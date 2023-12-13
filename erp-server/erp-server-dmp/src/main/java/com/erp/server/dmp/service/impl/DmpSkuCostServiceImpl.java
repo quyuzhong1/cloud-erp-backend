@@ -298,8 +298,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                     getParentCost(childSkuCostList,childList,childSkuLevelDTO.getSkuId(),parentSkuCostEntity);
                     continue;
                 }
-                parentSkuCostEntity.setCostPrice(MathUtil.add(dmpSkuCostEntity.getCostPrice(),parentSkuCostEntity.getCostPrice()));
-                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(dmpSkuCostEntity.getNotTaxCostPrice(),parentSkuCostEntity.getNotTaxCostPrice()));
+                parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
             }
         }
 
@@ -324,8 +324,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             //成本信息
             DmpSkuCostEntity dmpSkuCostEntity = new DmpSkuCostEntity();
             BeanMapperUtils.copy(skuCost,dmpSkuCostEntity);
-            BigDecimal totalCostPrice = BigDecimal.ZERO;
-            BigDecimal totalNoTaxCostPrice = BigDecimal.ZERO;
+            BigDecimal totalCostAmount = BigDecimal.ZERO;
+            BigDecimal totalNoTaxCostAmount = BigDecimal.ZERO;
             //条数
             Integer size = MathUtil.ZERO;
             for (SkuCostDTO skuCostDTO : value) {
@@ -343,15 +343,17 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                     continue;
                 }
                 //含税成本
-                totalCostPrice = MathUtil.add(totalCostPrice,MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate));
+                totalCostAmount = MathUtil.add(totalCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate),skuCostDTO.getQty()) );
                 //未含税成本
-                totalNoTaxCostPrice = MathUtil.add(totalNoTaxCostPrice,MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate));
-
+                totalNoTaxCostAmount = MathUtil.add(totalNoTaxCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate),skuCostDTO.getQty()));
                 size++;
             }
+            //总数量
+            Integer totalQty = value.stream().map(SkuCostDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
             dmpSkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            dmpSkuCostEntity.setCostPrice(MathUtil.divide(totalCostPrice, BigDecimal.valueOf(size),4) );
-            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostPrice, BigDecimal.valueOf(size),4));
+            dmpSkuCostEntity.setCostPrice(MathUtil.divide(totalCostAmount, new BigDecimal(totalQty),4) );
+            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostAmount, new BigDecimal(totalQty),4));
             //无成本则不保存
             if (MathUtil.compareTo(dmpSkuCostEntity.getCostPrice(),MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
