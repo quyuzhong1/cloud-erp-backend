@@ -610,7 +610,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
-            listSkuDTO.setVariantProperty(skuVO.getVariantProperty());
             listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
@@ -638,12 +637,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                             && !warehouseType.equals(obj.getType())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
-                //库存sku信息
+                //平台sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(platformListing)) {
                     listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
                     listSkuDTO.setPlatformProductName(platformListing.getPlatformSkuName());
                     listSkuDTO.setPlatformSpuNo(platformListing.getPlatformSpuNo());
+                    listSkuDTO.setVariantProperty(platformListing.getProductSpec());
                 }
             }
             resultList.add(listSkuDTO);

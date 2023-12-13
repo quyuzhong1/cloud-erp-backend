@@ -1,9 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,11 +28,11 @@ public class OverseasWarehouseController extends BaseController {
      * 通过状态获取入库单号
      */
     @PostMapping("/getReceiptNumbersForStatus")
-    public List<String> getReceiptNumbersForStatus(@RequestBody List<String> statusList){
+    public List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "platform") String platform){
         if (CollectionUtils.isEmpty(statusList)) {
             return Collections.emptyList();
         }
-        return overseasWarehouseInboundService.getReceiptNumbersForStatus(statusList);
+        return overseasWarehouseInboundService.getReceiptNumbersForStatus(statusList, platform);
     }
 
     /**
