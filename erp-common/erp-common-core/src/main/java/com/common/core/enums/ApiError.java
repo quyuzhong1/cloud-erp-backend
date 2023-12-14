@@ -531,6 +531,7 @@ public enum ApiError implements Serializable {
     ERROR_SALE_RANGE_EXIST(97042, "区间类型不能为空"),
     //getSettleMethod
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
+    ERROR_97044(97044, "已使用的模块不能删除"),
 
     /**
      * SCM 错误

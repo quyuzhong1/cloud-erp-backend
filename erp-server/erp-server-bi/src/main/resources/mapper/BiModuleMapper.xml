@@ -4,7 +4,7 @@
 
 
     <select id="paging" resultType="com.erp.model.bi.dto.ModulePagingDTO">
-        SELECT bm1.id, bm1.name, bm1.remark, bm1.image_url,
+        SELECT bm1.id, bm1.name, bm1.remark, bm1.image_url,bm1.category_id,
         bm1.state, bm1.view_code,bs.name AS sysModuleName
         FROM bi_module AS bm1
         INNER JOIN bi_sys_module bs ON  bs.id=bm1.sys_module_id
@@ -14,6 +14,12 @@
                      OR bs.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     )
             </if>
+        <if test="params.categoryId != null and params.categoryId != ''">
+            AND bm1.category_id = #{params.categoryId}
+        </if>
+        <if test="params.state != null">
+            AND bm1.state = #{params.state}
+        </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

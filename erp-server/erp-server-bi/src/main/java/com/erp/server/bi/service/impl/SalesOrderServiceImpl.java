@@ -1319,6 +1319,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     public BigDecimal getSalesRatio(BigDecimal totalSales, BigDecimal sales) {
         BigDecimal zero = BigDecimal.ZERO;
+        if (totalSales.compareTo(zero) == 0 && sales.compareTo(zero) > 0){
+            return BigDecimal.valueOf(100);
+        }
         if (totalSales.compareTo(zero) == 0 || sales == null) {
             return zero;
         }
