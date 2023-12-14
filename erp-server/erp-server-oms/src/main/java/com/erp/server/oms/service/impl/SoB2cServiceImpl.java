@@ -19,6 +19,7 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -1247,7 +1248,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_CANCEL_SPLIT, entity.getCode());
         }
         //关联关系
-        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
         if (CollectionUtils.isEmpty(soB2cRefList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT, entity.getCode());
         }
@@ -1557,9 +1558,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         skuInventoryDTO.setSkuIdList(skuIdList);
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
-        //物流方式
-        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_METHOD.getType());
-
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
 
 
@@ -1573,6 +1571,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cFinanceEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
         }
+
+        //SKU对照表信息
+        List<SkuMappingDTO.ListSkuParamDTO> listParamList = allDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId(),allList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e ->Optional.ofNullable(e.getDictPlatform())).orElse(""))).collect(Collectors.toList());
+        ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
+        listSkuParamList.setList(listParamList);
+        List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
 
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
@@ -1618,6 +1622,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(label, SoB2cDTO.LabelJsonDTO.class);
                 labelDTO.setAliexpressStatus(labelJsonDTO.getAliexpressStatus());
                 labelDTO.setAmazonStatus(labelJsonDTO.getAmazonStatus());
+                labelDTO.setFulfillmentChannel(labelJsonDTO.getFulfillmentChannel());
             }
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
@@ -1643,6 +1648,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         isCombination = Boolean.TRUE;
                     }
                 }
+
+                //库存SKU
+                SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(),detailDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(),detailDTO.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
+                    detailDTO.setVariantProperty(warehouseListSkuDTO.getVariantProperty());
+                }
+
                 //订单本位币金额
                 detailDTO.setSourceAmount(detailDTO.getAmount());
                 detailDTO.setSourceCurrency(detailDTO.getCurrency());
@@ -2284,6 +2296,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
         return map;
+    }
+
+    public static void main(String[] args) {
+        SoB2cDTO.LabelJsonDTO labelJsonDTO = new SoB2cDTO.LabelJsonDTO();
+        labelJsonDTO.setFulfillmentChannel("AFN");
+        String str = JSONUtil.toJsonStr(labelJsonDTO);
+        SoB2cDTO.LabelJsonDTO labelJsons = JSONUtil.toBean(str, SoB2cDTO.LabelJsonDTO.class);
+        System.out.println(str);
+        System.out.println(labelJsons);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -68,6 +69,14 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
             queryWrapper.eq(SoB2cRefEntity::getType,typeEnum.getCode());
         }
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum) {
+        if (CollectionUtils.isEmpty(targetIdList) || ObjectUtil.isEmpty(typeEnum)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listSourceByTargetIds(targetIdList,typeEnum.getCode());
     }
 
 

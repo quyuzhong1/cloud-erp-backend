@@ -3,6 +3,8 @@ package com.erp.sdk.oms.amz.spapi.dto;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -55,6 +57,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
     private String zshopStorefrontFeature;
 
+    @Panno(findType = PannoEnum.EQ,field = "asin1")
     private String asin1;
 
     private String asin2;
@@ -103,7 +106,9 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 详情或其他数据下载状态
      * 0 详情数据需要更新
      * 1 详情数据已更新
+     * -1 异常数据无法下载
      */
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
 
     /**
@@ -159,5 +164,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         String ee = "2020-08-04 03:56:29 PDT";
         LocalDateTime parse = LocalDateTime.parse(ee, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z", Locale.ENGLISH));
         System.out.println(parse);
+    }
+
+    public static PlatformAmazonListingDTO getByDownloadStatus() {
+        PlatformAmazonListingDTO amazonListingDTO = new PlatformAmazonListingDTO();
+        amazonListingDTO.setDownloadStatus(0);
+        return amazonListingDTO;
     }
 }

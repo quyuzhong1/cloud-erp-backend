@@ -31,11 +31,8 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
@@ -338,7 +335,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(listing)) {
             throw new ServiceException("平台sku不存在");
         }
-        checkExist(id, listing.getId());
+        checkExist(id, listing.getId(), dto.getShopId());
         // listing 更新匹配关系
         listing.setMatchResult(true);
         if (!listingInfoService.updateById(listing)) {
@@ -610,7 +607,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
-            listSkuDTO.setVariantProperty(skuVO.getVariantProperty());
             listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
@@ -638,12 +634,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                             && !warehouseType.equals(obj.getType())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
-                //库存sku信息
+                //平台sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(platformListing)) {
                     listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
                     listSkuDTO.setPlatformProductName(platformListing.getPlatformSkuName());
                     listSkuDTO.setPlatformSpuNo(platformListing.getPlatformSpuNo());
+                    listSkuDTO.setVariantProperty(platformListing.getProductSpec());
                 }
             }
             resultList.add(listSkuDTO);
@@ -791,10 +788,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
     }
 
-    private void checkExist(String id, String listingId) {
+    private void checkExist(String id, String listingId, String shopId) {
         LambdaQueryWrapper<SkuMappingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuMappingEntity::getListingId, listingId);
         queryWrapper.eq(SkuMappingEntity::getIsExpire, Boolean.FALSE);
+        queryWrapper.eq(SkuMappingEntity::getShopId, shopId);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(SkuMappingEntity::getId, id);
         }

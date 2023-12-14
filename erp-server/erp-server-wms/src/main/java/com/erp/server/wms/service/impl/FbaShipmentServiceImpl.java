@@ -148,6 +148,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
         List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream()
                 .filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())
@@ -156,10 +157,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
+        if (ObjectUtil.isEmpty(skuDTOS)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
 
         //映射sku
         dto.setShopId(entity.getShopId());
         dto.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        dto.setId(skuDTOS.get(0).getId());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
 
@@ -1195,6 +1200,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(mskuList);
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
         for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {

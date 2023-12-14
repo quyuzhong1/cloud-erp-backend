@@ -106,7 +106,7 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
             this.period = "P1D";
         } else {
             // AmazonReportRecordTypeEnum
-            this.period = "PT15M";
+            this.period = "PT30M";
         }
         this.firstNextReportCreationTime = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
         this.reportType = reportType;

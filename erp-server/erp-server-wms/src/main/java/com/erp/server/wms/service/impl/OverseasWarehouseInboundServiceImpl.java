@@ -852,9 +852,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public List<String> getReceiptNumbersForStatus(List<String> statusList) {
+    public List<String> getReceiptNumbersForStatus(List<String> statusList, String platform) {
         return this.list(Wrappers.<OverseasWarehouseInboundEntity>lambdaQuery()
-                        .in(OverseasWarehouseInboundEntity::getInstockStatus, statusList))
+                        .in(OverseasWarehouseInboundEntity::getInstockStatus, statusList)
+                        .eq(OverseasWarehouseInboundEntity::getDictPlatform,platform))
                 .stream()
                 .map(OverseasWarehouseInboundEntity::getCode)
                 .distinct()

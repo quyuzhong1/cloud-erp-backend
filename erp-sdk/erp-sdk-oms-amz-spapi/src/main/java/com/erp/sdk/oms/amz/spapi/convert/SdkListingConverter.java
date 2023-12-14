@@ -24,7 +24,7 @@ public interface SdkListingConverter {
     @Mappings({
             @Mapping(target = "uniqueId", source = "mongoDTO.listingId"),
             @Mapping(target = "shopId", source = "shopId"),
-            @Mapping(target = "downloadStatus", constant = "0"),
+            @Mapping(target = "downloadStatus", expression = "java(null == mongoDTO.getAsin1() ? -1 : 0)"),
             @Mapping(target = "platformUpdateTime", expression = "java(java.time.OffsetDateTime.parse(mongoDTO.getDataEndTime()).toLocalDateTime())"),
     })
     PlatformAmazonListingDTO mongoDtoToListingDto(ReportListingMongoDTO mongoDTO, String shopId);

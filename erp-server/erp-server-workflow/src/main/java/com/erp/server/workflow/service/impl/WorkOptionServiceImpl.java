@@ -173,12 +173,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 req.setSign(0);
             }
         }
-        for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
-            if (req.getModuleClassify().equals("质检单")) {
-                waitDoMenus.remove(req);
-            }
-        }
-        return waitDoMenus;
+
+        List<WorkOptionDTO.WaitDoMenu> waitDoMenuList = waitDoMenus.stream().filter(req -> !req.getModuleClassify().equals("质检单")).collect(Collectors.toList());
+        return waitDoMenuList;
     }
 
     /**
@@ -338,6 +335,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                         req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
                         break;
                     case WMS:
+                    case FM:
                         req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
                         break;
                     case OMS:
@@ -385,6 +383,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case SCM:
                 return scmTaskFeign.getTableNum(myWorkOptionDTOList);
             case WMS:
+            case FM:
                 return wmsTaskFeign.getTableNum(myWorkOptionDTOList);
             case OMS:
                 return omsTaskFeign.getTableNum(myWorkOptionDTOList);
@@ -426,6 +425,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                         pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case WMS:
+                    case FM:
                         pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case OMS:
@@ -543,6 +543,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmApprove(dto, entity);
                 break;
             case WMS:
+            case FM:
                 wmsApprove(dto, entity);
                 break;
             case OMS:

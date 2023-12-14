@@ -57,6 +57,11 @@ public class SkuCostDTO {
     private BigDecimal notTaxCostPrice;
 
     /**
+     * 数量
+     */
+    private Integer qty;
+
+    /**
      * 币别
      */
     private String currency;

@@ -264,6 +264,8 @@ public class FbaShipmentDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class skuMappingParamDTO {
+
+        private String id;
         /**
          * 详情id
          */
