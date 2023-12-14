@@ -102,16 +102,6 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
 
     /**
-     * 消费处理明细
-     *
-     * @Author Jim
-     * @since 2023-12-13
-     * @param list
-     * @param mainEntity
-     */
-    void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity);
-
-    /**
      * @description: 更新明细的是否匹配仓库规则字段
      * @author Will
      * @date: 2023/12/14 9:21
