@@ -76,7 +76,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:targetFinish",keyGenerator = "myKeyGenerator")
     public LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto) {
 
         LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
