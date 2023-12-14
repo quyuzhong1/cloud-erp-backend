@@ -205,14 +205,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     /**
      * 获取到物流匹配结果
      *
-     * @param jsonObject
+     * @param map
      * @return
      */
     @Override
-    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(JSONObject jsonObject) {
-        RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
-        if (Objects.isNull(jsonObject)) {
-            return ruleMatchResult;
+    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
+        if (Objects.isNull(map)) {
+            return null;
         }
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
         List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());
@@ -227,8 +226,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
 
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
+                RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
@@ -236,7 +236,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             }
 
         }
-        return ruleMatchResult;
+        return null;
     }
 
 
@@ -246,7 +246,10 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
      * @return
      */
     private List<RuleLogisticsEntity> listOrderByPriority() {
-        return this.lambdaQuery().eq(RuleLogisticsEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleLogisticsEntity::getPriority).list();
+        return this.lambdaQuery().eq(RuleLogisticsEntity::getDisabled, Boolean.FALSE).
+                orderByAsc(RuleLogisticsEntity::getPriority).
+                orderByDesc(RuleLogisticsEntity::getUpdateTime).
+                list();
 
     }
 

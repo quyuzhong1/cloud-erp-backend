@@ -376,6 +376,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //是否带电
         parceInfo.setHasBattery(hasBattery);
         parceInfo.setTotalQuantity(logisticsProductList.size());
+
+        //申报总价
+        BigDecimal totalPrice=skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        parceInfo.setTotalPrice(totalPrice);
+
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
         if (Objects.isNull(saleChannel)) {
