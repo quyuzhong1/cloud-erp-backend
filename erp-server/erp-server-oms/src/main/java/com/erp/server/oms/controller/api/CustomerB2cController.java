@@ -9,7 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.server.oms.service.CustomerB2cAddressService;
@@ -52,8 +52,8 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:paging",
             tableAlias = "ci"
     )
-    public ApiResult<List<CustomerDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<CustomerDTO.TabListDTO> list = customerB2cService.tabList(dto);
+    public ApiResult<List<CustomerB2CDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<CustomerB2CDTO.TabListDTO> list = customerB2cService.tabList(dto);
         return success(list);
     }
 
@@ -69,8 +69,8 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:paging",
             tableAlias = "ci"
     )
-    public ApiResult<PagingVO<CustomerDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerDTO.PagingParamDTO> dto) {
-        PagingVO<CustomerDTO.PagingViewDTO> pagingVO = customerB2cService.paging(dto);
+    public ApiResult<PagingVO<CustomerB2CDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerB2CDTO.PagingParamDTO> dto) {
+        PagingVO<CustomerB2CDTO.PagingViewDTO> pagingVO = customerB2cService.paging(dto);
         return success(pagingVO);
     }
 
@@ -82,7 +82,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
         String id = customerB2cService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -112,7 +112,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
+    public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
         String id = customerB2cService.addAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -131,8 +131,8 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
-    public ApiResult<CustomerDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        CustomerDTO.ViewDTO view = customerB2cService.view(dto.getId());
+    public ApiResult<CustomerB2CDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        CustomerB2CDTO.ViewDTO view = customerB2cService.view(dto.getId());
         return success(view);
     }
 
@@ -149,7 +149,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
-    public ApiResult update(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         String id = customerB2cService.updateCustomer(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -167,7 +167,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
-    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         Boolean result = customerB2cService.updateAndSubmit(dto);
         return result ? success() : failure();
     }
@@ -246,7 +246,7 @@ public class CustomerB2cController extends BaseController {
      * 导出数据
      */
     @PostMapping("/export")
-    public ApiResult exportCustomerB2c(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult exportCustomerB2c(@RequestBody @Valid CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerB2cService.exportExcel(dto, response);
         return result ? success() : failure();
     }
@@ -255,8 +255,8 @@ public class CustomerB2cController extends BaseController {
      * 客户列表
      */
     @GetMapping("/list")
-    public ApiResult<List<CustomerDTO.InfoDTO>> list() {
-        List<CustomerDTO.InfoDTO> list = customerB2cService.listCustomer();
+    public ApiResult<List<CustomerB2CDTO.InfoDTO>> list() {
+        List<CustomerB2CDTO.InfoDTO> list = customerB2cService.listCustomer();
         return success(list);
     }
 
@@ -264,9 +264,9 @@ public class CustomerB2cController extends BaseController {
      * 所有客户列表 没有任何限制
      */
     @GetMapping("/listAll")
-    public ApiResult<List<CustomerDTO.InfoDTO>> listAll() {
+    public ApiResult<List<CustomerB2CDTO.InfoDTO>> listAll() {
         List<CustomerB2cEntity> list = customerB2cService.list();
-        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        List<CustomerB2CDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerB2CDTO.InfoDTO.class);
         return success(resultList);
     }
 
@@ -279,8 +279,8 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:paging",
             tableAlias = "customerB2c_info"
     )
-    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable(PermissionsDTO dto) {
-        List<CustomerDTO.InfoDTO> list = customerB2cService.listEnable(dto.getPermissionSql());
+    public ApiResult<List<CustomerB2CDTO.InfoDTO>> listEnable(PermissionsDTO dto) {
+        List<CustomerB2CDTO.InfoDTO> list = customerB2cService.listEnable(dto.getPermissionSql());
         return success(list);
     }
 
@@ -303,8 +303,8 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @GetMapping("/getBase")
-    public ApiResult<CustomerDTO.BaseDTO> getBase(@RequestParam("customerId") String customerId) {
-        CustomerDTO.BaseDTO result = customerB2cService.getBase(customerId);
+    public ApiResult<CustomerB2CDTO.BaseDTO> getBase(@RequestParam("customerId") String customerId) {
+        CustomerB2CDTO.BaseDTO result = customerB2cService.getBase(customerId);
         return success(result);
     }
 
@@ -365,11 +365,11 @@ public class CustomerB2cController extends BaseController {
      * @param file
      * @return
      */
-    @PostMapping(value = "importCustomerKingdee")
-    public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
-        customerB2cService.importCustomerKingdee(file);
-        return success();
-    }
+//    @PostMapping(value = "importCustomerKingdee")
+//    public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
+//        customerB2cService.importCustomerKingdee(file);
+//        return success();
+//    }
 
     /**
      * 根据客户id查询买家信息
