@@ -203,6 +203,19 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+
+    /**
+     * 是否匹配订单规则
+     */
+    @TableField("is_match_order_rule")
+    private Boolean isMatchOrderRule;
+
+    /**
+     * 是否匹配物流规则
+     */
+    @TableField("is_match_logistics_rule")
+    private Boolean isMatchLogisticsRule;
+
     /**
      * 店铺名称
      */

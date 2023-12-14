@@ -311,6 +311,17 @@ public class SoB2cDTO implements Serializable {
         private LabelDTO labelDTO;
 
         /**
+         * 是否匹配订单规则
+         */
+        private Boolean isMatchOrderRule;
+
+        /**
+         * 是否匹配物流规则
+         */
+        private Boolean isMatchLogisticsRule;
+
+
+        /**
          * b2c销售订单明细信息
          */
         private List<SoB2cDetailDTO.ListDTO> detailList;

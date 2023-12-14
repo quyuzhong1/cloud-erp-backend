@@ -136,6 +136,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 是否匹配仓库规则
+     */
+    @TableField("is_match_warehouse_rule")
+    private Boolean isMatchWarehouseRule;
+
 
     public static final String MAIN_ID = "main_id";
 

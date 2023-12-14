@@ -1,37 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SoB2cMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
-        <id column="id" property="id"/>
-        <result column="code" property="code"/>
-        <result column="dictPlatform" property="dictPlatform"/>
-        <result column="platformCode" property="platformCode"/>
-        <result column="shopId" property="shopId"/>
-        <result column="approveStatus" property="approveStatus"/>
-        <result column="payStatus" property="payStatus"/>
-        <result column="billStatus" property="billStatus"/>
-        <result column="invalidStatus" property="invalidStatus"/>
-        <result column="amount" property="amount"/>
-        <result column="currency" property="currency"/>
-        <result column="payTime" property="payTime"/>
-        <result column="buyerRemark" property="buyerRemark"/>
-        <result column="remark" property="remark"/>
-        <result column="isIntercept" property="isIntercept"/>
-        <result column="abnormalType" property="abnormalType"/>
-        <result column="sourceId" property="sourceId"/>
-        <result column="sourceType" property="sourceType"/>
-        <result column="sourceCode" property="sourceCode"/>
-        <result column="logisticsChannelId" property="logisticsChannelId"/>
-        <result column="shippingCost" property="shippingCost"/>
-        <result column="shippingCostCurrency" property="shippingCostCurrency"/>
-        <result column="logisticsCode" property="logisticsCode"/>
-        <result column="buyerId" property="buyerId"/>
-        <result column="buyerName" property="buyerName"/>
-        <result column="countryName" property="countryName"/>
-        <result column="label" property="label"/>
-    </resultMap>
-
 
     <!-- 合并显示查询映射结果 -->
     <resultMap id="MergeResultMap" type="com.erp.model.oms.dto.SoB2cDTO$MergeMainDTO">
@@ -84,9 +53,11 @@
         sb2c.abnormal_type as abnormalType,
         sb2c.label_json as label,
         sb2c.is_intercept as isIntercept,
-         sb2c.source_id as sourceId,
-         sb2c.source_type as sourceType,
-         sb2c.source_code as sourceCode,
+        sb2c.source_id as sourceId,
+        sb2c.source_type as sourceType,
+        sb2c.source_code as sourceCode,
+        sb2c.is_match_order_rule as isMatchOrderRule,
+        sb2c.is_match_logistics_rule as isMatchLogisticsRule,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -100,11 +71,11 @@
         sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,
-        sb2c.create_time
+        sb2c.create_time as createTime
     </sql>
 
     <!-- 列表分页查询 -->
-    <select id="paging" resultMap="BaseResultMap">
+    <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
         from so_b2c sb2c
