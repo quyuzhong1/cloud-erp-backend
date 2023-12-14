@@ -4,7 +4,6 @@ package com.erp.rpc.dmp.feign;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;

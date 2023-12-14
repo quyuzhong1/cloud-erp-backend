@@ -149,17 +149,17 @@ public class ShippingCalculationDTO {
         /**
          * 有效期
          */
-        private String effectivePeriod ;
+        private String effectivePeriod;
 
         /**
          * 生效日期
          */
-        private LocalDate effectiveDate ;
+        private LocalDate effectiveDate;
 
         /**
          * 失效日期
          */
-        private LocalDate expireDate ;
+        private LocalDate expireDate;
 
         /**
          * 重量单位
@@ -386,7 +386,7 @@ public class ShippingCalculationDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ChannelCostDTO{
+    public static class ChannelCostDTO {
 
         /**
          * 物流渠道id
@@ -402,6 +402,43 @@ public class ShippingCalculationDTO {
          * 物流费
          */
         private BigDecimal shippingCost;
+
+    }
+
+
+    /**
+     * 运费测算结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CostCalculationResultDTO {
+
+
+        /**
+         * 国家
+         */
+        private String country;
+
+
+        /**
+         * 国家名
+         */
+        private String countryName;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 单位重量
+         */
+        private String weightUnit;
+
+        /**
+         * 费用列表
+         */
+        List<ChannelCostDTO> costList;
 
     }
 

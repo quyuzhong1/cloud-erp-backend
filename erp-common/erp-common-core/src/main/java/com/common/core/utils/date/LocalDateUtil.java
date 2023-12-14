@@ -243,7 +243,7 @@ public class LocalDateUtil {
      */
     public static LocalDateTime stringToLocalDateTime(String strDate) {
         Date date = EnumTimePattern.parseDate(strDate);
-        return LocalDateUtil.date2LocalDateTime(date);
+       return LocalDateUtil.date2LocalDateTime(date);
     }
 
 

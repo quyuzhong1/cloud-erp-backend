@@ -1,5 +1,9 @@
 package com.erp.server.dmp.service.mq;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -8,6 +12,8 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
+import com.common.message.service.mq.MQProducerService;
+import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -31,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -164,21 +171,25 @@ public class MQConsumerService {
     public class ConsumerErpRefundOrder implements RocketMQListener<DmpRefundInfoEntity> {
         @Override
         public void onMessage(DmpRefundInfoEntity ext) {
-            log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpRefundInfoService.checkOrder(ext);
-            MapUtil mapUtil = getMapParam();
-            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
-            }
-            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
-            }
-            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
+            try{
+                log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
+                // 调用订单写入与更新
+                dmpRefundInfoService.checkOrder(ext);
+                MapUtil mapUtil = getMapParam();
+                if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+                }
+                if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = new OrderMongoDTO(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
+                }
+                if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
+                }
+            }catch (Exception e){
+                log.error("rocketmq 监听到退款订单消息异常", e);
             }
         }
     }
@@ -441,10 +452,12 @@ public class MQConsumerService {
     }
 
 
-    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto, String tableName, Class<T> clazz) {
+    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
-            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
+            log.warn("mongo暂未写入数据, 请稍后重试");
+            return;
+//            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
         }
         if(CleanStatusEnum.CLEANED.getCode().equals(mongoData.get(0).getIsClean())){
             return;
@@ -454,7 +467,7 @@ public class MQConsumerService {
     private static MapUtil getMapParam() {
         CleanBaseDTO updateParam = new CleanBaseDTO();
         updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
-        updateParam.setLastPushTime(LocalDateTime.now().toString());
+        updateParam.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
         return mapUtil;
     }

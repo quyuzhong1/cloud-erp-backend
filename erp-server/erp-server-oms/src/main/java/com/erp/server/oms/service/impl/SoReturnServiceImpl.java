@@ -1,12 +1,10 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -20,10 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
@@ -40,7 +34,6 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -55,8 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -66,7 +57,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -120,11 +110,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Resource
-    private MQProducerService mQProducerService;
-
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private CustomerAddressService customerAddressService;
 
@@ -443,8 +428,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     .set(SoReturnEntity::getApproveTime, LocalDateTime.now())
                     .in(SoReturnEntity::getId, ids)
                     .update();
-            //增加广播通知
-            entityList.forEach(obj -> this.syncDataToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -455,59 +438,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货订单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
-    }
-
-    /**
-     * 增加广播推送
-     *
-     * @param entity
-     * @param operate
-     */
-    private void syncDataToDmp(SoReturnEntity entity, String operate) {
-        //推送同步中台dmp任务
-        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        //业务id
-        resultMap.put("id", entity.getId());
-        //客户编号
-        resultMap.put("code", entity.getCode());
-        resultMap.put("operate", operate);
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                log.error("soReturn.syncDataToDmp 推送MQ失败 :" + resultMap.get("id"));
-            }
-            return Boolean.TRUE;
-        });
-    }
-
-    /**
-     * 推送订单到mq
-     *
-     * @param entity
-     * @param syncOperate
-     */
-    @Override
-    public String syncOrderToDmp(SoReturnEntity entity, String syncOperate) {
-        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(entity))
-                .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
-                .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
-                .setSourceCode(entity.getCode())
-                .setSourceId(entity.getId())
-                .setSourceType(SourceTypeEnum.SO_RETURN.getCode())
-                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
-                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
-                .setSyncOperate(syncOperate);
-        log.info("推送消息开始：{}", dto.toString());
-        //推送mq
-        try {
-            return dmpTaskFeign.savePullTask(dto);
-        } catch (Exception e) {
-            throw new ServiceException(String.format("同步数据中台异常:%s", e.getMessage()));
-        }
     }
 
     @Override
@@ -541,8 +471,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoReturnEntity::getId, ids)
                 .update();
-        //增加广播通知
-        entityList.forEach(obj -> this.syncDataToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货订单【%s】", ModuleTypeEnum.SO_RETURN.getCode(), pairList, "反审核操作");

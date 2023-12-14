@@ -22,6 +22,7 @@ import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.RefreshTokenRequest;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.AuthSaveData;
 import com.erp.server.oms.service.IShopAuthorizeService;
@@ -230,13 +231,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     /**
      * 刷新token
      */
-    public void refreshToken(ShopDTO.RefreshTokenDTO dto ){
-        RefreshTokenRequest request=RefreshTokenRequest.builder().
-                baseUrl(dto.getBaseUrl()).
-                refreshToken(dto.getRefreshToken()).
-                clientId(dto.getClientId()).
-                clientSecret(dto.getClientSecret()).
-                build();
+    public void refreshToken(ShopDTO.RefreshTokenDTO dto){
 
 
     }

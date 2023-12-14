@@ -162,7 +162,6 @@ public class AliExpressOrderService {
      * @author yl
      * @date 2023-11-29 12:13
      */
-
     public AliExpressShopInfoDTO getShopInfoByShopId(String shopId) {
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
         // 缓存获取
@@ -189,7 +188,9 @@ public class AliExpressOrderService {
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
+                redisUtil.set(tokenKey, result,shopAuthEntity.getExpiresIn());
             }
+
             return result;
         }
         return null;

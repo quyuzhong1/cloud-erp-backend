@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -96,16 +97,33 @@ public class SoOutstockFeignController {
         return soOutstockDetailService.listDetailBySoDetailIds(soDetailIds);
     }
 
-     /**
-      * 根据任务单号获取销售出库信息
-      * @author yl
-      * @date 2023-10-19 15:46
-      * @param trackNo
-      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetailDTO.DeliveryQtyDTO>
-      */
-      
+    /**
+     * 根据任务单号获取销售出库信息
+     *
+     * @param trackNo
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetailDTO.DeliveryQtyDTO>
+     * @author yl
+     * @date 2023-10-19 15:46
+     */
+
     @PostMapping("/listByTrackNo")
     List<SoOutstockEntity> listByTrackNo(@RequestBody String trackNo) {
         return soOutstockService.listByTrackNo(trackNo);
     }
+
+    /**
+     * 生成销售出库单
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2023-12-11 16:11
+     */
+    @PostMapping("/generateB2cSoOutstock")
+    public Boolean generateB2cSoOutstock(@RequestBody SoOutstockDTO.GenerateB2cDTO dto) {
+        return soOutstockService.generateB2cSoOutstock(dto);
+    }
+
 }
+
+
+

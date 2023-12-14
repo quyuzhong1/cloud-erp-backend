@@ -12,7 +12,9 @@ import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -117,7 +119,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         gyyOrder.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
         gyyOrder.setDownloadStatus(1);
-        gyyOrder.setDownloadTime(LocalDateTime.now().toString());
+        gyyOrder.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         // 修改数据
         updateAndSaveDb(gyyOrder);
     }
@@ -156,7 +158,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         for (GyyOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }
@@ -300,7 +302,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         //平台标识
         dmpOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpOrderInfoEntity.setItemList(initOrderItem(gyyOrderEntity, orderState));
+        List<DmpOrderItemEntity> dmpOrderItemEntities = initOrderItem(gyyOrderEntity, orderState);
+        if (CollectionUtil.isEmpty(dmpOrderItemEntities)){
+            return null;
+        }
+        dmpOrderInfoEntity.setItemList(dmpOrderItemEntities);
         return dmpOrderInfoEntity;
     }
 
@@ -323,6 +329,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
         Map<String, Integer> skuCountMap = new HashMap<>();
         for (DetailsBean detailsBean : orderItem) {
+            if(StrUtil.isBlank(detailsBean.getItemCode())){
+                continue;
+            }
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
             //商品id
             dmpOrderItemEntity.setItemId(detailsBean.getItemCode());

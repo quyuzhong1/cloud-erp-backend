@@ -18,7 +18,7 @@ public @interface Idempotent {
     TimeUnit timeUnit() default TimeUnit.SECONDS;
 
     /**
-     * 间隔时间,默认为3秒
+     * 间隔时间,默认为5秒
      */
-    int interval() default 3;
+    int interval() default 5;
 }

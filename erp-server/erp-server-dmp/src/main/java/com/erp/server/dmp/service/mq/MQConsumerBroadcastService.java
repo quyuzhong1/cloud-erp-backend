@@ -34,13 +34,13 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "kingdee_so_info_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsOrderToDmp(resultMap);
+            //dmpPullTaskService.syncOmsOrderToDmp(resultMap);
         }
     }
 
@@ -50,13 +50,13 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "kingdee_so_outstock_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOutStockToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到销售出库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
+            //dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
         }
     }
 
@@ -73,7 +73,7 @@ public class MQConsumerBroadcastService {
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到退货入库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsReturnToDmp(resultMap);
+            //dmpPullTaskService.syncOmsReturnToDmp(resultMap);
         }
     }
 }

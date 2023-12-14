@@ -14,7 +14,9 @@ import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -110,7 +112,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByFIdAndBillNo(entity.getFBillNo(), entity.getFId());
             List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now().toString());
+            entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             if (CollectionUtil.isEmpty(mongoData)) {
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -163,7 +165,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         }
         for (KingdeeOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }

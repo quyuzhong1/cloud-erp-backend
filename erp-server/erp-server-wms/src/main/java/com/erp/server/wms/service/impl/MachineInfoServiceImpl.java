@@ -506,9 +506,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             // 发送马帮
             list.forEach(obj->{
                 // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
-                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+//                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
                     syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                }
+//                }
             });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
@@ -560,9 +560,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         // 发送马帮
         list.forEach(obj->{
             // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
-            if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-            }
+//            if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+            syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+//            }
         });
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

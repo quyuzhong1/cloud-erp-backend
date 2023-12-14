@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -65,4 +66,26 @@ public interface B2cOrderConverter {
     })
     LogisticsBillDTO.SkuDTO convertSku(SoB2cDetailEntity data);
     List<LogisticsBillDTO.SkuDTO> convertSku(List<SoB2cDetailEntity> detailList);
+
+
+    @Mappings({
+            @Mapping(target = "name", source = "name"),
+            @Mapping(target = "phone", source = "receiverTelNumber"),
+            @Mapping(target = "countryCode", source = "country"),
+            @Mapping(target = "province", source = "provinceName"),
+            @Mapping(target = "city", source = "cityName"),
+            @Mapping(target = "zipcode", source = "postCode"),
+            @Mapping(target = "address1", source = "firstAddress"),
+            @Mapping(target = "address2", source = "secondAddress"),
+
+    })
+    ThirdWarehouseCreateOutboundReq.ReceiverInfo convertThirdWarehouseReceiver(SoB2cReceiverEntity receiverEntity);
+
+
+    @Mappings({
+            @Mapping(target = "productSku", source = "warehouseSkuNo"),
+            @Mapping(target = "quantity", source = "qty"),
+    })
+    ThirdWarehouseCreateOutboundReq.Item convertThirdWarehouseItem(SoB2cDetailEntity detail);
+    List<ThirdWarehouseCreateOutboundReq.Item> convertThirdWarehouseItem(List<SoB2cDetailEntity> detailList);
 }

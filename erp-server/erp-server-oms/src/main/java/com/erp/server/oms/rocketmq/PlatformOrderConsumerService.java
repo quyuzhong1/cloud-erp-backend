@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 /**
  * 下载平台订单消费服务
- *
  * @author Cloud
  */
 @Service

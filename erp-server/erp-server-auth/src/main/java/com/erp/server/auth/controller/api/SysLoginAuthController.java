@@ -113,6 +113,7 @@ public class SysLoginAuthController extends BaseController {
             sysLoginUserVO.setHeadIcon(info.getHeadIcon());
             sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
             sysLoginUserVO.setBindingState(info.getBindingState());
+            sysLoginUserVO.setUserId(info.getUid());
             return success(sysLoginUserVO);
         }
     }

@@ -10,6 +10,11 @@ public interface AliexpressConstants {
     
     String TOKEN_CREATE = "/auth/token/create";
 
+    /**
+     * 刷新token
+     */
+    String REFRESH_TOKEN = "/auth/token/refresh";
+
 
     String SUCCESS_CODE="0";
     

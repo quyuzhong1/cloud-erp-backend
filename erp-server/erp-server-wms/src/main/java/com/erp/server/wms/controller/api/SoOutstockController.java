@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
+import java.util.HashMap;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -394,4 +396,6 @@ public class SoOutstockController extends BaseController {
         soOutstockService.tempRepairHistoryDb();
         return success();
     }
+
+
 }

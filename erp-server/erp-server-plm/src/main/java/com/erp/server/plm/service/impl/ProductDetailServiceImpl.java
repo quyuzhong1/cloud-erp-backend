@@ -1579,6 +1579,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(String skuId) {
         ProductDetailEntity detailEntity = this.getById(skuId);
+        Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
         if (detailEntity.getStatus().equals(1) || detailEntity.getStatus().equals(2)) {
             throw new ServiceException(ApiError.ERROR_95241);
         }

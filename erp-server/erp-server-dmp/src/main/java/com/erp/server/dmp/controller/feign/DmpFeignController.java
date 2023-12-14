@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -45,6 +46,8 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private DmpPullTaskService dmpPullTaskService;
+
+
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Resource

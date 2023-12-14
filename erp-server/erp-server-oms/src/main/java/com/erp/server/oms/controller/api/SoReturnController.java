@@ -15,6 +15,9 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
@@ -44,7 +47,7 @@ public class SoReturnController extends BaseController {
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
-    
+
     /**
      * 列表查询
      * @Author Luo_WG
@@ -382,4 +385,6 @@ public class SoReturnController extends BaseController {
         List<SoReturnDTO.PagingView> list = soReturnService.listSoReturnDetailBySourceId(id);
         return success(list);
     }
+
+
 }

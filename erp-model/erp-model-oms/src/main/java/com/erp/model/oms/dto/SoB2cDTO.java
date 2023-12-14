@@ -186,6 +186,12 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
+         * 是否对接了第三方海外仓
+         *  true 是
+         */
+        private Boolean isOverseasProviderWarehouse;
+
+        /**
          * 物流渠道id
          */
         private String logisticsChannelId;
@@ -924,6 +930,11 @@ public class SoB2cDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 目的地
+         */
+        private String toCountryName;
 
         /**
          * 单位重量

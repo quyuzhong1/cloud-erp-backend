@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoB2cDeliveryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoB2cDeliveryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="so_code" property="soCode" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="picking_type" property="pickingType" />
+       <result column="is_print_picking" property="isPrintPicking" />
+       <result column="is_inspection" property="isInspection" />
+       <result column="is_weigh" property="isWeigh" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="transport_no" property="transportNo" />
+       <result column="weight" property="weight" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="delivery_time" property="deliveryTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, status, so_code, source_id, source_code, source_type, dict_platform, shop_id, shop_name, picking_type, is_print_picking, is_inspection, is_weigh, logistics_channel_id, logistics_channel_name, transport_no, weight, weight_unit, delivery_time
+    </sql>
+
+
+</mapper>

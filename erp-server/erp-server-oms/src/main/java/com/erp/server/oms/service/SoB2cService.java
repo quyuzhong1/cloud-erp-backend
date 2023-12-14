@@ -329,4 +329,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
+
+    /** 
+     * @description 表示订单发货
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-13 17:40
+     */
+    Boolean  orderShipped(String  id);
+
+
 }
