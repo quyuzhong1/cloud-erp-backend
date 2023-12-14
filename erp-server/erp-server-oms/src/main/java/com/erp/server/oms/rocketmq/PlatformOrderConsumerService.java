@@ -60,11 +60,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Resource
     private CustomerB2cAddressService customerB2cAddressService;
     @Resource
-    private CustomerB2cGroupService customerB2cGroupService;
-    @Resource
     private CustomerB2cContactService customerB2cContactService;
-    @Resource
-    private CustomerB2cSellerService customerB2cSellerService;
     @Resource
     private ShopInfoService shopInfoService;
 
@@ -115,7 +111,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity);
 
-        customerB2cSellerService.saveOrUpdateEntity(dto, customerB2cEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
         if (!soB2cReceiverService.updateById(receiverEntity)) {
