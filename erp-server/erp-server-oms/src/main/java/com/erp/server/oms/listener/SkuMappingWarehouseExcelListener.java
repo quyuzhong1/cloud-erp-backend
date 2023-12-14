@@ -146,7 +146,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(null == platformEnum ? "" : platformEnum.getCode());
         paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(importExcelDTO.getWarehouseSkuNo()));
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         if (null != platformEnum && CollectionUtils.isEmpty(listDto)){
