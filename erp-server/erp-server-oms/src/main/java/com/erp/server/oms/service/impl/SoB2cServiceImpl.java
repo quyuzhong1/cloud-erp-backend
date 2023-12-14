@@ -2332,6 +2332,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2023/8/24 15:19
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
@@ -2339,23 +2340,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> list = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
         //配货规则是否通过
         Boolean distributionSuccess = CollectionUtils.isNotEmpty(list);
-        if (distributionSuccess) {
-            //更新明细仓库信息
-            for (SoB2cDetailEntity detailEntity : detailList) {
-                //比较json
-                String warehouseId = list.stream().filter(obj -> obj.getMap().equals(map)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseId())).orElse("");
-                detailEntity.setWarehouseId(warehouseId);
-            }
-            soB2cDetailService.updateWarehouse(detailList);
-            //状态更新为配货中
-            updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
-            //自动发货(物流规则有设置则自动发货)
-            submitDelivery(id);
-            return Boolean.TRUE;
+        if (!distributionSuccess) {
+            //仓库规则不匹配,标识异常
+            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
+            //明细设置仓库规则不匹配
+            soB2cDetailService.updateIsMatchWarehouseRule(entity.getId());
+            return  Boolean.TRUE;
         }
-        //配货规则不匹配,标识异常
-        updateAbnormalTypeApprove(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
-        return Boolean.TRUE;
+        //更新明细仓库信息
+        for (SoB2cDetailEntity detailEntity : detailList) {
+            //比较json
+            String warehouseId = list.stream().filter(obj -> obj.getMap().equals(map)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseId())).orElse("");
+            detailEntity.setWarehouseId(warehouseId);
+        }
+        soB2cDetailService.updateWarehouse(detailList);
+
+        //匹配物流规则 TODO
+        if (Boolean.FALSE) {
+            //物流规则不匹配,标识异常
+            updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
+            return  Boolean.TRUE;
+        }
+        //状态更新为配货中
+        updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
+        //自动发货(物流规则有设置则自动发货)
+        submitDelivery(id);
+        return  Boolean.TRUE;
     }
 
     /**
@@ -2363,7 +2373,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param approveStatusEnum
      * @param soB2cAbnormalTypeEnum
      * @return Boolean
-     * @description: 异常审核不通过
+     * @description: 订单审核规则不通过
      * @author Will
      * @date: 2023/8/24 15:14
      */
@@ -2371,18 +2381,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(ObjectUtils.isNotEmpty(approveStatusEnum), SoB2cEntity::getApproveStatus, approveStatusEnum.getCode())
                 .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
+                .set(SoB2cEntity::getIsMatchOrderRule,Boolean.FALSE)
                 .update(new SoB2cEntity());
     }
+
+    /**
+     * @description: 物流规则不通过
+     * @author Will
+     * @date: 2023/12/14 9:40
+     * @param id
+     * @param soB2cAbnormalTypeEnum
+     * @return Boolean
+     */
+    private Boolean updateLogisticsAbnormalType(String id, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
+        return lambdaUpdate().eq(SoB2cEntity::getId, id)
+                .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
+                .set(SoB2cEntity::getIsMatchLogisticsRule,Boolean.FALSE)
+                .update(new SoB2cEntity());
+    }
+
 
     /**
      * @param id
      * @param soB2cAbnormalTypeEnum
      * @return Boolean
-     * @description: 异常审核不通过
+     * @description: 仓库规则不通过
      * @author Will
      * @date: 2023/8/24 15:14
      */
-    private Boolean updateAbnormalTypeApprove(String id, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
+    private Boolean updateWarehouseAbnormalType(String id, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
                 .update(new SoB2cEntity());
