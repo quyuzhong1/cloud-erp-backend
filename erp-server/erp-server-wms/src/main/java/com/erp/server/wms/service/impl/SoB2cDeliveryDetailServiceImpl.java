@@ -38,60 +38,21 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(SoB2cDeliveryDetailDTO.AddDTO addDTO) {
-        SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity = new SoB2cDeliveryDetailEntity();
-        BeanMapperUtils.copy(addDTO, soB2cDeliveryDetailEntity);
-
+    public void add(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
         // 数据处理
-        handleData(soB2cDeliveryDetailEntity);
+        handleData(entities, mainId);
 
         log.info("开始新增b2c发货单详情");
-        boolean save = super.save(soB2cDeliveryDetailEntity);
+        boolean save = super.saveBatch(entities);
         if(!save) {
             throw new ServiceException("b2c发货单详情保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单详情" , soB2cDeliveryDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soB2cDeliveryDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(soB2cDeliveryDetailEntity.getId(), soB2cDeliveryDetailEntity.getId());
     }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(SoB2cDeliveryDetailDTO.UpdateDTO updateDTO) {
-        SoB2cDeliveryDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c发货单详情"));
-        SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity =  BeanMapperUtils.map(SoB2cDeliveryDetailEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(soB2cDeliveryDetailEntity);
-        log.info("编辑 开始修改b2c发货单详情数据，id：【{}】", old.getId());
-        boolean save = super.updateById(soB2cDeliveryDetailEntity);
-        if(!save) {
-            throw new ServiceException("b2c发货单详情保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录b2c发货单详情日志数据，id：【{}】", soB2cDeliveryDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cDeliveryDetailEntity.getId(), "b2c发货单详情");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soB2cDeliveryDetailEntity, null, soB2cDeliveryDetailEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity) {
+    private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
     // TODO 验证数据 & 数据赋值
     }
 }

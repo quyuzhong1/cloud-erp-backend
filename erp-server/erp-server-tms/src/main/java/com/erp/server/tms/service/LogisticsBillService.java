@@ -136,4 +136,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return 
      */
     Boolean cancelBill(LogisticsBillDTO.CancelBillDTO dto);
+
+    /**
+     * 根据物流单号查询物流单
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:44
+     * @param trackNo
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo);
 }

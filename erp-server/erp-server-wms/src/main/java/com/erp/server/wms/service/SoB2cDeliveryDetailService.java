@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * b2c发货单详情 服务类
@@ -18,19 +20,10 @@ public interface SoB2cDeliveryDetailService extends SuperService<SoB2cDeliveryDe
     * 新增
     * @author Luo_WG
     * @date: 2023-12-13
-    * @param dto
+    * @param entities
+    * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(SoB2cDeliveryDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-12-13
-    * @param dto
-    * @return
-    */
-    Boolean update(SoB2cDeliveryDetailDTO.UpdateDTO dto);
-
+    void add(List<SoB2cDeliveryDetailEntity> entities, String mainId);
 
 }

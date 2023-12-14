@@ -5,6 +5,7 @@ import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -126,5 +127,18 @@ public class LogisticsBillFeignController {
     public Boolean updateTrackNo(@RequestBody LogisticsBillDTO.UpdateTrackNoDTO billDTO) {
         Boolean result = logisticsBillDetailService.updateTrackNo(billDTO);
         return result;
+    }
+
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param trackNo
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @PostMapping("/getLogisticsBillByTrackNo")
+    public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestBody String trackNo) {
+        LogisticsBillDTO.BaseDTO entity = logisticsBillService.getBaseByTrackNo(trackNo);
+        return entity;
     }
 }

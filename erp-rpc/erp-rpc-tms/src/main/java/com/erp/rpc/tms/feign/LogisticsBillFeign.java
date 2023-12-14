@@ -80,4 +80,14 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/cancelBill")
     Boolean cancelBill(@RequestBody LogisticsBillDTO.CancelBillDTO dto);
+
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param trackNo
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @PostMapping("/feign/logisticsBill/getLogisticsBillByTrackNo")
+    LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestBody String trackNo);
 }

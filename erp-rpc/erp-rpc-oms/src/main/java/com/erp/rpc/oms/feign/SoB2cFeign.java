@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,4 +39,12 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listDetailByIds")
     List<SoB2cDetailEntity> listDetailByIds(List<String> soDetailIdList);
+
+    /**
+     * 根据主表id查询B2C订单主表信息
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listByIds")
+    List<SoB2cEntity> listByIds(List<String> soIds);
 }

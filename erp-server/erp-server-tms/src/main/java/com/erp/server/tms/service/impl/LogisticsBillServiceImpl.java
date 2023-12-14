@@ -490,8 +490,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return isSuccess;
     }
 
-
-    private LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
+    @Override
+    public LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
         return baseMapper.getBaseByTrackNo(trackNo);
     }
 
