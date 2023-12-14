@@ -293,6 +293,14 @@
                 ${params.permissionSql}
             </if>
         </where>
+        GROUP BY i.sku_no
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sales DESC
     </select>
 
     <select id="getMonthSales" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -391,7 +399,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        GROUP BY i.sku_no
+        GROUP BY flag
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
