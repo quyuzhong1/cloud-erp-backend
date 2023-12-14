@@ -6,10 +6,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cLogisticsService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +35,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cDetailService soB2cDetailService;
+
+    @Resource
+    private SoB2cService soB2cService;
 
 
    /**
@@ -75,4 +80,17 @@ public class SoB2cFeignController extends BaseController {
         return list;
     }
 
+    /**
+     * 根据主表id查询B2C订单主表信息
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/listByIds")
+    List<SoB2cEntity> listByIds(List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
+        List<SoB2cEntity> list = soB2cService.listByIds(soIds);
+        return list;
+    }
 }

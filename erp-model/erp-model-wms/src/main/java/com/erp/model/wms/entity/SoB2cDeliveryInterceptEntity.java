@@ -110,6 +110,16 @@ public class SoB2cDeliveryInterceptEntity extends BaseEntity<SoB2cDeliveryInterc
     */
     @TableField("handle_time")
     private LocalDateTime handleTime;
+    /**
+    * 取消状态
+    */
+    @TableField("cancel_status")
+    private String cancelStatus;
+    /**
+     * 拦截状态
+     */
+    @TableField("intercept_status")
+    private String interceptStatus;
 
 
     public static final String CODE = "code";

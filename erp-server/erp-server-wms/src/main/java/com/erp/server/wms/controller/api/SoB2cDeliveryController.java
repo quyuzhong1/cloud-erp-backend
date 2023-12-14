@@ -65,25 +65,6 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author Luo_WG
-    * @date:  2023-12-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "b2c发货单修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:update",
-            serviceClass = SoB2cDeliveryService.class,
-            keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SoB2cDeliveryDTO.UpdateDTO dto) {
-        soB2cDeliveryService.update(dto);
-        return success();
-    }
-
-    /**
      * 获取状态统计
      * @Author Luo_WG
      * @Date 2023/12/13 18:51

@@ -61,6 +61,8 @@ public enum BusinessNoTypeEnum {
     CODE_XSDD(51, "xsdd","b2c销售订单(平台)","XSDD"),
     CODE_FHJH(52, "fhjh","海外仓发货计划","FHJH"),
     CODE_YHSQ(53, "yhsq","要货申请","YHSQ"),
+    CODE_FHDC(54, "fhdc","b2c发货单","FHDC"),
+    CODE_FHLJ(55, "fhlj","b2c发货拦截单","FHLJ"),
 
     ;
 

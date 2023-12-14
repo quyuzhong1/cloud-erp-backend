@@ -4,9 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -111,51 +109,17 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 产品id
         */
-        @NotBlank(message = "产品id不能为空")
-        @Size(max = 19,message = "产品id最大长度不能超过19位")
         private String skuId;
 
         /**
         * 发货数量
         */
         @NotNull(message = "发货数量不能为空")
+        @Min(value = 1,message = "发货数量最小值为1")
+        @Max(value = 999999999,message = "发货数量最大值为999999999")
         private Integer deliveryQty;
-
-        /**
-        * 仓库id
-        */
-        @NotBlank(message = "仓库id不能为空")
-        @Size(max = 19,message = "仓库id最大长度不能超过19位")
-        private String warehouseId;
-
-        /**
-        * 仓库名称
-        */
-        @NotBlank(message = "仓库名称不能为空")
-        @Size(max = 255,message = "仓库名称最大长度不能超过255位")
-        private String warehouseName;
-
-        /**
-        * 仓位
-        */
-        @NotBlank(message = "仓位不能为空")
-        @Size(max = 50,message = "仓位最大长度不能超过50位")
-        private String warehouseLocation;
-
-        /**
-        * 待扫描数量
-        */
-        @NotNull(message = "待扫描数量不能为空")
-        private Integer waitScanQty;
 
         /**
         * 来源详情id
@@ -163,8 +127,6 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         @NotBlank(message = "来源详情id不能为空")
         @Size(max = 19,message = "来源详情id最大长度不能超过19位")
         private String sourceDetailId;
-
-
     }
 
 

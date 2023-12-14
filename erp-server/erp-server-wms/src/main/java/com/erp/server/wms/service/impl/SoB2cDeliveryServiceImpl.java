@@ -6,9 +6,19 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.PickingTypeEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
+import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -17,6 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +54,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Autowired
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
+    @Autowired
+    private LogisticsBillFeign logisticsBillFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -51,13 +68,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity soB2cDeliveryEntity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(addDTO, soB2cDeliveryEntity);
 
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities = BeanMapper.copyList(addDTO.getDetailList(), SoB2cDeliveryDetailEntity.class);
+
         // 数据处理
-        handleData(soB2cDeliveryEntity);
+        handleData(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
 
         log.info("开始新增b2c发货单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHDC);
         soB2cDeliveryEntity.setCode(code);
         boolean save = super.save(soB2cDeliveryEntity);
         if(!save) {
@@ -66,38 +84,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单" , soB2cDeliveryEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soB2cDeliveryEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
+        // 新增明细
+        soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(soB2cDeliveryEntity.getId(), code);
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(SoB2cDeliveryDTO.UpdateDTO updateDTO) {
-        SoB2cDeliveryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c发货单"));
-        SoB2cDeliveryEntity soB2cDeliveryEntity =  BeanMapperUtils.map(SoB2cDeliveryEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(soB2cDeliveryEntity);
-        log.info("编辑 开始修改b2c发货单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(soB2cDeliveryEntity);
-        if(!save) {
-            throw new ServiceException("b2c发货单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录b2c发货单日志数据，单号：【{}】", soB2cDeliveryEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cDeliveryEntity.getCode(), "b2c发货单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soB2cDeliveryEntity, null, soB2cDeliveryEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
     @Override
@@ -143,7 +133,42 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     /**
     * 新增修改处理数据
     */
-    private void handleData(SoB2cDeliveryEntity soB2cDeliveryEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
+        int deliveryQtySum = detailEntityList.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+        // 单品单数：SKU1个，数量1个
+        if (detailEntityList.size() == 1 && deliveryQtySum == 1) {
+            soB2cDeliveryEntity.setPickingType(PickingTypeEnum.SINGLE_ITEM_SINGLE.getCode());
+        } else if (detailEntityList.size() == 1 && deliveryQtySum > 1) {
+            // 单品多数：SKU1个，数量大于1
+            soB2cDeliveryEntity.setPickingType(PickingTypeEnum.SINGLE_ITEM_MULTI.getCode());
+        } else {
+            // 多品多数：SKU大于1个
+            soB2cDeliveryEntity.setPickingType(PickingTypeEnum.MULTI_ITEM_MULTI.getCode());
+        }
+
+        //查询B2C销售订单
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+        if (CollectionUtils.isEmpty(soB2cEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
+        //查询B2C销售订单物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+        if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        //订单信息
+        SoB2cEntity soB2cEntity = soB2cEntities.get(MathUtil.ZERO);
+        soB2cDeliveryEntity.setDictPlatform(soB2cEntity.getDictPlatform());
+        soB2cDeliveryEntity.setShopId(soB2cEntity.getShopId());
+        soB2cDeliveryEntity.setShopName(soB2cEntity.getShopName());
+
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(MathUtil.ZERO);
+        soB2cDeliveryEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        soB2cDeliveryEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
+        //根据物流跟踪单号查询物流单详情
+        LogisticsBillDTO.BaseDTO logisticsBillByTrackNo = logisticsBillFeign.getLogisticsBillByTrackNo(soB2cLogisticsEntity.getCode());
+        soB2cDeliveryEntity.setTransportNo(logisticsBillByTrackNo.getTransportNo());
     }
 }
