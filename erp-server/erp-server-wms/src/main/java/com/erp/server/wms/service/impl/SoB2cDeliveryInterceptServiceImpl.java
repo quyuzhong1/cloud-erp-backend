@@ -3,6 +3,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
@@ -96,6 +100,30 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<SoB2cDeliveryInterceptDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<SoB2cDeliveryInterceptDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public SoB2cDeliveryInterceptDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO logisticsIntercept(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO interceptResultConfirm(String id) {
+        return null;
+    }
 
     /**
     * 新增修改处理数据
