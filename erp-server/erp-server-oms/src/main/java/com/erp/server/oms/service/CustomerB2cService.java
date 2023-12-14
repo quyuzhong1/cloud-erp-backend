@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -281,7 +282,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
 
-    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
 
     CustomerB2cEntity getBySourceId(String mainId);
 }

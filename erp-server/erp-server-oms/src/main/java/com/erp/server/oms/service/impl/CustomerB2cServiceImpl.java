@@ -1414,20 +1414,53 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
         CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
+        // 当前国家
+        DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
+
         if (null == entity){
             CustomerB2cEntity customerB2cEntity = new CustomerB2cEntity();
+            //生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
+            customerB2cEntity.setCode(code);
             customerB2cEntity.setSourceId(mainEntity.getId());
             customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
             customerB2cEntity.setName(receiverEntity.getName());
             customerB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            customerB2cEntity.setPlatformType(dto.getDictPlatform());
+            customerB2cEntity.setCountryId(dictCountryCode);
+            customerB2cEntity.setConditionDict("onlineStorePayment");
+            customerB2cEntity.setCurrency(dto.getCurrency());
+            if (null != dictCountryEntity){
+                customerB2cEntity.setAreaId(dictCountryEntity.getSubregionCode());
+            }
             customerB2cEntity.setDisabled(false);
             if (!save(customerB2cEntity)){
                 throw new ServiceException("[CustomerB2cEntity] 保存失败");
             }
             return customerB2cEntity;
         } else {
+            if (StringUtils.isBlank(entity.getPlatformType())){
+                entity.setPlatformType(dto.getDictPlatform());
+            }
+            if (StringUtils.isBlank(entity.getCode())){
+                //生成单号
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
+                entity.setCode(code);
+            }
+            if (StringUtils.isBlank(entity.getCountryId())){
+                entity.setCountryId(dictCountryCode);
+            }
+            if (StringUtils.isBlank(entity.getAreaId()) && null != dictCountryEntity){
+                entity.setAreaId(dictCountryEntity.getSubregionCode());
+            }
+            if (StringUtils.isBlank(entity.getConditionDict())){
+                entity.setConditionDict("onlineStorePayment");
+            }
+            if (StringUtils.isBlank(entity.getCurrency())){
+                entity.setCurrency(dto.getCurrency());
+            }
             entity.setName(receiverEntity.getName());
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
             entity.setDisabled(false);

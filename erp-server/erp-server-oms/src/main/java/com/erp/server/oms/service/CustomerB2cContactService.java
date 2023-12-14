@@ -5,7 +5,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerB2cContactEntity;
 import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 
 import java.util.List;
 
@@ -82,7 +82,7 @@ public interface CustomerB2cContactService extends SuperService<CustomerB2cConta
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 
-    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity);
+    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
 
     CustomerB2cContactEntity getByMainId(String mainId);
 }

@@ -15,15 +15,22 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,6 +70,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private CustomerB2cContactService customerB2cContactService;
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
 
     @Override
@@ -92,6 +101,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         if (null == shopInfo) {
             throw new ServiceException("未找到订单的店铺" + dto.getShopId());
         }
+        // 查询国家信息
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(shopInfo.getDictCountryCode()));
 
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
@@ -105,11 +116,11 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
 
         //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity);
+        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
-        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity);
+        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
