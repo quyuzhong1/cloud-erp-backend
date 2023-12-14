@@ -141,8 +141,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private WorkflowFeign workflowFeign;
 
 
-    @Resource
-    private LogisticsBillFeign logisticsBillFeign;
+//    @Resource
+//    private LogisticsBillFeign logisticsBillFeign;
 
 
     @Resource
@@ -599,7 +599,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //物流单添加
-        saveLogisticsBill(entity);
+      //  saveLogisticsBill(entity);
 
     }
 
@@ -652,7 +652,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         addDTO.setDetailList(detailList);
-        logisticsBillFeign.addLogisticsBill(addDTO);
+       // logisticsBillFeign.addLogisticsBill(addDTO);
     }
 
 
@@ -705,9 +705,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soInfoFeign.updateDeliveryStatus(paramList);
 
         //删除物流单
-        LogisticsBillDTO.RemoveDTO removeDTO = new LogisticsBillDTO.RemoveDTO();
-        removeDTO.setOutstockIdList(idList);
-        logisticsBillFeign.removeLogisticsBill(removeDTO);
+//        LogisticsBillDTO.RemoveDTO removeDTO = new LogisticsBillDTO.RemoveDTO();
+//        removeDTO.setOutstockIdList(idList);
+//        logisticsBillFeign.removeLogisticsBill(removeDTO);
 
     }
 
@@ -1581,7 +1581,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO=new LogisticsBillDTO.UpdateTrackNoDTO();
         updateTrackNoDTO.setTrackNo(dto.getTrackNo());
         updateTrackNoDTO.setOutstockIdList(dto.getIdList());
-        logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
+        //logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
         return update;
     }
 
