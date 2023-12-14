@@ -64,7 +64,10 @@ public class Order {
 
         INVOICEUNCONFIRMED("InvoiceUnconfirmed"),
 
-        PENDINGAVAILABILITY("PendingAvailability");
+        PENDINGAVAILABILITY("PendingAvailability"),
+
+        UNKNOW("unknow"),
+        ;
 
         private String value;
 
@@ -81,13 +84,13 @@ public class Order {
             return String.valueOf(value);
         }
 
-        public static OrderStatusEnum fromValue(String text) {
+        public static OrderStatusEnum fromValue(String text, Boolean nullDefault) {
             for (OrderStatusEnum b : OrderStatusEnum.values()) {
                 if (String.valueOf(b.value).equals(text)) {
                     return b;
                 }
             }
-            return null;
+            return nullDefault ?  UNKNOW : null;
         }
 
         public static class Adapter extends TypeAdapter<OrderStatusEnum> {
@@ -99,13 +102,13 @@ public class Order {
             @Override
             public OrderStatusEnum read(final JsonReader jsonReader) throws IOException {
                 String value = jsonReader.nextString();
-                return OrderStatusEnum.fromValue(String.valueOf(value));
+                return OrderStatusEnum.fromValue(String.valueOf(value), true);
             }
         }
     }
 
     @SerializedName("OrderStatus")
-    private OrderStatusEnum orderStatus = null;
+    private String orderStatus = null;
 
     /**
      * Whether the order was fulfilled by Amazon (AFN) or by the seller (MFN).
@@ -502,7 +505,7 @@ public class Order {
         this.lastUpdateDate = lastUpdateDate;
     }
 
-    public Order orderStatus(OrderStatusEnum orderStatus) {
+    public Order orderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
         return this;
     }
@@ -513,11 +516,11 @@ public class Order {
      * @return orderStatus
      **/
 
-    public OrderStatusEnum getOrderStatus() {
+    public String getOrderStatus() {
         return orderStatus;
     }
 
-    public void setOrderStatus(OrderStatusEnum orderStatus) {
+    public void setOrderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
     }
 
