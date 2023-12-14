@@ -91,7 +91,6 @@ public class BiTargetStaffSettingController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "人员目标设置添加")
-    @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
     public ApiResult<String> add(@RequestBody @Validated BiTargetStaffSettingDTO.AddDTO dto) {
         return success(biTargetStaffSettingService.add(dto));
     }
@@ -124,7 +123,6 @@ public class BiTargetStaffSettingController extends BaseController {
 //        menuCode = "dmp:biTargetStaffSetting:update",
 //        serviceClass = BiTargetStaffSettingService.class,
 //        keyIdName = "id")
-    @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
     public ApiResult update(@RequestBody @Validated BiTargetStaffSettingDTO.UpdateDTO dto) {
         biTargetStaffSettingService.update(dto);
         return success();
@@ -162,7 +160,6 @@ public class BiTargetStaffSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "人员目标设置删除")
-    @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
     public ApiResult remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
         Boolean result = biTargetStaffSettingService.delete(dto);
         return result ? success() : failure();
