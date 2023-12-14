@@ -61,4 +61,9 @@ public class FindUserDTO implements Serializable {
      * 部门名
      */
     private String departmentName;
+
+    /**
+     * 是否禁用 true 禁用
+     */
+    private Boolean disabled;
 }

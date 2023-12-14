@@ -642,11 +642,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             user.setIsMyState(1);
             user.setUserId(loginUser.getUid());
             user.setUserName(loginUser.getUserName());
+            user.setDisabled(Boolean.FALSE);
             resultList.add(user);
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
-        queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
@@ -656,10 +656,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         queryWrapper.orderByAsc(SysUserInfoEntity::getUserName);
         List<SysUserInfoEntity> list = this.list(queryWrapper);
+        Integer notState=SysConstant.NO_STATE;
         for (SysUserInfoEntity item : list) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            Integer userState=item.getUserState();
+            userDTO.setDisabled(notState.equals(userState));
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }
