@@ -541,12 +541,67 @@ public class SoB2cDeliveryDTO implements Serializable {
     }
 
     /**
-     * 打印物流面单
+     * 打印物流面单详情
      */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
+        /**
+         * 物流商名称
+         */
+        private String providerName;
+        /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+        /**
+         * 订单编号
+         */
+        private String soCode;
+        /**
+         * 物流单号
+         */
+        private String transportNo;
+    }
+
+    /**
+     * 打印配货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintDistributionDTO {
+        /**
+         * 打印类型
+         * logisticsWaybill: 物流面单 ，distribution：配货单
+         */
+        private String printType;
+        /**
+         * 渠道名称
+         */
+        private List<String> logisticsChannelNameList;
+        /**
+         * 无运单号数量
+         */
+        private Integer notTransportNoNum;
+        /**
+         * 有运单号数量
+         */
+        private Integer isTransportNoNum;
+        /**
+         * 详情
+         */
+        private List<PrintDistributionDetailDTO> detailList;
+    }
+
+    /**
+     * 打印配货单详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintDistributionDetailDTO {
         /**
          * 物流商名称
          */

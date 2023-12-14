@@ -97,4 +97,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>
      **/
     List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids);
+
+    /**
+     * 打印配货单
+     * @Author Luo_WG
+     * @Date 2023/12/14 9:29
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>
+     **/
+    List<SoB2cDeliveryDTO.PrintDistributionDTO> printDistribution(List<String> ids);
 }

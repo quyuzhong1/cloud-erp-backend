@@ -135,6 +135,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return null;
     }
 
+    @Override
+    public List<SoB2cDeliveryDTO.PrintDistributionDTO> printDistribution(List<String> ids) {
+        return null;
+    }
+
     /**
     * 新增修改处理数据
     */

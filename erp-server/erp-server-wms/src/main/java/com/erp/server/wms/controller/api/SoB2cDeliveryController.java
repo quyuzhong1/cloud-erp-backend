@@ -227,12 +227,19 @@ public class SoB2cDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
      **/
     @PostMapping("/printLogisticsWaybill")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:printLogisticsWaybill",
-            tableAlias = "sbd"
-    )
     public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printLogisticsWaybill(dto.getIds()));
+    }
+
+    /**
+     * 打印配货单
+     * @Author Luo_WG
+     * @Date 2023/12/14 9:18
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>>
+     **/
+    @PostMapping("/printDistribution")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintDistributionDTO>> printDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cDeliveryService.printDistribution(dto.getIds()));
     }
 }
