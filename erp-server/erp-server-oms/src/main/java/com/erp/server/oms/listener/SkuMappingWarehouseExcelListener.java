@@ -144,7 +144,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 
         // 查询该仓库所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(null == platformEnum ? "" : platformEnum.getCode());
+        String currentPlatform = null == platformEnum ? "" : platformEnum.getCode();
+        paramDTO.setPlatform(currentPlatform);
 //        paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(importExcelDTO.getWarehouseSkuNo()));
@@ -182,7 +183,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         }
 
         //仓库id
-        String warehouseId = warehouse.getId();
+        String warehouseId = null == warehouse ? "" : warehouse.getId();
         //库存sku
         String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
@@ -224,9 +225,13 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         }
 
         long count = skuMappingList.stream().filter(
-                        a -> warehouseType.equals(a.getType()) &&
-                                warehouseId.equals(a.getWarehouseId()) &&
-                                sku.getSkuId().equals(a.getProductSkuId())).map(SkuMappingEntity::getListingId).
+                        a -> (warehouseType.equals(a.getType()) &&
+                                currentPlatform.equalsIgnoreCase(a.getDictPlatform()) &&
+                                (warehouseId.equals(a.getWarehouseId())) &&
+                                sku.getSkuId().equals(a.getProductSkuId()) &&
+                                !a.getHasMappingAll()) ||
+                                (warehouseType.equals(a.getType()) && a.getHasMappingAll() && sku.getSkuId().equals(a.getProductSkuId()) && currentPlatform.equalsIgnoreCase(a.getDictPlatform()))
+                ).map(SkuMappingEntity::getListingId).
                 distinct().count();
         if (count > 1) {
             errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
