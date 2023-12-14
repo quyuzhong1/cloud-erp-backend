@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -109,6 +110,12 @@ public class SoB2cDetailDTO implements Serializable {
         * 明细标签
         */
        private String label;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+        
        /**
         * 明细标签对象
         */

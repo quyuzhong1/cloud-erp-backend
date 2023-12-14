@@ -330,6 +330,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .collect(Collectors.toMap(e-> e.getPlatformSkuNo(), Function.identity()));
     }
 
+    @Override
+    public Boolean updateIsMatchWarehouseRule(String mainId) {
+        return  lambdaUpdate()
+                .eq(SoB2cDetailEntity::getMainId,mainId)
+                .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.FALSE)
+                .update();
+    }
+
 
     /**
      * 查询需要删除的数据
