@@ -198,10 +198,30 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         if (null == entity){
             CustomerB2cAddressEntity newEntity = new CustomerB2cAddressEntity();
             newEntity.setMainId(mainEntity.getId());
+            newEntity.setAddress(receiverEntity.getFirstAddress().concat(receiverEntity.getSecondAddress()).concat(receiverEntity.getFullAddress()));
+            newEntity.setPerson(receiverEntity.getName());
+            newEntity.setTelNumber(receiverEntity.getTelNumber());
+            newEntity.setIsDefault(true);
+            newEntity.setDisabled(false);
             if (!save(newEntity)){
                 throw new ServiceException("[CustomerB2cAddressEntity] 保存失败");
             }
         } else {
+            if (StringUtils.isBlank(entity.getAddress())){
+                entity.setAddress(receiverEntity.getFirstAddress().concat(receiverEntity.getSecondAddress()).concat(receiverEntity.getFullAddress()));
+            }
+            if (StringUtils.isBlank(entity.getPerson())) {
+                entity.setPerson(receiverEntity.getName());
+            }
+            if (StringUtils.isBlank(entity.getTelNumber())) {
+                entity.setTelNumber(receiverEntity.getTelNumber());
+            }
+            if (!entity.getIsDefault()){
+                entity.setIsDefault(true);
+            }
+            if (entity.getDisabled()){
+                entity.setIsDefault(false);
+            }
             entity.setEmail(receiverEntity.getEmail());
             entity.setTelNumber(receiverEntity.getTelNumber());
             if (!updateById(entity)){
