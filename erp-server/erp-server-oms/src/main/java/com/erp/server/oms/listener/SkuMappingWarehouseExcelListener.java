@@ -145,11 +145,16 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         // 查询该仓库所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(null == platformEnum ? "" : platformEnum.getCode());
-        paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
+//        paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(importExcelDTO.getWarehouseSkuNo()));
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
-        if (null != platformEnum && CollectionUtils.isEmpty(listDto)){
+
+        ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.stream()
+                .filter(e-> e.getHasMappingAll() || e.getWarehouseId().equalsIgnoreCase(warehouse.getId()))
+                .findFirst().orElse(null);
+
+        if (null != platformEnum && null == currentSkuMapping){
             errorMsgList.add("服务商不允许新增");
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
@@ -158,9 +163,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 
 
         // 已存在
-        if (CollectionUtils.isNotEmpty(listDto) ){
-            ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
-            if( currentSkuMapping.getMatchResult()){
+        if ( null != currentSkuMapping ){
+            if(currentSkuMapping.getMatchResult()){
                 errorMsgList.add("该仓库服务商sku已存在匹配关系");
                 importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(importExcelDTO);
