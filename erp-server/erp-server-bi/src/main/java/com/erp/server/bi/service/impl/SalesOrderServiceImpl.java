@@ -141,33 +141,15 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年的
         SeriesVO<Object> thisYearSeries = new SeriesVO();
         thisYearSeries.setName("销售额");
-        List<Object> thisYearDataList = new ArrayList<>(initSize);
-        for (int m = 1; m <= 12; m++) {
-            String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
-            SalesFlagVO salesFlag = thisYearList.stream().filter(s -> s.getFlag().equals(finalM)).
-                    findFirst().orElse(null);
-            if (salesFlag != null) {
-                thisYearDataList.add(salesFlag.getSales());
-            } else {
-                thisYearDataList.add(BigDecimal.ZERO);
-            }
-        }
+        List<Object> thisYearDataList = thisYearList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         thisYearSeries.setData(thisYearDataList);
         seriesList.add(thisYearSeries);
         //去年的
         SeriesVO<Object> lastYearSeries = new SeriesVO();
         lastYearSeries.setName("销售额");
-        List<Object> lastYearDataList = new ArrayList<>(initSize);
+        List<Object> lastYearDataList = lastYearList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         for (int m = 1; m <= 12; m++) {
             xAxisList.add(m + "月份");
-            String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
-            SalesFlagVO salesFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
-                    findFirst().orElse(null);
-            if (salesFlag != null) {
-                lastYearDataList.add(salesFlag.getSales());
-            } else {
-                lastYearDataList.add(BigDecimal.ZERO);
-            }
         }
         lastYearSeries.setData(lastYearDataList);
         seriesList.add(lastYearSeries);
