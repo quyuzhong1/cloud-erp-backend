@@ -36,8 +36,9 @@
             <include refid="Base_Column_List" />
         from so_b2c_ref
         where is_deleted = false and  source_id in (
-            select source_id from so_b2c_ref where is_deleted = false
+            select source_id from so_b2c_ref
             <where>
+                is_deleted = false
                 <if test="targetIdList != null and targetIdList.size > 0">
                     and target_id in
                     <foreach collection="targetIdList" item="item" separator="," open="(" close=")">
