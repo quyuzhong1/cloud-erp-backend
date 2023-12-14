@@ -485,10 +485,15 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
      * @date 2023-12-08 18:02
      */
     @Override
-    public List<ShippingCalculationDTO.ChannelCostDTO> listChannelCost(String orderId) {
+    public ShippingCalculationDTO.CostCalculationResultDTO listChannelCost(String orderId) {
+        ShippingCalculationDTO.CostCalculationResultDTO  resultDTO=new ShippingCalculationDTO.CostCalculationResultDTO();
 
         SoB2cDTO.ShippingCalculationDTO params = soB2cFeign.getShippingCalculationByOrderId(orderId);
+        resultDTO.setCountry(params.getToCountry());
+        resultDTO.setCountryName(params.getToCountryName());
+        resultDTO.setWeight(params.getWeight());
         String weightUnit = params.getWeightUnit();
+        resultDTO.setWeightUnit(weightUnit);
         //体积
         BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
@@ -558,8 +563,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             channelCost.setShippingCost(shippingCalculationDTO.getTotalTrialShippingCost());
             channelCostList.add(channelCost);
         }
-
-        return channelCostList;
+        resultDTO.setCostList(channelCostList);
+        return resultDTO;
     }
 
     /**

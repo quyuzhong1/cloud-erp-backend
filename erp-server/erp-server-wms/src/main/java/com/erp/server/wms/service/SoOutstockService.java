@@ -8,7 +8,6 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -362,5 +361,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return 
      */
-    Boolean generateSoOutstock(SoOutstockDTO.GenerateDTO dto);
+    Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
 }

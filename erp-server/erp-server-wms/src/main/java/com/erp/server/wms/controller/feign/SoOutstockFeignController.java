@@ -118,9 +118,9 @@ public class SoOutstockFeignController {
      * @author yl
      * @date 2023-12-11 16:11
      */
-    @PostMapping("/generateSoOutstock")
-    public Boolean generateSoOutstock(@RequestBody SoOutstockDTO.GenerateDTO dto) {
-        return soOutstockService.generateSoOutstock(dto);
+    @PostMapping("/generateB2cSoOutstock")
+    public Boolean generateB2cSoOutstock(@RequestBody SoOutstockDTO.GenerateB2cDTO dto) {
+        return soOutstockService.generateB2cSoOutstock(dto);
     }
 
 }

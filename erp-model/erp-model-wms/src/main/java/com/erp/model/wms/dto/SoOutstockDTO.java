@@ -1431,7 +1431,7 @@ public class SoOutstockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class GenerateDTO{
+    public static class GenerateB2cDTO {
 
         /**
          * 销售订单id
@@ -1489,14 +1489,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerId;
 
-        /**
-         * 客户code
-         */
-        private String customerOrderNo;
+
 
         /**
          *
-         * 运输单号
+         * 物流轨迹好
          */
         private String trackNo;
 

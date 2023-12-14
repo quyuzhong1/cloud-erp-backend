@@ -109,4 +109,14 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return Boolean
      */
     Boolean updateIsMatchWarehouseRule(String mainId);
+
+    /**
+     *
+     * @description
+     * @param mainId
+     * @author Lambda
+     * @return
+     * @create 2023-12-13 20:15
+     */
+    List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
 }

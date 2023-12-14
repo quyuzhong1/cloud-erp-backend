@@ -48,6 +48,24 @@
         is_deleted,
         main_id, image_url, sku_id, sku_no, seller_sku_no, platform_sku_no, stock_sku_no, qty, warehouse_id, warehouse_name, price, amount, currency, exchange_rate, advice_price, cost, source_detail_id, label_json, kingdee_detail_id, warehouse_org_id, warehouse_org_name
     </sql>
+    <!--查詢需要出库单要的数据-->
+    <select id="listOutstockByMainId" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$OutstockDTO">
+           SELECT
+               id AS soDetailId,
+               sku_id,
+               sku_no,
+               platform_sku_no,
+               platform_spu_no,
+               warehouse_sku_no,
+               qty,warehouse_id,
+               warehouse_name,label_json,
+               warehouse_org_id,
+               warehouse_org_name,
+               warehouse_location
+            FROM so_b2c_detail sbd
+            WHERE sbd.main_id = #{mainId}
+            AND  sbd.is_deleted=false
+    </select>
 
 
 </mapper>
