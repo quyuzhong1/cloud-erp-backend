@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -115,12 +116,14 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
 
         //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
+        // 根据平台和名称判断
+        CustomerB2cEntity customerB2cEntity = customerB2cService.findByPlatformAndName(dto.getDictPlatform(), receiverEntity.getName(), SourceTypeEnum.SO_B2C.getCode());
+
+        customerB2cEntity = customerB2cService.saveOrUpdateEntity(customerB2cEntity, dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
-
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
         if (!soB2cReceiverService.updateById(receiverEntity)) {

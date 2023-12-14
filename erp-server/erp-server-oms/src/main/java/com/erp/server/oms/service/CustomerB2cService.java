@@ -282,7 +282,16 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
 
-    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
+    CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity oldCustomerB2cEntity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
 
     CustomerB2cEntity getBySourceId(String mainId);
+
+    /**
+     * 根据条件查询
+     * @param dictPlatform
+     * @param name
+     * @param code
+     * @return
+     */
+    CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType);
 }

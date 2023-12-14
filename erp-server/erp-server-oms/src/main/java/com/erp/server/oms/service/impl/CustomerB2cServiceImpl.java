@@ -1414,8 +1414,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
-        CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
+    public CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity entity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
 
@@ -1474,6 +1473,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Override
     public CustomerB2cEntity getBySourceId(String sourceId) {
         return  lambdaQuery().eq(CustomerB2cEntity::getSourceId, sourceId).one();
+    }
+
+    @Override
+    public CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType) {
+        return lambdaQuery()
+                .eq(CustomerB2cEntity::getPlatformType, dictPlatform)
+                .eq(CustomerB2cEntity::getName, name)
+                .eq(CustomerB2cEntity::getSourceType, sourceType)
+                .last("LIMIT 1")
+                .one();
     }
 
     /**
