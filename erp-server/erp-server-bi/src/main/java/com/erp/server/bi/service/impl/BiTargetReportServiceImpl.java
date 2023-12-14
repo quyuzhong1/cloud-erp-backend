@@ -111,7 +111,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         //部门
         if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
-            List<String> deptDataList = targetList.stream().map(TargetFinishDTO.ViewDTO::getTypeId).collect(Collectors.toList());
+            List<String> deptDataList = targetList.stream().map(TargetFinishDTO.ViewDTO::getTypeId).distinct().collect(Collectors.toList());
             List<SysDepartmentDTO> deptList = sysUserFeign.listSameLevelDeptIdList(deptDataList);
             if (CollectionUtils.isNotEmpty(deptList)) {
                 if (CollectionUtils.isNotEmpty(targetList))  {
@@ -157,7 +157,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                     BigDecimal targetValue = value.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setTargetValue(targetValue);
                     //实际值
-                    BigDecimal realValue = realList.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal realValue = realList.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue()) && StrUtil.equals(obj.getTypeName(),entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setValue(realValue);
                     BigDecimal rate = BigDecimal.ZERO;
                     if (TargetFinishViewTypeEnum.FINISH_RATE.getCode().equals(dto.getViewType())) {
