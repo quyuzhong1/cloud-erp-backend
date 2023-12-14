@@ -50,8 +50,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
-    @Resource
-    private LogisticsRegistry logisticsRegistry;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -188,23 +187,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).eq(LogisticsSaleChannelEntity::getLogisticsPlatform,platform).last("LIMIT 1").one();
     }
 
-    @Async("tmsExecutor")
-    @Override
-    public void asyncUpdateSaleChannel(Map<String, String> authMap) {
-        if (Objects.isNull(authMap)) return;
-        if(StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
-        LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
-        ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-        chanelQueryVO.setAuthMap(authMap);
-        ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-        if (channels.isSuccess()) {
-            channels.getData().forEach(logisticsSaleChannelEntity -> {
-                this.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
-            });
-        } else {
-            log.error("同步渠道异常：{}",channels.getMsg());
-        }
-    }
+
 
 
 

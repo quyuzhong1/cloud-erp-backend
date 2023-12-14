@@ -60,7 +60,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Lazy
     @Resource
-    private LogisticsSaleChannelService  logisticsSaleChannelService;
+    private AsyncService  asyncService;
 
 
 
@@ -291,6 +291,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     public void syncUpdateSaleChannel(String authId,String logisticsPlatform) {
         Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId,logisticsPlatform);
-        logisticsSaleChannelService.asyncUpdateSaleChannel(authConfig);
+        asyncService.asyncUpdateSaleChannel(authConfig);
     }
 }
