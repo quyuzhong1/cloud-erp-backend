@@ -378,10 +378,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         parceInfo.setTotalQuantity(logisticsProductList.size());
 
         //申报总价
-        BigDecimal totalPrice=skuInfoList.stream().map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())). map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量
-        Integer totalWeight=skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
+        Integer totalWeight=skuInfoList.stream().filter(s->Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
         parceInfo.setTotalWeight(totalWeight);
 
         //根据销售平台和渠道code 获取到原生的渠道
