@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -60,6 +61,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -176,9 +178,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         //仓库sku 对照
         if (warehouse.equals(type)) {
+            // 查询仓库关联服务商
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
             warehouseList = warehouseList.stream().filter(w -> !w.getDisabled()).collect(Collectors.toList());
-            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, list, listingInfoService);
+            List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getId).collect(Collectors.toList());
+            // 海外仓库
+            List<WarehouseDTO.ListDTO> overseasWarehouseList = wmsWarehouseFeign.listByIds(warehouseIds);
+            Map<String, WarehouseDTO.ListDTO> overseasWarehouseMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(overseasWarehouseList)){
+                overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
+            }
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, overseasWarehouseMap, list, listingInfoService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
