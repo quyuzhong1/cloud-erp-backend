@@ -8,6 +8,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.enums.CancelStatusEnum;
+import com.erp.model.wms.enums.HandleResultEnum;
+import com.erp.model.wms.enums.InterceptStatusEnum;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -17,6 +21,8 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +30,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -123,6 +131,35 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Override
     public BatchResultDTO interceptResultConfirm(String id) {
         return null;
+    }
+
+    @Override
+    public Boolean getIsIntercept(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Boolean.FALSE;
+        }
+        List<SoB2cDeliveryInterceptEntity> list = lambdaQuery().in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIdList).list();
+
+        //如果结果确认是拦截成功,返回拦截标识
+        List<SoB2cDeliveryInterceptEntity> interceptSuccess = list.stream().filter(req -> HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(interceptSuccess)) {
+            return Boolean.TRUE;
+        }
+        //如果结果确认是拦截失败,返回拦截标识
+        List<SoB2cDeliveryInterceptEntity> interceptFailure = list.stream().filter(req -> HandleResultEnum.FAILURE.getCode().equals(req.getHandleResult())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(interceptFailure)) {
+            return Boolean.FALSE;
+        }
+        //如果还未手动确认拦截结果，按平台处理结果
+        List<SoB2cDeliveryInterceptEntity> intercept = list.stream()
+                .filter(req -> StringUtils.isBlank(req.getHandleResult())
+                        && !CancelStatusEnum.FAILURE.getCode().equals(req.getCancelStatus())
+                        && !InterceptStatusEnum.FAILURE.getCode().equals(req.getInterceptStatus())
+                ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(intercept)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**

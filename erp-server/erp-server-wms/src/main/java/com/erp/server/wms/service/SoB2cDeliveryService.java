@@ -97,4 +97,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>
      **/
     List<SoB2cDeliveryDTO.PrintDistributionDTO> printDistribution(List<String> ids);
+
+    SoB2cDeliveryEntity getByBusinessCode(String businessCode);
 }

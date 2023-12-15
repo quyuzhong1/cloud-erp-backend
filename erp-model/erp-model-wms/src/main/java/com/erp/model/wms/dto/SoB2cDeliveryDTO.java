@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -66,10 +67,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
-        /**
-         * 平台名称
-         */
-        private String dictPlatformName;
         /**
          * 店铺Id
          */
@@ -209,7 +206,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * tab
          */
@@ -287,6 +284,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 发货id
          */
         private String code;
+        /**
+         * 来源id
+         */
+        private String sourceId;
         /**
          * 拦截标识：true表示拦截
          */

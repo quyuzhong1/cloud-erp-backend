@@ -2,14 +2,17 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryDetailMapper;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,10 +52,17 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
         }
     }
 
+    @Override
+    public List<SoB2cDeliveryDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryDetailEntity::getMainId, mainIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
-    // TODO 验证数据 & 数据赋值
     }
 }

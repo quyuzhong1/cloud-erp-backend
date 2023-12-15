@@ -76,22 +76,22 @@ public class SoB2cDeliveryInterceptController extends BaseController {
         return success();
     }
 
-    /**
-     * 获取状态统计
-     * @Author Luo_WG
-     * @Date 2023/12/14 10:01
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO.TabListDTO>>
-     **/
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDeliveryIntercept:paging",
-            tableAlias = "sbdi"
-    )
-    public ApiResult<List<SoB2cDeliveryInterceptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        return success(soB2cDeliveryInterceptService.tabList(dto));
-    }
+//    /**
+//     * 获取状态统计
+//     * @Author Luo_WG
+//     * @Date 2023/12/14 10:01
+//     * @param dto
+//     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO.TabListDTO>>
+//     **/
+//    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:soB2cDeliveryIntercept:paging",
+//            tableAlias = "sbdi"
+//    )
+//    public ApiResult<List<SoB2cDeliveryInterceptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+//        return success(soB2cDeliveryInterceptService.tabList(dto));
+//    }
 
     /**
      * 列表查询

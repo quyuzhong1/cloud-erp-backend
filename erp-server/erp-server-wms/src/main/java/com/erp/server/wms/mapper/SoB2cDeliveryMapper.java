@@ -1,8 +1,14 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +22,22 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
 
+    /**
+     * 获取状态统计
+     * @Author Luo_WG
+     * @Date 2023/12/14 16:53
+     * @param searchParam
+     * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.TabListDTO>
+     **/
+    List<SoB2cDeliveryDTO.TabListDTO> tabList(SoB2cDeliveryDTO.PagingParamDTO searchParam);
+
+    /**
+     * 分页查询
+     * @Author Luo_WG
+     * @Date 2023/12/14 17:03
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoB2cDeliveryDTO.ListDTO>
+     **/
+    IPage<SoB2cDeliveryDTO.ListDTO> paging(Page query, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
 }

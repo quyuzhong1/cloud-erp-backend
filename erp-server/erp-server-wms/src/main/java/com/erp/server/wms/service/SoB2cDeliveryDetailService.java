@@ -26,4 +26,12 @@ public interface SoB2cDeliveryDetailService extends SuperService<SoB2cDeliveryDe
     */
     void add(List<SoB2cDeliveryDetailEntity> entities, String mainId);
 
+    /**
+     * 主表id
+     * @Author Luo_WG
+     * @Date 2023/12/15 10:12
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryDetailEntity>
+     **/
+    List<SoB2cDeliveryDetailEntity> listByMainIds(List<String> mainIds);
 }

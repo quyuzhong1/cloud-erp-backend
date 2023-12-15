@@ -79,4 +79,13 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO interceptResultConfirm(String id);
+
+    /**
+     * 查询是否拦截
+     * @Author Luo_WG
+     * @Date 2023/12/14 18:32
+     * @param sourceIdList
+     * @return void
+     **/
+    Boolean getIsIntercept(List<String> sourceIdList);
 }
