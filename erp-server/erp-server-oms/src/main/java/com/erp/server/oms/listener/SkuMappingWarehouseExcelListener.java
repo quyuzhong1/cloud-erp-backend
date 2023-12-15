@@ -224,15 +224,14 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             return;
         }
 
-        long count = skuMappingList.stream().filter(
+        long count = listDto.stream().filter(
                         a -> (warehouseType.equals(a.getType()) &&
                                 currentPlatform.equalsIgnoreCase(a.getDictPlatform()) &&
                                 (warehouseId.equals(a.getWarehouseId())) &&
                                 sku.getSkuId().equals(a.getProductSkuId()) &&
                                 !a.getHasMappingAll()) ||
                                 (warehouseType.equals(a.getType()) && a.getHasMappingAll() && sku.getSkuId().equals(a.getProductSkuId()) && currentPlatform.equalsIgnoreCase(a.getDictPlatform()))
-                ).map(SkuMappingEntity::getListingId).
-                distinct().count();
+                ).distinct().count();
         if (count > 1) {
             errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
