@@ -65,9 +65,4 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
     */
     private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
     }
-    @Override
-    public List<SoB2cDeliveryDetailEntity> listByMainId(String mainId) {
-        return this.list(new LambdaQueryWrapper<>(SoB2cDeliveryDetailEntity.class)
-                .eq(SoB2cDeliveryDetailEntity::getMainId, mainId));
-    }
 }

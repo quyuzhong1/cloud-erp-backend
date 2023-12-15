@@ -71,7 +71,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
         //redis没有值，说明可能是开始扫描，或者过期
         if(Objects.isNull(viewDTO)){
-            List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainId(entity.getId());
+            List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             if(CollectionUtils.isEmpty(detailEntityList)){
                 throw new ServiceException("发货单详情为空");
             }
@@ -175,7 +175,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //判断是否全部扫描完成
             if(CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())){
                 //更新数据
-                List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainId(entity.getId());
+                List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
                 detailEntityList.forEach(v-> v.setWaitScanQty(0));
                 entity.setIsInspection(true);
                 if(!soB2cDeliveryService.updateById(entity)){
@@ -205,7 +205,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         if(Objects.isNull(entity)){
             throw new ServiceException("查询的发货单为空");
         }
-        List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainId(entity.getId());
+        List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         detailEntityList.forEach(v-> v.setWaitScanQty(v.getDeliveryQty()));
         entity.setIsInspection(false);
         if(!soB2cDeliveryService.updateById(entity)){
