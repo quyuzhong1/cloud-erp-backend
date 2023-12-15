@@ -435,14 +435,18 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDTO {
         /**
-         * 打印类型
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
          * logisticsWaybill: 物流面单 ，distribution：配货单
          */
         private String printType;
         /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+        /**
          * 渠道名称
          */
-        private List<String> logisticsChannelNameList;
+        private String logisticsChannelName;
         /**
          * 无运单号数量
          */
@@ -469,6 +473,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String providerName;
         /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+        /**
          * 渠道名称
          */
         private String logisticsChannelName;
@@ -490,14 +498,18 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintDistributionDTO {
         /**
-         * 打印类型
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
          * logisticsWaybill: 物流面单 ，distribution：配货单
          */
         private String printType;
         /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+        /**
          * 渠道名称
          */
-        private List<String> logisticsChannelNameList;
+        private String logisticsChannelName;
         /**
          * 无运单号数量
          */
@@ -523,6 +535,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流商名称
          */
         private String providerName;
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
         /**
          * 渠道名称
          */

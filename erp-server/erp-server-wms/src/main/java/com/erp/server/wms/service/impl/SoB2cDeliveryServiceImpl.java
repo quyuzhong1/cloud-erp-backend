@@ -27,10 +27,7 @@ import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.enums.PickingTypeEnum;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -253,6 +250,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids) {
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = new ArrayList<>();
+        for (SoB2cDeliveryEntity soB2cDeliveryEntity : soB2cDeliveryEntities) {
+            SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+        }
+
         return null;
     }
 
