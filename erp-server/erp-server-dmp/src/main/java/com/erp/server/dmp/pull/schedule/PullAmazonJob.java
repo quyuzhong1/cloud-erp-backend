@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -12,6 +13,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
@@ -405,7 +407,6 @@ public class PullAmazonJob {
                         reportSchedule.getReportScheduleId(),
                         errorMsg
                 );
-                throw new ServiceException("亚马逊请求报表计划任务:error=" + errorMsg);
             }
         });
         XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束");
@@ -456,7 +457,6 @@ public class PullAmazonJob {
                         reportSchedule.getReportScheduleId(),
                         errorMsg
                 );
-                throw new ServiceException("创建【亚马逊报告】亚马逊-ERP:error=" + errorMsg);
             }
         });
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束");
@@ -490,12 +490,11 @@ public class PullAmazonJob {
             try {
                 reportHandleService.checkAndDownload(mongoDTO);
             } catch (Exception e) {
-                String errorMsg = JSONUtil.toJsonStr(e);
-                XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：reportId={}, error={}",
+                XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：reportId={},msg={}, json={}",
                         mongoDTO.getReportId(),
-                        errorMsg
+                        ExceptionUtil.stacktraceToString(e,2000),
+                        JSONUtil.toJsonStr(e)
                 );
-                throw new ServiceException("拉取亚马逊报表失败:error=" + errorMsg);
             }
         });
         XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束");
