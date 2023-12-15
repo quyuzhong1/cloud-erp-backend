@@ -471,7 +471,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 物流商名称
          */
-        private String providerName;
+        private String logisticsSupplierName;
         /**
          * 渠道id
          */
@@ -534,7 +534,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 物流商名称
          */
-        private String providerName;
+        private String logisticsSupplierName;
         /**
          * 渠道id
          */
