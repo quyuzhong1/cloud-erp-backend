@@ -230,7 +230,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_INVALID.getCode());
+            orderDTO.setInvalidStatus(Boolean.TRUE);
         }
 
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
