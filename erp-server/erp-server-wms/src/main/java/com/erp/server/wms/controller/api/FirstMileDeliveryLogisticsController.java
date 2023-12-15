@@ -19,14 +19,14 @@ import com.erp.model.wms.dto.FirstMileDeliveryLogisticsDTO;
 import java.util.List;
 
 /**
- * FBA发货单物流信息表
+ * 头程发货单物流信息表
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Slf4j
 @RestController
-@LogSystemModule("FBA发货单物流信息表")
+@LogSystemModule("头程发货单物流信息表")
 @RequestMapping("/fbaDeliveryLogistics")
 public class FirstMileDeliveryLogisticsController extends BaseController {
 

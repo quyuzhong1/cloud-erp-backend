@@ -49,6 +49,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -261,9 +262,26 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             resultAll.addAll(result);
             pageIndex++;
         }
+        List<KingdeeDeliveryDetailEntity> entityList = resultAll.stream()
+                .map(shopEntity -> BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                // key 映射函数
+                                KingdeeDeliveryDetailEntity::getFBillNo,
+                                // value 映射函数
+                                Function.identity(),
+                                // 如果有重复，保留第一个
+                                (existing, replacement) -> existing,
+                                // 使用 LinkedHashMap 来保持插入顺序
+                                LinkedHashMap::new
+                        ),
+                        // 从 Map 的值集合创建一个新的 ArrayList
+                        map -> new ArrayList<>(map.values())
+                ));
         // 金蝶发货单主数据
-        List<KingdeeDeliveryDetailEntity> entityList = resultAll.stream().map(shopEntity ->
-                BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
+//        List<KingdeeDeliveryDetailEntity> entityList = resultAll.stream().map(shopEntity ->
+//                BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class))
+//                .distinct().collect(Collectors.toList());
         // 金蝶发货单明细数据拆单
         Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = resultAll.stream().map(entity ->
                 BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
