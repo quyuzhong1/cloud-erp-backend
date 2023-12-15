@@ -17,8 +17,6 @@ public enum SoB2cBillStatusEnum {
     ENUM_SHIPPED("shipped",  "已发货"),
     ENUM_PARTIAL_SHIPPED("partialShipped",  "部分发货"),
     ENUM_FROZEN("frozen",  "冻结中"),
-    ENUM_INVALID("invalid",  "已作废"),
-
     ;
     /**
      * 类型

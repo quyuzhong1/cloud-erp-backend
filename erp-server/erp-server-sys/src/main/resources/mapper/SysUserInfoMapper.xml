@@ -235,7 +235,7 @@
                  select sru.user_id from sys_role_user sru
                  <where>
                      sru.role_id in
-                     <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                     <foreach collection="params.roleIdList" item="item" open="(" close=")" separator=",">
                          #{item}
                      </foreach>
                  </where>

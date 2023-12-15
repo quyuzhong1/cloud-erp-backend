@@ -1376,14 +1376,27 @@ public class SoB2cDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CheckCancelSplitDetailDTO {
+
         /**
          * 拆分后订单
          */
         private String childB2cSoCode;
+
         /**
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 订单状态
+         */
+        private String billStatus;
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+
     }
 
     /**
