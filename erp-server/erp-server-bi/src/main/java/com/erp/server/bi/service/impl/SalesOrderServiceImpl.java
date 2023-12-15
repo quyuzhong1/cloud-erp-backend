@@ -645,16 +645,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
         //查询近七天信息
-        List<SalesBaseVO> lastSevenList = baseMapper.getShopLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastSevenList = baseMapper.getShopLastDays(dto, settleRate);
         lastSevenList = lastSevenList.stream().filter(s -> s.getSales() != null).collect(Collectors.toList());
         for (ShopSalesVO item : resultList) {
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
+            List<SalesBaseVO> salesTrendList = new ArrayList<>(7);
 
             //近七天销售量
             Integer lastSevenDaysSalesQuantity = lastSevenList.stream().
@@ -667,30 +667,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
 
-
+            Map<LocalDateTime, SalesBaseVO> dateMap = lastSevenList.stream().filter(salesBaseVO -> StringUtils.isNotBlank(salesBaseVO.getFlagNo()) && salesBaseVO.getFlagNo().equals(item.getSkuNo()))
+                    .collect(Collectors.toMap(SalesBaseVO::getFlagDate, Function.identity()));
             for (int i = 6; i >= 0; i--) {
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = lastSevenList.stream().
-                        filter(b -> b.getFlagDate().isAfter(startTime)
-                                && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getShopNo())
-                                && b.getSales() != null
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
+                SalesBaseVO salesBaseVO = dateMap.get(startTime);
+                if (Objects.isNull(salesBaseVO)){
+                    salesBaseVO = new SalesBaseVO();
+                    salesBaseVO.setSales(BigDecimal.ZERO);
+                    salesBaseVO.setSalesQuantity(0);
+                    salesBaseVO.setFlagDate(startTime);
+                    salesBaseVO.setFlagNo(item.getSkuNo());
+                }
+                salesTrendList.add(salesBaseVO);
             }
-
-            BigDecimal sales = item.getSales();
-            Integer orderCount = item.getOrderCount();
-            if (orderCount != 0 && sales != null) {
-                //客单价
-                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
-                item.setPerCustomerTransaction(perCustomerTransaction);
-            }
-            item.setSalesTrend(salesTrend);
-
-
+            item.setSalesTrendList(salesTrendList);
         }
         return resultList;
     }
