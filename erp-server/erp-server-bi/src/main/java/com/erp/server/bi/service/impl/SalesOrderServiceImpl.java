@@ -62,6 +62,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -207,9 +208,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        if (StringUtils.isBlank(params.getDateType())){
-            params.setDateType(DateTypeEnum.DAY.getType());
-        }
         IPage pageData = baseMapper.getBySku(query, params, settleRate);
         List<SkuSalesDTO.PagingSalesInfoDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -219,22 +217,15 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
         params.setEndTime(nowTime);
-        String findTime = "delivery_time";
-        if (params.getTimeType() != null && params.getTimeType() == 0) {
-            findTime = "platform_create_time";
-        }
-        if (StringUtils.isBlank(params.getDateType())){
-            params.setDateType(DateTypeEnum.DAY.getType());
-        }
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate);
 
 
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
         //查询进七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate);
         List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
         Integer nowYear = LocalDate.now().getYear();
         //销售信息
@@ -268,8 +259,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setSaleStateName(skuInfo.getSaleStateName());
                 item.setProductName(skuItemNameMap.get(item.getSkuNo()));
             }
-
-//            LinkedList<Integer> salesTrend = new LinkedList<>();
             //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
@@ -282,42 +271,27 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
-            List<SalesBaseVO> salesTrendList = lastThirtyDays.stream().filter(b -> b.getFlagNo().equals(item.getSkuNo()))
-                    .sorted(Comparator.comparing(SalesBaseVO::getFlagDate))
-//                    .map(SalesBaseVO::getSalesQuantity)
-                    .collect(Collectors.toList());
+            List<SalesBaseVO> salesTrendList = new ArrayList<>(7);
+            Map<LocalDateTime, SalesBaseVO> dateMap = lastSevenDays.stream().filter(salesBaseVO -> StringUtils.isNotBlank(salesBaseVO.getFlagNo()) && salesBaseVO.getFlagNo().equals(item.getSkuNo()))
+                    .collect(Collectors.toMap(SalesBaseVO::getFlagDate, Function.identity()));
+            for (int i = 6; i >= 0; i--) {
+                LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
+                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
+                SalesBaseVO salesBaseVO = dateMap.get(startTime);
+                if (Objects.isNull(salesBaseVO)){
+                    salesBaseVO = new SalesBaseVO();
+                    salesBaseVO.setSales(BigDecimal.ZERO);
+                    salesBaseVO.setSalesQuantity(0);
+                    salesBaseVO.setFlagDate(startTime);
+                    salesBaseVO.setFlagNo(item.getSkuNo());
+                }
+                salesTrendList.add(salesBaseVO);
+            }
             item.setSalesTrendList(salesTrendList);
-//            for (int i = 6; i >= 0; i--) {
-//                LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
-//                SalesBaseVO salesBaseVO = salesTrendList.stream().filter(b -> b.getFlagDate().toLocalDate().isEqual(flagDay)).findFirst().orElse(null);
-//                if (Objects.nonNull(salesBaseVO)){
-//                    salesTrend.add(salesBaseVO.getSalesQuantity());
-//                }else {
-//                    salesTrend.add(0);
-//                }
-//                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-//                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-//                Integer salesQuantity = lastSevenDays.stream().
-//                        filter(b -> b.getFlagDate().isAfter(startTime)
-//                                && b.getFlagDate().isBefore(endTime)
-//                                && b.getFlagNo().equals(item.getSkuNo())
-//                                && b.getSales() != null
-//                        ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
-//                salesTrend.add(salesQuantity);
-//            }
-//            item.setSalesTrend(salesTrend);
-//            BigDecimal sales = item.getSales();
-//            Integer orderCount = item.getOrderCount();
-//            if (orderCount != 0 && sales != null) {
-//                //客单价
-//                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
-//                item.setPerCustomerTransaction(perCustomerTransaction);
-//            }
             //增加标签
             if (Objects.nonNull(labelMap)) {
                 item.setLabels(labelMap.get(item.getSkuNo()));
             }
-
         }
         return new PagingVO<>(pageData);
     }
@@ -344,19 +318,15 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
         params.setEndTime(nowTime);
-        String findTime = "delivery_time";
-        if (params.getTimeType() != null && params.getTimeType() == 0) {
-            findTime = "platform_create_time";
-        }
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate);
 
 
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
         //查询进七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate);
 
 
         Integer nowYear = LocalDate.now().getYear();

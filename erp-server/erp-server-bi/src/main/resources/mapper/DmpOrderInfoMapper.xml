@@ -462,7 +462,7 @@
                 SELECT
                 #{rangeVO.startValue} AS startValue,
                 #{rangeVO.endValue} AS endValue,
-                sum(o.sales_qty) AS salesQuantity,
+                COALESCE(sum(o.sales_qty),0) AS salesQuantity,
                 <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
                     COALESCE(round(SUM (o.sales_amount_currency_rate),2),0) AS saleAmount
                 </if>

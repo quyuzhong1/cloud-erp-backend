@@ -133,27 +133,10 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
         //上上个月第一天
         LocalDateTime lastsMonth = currentMonth.minusMonths(2);
-
-//        BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
-//        dto.setDateType(DateTypeEnum.MONTH.getType());
         dto.setStartTime(null);
         dto.setEndTime(null);
-        List<BiSalesMonitoringTableDTO.ViewDTO> resultList = new ArrayList<>();
+        List<BiSalesMonitoringTableDTO.ViewDTO> resultList = null;
           resultList = this.baseMapper.listBiSalesMonitoring(dto,lastsMonth);
-//        if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-//            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
-//                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesAmount(groupViewDTO,lastsMonth);
-//            } else {
-//                resultList = this.baseMapper.listBiSalesMonitoringSalesAmount(groupViewDTO,lastsMonth);
-//            }
-//
-//        } else {
-//            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
-//                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesQty(groupViewDTO,lastsMonth);
-//            } else {
-//                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
-//            }
-//        }
         if (CollectionUtils.isEmpty(resultList)) {
             return map;
         }
@@ -559,11 +542,15 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BigDecimal radio = BigDecimal.ZERO;
             if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
                 radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale,sumFirstMonthSale), sumFirstMonthSale).multiply(MathUtil.BigDecimal_100);
+            }else if (MathUtil.compareTo(sumSecondMonthSale, BigDecimal.ZERO) != 0){
+                radio = MathUtil.BigDecimal_100;
             }
             //上期环比 (上期－上上期）÷上上期×100%
             BigDecimal lastRadio = BigDecimal.ZERO;
             if (MathUtil.compareTo(sumLastMonthSale, BigDecimal.ZERO) != 0) {
                 lastRadio = MathUtil.divide(MathUtil.subtract(sumFirstMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
+            }else if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0){
+                lastRadio = MathUtil.BigDecimal_100;
             }
 
             //比较环比
