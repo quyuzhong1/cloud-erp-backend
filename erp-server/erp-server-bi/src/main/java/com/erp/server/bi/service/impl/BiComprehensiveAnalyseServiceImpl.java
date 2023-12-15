@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.BiCountryRegionImportExcelDTO;
@@ -549,7 +550,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             saleDetailVO.setLastYearSaleAmount(currentLastYearSaleAmount);
             // 占比
             saleDetailVO.setLastYearSaleProportion(
-                    yearSakeAmount.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO :
+                    MathUtil.compareTo(yearSakeAmount,BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO :
                     currentLastYearSaleAmount.divide(yearSakeAmount, 4, RoundingMode.DOWN).multiply(BigDecimal.valueOf(100)));
 
             //计算前年sku销售额
