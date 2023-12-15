@@ -49,6 +49,11 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+        * 产品名称
+        */
+        private String productName;
+
+        /**
         * 发货数量
         */
         private Integer deliveryQty;
