@@ -95,11 +95,6 @@ public class SkuSalesDTO implements Serializable {
          */
         private Integer lastThirtyDaysSalesQty;
 
-
-        /**
-         * 销售趋势
-         */
-        private List<Integer> salesTrend;
         /**
          * 销售趋势 带时间
          */

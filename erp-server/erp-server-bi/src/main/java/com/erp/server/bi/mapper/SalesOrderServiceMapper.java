@@ -80,7 +80,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate, @Param("findTime") String findTime);
+    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     @MapKey("shop")
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
