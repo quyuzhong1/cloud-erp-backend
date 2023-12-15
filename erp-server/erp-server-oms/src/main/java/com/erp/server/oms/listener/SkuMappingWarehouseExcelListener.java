@@ -36,13 +36,13 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     /**
      * 已审核消息
      */
-    private List<SkuVO> skuList;
+    private final List<SkuVO> skuList;
 
 
     /**
      * sku 映射信息
      */
-    private List<SkuMappingEntity> skuMappingList;
+    private final List<SkuMappingEntity> skuMappingList;
 
     /**
      * 仓库信息
@@ -52,42 +52,48 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     /**
      * listing 信息
      */
-    private List<ListingInfoEntity> listingInfoEntityList;
+    private final List<ListingInfoEntity> listingInfoEntityList;
 
     /**
      * listing
      */
-    private ListingInfoService listingInfoService;
+    private final ListingInfoService listingInfoService;
 
-    private SkuMappingService skuMappingService;
+    private final SkuMappingService skuMappingService;
     /**
      * listing 信息
      */
-    private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
+    private final List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
-    private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
+    private final List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
-    private List<BaseIdDTO> skuWarehouseList = new ArrayList<>(10);
+    private final List<BaseIdDTO> skuWarehouseList = new ArrayList<>(10);
 
     /**
      * 更新的信息
      */
-    private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
+    private final List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
 
     /**
      * 更新的listing
      */
-    private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
+    private final List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
 
     /**
      * 导入错误数据
      */
-    private List<SkuMappingWarehouseImportExcelDTO> errorList = new ArrayList<>(10);
+    private final List<SkuMappingWarehouseImportExcelDTO> errorList = new ArrayList<>(10);
+
+    /**
+     * 海外仓平台
+     */
+    private final Map<String, WarehouseDTO.ListDTO> overseasWareHouseMap;
 
 
     public SkuMappingWarehouseExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                             List<SkuMappingEntity> skuMappingList,
                                             List<WarehouseDTO.UpdateDTO> warehouseList,
+                                            Map<String, WarehouseDTO.ListDTO> overseasWareHouseMap,
                                             List<ListingInfoEntity> listingInfoEntityList,
                                             ListingInfoService listingInfoService) {
         this.skuMappingService = skuMappingService;
@@ -96,6 +102,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         this.warehouseList = warehouseList;
         this.listingInfoEntityList = listingInfoEntityList;
         this.listingInfoService = listingInfoService;
+        this.overseasWareHouseMap = overseasWareHouseMap;
     }
 
     /**
@@ -137,6 +144,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 } else {
                     warehouseId = warehouse.getId();
                 }
+
             } else {
                 errorMsgList.add("仓库不能为空");
             }
@@ -177,7 +185,23 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 errorMsgList.add("[对照关系适用于该服务商所有仓库]'是', 服务商不能为空");
             }
         }
-
+        // 校验服务商和仓库
+        if (null != platformEnum && StringUtils.isNotBlank(warehouseId)){
+            WarehouseDTO.ListDTO dto = overseasWareHouseMap.get(warehouseId);
+            if (null == dto){
+                errorMsgList.add("仓库无服务商,不允许服务商映射配置");
+            } else {
+                if (!platformEnum.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                    errorMsgList.add("仓库配置的服务商和服务商不匹配, 仓库配置的服务商="+ dto.getPlatformName());
+                }
+            }
+        }
+        if (null == platformEnum && StringUtils.isNotBlank(warehouseId)){
+            WarehouseDTO.ListDTO dto = overseasWareHouseMap.get(warehouseId);
+            if (null != dto){
+                errorMsgList.add("仓库已配置有服务商,不允许无服务商映射配置");
+            }
+        }
 
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
