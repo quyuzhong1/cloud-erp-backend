@@ -1006,6 +1006,9 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_RECEIVER_NOT_NULL(92112,"买家信息不能为空"),
     ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL(92113,"B2C销售订单【{}】物流渠道不能为空"),
     ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL(92114,"B2C销售订单【{}】物流渠道和物流单号不能为空"),
+    ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
+
+
     ERROR_SO_B2C_UPDATE_CATEGORY(92115,"冻结中和已作废不支持更新分类"),
     ERROR_SO_B2C_UPDATE_REMARK(92116,"冻结中和已作废不支持更新备注"),
     ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),

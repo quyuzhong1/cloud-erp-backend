@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.service.SoB2cService;
@@ -774,6 +775,19 @@ public class SoB2cController extends BaseController {
     @PostMapping("/matchSku")
     public ApiResult matchSku(@RequestBody @Validated SoB2cDTO.MatchSkuDTO dto) {
        Boolean result= soB2cService.matchSku(dto);
+        return result?success():failure();
+    }
+
+    /** 
+     * @description 运费测算后选择渠道
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2023-12-15 12:22
+     */
+    @PostMapping("/selectLogisticsChannel")
+    public ApiResult selectLogisticsChannel(@RequestBody SoB2cLogisticsDTO.SelectChannelDTO  dto){
+        Boolean result= soB2cService.selectLogisticsChannel(dto);
         return result?success():failure();
     }
 

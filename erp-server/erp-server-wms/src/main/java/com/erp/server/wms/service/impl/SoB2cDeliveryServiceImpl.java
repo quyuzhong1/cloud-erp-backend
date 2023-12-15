@@ -22,6 +22,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -32,6 +33,8 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -79,6 +82,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -251,13 +256,46 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
+        //查询物流商信息
+        List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = new ArrayList<>();
-        for (SoB2cDeliveryEntity soB2cDeliveryEntity : soB2cDeliveryEntities) {
+        for (String logisticsChannelId : logisticsChannelIds) {
             SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
+            //打印类型：物流面单
             waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
-        }
+            //渠道信息
+            waybillDTO.setLogisticsChannelId(logisticsChannelId);
+            List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                waybillDTO.setLogisticsChannelName(collect.get(MathUtil.ZERO).getLogisticsChannelName());
+            }
+            //有运单号数量
+            Integer isTransportNoNum = Math.toIntExact(collect.stream().filter(req -> StringUtils.isNotBlank(req.getTransportNo())).count());
+            waybillDTO.setIsTransportNoNum(isTransportNoNum);
+            //无运单号数量
+            Integer notTransportNoNum = Math.toIntExact(collect.stream().filter(req -> StringUtils.isBlank(req.getTransportNo())).count());
+            waybillDTO.setNotTransportNoNum(notTransportNoNum);
 
-        return null;
+            //详情
+            List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
+            for (SoB2cDeliveryEntity deliveryEntity : collect) {
+                SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO waybillDetailDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO();
+                waybillDetailDTO.setSoCode(deliveryEntity.getSoCode());
+                waybillDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());
+                waybillDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
+                waybillDetailDTO.setTransportNo(deliveryEntity.getTransportNo());
+                //匹配物流商名称
+                LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(baseDTO)) {
+                    waybillDetailDTO.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                }
+                detailList.add(waybillDetailDTO);
+            }
+            waybillDTO.setDetailList(detailList);
+            list.add(waybillDTO);
+        }
+        return list;
     }
 
     @Override
