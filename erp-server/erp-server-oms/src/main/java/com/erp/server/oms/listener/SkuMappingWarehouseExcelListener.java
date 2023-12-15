@@ -267,9 +267,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
         //已对应的平台sku
         String finalListingId = listingId;
-        List<SkuMappingEntity> existList = skuMappingList.stream().filter(
-                s -> s.getListingId().equals(finalListingId)
-                        && finalWarehouseId.equals(s.getWarehouseId())
+        List<SkuMappingEntity> existList = skuMappingList.stream()
+//                .filter(e-> (StringUtils.isNotBlank(finalWarehouseId) && finalWarehouseId.equals(e.getWarehouseId())))
+                .filter(s -> s.getListingId().equals(finalListingId)
                         && (!s.getIsExpire())
                         && warehouseType.equals(s.getType())
                         && s.getDictPlatform().equalsIgnoreCase(null == finalPlatformEnum ? "" : finalPlatformEnum.getCode())
