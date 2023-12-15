@@ -289,12 +289,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //自动匹配订单规则
         Boolean isSuccess = approveRule(id, detailList, map);
         if (isSuccess) {
-            //自动匹配仓库规则
+            //配货规则
             Boolean ruleDeliveryWarehouse = distributionRule(id, detailList, map);
-            //仓库规则审核通过
-            if (ruleDeliveryWarehouse) {
-                Boolean ruleLogistics = logisticsRule(id, map);
-            }
+
         }
         return soB2cEntity;
     }
@@ -2417,6 +2414,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailEntity.setWarehouseId(warehouseId);
         }
         soB2cDetailService.updateWarehouse(detailList);
+        //走物流规则
+        Boolean ruleLogistics = logisticsRule(id, map);
         return Boolean.TRUE;
     }
 
@@ -2438,26 +2437,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //表示通过
         if (result) {
             //物流商id
-            String  logisticsChannelId=matchResult.getLogisticsChannelId();
-            Boolean autoGetTrackNo=matchResult.getAutoGetTrackNo();
-            if(StringUtils.isNotBlank(logisticsChannelId)){
-                SoB2cLogisticsEntity b2cLogistics=soB2cLogisticsService.getByMainId(id);
-                if(Objects.nonNull(b2cLogistics)){
+            String logisticsChannelId = matchResult.getLogisticsChannelId();
+            Boolean autoGetTrackNo = matchResult.getAutoGetTrackNo();
+            if (StringUtils.isNotBlank(logisticsChannelId)) {
+                SoB2cLogisticsEntity b2cLogistics = soB2cLogisticsService.getByMainId(id);
+                if (Objects.nonNull(b2cLogistics)) {
                     b2cLogistics.setLogisticsChannelId(logisticsChannelId);
                     soB2cLogisticsService.updateById(b2cLogistics);
                 }
             }
             //获取跟踪单号
-            if(autoGetTrackNo){
-                this.getLogisticsCode(id,Boolean.TRUE);
-            }else{
+            if (autoGetTrackNo) {
+                try {
+                    this.getLogisticsCode(id, Boolean.TRUE);
+                } catch (Exception e) {
+                    log.error("获取物流单号出错了>>>>>>>>{}", e.getMessage());
+                }
+            } else {
                 //状态更新为配货中
                 updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
                 //自动发货(物流规则有设置则自动发货)
                 submitDelivery(id);
             }
-
-        }else{
+        } else {
             updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
         }
         return result;
@@ -3048,6 +3050,54 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
         return soOutstockFeign.generateB2cSoOutstock(dto);
+
+    }
+
+    /**
+     * 运费测算 更改渠道
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean selectLogisticsChannel(SoB2cLogisticsDTO.SelectChannelDTO dto) {
+        String id = dto.getId();
+        String logisticsChannelId = dto.getLogisticsChannelId();
+        //B2C销售订单主表信息
+        SoB2cEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        //存在的物流渠道
+        String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
+        //表示不一样 就要改过
+        Boolean isUpdate = !logisticsChannelId.equals(existChannelId);
+        //存在的物流单 code
+        String code = soB2cLogisticsEntity.getCode();
+        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(logisticsChannelId);
+        if (Objects.isNull(logisticsChannel)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+        }
+        if (StringUtils.isNotBlank(code)) {
+            //取消物流单
+            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                    channelId(existChannelId).trackNo(code).build();
+            Boolean cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+            //取消失败
+            if(!cancelResult){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI,code);
+            }
+        }
+        if (isUpdate) {
+            //物流信息更新
+            return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+        }
+        return true;
 
     }
 
