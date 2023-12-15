@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -162,12 +163,92 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public BatchResultDTO falseDelivery(String id) {
+        SoB2cDeliveryEntity entity = this.getById(id);
+        //虚假发货，已发货，取消发货的数据不允许操作虚假发货
+        if (SoB2cDeliveryStatusEnum.HANDLE.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())
+        ) {
+            throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
+        }
+        // TODO 调用第三方发货
+
+        //修改状态为虚假发货
+        this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
         return null;
     }
 
     @Override
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
-        return null;
+        List<SoB2cDeliveryEntity> list = this.listByIds(ids);
+        long count = list.stream()
+                .filter(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())
+                        && !RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(req.getStatus()))
+                .count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+        }
+
+        List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
+
+        //查询产品信息
+        List<String> skuIds = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        List<String> childSkuIds = bomChildrenSkuList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        skuIds.addAll(childSkuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity deliveryDetailEntity : deliveryDetailEntityList) {
+
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(deliveryDetailEntity.getSkuId()))
+                    .collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                    SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
+                    BeanMapper.copy(deliveryDetailEntity, viewDTO);
+                    viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
+                        viewDTO.setPickingQty(deliveryDetailEntity.getDeliveryQty());
+                    }
+
+                    //匹配sku信息
+                    SkuVO skuVO = skuVOList.stream()
+                            .filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId()))
+                            .distinct().findFirst().orElse(new SkuVO());
+                    viewDTO.setProductName(skuVO.getSkuName());
+                    viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                    printPickingViewList.add(viewDTO);
+                }
+            } else {
+                SoB2cDeliveryDTO.PrintPickingViewDTO viewDTO = new SoB2cDeliveryDTO.PrintPickingViewDTO();
+                BeanMapper.copy(deliveryDetailEntity, viewDTO);
+                //匹配sku信息
+                SkuVO skuVO = skuVOList.stream()
+                        .filter(req -> req.getSkuId().equals(deliveryDetailEntity.getSkuId()))
+                        .distinct().findFirst().orElse(new SkuVO());
+                viewDTO.setProductName(skuVO.getSkuName());
+                viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
+                    viewDTO.setPickingQty(deliveryDetailEntity.getDeliveryQty());
+                }
+                printPickingViewList.add(viewDTO);
+            }
+        }
+
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> resultList = printPickingViewList.stream()
+                .sorted(Comparator.comparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getSkuNo).reversed()
+                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName).reversed()
+                        .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation).reversed()
+                ).collect(Collectors.toList());
+        return resultList;
     }
 
     @Override
@@ -280,4 +361,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         data.setDetailList(viewDetailList);
     }
+
+
+    /**
+     * 修改单据状态
+     * @Author Luo_WG
+     * @Date 2023/12/15 11:28
+     * @param id 主键id
+     * @param status 状态编码
+     * @return java.lang.Boolean
+     **/
+    private Boolean updateStatus(String id, String status) {
+        return lambdaUpdate().set(SoB2cDeliveryEntity::getStatus, status).eq(SoB2cDeliveryEntity::getId, id).update();
+    }
+
 }

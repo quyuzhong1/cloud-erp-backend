@@ -868,6 +868,7 @@ public enum ApiError implements Serializable {
     WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
+    IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
 
 
     /**

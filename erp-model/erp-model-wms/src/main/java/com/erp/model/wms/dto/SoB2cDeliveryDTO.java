@@ -387,7 +387,7 @@ public class SoB2cDeliveryDTO implements Serializable {
 
     }
     /**
-     * 列表分页查询
+     * 打印拣货单
      */
     @Data
     @NoArgsConstructor
