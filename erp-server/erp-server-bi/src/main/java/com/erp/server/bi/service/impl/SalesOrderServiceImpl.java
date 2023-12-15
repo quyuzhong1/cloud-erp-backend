@@ -361,13 +361,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
 
-            BigDecimal sales = item.getSales();
-            Integer orderCount = item.getOrderCount();
-            if (orderCount != 0 && sales != null) {
-                //客单价
-                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
-                item.setPerCustomerTransaction(perCustomerTransaction);
-            }
+//            BigDecimal sales = item.getSales();
+//            Integer orderCount = item.getOrderCount();
+//            if (orderCount != 0 && sales != null) {
+//                //客单价
+//                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
+//                item.setPerCustomerTransaction(perCustomerTransaction);
+//            }
 
         }
 
