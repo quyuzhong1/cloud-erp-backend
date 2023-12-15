@@ -257,6 +257,9 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
+        @NotNull(message = "是否包含平台仓不能为空")
+        private Boolean  isHaveWarehouse;
+
         /**
          * 区域id
          */
@@ -342,6 +345,11 @@ public class ShopDTO implements Serializable {
          * 区域名
          */
         private String areaName;
+
+        /**
+         * 是否包含平台仓  true 包含
+         */
+        private Boolean  isHaveWarehouse;
 
         /**
          * 国家id
@@ -474,6 +482,12 @@ public class ShopDTO implements Serializable {
         private String chargeId;
 
         /**
+         * 是否包含平台仓  true 包含
+         */
+        @NotNull(message = "是否包含平台仓不能为空")
+        private Boolean  isHaveWarehouse;
+
+        /**
          * 销售组织
          */
         @NotBlank(message = "销售组织不能为空")
@@ -482,7 +496,6 @@ public class ShopDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
     }
