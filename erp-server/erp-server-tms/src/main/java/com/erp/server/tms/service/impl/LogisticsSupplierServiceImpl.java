@@ -401,7 +401,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         for (BaseChildDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
             List<LogisticsChannelEntity> channelList = allChannelList.stream().
-                    filter(c -> c.getMainId().equals(id)).collect(Collectors.toList());
+                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
+                    collect(Collectors.toList());
             List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }

@@ -151,6 +151,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list= this.lambdaQuery().
                 in(LogisticsChannelEntity::getMainId, mainIdList).
                 like(StringUtils.isNotBlank(name),LogisticsChannelEntity::getName,name).
+                orderByAsc(LogisticsChannelEntity::getDisabled).
                 orderByDesc(LogisticsChannelEntity::getCreateTime).
                 list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
