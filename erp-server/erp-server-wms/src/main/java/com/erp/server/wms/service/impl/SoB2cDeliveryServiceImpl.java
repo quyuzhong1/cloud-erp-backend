@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -17,6 +18,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PickingTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -130,6 +132,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return null;
     }
 
+    @Override
+    public SoB2cDeliveryEntity getByBusinessCode(String businessCode) {
+        return this.getOne(new LambdaQueryWrapper<>(SoB2cDeliveryEntity.class)
+                .eq(SoB2cDeliveryEntity::getSoCode, businessCode)
+                .or()
+                .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
+        );
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -168,7 +179,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         soB2cDeliveryEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDeliveryEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         //根据物流跟踪单号查询物流单详情
-        LogisticsBillDTO.BaseDTO logisticsBillByTrackNo = logisticsBillFeign.getLogisticsBillByTrackNo(soB2cLogisticsEntity.getCode());
-        soB2cDeliveryEntity.setTransportNo(logisticsBillByTrackNo.getTransportNo());
+//        LogisticsBillDTO.BaseDTO logisticsBillByTrackNo = logisticsBillFeign.getLogisticsBillByTrackNo(soB2cLogisticsEntity.getCode());
+        soB2cDeliveryEntity.setTransportNo("test123456");
     }
 }

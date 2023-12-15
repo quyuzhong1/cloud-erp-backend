@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryDetailMapper;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -54,5 +56,10 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
     */
     private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
     // TODO 验证数据 & 数据赋值
+    }
+    @Override
+    public List<SoB2cDeliveryDetailEntity> listByMainId(String mainId) {
+        return this.list(new LambdaQueryWrapper<>(SoB2cDeliveryDetailEntity.class)
+                .eq(SoB2cDeliveryDetailEntity::getMainId, mainId));
     }
 }

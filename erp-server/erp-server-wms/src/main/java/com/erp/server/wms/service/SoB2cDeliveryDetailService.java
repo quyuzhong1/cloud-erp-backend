@@ -26,4 +26,5 @@ public interface SoB2cDeliveryDetailService extends SuperService<SoB2cDeliveryDe
     */
     void add(List<SoB2cDeliveryDetailEntity> entities, String mainId);
 
+    List<SoB2cDeliveryDetailEntity> listByMainId(String mainId);
 }
