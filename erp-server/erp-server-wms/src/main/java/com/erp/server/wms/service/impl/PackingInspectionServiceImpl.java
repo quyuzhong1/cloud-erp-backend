@@ -64,9 +64,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         if(Objects.isNull(entity)){
             throw new ServiceException("查询不到发货单，请确认扫描单号");
         }
-        if(entity.getIsInspection()){
-            throw new ServiceException("订单已验货，无法重复验货");
-        }
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
         PackingInspectionDTO.ViewDTO viewDTO = this.getViewDTO(entity.getId());
         //redis没有值，说明可能是开始扫描，或者过期
