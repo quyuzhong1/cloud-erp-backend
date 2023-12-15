@@ -22,7 +22,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "库存SKU", index = 0)
-    @FieldValid(fieldName = "库存SKU", isNotBlank = true ,maxLength =100 )
+    @FieldValid(fieldName = "库存SKU", isNotBlank = true, maxLength = 100)
     private String warehouseSkuNo;
 
     /**
@@ -30,24 +30,32 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "库存产品名称", index = 1)
-    @FieldValid(fieldName = "库存产品名称", isNotBlank = true,maxLength =200)
+    @FieldValid(fieldName = "库存产品名称", isNotBlank = true, maxLength = 200)
     private String warehouseProductName;
 
+
+    /**
+     * 对照关系适用于该服务商所有仓库
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "对照关系适用于该服务商所有仓库", index = 2)
+    @FieldValid(fieldName = "对照关系适用于该服务商所有仓库", isNotBlank = true, maxLength = 200)
+    private String hasMappingAllStr;
 
     /**
      * 仓库名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库名称", index = 2)
-    @FieldValid(fieldName = "仓库名称", isNotBlank = true,maxLength =200)
+    @ExcelProperty(value = "仓库名称", index = 3)
+    @FieldValid(fieldName = "仓库名称", maxLength = 200)
     private String warehouseName;
 
     /**
      * 服务商
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "服务商", index = 3)
-    @FieldValid(fieldName = "服务商", maxLength =200)
+    @ExcelProperty(value = "服务商", index = 4)
+    @FieldValid(fieldName = "服务商", maxLength = 200)
     private String platformName;
 
 
@@ -55,19 +63,25 @@ public class SkuMappingWarehouseImportExcelDTO {
      * sku
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "SKU", index = 4)
-    @FieldValid(fieldName = "sku",isNotBlank = true,maxLength =200)
-    private String skuNo ;
-
-    /**
-
+    @ExcelProperty(value = "SKU", index = 5)
+    @FieldValid(fieldName = "sku", isNotBlank = true, maxLength = 200)
+    private String skuNo;
 
     /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 5)
+    @ExcelProperty(value = "错误数据", index = 6)
     private String errorMsg;
 
 
+    public Boolean convertHasMappingAllStr() {
+        if (this.getHasMappingAllStr().equals("是")) {
+            return true;
+        }
+        if (this.getHasMappingAllStr().equals("否")) {
+            return false;
+        }
+        return null;
+    }
 }
