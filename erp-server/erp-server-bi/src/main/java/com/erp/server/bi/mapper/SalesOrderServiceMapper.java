@@ -156,9 +156,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesFlagVO> byTobToc(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     List<SalesFlagVO> getSalesByReport(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType, @Param("groupName") String groupName);
-    List<SalesFlagVO> deptNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> userNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
     List<SalesFlagVO> newAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate,@Param("dataType") String dataType);
 
 
