@@ -108,6 +108,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(MatrixVO::getSales)).forEach(x -> {
+            if (MathUtil.compareTo(x.getSales(),BigDecimal.ZERO) == MathUtil.ZERO) {
+                return;
+            }
             List<Object> tempList = new ArrayList<>();
             tempList.add(x.getSales());
             tempList.add(x.getNetProfit());
