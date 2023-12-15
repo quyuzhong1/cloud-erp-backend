@@ -181,7 +181,7 @@
             ),2) AS perCustomerTransaction,
         </if>
         o.sku_no AS skuNo,
-        min(o.item_name) AS productName
+        min(o.product_name) AS productName
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o
