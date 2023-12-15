@@ -162,6 +162,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public BatchResultDTO falseDelivery(String id) {
+        SoB2cDeliveryEntity entity = this.getById(id);
+        //虚假发货，已发货，取消发货的数据不允许操作虚假发货
+        if (SoB2cDeliveryStatusEnum.HANDLE.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())
+        ) {
+            throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
+        }
+
         return null;
     }
 
