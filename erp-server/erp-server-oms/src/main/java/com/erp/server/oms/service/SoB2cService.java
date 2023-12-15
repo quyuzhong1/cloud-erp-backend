@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -339,5 +340,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean  orderShipped(String  id);
 
-
+    /** 
+     * @description 运费测算后选择物流渠道
+     * @param dto
+     * @author Lambda
+     * @return Boolean
+     * @create 2023-12-15 12:27
+     */
+    Boolean selectLogisticsChannel(SoB2cLogisticsDTO.SelectChannelDTO dto);
 }

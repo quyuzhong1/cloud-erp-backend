@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -150,6 +151,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list= this.lambdaQuery().
                 in(LogisticsChannelEntity::getMainId, mainIdList).
                 like(StringUtils.isNotBlank(name),LogisticsChannelEntity::getName,name).
+                orderByAsc(LogisticsChannelEntity::getDisabled).
                 orderByDesc(LogisticsChannelEntity::getCreateTime).
                 list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
@@ -373,6 +375,23 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseDTO;
     }
 
+    @Override
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds) {
+        List<LogisticsChannelEntity> logisticsChannelEntities = this.listByIds(channelIds);
+        if(CollectionUtils.isEmpty(logisticsChannelEntities)){
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
+        List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
+        for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
+            if(Objects.nonNull(logisticsSupplierEntity)){
+                baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+            }
+        }
+        return baseDTOS;
+    }
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {

@@ -47,4 +47,7 @@ public interface LogisticsFeign {
 
     @PostMapping("/feign/logistics/getChannelInfoById")
     LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId);
+
+    @PostMapping("/feign/logistics/listChannelInfoById")
+    List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds);
 }
