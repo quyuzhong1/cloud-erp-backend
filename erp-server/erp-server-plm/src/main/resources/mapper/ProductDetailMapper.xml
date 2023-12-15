@@ -534,14 +534,13 @@
 
     <select id="getNotFinish" resultType="com.common.business.dto.base.BaseIdDTO">
         SELECT id,sku_no AS name FROM product_detail
-        <where>
-            <if test="skuIdList!=null and skuIdList.size>0 ">
-                id IN
-                <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-                    #{skuId}
-                </foreach>
-            </if>
-        </where>
+        WHERE is_deleted=FALSE
+        <if test="skuIdList!=null and skuIdList.size>0 ">
+            id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 
     <select id="getProductIdBySkuClean" resultType="com.erp.model.plm.dto.CleanSkuDto">
