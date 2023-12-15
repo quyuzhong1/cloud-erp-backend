@@ -408,7 +408,6 @@ public class PullAmazonJob {
                         reportSchedule.getReportScheduleId(),
                         errorMsg
                 );
-                throw new ServiceException("亚马逊请求报表计划任务:error=" + errorMsg);
             }
         });
         XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束");
@@ -459,7 +458,6 @@ public class PullAmazonJob {
                         reportSchedule.getReportScheduleId(),
                         errorMsg
                 );
-                throw new ServiceException("创建【亚马逊报告】亚马逊-ERP:error=" + errorMsg);
             }
         });
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束");
