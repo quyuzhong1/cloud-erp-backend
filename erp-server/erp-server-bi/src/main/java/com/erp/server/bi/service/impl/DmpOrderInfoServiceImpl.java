@@ -39,6 +39,7 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
@@ -156,66 +157,46 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         BigDecimal amount = baseMapper.sumSales(dto, settleRate);
-        if (Objects.nonNull(amount)){
+        if (Objects.nonNull(amount)) {
             return new TargetSaleSumVO(amount);
-        }else {
+        } else {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
     }
 
     @Override
-    public List<SalesPriceRangeVO> salePriceDistribution(BiFilterDTO dto) {
+    public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO dto) {
         //获取区间列表
         List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());
-        //判断区间是否存在部门，存在则覆盖请求参数，不存在则查询为空
-        SalesPriceRangeVO salesPriceRangeVO1 = rangeVOS.stream().filter(rangeVO -> StringUtils.isNotEmpty(rangeVO.getDeptId())).findFirst().orElse(null);
-        if (Objects.nonNull(salesPriceRangeVO1) && StringUtils.isNotEmpty(salesPriceRangeVO1.getDeptId())) {
-            List<SysDepartmentDTO> depts = sysUserFeign.getDeptList();
-            //汇总组织下全部组织列表（包括本级和中间级）
-            List<String> deptIds;
-            if (CollectionUtils.isNotEmpty(depts)) {
-                deptIds = depts.stream().filter(dept -> dept.getParentId().equals(salesPriceRangeVO1.getDeptId())).map(SysDepartmentDTO::getId).collect(Collectors.toList());
-                deptIds.add(salesPriceRangeVO1.getDeptId());
-            } else {
-                deptIds = Collections.singletonList(salesPriceRangeVO1.getDeptId());
-            }
-            dto.setDepartment(deptIds);
-            //获取到结算汇率
+        //获取店铺列表
+        List<DmpShopInfoEntity> shopInfoList = dmpShopInfoService.listByStoreSign();
+        String cn = BiConstant.CN;
+        if (1 == dto.getRangeType()) {
+            dto.setShopNo(shopInfoList.stream().filter(s -> cn.equals(s.getStoreSign())).
+                    map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+        } else {
+            dto.setShopNo(shopInfoList.stream().filter(s -> !cn.equals(s.getStoreSign())).
+                    map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
         }
-        CountDownLatch countDownLatch = new CountDownLatch(rangeVOS.size());
-        final BigDecimal[] salesTotal = {BigDecimal.ZERO};
-        final Integer[] qtyTotal = {0};
-        //根据区间进行汇总
-        rangeVOS.forEach(salesPriceRangeVO -> new Thread(() -> {
-            //防止最后范围统计不到最大单价
-            String settleRate = getSettleRate(dto.getSettleMethod());
-            if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue())) {
-                SalePriceDistributionVO vo = baseMapper.countSalePriceDistribution(dto, settleRate, salesPriceRangeVO.getStartValue(), salesPriceRangeVO.getEndValue());
-                if (Objects.isNull(vo) || Objects.isNull(vo.getSalesQuantity()) || Objects.isNull(vo.getSaleAmount())) {
-                    salesPriceRangeVO.setSalesQuantity(0);
-                    salesPriceRangeVO.setSaleAmount(BigDecimal.ZERO);
-                } else {
-                    salesTotal[0] = salesTotal[0].add(vo.getSaleAmount());
-                    qtyTotal[0] = qtyTotal[0] + vo.getSalesQuantity();
-                    salesPriceRangeVO.setSalesQuantity(vo.getSalesQuantity());
-                    salesPriceRangeVO.setSaleAmount(vo.getSaleAmount());
-                }
-            }
-            countDownLatch.countDown();
-        }).start());
-        try {
-            countDownLatch.await(15, TimeUnit.SECONDS);
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.countSalePriceDistribution(dto, settleRate, rangeVOS);
+        BigDecimal salesTotal = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSaleAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO,BigDecimal::add);
+        Integer qtyTotal = salePriceDistributionVOS.stream().filter(s -> Objects.nonNull(s.getSalesQuantity())).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
             //占比计算
-            rangeVOS.forEach(salesPriceRangeVO -> {
-                BigDecimal saleRate = MathUtil.divide(salesPriceRangeVO.getSaleAmount(), salesTotal[0]).multiply(MathUtil.BigDecimal_100);
-                salesPriceRangeVO.setSaleAmountRate(saleRate.stripTrailingZeros().toPlainString());
-                BigDecimal qtyRate = MathUtil.divide(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()),BigDecimal.valueOf(qtyTotal[0])).multiply(MathUtil.BigDecimal_100);
-                salesPriceRangeVO.setSalesQuantityRate(qtyRate.stripTrailingZeros().toPlainString());
+        salePriceDistributionVOS.forEach(salePriceDistributionVO -> {
+            BigDecimal saleRate = BigDecimal.ZERO;
+            if (Objects.nonNull(salePriceDistributionVO.getSaleAmount()) && salesTotal.compareTo(BigDecimal.ZERO) > 0){
+                saleRate = MathUtil.divide(salePriceDistributionVO.getSaleAmount(), salesTotal).multiply(MathUtil.BigDecimal_100);
+            }
+            salePriceDistributionVO.setSaleAmountRate(saleRate.stripTrailingZeros().toPlainString());
+            BigDecimal qtyRate = BigDecimal.ZERO;
+            if (Objects.nonNull(salePriceDistributionVO.getSalesQuantity()) && qtyTotal > 0){
+                qtyRate = MathUtil.divide(BigDecimal.valueOf(salePriceDistributionVO.getSalesQuantity()), BigDecimal.valueOf(qtyTotal)).multiply(MathUtil.BigDecimal_100);
+            }
+            salePriceDistributionVO.setSalesQuantityRate(qtyRate.stripTrailingZeros().toPlainString());
             });
-        } catch (InterruptedException e) {
-            throw new ServiceException(ApiError.Default);
-        }
-        return rangeVOS;
+        salePriceDistributionVOS.sort(Comparator.comparingInt(SalePriceDistributionVO::getStartValue));
+        return salePriceDistributionVOS;
     }
 
     /**

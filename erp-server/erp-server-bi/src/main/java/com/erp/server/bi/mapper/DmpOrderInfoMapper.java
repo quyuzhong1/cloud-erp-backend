@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.vo.DimensionSalesVO;
 import com.erp.model.bi.vo.SalePriceDistributionVO;
+import com.erp.model.bi.vo.SalesPriceRangeVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
@@ -74,8 +75,8 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    SalePriceDistributionVO countSalePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate,
-                                                       @Param("startValue") Integer startValue, @Param("endValue") Integer endValue );
+    List<SalePriceDistributionVO> countSalePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate,
+                                                       @Param("rangeVOS") List<SalesPriceRangeVO> rangeVOS );
     /**
      * 根据不同维度统计销售量
      *

@@ -227,11 +227,11 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     /**
      * 计算客户销售额
      *
-     * @param dto
+     * @param filterDTOS
      * @param settleRate
      * @return
      */
-    BigDecimal customerLevelProportion(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+    List<CustomerSaleVO> customerLevelProportion(@Param("dtos") List<CustomerBiFilterDTO> filterDTOS, @Param("settleRate") String settleRate);
 
     /**
      * 净销售额

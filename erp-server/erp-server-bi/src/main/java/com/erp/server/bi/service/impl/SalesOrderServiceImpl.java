@@ -431,9 +431,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(params.getSettleMethod());
         LocalDateTime paramsEndTime = params.getEndTime();
         params.setEndTime(paramsEndTime, 1);
-        if (StringUtils.isBlank(params.getDateType())){
-            params.setDateType(DateTypeEnum.MONTH.getType());
-        }
         //产品销售等级销售额
         List<Map<String, Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
         int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
@@ -1057,7 +1054,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-        String chinaName = "中国";
+        String cn = BiConstant.CN;
+        List<DmpShopInfoEntity> shopInfoList=shopInfoService.listByStoreSign();
+        List<String> cnShopNoList=shopInfoList.stream().filter(s->cn.equals(s.getStoreSign())).
+                map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList());
+
         List<SalesCountVO> resultList = baseMapper.byHomeAndAbroad(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("国内外销售额占比");
@@ -1071,7 +1072,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
         BigDecimal chinaSales = resultList.stream().
-                filter(s -> StringUtils.isNotBlank(s.getName()) && s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> cnShopNoList.contains(s.getName())).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         chinaMap.put("value", chinaSales);
@@ -1080,7 +1081,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> abroadMap = new HashMap();
         abroadMap.put("name", "国外");
         BigDecimal abroadSales = resultList.stream().
-                filter(s -> StringUtils.isNotBlank(s.getName()) && !s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> !cnShopNoList.contains(s.getName())).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);
@@ -3585,7 +3586,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(viewDTO)) {
                     pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }else if (pagingDTO.getMonthSales().compareTo(BigDecimal.ZERO) > 0){
+                    pagingDTO.setMonthCompletionRate(MathUtil.BigDecimal_100);
                 }
+            }else if (pagingDTO.getMonthSales().compareTo(BigDecimal.ZERO) > 0){
+                pagingDTO.setMonthCompletionRate(MathUtil.BigDecimal_100);
             }
             //获取上月排行
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
@@ -3642,7 +3647,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(viewDTO)) {
                     pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }else if (pagingDTO.getMonthSales().compareTo(BigDecimal.ZERO) > 0){
+                    pagingDTO.setMonthCompletionRate(MathUtil.BigDecimal_100);
                 }
+            }else if (pagingDTO.getMonthSales().compareTo(BigDecimal.ZERO) > 0){
+                pagingDTO.setMonthCompletionRate(MathUtil.BigDecimal_100);
             }
             //获取上月排行
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
@@ -3781,40 +3790,27 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (map.isEmpty()) {
             return statistical;
         }
-        //获取到结算汇率
-        String settleRate = getSettleRate(params.getSettleMethod());
         LocalDateTime paramsEndTime = params.getEndTime();
         params.setEndTime(paramsEndTime, 1);
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        List<CustomerBiFilterDTO> filterDTOS = new ArrayList<>(map.size());
+        map.keySet().forEach(s->{
+            CustomerBiFilterDTO biFilterDTO = new CustomerBiFilterDTO();
+            BeanMapperUtils.copy(params, biFilterDTO);
+            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
+            Set<String> shopNo = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+            biFilterDTO.setShopNo(new ArrayList<>(shopNo));
+            biFilterDTO.setCustomerProperty(customerInfoVOS1.get(0).getCustomerProperty());
+            filterDTOS.add(biFilterDTO);
+        });
         ChartVO chartVO = new ChartVO();
         chartVO.setXAxis(new ArrayList<>());
-        List<SeriesVO<Object>> seriesList = new ArrayList<>();
-        SeriesVO<Object> series = new SeriesVO();
+        List<SeriesVO<CustomerSaleVO>> seriesList = new ArrayList<>();
+        SeriesVO<CustomerSaleVO> series = new SeriesVO();
         series.setName("销售额");
-        List<Object> dataList = new ArrayList<>(map.size());
-        CountDownLatch countDownLatch = new CountDownLatch(map.size());
-        map.keySet().forEach(s -> new Thread(()->{
-            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
-            if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
-                Map<String, Object> siteMap = new HashMap<>();
-                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
-                params.setCustomerCodes(new ArrayList<>(customerCodes));
-                BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
-                siteMap.put("name", customerInfoVOS1.get(0).getCustomerProperty());
-                if (Objects.isNull(bigDecimal)) {
-                    siteMap.put("value", "0.00");
-                } else {
-                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
-                }
-                dataList.add(siteMap);
-            }
-            countDownLatch.countDown();
-        }).start());
-        try {
-            countDownLatch.await(15, TimeUnit.SECONDS);
-        }catch (Exception e){
-            throw new ServiceException(ApiError.Default);
-        }
-        series.setData(dataList);
+        List<CustomerSaleVO> customerSaleVOS = baseMapper.customerLevelProportion(filterDTOS, settleRate);
+        series.setData(customerSaleVOS);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
@@ -3836,40 +3832,27 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (map.isEmpty()) {
             return statistical;
         }
-        //获取到结算汇率
-        String settleRate = getSettleRate(params.getSettleMethod());
         LocalDateTime paramsEndTime = params.getEndTime();
         params.setEndTime(paramsEndTime, 1);
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        List<CustomerBiFilterDTO> filterDTOS = new ArrayList<>(map.size());
+        map.keySet().forEach(s->{
+            CustomerBiFilterDTO biFilterDTO = new CustomerBiFilterDTO();
+            BeanMapperUtils.copy(params, biFilterDTO);
+            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
+            Set<String> shopNo = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+            biFilterDTO.setShopNo(new ArrayList<>(shopNo));
+            biFilterDTO.setCustomerProperty(customerInfoVOS1.get(0).getGroupName());
+            filterDTOS.add(biFilterDTO);
+        });
         ChartVO chartVO = new ChartVO();
         chartVO.setXAxis(new ArrayList<>());
-        List<SeriesVO<Object>> seriesList = new ArrayList<>();
-        SeriesVO<Object> series = new SeriesVO();
+        List<SeriesVO<CustomerSaleVO>> seriesList = new ArrayList<>();
+        SeriesVO<CustomerSaleVO> series = new SeriesVO();
         series.setName("销售额");
-        List<Object> dataList = new ArrayList<>(map.size());
-        CountDownLatch countDownLatch = new CountDownLatch(map.size());
-        map.keySet().forEach(s -> new Thread(() ->{
-            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
-            if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
-                Map<String, Object> siteMap = new HashMap<>();
-                Set<String> names = customerInfoVOS1.stream().map(CustomerInfoVO::getName).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
-                params.setShopName(new ArrayList<>(names));
-                BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
-                siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
-                if (Objects.isNull(bigDecimal)) {
-                    siteMap.put("value", "0.00");
-                } else {
-                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
-                }
-                dataList.add(siteMap);
-            }
-            countDownLatch.countDown();
-        }).start());
-        try {
-            countDownLatch.await(15, TimeUnit.SECONDS);
-        }catch (Exception e){
-            throw new ServiceException(ApiError.Default);
-        }
-        series.setData(dataList);
+        List<CustomerSaleVO> customerSaleVOS = baseMapper.customerLevelProportion(filterDTOS, settleRate);
+        series.setData(customerSaleVOS);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
