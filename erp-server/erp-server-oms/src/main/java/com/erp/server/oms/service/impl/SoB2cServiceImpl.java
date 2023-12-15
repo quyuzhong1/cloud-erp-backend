@@ -2787,6 +2787,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!save) {
                 throw new ServiceException("soB2c订单保存失败");
             }
+            // 新增日志
+            String msg = StrUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "新增操作");
             return entity;
         } else {
             // 历史异常记录修复

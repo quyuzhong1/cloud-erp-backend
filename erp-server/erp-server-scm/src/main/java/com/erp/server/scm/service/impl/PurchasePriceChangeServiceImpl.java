@@ -349,10 +349,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
 
         //判断是否能通过
-        Boolean isPass = getIsPass(priceChangeDetailList);
-        if (isPass) {
-            priceChangeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
-        }
+//        Boolean isPass = getIsPass(priceChangeDetailList);
+//        if (isPass) {
+//            priceChangeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
+//        }
         //历史报价
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
 
@@ -376,9 +376,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean result = this.updateById(priceChangeEntity);
         if (result) {
 
-            if (isPass) {
-                purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(priceChangeEntity));
-            }
+//            if (isPass) {
+//                purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(priceChangeEntity));
+//            }
 
             /**
              * 添加修改日志

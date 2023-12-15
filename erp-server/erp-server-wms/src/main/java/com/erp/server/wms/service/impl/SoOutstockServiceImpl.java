@@ -141,8 +141,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private WorkflowFeign workflowFeign;
 
 
-    @Resource
-    private LogisticsBillFeign logisticsBillFeign;
+//    @Resource
+//    private LogisticsBillFeign logisticsBillFeign;
 
 
     @Resource
@@ -449,6 +449,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ingStatus.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -501,6 +502,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         updateForApprove(entity.getId(), approveStatus.getStatus());
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
+            //审核通过发送金蝶
+            syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             handleData(entity);
         }
         return Boolean.TRUE;
@@ -599,7 +602,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //物流单添加
-        saveLogisticsBill(entity);
+      //  saveLogisticsBill(entity);
 
     }
 
@@ -652,7 +655,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         addDTO.setDetailList(detailList);
-        logisticsBillFeign.addLogisticsBill(addDTO);
+       // logisticsBillFeign.addLogisticsBill(addDTO);
     }
 
 
@@ -705,9 +708,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soInfoFeign.updateDeliveryStatus(paramList);
 
         //删除物流单
-        LogisticsBillDTO.RemoveDTO removeDTO = new LogisticsBillDTO.RemoveDTO();
-        removeDTO.setOutstockIdList(idList);
-        logisticsBillFeign.removeLogisticsBill(removeDTO);
+//        LogisticsBillDTO.RemoveDTO removeDTO = new LogisticsBillDTO.RemoveDTO();
+//        removeDTO.setOutstockIdList(idList);
+//        logisticsBillFeign.removeLogisticsBill(removeDTO);
 
     }
 
@@ -1581,7 +1584,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO=new LogisticsBillDTO.UpdateTrackNoDTO();
         updateTrackNoDTO.setTrackNo(dto.getTrackNo());
         updateTrackNoDTO.setOutstockIdList(dto.getIdList());
-        logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
+        //logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
         return update;
     }
 
