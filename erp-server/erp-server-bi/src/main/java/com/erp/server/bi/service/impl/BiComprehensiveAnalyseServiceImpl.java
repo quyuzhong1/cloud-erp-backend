@@ -281,7 +281,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     }
 
     @Override
-//    @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
     public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO biFilterDTO) {
         Optional.ofNullable(biFilterDTO.getRangeType()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST));
         Optional.ofNullable(biFilterDTO.getSettleMethod()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
@@ -544,7 +544,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             }
             //计算去年sku销售额
-            String lastYearKey = LocalDate.parse(saleDetailVO.getName()).minusYears(1).toString();
+            String lastYearKey = biFilterDTO.getEndTime().minusYears(1).toString();
             BigDecimal currentLastYearSaleAmount = lastYearSaleMap.getOrDefault(lastYearKey, BigDecimal.ZERO);
             saleDetailVO.setLastYearSaleAmount(currentLastYearSaleAmount);
             // 占比
@@ -553,7 +553,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     currentLastYearSaleAmount.divide(yearSakeAmount, 4, RoundingMode.DOWN).multiply(BigDecimal.valueOf(100)));
 
             //计算前年sku销售额
-            String TwoYearAgeKey = LocalDate.parse(saleDetailVO.getName()).minusYears(2).toString();
+            String TwoYearAgeKey = biFilterDTO.getEndTime().minusYears(2).toString();
             BigDecimal currentTwoYearAgeAmount = twoYearAgeSaleMap.getOrDefault(TwoYearAgeKey, BigDecimal.ZERO);
             saleDetailVO.setYearBeforeLastSaleAmount(currentTwoYearAgeAmount);
             // 占比
@@ -589,6 +589,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Cacheable(cacheNames = "cache:bi:skuDateSaleTrend",keyGenerator = "myKeyGenerator")
     public List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO) {
 //        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = null;
+        biFilterDTO.setSku(Arrays.asList(biFilterDTO.getSkuNo()));
         String settleRate = getSettleRate(biFilterDTO.getSettleMethod());
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = baseMapper.skuSaleTrend(biFilterDTO, settleRate);
 //        switch (biFilterDTO.getDateType()) {

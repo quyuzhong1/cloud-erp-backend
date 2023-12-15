@@ -65,16 +65,16 @@
             resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
         select
             <if test="params.searchType != null and params.searchType == 0">
-                o.dept_id as typeId,
+                o.dept_name as typeName,
             </if>
             <if test="params.searchType != null and params.searchType == 1">
-                o.charge_id as typeId,
+                o.charge_name as typeName,
             </if>
             <if test="params.searchType != null and params.searchType == 2">
                 o.shop_name as typeName,
             </if>
             <if test="params.searchType != null and params.searchType == 3">
-                o.category_id as typeId,
+                o.category_name as typeName,
             </if>
             <if test="params.searchType != null and params.searchType == 4">
                 o.sku_no as typeName,
@@ -110,29 +110,10 @@
                 right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </otherwise>
         </choose>
-        <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
-        and ddd.date_time >= #{lastsMonth}
+        where ddd.date_time >= #{lastsMonth}
         group by month
-            <if test="params.searchType != null and params.searchType == 0">
-                ,o.dept_id
-            </if>
-            <if test="params.searchType != null and params.searchType == 1">
-                ,o.charge_id
-            </if>
-            <if test="params.searchType != null and params.searchType == 2">
-                ,o.shop_name
-            </if>
-            <if test="params.searchType != null and params.searchType == 3">
-                ,o.category_id
-            </if>
-            <if test="params.searchType != null and params.searchType == 4">
-                ,o.sku_no
-            </if>
-            <if test="params.searchType != null and params.searchType == 5">
-                ,o.source_platform
-            </if>
-            <if test="params.searchType != null and params.searchType == 6">
-                ,o.country_name_cn
+            <if test="params.searchType != null">
+                ,typeName
             </if>
     </select>
 </mapper>
