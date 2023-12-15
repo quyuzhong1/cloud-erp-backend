@@ -224,13 +224,11 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
     private void saveViewDTO(String id, PackingInspectionDTO.ViewDTO viewDTO) {
         String json = JSONObject.toJSONString(viewDTO);
-        System.out.println(json);
         redisTemplate.opsForValue().set(StrUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id), json,1, TimeUnit.DAYS);
     }
 
     private PackingInspectionDTO.ViewDTO getViewDTO(String id) {
         String json = redisTemplate.opsForValue().get(StrUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
-        System.out.println(json);
         return JSONObject.parseObject(json,new TypeReference<PackingInspectionDTO.ViewDTO>() {}.getType());
     }
 }

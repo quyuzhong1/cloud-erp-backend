@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -58,7 +59,7 @@ public class PackingInspectionController extends BaseController {
      */
     @GetMapping("/reset")
     @LogAction(value = LogActionEnum.UPDATE, desc = "重置")
-    public ApiResult<?> reset(@RequestParam(value = "id") String id) {
+    public ApiResult<?> reset(@RequestParam(value = "id") @NotBlank(message = "ID不能为空") String id) {
         packingInspectionService.reset(id);
         return success();
     }
