@@ -57,7 +57,7 @@ public enum BusinessNoTypeEnum {
     CODE_KHLXRC(47, "khlxrc","b2c客户联系人编号","KHLXRC"),
     CODE_CUSTC(48, "custc","客户","CUSTC"),
     CODE_FBAS(49, "fbas","FBA货件","FBAS"),
-    CODE_FHD(50, "fhd","FBA发货单","FHD"),
+    CODE_FHD(50, "fhd","头程发货单","FHD"),
     CODE_XSDD(51, "xsdd","b2c销售订单(平台)","XSDD"),
     CODE_FHJH(52, "fhjh","海外仓发货计划","FHJH"),
     CODE_YHSQ(53, "yhsq","要货申请","YHSQ"),
