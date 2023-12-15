@@ -31,7 +31,7 @@ import com.common.core.enums.ApiError;
 
 /**
  * <p>
- * FBA发货单物流信息表 服务实现类
+ * 头程发货单物流信息表 服务实现类
  * </p>
  *
  * @author Luo_WG
@@ -62,10 +62,10 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
         // 数据处理
         handleData(firstMileDeliveryLogisticsEntity);
 
-        log.info("开始新增FBA发货单物流信息单");
+        log.info("开始新增头程发货单物流信息单");
         boolean save = super.save(firstMileDeliveryLogisticsEntity);
         if(!save) {
-            throw new ServiceException("FBA发货单物流信息单保存失败");
+            throw new ServiceException("头程发货单物流信息单保存失败");
         }
         return firstMileDeliveryLogisticsEntity.getId();
     }
@@ -77,15 +77,15 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
     @Override
     public Boolean update(FirstMileDeliveryLogisticsDTO.UpdateDTO updateDTO) {
         FirstMileDeliveryLogisticsEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单物流信息单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程发货单物流信息单"));
         FirstMileDeliveryLogisticsEntity firstMileDeliveryLogisticsEntity =  BeanMapperUtils.map(FirstMileDeliveryLogisticsEntity.class, updateDTO);
         firstMileDeliveryLogisticsEntity.setRemark(updateDTO.getLogisticsRemark());
         // 数据处理
         handleData(firstMileDeliveryLogisticsEntity);
-        log.info("编辑 开始修改FBA发货单物流信息单数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改头程发货单物流信息单数据，id：【{}】", old.getId());
         boolean save = super.updateById(firstMileDeliveryLogisticsEntity);
         if(!save) {
-            throw new ServiceException("FBA发货单物流信息单保存失败");
+            throw new ServiceException("头程发货单物流信息单保存失败");
         }
         return Boolean.TRUE;
     }

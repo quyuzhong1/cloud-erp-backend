@@ -30,14 +30,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 /**
- * FBA发货单
+ * 头程发货单
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Slf4j
 @RestController
-@LogSystemModule("FBA发货单")
+@LogSystemModule("头程发货单")
 @RequestMapping("/fbaDelivery")
 public class FirstMileDeliveryController extends BaseController {
 
@@ -55,7 +55,7 @@ public class FirstMileDeliveryController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
         return success(firstMileDeliveryService.add(dto));
     }
@@ -148,7 +148,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:submit",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "FBA发货单提交审核")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "头程发货单提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -156,10 +156,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 submit = firstMileDeliveryService.submit(id);
             }catch (Exception e){
-                log.error("FBA发货单 提交审核失败",e);
+                log.error("发货单 提交审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "FBA发货单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "发货单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -183,7 +183,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:approve",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "FBA发货单审核")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "头程发货单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -192,10 +192,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("FBA发货单审核失败",e);
+                log.error("发货单审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "发货单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -219,7 +219,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:disApprove",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "FBA发货单反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "头程发货单反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -227,10 +227,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 disApproveResult = firstMileDeliveryService.disApprove(id);
             }catch (Exception e){
-                log.error("FBA发货单反审核失败",e);
+                log.error("发货单反审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "发货单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -254,7 +254,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:delete",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "FBA发货单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "头程发货单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -262,10 +262,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 deleteResult = firstMileDeliveryService.delete(id);
             }catch (Exception e){
-                log.error("FBA发货单删除失败",e);
+                log.error("发货单删除失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "发货单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -288,7 +288,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:invalid",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.INVALID, desc = "FBA发货单作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "头程发货单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -296,10 +296,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 invalidResult = firstMileDeliveryService.invalid(id,dto.getRemark());
             }catch (Exception e){
-                log.error("FBA发货单作废失败",e);
+                log.error("发货单作废失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
@@ -323,7 +323,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:cancel",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "FBA发货单撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "头程发货单撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -331,10 +331,10 @@ public class FirstMileDeliveryController extends BaseController {
             try {
                 cancelResult = firstMileDeliveryService.cancelProcess(id);
             }catch (Exception e){
-                log.error("FBA发货单撤回流程失败",e);
+                log.error("发货单撤回流程失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "发货单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -377,7 +377,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:export",
             tableAlias = "fd"
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出Excel数据")
     public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportList(dto, response);
     }
@@ -468,7 +468,7 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/packingSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单装箱保存")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
     public ApiResult packingSave(@RequestBody @Validated FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
         Boolean flag = firstMileDeliveryService.packingSave(dto);
         return flag ? success() : failure();
@@ -526,7 +526,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:exportPacking",
             tableAlias = "fd"
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出装箱清单Excel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出装箱清单Excel")
     public ApiResult exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportPacking(dto, response);
         return success();
