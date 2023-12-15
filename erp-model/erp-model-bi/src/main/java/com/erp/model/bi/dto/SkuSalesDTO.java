@@ -25,13 +25,6 @@ public class SkuSalesDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchSkuDTO extends BiFilterDTO {
         private String skuType;
-
-
-        /**
-         * 是否组合品 true 是
-         */
-        @NotNull(message = "单品，组合品不能为空")
-        private Boolean isCombo;
     }
 
     @Data
