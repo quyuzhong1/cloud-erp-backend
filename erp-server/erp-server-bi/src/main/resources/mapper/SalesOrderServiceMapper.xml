@@ -91,6 +91,13 @@
             <if test="params.startTime !=null and params.endTime !=null">
                 AND ddd.date_time BETWEEN #{params.startTime} AND #{params.endTime}
             </if>
+            <!-- 是否组合品 -->
+            <if test="params.isCombo!=null and params.isCombo==true" >
+                AND o.is_combo = 1
+            </if>
+            <if test="params.isCombo!=null and params.isCombo==false" >
+                AND o.is_combo != 1
+            </if>
             <!-- 部门 -->
             <if test="params.department!=null and params.department.size>0">
                 AND o.dept_id IN
