@@ -34,7 +34,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- * FBA发货单明细表 服务实现类
+ * 头程发货单明细表 服务实现类
  * </p>
  *
  * @author Luo_WG
