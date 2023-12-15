@@ -397,5 +397,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             throw new ServiceException(ApiError.ERROR_97007);
         }
     }
-
+    @Override
+    public List<DmpShopInfoEntity> listByStoreSign() {
+        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign, "").list();
+    }
 }

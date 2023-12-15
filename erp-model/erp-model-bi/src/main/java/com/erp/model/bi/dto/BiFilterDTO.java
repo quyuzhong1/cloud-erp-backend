@@ -92,6 +92,10 @@ public class BiFilterDTO extends SortDTO {
      */
     private List<String> shopName;
 
+    /**
+     * 店铺
+     */
+    private List<String> shopNo;
 
     /**
      * 品类

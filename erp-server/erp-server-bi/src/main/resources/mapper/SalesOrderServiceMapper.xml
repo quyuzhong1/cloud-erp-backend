@@ -37,6 +37,13 @@
                     #{shopName}
                 </foreach>
             </if>
+            <!-- 店铺 -->
+            <if test="params.shopNo!=null and params.shopNo.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopNo" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
                 AND o.sku_no IN
@@ -1139,7 +1146,7 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (o.sales_amount),2) AS sales,
         </if>
-        o.country_name_cn AS name
+        o.shop_no AS name
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o
@@ -1149,7 +1156,7 @@
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
-        GROUP BY o.country_name_cn
+        GROUP BY o.shop_no
         ORDER BY sales DESC
     </select>
 
@@ -3303,13 +3310,13 @@
     <select id="listProductGradeSales" resultType="java.util.Map">
         SELECT
         <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
-            round(SUM (o.sales_amount_currency_rate),2) AS sales,
+            COALESCE(round(SUM (o.sales_amount_currency_rate),2),0) AS sales,
         </if>
         <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
-            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
+            COALESCE(round(SUM (o.sales_amount_cny_settle_rate),2),0) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (o.sales_amount),2) AS sales,
+            COALESCE(round(SUM (o.sales_amount),2),0) AS sales,
         </if>
          o.grade AS flag
         <choose>
@@ -3321,31 +3328,39 @@
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
+        and o.grade != ''
         GROUP BY o.grade
         order by sales DESC
     </select>
 
-    <select id="customerLevelProportion" resultType="java.math.BigDecimal">
-        SELECT
-        <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
-            round(SUM (o.sales_amount_currency_rate),2) AS sales
+    <select id="customerLevelProportion" resultType="com.erp.model.bi.vo.CustomerSaleVO">
+        <if test="dtos != null and dtos.size > 0">
+            <foreach collection="dtos" item="params" open="(" separator=" union all" close=")">
+                SELECT
+                #{params.customerProperty} AS name,
+                <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
+
+                    COALESCE(round(SUM (o.sales_amount_currency_rate),2),0) AS value
+                </if>
+                <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
+
+                    COALESCE(round(SUM (o.sales_amount_cny_settle_rate),2),0) AS value
+                </if>
+                <if test="settleRate ==null or settleRate==''">
+
+                    COALESCE(round(SUM (o.sales_amount),2),0) AS value
+                </if>
+                <choose>
+                    <when test="params.timeType == '1'">
+                        FROM dmp_order_delivery_report AS o
+                    </when>
+                    <otherwise>
+                        FROM dmp_order_create_report AS o
+                    </otherwise>
+                </choose>
+                <include refid="sql_report_condition"/>
+            </foreach>
         </if>
-        <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
-            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales
-        </if>
-        <if test="settleRate ==null or settleRate==''">
-            round(SUM (o.sales_amount),2) AS sales
-        </if>
-        <choose>
-            <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
-            </when>
-            <otherwise>
-                FROM dmp_order_create_report AS o
-            </otherwise>
-        </choose>
-        <include refid="sql_report_condition"/>
-        AND o.source_platform = 'B2B'
     </select>
     <!--部门销售额排行榜-->
     <select id="deptCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
