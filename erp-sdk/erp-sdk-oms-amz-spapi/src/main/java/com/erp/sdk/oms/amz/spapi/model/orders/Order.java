@@ -48,7 +48,7 @@ public class Order {
     /**
      * The current order status.
      */
-    @JsonAdapter(OrderStatusEnum.Adapter.class)
+//    @JsonAdapter(OrderStatusEnum.Adapter.class)
     public enum OrderStatusEnum {
         PENDING("Pending"),
 
@@ -86,7 +86,7 @@ public class Order {
 
         public static OrderStatusEnum fromValue(String text, Boolean nullDefault) {
             for (OrderStatusEnum b : OrderStatusEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }
