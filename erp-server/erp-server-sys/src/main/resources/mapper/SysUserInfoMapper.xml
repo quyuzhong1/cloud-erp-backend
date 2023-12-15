@@ -246,7 +246,7 @@
                 select sdu.user_id from sys_department_user sdu
                 <where>
                     sdu.department_id in
-                    <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                    <foreach collection="params.deptIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </where>
