@@ -98,7 +98,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         } else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
         } else if (OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_INVALID.getCode());
             // 作废状态（false未作废，true已作废）
             orderDTO.setInvalidStatus(true);
         } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(orderStatus)) {
