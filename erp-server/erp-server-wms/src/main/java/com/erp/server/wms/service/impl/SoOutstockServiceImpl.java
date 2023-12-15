@@ -451,6 +451,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (!ingStatus.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -503,6 +504,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         updateForApprove(entity.getId(), approveStatus.getStatus());
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
+            //审核通过发送金蝶
+            syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             handleData(entity);
         }
         return Boolean.TRUE;
