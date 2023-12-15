@@ -78,6 +78,7 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
         resultDto.setPlatformProductName(itemResponseBean.getProductName());
         resultDto.setUniqueId(itemResponseBean.getSku());
         resultDto.setShopId(dto.getShopId());
+        resultDto.setPlatformUpdateTime(LocalDateTime.now());
         return resultDto;
     }
 }
