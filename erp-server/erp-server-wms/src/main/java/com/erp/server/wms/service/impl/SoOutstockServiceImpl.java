@@ -760,6 +760,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (isPushKingDee) {
                 //审核通过发送金蝶
                 list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+                //订单推送dmp
+                list.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
         }
         return result;
@@ -823,6 +825,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstockDetailService.removeByMainIdList(ids);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            //订单推送dmp
+            list.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
         return result;
     }

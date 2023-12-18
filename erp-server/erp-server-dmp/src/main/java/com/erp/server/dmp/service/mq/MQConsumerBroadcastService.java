@@ -32,15 +32,15 @@ public class MQConsumerBroadcastService {
      * 订单审核通过后同步dmp
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-            selectorExpression = "kingdee_so_info_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_so_info_order_to_dmp_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            //dmpPullTaskService.syncOmsOrderToDmp(resultMap);
+            dmpPullTaskService.syncOmsOrderToDmp(resultMap);
         }
     }
 
@@ -48,15 +48,15 @@ public class MQConsumerBroadcastService {
      * 销售出库单 outstock 同步dmp
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-            selectorExpression = "kingdee_so_outstock_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_so_outstock_order_to_dmp_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOutStockToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到销售出库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            //dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
+            dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
         }
     }
 
@@ -73,7 +73,7 @@ public class MQConsumerBroadcastService {
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到退货入库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            //dmpPullTaskService.syncOmsReturnToDmp(resultMap);
+            dmpPullTaskService.syncOmsReturnToDmp(resultMap);
         }
     }
 }

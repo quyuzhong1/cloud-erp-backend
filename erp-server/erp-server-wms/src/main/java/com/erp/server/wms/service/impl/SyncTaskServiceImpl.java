@@ -231,6 +231,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             syncKingdeeSoOutstockService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
     }
 
