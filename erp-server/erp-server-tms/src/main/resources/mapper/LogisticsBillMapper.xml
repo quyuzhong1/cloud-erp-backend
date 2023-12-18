@@ -326,7 +326,7 @@
              lb.delivery_time AS deliveryTime,
              lb.transport_no AS transportNo,
              lb.to_country AS toCountry,
-             lbd.track_no AS trackNo,
+             lbd.track_no AS trackNo
          FROM  logistics_bill_detail lbd
          LEFT JOIN  logistics_bill lb
          ON lbd.main_id=lb.id ANd lb.is_deleted=false
