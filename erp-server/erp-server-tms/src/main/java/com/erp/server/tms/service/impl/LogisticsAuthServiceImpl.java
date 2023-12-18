@@ -155,11 +155,20 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             return ApiResult.error(-1,"功能未开发");
         }
         Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
-        if (Objects.isNull(authConfig)){
+        if (CollectionUtils.isEmpty(authConfig)){
             return ApiResult.error(-1,"未找到配置信息");
         }
         ApiResult authorization = service.authorization(authConfig);
         return authorization;
+    }
+
+    @Override
+    public ApiResult authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        if (Objects.isNull(service)){
+            return ApiResult.error(-1,"功能未开发");
+        }
+        return service.authorization(authConfig);
     }
 
     @Override
