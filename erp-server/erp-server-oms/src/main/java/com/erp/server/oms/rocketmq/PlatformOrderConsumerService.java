@@ -72,8 +72,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Resource
     private CustomerB2cContactService customerB2cContactService;
     @Resource
-    private CustomerB2cSellerService customerB2cSellerService;
-    @Resource
     private SoOutstockFeign soOutstockFeign;
     @Resource
     private ShopInfoService shopInfoService;
