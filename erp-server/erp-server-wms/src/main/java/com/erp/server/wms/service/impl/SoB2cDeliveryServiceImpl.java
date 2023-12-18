@@ -16,6 +16,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -30,6 +31,7 @@ import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -85,6 +87,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private LogisticsFeign logisticsFeign;
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -367,6 +371,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         } else {
             // 多品多数：SKU大于1个
             soB2cDeliveryEntity.setPickingType(PickingTypeEnum.MULTI_ITEM_MULTI.getCode());
+        }
+
+        //店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cDeliveryEntity.getShopId());
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            soB2cDeliveryEntity.setShopName(shopInfoEntity.getName());
         }
 
         //查询B2C销售订单
