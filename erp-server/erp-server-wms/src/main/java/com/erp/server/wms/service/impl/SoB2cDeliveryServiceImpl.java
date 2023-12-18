@@ -164,15 +164,34 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(String id) {
-        return null;
+
+        SoB2cDeliveryEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.b2c_so_delivery_NOT_EXISTS);
+        }
+
+        //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
+        if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+        ) {
+            throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
+        }
+
+
+        this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
     }
 
     @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO falseDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
         //虚假发货，已发货，取消发货的数据不允许操作虚假发货
-        if (SoB2cDeliveryStatusEnum.HANDLE.getCode().equals(entity.getStatus())
+        if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())
         ) {

@@ -869,6 +869,8 @@ public enum ApiError implements Serializable {
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
+    b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
+    IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
 
 
     /**
