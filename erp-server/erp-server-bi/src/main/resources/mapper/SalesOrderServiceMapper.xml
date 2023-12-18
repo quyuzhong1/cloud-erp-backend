@@ -6,11 +6,15 @@
 <mapper namespace="com.erp.server.bi.mapper.SalesOrderServiceMapper">
     <sql id="sql_report_condition">
         <where>
-            <if test="params.skuNo != '' and params.skuNo != null">
-                AND o.sku_no = #{params.skuNo}
-            </if>
             <if test="params.startTime !=null and params.endTime !=null">
                 AND o.date_time BETWEEN #{params.startTime} AND #{params.endTime}
+            </if>
+            <!-- 是否组合品 -->
+            <if test="params.isCombo!=null and params.isCombo==true" >
+                AND o.is_combo = 1
+            </if>
+            <if test="params.isCombo!=null and params.isCombo==false" >
+                AND o.is_combo != 1
             </if>
             <!-- 部门 -->
             <if test="params.department!=null and params.department.size>0">
