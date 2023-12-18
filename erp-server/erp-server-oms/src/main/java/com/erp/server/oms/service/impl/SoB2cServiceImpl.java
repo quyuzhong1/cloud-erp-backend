@@ -781,7 +781,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submitDelivery(String id) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -854,9 +853,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 下出库单的命令
          */
         if (isApi) {
-            thirdWarehouseCreateOutStock(id, logisticsChannelId, overseasWarehouseList.get(0), list);
+            try {
+                //下出库单命令
+                thirdWarehouseCreateOutStock(id, logisticsChannelId, overseasWarehouseList.get(0), list);
+            } catch (Exception e) {
+                //TODO 记录异常订单信息
+                log.error("B2C订单【{}】下出库单异常", entity.getCode(), e.getMessage());
+
+            }
+
         } else {
-            //生成发货单  todo
+            //TODO生成发货单
         }
         this.updateById(entity);
         //操作日志
@@ -1434,6 +1441,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         SoB2cLogisticsDTO.ViewDTO logisticsDTO = new SoB2cLogisticsDTO.ViewDTO();
         BeanMapperUtils.copy(soB2cLogisticsEntity, logisticsDTO);
+        //渠道id
+        String logisticsChannelId=soB2cLogisticsEntity.getLogisticsChannelId();
+        String logisticsChannelName="";
+        if(StringUtils.isNotBlank(logisticsChannelId)){
+            LogisticsChannelEntity channelEntity=logisticsFeign.getChannelById(logisticsChannelId);
+            if(Objects.nonNull(channelEntity)){
+                logisticsChannelName=channelEntity.getName();
+            }
+        }
+        logisticsDTO.setLogisticsChannelName(logisticsChannelName);
         data.setLogisticsDTO(logisticsDTO);
         //买家
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
@@ -3158,8 +3175,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     channelId(existChannelId).trackNo(code).build();
             Boolean cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
-            if(!cancelResult){
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI,code);
+            if (!cancelResult) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
             }
         }
         if (isUpdate) {
