@@ -124,6 +124,15 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     public PagingVO<OverseasInventoryDTO.ListDTO> paging(PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
         OverseasInventoryDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        // 查询关联仓库ID
+        if (CollectionUtils.isNotEmpty(dto.getParams().getWarehouseIdList())){
+            List<OverseasProviderDTO.WarehouseDTO> warehouseDTOList = overseasProviderService.listProviderWarehouseByIds(dto.getParams().getWarehouseIdList());
+            if (CollectionUtils.isEmpty(warehouseDTOList)){
+                return new PagingVO<>(new Page<>());
+            }
+            List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
+            params.setPlatformWarehouseCodeList(codeList);
+        }
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())){
