@@ -37,6 +37,7 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -500,6 +501,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Override
     public LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return new LogisticsBillDTO.BaseDTO();
+        }
         return baseMapper.getBaseByTrackNo(trackNo);
     }
 

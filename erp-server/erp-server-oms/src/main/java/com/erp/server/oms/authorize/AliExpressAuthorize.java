@@ -1,4 +1,4 @@
-package com.erp.server.oms.service.authorize;
+package com.erp.server.oms.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -20,11 +20,9 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.dto.request.RefreshTokenRequest;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
-import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.AuthSaveData;
+import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -52,7 +50,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.ALI_EXPRESS)
+@PlatformAnnotate(method = PlatformDictEnum.ALI_EXPRESS)
 public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;

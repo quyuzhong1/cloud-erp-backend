@@ -1,11 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryDetailMapper;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +23,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -37,6 +42,8 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -60,9 +67,33 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
         return lambdaQuery().in(SoB2cDeliveryDetailEntity::getMainId, mainIds).list();
     }
 
+    @Override
+    public List<SoB2cDeliveryDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
+        if(CollectionUtils.isEmpty(soDetailIdList)){
+         return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoB2cDeliveryDetailEntity::getSourceDetailId, soDetailIdList).list();
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
+        //查询销售订单详情信息
+        List<String> soDetailIds = entities.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+        List<SoB2cDetailEntity> soB2cDetailEntities = soB2cFeign.listDetailByIds(soDetailIds);
+
+        //设置详情字段
+        for (SoB2cDeliveryDetailEntity entity : entities) {
+            entity.setMainId(mainId);
+
+            //匹配销售单详情，映射仓库字段
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntities.stream().filter(req -> req.getId().equals(entity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soB2cDetailEntity)) {
+                entity.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+                entity.setWarehouseName(soB2cDetailEntity.getWarehouseName());
+                entity.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+            }
+        }
     }
 }

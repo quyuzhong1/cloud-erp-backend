@@ -358,8 +358,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 生成销售出库单
      * @author yl
      * @date 2023-12-11 16:16
-     * @param dto
+     * @param b2cSoId 销售订单id
      * @return 
      */
-    Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto);
+    Boolean generateB2cSoOutstock(String b2cSoId);
 }

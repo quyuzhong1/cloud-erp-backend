@@ -9,10 +9,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -136,8 +133,8 @@ public class LogisticsBillFeignController {
      * @param trackNo
      * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
      **/
-    @PostMapping("/getLogisticsBillByTrackNo")
-    public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestBody String trackNo) {
+    @GetMapping("/getLogisticsBillByTrackNo")
+    public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo) {
         LogisticsBillDTO.BaseDTO entity = logisticsBillService.getBaseByTrackNo(trackNo);
         return entity;
     }

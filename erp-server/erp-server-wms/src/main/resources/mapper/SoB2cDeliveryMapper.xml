@@ -17,6 +17,7 @@
         SELECT
         sbd.id,
         sbd.code,
+        sbd.source_id,
         sbd.dict_platform,
         sbd.shop_id,
         sbd.shop_name,

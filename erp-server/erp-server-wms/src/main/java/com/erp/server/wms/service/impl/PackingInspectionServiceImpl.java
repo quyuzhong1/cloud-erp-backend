@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -56,6 +57,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     private RedisTemplate<String, String> redisTemplate;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto) {
         if(PackingInspectionOperationEnum.BY_ORDER.getCode().equals(dto.getOperationType())){
             throw new ServiceException("不支持该操作类型");
@@ -184,13 +186,11 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             }
         }
         this.saveViewDTO(entity.getId(),viewDTO);
-        if(dto.getIsAutoDelivery()){
-            if(entity.getIsInspection()){
-                //将发货状态更新为已发货
-                entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-                if(!soB2cDeliveryService.updateById(entity)){
-                    throw new ServiceException("发货单更新失败");
-                }
+        if(dto.getIsAutoDelivery() && entity.getIsInspection()){
+            //将发货状态更新为已发货
+            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            if (!soB2cDeliveryService.updateById(entity)) {
+                throw new ServiceException("发货单更新失败");
             }
         }
         return viewDTO;

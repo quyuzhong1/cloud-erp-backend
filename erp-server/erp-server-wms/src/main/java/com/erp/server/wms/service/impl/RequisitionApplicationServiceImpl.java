@@ -592,7 +592,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
@@ -815,7 +815,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     TransferInfoDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.radFinishListToTransferInfoDetail(detailEntity);
                     detailAddDto.setSkuId(bomChildrenSku.getSkuId());
                     detailAddDto.setSkuNo(bomChildrenSku.getSkuNo());
-                    detailAddDto.setQty(detailEntity.getApproveQty() * bomChildrenSku.getQuantity());
+                    detailAddDto.setQty(detailEntity.getPickingQty() * bomChildrenSku.getQuantity());
 
                     //虚拟仓暂无仓位
                     detailAddDto.setOutWarehouseLocation("");
@@ -828,7 +828,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).distinct().findFirst().orElse(new SkuVO());
                 detailAddDto.setSkuId(skuVO.getSkuId());
                 detailAddDto.setSkuNo(skuVO.getSkuNo());
-                detailAddDto.setQty(detailEntity.getApproveQty());
+                detailAddDto.setQty(detailEntity.getPickingQty());
                 //虚拟仓暂无仓位
                 detailAddDto.setOutWarehouseLocation("");
                 detailAddDtoList.add(detailAddDto);

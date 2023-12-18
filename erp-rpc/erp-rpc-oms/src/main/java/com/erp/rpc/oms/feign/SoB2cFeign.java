@@ -6,6 +6,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,7 +39,7 @@ public interface SoB2cFeign {
      * @return
      */
     @PostMapping("/feign/soB2c/listDetailByIds")
-    List<SoB2cDetailEntity> listDetailByIds(List<String> soDetailIdList);
+    List<SoB2cDetailEntity> listDetailByIds(@RequestBody List<String> soDetailIdList);
 
     /**
      * 根据主表id查询B2C订单主表信息
@@ -46,5 +47,11 @@ public interface SoB2cFeign {
      * @return
      */
     @PostMapping("/feign/soB2c/listByIds")
-    List<SoB2cEntity> listByIds(List<String> soIds);
+    List<SoB2cEntity> listByIds(@RequestBody List<String> soIds);
+
+    /**
+     * 更改销售订单已发货
+     */
+    @PostMapping("/feign/soB2c/orderShipped")
+    SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId);
 }

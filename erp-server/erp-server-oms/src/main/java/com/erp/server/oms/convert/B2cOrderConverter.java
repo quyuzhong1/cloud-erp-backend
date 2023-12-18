@@ -2,9 +2,11 @@ package com.erp.server.oms.convert;
 
 import com.common.business.dto.PlatformProductDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import org.mapstruct.Mapper;
@@ -88,4 +90,17 @@ public interface B2cOrderConverter {
     })
     ThirdWarehouseCreateOutboundReq.Item convertThirdWarehouseItem(SoB2cDetailEntity detail);
     List<ThirdWarehouseCreateOutboundReq.Item> convertThirdWarehouseItem(List<SoB2cDetailEntity> detailList);
+
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "planQty", source = "qty"),
+            @Mapping(target = "actualQty", source = "qty"),
+            @Mapping(target = "warehouseLocation", source = "warehouseLocation"),
+            @Mapping(target = "sourceDetailId", source = "sourceDetailId"),
+            @Mapping(target = "soDetailId", source = "soDetailId"),
+    })
+    SoOutstockDetailDTO.AddDTO convertOutstockDetail(SoB2cDetailDTO.OutstockDTO detail);
+    List<SoOutstockDetailDTO.AddDTO> convertOutstockDetail(List<SoB2cDetailDTO.OutstockDTO> detailList);
 }

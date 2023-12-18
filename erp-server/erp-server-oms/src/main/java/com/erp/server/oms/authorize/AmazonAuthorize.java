@@ -1,7 +1,6 @@
-package com.erp.server.oms.service.authorize;
+package com.erp.server.oms.authorize;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -26,13 +25,12 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
-import com.erp.server.oms.service.AuthSaveData;
+import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
@@ -41,10 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -58,7 +52,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.AMAZON)
+@PlatformAnnotate(method = PlatformDictEnum.AMAZON)
 public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;

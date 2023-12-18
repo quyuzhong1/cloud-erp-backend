@@ -51,6 +51,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -149,6 +150,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SysDictFeign sysDictFeign;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -284,10 +288,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 出库日期
         soOutstock.setBillDate(LocalDate.now());
         Boolean addResult = this.save(soOutstock);
-        String b2b=OrderTypeEnum.B2B.getCode();
+        String b2b = OrderTypeEnum.B2B.getCode();
         //添加成功
         if (addResult) {
-            soOutstockDetailService.add(id,addDetailList,b2b);
+            soOutstockDetailService.add(id, addDetailList, b2b);
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "新增操作");
@@ -625,11 +629,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setSalesPlatform(salesPlatform);
             addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
             //国家id
-            String countryId=soInfo.getCountryId();
-            List<DictCountryEntity>  countryList= sysDictFeign.listCountryByIds(Arrays.asList(countryId));
-            if(CollectionUtils.isNotEmpty(countryList)){
+            String countryId = soInfo.getCountryId();
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+            if (CollectionUtils.isNotEmpty(countryList)) {
                 addDTO.setToCountry(countryList.get(0).getNameCn());
-            }else{
+            } else {
                 addDTO.setToCountry("");
             }
             addDTO.setSourceCode(soInfo.getCode());
@@ -1583,7 +1587,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         boolean update = lambdaUpdate().in(SoOutstockEntity::getId, dto.getIdList())
                 .set(SoOutstockEntity::getTrackNo, dto.getTrackNo())
                 .update();
-        LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO=new LogisticsBillDTO.UpdateTrackNoDTO();
+        LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO = new LogisticsBillDTO.UpdateTrackNoDTO();
         updateTrackNoDTO.setTrackNo(dto.getTrackNo());
         updateTrackNoDTO.setOutstockIdList(dto.getIdList());
         logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
@@ -1917,13 +1921,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 生成销售出库单
+     *
+     * @param soB2cId 销售订单id
+     * @return
      * @author yl
      * @date 2023-12-11 16:17
-     * @param dto
-     * @return 
      */
     @Override
-    public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean generateB2cSoOutstock(String soB2cId) {
+        SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.orderShipped(soB2cId);
         //来源类型
         String sourceType = dto.getSourceType();
         if (StringUtils.isBlank(sourceType)) {
@@ -1949,7 +1957,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = this.save(soOutstock);
         //添加成功
         if (addResult) {
-            soOutstockDetailService.add(soOutstock.getId(), detailList,soOutstock.getOrderType());
+            soOutstockDetailService.add(soOutstock.getId(), detailList, soOutstock.getOrderType());
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
@@ -1964,7 +1972,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String warehouseId = soOutstock.getWarehouseId();
         //用户信息
         if (StringUtils.isNotBlank(soOutstock.getSellerId())) {
-            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList( soOutstock.getSellerId()));
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(soOutstock.getSellerId()));
             if (CollectionUtils.isNotEmpty(userList)) {
                 //销售员
                 String sellerName = userList.stream().filter(obj -> obj.getUserId().equals(soOutstock.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
@@ -1976,10 +1984,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99002);
         }
         soOutstock.setWarehouseName(warehouse.getName());
-        String orgId=soOutstock.getWarehouseOrgId();
-        if(StringUtils.isNotBlank(orgId)){
-            SysAccountingCompanyEntity org= sysUserFeign.getCompanyById(orgId);
-            if(Objects.nonNull(org)){
+        String orgId = soOutstock.getWarehouseOrgId();
+        if (StringUtils.isNotBlank(orgId)) {
+            SysAccountingCompanyEntity org = sysUserFeign.getCompanyById(orgId);
+            if (Objects.nonNull(org)) {
                 soOutstock.setWarehouseOrgName(org.getCompanyName());
             }
         }

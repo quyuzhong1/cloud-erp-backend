@@ -116,7 +116,14 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         /**
         * 产品id
         */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
+
+        /**
+        * skuNo
+        */
+        @NotBlank(message = "skuNo不能为空")
+        private String skuNo;
 
         /**
         * 发货数量
