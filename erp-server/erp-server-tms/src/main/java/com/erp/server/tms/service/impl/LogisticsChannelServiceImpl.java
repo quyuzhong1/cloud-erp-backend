@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.core.constant.EnumMessage;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
@@ -167,7 +168,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setSortingCode(item.getSortingCode());
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
-            String timeUnitName = UnitEnum.getName(timeUnit);
+            String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class,timeUnit);
             base.setEffectiveTimeStr(effectiveTime.concat(timeUnitName));
             String id = item.getId();
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
