@@ -34,6 +34,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -46,10 +47,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -838,6 +836,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             //TODO生成发货单
+            SoB2cDeliveryDTO.AddDTO soB2cDelivery =B2cOrderConverter.INSTANCE.convertDelivery(entity);
+            List<SoB2cDeliveryDetailDTO.AddDTO> soB2cDeliveryDetailList=B2cOrderConverter.INSTANCE.convertDeliveryDetail(list);
+            soB2cDelivery.setDetailList(soB2cDeliveryDetailList);
+            soB2cDeliveryFeign.addSoB2cDelivery(soB2cDelivery);
         }
         this.updateById(entity);
         //操作日志
@@ -2147,7 +2149,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
-        if(map.isEmpty()){
+        if (map.isEmpty()) {
             //匹配审核规则
             handleMatchJson(id, detailList, map);
         }
@@ -2380,7 +2382,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return map;
     }
-
 
 
     /**
@@ -3187,7 +3188,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Async
-    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String,Object> map) {
+    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         Boolean isSuccess = this.approveRule(id, detailList, map);
         if (isSuccess) {
             //自动匹配配货规则
