@@ -18,6 +18,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.api.TokensApi;
@@ -103,7 +104,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     /**

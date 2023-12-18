@@ -12,6 +12,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
@@ -142,7 +143,7 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.WALMART.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
 

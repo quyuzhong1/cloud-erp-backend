@@ -10,6 +10,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
 import com.common.business.handler.AbstractRefundHandler;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonRefundDTO;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +48,6 @@ public class AmazonRefundHandler extends AbstractRefundHandler<PlatformAmazonRef
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 }
