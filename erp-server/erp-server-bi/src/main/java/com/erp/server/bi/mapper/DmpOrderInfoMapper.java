@@ -88,34 +88,6 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
     List<TargetFinishDTO.ViewDTO>  listSalesBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("dataType") String dataType);
 
     /**
-     * @description: 查询销售额
-     * @author Will
-     * @date: 2023/9/25 9:34
-     * @param dto 
-     * @param groupViewDTO 
-     * @return List<ViewDTO> 
-     */
-    List<TargetFinishDTO.ViewDTO>  listSalesAmountBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
-    /**
-     * @description: 查询销量
-     * @author Will
-     * @date: 2023/9/25 9:34
-     * @param dto 
-     * @param groupViewDTO 
-     * @return List<ViewDTO> 
-     */
-    List<TargetFinishDTO.ViewDTO>  listSalesQtyBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
-    /**
-     * @description: 查询订单净销售额
-     * @author Will
-     * @date: 2023/9/25 9:34
-     * @param dto 
-     * @param groupViewDTO
-     * @return List<ViewDTO> 
-     */
-    List<TargetFinishDTO.ViewDTO>  listNetSalesAmountBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
-
-    /**
      * @description: 查询订单退款数据
      * @author Will
      * @date: 2023/10/8 14:30

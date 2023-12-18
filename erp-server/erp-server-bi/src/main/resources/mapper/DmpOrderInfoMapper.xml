@@ -435,6 +435,7 @@
             #{params.permissionSql}
         </if>
     </sql>
+
     <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
         <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
@@ -456,6 +457,7 @@
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
     </select>
+
     <select id="countSalePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         <if test="rangeVOS != null and rangeVOS.size > 0">
             <foreach collection="rangeVOS" item="rangeVO" open="(" separator=" union all" close=")">
@@ -485,16 +487,19 @@
             </foreach>
         </if>
     </select>
+
     <select id="countSalesVolume" resultType="java.lang.Integer"  parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
-        SUM(coalesce(doit.quantity, 0)) AS salesVolume
-        FROM dmp_order_info AS doi
-        left join  dmp_order_item AS doit on doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <where>
-            <include refid="conditionSql"/>
-        </where>
+            SUM(coalesce(doit.quantity, 0)) AS salesVolume
+        <choose>
+            <when test="params.timeType == '1'">
+                FROM dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                FROM dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
     </select>
 
     <select id="listSalesBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
@@ -550,51 +555,6 @@
             ,o.sku_no
         </if>
     </select>
-
-    <select id="listSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
-        select
-             ${viewParams.viewData},
-             sum(COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
-        from dmp_order_info doi
-        left join dmp_order_item doit on doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <where>
-            <include refid="base_where_sql"/>
-            <include refid="conditionSql"/>
-        </where>
-        group by ${viewParams.groupData}
-    </select>
-
-    <select id="listSalesQtyBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
-        select
-        ${viewParams.viewData},
-        sum(COALESCE(doit.quantity,0)) as value
-        from dmp_order_info doi
-        left join dmp_order_item doit on doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <where>
-            <include refid="base_where_sql"/>
-            <include refid="conditionSql"/>
-        </where>
-        group by ${viewParams.groupData}
-    </select>
-
-    <select id="listNetSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
-        select
-        ${viewParams.viewData},
-        sum(COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1)) as value
-        from dmp_order_info doi
-        inner join dmp_order_item doit on doi.id = doit.order_id
-        <where>
-            <include refid="base_where_sql"/>
-
-            <include refid="conditionSql"/>
-        </where>
-        group by ${viewParams.groupData}
-    </select>
-
 
     <select id="listRefundBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
