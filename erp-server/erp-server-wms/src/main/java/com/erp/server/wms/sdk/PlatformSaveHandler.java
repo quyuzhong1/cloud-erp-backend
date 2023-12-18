@@ -14,8 +14,8 @@ import java.util.Map;
 
 @Component
 @Slf4j
-public class DliverySaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAnnotate, IPlatformDeliveryService> {
-    private static final Map<PlatformDictEnum, IPlatformDeliveryService> PAY_MAP = Maps.newHashMap();
+public class PlatformSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAnnotate, IPlatformService> {
+    private static final Map<PlatformDictEnum, IPlatformService> PAY_MAP = Maps.newHashMap();
 
     @Override
     public Class<PlatformAnnotate> getAnnotation() {
@@ -23,22 +23,22 @@ public class DliverySaveHandler extends AbstractSparrowAnnotationBeanMap<Platfor
     }
 
     @Override
-    public void refresh(Map<PlatformAnnotate, IPlatformDeliveryService> annotationBeanMap) {
+    public void refresh(Map<PlatformAnnotate, IPlatformService> annotationBeanMap) {
         annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
     public static String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        IPlatformDeliveryService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.getShopAuthorizeUrl(dto);
     }
 
     public static Boolean shopAuthorize(ShopAuthorizeDTO dto){
-        IPlatformDeliveryService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.shopAuthorize(dto);
     }
 
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
-        IPlatformDeliveryService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.cancelAuthorize(dto);
     }
 

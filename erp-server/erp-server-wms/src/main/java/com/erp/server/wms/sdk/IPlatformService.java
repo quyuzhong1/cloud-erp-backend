@@ -9,7 +9,7 @@ import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
  * @Author Luo_WG
  * @Date 2023/12/18 15:53
  **/
-public interface IPlatformDeliveryService<T> {
+public interface IPlatformService<T> {
 
     /**
      * 获取平台授权地址
