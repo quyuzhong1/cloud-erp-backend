@@ -75,6 +75,16 @@ public class OverseasInventoryDTO implements Serializable {
          * 是否不显示0库存: true=不显示0库存, false=显示0库存
          */
         private Boolean hasNotZero;
+
+        /**
+         * 仓库ID列表
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 平台仓库代号列表
+         */
+        private List<String> platformWarehouseCodeList;
     }
 
 

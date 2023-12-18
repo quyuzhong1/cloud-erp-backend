@@ -1028,7 +1028,7 @@
         SUM ( i.quantity ) AS salesQuantity, o.${findTime} AS flagDate
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o
-        ON o.order_id = o.ID
+        ON i.order_id = o.ID
         WHERE (o.shop_no!=null or o.shop_no!='')
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">

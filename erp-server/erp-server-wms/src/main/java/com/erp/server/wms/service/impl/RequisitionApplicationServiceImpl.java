@@ -199,7 +199,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //字段映射处理
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
@@ -208,7 +208,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             handleListDTO.setProductName(skuVO.getSkuName());
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
+                            && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                    ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
             } else {
@@ -235,7 +238,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.HandleListDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //调出仓库和调入仓库不一致的单据
         Map<String, List<RequisitionApplicationDTO.HandleListDTO>> map = list.stream().filter(req -> !req.getFromWarehouseId().equals(req.getToWarehouseId())).collect(Collectors.groupingBy(req -> req.getFromWarehouseId().concat(",").concat(req.getToWarehouseId())));
@@ -272,7 +275,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //字段映射处理
         for (RequisitionApplicationDTO.FinishListDTO finishListDTO : list) {
@@ -285,7 +288,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             finishListDTO.setProductName(skuVO.getSkuName());
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(finishListDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(finishListDTO.getSkuId())
+                            && req.getBomVersion().equals(finishListDTO.getBomVersion())
+                    ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 finishListDTO.setIsCombination(Boolean.TRUE);
             } else {
@@ -524,7 +530,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //来源类型中文
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
@@ -545,7 +551,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             detailView.setUsableQty(inventoryService.getUsableInventoryTotal(data.getRequisitionWarehouseId(), skuVO.getSkuId()));
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
+                    ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 detailView.setIsCombination(Boolean.TRUE);
             } else {
@@ -568,10 +577,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(listDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(listDTO.getSkuId())
+                            && req.getBomVersion().equals(listDTO.getBomVersion())
+                    ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 listDTO.setIsCombination(Boolean.TRUE);
             } else {
@@ -592,7 +604,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
@@ -815,7 +827,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     TransferInfoDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.radFinishListToTransferInfoDetail(detailEntity);
                     detailAddDto.setSkuId(bomChildrenSku.getSkuId());
                     detailAddDto.setSkuNo(bomChildrenSku.getSkuNo());
-                    detailAddDto.setQty(detailEntity.getApproveQty() * bomChildrenSku.getQuantity());
+                    detailAddDto.setQty(detailEntity.getPickingQty() * bomChildrenSku.getQuantity());
 
                     //虚拟仓暂无仓位
                     detailAddDto.setOutWarehouseLocation("");
@@ -828,7 +840,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).distinct().findFirst().orElse(new SkuVO());
                 detailAddDto.setSkuId(skuVO.getSkuId());
                 detailAddDto.setSkuNo(skuVO.getSkuNo());
-                detailAddDto.setQty(detailEntity.getApproveQty());
+                detailAddDto.setQty(detailEntity.getPickingQty());
                 //虚拟仓暂无仓位
                 detailAddDto.setOutWarehouseLocation("");
                 detailAddDtoList.add(detailAddDto);

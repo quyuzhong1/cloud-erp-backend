@@ -13,17 +13,34 @@
 
 package com.erp.server.dmp.amz;
 
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.MerchantFulfillmentApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.merchantfulfillment.*;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.annotation.Resource;
 
 /**
  * API tests for MerchantFulfillmentApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TestPropertySource("classpath:bootstrap-dev.yml")
+@Profile("dev")
 public class MerchantFulfillmentApiTest {
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     private final MerchantFulfillmentApi api = null;
 
@@ -119,9 +136,16 @@ public class MerchantFulfillmentApiTest {
     @Test
     public void getEligibleShipmentServicesTest() throws ApiException {
         GetEligibleShipmentServicesRequest body = null;
-        GetEligibleShipmentServicesResponse response = api.getEligibleShipmentServices(body);
 
+        String shopId = "1734478618727288833";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        GetEligibleShipmentServicesResponse response = api.getEligibleShipmentServices(body);
         // TODO: test validations
+
     }
     
     /**
