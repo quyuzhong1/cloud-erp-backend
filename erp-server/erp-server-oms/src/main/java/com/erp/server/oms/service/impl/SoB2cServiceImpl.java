@@ -310,6 +310,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        //未付款数据不能编辑
+        if (ObjectUtil.isEmpty(old.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(old.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_UPDATE,old.getCode());
+        }
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
 
@@ -1867,9 +1871,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        //作废和冻结不支持提交
         if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus()) || SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_SUBMIT);
+            throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_SUBMIT,entity.getCode());
         }
+        //未付款数据不支持提交
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus()) ) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT,entity.getCode());
+        }
+        //汇率不存在不支持提交
+        if (MathUtil.compareTo(entity.getExchangeRate(),MathUtil.ZERO) == MathUtil.ZERO) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT,entity.getCode());
+        }
+
         return;
     }
 
@@ -1930,6 +1944,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
             params.setAbnormalTypeList(Arrays.stream(SoB2cAbnormalTypeEnum.values()).map(SoB2cAbnormalTypeEnum::getCode).collect(Collectors.toList()));
             params.setInvalidStatus(Boolean.FALSE);
+            params.setPayStatusList(Arrays.asList(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
         }
         //审核中
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(params.getTabFlag())) {
@@ -1945,6 +1960,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
             params.setInvalidStatus(Boolean.FALSE);
         }
