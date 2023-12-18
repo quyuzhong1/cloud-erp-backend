@@ -1,11 +1,9 @@
-package com.erp.server.oms.service.authorize;
+package com.erp.server.oms.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
-import com.common.business.annotation.SaveData;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.AuthorizeDTO;
-import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
 

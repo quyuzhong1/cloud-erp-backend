@@ -1,4 +1,4 @@
-package com.erp.server.oms.service.authorize;
+package com.erp.server.oms.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.RedisCacheConstants;
