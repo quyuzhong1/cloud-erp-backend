@@ -64,5 +64,8 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
     * 新增修改处理数据
     */
     private void handleData(List<SoB2cDeliveryDetailEntity> entities, String mainId) {
+        for (SoB2cDeliveryDetailEntity entity : entities) {
+            entity.setMainId(mainId);
+        }
     }
 }

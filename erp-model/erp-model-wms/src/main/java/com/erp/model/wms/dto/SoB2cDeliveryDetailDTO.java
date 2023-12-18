@@ -116,6 +116,7 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         /**
         * 产品id
         */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
 
         /**
@@ -125,6 +126,17 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         @Min(value = 1,message = "发货数量最小值为1")
         @Max(value = 999999999,message = "发货数量最大值为999999999")
         private Integer deliveryQty;
+
+        /**
+        * 发货仓库Id
+        */
+        @NotBlank(message = "发货仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+        * 发货仓位
+        */
+        private Integer warehouseLocation;
 
         /**
         * 来源详情id

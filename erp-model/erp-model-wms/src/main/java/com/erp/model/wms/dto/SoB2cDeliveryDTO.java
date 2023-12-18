@@ -11,12 +11,12 @@ import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -137,8 +137,10 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String id;
 
         /**
-         * 详情
+         * 明细信息
          */
+        @NotEmpty(message = "明细信息不能为空")
+        @Valid
         private List<SoB2cDeliveryDetailDTO.AddDTO> detailList;
     }
 

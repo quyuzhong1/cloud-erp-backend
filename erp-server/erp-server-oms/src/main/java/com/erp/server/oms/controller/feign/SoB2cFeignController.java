@@ -86,7 +86,7 @@ public class SoB2cFeignController extends BaseController {
      * @return
      */
     @PostMapping("/listByIds")
-    List<SoB2cEntity> listByIds(List<String> soIds) {
+    List<SoB2cEntity> listByIds(@RequestBody List<String> soIds) {
         if(CollectionUtils.isEmpty(soIds)){
             return Collections.emptyList();
         }

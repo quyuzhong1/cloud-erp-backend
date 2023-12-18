@@ -38,7 +38,7 @@ public interface SoB2cFeign {
      * @return
      */
     @PostMapping("/feign/soB2c/listDetailByIds")
-    List<SoB2cDetailEntity> listDetailByIds(List<String> soDetailIdList);
+    List<SoB2cDetailEntity> listDetailByIds(@RequestBody List<String> soDetailIdList);
 
     /**
      * 根据主表id查询B2C订单主表信息
@@ -46,5 +46,5 @@ public interface SoB2cFeign {
      * @return
      */
     @PostMapping("/feign/soB2c/listByIds")
-    List<SoB2cEntity> listByIds(List<String> soIds);
+    List<SoB2cEntity> listByIds(@RequestBody List<String> soIds);
 }

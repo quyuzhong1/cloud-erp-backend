@@ -64,13 +64,4 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return
      */
     LogisticsBillDTO.BaseDTO getBaseByTrackNo(@Param("trackNo") String trackNo);
-
-    /**
-     *
-     * @Author Luo_WG
-     * @Date 2023/12/14 15:44
-     * @param [trackNo]
-     * @return com.erp.model.tms.entity.LogisticsBillEntity
-     **/
-    LogisticsBillEntity getLogisticsBillByTrackNo(String trackNo);
 }
