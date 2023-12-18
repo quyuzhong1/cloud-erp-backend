@@ -48,10 +48,12 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -197,7 +199,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private ThirdWarehouseFeign thirdWarehouseFeign;
 
     @Autowired
-    private SoOutstockFeign soOutstockFeign;
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
 
     @Override
@@ -831,9 +833,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } catch (Exception e) {
                 //TODO 记录异常订单信息
                 log.error("B2C订单【{}】下出库单异常", entity.getCode(), e.getMessage());
-
             }
-
         } else {
             //TODO生成发货单
         }
@@ -3028,8 +3028,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean orderShipped(String id) {
+    public SoOutstockDTO.GenerateB2cDTO orderShipped(String id) {
         SoB2cEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单");
@@ -3064,9 +3063,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //根据主表id 查询出库的信息
         List<SoB2cDetailDTO.OutstockDTO> detailList = soB2cDetailService.listOutstockByMainId(id);
+        if(CollectionUtils.isEmpty(detailList)){
+              throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        dto.setWarehouseId(detailList.get(0).getWarehouseId());
+        dto.setWarehouseName(detailList.get(0).getWarehouseName());
+        dto.setWarehouseOrgId(detailList.get(0).getWarehouseOrgId());
 
+        List<String> soDetailIdList=detailList.stream().map(SoB2cDetailDTO.OutstockDTO::getSoDetailId).collect(Collectors.toList());
+        /**
+         * 发货详情
+         */
+        List<SoB2cDeliveryDetailEntity>  soB2cDeliveryDetailList=  soB2cDeliveryFeign.listBySoDetailIds(soDetailIdList);
+        for(SoB2cDetailDTO.OutstockDTO item:detailList){
+           String soDetailId=item.getSoDetailId();
+           String sourceDetailId=soB2cDeliveryDetailList.stream().filter(s->s.getSourceDetailId().equals(soDetailId)).
+                   map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
+            item.setSourceDetailId(sourceDetailId);
+        }
 
-        return soOutstockFeign.generateB2cSoOutstock(dto);
+        List<SoOutstockDetailDTO.AddDTO> wantDetailList=B2cOrderConverter.INSTANCE.convertOutstockDetail(detailList);
+        dto.setDetailList(wantDetailList);
+        return dto;
 
     }
 

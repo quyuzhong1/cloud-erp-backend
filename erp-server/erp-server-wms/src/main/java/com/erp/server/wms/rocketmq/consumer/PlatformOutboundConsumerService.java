@@ -17,6 +17,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -43,6 +44,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private SoOutstockService soOutstockService;
+
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
@@ -61,6 +65,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
         if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             //TODO 已发货自动生成销售出库单并自动审核,扣减可用库存
+            //这个是B2c销售订单id
+            String soB2cId=dto.getReferenceNo();
+           try {
+               soOutstockService.generateB2cSoOutstock(soB2cId);
+           }catch (Exception e){
+             //TODO生成异常单
+           }
+
+
         }
         return ApiResult.success();
     }

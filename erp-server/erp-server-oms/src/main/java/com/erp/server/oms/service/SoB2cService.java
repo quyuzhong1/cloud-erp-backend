@@ -1,6 +1,5 @@
 package com.erp.server.oms.service;
 
-import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -12,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -338,7 +338,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-13 17:40
      */
-    Boolean  orderShipped(String  id);
+    SoOutstockDTO.GenerateB2cDTO  orderShipped(String  id);
 
     /** 
      * @description 运费测算后选择物流渠道

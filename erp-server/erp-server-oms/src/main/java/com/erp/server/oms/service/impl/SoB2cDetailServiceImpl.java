@@ -307,8 +307,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     public List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId) {
         List<SoB2cDetailDTO.OutstockDTO> outstockList=baseMapper.listOutstockByMainId(mainId);
-        List<String> soDetailIdList=outstockList.stream().map(SoB2cDetailDTO.OutstockDTO::getSoDetailId).collect(Collectors.toList());
-        //todo 远程 调用b2c发货单
         return outstockList;
     }
 

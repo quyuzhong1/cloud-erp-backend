@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -34,4 +35,13 @@ public interface SoB2cDeliveryDetailService extends SuperService<SoB2cDeliveryDe
      * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryDetailEntity>
      **/
     List<SoB2cDeliveryDetailEntity> listByMainIds(List<String> mainIds);
+
+    /** 
+     * @description 根据
+     * @param soDetailIdList 销售订单明细
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 11:31
+     */
+    List<SoB2cDeliveryDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
 }
