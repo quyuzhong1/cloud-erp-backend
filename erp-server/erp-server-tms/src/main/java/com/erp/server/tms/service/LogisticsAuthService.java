@@ -105,6 +105,14 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
     ApiResult authLogistics(String id, String logisticsPlatform);
 
     /**
+     * 根据授权信息进行校验
+     * @param logisticsPlatform
+     * @param authConfig
+     * @return
+     */
+    ApiResult authLogistics(String logisticsPlatform,Map<String, String> authConfig);
+
+    /**
      *
      *@parms authId
      *@return authStatus

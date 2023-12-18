@@ -44,6 +44,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -58,6 +61,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -87,6 +93,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -114,6 +123,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -128,6 +140,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
@@ -144,6 +159,9 @@ public class AliExpressShipperService {
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
         String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
         validate(appKey,appSecret,token,url);
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
