@@ -1,9 +1,13 @@
 package com.erp.model.oms.entity;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.oms.dto.SoB2cDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -300,5 +304,34 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
                 '}';
+    }
+
+    /**
+     * 是否是平台仓订单
+     */
+    public Boolean hasPlatformWarehouseOrder() {
+        //亚马逊
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(this.dictPlatform)){
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                //FBA
+                return "AFN".equalsIgnoreCase(labelJsonDTO.getFulfillmentChannel());
+            }
+        }
+        // TODO 速卖通
+
+
+        // 虾皮
+        if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            return true;
+        }
+        if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                //FBA
+                return "WFSFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType()) || "3PLFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType());
+            }
+        }
+        return false;
     }
 }

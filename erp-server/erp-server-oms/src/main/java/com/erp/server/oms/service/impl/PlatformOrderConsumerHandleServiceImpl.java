@@ -88,6 +88,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity);
+
         //财务信息更新保存
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
@@ -101,10 +102,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
-        if (StringUtils.isBlank(receiverEntity.getCustomerId())){
+        if (StringUtils.isBlank(receiverEntity.getId())){
             receiverEntity.setCustomerId(customerB2cEntity.getId());
-            if (!soB2cReceiverService.updateById(receiverEntity)) {
-                throw new ServiceException("记录客户ID失败");
+            if (!soB2cReceiverService.save(receiverEntity)){
+                throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
             }
         }
         //订单状态
@@ -115,7 +116,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //自动匹配订单规则
         if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)) {
             //是否是平台仓订单 true 是
-            Boolean isPlatformWarehouseOrder=Boolean.FALSE;
+            Boolean isPlatformWarehouseOrder= mainEntity.hasPlatformWarehouseOrder();
             Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
             if(isPlatformWarehouseOrder){
                 soB2cService.platformWarehouseOrderHandle(id,map);

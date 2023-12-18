@@ -388,6 +388,11 @@ public class SoB2cDTO implements Serializable {
          * 合并数量
          */
         private Integer mergeCount;
+
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
     }
 
     /**
