@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
@@ -101,6 +102,6 @@ public class AliExpressListingHandler extends AbstractProductHandler<PlatformAli
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.ALI_EXPRESS.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 }
