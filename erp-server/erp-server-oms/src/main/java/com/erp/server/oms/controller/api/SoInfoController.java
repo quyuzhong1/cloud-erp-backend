@@ -15,7 +15,9 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,7 +50,8 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
     /**
      * 获取 tab列表
      *

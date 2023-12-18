@@ -444,7 +444,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     .in(SoReturnEntity::getId, ids)
                     .update();
             //增加广播通知
-            entityList.forEach(obj -> this.syncDataToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -463,9 +463,27 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
      * @param entity
      * @param operate
      */
-    private void syncDataToDmp(SoReturnEntity entity, String operate) {
+    @Override
+    public void syncOrderToDmp(SoReturnEntity entity, String operate) {
+        //判断是否需要推送记录
+        //判断是否需要推送记录
+        if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())){
+            return;
+        }
         //推送同步中台dmp任务
-        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
+                .setMqData(JSON.toJSONString(entity))
+                .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
+                .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
+                .setSourceCode(entity.getCode())
+                .setSourceId(entity.getId())
+                .setSourceType(SourceTypeEnum.SO_RETURN.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(operate);
+        log.info("推送消息开始：{}", dto.toString());
+        String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
+
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //业务id
@@ -481,33 +499,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
             return Boolean.TRUE;
         });
-    }
-
-    /**
-     * 推送订单到mq
-     *
-     * @param entity
-     * @param syncOperate
-     */
-    @Override
-    public String syncOrderToDmp(SoReturnEntity entity, String syncOperate) {
-        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(entity))
-                .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
-                .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
-                .setSourceCode(entity.getCode())
-                .setSourceId(entity.getId())
-                .setSourceType(SourceTypeEnum.SO_RETURN.getCode())
-                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
-                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
-                .setSyncOperate(syncOperate);
-        log.info("推送消息开始：{}", dto.toString());
-        //推送mq
-        try {
-            return dmpTaskFeign.savePullTask(dto);
-        } catch (Exception e) {
-            throw new ServiceException(String.format("同步数据中台异常:%s", e.getMessage()));
-        }
     }
 
     @Override
@@ -542,7 +533,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .in(SoReturnEntity::getId, ids)
                 .update();
         //增加广播通知
-        entityList.forEach(obj -> this.syncDataToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货订单【%s】", ModuleTypeEnum.SO_RETURN.getCode(), pairList, "反审核操作");

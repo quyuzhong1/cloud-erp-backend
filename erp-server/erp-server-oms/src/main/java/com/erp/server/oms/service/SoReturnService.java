@@ -240,5 +240,5 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      **/
     SoReturnDTO.View pdaView(String id);
 
-    String syncOrderToDmp(SoReturnEntity entity, String syncOperate);
+    void syncOrderToDmp(SoReturnEntity entity, String syncOperate);
 }

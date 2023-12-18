@@ -1134,6 +1134,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            //推送同步中台dmp任务
+            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1212,6 +1214,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
             // TODO 收款字段需补
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            //推送同步中台dmp任务
+            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -1330,6 +1334,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //推送金蝶
             if (CollectionUtils.isNotEmpty(syncList)) {
                 syncList.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+                //推送同步中台dmp任务
+                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
             }
         }
 
@@ -3179,37 +3185,5 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
         skuCostProfitResult.setExchangeRate(rate);
         return skuCostProfitResult;
-    }
-
-    /**
-     * 推送订单到mq
-     *
-     * @param soInfoEntity
-     * @param syncOperate
-     */
-    @Override
-    public void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
-
-        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(soInfoEntity))
-                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
-                .setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName())
-                .setSourceCode(soInfoEntity.getCode())
-                .setSourceId(soInfoEntity.getId())
-                .setSourceType(SourceTypeEnum.SO_INFO.getCode())
-                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
-                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
-                .setSyncOperate(syncOperate);
-        log.info("推送消息开始：{}", dto.toString());
-        //推送mq
-        try {
-            Boolean b = dmpTaskFeign.sendMqAndSaveTask(dto);
-            if (Objects.isNull(b) || !b) {
-                throw new ServiceException("同步数据中台异常");
-            }
-        } catch (Exception e) {
-            throw new ServiceException(String.format("同步数据中台异常:%s", e.getMessage()));
-        }
-        log.info("推送消息结束：");
     }
 }
