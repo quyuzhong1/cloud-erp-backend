@@ -188,13 +188,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
         List<SoB2cDeliveryEntity> list = this.listByIds(ids);
-        long count = list.stream()
-                .filter(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())
-                        && !RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(req.getStatus()))
-                .count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
-        }
 
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
@@ -255,6 +248,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseName).reversed()
                         .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation).reversed()
                 ).collect(Collectors.toList());
+
+        //修改打印状态
+        lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).update();
         return resultList;
     }
 
