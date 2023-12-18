@@ -74,13 +74,14 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 来源编码
         orderDTO.setSourceCode("");
         // 标签json
+        Map<String, String> lableMap = new HashMap<>();
         if (Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(dto.getOrder().getFulfillmentChannel().getValue())) {
-            Map<String, String> lableMap = new HashMap<>();
             lableMap.put("FulfillmentChannel", "AFN");
-            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
-        } else {
-            orderDTO.setLabelJson("{}");
         }
+        if (Order.OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(dto.getOrder().getOrderStatus())){
+            lableMap.put("amazonStatus", "Unfulfillable");
+        }
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
 
         // 订单日期
