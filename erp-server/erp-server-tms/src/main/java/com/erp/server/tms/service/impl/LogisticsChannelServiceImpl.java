@@ -233,7 +233,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getCode(), "删除盘点计划单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
         removeById(id);
         List<String> channelIdList = Arrays.asList(id);
         //平台物流映射
@@ -262,7 +262,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         entity.setDisabled(disabled);
         this.updateById(entity);
         String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getName(), "启用/停用");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
 
     }

@@ -257,6 +257,9 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
+        /**
+         * 是否包含平台仓 true 包含
+         */
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
 
