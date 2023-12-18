@@ -264,7 +264,8 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     }
 
     private List<RuleConditionEntity> listDbByRuleId(String ruleId) {
-        return this.lambdaQuery().eq(RuleConditionEntity::getRuleId, ruleId).list();
+        return this.lambdaQuery().eq(RuleConditionEntity::getRuleId, ruleId).
+        orderByAsc(RuleConditionEntity::getIndex).list();
     }
 
 
