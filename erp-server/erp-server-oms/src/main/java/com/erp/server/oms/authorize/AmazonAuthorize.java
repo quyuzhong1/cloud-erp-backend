@@ -25,7 +25,7 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
-import com.erp.server.oms.service.AuthSaveData;
+import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.AMAZON)
+@PlatformAnnotate(method = PlatformDictEnum.AMAZON)
 public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;

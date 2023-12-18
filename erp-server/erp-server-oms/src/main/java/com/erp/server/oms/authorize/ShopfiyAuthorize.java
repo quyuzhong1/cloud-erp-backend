@@ -2,6 +2,7 @@ package com.erp.server.oms.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
+import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.AuthorizeDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -34,7 +35,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.SHOPIFY)
+@PlatformAnnotate(method = PlatformDictEnum.SHOPIFY)
 public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
 
     @Resource

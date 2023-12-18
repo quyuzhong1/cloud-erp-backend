@@ -17,7 +17,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.AuthSaveData;
+import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -44,7 +44,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.WALMART)
+@PlatformAnnotate(method = PlatformDictEnum.WALMART)
 public class WalmartAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;

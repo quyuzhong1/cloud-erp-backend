@@ -22,7 +22,7 @@ import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.AuthSaveData;
+import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -50,7 +50,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.ALI_EXPRESS)
+@PlatformAnnotate(method = PlatformDictEnum.ALI_EXPRESS)
 public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;
