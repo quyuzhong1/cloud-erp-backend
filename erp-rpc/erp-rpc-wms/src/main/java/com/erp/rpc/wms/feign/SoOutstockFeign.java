@@ -65,17 +65,17 @@ public interface SoOutstockFeign {
      * @return
      */
     @PostMapping("feign/soOutstock/getSoOutstockDetailByDetailId")
-    public List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
+     List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
 
     /**
      * 生成b2c 销售出库单
      * @description
-     * @param dto
+     * @param b2cSoId 销售订单-b2c
      * @author Lambda
      * @return Boolean
      * @create 2023-12-13 18:18
      */
     @PostMapping("feign/soOutstock/generateB2cSoOutstock")
-    Boolean generateB2cSoOutstock(@RequestBody SoOutstockDTO.GenerateB2cDTO dto);
+    Boolean generateB2cSoOutstock(@RequestBody String b2cSoId);
 
 }

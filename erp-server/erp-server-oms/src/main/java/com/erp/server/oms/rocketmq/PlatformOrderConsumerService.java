@@ -1,6 +1,5 @@
 package com.erp.server.oms.rocketmq;
 
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -16,6 +15,8 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -65,6 +66,9 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private CustomerB2cContactService customerB2cContactService;
     @Resource
     private CustomerB2cSellerService customerB2cSellerService;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+
     @Resource
     private ShopInfoService shopInfoService;
 
@@ -121,13 +125,15 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         if (!soB2cReceiverService.updateById(receiverEntity)) {
             throw new ServiceException("记录客户ID失败");
         }
-
-
+        //订单状态
+        String billStatus = mainEntity.getBillStatus();
+        //已发货
+        String shippedCode=SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String id=mainEntity.getId();
         //自动匹配订单规则
-        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)) {
             //是否是平台仓订单 true 是
             Boolean isPlatformWarehouseOrder=Boolean.FALSE;
-            String id=mainEntity.getId();
             Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
             if(isPlatformWarehouseOrder){
                 soB2cService.platformWarehouseOrderHandle(id,map);
@@ -135,8 +141,17 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
                 //拉取订单正常处理
                 soB2cService.pullOrderHandle(id,detailList,map);
             }
+        }
+        //已发货就要生成销售出库单
+        if(shippedCode.equalsIgnoreCase(billStatus)){
+            try {
+                soOutstockFeign.generateB2cSoOutstock(id);
+            }catch (Exception e){
+               log.error("B2C订单【{}】 更改状态为已发货， 生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
+            }
 
         }
+
         return ApiResult.success();
     }
 }
