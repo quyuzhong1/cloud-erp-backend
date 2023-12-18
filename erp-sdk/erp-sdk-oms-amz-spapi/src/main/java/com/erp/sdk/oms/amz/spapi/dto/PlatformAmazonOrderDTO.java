@@ -1,6 +1,9 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -14,8 +17,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +69,23 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         BeanUtils.copyProperties(dto, orderDTO);
+
+        // 来源类型
+        orderDTO.setSourceType("soB2c");
+        // 来源id
+        orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
+        // 来源编码
+        orderDTO.setSourceCode("");
+        // 标签json
+        if (Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(dto.getOrder().getFulfillmentChannel().getValue())) {
+            Map<String, String> lableMap = new HashMap<>();
+            lableMap.put("FulfillmentChannel", "AFN");
+            orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+        } else {
+            orderDTO.setLabelJson("{}");
+        }
+
+
         // 订单日期
         LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseSystemTime();
         orderDTO.setBillDate(purchaseLocalDateTime.toLocalDate());
@@ -73,8 +95,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
+
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(false);
+        orderDTO.setInvalidStatus(sourceOrder.convertCancel());
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
         // 作废原因
@@ -85,13 +108,16 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         orderDTO.setPayStatus(sourceOrder.convertPayStatus());
+        // 审核状态
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatusStr());
+
         // 订单金额
         orderDTO.setAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 币别（原币）
         orderDTO.setCurrency(null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode());
         // 汇率
-        orderDTO.setExchangeRate(BigDecimal.ONE);
-        // TODO 运费收入
+        orderDTO.setExchangeRate(BigDecimal.ZERO);
+        //  运费
         BigDecimal shippingFee = BigDecimal.ZERO;
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
@@ -112,14 +138,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderDTO.setIsIntercept(false);
         // 拦截备注
         orderDTO.setInterceptRemark("");
-        // 来源类型
-        orderDTO.setSourceType("soB2c");
-        // 来源id
-        orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
-        // 来源编码
-        orderDTO.setSourceCode("");
-        // 标签json
-        orderDTO.setLabelJson("{}");
+
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）

@@ -230,7 +230,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(addDTO, soB2cEntity);
 
         // 数据处理
-        handleData(soB2cEntity);
+        handleData(soB2cEntity, true);
         //创建时间
         soB2cEntity.setCreateTime(ObjectUtils.isEmpty(addDTO.getCreateTime()) ? LocalDateTime.now() : addDTO.getCreateTime());
         soB2cEntity.setCode(code);
@@ -298,7 +298,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
 
         // 数据处理
-        handleData(soB2cEntity);
+        handleData(soB2cEntity, true);
 
         log.info("编辑 开始修改B2C销售订单表数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(soB2cEntity);
@@ -1812,13 +1812,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * 新增修改处理数据
      */
-    private void handleData(SoB2cEntity soB2cEntity) {
+    private void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow) {
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             return;
         }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
         BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-        if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO) {
+        if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
             throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
         }
         soB2cEntity.setExchangeRate(exchangeRate);
@@ -2882,7 +2882,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 组合信息
             SoB2cEntity entity = new SoB2cEntity();
             BeanUtils.copyProperties(dto, entity);
-            handleData(entity);
+            handleData(entity, false);
+            if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
+                ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
+                if (null == approveStatusEnum){
+                    String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
+                    throw new ServiceException(msg);
+                }
+                entity.setApproveStatus(approveStatusEnum);
+            }
+            if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+                entity.setApproveStatus(ApproveStatusEnum.REJECT);
+                entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+                entity.setRemark("汇率配置不存在");
+            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
@@ -2908,6 +2921,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if (StringUtils.isBlank(oldEntity.getShopId()) && !BusinessCommonConstants.hasProfile("prod")) {
                 oldEntity.setShopId(dto.getShopId());
+            }
+            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO) && !BusinessCommonConstants.hasProfile("prod")) {
+                handleData(oldEntity, false);
+            }
+            if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
+                ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
+                if (null == approveStatusEnum){
+                    String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
+                    throw new ServiceException(msg);
+                }
+                oldEntity.setApproveStatus(approveStatusEnum);
+            }
+            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+                oldEntity.setRemark("汇率配置不存在");
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
