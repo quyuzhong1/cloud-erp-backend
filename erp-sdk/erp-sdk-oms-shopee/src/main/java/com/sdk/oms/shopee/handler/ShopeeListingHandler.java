@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -128,6 +129,6 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.SHOPEE.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 }

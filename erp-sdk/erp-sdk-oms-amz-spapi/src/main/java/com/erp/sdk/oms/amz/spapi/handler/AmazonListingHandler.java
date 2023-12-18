@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -81,7 +82,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     @Override
