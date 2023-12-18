@@ -119,4 +119,14 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @create 2023-12-13 20:15
      */
     List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
+
+    /** 
+     * @description 根据主表更新仓库
+     * @param mainId
+     * @param warehouseId
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 14:39
+     */
+    void updateWarehouseId(String mainId, String warehouseId,Boolean isMatchWarehouseRule);
 }

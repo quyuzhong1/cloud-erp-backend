@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -123,14 +124,19 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
 
         //自动匹配订单规则
-//        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
-//            JSONObject jsonObject = new JSONObject();
-//            Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList, jsonObject);
-//            if (isSuccess) {
-//                //自动匹配配货规则
-//                soB2cService.distributionRule(mainEntity.getId(), detailList, jsonObject);
-//            }
-//        }
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
+            //是否是平台仓订单 true 是
+            Boolean isPlatformWarehouseOrder=Boolean.FALSE;
+            String id=mainEntity.getId();
+            Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
+            if(isPlatformWarehouseOrder){
+                soB2cService.platformWarehouseOrderHandle(id,map);
+            }else{
+                //拉取订单正常处理
+                soB2cService.pullOrderHandle(id,detailList,map);
+            }
+
+        }
         return ApiResult.success();
     }
 }
