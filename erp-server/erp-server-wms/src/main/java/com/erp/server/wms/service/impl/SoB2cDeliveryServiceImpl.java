@@ -12,6 +12,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -177,7 +178,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
-        return null;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
     @Override
@@ -300,7 +301,47 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public List<SoB2cDeliveryDTO.PrintDistributionDTO> printDistribution(List<String> ids) {
-        return null;
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
+        //查询物流商信息
+        List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
+        List<SoB2cDeliveryDTO.PrintDistributionDTO> list = new ArrayList<>();
+        for (String logisticsChannelId : logisticsChannelIds) {
+            SoB2cDeliveryDTO.PrintDistributionDTO waybillDTO = new SoB2cDeliveryDTO.PrintDistributionDTO();
+            //打印类型：物流面单
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+            //渠道信息
+            waybillDTO.setLogisticsChannelId(logisticsChannelId);
+            List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                waybillDTO.setLogisticsChannelName(collect.get(MathUtil.ZERO).getLogisticsChannelName());
+            }
+            //有运单号数量
+            Integer isTransportNoNum = Math.toIntExact(collect.stream().filter(req -> StringUtils.isNotBlank(req.getTransportNo())).count());
+            waybillDTO.setIsTransportNoNum(isTransportNoNum);
+            //无运单号数量
+            Integer notTransportNoNum = Math.toIntExact(collect.stream().filter(req -> StringUtils.isBlank(req.getTransportNo())).count());
+            waybillDTO.setNotTransportNoNum(notTransportNoNum);
+
+            //详情
+            List<SoB2cDeliveryDTO.PrintDistributionDetailDTO> detailList = new ArrayList<>();
+            for (SoB2cDeliveryEntity deliveryEntity : collect) {
+                SoB2cDeliveryDTO.PrintDistributionDetailDTO distributionDetailDTO = new SoB2cDeliveryDTO.PrintDistributionDetailDTO();
+                distributionDetailDTO.setSoCode(deliveryEntity.getSoCode());
+                distributionDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());
+                distributionDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
+                distributionDetailDTO.setTransportNo(deliveryEntity.getTransportNo());
+                //匹配物流商名称
+                LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(baseDTO)) {
+                    distributionDetailDTO.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+                }
+                detailList.add(distributionDetailDTO);
+            }
+            waybillDTO.setDetailList(detailList);
+            list.add(waybillDTO);
+        }
+        return list;
     }
 
     @Override

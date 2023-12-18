@@ -778,8 +778,9 @@ public class SoB2cController extends BaseController {
         return result?success():failure();
     }
 
-    /** 
-     * @description 运费测算后选择渠道
+    /**
+     * 运费测算后选择渠道
+     * @description
      * @param
      * @author Lambda
      * @return 
