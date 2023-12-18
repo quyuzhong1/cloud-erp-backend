@@ -17,10 +17,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -156,22 +153,23 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 订单财务信息
         if (!CollectionUtils.isEmpty(dto.getDetails())) {
             final String[] currency = {""};
-            final BigDecimal[] shippingCost = {BigDecimal.ZERO};
+//            final BigDecimal[] shippingCost = {BigDecimal.ZERO};
             dto.getDetails().forEach(e-> {
                 Money money = e.getShippingPrice();
                 if (null == money){
                     return;
                 }
                 currency[0] = money.getCurrencyCode();
-                shippingCost[0] = shippingCost[0].add(new BigDecimal(money.getAmount()));
+//                shippingCost[0] = shippingCost[0].add(new BigDecimal(money.getAmount()));
             });
             PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
-            financeDTO.setShippingCost(shippingCost[0]);
+            // 亚马逊物流费用不显示
+            financeDTO.setShippingCost(BigDecimal.ZERO);
             financeDTO.setCurrency(currency[0]);
             orderDTO.setFinances(financeDTO);
         }
 
-        // TODO 订单物流信息
+        // 订单物流信息(无)
 
         // 订单买家信息
         BuyerInfo buyerInfo = dto.getOrder().getBuyerInfo();

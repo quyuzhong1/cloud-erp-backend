@@ -2922,7 +2922,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isBlank(oldEntity.getShopId()) && !BusinessCommonConstants.hasProfile("prod")) {
                 oldEntity.setShopId(dto.getShopId());
             }
-            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO) && !BusinessCommonConstants.hasProfile("prod")) {
+            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
                 handleData(oldEntity, false);
             }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
