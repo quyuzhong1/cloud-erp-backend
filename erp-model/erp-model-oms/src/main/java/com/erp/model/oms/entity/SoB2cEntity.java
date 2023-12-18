@@ -76,7 +76,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
     /**
-    * 订单状态
+    * 订单状态，SoB2cBillStatusEnum枚举
     */
     @TableField("bill_status")
     private String billStatus;

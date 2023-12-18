@@ -1007,7 +1007,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_UPDATE_REMARK(92116,"冻结中和已作废不支持更新备注"),
     ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),
     ERROR_SO_B2C_APPROVE_NOT_GET_LOGISTICS(92118,"B2C销售订单【{}】未审核不支持获取物流单"),
-    ERROR_SO_B2C_UPDATE_SUBMIT(92116,"冻结中和已作废不支持提交"),
+    ERROR_SO_B2C_UPDATE_SUBMIT(92116,"B2C销售订单【{}】冻结中和已作废不支持提交"),
     ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中和已作废不支持拆分"),
     ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中和已作废不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_SPLIT(92119,"B2C销售订单【{}】为shopee订单不支持拆分"),
@@ -1015,7 +1015,9 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
     ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
-
+    ERROR_SO_B2C_PAYMENT_NOT_UPDATE(92124,"B2C销售订单【{}】未付款不支持编辑"),
+    ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
+    ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
 
     /**
      * TMS 错误
