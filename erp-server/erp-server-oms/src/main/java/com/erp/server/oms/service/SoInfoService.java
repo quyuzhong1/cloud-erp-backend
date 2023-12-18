@@ -384,13 +384,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 
-    /**
-     * 推送订单数据到mq
-     * @param soInfoEntity
-     * @param syncOperate
-     */
-    void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate);
-
 
     /**
      * 导出国内的spi 数据

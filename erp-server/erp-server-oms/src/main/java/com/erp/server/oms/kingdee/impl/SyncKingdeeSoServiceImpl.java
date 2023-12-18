@@ -8,15 +8,14 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.*;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -41,6 +40,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +49,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -85,13 +88,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
     @Autowired
     private DictBasicService dictBasicService;
 
     @Autowired
     private BankAccountService bankAccountService;
-
+    @Resource
+    private MQProducerService mqProducerService;
     /**
      * 销售订单同步金碟
      *
@@ -105,8 +108,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
-        //推送同步中台dmp任务
-        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -114,7 +115,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String id = entity.getId();
         //业务id
         resultMap.put("id", id);
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //编码
         resultMap.put("code", entity.getCode());
         //操作（枚举SyncKingdeeOperateEnum）
@@ -349,11 +349,16 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      * @param syncOperate
      */
     @Override
-    public String syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
+    public void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
+        //判断是否需要推送记录
+        if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())){
+            return;
+        }
+        //推送同步中台dmp任务
         DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
                 .setMqData(JSON.toJSONString(soInfoEntity))
-                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
-                .setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName())
+                .setMqTopic(RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC)
+                .setMqTag(RocketMqTagEnum.APPROVED_SO_INFO_ORDER_TO_DMP_TAG.getName())
                 .setSourceCode(soInfoEntity.getCode())
                 .setSourceId(soInfoEntity.getId())
                 .setSourceType(SourceTypeEnum.SO_INFO.getCode())
@@ -362,10 +367,21 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 .setSyncOperate(syncOperate);
         log.info("推送消息开始：{}", dto.toString());
         //推送mq
-        try {
-            return dmpTaskFeign.savePullTask(dto);
-        }catch (Exception e){
-            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
-        }
+        String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
+        //业务id
+        resultMap.put("id", soInfoEntity.getId());
+        //客户编号
+        resultMap.put("code", soInfoEntity.getCode());
+        resultMap.put("operate", syncOperate);
+        //异步推送mq
+        CompletableFuture.supplyAsync(() -> {
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_SO_INFO_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                log.error("soReturn.syncDataToDmp 推送MQ失败 :" + resultMap.get("id"));
+            }
+            return Boolean.TRUE;
+        });
     }
 }

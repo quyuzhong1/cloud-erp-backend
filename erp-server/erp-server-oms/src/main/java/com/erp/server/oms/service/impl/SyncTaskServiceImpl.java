@@ -166,6 +166,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             syncKingdeeSoService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
+            //同步订单数据到dmp
+            syncKingdeeSoService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
     }
 
