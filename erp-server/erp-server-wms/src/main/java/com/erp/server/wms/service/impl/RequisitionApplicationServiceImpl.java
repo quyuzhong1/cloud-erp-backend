@@ -552,8 +552,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
-                    .filter(req -> req.getParentSkuId().equals(finishListDTO.getSkuId())
-                            && req.getBomVersion().equals(finishListDTO.getBomVersion())
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 detailView.setIsCombination(Boolean.TRUE);
