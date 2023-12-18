@@ -93,7 +93,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(SoB2cDeliveryDTO.AddDTO addDTO) {
+    public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(addDTO, soB2cDeliveryEntity);
 
@@ -116,7 +116,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
-        return new BaseResultDTO.AddDTO(soB2cDeliveryEntity.getId(), code);
+        return save;
     }
 
     @Override

@@ -24,7 +24,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(SoB2cDeliveryDTO.AddDTO dto);
+    Boolean add(SoB2cDeliveryDTO.AddDTO dto);
 
     /**
      * 获取状态统计

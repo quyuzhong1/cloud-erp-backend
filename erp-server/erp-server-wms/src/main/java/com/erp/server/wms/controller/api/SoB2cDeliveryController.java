@@ -61,7 +61,8 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
-        return success(soB2cDeliveryService.add(dto));
+        Boolean addResult=soB2cDeliveryService.add(dto);
+        return addResult?success():failure();
     }
 
     /**
