@@ -3,8 +3,10 @@ package com.erp.server.oms.service;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
 import java.util.List;
 
@@ -53,5 +55,5 @@ public interface SoB2cFinanceService extends SuperService<SoB2cFinanceEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList);
 }

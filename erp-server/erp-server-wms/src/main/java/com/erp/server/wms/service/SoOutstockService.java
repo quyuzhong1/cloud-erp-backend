@@ -93,7 +93,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(SoOutstockEntity entity,ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
      * 反审核

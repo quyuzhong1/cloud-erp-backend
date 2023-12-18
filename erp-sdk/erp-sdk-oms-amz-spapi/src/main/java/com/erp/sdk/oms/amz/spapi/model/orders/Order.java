@@ -90,7 +90,7 @@ public class Order {
                     return b;
                 }
             }
-            return nullDefault ?  UNKNOW : null;
+            return nullDefault ? UNKNOW : null;
         }
 
         public static class Adapter extends TypeAdapter<OrderStatusEnum> {
@@ -1445,36 +1445,118 @@ public class Order {
 
     public String convertBillStatus() {
         // SoB2cBillStatusEnum
-        if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus) || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)) {
-            // 待发货
-            return "waitShipped";
+        //  ENUM_WAIT_DISTRIBUTION("waitDistribution",  "待配货"),
+        //    ENUM_IN_DISTRIBUTION("inDistribution",  "配货中"),
+        //    ENUM_WAIT_SHIPPED("waitShipped",  "待发货"),
+        //    ENUM_SHIPPED("shipped",  "已发货"),
+        //    ENUM_FROZEN("frozen",  "冻结中"),
+
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
         }
-        // 已发货
-        if (OrderStatusEnum.SHIPPED.equals(this.orderStatus)) {
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
             return "shipped";
         }
-
-        // 待发货
-        return "waitDistribution";
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
+            return "shipped";
+        }
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 冻结中
+            return "frozen";
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
+            return "shipped";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        // 未知
+        return "unknow";
     }
 
     public String convertPayStatus() {
-        if (null == this.orderStatus) {
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
             //待付款
             return "payment";
         }
-        if (OrderStatusEnum.PENDING.equals(this.orderStatus)) {
-            //待付款
-            return "payment";
-        }
-        // 已付款
-        if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus)
-                || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)
-                || OrderStatusEnum.SHIPPED.equals(this.orderStatus)
-        ) {
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             return "paid";
         }
-        // 未知
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
+            return "paid";
+        }
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            //待付款
+            return "payment";
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            //待付款
+            return "payment";
+        }
+        return "unknow";
+    }
+
+
+    public Boolean convertCancel(){
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String convertApproveStatusStr() {
+//                WAIT_SUBMIT("waitSubmit", "待提交"),
+//                APPROVE_ING("approveIng", "审核中"),
+//                REJECT("reject", "审核不通过"),
+//                APPROVE("approve", "已审核");
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
         return "unknow";
     }
 

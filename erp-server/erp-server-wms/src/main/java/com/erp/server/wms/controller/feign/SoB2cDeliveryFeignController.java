@@ -40,9 +40,25 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @Resource
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
 
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+
     @PostMapping("/listBySoDetailIds")
     public List<SoB2cDeliveryDetailEntity> listBySoDetailIds(@RequestBody List<String> soDetailIdList) {
         List<SoB2cDeliveryDetailEntity> list = soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
         return list;
+    }
+ 
+     /** 
+      * @description 添加B2C发货单
+      * @param dto
+      * @author Lambda
+      * @return 
+      * @create 2023-12-18 15:47
+      */
+    @PostMapping("/add")
+    public Boolean listBySoDetailIds(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
+        Boolean addResult=  soB2cDeliveryService.add(dto);
+        return addResult;
     }
 }

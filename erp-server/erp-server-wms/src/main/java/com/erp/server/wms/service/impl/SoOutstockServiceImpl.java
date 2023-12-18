@@ -339,8 +339,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "", null);
         if (result) {
             //添加日志
@@ -445,7 +443,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(SoOutstockEntity entity, ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
@@ -1965,8 +1964,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
+            try {
+                String id = soOutstock.getId();
+                this.submit(Arrays.asList(id));
+                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+            } catch (Exception e) {
+                //TODO  异常订单？
+              log.error("销售出库单【{}】，提交或者审核失败 {}",code, e.getMessage());
+            }
             return Boolean.TRUE;
         }
+
 
         return addResult;
     }

@@ -1,11 +1,14 @@
 package com.erp.server.oms.convert;
 
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
@@ -103,4 +106,20 @@ public interface B2cOrderConverter {
     })
     SoOutstockDetailDTO.AddDTO convertOutstockDetail(SoB2cDetailDTO.OutstockDTO detail);
     List<SoOutstockDetailDTO.AddDTO> convertOutstockDetail(List<SoB2cDetailDTO.OutstockDTO> detailList);
+    @Mappings({
+            @Mapping(target = "soCode", source = "code"),
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "sourceType", constant  ="soB2c"),
+    })
+    SoB2cDeliveryDTO.AddDTO convertDelivery(SoB2cEntity entity);
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "deliveryQty", source = "qty"),
+            @Mapping(target = "sourceDetailId", source  ="id"),
+    })
+    SoB2cDeliveryDetailDTO.AddDTO convertDeliveryDetail(SoB2cDetailEntity item);
+    List<SoB2cDeliveryDetailDTO.AddDTO> convertDeliveryDetail(List<SoB2cDetailEntity> list );
 }

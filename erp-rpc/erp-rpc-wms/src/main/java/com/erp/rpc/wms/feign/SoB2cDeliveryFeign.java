@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,4 +27,12 @@ public interface SoB2cDeliveryFeign {
      */
     @PostMapping("feign/soB2cDelivery/listBySoDetailIds")
     List<SoB2cDeliveryDetailEntity> listBySoDetailIds(@RequestBody List<String> soDetailIdList);
+
+    /**
+     * 添加发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/soB2cDelivery/add")
+    Boolean addSoB2cDelivery(@RequestBody SoB2cDeliveryDTO.AddDTO dto);
 }

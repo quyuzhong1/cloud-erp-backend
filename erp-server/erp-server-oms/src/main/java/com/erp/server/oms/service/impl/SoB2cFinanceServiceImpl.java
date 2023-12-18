@@ -2,20 +2,26 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderFinanceDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cFinanceService;
+import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -40,6 +48,8 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private SoB2cService soB2cService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -102,7 +112,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         PlatformOrderFinanceDTO financeDTO = dto.getFinances();
 
@@ -122,16 +132,49 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         SoB2cFinanceEntity oldEntity = getByMainId(mainEntity.getId());
         if (null == oldEntity){
             //新增
-                SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(financeDTO, mainEntity.getId());
-                if (!this.save(entity)){
-                    throw new ServiceException("[SoB2cFinanceEntity] 保存失败");
-                }
+            SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(financeDTO, mainEntity.getId());
+            // 补充数据
+            fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, entity);
+            log.info("消费:开始新增B2C销售订单财务信息单");
+            if (!this.save(entity)){
+                throw new ServiceException("[SoB2cFinanceEntity] 保存失败");
+            }
         }else {
             // 更新
             SoB2cFinanceEntity newEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateFinance(oldEntity, financeDTO);
+            // 历史数据修复
+            if (!BusinessCommonConstants.hasProfile("prod")){
+                fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, newEntity);
+            }
             if (!this.updateById(newEntity)){
                 throw new ServiceException("[SoB2cFinanceEntity] 更新失败");
             }
+        }
+    }
+
+    private void fillAndHandleData(SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList, PlatformOrderFinanceDTO financeDTO, SoB2cFinanceEntity newEntity) {
+        SoB2cDTO.FinancialParamDTO paramDTO = new SoB2cDTO.FinancialParamDTO();
+        paramDTO.setId(mainEntity.getId());
+        paramDTO.setIsCny(CurrencyEnum.CNY.getCurrencyCode().equalsIgnoreCase(financeDTO.getCurrency()));
+        paramDTO.setSoB2cEntity(mainEntity);
+        paramDTO.setSoB2cLogisticsEntity(logisticsEntity);
+        paramDTO.setSoB2cDetailList(detailList);
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = soB2cService.getFinancialInfo(paramDTO, Boolean.TRUE);
+        SoB2cFinanceDTO.AddDTO addDTO = BeanMapperUtils.map(SoB2cFinanceDTO.AddDTO.class, financialInfoDTO);
+        addDTO.setMainId(mainEntity.getId());
+        BeanMapperUtils.copy(addDTO, newEntity);
+        // 平台参数优先
+        if (null != financeDTO.getLogisticsCost() && financeDTO.getLogisticsCost().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setLogisticsCost(financeDTO.getLogisticsCost());
+        }
+        if (null != financeDTO.getPlatformRate() && financeDTO.getPlatformRate().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setPlatformRate(financeDTO.getPlatformRate());
+        }
+        if (null != financeDTO.getTransferRate() && financeDTO.getTransferRate().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setTransferRate(financeDTO.getTransferRate());
+        }
+        if (null != financeDTO.getVatRate() && financeDTO.getVatRate().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setVatRate(financeDTO.getTransferRate());
         }
     }
 

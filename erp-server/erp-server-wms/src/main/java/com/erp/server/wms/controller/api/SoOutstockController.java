@@ -231,12 +231,12 @@ public class SoOutstockController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
-            SoOutstockEntity entity = soOutstockService.getById(id);
             BatchResultDTO result;
             try {
-                 result = soOutstockService.approve(entity,new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                 result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
             } catch (Exception e) {
                 log.error("销售出库 审核失败>>>>{}", e);
+                 SoOutstockEntity entity=soOutstockService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "销售出库单不存在, 审核失败");
                     resultDTOS.add(result);
