@@ -133,7 +133,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumSales",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
 //        BigDecimal amount = BigDecimal.ZERO;
@@ -396,7 +395,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:statisticsCustomerPrice",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO statisticsCustomerPrice(BiFilterDTO dto) {
         // 销售额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
@@ -416,7 +414,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:statisticsDomesticSalesRatio",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO statisticsDomesticSalesRatio(BiFilterDTO dto) {
         // 销售总额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
@@ -480,7 +477,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumQuarterSales",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto) {
         // 获取年度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
@@ -532,7 +528,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumQuarterSalesVolume",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumQuarterSalesVolume(BiFilterDTO dto) {
         // 获取年度开始时间和结束时间
         int year = dto.getStartTime().getYear();
@@ -579,7 +574,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumMonthSales",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVO> sumMonthSales(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
@@ -625,7 +619,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumMonthSalesVolume",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
@@ -979,7 +972,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:getSalesAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
 //        dto.setEndTime(dto.getEndTime());
@@ -1005,7 +997,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countSalesVolumeAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
 //        dto.setEndTime(dto.getEndTime());
@@ -1031,7 +1022,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countOrderQuantityAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         TargetSaleCountVO currentVo = countOrderQuantity(dto);
@@ -1056,7 +1046,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundRateAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO countRefundRateAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));
@@ -1082,7 +1071,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundAmountAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO countRefundAmountAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));
@@ -1108,7 +1096,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundOrderNumAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countRefundOrderNumAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));

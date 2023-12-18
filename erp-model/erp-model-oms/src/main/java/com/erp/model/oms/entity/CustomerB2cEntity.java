@@ -44,8 +44,8 @@ public class CustomerB2cEntity extends BaseEntity<CustomerB2cEntity> {
     /**
      * 分组id
      */
-    @TableField("group_id")
-    private String groupId;
+//    @TableField("group_id")
+//    private String groupId;
 
     /**
      * 分组名
@@ -68,14 +68,14 @@ public class CustomerB2cEntity extends BaseEntity<CustomerB2cEntity> {
     /**
      * 省id
      */
-    @TableField("province_id")
-    private String provinceId;
+//    @TableField("province_id")
+//    private String provinceId;
 
     /**
      * 城市id
      */
-    @TableField("city_id")
-    private String cityId;
+//    @TableField("city_id")
+//    private String cityId;
 
     /**
      * 客户名称
@@ -86,24 +86,24 @@ public class CustomerB2cEntity extends BaseEntity<CustomerB2cEntity> {
     /**
      * 使用组织id
      */
-    @TableField("use_org_id")
-    private String useOrgId;
+//    @TableField("use_org_id")
+//    private String useOrgId;
+//
+//    @TableField("use_org_name")
+//    private String useOrgName;
 
-    @TableField("use_org_name")
-    private String useOrgName;
-
-
-    /**
-     * 内部组织id
-     */
-    @TableField("inner_org_id")
-    private String innerOrgId;
 
     /**
      * 内部组织id
      */
-    @TableField("inner_org_name")
-    private String innerOrgName;
+//    @TableField("inner_org_id")
+//    private String innerOrgId;
+
+    /**
+     * 内部组织id
+     */
+//    @TableField("inner_org_name")
+//    private String innerOrgName;
 
     /**
      * 简称
@@ -187,26 +187,26 @@ public class CustomerB2cEntity extends BaseEntity<CustomerB2cEntity> {
     /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
+//    @TableField("sync_kingdee_status")
+//    private String syncKingdeeStatus;
 
     /**
      * 同步金蝶时间
      */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
+//    @TableField("sync_kingdee_time")
+//    private LocalDateTime syncKingdeeTime;
 
     /**
      * 同步金蝶id
      */
-    @TableField("sync_kingdee_id")
-    private String syncKingdeeId;
+//    @TableField("sync_kingdee_id")
+//    private String syncKingdeeId;
 
     /**
      * 同步操作
      */
-    @TableField("sync_operate")
-    private String syncOperate;
+//    @TableField("sync_operate")
+//    private String syncOperate;
 
     /**
      * 来源id

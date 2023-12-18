@@ -18,6 +18,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.api.TokensApi;
@@ -103,7 +104,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     /**
@@ -118,6 +119,11 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
     @Override
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
+        if (StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName()) && !CollectionUtils.isEmpty(dto.getDetails())){
+            // 已有信息不请求
+            log.info("亚马逊详情和地址已有不请求, UniqueId={}", dto.getUniqueId());
+            return dto;
+        }
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
         if (null == shopInfoDTO) {
@@ -137,6 +143,11 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
         dto.setDetails(allOrderItems);
         log.info("查询亚马逊订单详情成功, UniqueId={}", dto.getUniqueId());
+        if (StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
+            // 已有信息不请求
+            log.info("亚马逊地址详情信息已有不请求, UniqueId={}", dto.getUniqueId());
+            return dto;
+        }
         // 生成RDT权限获取地址信息
         // amazon-rdt-token:店铺ID:订单ID
         String tokenKey = StrUtil.format(RedisCacheConstants.AMAZON_RDT_TOKEN, dto.getShopId(), dto.getUniqueId());

@@ -325,7 +325,14 @@ public enum RocketMqTagEnum {
      * 汇率更新
      */
     CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
-
+    /**
+     * 订单审核通过后同步dmp
+     */
+    APPROVED_SO_INFO_ORDER_TO_DMP_TAG(2011, RocketMqTagEnum.SYNC_DMP,"approved_so_info_order_to_dmp_tag"),
+    /**
+     * 订单审核通过后同步dmp
+     */
+    APPROVED_SO_OUTSTOCK_ORDER_TO_DMP_TAG(2012, RocketMqTagEnum.SYNC_DMP,"approved_so_outstock_order_to_dmp_tag"),
     /**
      * 订单审核通过后同步dmp
      */

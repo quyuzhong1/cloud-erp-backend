@@ -24,5 +24,5 @@ public interface SyncKingdeeSoOutstockService {
      * @param entity
      * @param syncOperate
      */
-    public String syncOrderToDmp(SoOutstockEntity entity, String syncOperate);
+    void syncOrderToDmp(SoOutstockEntity entity, String syncOperate);
 }

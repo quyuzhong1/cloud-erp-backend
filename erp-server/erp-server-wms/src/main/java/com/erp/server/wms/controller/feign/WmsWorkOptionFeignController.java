@@ -133,7 +133,7 @@ public class WmsWorkOptionFeignController {
     }
 
     /**
-     * FBA发货单
+     * 头程发货单
      * @Author Luo_WG
      * @Date 2023/11/15 18:01
      * @param baseApproveParamDTO

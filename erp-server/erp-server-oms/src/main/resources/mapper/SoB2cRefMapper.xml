@@ -46,7 +46,7 @@
                     </foreach>
                 </if>
                 <if test="code != null and code != ''">
-                    and code = #{code}
+                    and type = #{code}
                 </if>
             </where>
             )

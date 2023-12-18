@@ -216,10 +216,10 @@
         from sys_user_info sui
         <where>
             <if test="params.userName != null and params.userName != ''">
-                and sui.user_name  ilikeconcat('%',#{params.userName}::text,'%')
+                and sui.user_name  ilike concat('%',#{params.userName}::text,'%')
             </if>
             <if test="params.realName != null and params.realName != ''">
-                and  sui.real_name  ilikeconcat('%',#{params.realName}::text,'%')
+                and  sui.real_name  ilike concat('%',#{params.realName}::text,'%')
             </if>
             <if test="params.userState != null ">
                 and sui.user_state = #{params.userState}
@@ -235,7 +235,7 @@
                  select sru.user_id from sys_role_user sru
                  <where>
                      sru.role_id in
-                     <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                     <foreach collection="params.roleIdList" item="item" open="(" close=")" separator=",">
                          #{item}
                      </foreach>
                  </where>
@@ -246,7 +246,7 @@
                 select sdu.user_id from sys_department_user sdu
                 <where>
                     sdu.department_id in
-                    <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                    <foreach collection="params.deptIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </where>

@@ -169,8 +169,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
-        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
+    public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+//        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
 
         if (CollectionUtils.isEmpty(logisticsList)) {
@@ -184,8 +184,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
+                return entity;
             }
-            return;
+            return oldEntity;
         }
         // 暂时使用第一个
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
@@ -229,6 +230,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             }
 
         }
+        return entity;
     }
 
     @Override

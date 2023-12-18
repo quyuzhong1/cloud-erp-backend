@@ -58,7 +58,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 stocktakingProfitLossApproveEnd(dto);
                 break;
             case FIRST_MILE_DELIVERY:
-                //FBA发货单
+                //头程发货单
                 fbaDeliveryApproveEnd(dto);
                 break;
             case OVERSEAS_DELIVERY_PLAN:

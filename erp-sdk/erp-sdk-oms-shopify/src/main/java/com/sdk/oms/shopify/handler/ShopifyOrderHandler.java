@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
@@ -92,7 +93,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.SHOPIFY.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     @Override

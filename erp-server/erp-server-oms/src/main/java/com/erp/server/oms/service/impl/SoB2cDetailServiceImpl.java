@@ -267,13 +267,47 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }).collect(Collectors.toList());
 
         // 其他处理
-        handleDetailList(saveOrUpdateList, mainEntity.getId(), saveOrUpdateList.stream().allMatch(e-> StringUtils.isBlank(e.getId())));
+        consumerHandleDetailList(saveOrUpdateList, mainEntity);
 
         // 批量保存和更新
          if (!this.saveOrUpdateBatch(saveOrUpdateList)){
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
         }
         return saveOrUpdateList;
+    }
+
+    /**
+     * 消费明细处理
+     */
+    @Override
+    public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity) {
+        List<String> skuIds = list.stream()
+                .map(SoB2cDetailEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(skuIds)){
+            skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        }
+
+
+        for (SoB2cDetailEntity detailEntity :list) {
+            //产品信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
+                    .orElse(null);
+
+            detailEntity.setCurrency(mainEntity.getCurrency());
+            detailEntity.setExchangeRate(mainEntity.getExchangeRate());
+
+            //建议售价
+            BigDecimal advicePrice = null == skuVO ? BigDecimal.ZERO : MathUtil.multiply(skuVO.getRetailPrice(), detailEntity.getQty());
+            detailEntity.setAdvicePrice(advicePrice);
+            //含税单价
+            BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
+            detailEntity.setTaxCost(MathUtil.multiply(costPrice,detailEntity.getQty()));
+            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+        }
     }
 
     @Override

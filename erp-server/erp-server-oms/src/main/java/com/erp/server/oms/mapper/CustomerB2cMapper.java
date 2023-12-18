@@ -3,7 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -30,7 +30,7 @@ public interface CustomerB2cMapper extends BaseMapper<CustomerB2cEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      */
-    IPage<CustomerDTO.PagingViewDTO> paging(Page query, @Param("params")CustomerDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
+    IPage<CustomerB2CDTO.PagingViewDTO> paging(Page query, @Param("params")CustomerB2CDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
 
     
     /**
@@ -38,9 +38,9 @@ public interface CustomerB2cMapper extends BaseMapper<CustomerB2cEntity> {
      * @author yl
      * @date 2023-05-15 14:56
      * @param dto
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.PagingViewDTO>
      */
-    List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
+    List<CustomerB2CDTO.PagingViewDTO> listExport(@Param("params") CustomerB2CDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 
-    List<CustomerDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
+    List<CustomerB2CDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
 }

@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -36,7 +35,6 @@ import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -45,7 +43,6 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.kingdee.SyncKingdeeCustomerB2cService;
 import com.erp.server.oms.mapper.CustomerB2cMapper;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Maps;
@@ -58,7 +55,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,9 +62,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -93,15 +87,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     private CustomerB2cAddressService customerB2cAddressService;
 
     @Resource
-    private CustomerB2cInvoiceService customerB2cInvoiceService;
-
-    @Resource
-    private CustomerB2cSellerService customerB2cSellerService;
-
-    @Resource
-    private CustomerB2cGroupService customerB2cGroupService;
-
-    @Resource
     private OmsAttachmentService omsAttachmentService;
 
 
@@ -115,8 +100,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Resource
     private CommonService commonService;
 
-    @Resource
-    private SyncKingdeeCustomerB2cService syncKingdeeCustomerB2cService;
 
     @Resource
     private SoInfoService soInfoService;
@@ -142,11 +125,11 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * @author yl
      * @date 2023-05-11 18:10
      */
-    @Override
-    public List<String> listGroup() {
-        List<CustomerB2cEntity> list = this.list();
-        return list.stream().map(CustomerB2cEntity::getGroupId).distinct().collect(Collectors.toList());
-    }
+//    @Override
+//    public List<String> listGroup() {
+//        List<CustomerB2cEntity> list = this.list();
+//        return list.stream().map(CustomerB2cEntity::getGroupId).distinct().collect(Collectors.toList());
+//    }
 
 
     /**
@@ -159,7 +142,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String add(CustomerDTO.AddDTO dto) {
+    public String add(CustomerB2CDTO.AddDTO dto) {
         //检查名称
         checkName(null, dto.getName());
         //客户联系人
@@ -172,8 +155,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         customerB2cAddressService.checkIsDefault(addressList);
 
         //检查默认发票 银行账号
-        List<InvoiceDTO.AddDTO> invoiceList = dto.getInvoiceList();
-        customerB2cInvoiceService.checkIsDefault(invoiceList);
+//        List<InvoiceDTO.AddDTO> invoiceList = dto.getInvoiceList();
+//        customerB2cInvoiceService.checkIsDefault(invoiceList);
 
 
         //id
@@ -187,39 +170,39 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String areaId = globalAreaList.stream().filter(d -> d.getCountryId().equals(countryId)).findFirst().map(DictGlobalAreaDTO.InfoDTO::getId).orElse("");
         addEntity.setAreaId(areaId);
         //分组id
-        String groupId = dto.getGroupId();
+//        String groupId = dto.getGroupId();
         //付款方
         List<String> payCodeList = dto.getPayCodeList();
         String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
         addEntity.setPayCode(payCode);
         //获取客户分组信息
-        List<CustomerB2cGroupEntity> customerGroupList = customerB2cGroupService.listById(groupId);
-        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        addEntity.setGroupName(groupName);
+//        List<CustomerB2cGroupEntity> customerGroupList = customerB2cGroupService.listById(groupId);
+//        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        addEntity.setGroupName(groupName);
         //生成单号
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
         addEntity.setCode(code);
         //销售员
-        String sellerId = dto.getSellerId();
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
-        addEntity.setSellerName(findUserDTO.getUserName());
-        //对应组织
-        String innerOrgId = dto.getInnerOrgId();
+//        String sellerId = dto.getSellerId();
+//        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
+//        addEntity.setSellerName(findUserDTO.getUserName());
+//        //对应组织
+//        String innerOrgId = dto.getInnerOrgId();
+//
+//        //使用组织
+//        String useOrgId = dto.getUseOrgId();
+//        //组织列表
+//        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
 
-        //使用组织
-        String useOrgId = dto.getUseOrgId();
-        //组织列表
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
-
-        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        addEntity.setInnerOrgName(innerOrgName);
-
-        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        addEntity.setUseOrgName(useOrgName);
+//        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        addEntity.setInnerOrgName(innerOrgName);
+//
+//        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        addEntity.setUseOrgName(useOrgName);
         //保存客户
         Boolean addResult = this.save(addEntity);
         if (addResult) {
@@ -240,7 +223,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             customerB2cContactService.saveBatchContact(id, contactList);
 
             //批量保存发票信息
-            customerB2cInvoiceService.saveBatchInvoice(id, invoiceList);
+//            customerB2cInvoiceService.saveBatchInvoice(id, invoiceList);
 
 
             return id;
@@ -306,22 +289,22 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * 获取tab list
      *
      * @param
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.TabListDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.TabListDTO>
      * @author yl
      * @date 2023-05-12 17:01
      */
     @Override
-    public List<CustomerDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<CustomerDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<CustomerDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
-        int allCount = approveCountList.stream().mapToInt(CustomerDTO.ApproveCountDTO::getCount).sum();
-        CustomerDTO.TabListDTO all = new CustomerDTO.TabListDTO();
+    public List<CustomerB2CDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<CustomerB2CDTO.TabListDTO> resultList = new ArrayList<>(4);
+        List<CustomerB2CDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
+        int allCount = approveCountList.stream().mapToInt(CustomerB2CDTO.ApproveCountDTO::getCount).sum();
+        CustomerB2CDTO.TabListDTO all = new CustomerB2CDTO.TabListDTO();
         all.setCount(allCount);
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
-        CustomerDTO.TabListDTO waitApprove = new CustomerDTO.TabListDTO();
+        CustomerB2CDTO.TabListDTO waitApprove = new CustomerB2CDTO.TabListDTO();
         int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
@@ -330,7 +313,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
         //已审核
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        CustomerDTO.TabListDTO approve = new CustomerDTO.TabListDTO();
+        CustomerB2CDTO.TabListDTO approve = new CustomerB2CDTO.TabListDTO();
         int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         approve.setCount(approveCount);
@@ -338,7 +321,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         resultList.add(approve);
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-        CustomerDTO.TabListDTO reject = new CustomerDTO.TabListDTO();
+        CustomerB2CDTO.TabListDTO reject = new CustomerB2CDTO.TabListDTO();
         int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
@@ -351,13 +334,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * 分页信息
      *
      * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.CustomerB2CDTO.PagingViewDTO>
      * @author yl
      * @date 2023-05-12 17:21
      */
     @Override
-    public PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto) {
-        CustomerDTO.PagingParamDTO params = dto.getParams();
+    public PagingVO<CustomerB2CDTO.PagingViewDTO> paging(PagingDTO<CustomerB2CDTO.PagingParamDTO> dto) {
+        CustomerB2CDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         List<String> approveList = new ArrayList<>();
@@ -378,13 +361,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, approveList);
-        List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
+        List<CustomerB2CDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
-        List<CustomerB2cGroupEntity> groupList = CollectionUtils.isNotEmpty(groupIdList) ? customerB2cGroupService.listByIds(groupIdList) : Collections.emptyList();
-        List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<String> groupIdList = list.stream().map(CustomerB2CDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
+//        List<CustomerB2cGroupEntity> groupList = CollectionUtils.isNotEmpty(groupIdList) ? customerB2cGroupService.listByIds(groupIdList) : Collections.emptyList();
+        List<String> ids = list.stream().map(CustomerB2CDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2C.getCode(), obj));
@@ -398,13 +381,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             }
         }
 
-        for (CustomerDTO.PagingViewDTO item : list) {
+        for (CustomerB2CDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
-            String groupId = item.getGroupId();
-            String groupName = groupList.stream().filter(g -> g.getId().equals(groupId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setGroupName(groupName);
+//            String groupId = item.getGroupId();
+//            String groupName = groupList.stream().filter(g -> g.getId().equals(groupId)).findFirst().
+//                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//            item.setGroupName(groupName);
             //最新审核人
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -425,7 +408,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addAndSubmit(CustomerDTO.AddDTO dto) {
+    public String addAndSubmit(CustomerB2CDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
@@ -443,13 +426,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * 客户详情
      *
      * @param id
-     * @return com.erp.model.oms.dto.CustomerDTO.ViewDTO
+     * @return com.erp.model.oms.dto.CustomerB2CDTO.ViewDTO
      * @author yl
      * @date 2023-05-15 9:24
      */
     @Override
-    public CustomerDTO.ViewDTO view(String id) {
-        CustomerDTO.ViewDTO view = new CustomerDTO.ViewDTO();
+    public CustomerB2CDTO.ViewDTO view(String id) {
+        CustomerB2CDTO.ViewDTO view = new CustomerB2CDTO.ViewDTO();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
             throw new ServiceException(ApiError.ERROR_92011);
@@ -486,12 +469,12 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         view.setAddressList(addressList);
 
         //发票信息
-        List<InvoiceDTO.ViewDTO> invoiceList = customerB2cInvoiceService.listByMainId(id);
-        view.setInvoiceList(invoiceList);
+//        List<InvoiceDTO.ViewDTO> invoiceList = customerB2cInvoiceService.listByMainId(id);
+//        view.setInvoiceList(invoiceList);
 
         //销售员信息
-        List<SellerDTO.ViewDTO> sellerList = customerB2cSellerService.listByMainId(id);
-        view.setSellerList(sellerList);
+//        List<SellerDTO.ViewDTO> sellerList = customerB2cSellerService.listByMainId(id);
+//        view.setSellerList(sellerList);
 
         return view;
     }
@@ -507,7 +490,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String updateCustomer(CustomerDTO.UpdateDTO dto) {
+    public String updateCustomer(CustomerB2CDTO.UpdateDTO dto) {
         String id = dto.getId();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
@@ -528,9 +511,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         customerB2cAddressService.checkIsDefault(addressAddList);
 
         //检查默认发票 银行账号
-        List<InvoiceDTO.ViewDTO> invoiceList = dto.getInvoiceList();
-        List<InvoiceDTO.AddDTO> invoiceAddList = BeanMapper.copyList(invoiceList, InvoiceDTO.AddDTO.class);
-        customerB2cInvoiceService.checkIsDefault(invoiceAddList);
+//        List<InvoiceDTO.ViewDTO> invoiceList = dto.getInvoiceList();
+//        List<InvoiceDTO.AddDTO> invoiceAddList = BeanMapper.copyList(invoiceList, InvoiceDTO.AddDTO.class);
+//        customerB2cInvoiceService.checkIsDefault(invoiceAddList);
 
         String code = customer.getCode();
 
@@ -543,7 +526,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         BeanMapper.copy(dto, customer);
 
         //分组id
-        String groupId = dto.getGroupId();
+//        String groupId = dto.getGroupId();
         //付款方
         List<String> payCodeList = dto.getPayCodeList();
         String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
@@ -556,31 +539,31 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         customer.setAreaId(areaId);
         customer.setCode(code);
         //获取客户分组信息
-        List<CustomerB2cGroupEntity> customerGroupList = customerB2cGroupService.listById(groupId);
-        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        customer.setGroupName(groupName);
+//        List<CustomerB2cGroupEntity> customerGroupList = customerB2cGroupService.listById(groupId);
+//        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        customer.setGroupName(groupName);
 
         //销售员
-        String sellerId = dto.getSellerId();
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
-        customer.setSellerName(findUserDTO.getUserName());
+//        String sellerId = dto.getSellerId();
+//        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
+//        customer.setSellerName(findUserDTO.getUserName());
 
         //对应组织
-        String innerOrgId = dto.getInnerOrgId();
+//        String innerOrgId = dto.getInnerOrgId();
 
         //使用组织
-        String useOrgId = dto.getUseOrgId();
+//        String useOrgId = dto.getUseOrgId();
         //组织列表
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
+//        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
 
-        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        customer.setInnerOrgName(innerOrgName);
+//        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        customer.setInnerOrgName(innerOrgName);
 
-        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        customer.setUseOrgName(useOrgName);
+//        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
+//                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//        customer.setUseOrgName(useOrgName);
         Boolean updateResult = this.updateById(customer);
         if (updateResult) {
 
@@ -603,7 +586,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             customerB2cAddressService.updateBatchAddress(id, dto.getAddressList());
 
             //批量修改发票信息
-            customerB2cInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
+//            customerB2cInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
 
             return id;
         }
@@ -622,7 +605,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateAndSubmit(CustomerDTO.UpdateDTO dto) {
+    public Boolean updateAndSubmit(CustomerB2CDTO.UpdateDTO dto) {
         String id = this.updateCustomer(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
@@ -687,15 +670,15 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        if (dto.getType().equals(ApproveType.PASS)) {
-            String sourceType=SourceTypeEnum.SHOP.getCode();
-            //审核通过发送金蝶
-            list=list.stream().filter(l->sourceType.equals(l.getSourceType())).collect(Collectors.toList());
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-            //批量保存销售员信息
-            customerB2cSellerService.batchSellerHistory(list);
-
-        }
+//        if (dto.getType().equals(ApproveType.PASS)) {
+//            String sourceType=SourceTypeEnum.SHOP.getCode();
+//            //审核通过发送金蝶
+//            list=list.stream().filter(l->sourceType.equals(l.getSourceType())).collect(Collectors.toList());
+//            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+//            //批量保存销售员信息
+//            customerB2cSellerService.batchSellerHistory(list);
+//
+//        }
         return Boolean.TRUE;
     }
 
@@ -739,7 +722,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+//            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -790,7 +773,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * @date 2023-05-15 14:53
      */
     @Override
-    public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
         List<String> approveList = new ArrayList<>();
         //待审核
@@ -808,8 +791,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             approveList.add(ApproveStatusEnum.REJECT.getStatus());
         }
 
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
-        for (CustomerDTO.PagingViewDTO item : list) {
+        List<CustomerB2CDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        for (CustomerB2CDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);
@@ -834,7 +817,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     }
 
     @Override
-    public List<CustomerDTO.InfoDTO> listCustomer() {
+    public List<CustomerB2CDTO.InfoDTO> listCustomer() {
         LambdaQueryWrapper<CustomerB2cEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(CustomerB2cEntity::getId,
                 CustomerB2cEntity::getCode,
@@ -845,7 +828,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         queryWrapper.eq(CustomerB2cEntity::getApproveStatus, approveStatusEnum);
         queryWrapper.orderByDesc(CustomerB2cEntity::getDisabled);
         List<CustomerB2cEntity> list = this.list(queryWrapper);
-        return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        return BeanMapper.copyList(list, CustomerB2CDTO.InfoDTO.class);
     }
 
 
@@ -886,14 +869,14 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String finalContent = "[%s]," + content;
         operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
 
-        customerList.forEach(req -> {
-            //发送金蝶
-            if (dto.getDisabled()) {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
-            } else {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
-            }
-        });
+//        customerList.forEach(req -> {
+//            //发送金蝶
+//            if (dto.getDisabled()) {
+//                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
+//            } else {
+//                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
+//            }
+//        });
 
         return this.updateBatchById(customerList);
 
@@ -940,12 +923,12 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * 获取启用的列表
      *
      * @param
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.InfoDTO>
      * @author yl
      * @date 2023-05-15 16:05
      */
     @Override
-    public List<CustomerDTO.InfoDTO> listEnable(String permissionSql) {
+    public List<CustomerB2CDTO.InfoDTO> listEnable(String permissionSql) {
         LambdaQueryWrapper<CustomerB2cEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(CustomerB2cEntity::getId,
                 CustomerB2cEntity::getCode,
@@ -957,15 +940,15 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             queryWrapper.last(permissionSql);
         }
         List<CustomerB2cEntity> list = this.list(queryWrapper);
-        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        List<CustomerB2CDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerB2CDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
         statusList.add(ApproveStatusEnum.APPROVE);
-        for (CustomerDTO.InfoDTO item : resultList) {
+        for (CustomerB2CDTO.InfoDTO item : resultList) {
             if (!statusList.contains(item.getApproveStatus())) {
                 item.setDisabled(true);
             }
         }
-        resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
+        resultList = resultList.stream().sorted(Comparator.comparing(CustomerB2CDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
     }
 
@@ -974,13 +957,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * 获取客户的默认联系人
      *
      * @param customerId
-     * @return com.erp.model.oms.dto.CustomerDTO.BaseDTO
+     * @return com.erp.model.oms.dto.CustomerB2CDTO.BaseDTO
      * @author yl
      * @date 2023-05-15 16:15
      */
     @Override
-    public CustomerDTO.BaseDTO getBase(String customerId) {
-        CustomerDTO.BaseDTO base = new CustomerDTO.BaseDTO();
+    public CustomerB2CDTO.BaseDTO getBase(String customerId) {
+        CustomerB2CDTO.BaseDTO base = new CustomerB2CDTO.BaseDTO();
         CustomerB2cEntity customer = this.getById(customerId);
         if (Objects.isNull(customer)) {
             throw new ServiceException(ApiError.ERROR_92011);
@@ -1000,8 +983,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         }
         base.setSellerId(customer.getSellerId());
         base.setSellerName(customer.getSellerName());
-        base.setUseOrgId(customer.getUseOrgId());
-        base.setUseOrgName(customer.getUseOrgName());
+//        base.setUseOrgId(customer.getUseOrgId());
+//        base.setUseOrgName(customer.getUseOrgName());
         String currencySymbol = "";
         if (CollectionUtils.isNotEmpty(currencyList)) {
             currencySymbol = currencyList.get(0).getSymbol();
@@ -1026,16 +1009,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         return base;
     }
 
-    @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .eq(CustomerB2cEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cEntity::getSyncOperate, syncOperate)
-                .update();
-    }
+//    @Override
+//    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+//        return this.lambdaUpdate()
+//                .eq(CustomerB2cEntity::getId, id)
+//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+//                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
+//                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerB2cEntity::getSyncKingdeeId, syncKingdeeId)
+//                .set(StringUtils.isNotBlank(syncOperate), CustomerB2cEntity::getSyncOperate, syncOperate)
+//                .update();
+//    }
 
 
     /**
@@ -1134,9 +1117,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<BaseIdDTO> accountingCompanyList = sysUserFeign.listAccountingCompany();
         Map<String, List<BaseIdDTO>> accountCompanyNameMap = accountingCompanyList.stream().collect(Collectors.groupingBy(BaseIdDTO::getName));
         // 客户分组
-        List<CustomerB2cGroupEntity> customerGroupEntityList = customerB2cGroupService.list();
-        Map<String, List<CustomerB2cGroupEntity>> customerGroupNameMap = customerGroupEntityList.stream().filter(r -> StrUtils.isNotEmpty(r.getName())).collect(Collectors.groupingBy(CustomerB2cGroupEntity::getName));
-        // 国家
+//        List<CustomerB2cGroupEntity> customerGroupEntityList = customerB2cGroupService.list();
+//        Map<String, List<CustomerB2cGroupEntity>> customerGroupNameMap = customerGroupEntityList.stream().filter(r -> StrUtils.isNotEmpty(r.getName())).collect(Collectors.groupingBy(CustomerB2cGroupEntity::getName));
+//        // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         Map<String, List<DictCountryDTO.ListDTO>> countryNameMap = countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
         // 平台类型
@@ -1186,24 +1169,24 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 基本信息
             customerInfoEntity.setCode(code);
             // 使用组织
-            String useOrgName = ExcelUtil.convertCellValueToString(row.getCell(2));
-            customerInfoEntity.setUseOrgName(useOrgName);
+//            String useOrgName = ExcelUtil.convertCellValueToString(row.getCell(2));
+//            customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
-            if (!accountCompanyNameMap.containsKey(useOrgName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
-            }
+//            if (!accountCompanyNameMap.containsKey(useOrgName)) {
+//                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+//            }
             // 名称不会重复
-            if (Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
-                customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
-            }
+//            if (Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
+//                customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
+//            }
 
             // 客户分组（单独的表需提前维护customer_group），分组id需要根据名称获取
             String groupName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(3)));
             // 客户分组id需根据客户分组名称获取
-            if (StrUtils.isNotEmpty(groupName) && customerGroupNameMap.containsKey(groupName)) {
-                customerInfoEntity.setGroupName(groupName);
-                customerInfoEntity.setGroupId(customerGroupNameMap.get(groupName).get(0).getId());
-            }
+//            if (StrUtils.isNotEmpty(groupName) && customerGroupNameMap.containsKey(groupName)) {
+//                customerInfoEntity.setGroupName(groupName);
+//                customerInfoEntity.setGroupId(customerGroupNameMap.get(groupName).get(0).getId());
+//            }
 
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
@@ -1224,28 +1207,28 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             String provinceName = ExcelUtil.convertCellValueToString(row.getCell(6));
             // 省份id需要根据名称获取
             DictCityDTO.ListDTO provinceDTO = null;
-            if (StrUtils.isNotEmpty(provinceName)) {
-                List<DictCityDTO.ListDTO> provinceList = sysUserFeign.getProvincesByCountryCode(customerInfoEntity.getCountryId());
-                if (CollUtil.isNotEmpty(provinceList)) {
-                    provinceDTO = provinceList.stream().filter(r -> Objects.equals(r.getName(), provinceName)).findFirst().orElse(null);
-                    if (Objects.nonNull(provinceDTO)) {
-                        customerInfoEntity.setProvinceId(provinceDTO.getId());
-                    }
-                }
-            }
+//            if (StrUtils.isNotEmpty(provinceName)) {
+//                List<DictCityDTO.ListDTO> provinceList = sysUserFeign.getProvincesByCountryCode(customerInfoEntity.getCountryId());
+//                if (CollUtil.isNotEmpty(provinceList)) {
+//                    provinceDTO = provinceList.stream().filter(r -> Objects.equals(r.getName(), provinceName)).findFirst().orElse(null);
+//                    if (Objects.nonNull(provinceDTO)) {
+//                        customerInfoEntity.setProvinceId(provinceDTO.getId());
+//                    }
+//                }
+//            }
 
             // 城市
-            DictCityDTO.ListDTO cityDTO = null;
-            String cityName = ExcelUtil.convertCellValueToString(row.getCell(7));
-            if (StrUtils.isNotEmpty(cityName) && Objects.nonNull(provinceDTO)) {
-                List<DictCityDTO.ListDTO> cityList = provinceDTO.getChildrenList();
-                if (CollUtil.isNotEmpty(cityList)) {
-                    cityDTO = cityList.stream().filter(r -> Objects.equals(r.getName(), cityName)).findFirst().orElse(null);
-                }
-                if (Objects.nonNull(cityDTO)) {
-                    customerInfoEntity.setCityId(cityDTO.getId());
-                }
-            }
+//            DictCityDTO.ListDTO cityDTO = null;
+//            String cityName = ExcelUtil.convertCellValueToString(row.getCell(7));
+//            if (StrUtils.isNotEmpty(cityName) && Objects.nonNull(provinceDTO)) {
+//                List<DictCityDTO.ListDTO> cityList = provinceDTO.getChildrenList();
+//                if (CollUtil.isNotEmpty(cityList)) {
+//                    cityDTO = cityList.stream().filter(r -> Objects.equals(r.getName(), cityName)).findFirst().orElse(null);
+//                }
+//                if (Objects.nonNull(cityDTO)) {
+//                    customerInfoEntity.setCityId(cityDTO.getId());
+//                }
+//            }
 
             // 客户名称
             String name = ExcelUtil.convertCellValueToString(row.getCell(8));
@@ -1317,59 +1300,59 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             this.importCustomerAddress(customerInfoEntity.getId(), row);
 
             // 客户发票
-            this.importCustomerInvoice(customerInfoEntity.getId(), row);
+//            this.importCustomerInvoice(customerInfoEntity.getId(), row);
 
             // 客户销售员信息
-            this.importCustomerSale(customerInfoEntity.getId(), row, noticeRow, deptNameMap, userNameMap);
+//            this.importCustomerSale(customerInfoEntity.getId(), row, noticeRow, deptNameMap, userNameMap);
 
             // 需要拉取客户的金蝶id
         }
 
     }
 
-    @Override
-    public List<CustomerB2cEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds) {
-        if (CollectionUtils.isEmpty(kingdeeCustomerIds)) {
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(CustomerB2cEntity::getSyncKingdeeId, kingdeeCustomerIds).list();
-    }
+//    @Override
+//    public List<CustomerB2cEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds) {
+//        if (CollectionUtils.isEmpty(kingdeeCustomerIds)) {
+//            return Collections.emptyList();
+//        }
+//        return this.lambdaQuery().in(CustomerB2cEntity::getSyncKingdeeId, kingdeeCustomerIds).list();
+//    }
 
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void importCustomerKingdee(MultipartFile file) throws IOException {
-        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
-        XSSFSheet sheet = wb.getSheetAt(0);
-        // 读取数据集
-        int rows = sheet.getPhysicalNumberOfRows();
-
-        for (int i = 2; i < rows; i++) {
-            XSSFRow row = sheet.getRow(i);
-
-            // 客户名称
-            String customerName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(6)));
-            // 金蝶id
-            String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
-            LambdaQueryWrapper<CustomerB2cEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(CustomerB2cEntity::getName, customerName);
-            queryWrapper.last("LIMIT 1");
-            CustomerB2cEntity customerInfoEntity = super.getOne(queryWrapper);
-            if (Objects.isNull(customerInfoEntity)) {
-                log.info("未找到客户【{}】", customerName);
-                continue;
-            }
-            if (StrUtils.isNotEmpty(customerInfoEntity.getSyncKingdeeId())) {
-                log.info("客户【{}】已经存在金蝶id，不处理", customerName);
-                continue;
-            }
-            lambdaUpdate().set(CustomerB2cEntity::getSyncKingdeeId, kingdeeId).set(CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerB2cEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(CustomerB2cEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
-                    .eq(CustomerB2cEntity::getId, customerInfoEntity.getId())
-                    .update();
-        }
-
-    }
+//    @Transactional(rollbackFor = Exception.class)
+//    @Override
+//    public void importCustomerKingdee(MultipartFile file) throws IOException {
+//        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
+//        XSSFSheet sheet = wb.getSheetAt(0);
+//        // 读取数据集
+//        int rows = sheet.getPhysicalNumberOfRows();
+//
+//        for (int i = 2; i < rows; i++) {
+//            XSSFRow row = sheet.getRow(i);
+//
+//            // 客户名称
+//            String customerName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(6)));
+//            // 金蝶id
+//            String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+//            LambdaQueryWrapper<CustomerB2cEntity> queryWrapper = new LambdaQueryWrapper<>();
+//            queryWrapper.eq(CustomerB2cEntity::getName, customerName);
+//            queryWrapper.last("LIMIT 1");
+//            CustomerB2cEntity customerInfoEntity = super.getOne(queryWrapper);
+//            if (Objects.isNull(customerInfoEntity)) {
+//                log.info("未找到客户【{}】", customerName);
+//                continue;
+//            }
+//            if (StrUtils.isNotEmpty(customerInfoEntity.getSyncKingdeeId())) {
+//                log.info("客户【{}】已经存在金蝶id，不处理", customerName);
+//                continue;
+//            }
+//            lambdaUpdate().set(CustomerB2cEntity::getSyncKingdeeId, kingdeeId).set(CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
+//                    .set(CustomerB2cEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+//                    .set(CustomerB2cEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+//                    .eq(CustomerB2cEntity::getId, customerInfoEntity.getId())
+//                    .update();
+//        }
+//
+//    }
 
     @Override
     public List<CustomerB2cEntity> listByCountryIdList(List<String> countryIdList) {
@@ -1393,12 +1376,12 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         viewReceiveDataDTO.setCustomerId(id);
         viewReceiveDataDTO.setName(entity.getName());
 
-        if (StringUtils.isNotBlank(entity.getCityId())) {
-            DictCityEntity dictCityEntity = sysUserFeign.getCityById(entity.getCityId());
-            if (ObjectUtils.isNotEmpty(dictCityEntity)) {
-                viewReceiveDataDTO.setCityName(dictCityEntity.getName());
-            }
-        }
+//        if (StringUtils.isNotBlank(entity.getCityId())) {
+//            DictCityEntity dictCityEntity = sysUserFeign.getCityById(entity.getCityId());
+//            if (ObjectUtils.isNotEmpty(dictCityEntity)) {
+//                viewReceiveDataDTO.setCityName(dictCityEntity.getName());
+//            }
+//        }
         if (StringUtils.isNotBlank(entity.getCountryId())) {
             DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
             if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
@@ -1431,20 +1414,52 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
-        CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
+    public CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity entity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
+        // 当前国家
+        DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
+
         if (null == entity){
             CustomerB2cEntity customerB2cEntity = new CustomerB2cEntity();
+            //生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
+            customerB2cEntity.setCode(code);
             customerB2cEntity.setSourceId(mainEntity.getId());
             customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
             customerB2cEntity.setName(receiverEntity.getName());
             customerB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            customerB2cEntity.setPlatformType(dto.getDictPlatform());
+            customerB2cEntity.setCountryId(dictCountryCode);
+            customerB2cEntity.setConditionDict("onlineStorePayment");
+            customerB2cEntity.setCurrency(dto.getCurrency());
+            if (null != dictCountryEntity){
+                customerB2cEntity.setAreaId(dictCountryEntity.getSubregionCode());
+            }
             customerB2cEntity.setDisabled(false);
             if (!save(customerB2cEntity)){
                 throw new ServiceException("[CustomerB2cEntity] 保存失败");
             }
             return customerB2cEntity;
         } else {
+            if (StringUtils.isBlank(entity.getPlatformType())){
+                entity.setPlatformType(dto.getDictPlatform());
+            }
+            if (StringUtils.isBlank(entity.getCode())){
+                //生成单号
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
+                entity.setCode(code);
+            }
+            if (StringUtils.isBlank(entity.getCountryId())){
+                entity.setCountryId(dictCountryCode);
+            }
+            if (StringUtils.isBlank(entity.getAreaId()) && null != dictCountryEntity){
+                entity.setAreaId(dictCountryEntity.getSubregionCode());
+            }
+            if (StringUtils.isBlank(entity.getConditionDict())){
+                entity.setConditionDict("onlineStorePayment");
+            }
+            if (StringUtils.isBlank(entity.getCurrency())){
+                entity.setCurrency(dto.getCurrency());
+            }
             entity.setName(receiverEntity.getName());
             entity.setApproveStatus(ApproveStatusEnum.APPROVE);
             entity.setDisabled(false);
@@ -1458,6 +1473,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Override
     public CustomerB2cEntity getBySourceId(String sourceId) {
         return  lambdaQuery().eq(CustomerB2cEntity::getSourceId, sourceId).one();
+    }
+
+    @Override
+    public CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType) {
+        return lambdaQuery()
+                .eq(CustomerB2cEntity::getPlatformType, dictPlatform)
+                .eq(CustomerB2cEntity::getName, name)
+                .eq(CustomerB2cEntity::getSourceType, sourceType)
+                .last("LIMIT 1")
+                .one();
     }
 
     /**
@@ -1574,43 +1599,43 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * @param mainId
      * @param row
      */
-    public void importCustomerInvoice(String mainId, XSSFRow row) {
-        // 发票信息
-        // 发票抬头
-        String invoiceHead = ExcelUtil.convertCellValueToString(row.getCell(34));
-        if (StrUtils.isEmpty(invoiceHead)) {
-            return;
-        }
-        CustomerB2cInvoiceEntity customerB2cInvoiceEntity = new CustomerB2cInvoiceEntity();
-        customerB2cInvoiceEntity.setMainId(mainId);
-        customerB2cInvoiceEntity.setHead(invoiceHead);
-        // 发票类型
-        String invoiceTypeName = ExcelUtil.convertCellValueToString(row.getCell(35));
-        customerB2cInvoiceEntity.setType(invoiceTypeName);
-        // 开户银行
-        String bankName = ExcelUtil.convertCellValueToString(row.getCell(36));
-        customerB2cInvoiceEntity.setBankName(bankName);
-        // 银行账号
-        String bankAccount = ExcelUtil.convertCellValueToString(row.getCell(37));
-        customerB2cInvoiceEntity.setBankAccount(bankAccount);
-        // 是否默认银行
-        String isDefaultBank = ExcelUtil.convertCellValueToString(row.getCell(38));
-        customerB2cInvoiceEntity.setIsDefault(Boolean.FALSE);
-        if (Objects.equals(isDefaultBank, "是") || Objects.equals(isDefaultBank, "默认")) {
-            customerB2cInvoiceEntity.setIsDefault(Boolean.TRUE);
-        }
-
-        // 备注
-        String invoiceRemark = ExcelUtil.convertCellValueToString(row.getCell(39));
-        customerB2cInvoiceEntity.setRemark(invoiceRemark);
-        customerB2cInvoiceEntity.setCreateTime(LocalDateTime.now());
-        customerB2cInvoiceEntity.setUpdateTime(LocalDateTime.now());
-        customerB2cInvoiceEntity.setCreateUserId("");
-        customerB2cInvoiceEntity.setCreateUserName("");
-        customerB2cInvoiceEntity.setUpdateUserId("");
-        customerB2cInvoiceEntity.setUpdateUserName("");
-        customerB2cInvoiceService.save(customerB2cInvoiceEntity);
-    }
+//    public void importCustomerInvoice(String mainId, XSSFRow row) {
+//        // 发票信息
+//        // 发票抬头
+//        String invoiceHead = ExcelUtil.convertCellValueToString(row.getCell(34));
+//        if (StrUtils.isEmpty(invoiceHead)) {
+//            return;
+//        }
+//        CustomerB2cInvoiceEntity customerB2cInvoiceEntity = new CustomerB2cInvoiceEntity();
+//        customerB2cInvoiceEntity.setMainId(mainId);
+//        customerB2cInvoiceEntity.setHead(invoiceHead);
+//        // 发票类型
+//        String invoiceTypeName = ExcelUtil.convertCellValueToString(row.getCell(35));
+//        customerB2cInvoiceEntity.setType(invoiceTypeName);
+//        // 开户银行
+//        String bankName = ExcelUtil.convertCellValueToString(row.getCell(36));
+//        customerB2cInvoiceEntity.setBankName(bankName);
+//        // 银行账号
+//        String bankAccount = ExcelUtil.convertCellValueToString(row.getCell(37));
+//        customerB2cInvoiceEntity.setBankAccount(bankAccount);
+//        // 是否默认银行
+//        String isDefaultBank = ExcelUtil.convertCellValueToString(row.getCell(38));
+//        customerB2cInvoiceEntity.setIsDefault(Boolean.FALSE);
+//        if (Objects.equals(isDefaultBank, "是") || Objects.equals(isDefaultBank, "默认")) {
+//            customerB2cInvoiceEntity.setIsDefault(Boolean.TRUE);
+//        }
+//
+//        // 备注
+//        String invoiceRemark = ExcelUtil.convertCellValueToString(row.getCell(39));
+//        customerB2cInvoiceEntity.setRemark(invoiceRemark);
+//        customerB2cInvoiceEntity.setCreateTime(LocalDateTime.now());
+//        customerB2cInvoiceEntity.setUpdateTime(LocalDateTime.now());
+//        customerB2cInvoiceEntity.setCreateUserId("");
+//        customerB2cInvoiceEntity.setCreateUserName("");
+//        customerB2cInvoiceEntity.setUpdateUserId("");
+//        customerB2cInvoiceEntity.setUpdateUserName("");
+//        customerB2cInvoiceService.save(customerB2cInvoiceEntity);
+//    }
 
     /**
      * 新增客户销售员信息
@@ -1621,70 +1646,70 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * @param deptNameMap
      * @param userNameMap
      */
-    public void importCustomerSale(String mainId, XSSFRow row,
-                                   Integer noticeRow,
-                                   Map<String, List<SysUserDeptDTO>> deptNameMap,
-                                   Map<String, List<FindUserDTO>> userNameMap) {
-        // 销售部门
-        String deptName = ExcelUtil.convertCellValueToString(row.getCell(40));
-        if (StrUtils.isEmpty(deptName)) {
-            return;
-        }
-        if (StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
-            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
-        }
-        // 销售员信息
-        CustomerB2cSellerEntity customerB2cSellerEntity = new CustomerB2cSellerEntity();
-        customerB2cSellerEntity.setMainId(mainId);
-        customerB2cSellerEntity.setDeptId("");
-        if (Objects.nonNull(deptNameMap.get(deptName))) {
-            customerB2cSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
-        }
-        // 销售员
-        String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
-        if (StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
-            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
-        }
-        customerB2cSellerEntity.setSellerName(sellerName);
-        // 需转换成销售员id
-        customerB2cSellerEntity.setSellerId("");
-        if (userNameMap.containsKey(sellerName)) {
-            customerB2cSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
-        }
-        // 开始日期
-        String startDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(42)));
-        if (StrUtils.isNotEmpty(startDateStr) && startDateStr.length() == 10) {
-            if (startDateStr.contains("-")) {
-                LocalDate startDate = LocalDate.parse(startDateStr);
-                customerB2cSellerEntity.setStartDate(startDate);
-            } else if (startDateStr.contains("/")) {
-                LocalDate endDate = LocalDate.parse(startDateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-                customerB2cSellerEntity.setStartDate(endDate);
-            }
-        }
-        // 结束日期
-        String endDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(43)));
-        if (StrUtils.isNotEmpty(endDateStr) && endDateStr.length() == 10) {
-            if (endDateStr.contains("-")) {
-                LocalDate endDate = LocalDate.parse(endDateStr);
-                customerB2cSellerEntity.setEndDate(endDate);
-            } else if (endDateStr.contains("/")) {
-                LocalDate endDate = LocalDate.parse(endDateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-                customerB2cSellerEntity.setEndDate(endDate);
-            }
-        }
-        // 备注
-        String sellerRemark = ExcelUtil.convertCellValueToString(row.getCell(44));
-        customerB2cSellerEntity.setRemark(sellerRemark);
-        customerB2cSellerEntity.setCreateTime(LocalDateTime.now());
-        customerB2cSellerEntity.setUpdateTime(LocalDateTime.now());
-        customerB2cSellerEntity.setCreateUserId("");
-        customerB2cSellerEntity.setCreateUserName("");
-        customerB2cSellerEntity.setUpdateUserId("");
-        customerB2cSellerEntity.setUpdateUserName("");
-        customerB2cSellerService.save(customerB2cSellerEntity);
-
-    }
+//    public void importCustomerSale(String mainId, XSSFRow row,
+//                                   Integer noticeRow,
+//                                   Map<String, List<SysUserDeptDTO>> deptNameMap,
+//                                   Map<String, List<FindUserDTO>> userNameMap) {
+//        // 销售部门
+//        String deptName = ExcelUtil.convertCellValueToString(row.getCell(40));
+//        if (StrUtils.isEmpty(deptName)) {
+//            return;
+//        }
+//        if (StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
+//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+//        }
+//        // 销售员信息
+//        CustomerB2cSellerEntity customerB2cSellerEntity = new CustomerB2cSellerEntity();
+//        customerB2cSellerEntity.setMainId(mainId);
+//        customerB2cSellerEntity.setDeptId("");
+//        if (Objects.nonNull(deptNameMap.get(deptName))) {
+//            customerB2cSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
+//        }
+//        // 销售员
+//        String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
+//        if (StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
+//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+//        }
+//        customerB2cSellerEntity.setSellerName(sellerName);
+//        // 需转换成销售员id
+//        customerB2cSellerEntity.setSellerId("");
+//        if (userNameMap.containsKey(sellerName)) {
+//            customerB2cSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
+//        }
+//        // 开始日期
+//        String startDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(42)));
+//        if (StrUtils.isNotEmpty(startDateStr) && startDateStr.length() == 10) {
+//            if (startDateStr.contains("-")) {
+//                LocalDate startDate = LocalDate.parse(startDateStr);
+//                customerB2cSellerEntity.setStartDate(startDate);
+//            } else if (startDateStr.contains("/")) {
+//                LocalDate endDate = LocalDate.parse(startDateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+//                customerB2cSellerEntity.setStartDate(endDate);
+//            }
+//        }
+//        // 结束日期
+//        String endDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(43)));
+//        if (StrUtils.isNotEmpty(endDateStr) && endDateStr.length() == 10) {
+//            if (endDateStr.contains("-")) {
+//                LocalDate endDate = LocalDate.parse(endDateStr);
+//                customerB2cSellerEntity.setEndDate(endDate);
+//            } else if (endDateStr.contains("/")) {
+//                LocalDate endDate = LocalDate.parse(endDateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+//                customerB2cSellerEntity.setEndDate(endDate);
+//            }
+//        }
+//        // 备注
+//        String sellerRemark = ExcelUtil.convertCellValueToString(row.getCell(44));
+//        customerB2cSellerEntity.setRemark(sellerRemark);
+//        customerB2cSellerEntity.setCreateTime(LocalDateTime.now());
+//        customerB2cSellerEntity.setUpdateTime(LocalDateTime.now());
+//        customerB2cSellerEntity.setCreateUserId("");
+//        customerB2cSellerEntity.setCreateUserName("");
+//        customerB2cSellerEntity.setUpdateUserId("");
+//        customerB2cSellerEntity.setUpdateUserName("");
+//        customerB2cSellerService.save(customerB2cSellerEntity);
+//
+//    }
 
     /**
      * @param list

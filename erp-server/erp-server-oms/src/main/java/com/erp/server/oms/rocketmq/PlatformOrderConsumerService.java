@@ -6,6 +6,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -14,18 +15,26 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,16 +70,15 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Resource
     private CustomerB2cAddressService customerB2cAddressService;
     @Resource
-    private CustomerB2cGroupService customerB2cGroupService;
-    @Resource
     private CustomerB2cContactService customerB2cContactService;
     @Resource
     private CustomerB2cSellerService customerB2cSellerService;
     @Resource
     private SoOutstockFeign soOutstockFeign;
-
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
 
     @Override
@@ -100,30 +108,35 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         if (null == shopInfo) {
             throw new ServiceException("未找到订单的店铺" + dto.getShopId());
         }
+        // 查询国家信息
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(shopInfo.getDictCountryCode()));
 
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo);
         //物流信息更新保存
-        soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity);
         //财务信息更新保存
-        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
+        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity);
+        // 根据平台和名称判断
+        CustomerB2cEntity customerB2cEntity = customerB2cService.findByPlatformAndName(dto.getDictPlatform(), receiverEntity.getName(), SourceTypeEnum.SO_B2C.getCode());
+
+        customerB2cEntity = customerB2cService.saveOrUpdateEntity(customerB2cEntity, dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
-        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity);
+        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
-        customerB2cSellerService.saveOrUpdateEntity(dto, customerB2cEntity);
-
-        receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.updateById(receiverEntity)) {
-            throw new ServiceException("记录客户ID失败");
+        if (StringUtils.isBlank(receiverEntity.getCustomerId())){
+            receiverEntity.setCustomerId(customerB2cEntity.getId());
+            if (!soB2cReceiverService.updateById(receiverEntity)) {
+                throw new ServiceException("记录客户ID失败");
+            }
         }
         //订单状态
         String billStatus = mainEntity.getBillStatus();

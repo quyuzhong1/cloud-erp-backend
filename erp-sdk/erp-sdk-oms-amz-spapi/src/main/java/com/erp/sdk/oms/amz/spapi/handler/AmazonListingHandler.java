@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -21,6 +22,7 @@ import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -60,6 +62,13 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
             throw new ServiceException("mongoDataList类型异常:error=" + genericMongoDataList.getClass().toGenericString());
         }
         List<ReportListingMongoDTO> mongoDataList = (List<ReportListingMongoDTO>) genericMongoDataList;
+        // 过滤异常数据
+        mongoDataList = mongoDataList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getSellerSku()) && StringUtils.isNotBlank(e.getAsin1()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mongoDataList)){
+            return Collections.emptyList();
+        }
 
         // 返回下载源数据
         return mongoDataList.stream()
@@ -81,7 +90,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     @Override

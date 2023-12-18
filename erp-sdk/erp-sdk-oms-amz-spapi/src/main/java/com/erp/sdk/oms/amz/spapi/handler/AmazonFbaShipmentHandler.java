@@ -14,6 +14,7 @@ import com.common.business.handler.AbstractFbaShipmentHandler;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
@@ -105,7 +106,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformEnum.ERP.getDesc();
     }
 
     /**

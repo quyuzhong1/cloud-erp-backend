@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -157,7 +159,7 @@ public interface DmpTaskFeign {
     Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
 
     /**
-     * 发送MQ消息并保存任务
+     * 保存任务
      *
      * @param dto
      * @return
@@ -230,4 +232,10 @@ public interface DmpTaskFeign {
     */
     @PostMapping("feign/listRedisBySkuNoList")
     List<DmpSkuCostEntity> listRedisBySkuNoList(@RequestBody @Valid List<String> skuNoList);
+
+    /**
+     * 根据type查询所有配置
+     */
+    @PostMapping("feign/pull/needPushMQ")
+    Boolean needPushMQ(@RequestBody LocalDateTime lastTime);
 }

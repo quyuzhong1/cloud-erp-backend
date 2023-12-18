@@ -37,7 +37,6 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:returnOrderAnalByCategoryPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(BiFilterDTO biFilterDTO) {
         List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByCategoryPaging(biFilterDTO);
         return returnOrderAnalyseTableVoIPage;
@@ -51,7 +50,6 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:returnOrderAnalByShopPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(BiFilterDTO biFilterDTO) {
         List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(biFilterDTO);
         return returnOrderAnalyseTableVoIPage;
@@ -65,7 +63,6 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:returnOrderAnalByPlatformPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(BiFilterDTO biFilterDTO) {
         List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVOIPage = baseMapper.returnOrderAnalByPlatformPaging(biFilterDTO);
         return returnOrderAnalyseTableVOIPage;
@@ -79,7 +76,6 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:returnOrderAnalByDeptPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(BiFilterDTO biFilterDTO) {
         List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByDeptPaging(biFilterDTO);
         return returnOrderAnalyseTableVoIPage;
@@ -93,7 +89,6 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:returnOrderAnalByDate",keyGenerator = "myKeyGenerator")
     public DateBarAndLineVO returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO) {
         List<DateReturnOrderVO> dateReturnOrderVOIPage = null;
         switch (biFilterDTO.getDateType()) {

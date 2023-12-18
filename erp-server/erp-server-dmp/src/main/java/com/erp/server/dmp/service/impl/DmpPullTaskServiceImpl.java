@@ -60,6 +60,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -325,6 +326,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
     }
 
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsOrderToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
         Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
@@ -361,7 +364,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             } catch (Exception e) {
                 log.error("处理B2B审核订单广播异常：{}", e.getMessage());
             }
-        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
                 dmpOrderInfoService.removeOrderByCode(Collections.singletonList(String.valueOf(code)));
@@ -384,6 +387,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncWmsOutStockToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
         Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
@@ -415,7 +419,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 log.error("处理B2B出库订单广播异常：{}", e.getMessage());
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
             }
-        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
                 dmpDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(String.valueOf(code)));
@@ -439,6 +443,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncOmsReturnToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
         Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
@@ -470,7 +475,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 log.error("处理B2B退货入库订单广播异常：{}", e.getMessage());
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
             }
-        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()) || Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DELETE.getCode())) {
             //反审核
             try {
                 dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(code)));
@@ -916,6 +921,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto) {
         // 保存任务表
         try {
@@ -938,18 +944,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String savePullTask(DmpPullTaskFeignDTO dto) {
-        // 保存任务表
-        try {
-            DmpPullTaskEntity entity = new DmpPullTaskEntity(dto.getTargetPlatformName(),
-                    dto.getMqTopic(), dto.getMqTag(), dto.getMqData(), SyncStatusEnum.IN_SYNC.getCode(),
-                    dto.getSourcePlatformName(), dto.getSourceType(), dto.getSourceId(), dto.getSourceCode(), 0);
-            this.saveOrUpdateDmpSyncTask(entity);
-            return entity.getId();
-        } catch (Exception e) {
-            log.error("savePullTask 保存数据异常，{}", e.getMessage());
-        }
-        return null;
+        DmpPullTaskEntity entity = new DmpPullTaskEntity(dto.getTargetPlatformName(),
+                dto.getMqTopic(), dto.getMqTag(), dto.getMqData(), SyncStatusEnum.IN_SYNC.getCode(),
+                dto.getSourcePlatformName(), dto.getSourceType(), dto.getSourceId(), dto.getSourceCode(), 0);
+        this.saveOrUpdateDmpSyncTask(entity);
+        return entity.getId();
     }
 
     @Override

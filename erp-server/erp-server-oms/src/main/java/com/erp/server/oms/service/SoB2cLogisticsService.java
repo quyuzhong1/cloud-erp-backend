@@ -78,7 +78,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @Author Jim
      * @since 2023-11-10
      **/
-    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 
     /**
      * 获取物流费用参数
