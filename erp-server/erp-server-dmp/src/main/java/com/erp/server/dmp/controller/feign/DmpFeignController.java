@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -257,5 +258,18 @@ public class DmpFeignController extends BaseController {
     public Boolean sendWarnMsg(@RequestBody String syncTaskId) {
         dmpPullTaskService.sendWarnMsg(syncTaskId);
         return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 获取是否切换金蝶数据源
+     * @author Will
+     * @date: 2023/11/17 14:35
+     * @param lastTime
+     * @return Boolean
+     */
+    @PostMapping("/pull/needPushMQ")
+    public Boolean needPushMQ(@RequestBody LocalDateTime lastTime) {
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
+        return kingdeeApiUtils.needPushMQ(lastTime);
     }
 }

@@ -467,6 +467,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private String skuNo;
 
         /**
+         * sku版本
+         */
+        private String bomVersion;
+
+        /**
          * 是否组合品
          */
         private Boolean isCombination;

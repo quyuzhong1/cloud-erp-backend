@@ -32,8 +32,8 @@ public class MQConsumerBroadcastService {
      * 订单审核通过后同步dmp
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-            selectorExpression = "kingdee_so_info_tag",
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_INFO_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_so_info_order_to_dmp_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
@@ -48,8 +48,8 @@ public class MQConsumerBroadcastService {
      * 销售出库单 outstock 同步dmp
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-            selectorExpression = "kingdee_so_outstock_tag",
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_so_outstock_order_to_dmp_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOutStockToDmp implements RocketMQListener<Map<String, Object>> {
         @Override

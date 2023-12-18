@@ -57,7 +57,7 @@ public enum ApproveStatusEnum implements EnumMessage  {
     }
 
     public static ApproveStatusEnum getByStatus(String status){
-        return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
+        return Arrays.stream(values()).filter(a -> a.getStatus().equalsIgnoreCase(status))
                 .findFirst().orElse(null);
     }
 

@@ -48,7 +48,6 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-
     /**
      * 获取 tab列表
      *

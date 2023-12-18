@@ -610,6 +610,11 @@ public class KingdeeApiUtils {
         return result.replace(1, 1, joinStr).toString();
     }
 
+    /**
+     * 拉取时间在切换时间前 则为false 拉取时间在切换时间之后 则为true
+     * @param lastTime
+     * @return
+     */
     public boolean needPushMQ(LocalDateTime lastTime) {
         if (Objects.nonNull(SWITCH_TIME)) {
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

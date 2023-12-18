@@ -23,6 +23,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.checkerframework.checker.units.qual.A;
@@ -110,11 +111,11 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo);
         //物流信息更新保存
-        soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity);
         //财务信息更新保存
-        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
+        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
         // 根据平台和名称判断
@@ -126,10 +127,13 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
-        receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.updateById(receiverEntity)) {
-            throw new ServiceException("记录客户ID失败");
+        if (StringUtils.isBlank(receiverEntity.getCustomerId())){
+            receiverEntity.setCustomerId(customerB2cEntity.getId());
+            if (!soB2cReceiverService.updateById(receiverEntity)) {
+                throw new ServiceException("记录客户ID失败");
+            }
         }
+
 
 
         //自动匹配订单规则
