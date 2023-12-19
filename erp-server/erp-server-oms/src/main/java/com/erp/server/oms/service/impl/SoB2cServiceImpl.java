@@ -45,6 +45,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
@@ -764,7 +765,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX);
         }
         //检测是否是API 对接的仓库
-        List<OverseasProviderWarehouseEntity> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(deliveryWarehouseIdList);
+        List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(deliveryWarehouseIdList);
         Boolean isApi = CollectionUtils.isEmpty(overseasWarehouseList);
         //必须要有物流渠道，没有物流单号可以提交发货
         if (isApi) {
