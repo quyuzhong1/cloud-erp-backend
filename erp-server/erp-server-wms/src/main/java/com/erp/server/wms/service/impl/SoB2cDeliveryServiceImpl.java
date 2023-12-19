@@ -302,7 +302,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids) {
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillView(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
         //查询物流商信息
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
@@ -329,6 +329,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
             for (SoB2cDeliveryEntity deliveryEntity : collect) {
                 SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO waybillDetailDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO();
+                waybillDetailDTO.setSoB2cId(deliveryEntity.getSourceId());
                 waybillDetailDTO.setSoCode(deliveryEntity.getSoCode());
                 waybillDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());
                 waybillDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
@@ -398,6 +399,53 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .or()
                 .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
         );
+    }
+
+    @Override
+    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+        //打印类型
+        String printType = dto.getPrintType();
+
+        //明细信息
+        List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
+
+        //循环打印的渠道
+        for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
+
+            //查询b2c订单信息
+            List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = logisticsChannelDTO.getDetailList();
+            List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+
+            //渠道包含的单据
+            for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO : waybillDetailDTOList) {
+                //匹配订单
+                SoB2cEntity soB2cEntity = soB2cEntities.stream()
+                        .filter(req -> req.getId().equals(logisticsWaybillDetailDTO.getSoB2cId()))
+                        .findFirst().orElse(new SoB2cEntity());
+
+                //如果打印面单
+                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode().equals(printType)) {
+                    //先获取订单的面单，没有就请求sdk获取
+                    if (StringUtils.isBlank(soB2cEntity.getLogisticsWaybill())) {
+
+                    }
+                }
+                //如果打印配货单
+                if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
+                    //先获取订单的配货单，没有就请求sdk获取
+                    if (StringUtils.isBlank(soB2cEntity.getDistributeWaybill())) {
+
+                    }
+                    // TODO 配货单需要根据渠道查询是否是自定义配置
+                }
+
+
+
+            }
+        }
+
+
     }
 
     /**

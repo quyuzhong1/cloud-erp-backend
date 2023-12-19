@@ -65,7 +65,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     public void handleAll(PlatformOrderDTO dto) {
         SoB2cEntity mainEntity = this.checkAndSaveAll(dto);
 
-        handleRule(mainEntity);
+        try {
+            handleRule(mainEntity);
+        } catch (Exception e) {
+            log.error("[订单规则处理失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
+        }
 
     }
     @Override

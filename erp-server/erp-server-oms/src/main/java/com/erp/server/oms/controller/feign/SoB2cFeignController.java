@@ -144,4 +144,32 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cDetailEntity> list = soB2cDetailService.listByMainIds(mainIds);
         return list;
     }
+
+    /**
+     * 修改销售订单的物流面单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param id b2c销售单id
+     * @param logisticsWaybill 物流面单
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/updateLogisticsWaybill")
+    public Boolean updateLogisticsWaybill(@RequestParam(value = "id") String id, @RequestParam(value = "logisticsWaybill") String logisticsWaybill) {
+        Boolean flag = soB2cService.updateLogisticsWaybill(id, logisticsWaybill);
+        return flag;
+    }
+
+    /**
+     * 修改销售订单的配货单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 17:18
+     * @param id b2c销售单id
+     * @param distributeWaybill 配货单
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateDistributeWaybill")
+    public Boolean updateDistributeWaybill(@RequestParam(value = "id") String id, @RequestParam(value = "distributeWaybill") String distributeWaybill) {
+        Boolean flag = soB2cService.updateDistributeWaybill(id, distributeWaybill);
+        return flag;
+    }
 }
