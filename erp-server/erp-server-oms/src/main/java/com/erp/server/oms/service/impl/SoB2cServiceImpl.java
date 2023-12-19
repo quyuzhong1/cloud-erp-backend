@@ -2488,7 +2488,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
             lambdaUpdate()
-                    .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getBase64())
+                    .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getLogisticsBase64())
                     .eq(SoB2cEntity::getId, waybillDTO.getSoB2cId())
                     .update();
         }
@@ -2499,7 +2499,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
         for (SoB2cDTO.WaybillDTO distributeWaybillDTO : waybillDTOList) {
             lambdaUpdate()
-                    .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getBase64())
+                    .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeBase64())
                     .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
                     .update();
         }
