@@ -670,10 +670,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      *
      * @param list
      */
-   /* @Override
+//    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+        Map<String,Object> map = new HashMap<>();
+
+
         List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             String channelId = dto.getChannelId();
@@ -704,9 +707,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             } catch (IOException e) {
                 return null;
             }
-
-//            soB2cFeign.updateLogisticsWaybill()
+            map.put(dto.getB2cSoId(), labelList.getData().get(0).getBase64());
         }
+
+
+//        soB2cFeign.updateLogisticsWaybill(dto.getB2cSoId(), labelList.getData().get(0).getBase64());
         return null;
-    }*/
+    }
 }

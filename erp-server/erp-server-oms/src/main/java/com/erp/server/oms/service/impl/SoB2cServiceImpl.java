@@ -2469,13 +2469,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean updateLogisticsWaybill(String id, String logisticsWaybill) {
-        return lambdaUpdate().set(SoB2cEntity::getLogisticsWaybill, logisticsWaybill).eq(SoB2cEntity::getId, id).update();
+    public Boolean updateLogisticsWaybill(SoB2cDTO.LogisticsWaybillDTO logisticsWaybillDTO) {
+        return lambdaUpdate()
+                .set(SoB2cEntity::getLogisticsWaybill, logisticsWaybillDTO.getLogisticsWaybill())
+                .eq(SoB2cEntity::getId, logisticsWaybillDTO.getSoB2cId())
+                .update();
     }
 
     @Override
-    public Boolean updateDistributeWaybill(String id, String distributeWaybill) {
-        return lambdaUpdate().set(SoB2cEntity::getDistributeWaybill, distributeWaybill).eq(SoB2cEntity::getId, id).update();
+    public Boolean updateDistributeWaybill(SoB2cDTO.DistributeWaybillDTO distributeWaybillDTO) {
+        return lambdaUpdate()
+                .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeWaybill())
+                .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
+                .update();
     }
 
     /**
