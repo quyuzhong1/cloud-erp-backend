@@ -84,10 +84,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             Boolean isPlatformWarehouseOrder= mainEntity.hasPlatformWarehouseOrder();
             Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
             if(isPlatformWarehouseOrder){
-                soB2cService.platformWarehouseOrderHandle(id,map);
+                soB2cService.platformWarehouseOrderHandle(mainEntity,map);
             }else{
                 //拉取订单正常处理
-                soB2cService.pullOrderHandle(id,detailList,map);
+                soB2cService.pullOrderHandle(mainEntity,detailList,map);
             }
         }
         //已发货就要生成销售出库单

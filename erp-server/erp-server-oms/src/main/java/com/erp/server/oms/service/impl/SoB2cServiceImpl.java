@@ -3257,7 +3257,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 走仓库规则 通过就是审核通过 并待发货
      * 没有通过就是审核通过有待配货
      *
-     * @param id
+     * @param entity
      * @param map
      * @return
      * @description
@@ -3267,8 +3267,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Async
-    public Boolean platformWarehouseOrderHandle(String id, Map<String, Object> map) {
-        SoB2cEntity entity = super.getById(id);
+    public Boolean platformWarehouseOrderHandle(SoB2cEntity entity, Map<String, Object> map) {
+        String id=entity.getId();
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //仓库匹配规则结果
         RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
@@ -3305,7 +3305,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Async
-    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+    public Boolean pullOrderHandle(SoB2cEntity entity , List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        String id=entity.getId();
         Boolean isSuccess = this.approveRule(id, detailList, map);
         if (isSuccess) {
             //自动匹配配货规则
