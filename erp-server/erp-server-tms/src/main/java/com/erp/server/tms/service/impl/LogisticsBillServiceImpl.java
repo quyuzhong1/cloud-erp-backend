@@ -674,7 +674,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 //    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+    public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
 
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
@@ -707,12 +707,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 return null;
             }
             SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
-            waybillDTO.setBase64(labelList.getData().get(0).getBase64());
+            waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
             waybillDTO.setSoB2cId(dto.getB2cSoId());
             waybillDTOList.add(waybillDTO);
         }
 
         soB2cFeign.updateLogisticsWaybill(waybillDTOList);
-        return null;
+        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
+        return waybillDTOList;
     }
 }

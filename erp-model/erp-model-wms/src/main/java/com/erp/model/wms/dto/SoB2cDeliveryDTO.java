@@ -474,6 +474,11 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
         /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         */
+        private String printType;
+        /**
          * 销售单id
          */
         private String soB2cId;

@@ -1537,7 +1537,9 @@ public class SoB2cDTO implements Serializable {
 
         private String soB2cId;
 
-        private String base64;
+        private String LogisticsBase64;
+
+        private String DistributeBase64;
     }
 
 
