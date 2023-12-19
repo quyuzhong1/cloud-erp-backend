@@ -65,6 +65,8 @@ import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -900,6 +902,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
                 if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
                     e.setDiffQty(e.getReceiveQty() - detailEntity.getDeliveryQty());
+                    e.setReceiveDate(LocalDateTime.now(ZoneId.systemDefault()));
                 }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
