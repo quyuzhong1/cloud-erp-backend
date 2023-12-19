@@ -519,6 +519,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 补录销售订单毛利历史数据
+     *
      * @param startDate
      * @param endDate
      * @return
@@ -593,6 +594,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 获取销售成本毛利信息
+     *
      * @param calCostProfitDTO
      * @return
      */
@@ -600,7 +602,6 @@ public class SoInfoController extends BaseController {
     public ApiResult<List<SoDetailDTO.CalDetailResultDTO>> calSkuCostProfit(@RequestBody @Validated SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
     }
-
 
     /**
      * 下载销售订单导入模板
@@ -628,5 +629,4 @@ public class SoInfoController extends BaseController {
         Boolean result = soInfoService.importExcel(excelFile, response);
         return result?success():failure();
     }
-
 }

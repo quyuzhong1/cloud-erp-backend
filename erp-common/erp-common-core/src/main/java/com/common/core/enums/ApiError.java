@@ -32,6 +32,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_404_NOT_FIND(404, "接口路径不存在"),
     ERROR_405(405, "方法不被允许"),
+    ERROR_500(500, "系统异常"),
     ERROR_600(600, "缺少参数"),
     ERROR_400(400, "参数错误"),
     GLOBAL_EXCEPTION_UN_KNOW(500, "未知异常：【{}】"),
@@ -543,6 +544,7 @@ public enum ApiError implements Serializable {
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
     ERP_DMP_SKU_NOT_COST(97044, "sku【{}】未发现成本数据！"),
 
+    ERROR_97044(97044, "已使用的模块不能删除"),
 
     /**
      * SCM 错误
@@ -1063,6 +1065,9 @@ public enum ApiError implements Serializable {
 
 
 
+
+
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

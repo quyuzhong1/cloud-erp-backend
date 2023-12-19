@@ -60,6 +60,14 @@
                 #{platformSkuNo,jdbcType=VARCHAR}
             </foreach>
         </if>
+
+        <if test="params.platformWarehouseCodeList!=null and params.platformWarehouseCodeList.size>0">
+            AND oi.warehouse_code IN
+            <foreach collection="params.platformWarehouseCodeList" item="platformWarehouseCode" open="(" separator="," close=")">
+                #{platformWarehouseCode,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+
         <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
             and oi.download_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.download_time
         </if>

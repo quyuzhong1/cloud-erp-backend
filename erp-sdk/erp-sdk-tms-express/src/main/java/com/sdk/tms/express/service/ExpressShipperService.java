@@ -2,6 +2,7 @@ package com.sdk.tms.express.service;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.express.constants.PathConstants;
 import com.sdk.tms.express.enums.ExpressServiceCodeEnum;
@@ -264,7 +265,7 @@ public class ExpressShipperService {
         return baseResult;
     }
     private void validate(String partnerId,String md5Key){
-        assert StringUtils.isNotEmpty(partnerId);
-        assert StringUtils.isNotEmpty(md5Key);
+        if (StringUtils.isBlank(partnerId) || StringUtils.isBlank(md5Key)) throw new ServiceException("授权信息不能为空");
+
     }
 }

@@ -32,6 +32,7 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.BomCombinationExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -147,7 +148,6 @@ public class BomCombinationServiceImpl implements BomCombinationService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
 
         BomCombinationExcelListener excelListenerUtil = new BomCombinationExcelListener();

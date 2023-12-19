@@ -42,6 +42,11 @@ public class TransferInfoDTO implements Serializable {
         private String  code;
 
         /**
+         * 来源单据【可排序】
+         */
+        private String sourceCode;
+
+        /**
          * 调拨方向
          */
         private String transferDirection;
@@ -179,6 +184,10 @@ public class TransferInfoDTO implements Serializable {
          * 调拨单编号
          */
         private String  code;
+        /**
+         * 来源单据号
+         */
+        private String  sourceCode;
         /**
          * sku编码集合
          */
