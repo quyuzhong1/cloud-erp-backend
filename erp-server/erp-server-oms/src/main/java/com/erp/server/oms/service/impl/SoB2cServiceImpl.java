@@ -251,7 +251,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(addDTO, soB2cEntity);
 
         // 数据处理
-        handleData(soB2cEntity, true);
+        handleData(soB2cEntity, true, true);
         //创建时间
         soB2cEntity.setCreateTime(ObjectUtils.isEmpty(addDTO.getCreateTime()) ? LocalDateTime.now() : addDTO.getCreateTime());
         soB2cEntity.setCode(code);
@@ -321,7 +321,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
 
         // 数据处理
-        handleData(soB2cEntity, true);
+        handleData(soB2cEntity, true, true);
 
         log.info("编辑 开始修改B2C销售订单表数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(soB2cEntity);
@@ -1895,16 +1895,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * 新增修改处理数据
      */
-    private void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow) {
+    private void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime) {
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             return;
         }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
-        BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-        if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
-            throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        if (StringUtils.isNotBlank(soB2cEntity.getCurrency())){
+            BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
+                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            }
+            soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
         }
-        soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
 
         //店铺
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
@@ -1915,7 +1917,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
 
         //付款时间不为空则已付款
-        if (ObjectUtils.isNotEmpty(soB2cEntity.getPayTime())) {
+        if (ObjectUtils.isNotEmpty(soB2cEntity.getPayTime()) && checkPayTime) {
             soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
     }
@@ -2999,7 +3001,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 组合信息
             SoB2cEntity entity = new SoB2cEntity();
             BeanUtils.copyProperties(dto, entity);
-            handleData(entity, false);
+            handleData(entity, false, false);
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum){
@@ -3040,7 +3042,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 oldEntity.setShopId(dto.getShopId());
             }
             if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
-                handleData(oldEntity, false);
+                handleData(oldEntity, false, false);
             }
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
