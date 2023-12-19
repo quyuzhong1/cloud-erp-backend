@@ -20,6 +20,9 @@ public interface PlatformOrderConsumerHandleService {
      */
     void handleAll(PlatformOrderDTO dto);
 
+
+    void handleRule(SoB2cEntity mainEntity);
+
     /**
      * 保存所有
      */
