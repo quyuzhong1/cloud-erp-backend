@@ -139,14 +139,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailList(detailIsNull ? detail.getChildOrderList() : Collections.emptyList());
         orderDTO.setDetails(details);
-        // 订单买家信息
-        List<PlatformOrderReceiverDTO> receiverList = new ArrayList<>(1);
+
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailIsNull) {
             //收货信息
             ReceiptInfo receiptInfo = detail.getReceiptInfo();
             BuyerInfo buyerInfo = detail.getBuyerInfo();
-
+            receiverDTO.setLoginId(buyerInfo.getLoginId());
             receiverDTO.setCountry(receiptInfo.getCountry());
             receiverDTO.setName(sourceOrder.getBuyerSignerFullname());
             receiverDTO.setEmail("");

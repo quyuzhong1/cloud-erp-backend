@@ -35,8 +35,16 @@ public class BuyerInfo implements Serializable {
      *
      * last name
      */
-    @JSONField(name = "last name")
+    @JSONField(name = "last_name")
     private String lastName;
+
+
+    /**
+     *
+     * 登陆id
+     */
+    @JSONField(name = "login_id")
+    private String loginId;
 
 
 }
