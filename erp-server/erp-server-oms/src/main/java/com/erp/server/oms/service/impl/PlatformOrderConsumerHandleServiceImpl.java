@@ -64,7 +64,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         SoB2cEntity mainEntity = this.checkAndSaveAll(dto);
-
         try {
             handleRule(mainEntity);
         } catch (Exception e) {

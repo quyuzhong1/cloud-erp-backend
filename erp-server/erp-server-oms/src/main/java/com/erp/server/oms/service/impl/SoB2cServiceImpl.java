@@ -2587,18 +2587,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     soB2cLogisticsService.updateById(b2cLogistics);
                 }
             }
+            //状态更新为配货中
+            updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
             //获取跟踪单号
             if (autoGetTrackNo) {
                 try {
                     this.getLogisticsCode(id, Boolean.TRUE);
+                    //自动发货(物流规则有设置则自动发货)
+                    submitDelivery(id);
                 } catch (Exception e) {
                     log.error("获取物流单号出错了>>>>>>>>{}", e.getMessage());
                 }
-            } else {
-                //状态更新为配货中
-                updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
-                //自动发货(物流规则有设置则自动发货)
-                submitDelivery(id);
             }
         } else {
             updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
