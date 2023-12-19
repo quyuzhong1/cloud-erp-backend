@@ -149,13 +149,12 @@ public class SoB2cFeignController extends BaseController {
      * 修改销售订单的物流面单字段
      * @Author Luo_WG
      * @Date 2023/12/19 15:22
-     * @param id b2c销售单id
-     * @param logisticsWaybill 物流面单
+     * @param logisticsWaybillDTO 物流面单
      * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
      **/
     @PostMapping("/updateLogisticsWaybill")
-    public Boolean updateLogisticsWaybill(@RequestParam(value = "id") String id, @RequestParam(value = "logisticsWaybill") String logisticsWaybill) {
-        Boolean flag = soB2cService.updateLogisticsWaybill(id, logisticsWaybill);
+    public Boolean updateLogisticsWaybill(@RequestBody SoB2cDTO.LogisticsWaybillDTO logisticsWaybillDTO) {
+        Boolean flag = soB2cService.updateLogisticsWaybill(logisticsWaybillDTO);
         return flag;
     }
 
@@ -163,13 +162,12 @@ public class SoB2cFeignController extends BaseController {
      * 修改销售订单的配货单字段
      * @Author Luo_WG
      * @Date 2023/12/19 17:18
-     * @param id b2c销售单id
-     * @param distributeWaybill 配货单
+     * @param distributeWaybillDTO 配货单
      * @return java.lang.Boolean
      **/
     @PostMapping("/updateDistributeWaybill")
-    public Boolean updateDistributeWaybill(@RequestParam(value = "id") String id, @RequestParam(value = "distributeWaybill") String distributeWaybill) {
-        Boolean flag = soB2cService.updateDistributeWaybill(id, distributeWaybill);
+    public Boolean updateDistributeWaybill(@RequestBody SoB2cDTO.DistributeWaybillDTO distributeWaybillDTO) {
+        Boolean flag = soB2cService.updateDistributeWaybill(distributeWaybillDTO);
         return flag;
     }
 }
