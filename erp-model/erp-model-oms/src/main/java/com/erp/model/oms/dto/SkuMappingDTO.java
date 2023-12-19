@@ -891,6 +891,10 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 产品skuId
          */
+        private String listingId;
+        /**
+         * 产品skuId
+         */
         private String productSkuId;
         /**
          * 产品sku编号

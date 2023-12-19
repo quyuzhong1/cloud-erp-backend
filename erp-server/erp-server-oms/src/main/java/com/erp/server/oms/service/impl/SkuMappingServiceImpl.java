@@ -32,8 +32,11 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
@@ -94,6 +97,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
+
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -607,6 +613,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
             listingList = listingInfoService.listByIds(listingIds);
         }
+
+        //根据ERP仓库查询绑定的海外仓
+        List<String> warehouseIds = dataList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
+
         //库存
         RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
@@ -629,11 +640,31 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
                 //库存sku信息
-                ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(warehouseSkuMapping.getListingId())).findFirst().orElse(null);
+                SkuMappingEntity skuMappingEntity = warehouseSkuMapping;
+                ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(warehouseListing)) {
                     listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
                     listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
 
+                }
+            } else {
+                OverseasProviderWarehouseDTO.ViewDTO viewDTO = providerWarehouseList.stream().filter(req -> req.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(viewDTO)) {
+                    //查询库存sku映射
+                    warehouseSkuMapping = list.stream().filter(
+                            obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) &&
+                                    obj.getDictPlatform().equals(viewDTO.getProviderCode()) &&
+                                    warehouseType.equals(obj.getType())
+                    ).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
+                        //库存sku信息
+                        SkuMappingEntity finalWarehouseSkuMapping = warehouseSkuMapping;
+                        ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(finalWarehouseSkuMapping.getListingId())).findFirst().orElse(null);
+                        if (ObjectUtils.isNotEmpty(warehouseListing)) {
+                            listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
+                            listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
+                        }
+                    }
                 }
             }
             //查询平台sku信息
