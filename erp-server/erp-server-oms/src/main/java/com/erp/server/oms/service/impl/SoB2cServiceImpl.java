@@ -315,7 +315,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //未付款数据不能编辑
         if (ObjectUtil.isEmpty(old.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(old.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_UPDATE,old.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_UPDATE, old.getCode());
         }
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
@@ -426,7 +426,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         approveDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
+        String userId = userInfo.getUid();
+        if (StringUtils.isBlank(userId)) {
+            userId = "0";
+        }
+        approveDTO.setUserId(userId);
         approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
@@ -869,8 +873,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             //TODO生成发货单
-            SoB2cDeliveryDTO.AddDTO soB2cDelivery =B2cOrderConverter.INSTANCE.convertDelivery(entity);
-            List<SoB2cDeliveryDetailDTO.AddDTO> soB2cDeliveryDetailList=B2cOrderConverter.INSTANCE.convertDeliveryDetail(list);
+            SoB2cDeliveryDTO.AddDTO soB2cDelivery = B2cOrderConverter.INSTANCE.convertDelivery(entity);
+            List<SoB2cDeliveryDetailDTO.AddDTO> soB2cDeliveryDetailList = B2cOrderConverter.INSTANCE.convertDeliveryDetail(list);
             soB2cDelivery.setDetailList(soB2cDeliveryDetailList);
             soB2cDeliveryFeign.addSoB2cDelivery(soB2cDelivery);
         }
@@ -986,21 +990,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String mainLabelJson = entity.getLabelJson();
             SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(mainLabelJson, SoB2cDTO.LabelJsonDTO.class);
             if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_FBA,entity.getCode());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_FBA, entity.getCode());
             }
             //菜鸟官方仓订单不支持合并
             long cainiaoCount = soB2cDetailList.stream().filter(obj -> obj.getMainId().equals(entity.getId()) && obj.getLabelJson().contains("cainiaoInternationalWarehouse")).count();
             if (cainiaoCount > 0) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_CAINIAO,entity.getCode());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_CAINIAO, entity.getCode());
             }
             //速卖通非已税订单不支持合并
             long taxCount = soB2cDetailList.stream().filter(obj -> obj.getMainId().equals(entity.getId()) && (obj.getLabelJson().contains("U_TAXED") || obj.getLabelJson().contains("I_TAXED"))).count();
             if (taxCount > 0) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_TAX,entity.getCode());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_TAX, entity.getCode());
             }
             //shopee订单不支持合并
             if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_MERGE,entity.getCode());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_MERGE, entity.getCode());
             }
         }
 
@@ -1520,7 +1524,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        String userId = commonService.getUserInfo().getUid();
+        startDTO.setUserId(userId);
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -1878,15 +1883,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //作废和冻结不支持提交
         if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus()) || SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_SUBMIT,entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_SUBMIT, entity.getCode());
         }
         //未付款数据不支持提交
-        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus()) ) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT,entity.getCode());
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
         }
         //汇率不存在不支持提交
-        if (MathUtil.compareTo(entity.getExchangeRate(),MathUtil.ZERO) == MathUtil.ZERO) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT,entity.getCode());
+        if (MathUtil.compareTo(entity.getExchangeRate(), MathUtil.ZERO) == MathUtil.ZERO) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
         }
 
         return;
@@ -1900,7 +1905,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
-        if (StringUtils.isNotBlank(soB2cEntity.getCurrency())){
+        if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
             BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
             if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
                 throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
@@ -2205,7 +2210,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_SAVE_SPLIT_INVALID);
         }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT,entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
         }
 
         //查询订单是否是合并订单或拆分子订单
@@ -2267,15 +2272,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 存在流程，则直接提交进入流程审核
          * 不存在流程，则判断标记异常，进入审核不通过
          */
-        ProcessBusinessEntity processBusinessEntity = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
-        if (ObjectUtils.isNotEmpty(processBusinessEntity)) {
-            //自动提交
-            BatchResultDTO submit = submit(id, Boolean.TRUE);
-            if (!submit.getSuccess()) {
-                throw new ServiceException(ApiError.ERROR_1042);
-            }
-            return Boolean.FALSE;
-        }
+//        ProcessBusinessEntity processBusinessEntity = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
+//        if (ObjectUtils.isNotEmpty(processBusinessEntity)) {
+//            //自动提交
+//            BatchResultDTO submit = submit(id, Boolean.TRUE);
+//            if (!submit.getSuccess()) {
+//                throw new ServiceException(ApiError.ERROR_1042);
+//            }
+//            return Boolean.FALSE;
+//        }
         //标识异常并且审核不通过
         updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
         return Boolean.FALSE;
@@ -2496,8 +2501,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private String getByField(String fieldCode, List<Map<String, Object>> mapList) {
         Set<String> list = new HashSet<>(mapList.size());
         for (Map<String, Object> map : mapList) {
-            Object obj=map.getOrDefault(fieldCode, "");
-            if(Objects.nonNull(obj)){
+            Object obj = map.getOrDefault(fieldCode, "");
+            if (Objects.nonNull(obj)) {
                 list.add(obj.toString());
             }
         }
@@ -3017,9 +3022,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cEntity entity = new SoB2cEntity();
             BeanUtils.copyProperties(dto, entity);
             handleData(entity, false, false);
-            if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
+            if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
-                if (null == approveStatusEnum){
+                if (null == approveStatusEnum) {
                     String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
                     throw new ServiceException(msg);
                 }
@@ -3059,9 +3064,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
                 handleData(oldEntity, false, false);
             }
-            if (StringUtils.isNotBlank(dto.getApproveStatusStr())){
+            if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
-                if (null == approveStatusEnum){
+                if (null == approveStatusEnum) {
                     String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
                     throw new ServiceException(msg);
                 }
@@ -3286,7 +3291,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @Async
     public Boolean platformWarehouseOrderHandle(SoB2cEntity entity, Map<String, Object> map) {
-        String id=entity.getId();
+        String id = entity.getId();
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //仓库匹配规则结果
         RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
@@ -3323,8 +3328,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Async
-    public Boolean pullOrderHandle(SoB2cEntity entity , List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        String id=entity.getId();
+    public Boolean pullOrderHandle(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        String id = entity.getId();
         Boolean isSuccess = this.approveRule(id, detailList, map);
         if (isSuccess) {
             //自动匹配配货规则
@@ -3332,7 +3337,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return Boolean.TRUE;
     }
-
 
 
 }

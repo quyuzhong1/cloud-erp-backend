@@ -122,9 +122,11 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
          * 国家名称
          */
-        @NotBlank(message = "国家名称不能为空")
-        @Size(max = 50,message = "国家名称最大长度不能超过50位")
-        private String countryName;
+       // @NotBlank(message = "国家不能为空")
+        private String country;
+
+
+
 
         /**
         * 收货人名称
