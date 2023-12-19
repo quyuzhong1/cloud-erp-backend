@@ -62,6 +62,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 @Slf4j
@@ -115,8 +116,14 @@ public class PullAmazonJob {
     @XxlJob("amazonExecute")
     public ReturnT<String> execute() {
         XxlJobHelper.log("[拉取亚马逊任务] 任务开始 =====");
-        threadPoolTaskExecutor.execute(() -> {
-            platformDataThread.executeTask(PlatformDictEnum.AMAZON.getCode());
+        IntStream.range(0, 10).forEach( x->{
+            try {
+                threadPoolTaskExecutor.execute(() -> {
+                    platformDataThread.executeTask(PlatformDictEnum.AMAZON.getCode());
+                });
+            } catch (Exception e) {
+                XxlJobHelper.log("[拉取亚马逊任务] 执行失败，msg={}", e.getMessage());
+            }
         });
         XxlJobHelper.log("[拉取亚马逊任务] 任务结束 =====");
         return ReturnT.SUCCESS;
