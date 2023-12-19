@@ -90,6 +90,15 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     Boolean printPicking(List<String> ids);
 
     /**
+     * 取消打印拣货单
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:20
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean printPickingCancel(List<String> ids);
+
+    /**
      * 打印物流面单
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
