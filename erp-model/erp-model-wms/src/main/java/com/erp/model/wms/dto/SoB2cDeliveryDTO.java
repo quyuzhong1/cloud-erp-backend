@@ -441,7 +441,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintLogisticsWaybillDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
          */
         private String printType;
         /**
@@ -474,6 +474,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
         /**
+         * 销售单id
+         */
+        private String soB2cId;
+        /**
          * 物流商名称
          */
         private String logisticsSupplierName;
@@ -504,7 +508,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintDistributionDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
          */
         private String printType;
         /**
@@ -537,6 +541,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintDistributionDetailDTO {
         /**
+         * 销售单id
+         */
+        private String soB2cId;
+        /**
          * 物流商名称
          */
         private String logisticsSupplierName;
@@ -556,5 +564,42 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流单号
          */
         private String transportNo;
+    }
+
+    /**
+     * 打印物流面单确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmDTO {
+        /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         */
+        private String printType;
+        /**
+         * 详情
+         */
+        private List<LogisticsChannelDTO> detailList;
+    }
+
+
+    /**
+     * 打印物流面单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticsChannelDTO {
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 详情
+         */
+        private List<PrintLogisticsWaybillDetailDTO> detailList;
     }
 }

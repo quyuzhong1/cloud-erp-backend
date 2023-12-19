@@ -105,7 +105,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>
      **/
-    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids);
+    List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillView(List<String> ids);
 
     /**
      * 打印配货单
@@ -118,4 +118,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     SoB2cDeliveryEntity getByBusinessCode(String businessCode);
 
+    /**
+     * 打印物流面单确认
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:39
+     * @param dto
+     * @return void
+     **/
+    void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto);
 }

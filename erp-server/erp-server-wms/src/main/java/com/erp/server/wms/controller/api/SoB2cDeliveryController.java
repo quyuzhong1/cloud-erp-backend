@@ -227,7 +227,6 @@ public class SoB2cDeliveryController extends BaseController {
         return flag ? success() : failure();
     }
 
-
     /**
      * 打印物流面单
      * @Author Luo_WG
@@ -237,7 +236,7 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/printLogisticsWaybill")
     public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cDeliveryService.printLogisticsWaybill(dto.getIds()));
+        return success(soB2cDeliveryService.printLogisticsWaybillView(dto.getIds()));
     }
 
     /**
@@ -250,5 +249,19 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/printDistribution")
     public ApiResult<List<SoB2cDeliveryDTO.PrintDistributionDTO>> printDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cDeliveryService.printDistribution(dto.getIds()));
+    }
+
+    /**
+     * 打印物流面单确认
+     * @Author Luo_WG
+     * @Date 2023/12/13 20:13
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
+     **/
+
+    @PostMapping("/printLogisticsBillConfirm")
+    public ApiResult printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+        soB2cDeliveryService.printLogisticsBillConfirm(dto);
+        return success();
     }
 }
