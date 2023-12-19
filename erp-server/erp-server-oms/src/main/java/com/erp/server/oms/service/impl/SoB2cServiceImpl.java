@@ -1740,6 +1740,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setStatus(data.getBillStatus());
             data.setStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
 
+            //异常信息名称
+            data.setAbnormalTypeName(SoB2cAbnormalTypeEnum.getName(data.getAbnormalType()));
+
             //标签处理
             String label = data.getLabel();
             SoB2cDTO.LabelDTO labelDTO = new SoB2cDTO.LabelDTO();
