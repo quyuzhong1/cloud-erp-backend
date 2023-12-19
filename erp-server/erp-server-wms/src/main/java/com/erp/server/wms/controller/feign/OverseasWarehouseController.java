@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
@@ -51,7 +52,7 @@ public class OverseasWarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/listByWarehouseId")
-    public List<OverseasProviderWarehouseEntity> listByWarehouseId(@RequestBody List<String> warehouseIdList){
-        return overseasProviderWarehouseService.listByWarehouseIds(warehouseIdList);
+    public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseId(@RequestBody List<String> warehouseIdList){
+        return overseasProviderWarehouseService.listByWarehouseIdList(warehouseIdList);
     }
 }
