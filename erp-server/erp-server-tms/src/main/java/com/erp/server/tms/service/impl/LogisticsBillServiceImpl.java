@@ -407,7 +407,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
             return trackNoList;
         } else {
-            throw new ServiceException(orderResult.getCode(), orderResult.getMsg());
+            LogisticsOrderResponseVO responseVO= orderResult.getData();
+            StringBuilder sb=new StringBuilder(orderResult.getMsg());
+            if(Objects.nonNull(responseVO)){
+                sb.append(responseVO.getMessage());
+            }
+
+            throw new ServiceException(orderResult.getCode(), sb.toString());
         }
 
 
