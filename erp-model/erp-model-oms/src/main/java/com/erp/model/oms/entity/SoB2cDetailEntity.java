@@ -142,6 +142,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("is_match_warehouse_rule")
     private Boolean isMatchWarehouseRule;
 
+    /**
+     * 平台明细行号
+     */
+    @TableField("platform_line_number")
+    private String platformLineNumber;
+
 
     public static final String MAIN_ID = "main_id";
 
