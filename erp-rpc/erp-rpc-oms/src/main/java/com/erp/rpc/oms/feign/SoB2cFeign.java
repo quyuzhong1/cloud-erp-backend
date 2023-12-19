@@ -50,8 +50,26 @@ public interface SoB2cFeign {
     List<SoB2cEntity> listByIds(@RequestBody List<String> soIds);
 
     /**
+     * 根据主表id查询B2C订单主表信息
+     * @param soId
+     * @return
+     */
+    @GetMapping("/feign/soB2c/getById")
+    SoB2cEntity getById(@RequestParam("soId") String soId);
+
+    /**
      * 更改销售订单已发货
      */
     @PostMapping("/feign/soB2c/orderShipped")
     SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId);
+
+    /**
+     * 根据b2c订单id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param mainIds
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/feign/soB2c/listDetailByMainIds")
+    List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
 }

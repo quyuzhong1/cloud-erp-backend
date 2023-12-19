@@ -3,7 +3,11 @@ package com.common.business.dto;
 import lombok.Data;
 
 @Data
-public class PlatformShipOrderDetailDTO {
+public class WalmartShipOrderDetailDTO {
+    /**
+     * 平台明细行号
+     */
+    private String platformLineNumber;
     /**
      * 平台sku
      */
