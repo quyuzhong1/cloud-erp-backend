@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -161,6 +162,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Autowired
     private SubcontractOrderService subcontractOrderService;
 
+    @Autowired
+    private PurchaseChangeService purchaseChangeService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -490,6 +493,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
             throw new ServiceException(ApiError.ERROR_98056);
+        }
+        //验证有没有下推变更单
+        List<PurchaseChangeEntity> purchaseChangeList = purchaseChangeService.listByPoIds(ids);
+        if (CollectionUtils.isEmpty(purchaseChangeList)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE);
         }
 
         log.info("采购订单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
