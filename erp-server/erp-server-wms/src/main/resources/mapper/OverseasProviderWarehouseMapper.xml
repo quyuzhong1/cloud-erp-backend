@@ -3,24 +3,24 @@
 <mapper namespace="com.erp.server.wms.mapper.OverseasProviderWarehouseMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasProviderWarehouseEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="main_id" property="mainId" />
-       <result column="platform_warehouse_code" property="platformWarehouseCode" />
-       <result column="platform_warehouse_name" property="platformWarehouseName" />
-       <result column="country" property="country" />
-       <result column="country_name" property="countryName" />
-       <result column="warehouse_id" property="warehouseId" />
-       <result column="warehouse_name" property="warehouseName" />
-       <result column="warehouse_code" property="warehouseCode" />
-       <result column="disabled" property="disabled" />
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="main_id" property="mainId" />
+        <result column="platform_warehouse_code" property="platformWarehouseCode" />
+        <result column="platform_warehouse_name" property="platformWarehouseName" />
+        <result column="country" property="country" />
+        <result column="country_name" property="countryName" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="warehouse_name" property="warehouseName" />
+        <result column="warehouse_code" property="warehouseCode" />
+        <result column="disabled" property="disabled" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -36,6 +36,29 @@
         is_deleted,
         main_id, platform_warehouse_code, platform_warehouse_name, country, country_name, warehouse_id, warehouse_name, warehouse_code, disabled
     </sql>
+    <select id="listByWarehouseIdList" resultType="com.erp.model.wms.dto.OverseasProviderWarehouseDTO$ViewDTO">
+        SELECT
+        opw.main_id,
+        opw.platform_warehouse_code,
+        opw.platform_warehouse_name,
+        opw.country,
+        opw.country_name,
+        opw.warehouse_id,
+        opw.warehouse_name,
+        opw.warehouse_code,
+        opw.disabled,
+        op.code AS providerCode
+        FROM overseas_provider_warehouse opw
+        INNER JOIN overseas_provider op
+        ON op.id = opw.main_id and op.is_deleted=false
+        WHERE opw.is_deleted=false
+        <if test="warehouseIds!=null and warehouseIds.size>0">
+            AND opw.warehouse_id IN
+            <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>
