@@ -721,7 +721,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
 
 
-        //货取物流单号，TODO
+        //货取物流单号
         List<String> logisticsTrackNoList = logisticsBillFeign.generateBill(generateBillDTO);
         if (CollectionUtils.isEmpty(logisticsTrackNoList)) {
             throw new ServiceException("下物流单失败");
@@ -2449,8 +2449,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String category = getByField("category", mapList);
         map.put("category", category);
 
-        String property = getByField("property", mapList);
-        map.put("property", property);
+        String property = getByField("propertyId", mapList);
+        map.put("propertyId", property);
 
         String isAliExpressTaxOrder = getByField("isAliExpressTaxOrder", mapList);
         map.put("isAliExpressTaxOrder", isAliExpressTaxOrder);
@@ -2478,7 +2478,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private String getByField(String fieldCode, List<Map<String, Object>> mapList) {
         Set<String> list = new HashSet<>(mapList.size());
         for (Map<String, Object> map : mapList) {
-            list.add(map.getOrDefault(fieldCode, "").toString());
+            Object obj=map.getOrDefault(fieldCode, "");
+            if(Objects.nonNull(obj)){
+                list.add(obj.toString());
+            }
         }
         return list.stream().collect(Collectors.joining(","));
     }
@@ -3310,5 +3313,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return Boolean.TRUE;
     }
+
+
 
 }

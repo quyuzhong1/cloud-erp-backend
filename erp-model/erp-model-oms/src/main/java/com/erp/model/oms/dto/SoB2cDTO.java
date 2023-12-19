@@ -374,6 +374,9 @@ public class SoB2cDTO implements Serializable {
          * 手工订单（在ERP手动创建的订单）
          */
         private Boolean isManual;
+
+
+
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
          */
