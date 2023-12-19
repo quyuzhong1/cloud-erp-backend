@@ -469,6 +469,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @return
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult<CancelResponseVO> cancelBill(LogisticsBillDTO.CancelBillDTO dto) {
 
         String channelId = dto.getChannelId();
@@ -515,6 +516,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult<InterceptResponseVO> interceptBill(LogisticsBillDTO.CancelBillDTO dto) {
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
