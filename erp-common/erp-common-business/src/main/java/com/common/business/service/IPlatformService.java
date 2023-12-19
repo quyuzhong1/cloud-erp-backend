@@ -7,7 +7,7 @@ import com.common.business.dto.PlatformShipOrderDTO;
  * @Author Luo_WG
  * @Date 2023/12/18 15:53
  **/
-public interface IPlatformService<T> {
+public interface IPlatformService {
 
     /**
      * 订单发货标识
