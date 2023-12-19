@@ -859,17 +859,26 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PrintLogisticsWaybillDTO {
-        /**
-         * ids
-         */
-        @Size(min = 1,message = "物流单不能为空")
-        private List<String> ids;
 
         /**
-         * 运输状态
-         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
+         * 销售单id
          */
-        private String trackStatus;
+        private String b2cSoId;
+
+        @NotBlank(message = "渠道不能为空")
+        private String channelId;
+
+        /**
+         * 运单号
+         */
+        @NotBlank(message = "运单号不能为空")
+        private String transportNo;
+
+        /**
+         * 发货单号
+         */
+        @NotBlank(message = "发货单号不能为空")
+        private String deliveryNo;
 
     }
 

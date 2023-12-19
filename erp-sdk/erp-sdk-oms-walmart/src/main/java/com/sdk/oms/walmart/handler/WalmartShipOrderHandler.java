@@ -2,7 +2,9 @@ package com.sdk.oms.walmart.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.JobTaskDTO;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
+import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartShipOrderDTO;
@@ -100,4 +102,9 @@ public class WalmartShipOrderHandler {
         String s = walmartSdkClientService.sendWalmartPost(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), map);
         System.out.println(s);
     }
+/*
+    @Override
+    public List<PlatformWalmartOrderDTO> download(JobTaskDTO data) {
+
+    }*/
 }
