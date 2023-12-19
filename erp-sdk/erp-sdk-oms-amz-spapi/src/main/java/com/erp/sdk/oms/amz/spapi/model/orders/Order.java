@@ -1438,7 +1438,6 @@ public class Order {
     public LocalDateTime convertPurchaseSystemTime() {
         return LocalDateTime.parse(this.purchaseDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 .atZone(ZoneOffset.UTC)
-                .withZoneSameInstant(ZoneId.systemDefault())
                 .toLocalDateTime()
                 ;
     }
@@ -1460,8 +1459,8 @@ public class Order {
             return "waitDistribution";
         }
         if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
-            // 已发货
-            return "shipped";
+            // 待发货
+            return "waitShipped";
         }
         if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             // 已发货
@@ -1537,7 +1536,11 @@ public class Order {
             return "waitSubmit";
         }
         if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
-            return "waitSubmit";
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
         }
         if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             return "approve";
@@ -1546,7 +1549,11 @@ public class Order {
             return "approve";
         }
         if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
-            return "waitSubmit";
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
         }
         if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
             return "waitSubmit";

@@ -284,9 +284,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation).reversed()
                 ).collect(Collectors.toList());
 
-        //修改打印状态
-        lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).update();
         return resultList;
+    }
+
+
+    @Override
+    public Boolean printPicking(List<String> ids) {
+        lambdaUpdate().set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.PICKING.getCode()).update();
+        //修改打印状态
+        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).update();
+    }
+
+    @Override
+    public Boolean printPickingCancel(List<String> ids) {
+        //修改打印状态
+        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.FALSE).update();
     }
 
     @Override
