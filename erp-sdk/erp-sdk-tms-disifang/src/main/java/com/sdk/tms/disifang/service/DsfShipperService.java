@@ -2,6 +2,7 @@ package com.sdk.tms.disifang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.sdk.tms.disifang.constants.AmbientEnum;
 import com.sdk.tms.disifang.model.base.AffterentParam;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
@@ -38,11 +39,8 @@ public class DsfShipperService {
 //    static String host = "https://open-test.4px.com/router/api/service";
 //    static String appKey = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
 //    static String appSecret = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
-
     private void validate(String appKey,String appSecret,String method){
-        assert StringUtils.isNotEmpty(appKey);
-        assert StringUtils.isNotEmpty(appSecret);
-        assert StringUtils.isNotEmpty(method);
+        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(method) ) throw new ServiceException("授权信息不能为空");
     }
     /**
      * 获取标签 打印标签
