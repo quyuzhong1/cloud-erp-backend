@@ -88,6 +88,14 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
+    public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(List<String> warehouseIds) {
+        if(CollectionUtils.isEmpty(warehouseIds)){
+             return Collections.emptyList();
+        }
+        return baseMapper.listByWarehouseIdList(warehouseIds);
+    }
+
+    @Override
     public OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getMainId, mainId)

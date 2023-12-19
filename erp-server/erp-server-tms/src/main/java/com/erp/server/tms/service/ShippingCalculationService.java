@@ -128,5 +128,5 @@ public interface ShippingCalculationService {
      * @param orderId b2c 销售订单id
      * @return 
      */
-    List<ShippingCalculationDTO.ChannelCostDTO> listChannelCost(String orderId);
+    ShippingCalculationDTO.CostCalculationResultDTO listChannelCost(String orderId);
 }

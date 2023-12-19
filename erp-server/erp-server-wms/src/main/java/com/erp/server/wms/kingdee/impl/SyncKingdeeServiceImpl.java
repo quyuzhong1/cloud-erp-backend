@@ -123,6 +123,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode().toString().equals(code)) {
             stocktakingProfitLossService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
+
         //采购收货单
         if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {

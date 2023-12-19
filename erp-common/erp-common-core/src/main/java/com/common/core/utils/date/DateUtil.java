@@ -10,9 +10,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
 
 /**
  * @Classname 日期工具类
@@ -478,5 +476,21 @@ public class DateUtil {
         return localDateTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toLocalDateTime();
+    }
+
+    /**
+     * 获取某年的全部日子
+     * @param year
+     * @return
+     */
+    public static List<LocalDateTime> getDatesInYear(int year) {
+        List<LocalDateTime> dates = new ArrayList<>();
+        LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
+        while (startDate.isBefore(endDate) || startDate.isEqual(endDate)) {
+            dates.add(startDate);
+            startDate = startDate.plusDays(1);
+        }
+        return dates;
     }
 }

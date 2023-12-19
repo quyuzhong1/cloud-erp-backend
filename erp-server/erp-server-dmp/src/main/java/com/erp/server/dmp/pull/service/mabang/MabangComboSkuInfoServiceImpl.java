@@ -12,6 +12,8 @@ import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -66,7 +68,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByComboSku(entity.getComboSku());
             List<ComboSkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_COMBO_SKU, ComboSkuInfoEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now().toString());
+            entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -117,7 +119,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
         }
         for (ComboSkuInfoEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }
@@ -173,7 +175,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
         comboSkuInfo.setDeclareWeight(skuInfoEntity.getDeclareWeight());
         comboSkuInfo.setDeclareCustoms(skuInfoEntity.getDeclareCustoms());
         comboSkuInfo.setStatus(skuInfoEntity.getStatus());
-        comboSkuInfo.setDownloadTime(LocalDateTime.now().toString());
+        comboSkuInfo.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         comboSkuInfo.setVirtualSku(skuInfoEntity.getVirtualSku());
         comboSkuInfo.setRelationType("combine");
         comboSkuInfo.setPlatformSign(PlatformEnum.MABANG.getDesc());

@@ -79,4 +79,5 @@ public class KingdeePurchaseOrderConsumer<T extends DmpSyncTaskIdDTO> extends Ab
         return ApiResult.success();
     }
 
+
 }

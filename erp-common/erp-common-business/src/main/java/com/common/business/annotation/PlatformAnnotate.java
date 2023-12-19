@@ -1,4 +1,4 @@
-package com.erp.server.oms.service;
+package com.common.business.annotation;
 
 
 
@@ -14,6 +14,6 @@ import java.lang.annotation.*;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuthSaveData {
+public @interface PlatformAnnotate {
     PlatformDictEnum method();
 }

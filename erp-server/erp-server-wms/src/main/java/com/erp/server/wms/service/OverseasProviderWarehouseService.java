@@ -47,6 +47,15 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     List<OverseasProviderWarehouseEntity> listByWarehouseIds(List<String> warehouseIds);
 
     /**
+     * @Description 根据erp系统的仓库id 获取数据
+     * @author lambda
+     * @date 2023-12-13 16:08
+     * @Param  warehouseIds
+     * @Return
+     */
+    List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(List<String> warehouseIds);
+
+    /**
      * 根据第三方仓库信息查询
      **/
     OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode);

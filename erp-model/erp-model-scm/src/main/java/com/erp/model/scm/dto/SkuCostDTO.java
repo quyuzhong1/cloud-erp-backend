@@ -47,6 +47,7 @@ public class SkuCostDTO {
 
     /**
     * 成本价格（含税）
+    * 成本价格
     */
     private BigDecimal costPrice;
 
@@ -54,6 +55,11 @@ public class SkuCostDTO {
      * 成本价格（不含税）
      */
     private BigDecimal notTaxCostPrice;
+
+    /**
+     * 数量
+     */
+    private Integer qty;
 
     /**
      * 币别

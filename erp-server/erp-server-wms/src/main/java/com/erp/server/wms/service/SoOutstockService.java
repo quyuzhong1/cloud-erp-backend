@@ -8,7 +8,6 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -94,7 +93,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(SoOutstockEntity entity,ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
      * 反审核
@@ -354,4 +353,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
+
+    /**
+     * 生成销售出库单
+     * @author yl
+     * @date 2023-12-11 16:16
+     * @param b2cSoId 销售订单id
+     * @return 
+     */
+    Boolean generateB2cSoOutstock(String b2cSoId);
 }

@@ -894,9 +894,8 @@ public class SoInfoDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
+         * 贸易条款
          */
-        @StateEnumValue(clazz = TradeTermEnum.class, message = "贸易条款有误", groups = {AddGroup.class})
         private String tradeTerm;
 
         @Valid
@@ -1528,9 +1527,8 @@ public class SoInfoDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
+         * 贸易条款
          */
-        @StateEnumValue(clazz = TradeTermEnum.class, message = "贸易条款有误", groups = {AddGroup.class})
         private String tradeTerm;
 
         @Valid

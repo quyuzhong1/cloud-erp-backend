@@ -1,16 +1,17 @@
 package com.erp.server.oms.service;
 
-import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -329,4 +330,55 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
+
+    /** 
+     * @description 表示订单发货
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-13 17:40
+     */
+    SoOutstockDTO.GenerateB2cDTO  orderShipped(String  id);
+
+    /** 
+     * @description 运费测算后选择物流渠道
+     * @param dto
+     * @author Lambda
+     * @return Boolean
+     * @create 2023-12-15 12:27
+     */
+    Boolean selectLogisticsChannel(SoB2cLogisticsDTO.SelectChannelDTO dto);
+
+    /**
+     * 平台仓订单处理
+     * 走仓库规则 通过就是审核通过 并待发货
+     * 没有通过就是审核通过有待配货
+     * @description
+     * @param id
+     * @param  map
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 14:06
+     */
+    Boolean platformWarehouseOrderHandle(String id, Map<String,Object> map);
+
+  
+    /** 
+     * @description 正常订单拉取处理规则
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 14:52
+     */
+    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
+
+    /** 
+     * @description 获取规则需要的map
+     * @param id 订单id
+     * @param detailList 详情
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 15:03
+     */
+    Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
 }

@@ -80,6 +80,11 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 海外仓服务商code
+         */
+        private String  providerCode;
+
 
     }
 

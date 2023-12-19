@@ -32,7 +32,7 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
         this.itemResponseBean = itemResponseBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
-        this.setPlatform(PlatformDictEnum.WALMART.getCode());
+        super.setPlatform(PlatformDictEnum.WALMART.getCode());
         this.setUniqueId(itemResponseBean.getWpid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());

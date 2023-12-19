@@ -675,4 +675,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         map.put("actualNoTaxCost", actualNoTaxCost);
         return map;
     }
+
+    public static void main(String[] args) {
+        BigDecimal grossWeight=new BigDecimal("10.2");
+       Integer weight=grossWeight.intValue();
+        System.out.println(weight);
+    }
 }

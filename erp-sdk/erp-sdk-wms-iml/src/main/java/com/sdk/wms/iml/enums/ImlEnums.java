@@ -1,6 +1,7 @@
 package com.sdk.wms.iml.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import io.seata.common.util.StringUtils;
@@ -161,9 +162,9 @@ public enum ImlEnums {
      */
     @Getter
     public enum OrderStatusEnum {
-        NEW("C","待发货审核", "waitShipped"),
-        FIRST_JOURNEY_ON_THE_WAY("W","待发货", "waitShipped"),
-        INITIAL_RECEIVING("D","已发货", "shipped"),
+        NEW("C","待发货审核",SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        FIRST_JOURNEY_ON_THE_WAY("W","待发货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        INITIAL_RECEIVING("D","已发货", SoB2cBillStatusEnum.ENUM_SHIPPED),
         IN_TRANSIT("H","暂存", null),
         RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", null),
         COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
@@ -172,18 +173,21 @@ public enum ImlEnums {
         private final String code;
         private final String name;
         //本来应该是引用枚举SoB2cBillStatusEnum，但是枚举不在common包下，引包会导致循环依赖
-        private final String erpsoStatus;
-        OrderStatusEnum(String code, String name, String erpsoStatus) {
+        private final SoB2cBillStatusEnum erpSoStatus;
+
+
+        OrderStatusEnum(String code, String name, SoB2cBillStatusEnum erpsoStatus) {
             this.code = code;
             this.name = name;
-            this.erpsoStatus = erpsoStatus;
+            this.erpSoStatus = erpsoStatus;
         }
         public static String getErpOrderStatus(String code){
-            return Arrays.stream(ImlEnums.OrderStatusEnum.values())
+            return Arrays.stream(OrderStatusEnum.values())
                     .filter(item -> code.equals(item.getCode()))
                     .findFirst()
-                    .map(ImlEnums.OrderStatusEnum::getErpsoStatus)
-                    .orElse(null);
+                    .map(OrderStatusEnum::getErpSoStatus)
+                    .map(SoB2cBillStatusEnum::getCode)
+                    .orElse(code);
         }
 
         public static String getName(String code){

@@ -312,6 +312,7 @@ public class SysLoggingAspect {
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
                 || o instanceof BindingResult;
     }
+
     /**
      * 生成描述
      *

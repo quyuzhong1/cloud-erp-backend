@@ -78,13 +78,25 @@ public class LogisticsFeignController {
     }
 
     /**
-     * 获取渠道 根据渠道id
+     * 获取渠道 根据渠道i
      * @param channelId
      * @return
      */
     @PostMapping("/getChannelInfoById")
     public LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId){
         return logisticsChannelService.getInfoById(channelId);
+    }
+
+    /**
+     * 根据渠道id查询物流商信息
+     * @Author Luo_WG
+     * @Date 2023/12/15 15:45
+     * @param channelIds
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsChannelDTO.BaseDTO>
+     **/
+    @PostMapping("/listChannelInfoById")
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds){
+        return logisticsChannelService.listChannelInfoById(channelIds);
     }
 
 }

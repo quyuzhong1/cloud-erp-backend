@@ -45,6 +45,8 @@ public enum SourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库","other_instock"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
+    SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
@@ -67,6 +69,7 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
+
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
@@ -156,6 +159,7 @@ public enum SourceTypeEnum {
                 return sourceTypeEnum.getName();
             }
         }
+
         return "";
     }
 

@@ -40,7 +40,7 @@ public class MQConsumerBroadcastService {
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsOrderToDmp(resultMap);
+            //dmpPullTaskService.syncOmsOrderToDmp(resultMap);
         }
     }
 
@@ -56,7 +56,7 @@ public class MQConsumerBroadcastService {
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到销售出库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
+            //dmpPullTaskService.syncWmsOutStockToDmp(resultMap);
         }
     }
 
@@ -73,7 +73,7 @@ public class MQConsumerBroadcastService {
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到退货入库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsReturnToDmp(resultMap);
+            //dmpPullTaskService.syncOmsReturnToDmp(resultMap);
         }
     }
 }

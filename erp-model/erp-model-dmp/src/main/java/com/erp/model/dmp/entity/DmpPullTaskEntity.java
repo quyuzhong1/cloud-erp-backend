@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,72 +24,73 @@ import java.time.LocalDateTime;
  *
  * @author zhangchunlin
  * @since 2023-06-29
-*/
+ */
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_pull_task")
+@AllArgsConstructor
 public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
 
 
     /**
-    * 目标平台名称
-    */
+     * 目标平台名称
+     */
     @TableField("target_platform_name")
     private String targetPlatformName;
 
     /**
-    * MQ消息主题
-    */
+     * MQ消息主题
+     */
     @TableField("mq_topic")
     private String mqTopic;
 
     /**
-    * MQ消息TAG
-    */
+     * MQ消息TAG
+     */
     @TableField("mq_tag")
     private String mqTag;
 
     /**
-    * MQ消息内容
-    */
+     * MQ消息内容
+     */
     @TableField("mq_data")
     private String mqData;
 
     /**
-    * 同步状态SyncKingdeeStatusEnum
-    */
+     * 同步状态SyncKingdeeStatusEnum
+     */
     @TableField("status")
     private String status;
 
     /**
-    * 同步返回信息
-    */
+     * 同步返回信息
+     */
     @TableField("return_msg")
     private String returnMsg;
 
     /**
-    * 最新同步时间
-    */
+     * 最新同步时间
+     */
     @TableField("last_sync_time")
     private LocalDateTime lastSyncTime;
 
     /**
-    * 来源系统
-    */
+     * 来源系统
+     */
     @TableField("source_platform_name")
     private String sourcePlatformName;
 
     /**
-    * 来源单据类型
-    */
+     * 来源单据类型
+     */
     @TableField("source_type")
     private String sourceType;
 
     /**
-    * 来源单据id
-    */
+     * 来源单据id
+     */
     @TableField("source_id")
     private String sourceId;
 

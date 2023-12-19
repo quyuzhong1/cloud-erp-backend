@@ -82,9 +82,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Autowired
     private RedisService redisService;
-
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -233,7 +233,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return resultList.stream()
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
-                    
+
 
     }
 

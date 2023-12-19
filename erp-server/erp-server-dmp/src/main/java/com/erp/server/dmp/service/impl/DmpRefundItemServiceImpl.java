@@ -1,9 +1,11 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -14,6 +16,7 @@ import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import com.erp.server.dmp.service.DmpRefundItemService;
 import com.erp.server.dmp.service.DmpSkuCostService;
+import com.erp.server.dmp.utils.MapCountUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -168,9 +171,16 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
+                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());
+                //拆分单的条件下erpOrderItemId上拼接新sku编码
+                if (MathUtil.ONE.equals(skuDTO.getIsSplitSku()) ) {
+                    String erpOrderItemId = StrUtil.format("{}_{}",itemEntity.getErpOrderItemId(),skuDTO.getSkuNo());
+                    entity.setErpOrderItemId(erpOrderItemId);
+                }
                 itemListAll.add(entity);
             }
         }

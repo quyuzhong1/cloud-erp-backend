@@ -75,4 +75,12 @@ public class KingdeeMachineInfoConsumer<T extends DmpSyncTaskIdDTO> extends Abst
     }
 
 
+
+
+
+
+
+
+
+
 }

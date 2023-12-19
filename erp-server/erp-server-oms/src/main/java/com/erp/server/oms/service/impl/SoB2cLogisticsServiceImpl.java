@@ -250,8 +250,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         shippingCalculationDTO.setWidth(entity.getWidth());
         shippingCalculationDTO.setHeight(entity.getHeight());
         shippingCalculationDTO.setToCountry(receiverEntity.getCountry());
+        shippingCalculationDTO.setToCountryName(receiverEntity.getCountryName());
         shippingCalculationDTO.setFromCountry(CountrySiteEnum.CHINA.getSite());
-        shippingCalculationDTO.setWeightUnit(UnitEnum.G.getCode());
+        shippingCalculationDTO.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         return shippingCalculationDTO;
     }
 

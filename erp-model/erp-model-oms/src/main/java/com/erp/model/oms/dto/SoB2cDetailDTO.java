@@ -279,4 +279,49 @@ public class SoB2cDetailDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class OutstockDTO{
+
+
+
+        private String soDetailId;
+
+        private String mianId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku編號
+         */
+        private String skuNo;
+
+        private Integer qty;
+
+        private String warehouseLocation;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        private String platformSkuNo;
+
+        private String platformSpuNo;
+
+        private String warehouseSkuNo;
+
+        private String warehouseOrgId;
+
+        private String warehouseOrgName;
+
+        private String remark;
+
+        private String sourceDetailId;
+
+    }
+
+
 }

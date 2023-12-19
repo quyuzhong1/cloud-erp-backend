@@ -4,7 +4,6 @@ package com.erp.rpc.dmp.feign;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -223,6 +222,16 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/cfgSetting/list")
     Map<SettingEnum, String> getCfgSettingList(@RequestBody String type);
+
+   /**
+    * 查询sku成本数据
+    * @author Will
+    * @date: 2023/12/13 18:04
+    * @param skuNoList
+    * @return List<DmpSkuCostEntity>
+    */
+    @PostMapping("feign/listRedisBySkuNoList")
+    List<DmpSkuCostEntity> listRedisBySkuNoList(@RequestBody @Valid List<String> skuNoList);
 
     /**
      * 根据type查询所有配置

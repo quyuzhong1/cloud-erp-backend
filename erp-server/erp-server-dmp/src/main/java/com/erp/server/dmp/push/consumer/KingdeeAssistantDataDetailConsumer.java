@@ -78,5 +78,4 @@ public class KingdeeAssistantDataDetailConsumer<T extends DmpSyncTaskIdDTO> exte
         kingdeeAssistantDataDetailConsumerService.executeAssistantDataDetailConsumer(map);
         return ApiResult.success();
     }
-
 }

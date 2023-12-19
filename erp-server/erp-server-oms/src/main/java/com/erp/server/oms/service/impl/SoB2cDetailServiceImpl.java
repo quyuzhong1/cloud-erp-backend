@@ -338,6 +338,19 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .update();
     }
 
+    @Override
+    public List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId) {
+        List<SoB2cDetailDTO.OutstockDTO> outstockList=baseMapper.listOutstockByMainId(mainId);
+        return outstockList;
+    }
+
+    @Override
+    public void updateWarehouseId(String mainId, String warehouseId,Boolean isMatchWarehouseRule) {
+        this.lambdaUpdate().set(SoB2cDetailEntity::getWarehouseId,warehouseId).
+                set(Objects.nonNull(isMatchWarehouseRule),SoB2cDetailEntity::getIsMatchWarehouseRule,isMatchWarehouseRule).
+                eq(SoB2cDetailEntity::getMainId,mainId).update();
+    }
+
 
     /**
      * 查询需要删除的数据

@@ -122,6 +122,7 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SO_OUTSTOCK = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock";
 
+
     /**
      * 销售出库
      */
@@ -135,6 +136,11 @@ public class RocketMqConsumerGroup {
      * 订单 oms推送到dmp
      */
     public static final String SYNC_OMS_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
+
+    /**
+     * 订单 oms推送到dmp
+     */
+    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
 
     /**
      * 委外订单

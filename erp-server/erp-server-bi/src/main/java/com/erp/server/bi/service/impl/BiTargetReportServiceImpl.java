@@ -305,7 +305,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
             //部门、品类和SKU无需显示（现马帮数据退款明细无金额暂不计算财务销售额·6）
             if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())
-                || TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
+                    || TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
                 return resultList;
             }
             dto.setCategory(null);

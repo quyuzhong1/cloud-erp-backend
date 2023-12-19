@@ -52,6 +52,26 @@ public class SoB2cLogisticsDTO implements Serializable {
         private String accessoriesSkuNo;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectChannelDTO{
+
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单不能为空")
+        private String  id;
+
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "物流渠道不能为空")
+        private String logisticsChannelId;
+
+
+    }
+
+
     /**
     * 新增
     */

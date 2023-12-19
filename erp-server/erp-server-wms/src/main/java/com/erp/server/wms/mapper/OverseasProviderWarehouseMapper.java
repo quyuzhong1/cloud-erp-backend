@@ -1,8 +1,13 @@
 package com.erp.server.wms.mapper;
+
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +21,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface OverseasProviderWarehouseMapper extends BaseMapper<OverseasProviderWarehouseEntity> {
 
+    /**
+     * @Description 根据仓库ids 获取对应数据
+     * @author lambda
+     * @date 2023-12-13 16:11
+     * @Param warehouseIds
+     * @Return
+     */
+    List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(@Param("warehouseIds") List<String> warehouseIds);
 }

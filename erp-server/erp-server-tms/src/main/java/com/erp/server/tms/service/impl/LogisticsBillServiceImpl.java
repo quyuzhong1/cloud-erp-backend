@@ -26,6 +26,7 @@ import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
@@ -37,6 +38,7 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -370,11 +372,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-
-
         List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(skuInfoList);
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
+        Boolean hasBattery = skuInfoList.stream().filter(s->s.getIsElectric()).count()>0;
+        //是否带电
+        parceInfo.setHasBattery(hasBattery);
         parceInfo.setTotalQuantity(logisticsProductList.size());
+
+        //申报总价
+        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())). map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        parceInfo.setTotalPrice(totalPrice);
+        //总重量
+        Integer totalWeight=skuInfoList.stream().filter(s->Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
+        parceInfo.setTotalWeight(totalWeight);
+
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
         if (Objects.isNull(saleChannel)) {
@@ -478,7 +489,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
         cancelOrderVO.setTransportNo(billBase.getTransportNo());
         cancelOrderVO.setAuthMap(authMap);
-        cancelOrderVO.setTransportNo(billBase.getTrackNo());
+        cancelOrderVO.setTrackNo(billBase.getTrackNo());
         cancelOrderList.add(cancelOrderVO);
         ApiResult<List<CancelResponseVO>> result = service.cancelOrder(cancelOrderList);
         //是否成功
@@ -489,8 +500,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return isSuccess;
     }
 
-
-    private LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
+    @Override
+    public LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return new LogisticsBillDTO.BaseDTO();
+        }
         return baseMapper.getBaseByTrackNo(trackNo);
     }
 
@@ -584,4 +598,47 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillCostService.add(addDTO);
     }
 
+
+    /**
+     * 打印物流面单
+     *
+     * @param list
+     */
+   /* @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+        for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
+            String channelId = dto.getChannelId();
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            }
+            Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+            //平台
+            String logisticsPlatform = auth.getLogisticsPlatform();
+            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+
+            //请求面单参数
+            List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
+            LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
+            getLabelVO.setDeliveryNo(dto.getDeliveryNo());
+            getLabelVO.setTransportNo(dto.getTransportNo());
+            getLabelVO.setAuthMap(authMap);
+            //设置渠道编号
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
+            LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
+            entity.setCode(channelEntity.getCode());
+            labelVOArrayList.add(getLabelVO);
+
+            ApiResult<List<LogisticsPrintLabelResponse>> labelList = null;
+            try {
+                labelList = service.getLabelList(labelVOArrayList);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_98004);
+            }
+        }
+        return null;
+    }*/
 }

@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -65,9 +66,9 @@ public interface RuleLogisticsService extends SuperService<RuleLogisticsEntity> 
 
     /**
      * 获取到物流匹配结果
-     * @param jsonObjectList
+     * @param map
      * @return
      */
-    RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(JSONObject jsonObject);
+    RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map);
 
 }

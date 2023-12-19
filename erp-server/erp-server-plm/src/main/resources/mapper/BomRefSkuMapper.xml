@@ -51,6 +51,7 @@
     <select id="listBomChildBySkuNos" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbi.id as bomId,
+        pbi.type,
         pbi.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
         pbs.parent_sku_no as parentSkuNo,
@@ -166,9 +167,9 @@
         </where>
     </select>
 
-    <select id="listAllParentSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListAllSkuDTO">
-        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no ) AS (
-            SELECT sku_id,sku_no, parent_sku_id,parent_sku_no FROM product_bom_sku
+    <select id="listAllParentSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListSkuLevelDTO">
+        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no,quantity ) AS (
+            SELECT sku_id,sku_no, parent_sku_id,parent_sku_no,quantity FROM product_bom_sku
             WHERE is_deleted = false
             <if test="params.skuIdList != null and params.skuNoList.size > 0">
                 and sku_id in
@@ -182,11 +183,11 @@
                     #{item}
                 </foreach>
             </if>
-            UNION ALL
-            SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no
+            UNION
+            SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
             FROM product_bom_sku st JOIN T ON st.sku_id = T.parent_sku_id and st.is_deleted = false
         )
-        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no FROM T;
+        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>
 
 
@@ -208,5 +209,28 @@
                 #{item}
             </foreach>
         </where>
+    </select>
+
+    <select id="listAllChildSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListSkuLevelDTO">
+        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no ,quantity) AS (
+        SELECT sku_id,sku_no, parent_sku_id,parent_sku_no,quantity FROM product_bom_sku
+        WHERE is_deleted = false
+        <if test="params.skuIdList != null and params.skuIdList.size > 0">
+            and parent_sku_id in
+            <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            and parent_sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        UNION
+        SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
+        FROM product_bom_sku st JOIN T ON st.parent_sku_id = T.sku_id and st.is_deleted = false
+        )
+        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>
 </mapper>
