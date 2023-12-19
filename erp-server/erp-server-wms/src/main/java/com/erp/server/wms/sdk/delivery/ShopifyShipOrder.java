@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Component
-@PlatformShipOrderAnno(method = PlatformDictEnum.WALMART)
+@PlatformShipOrderAnno(method = PlatformDictEnum.SHOPIFY)
 public class ShopifyShipOrder implements IPlatformService {
 
     @Resource
