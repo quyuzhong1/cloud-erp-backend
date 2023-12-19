@@ -128,7 +128,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 entity.setTelNumber(receiverDTO.getTelNumber());
                 entity.setReceiverTelNumber(receiverDTO.getReceiverTelNumber());
                 //处理买家信息
-                handleSoB2cReceiver(entity, mainEntity.getId());
+//                handleSoB2cReceiver(entity, mainEntity.getId());
                 if (StringUtils.isBlank(receiverDTO.getName())){
                     receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
                 }

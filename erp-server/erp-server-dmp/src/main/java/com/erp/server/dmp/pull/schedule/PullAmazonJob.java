@@ -156,6 +156,8 @@ public class PullAmazonJob {
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Arrays.asList(newDto));
                 // TODO
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}",
+                        dto.getUniqueId());
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
