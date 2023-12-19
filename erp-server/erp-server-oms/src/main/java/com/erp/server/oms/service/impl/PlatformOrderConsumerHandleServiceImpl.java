@@ -62,9 +62,40 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SysDictFeign sysDictFeign;
 
     @Override
+    public void handleAll(PlatformOrderDTO dto) {
+        SoB2cEntity mainEntity = this.checkAndSaveAll(dto);
+        //订单状态
+        String billStatus = mainEntity.getBillStatus();
+        //已发货
+        String shippedCode= SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String id=mainEntity.getId();
+        //自动匹配订单规则
+//        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)) {
+//            //是否是平台仓订单 true 是
+//            Boolean isPlatformWarehouseOrder= mainEntity.hasPlatformWarehouseOrder();
+//            Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
+//            if(isPlatformWarehouseOrder){
+//                soB2cService.platformWarehouseOrderHandle(id,map);
+//            }else{
+//                //拉取订单正常处理
+//                soB2cService.pullOrderHandle(id,detailList,map);
+//            }
+//        }
+//        //已发货就要生成销售出库单
+//        if(shippedCode.equalsIgnoreCase(billStatus)){
+//            try {
+//                soOutstockFeign.generateB2cSoOutstock(id);
+//            }catch (Exception e){
+//                log.error("B2C订单【{}】 更改状态为已发货， 生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
+//            }
+//
+//        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void handleAll(PlatformOrderDTO dto) {
+    public SoB2cEntity checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
                 .stream()
@@ -108,31 +139,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
             }
         }
-        //订单状态
-        String billStatus = mainEntity.getBillStatus();
-        //已发货
-        String shippedCode= SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-        String id=mainEntity.getId();
-        //自动匹配订单规则
-//        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)) {
-//            //是否是平台仓订单 true 是
-//            Boolean isPlatformWarehouseOrder= mainEntity.hasPlatformWarehouseOrder();
-//            Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
-//            if(isPlatformWarehouseOrder){
-//                soB2cService.platformWarehouseOrderHandle(id,map);
-//            }else{
-//                //拉取订单正常处理
-//                soB2cService.pullOrderHandle(id,detailList,map);
-//            }
-//        }
-//        //已发货就要生成销售出库单
-//        if(shippedCode.equalsIgnoreCase(billStatus)){
-//            try {
-//                soOutstockFeign.generateB2cSoOutstock(id);
-//            }catch (Exception e){
-//                log.error("B2C订单【{}】 更改状态为已发货， 生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
-//            }
-//
-//        }
+        return mainEntity;
     }
 }
