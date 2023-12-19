@@ -163,7 +163,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
                         .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
                         .collect(Collectors.toList());
-                platformFbaShipmentDTO.setReceiveDTOList(receiveDTOList);
+
                 // 合并成详情
                 List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
                         receiveDTOList.stream()
@@ -173,6 +173,16 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                                         PlatformFbaShipmentReceiveDTO::merge))
                                 .values()
                 );
+                // 过滤为0
+                List<PlatformFbaShipmentReceiveDTO> saveReceiveDTO = receiveDTOList.stream().filter(e -> e.getReceiveQty() > 0).collect(Collectors.toList());
+                platformFbaShipmentDTO.setReceiveDTOList(saveReceiveDTO);
+
+                // 检查签收时间
+                detailListDTO.forEach(e-> {
+                    if (e.getReceiveQty() == 0) {
+                        e.setReceiveDate(null);
+                    }
+                });
                 platformFbaShipmentDTO.setDetailList(detailListDTO);
 
 //                businessService.pullDetailProcess(amazonShipmentDTO, platformFbaShipmentDTO, category, platform, business);
