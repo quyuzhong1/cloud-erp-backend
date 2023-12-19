@@ -1529,27 +1529,16 @@ public class SoB2cDTO implements Serializable {
     }
 
     /**
-     * 物流面单
+     * 打印面单/配货单
      */
     @Data
     @NoArgsConstructor
-    public static class LogisticsWaybillDTO {
+    public static class WaybillDTO {
 
         private String soB2cId;
 
-        private String logisticsWaybill;
+        private String base64;
     }
 
-    /**
-     * 配货单
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DistributeWaybillDTO {
-
-        private String soB2cId;
-
-        private String distributeWaybill;
-    }
 
 }

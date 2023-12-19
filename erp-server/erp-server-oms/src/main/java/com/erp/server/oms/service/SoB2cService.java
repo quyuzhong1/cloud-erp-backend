@@ -387,17 +387,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 修改销售订单的物流面单字段
      * @Author Luo_WG
      * @Date 2023/12/19 15:22
-     * @param logisticsWaybillDTO 物流面单
+     * @param waybillDTOList 物流面单
      * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
      **/
-    Boolean updateLogisticsWaybill(SoB2cDTO.LogisticsWaybillDTO logisticsWaybillDTO);
+    Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
      * 修改销售订单的配货单字段
      * @Author Luo_WG
      * @Date 2023/12/19 17:18
-     * @param distributeWaybillDTO 配货单
+     * @param waybillDTOList 配货单
      * @return java.lang.Boolean
      **/
-    Boolean updateDistributeWaybill(SoB2cDTO.DistributeWaybillDTO distributeWaybillDTO);
+    Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
 }

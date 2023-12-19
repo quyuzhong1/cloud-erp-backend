@@ -16,6 +16,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
@@ -674,10 +675,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
-        Map<String,Object> map = new HashMap<>();
+        List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
 
-
-        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             String channelId = dto.getChannelId();
             LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
@@ -707,11 +706,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             } catch (IOException e) {
                 return null;
             }
-            map.put(dto.getB2cSoId(), labelList.getData().get(0).getBase64());
+            SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
+            waybillDTO.setBase64(labelList.getData().get(0).getBase64());
+            waybillDTO.setSoB2cId(dto.getB2cSoId());
+            waybillDTOList.add(waybillDTO);
         }
 
-
-//        soB2cFeign.updateLogisticsWaybill(dto.getB2cSoId(), labelList.getData().get(0).getBase64());
+        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
         return null;
     }
 }

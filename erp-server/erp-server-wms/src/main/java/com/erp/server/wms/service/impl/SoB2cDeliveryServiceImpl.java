@@ -430,14 +430,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     if (StringUtils.isBlank(soB2cEntity.getLogisticsWaybill())) {
 
                     }
-                }
-                //如果打印配货单
-                if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
-                    //先获取订单的配货单，没有就请求sdk获取
+                } else if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
+                    //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
                     if (StringUtils.isBlank(soB2cEntity.getDistributeWaybill())) {
 
                     }
                     // TODO 配货单需要根据渠道查询是否是自定义配置
+                } else {
+
                 }
 
 

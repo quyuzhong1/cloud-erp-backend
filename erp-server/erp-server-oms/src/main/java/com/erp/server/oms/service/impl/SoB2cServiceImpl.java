@@ -2469,19 +2469,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean updateLogisticsWaybill(SoB2cDTO.LogisticsWaybillDTO logisticsWaybillDTO) {
-        return lambdaUpdate()
-                .set(SoB2cEntity::getLogisticsWaybill, logisticsWaybillDTO.getLogisticsWaybill())
-                .eq(SoB2cEntity::getId, logisticsWaybillDTO.getSoB2cId())
-                .update();
+    public Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
+        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
+            lambdaUpdate()
+                    .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getBase64())
+                    .eq(SoB2cEntity::getId, waybillDTO.getSoB2cId())
+                    .update();
+        }
+        return Boolean.TRUE;
     }
 
     @Override
-    public Boolean updateDistributeWaybill(SoB2cDTO.DistributeWaybillDTO distributeWaybillDTO) {
-        return lambdaUpdate()
-                .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeWaybill())
-                .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
-                .update();
+    public Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
+        for (SoB2cDTO.WaybillDTO distributeWaybillDTO : waybillDTOList) {
+            lambdaUpdate()
+                    .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getBase64())
+                    .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
+                    .update();
+        }
+        return Boolean.TRUE;
     }
 
     /**
