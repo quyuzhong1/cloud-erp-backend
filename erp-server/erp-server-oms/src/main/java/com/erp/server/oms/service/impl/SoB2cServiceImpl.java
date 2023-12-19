@@ -3015,11 +3015,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 entity.setApproveStatus(approveStatusEnum);
             }
-            if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)){
-                entity.setApproveStatus(ApproveStatusEnum.REJECT);
-                entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
-                entity.setRemark("汇率配置不存在");
-            }
+//            if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+//                entity.setApproveStatus(ApproveStatusEnum.REJECT);
+//                entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+//                entity.setRemark("汇率配置不存在");
+//            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
@@ -3057,11 +3057,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);
             }
-            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
-                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
-                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
-                oldEntity.setRemark("汇率配置不存在");
-            }
+//            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+//                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+//                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+//                oldEntity.setRemark("汇率配置不存在");
+//            }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
@@ -3265,7 +3265,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 走仓库规则 通过就是审核通过 并待发货
      * 没有通过就是审核通过有待配货
      *
-     * @param id
+     * @param entity
      * @param map
      * @return
      * @description
@@ -3275,8 +3275,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Async
-    public Boolean platformWarehouseOrderHandle(String id, Map<String, Object> map) {
-        SoB2cEntity entity = super.getById(id);
+    public Boolean platformWarehouseOrderHandle(SoB2cEntity entity, Map<String, Object> map) {
+        String id=entity.getId();
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //仓库匹配规则结果
         RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
@@ -3313,7 +3313,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Async
-    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+    public Boolean pullOrderHandle(SoB2cEntity entity , List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        String id=entity.getId();
         Boolean isSuccess = this.approveRule(id, detailList, map);
         if (isSuccess) {
             //自动匹配配货规则

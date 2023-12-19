@@ -49,4 +49,9 @@ public interface AliexpressConstants {
      */
     String DECLARE_DELIVER="aliexpress.logistics.sellershipmentfortop";
 
+    /**
+     * 海外仓表示
+     */
+    String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";
+
 }

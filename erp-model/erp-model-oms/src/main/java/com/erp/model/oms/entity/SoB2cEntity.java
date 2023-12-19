@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 
 /**
@@ -25,7 +26,7 @@ import java.time.LocalDateTime;
  *
  * @author Will
  * @since 2023-08-18
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -33,8 +34,8 @@ import java.time.LocalDateTime;
 public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     /**
-    * 单据编码
-    */
+     * 单据编码
+     */
     @TableField("code")
     private String code;
 
@@ -45,28 +46,28 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private LocalDate billDate;
 
     /**
-    * 审核状态
-    */
+     * 审核状态
+     */
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
     /**
-    * 平台订单号
-    */
+     * 平台订单号
+     */
     @TableField("platform_code")
     private String platformCode;
     /**
-    * 销售平台
-    */
+     * 销售平台
+     */
     @TableField("dict_platform")
     private String dictPlatform;
     /**
-    * 店铺
-    */
+     * 店铺
+     */
     @TableField("shop_id")
     private String shopId;
     /**
-    * 作废状态（false未作废，true已作废）
-    */
+     * 作废状态（false未作废，true已作废）
+     */
     @TableField("invalid_status")
     private Boolean invalidStatus;
     /**
@@ -75,108 +76,108 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("invalid_type")
     private String invalidType;
     /**
-    * 作废原因
-    */
+     * 作废原因
+     */
     @TableField("invalid_remark")
     private String invalidRemark;
     /**
-    * 订单状态，SoB2cBillStatusEnum枚举
-    */
+     * 订单状态，SoB2cBillStatusEnum枚举
+     */
     @TableField("bill_status")
     private String billStatus;
     /**
-    * 付款状态（待付款、已付款）
-    */
+     * 付款状态（待付款、已付款）
+     */
     @TableField("pay_status")
     private String payStatus;
     /**
-    * 订单金额
-    */
+     * 订单金额
+     */
     @TableField("amount")
     private BigDecimal amount;
     /**
-    * 币别（原币）
-    */
+     * 币别（原币）
+     */
     @TableField("currency")
     private String currency;
     /**
-    * 汇率
-    */
+     * 汇率
+     */
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
     /**
-    * 运费收入
-    */
+     * 运费收入
+     */
     @TableField("shipping_fee")
     private BigDecimal shippingFee;
     /**
-    * 付款时间
-    */
+     * 付款时间
+     */
     @TableField("pay_time")
     private LocalDateTime payTime;
     /**
-    * 付款金额
-    */
+     * 付款金额
+     */
     @TableField("pay_amount")
     private BigDecimal payAmount;
     /**
-    * 付款方式
-    */
+     * 付款方式
+     */
     @TableField("dict_pay_method")
     private String dictPayMethod;
     /**
-    * 买家备注
-    */
+     * 买家备注
+     */
     @TableField("buyer_remark")
     private String buyerRemark;
     /**
-    * 订单备注
-    */
+     * 订单备注
+     */
     @TableField("remark")
     private String remark;
     /**
-    * 销售组织id
-    */
+     * 销售组织id
+     */
     @TableField("org_id")
     private String orgId;
     /**
-    * 销售组织名称
-    */
+     * 销售组织名称
+     */
     @TableField("org_name")
     private String orgName;
     /**
-    * 是否拦截
-    */
+     * 是否拦截
+     */
     @TableField("is_intercept")
     private Boolean isIntercept;
     /**
-    * 拦截备注
-    */
+     * 拦截备注
+     */
     @TableField("intercept_remark")
     private String interceptRemark;
     /**
-    * 来源类型
-    */
+     * 来源类型
+     */
     @TableField("source_type")
     private String sourceType;
     /**
-    * 来源id
-    */
+     * 来源id
+     */
     @TableField("source_id")
     private String sourceId;
     /**
-    * 来源编码
-    */
+     * 来源编码
+     */
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 标签json
-    */
+     * 标签json
+     */
     @TableField("label_json")
     private String labelJson;
     /**
-    * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-    */
+     * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
+     */
     @TableField("abnormal_type")
     private String abnormalType;
 
@@ -187,23 +188,23 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private Boolean isNotMerge;
 
     /**
-    * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-    */
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
     @TableField("sync_kingdee_status")
     private String syncKingdeeStatus;
     /**
-    * 同步时间
-    */
+     * 同步时间
+     */
     @TableField("sync_kingdee_time")
     private LocalDateTime syncKingdeeTime;
     /**
-    * 金蝶数据id
-    */
+     * 金蝶数据id
+     */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
     /**
-    * 同步操作
-    */
+     * 同步操作
+     */
     @TableField("sync_operate")
     private String syncOperate;
 
@@ -311,7 +312,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     public Boolean hasPlatformWarehouseOrder() {
         //亚马逊
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(this.dictPlatform)){
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //FBA
@@ -320,7 +321,16 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         }
         // TODO 速卖通
 
-
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsAliexpressPlatformWarehouseOrder();
+                if (Objects.nonNull(isAliexpressPlatformWarehouseOrder)) {
+                    return isAliexpressPlatformWarehouseOrder;
+                }
+                return false;
+            }
+        }
         // 虾皮
         if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             return true;

@@ -3,6 +3,8 @@ package com.sdk.oms.walmart.handler;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.service.IPlatformDataSaveService;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
@@ -30,17 +32,7 @@ public class WalmartShipOrderHandler {
         List<String> list = new ArrayList<>();
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        //请求参数
-        HashMap<String, Object> paramMap = new HashMap<>();
-        Integer pageSize = 200;
-        paramMap.put("limit", pageSize);
-        paramMap.put("lastModifiedStartDate", "2023-09-01T00:00:00");
-        paramMap.put("lastModifiedEndDate", "2023-10-27T00:00:00");
-        paramMap.put("createdStartDate", "2023-09-01T00:00:00");
-        paramMap.put("createdEndDate", "2023-10-27T00:00:00");
-        paramMap.put("status", "Acknowledged,Shipped,Delivered,Cancelled");
-        paramMap.put("productInfo", "true");
-//        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
+
         baseUrl = WalmartStaticKey.baseUrl + "orders/{purchaseOrderId}/shipping";
         WalmartShipOrderDTO walmartShipOrderDTO = new WalmartShipOrderDTO();
 
@@ -102,9 +94,8 @@ public class WalmartShipOrderHandler {
         String s = walmartSdkClientService.sendWalmartPost(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), map);
         System.out.println(s);
     }
-/*
-    @Override
-    public List<PlatformWalmartOrderDTO> download(JobTaskDTO data) {
 
-    }*/
+    public void shipOrder(PlatformShipOrderDTO dto) {
+
+    }
 }
