@@ -88,6 +88,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder));
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(tongYouCreateOrder.getLogisticsNo())
+                    .trackNo(tongYouCreateOrder.getLogisticsNo())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
                     .build());
         } catch (Exception e) {
