@@ -679,9 +679,23 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "渠道不能为空")
         private String channelId;
 
-        @NotBlank(message = "物流单")
+        /**
+         * 客户参考号
+         */
+        @NotBlank(message = "客户参考号不能为空")
+        private String referenceNumber;
+
+        /**
+         * 运单号（运单号和跟踪单号不能都为空）
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号（运单号和跟踪单号不能都为空）
+         */
         private String trackNo;
 
+        private String reason;
     }
 
     @Data

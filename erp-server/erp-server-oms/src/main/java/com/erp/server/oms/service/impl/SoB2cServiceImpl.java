@@ -48,6 +48,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
@@ -655,7 +656,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isNotBlank(code)) {
                 //取消物流单
                 LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                        channelId(existChannelId).trackNo(code).build();
+                        channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
                 logisticsBillFeign.cancelBill(cancelBillDTO);
             }
             soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
@@ -3237,10 +3238,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(code)) {
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).trackNo(code).build();
-            Boolean cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+                    channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
+            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
-            if (!cancelResult) {
+            if (!cancelResult.isSuccess()) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
             }
         }
