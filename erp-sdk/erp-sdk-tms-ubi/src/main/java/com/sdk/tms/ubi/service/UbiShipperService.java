@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.ubi.constant.PathConstants;
@@ -71,7 +72,7 @@ public class UbiShipperService {
      * @param ubiOrder
      * @return
      */
-    public OrderResponse createOrder(Map<String, String> authMap,UbiOrder ubiOrder) {
+    public List<OrderResponse> createOrder(Map<String, String> authMap,UbiOrder ubiOrder) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
         String url = PathConstants.BASE_URL + PathConstants.POST_CREATE_ORDERS_URL;
@@ -84,7 +85,7 @@ public class UbiShipperService {
         log.info("创建订单：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
-            return JSONUtil.toBean(JSON.toJSONString(result.getData()), OrderResponse.class);
+            return JSONUtil.toList((JSONArray) result.getData(), OrderResponse.class);
         } else {
             throw new ServiceException(result.getErrors());
         }
