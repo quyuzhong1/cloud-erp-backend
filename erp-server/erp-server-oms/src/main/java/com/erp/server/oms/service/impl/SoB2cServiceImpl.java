@@ -3007,11 +3007,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 entity.setApproveStatus(approveStatusEnum);
             }
-            if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)){
-                entity.setApproveStatus(ApproveStatusEnum.REJECT);
-                entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
-                entity.setRemark("汇率配置不存在");
-            }
+//            if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+//                entity.setApproveStatus(ApproveStatusEnum.REJECT);
+//                entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+//                entity.setRemark("汇率配置不存在");
+//            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
@@ -3049,11 +3049,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);
             }
-            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
-                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
-                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
-                oldEntity.setRemark("汇率配置不存在");
-            }
+//            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
+//                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+//                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
+//                oldEntity.setRemark("汇率配置不存在");
+//            }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
