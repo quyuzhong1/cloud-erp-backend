@@ -498,13 +498,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        //明细信息
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
-        Map<String, Object> map = new HashMap<>();
-        //匹配审核规则
-        handleMatchJson(entity.getId(), detailList, map);
-        //自动匹配配货规则
-        distributionRule(entity.getId(), detailList, map);
+        //审核通过进行匹配规则
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            //明细信息
+            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
+            Map<String, Object> map = new HashMap<>();
+            //匹配审核规则
+            handleMatchJson(entity.getId(), detailList, map);
+            //自动匹配配货规则
+            distributionRule(entity.getId(), detailList, map);
+        }
         return Boolean.TRUE;
     }
 
