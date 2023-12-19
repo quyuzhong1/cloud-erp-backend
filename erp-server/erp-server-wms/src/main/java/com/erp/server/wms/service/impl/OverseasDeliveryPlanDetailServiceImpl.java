@@ -5,12 +5,16 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.OverseasDeliveryPlanDetailMapper;
@@ -19,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -51,6 +56,10 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -126,9 +135,11 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
 
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
 
+        //获取库存sku信息
+        List<SkuMappingDTO.ListSkuParamDTO> paramDTOS = new ArrayList<>();
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
+        List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(toWarehouseId));
         //设置详情字段
         for (OverseasDeliveryPlanDetailEntity detailEntity : list) {
             detailEntity.setMainId(mainId);
@@ -144,13 +155,28 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
             detailEntity.setSkuNo(skuVO.getSkuNo());
 
             //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = ListStockSkuNoByProductSkuIdViews.stream()
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
                     .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
                             && req.getProductSkuId().equals(detailEntity.getSkuId())
                             && req.getWarehouseId().equals(toWarehouseId))
                     .distinct().findFirst().orElse(null);
             if (ObjectUtil.isEmpty(listStockSkuNoByProductSkuIdView)) {
-                throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
+
+                OverseasProviderWarehouseDTO.ViewDTO viewDTO = providerWarehouseList.stream().filter(req -> req.getWarehouseId().equals(toWarehouseId)).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(viewDTO)) {
+                    throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
+                } else {
+                    //查询库存sku映射
+                    listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
+                            .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
+                                    && req.getProductSkuId().equals(detailEntity.getSkuId())
+                                    && req.getDictPlatform().equals(viewDTO.getProviderCode()))
+
+                    .findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(listStockSkuNoByProductSkuIdView)) {
+                        throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
+                    }
+                }
             }
 
             //校验是否是修改，如果是就新增修改日志
