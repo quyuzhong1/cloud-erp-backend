@@ -14,6 +14,6 @@ public interface IPlatformService {
      * @param dto
      * @return
      */
-    String shipOrder(PlatformShipOrderDTO dto);
+    void shipOrder(PlatformShipOrderDTO dto);
 
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -15,6 +16,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -58,6 +60,10 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import sun.plugin.services.PlatformService;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * b2c发货单 服务实现类
@@ -180,7 +186,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
 
+        //调用第三方平台SDK发货
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(id);
+        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
 
+        //修改发货状态
         this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
     }
@@ -197,7 +209,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
         }
-        // TODO 调用第三方发货
+
+        //调用第三方平台SDK发货
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(id);
+        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
 
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
@@ -206,7 +223,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
-        List<SoB2cDeliveryEntity> list = this.listByIds(ids);
 
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 

@@ -871,6 +871,7 @@ public enum ApiError implements Serializable {
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
 
 
     /**
