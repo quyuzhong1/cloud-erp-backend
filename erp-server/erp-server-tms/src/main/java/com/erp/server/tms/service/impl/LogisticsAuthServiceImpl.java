@@ -298,8 +298,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public void syncUpdateSaleChannel(String authId,String logisticsPlatform) {
-        Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId,logisticsPlatform);
+    public void syncUpdateSaleChannel(String logisticsPlatform, Map<String, String> authConfig) {
+        authConfig.put("logisticsPlatform", logisticsPlatform);
         asyncService.asyncUpdateSaleChannel(authConfig);
     }
 }

@@ -62,7 +62,7 @@ public class LogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = logisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
+                logisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
             } else {
                logisticsAuthService.removeById(id);
                logisticsAuthFieldService.removeByAuthId(id);
@@ -111,7 +111,7 @@ public class LogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = logisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
+                logisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
             } else {
                 logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
                 return apiResult;

@@ -2,6 +2,7 @@ package com.erp.tms.aliexpress.service;
 
 import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.UUID;
 import com.erp.tms.aliexpress.api.IopClient;
 import com.erp.tms.aliexpress.api.IopClientImpl;
@@ -34,10 +35,7 @@ import java.util.Map;
 @Component
 public class AliExpressShipperService {
     private void validate(String appKey,String appSecret,String token,String url){
-        assert StringUtils.isNotEmpty(appKey);
-        assert StringUtils.isNotEmpty(appSecret);
-        assert StringUtils.isNotEmpty(token);
-        assert StringUtils.isNotEmpty(url);
+        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
     public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
         String appKey = authMap.get("clientId");
