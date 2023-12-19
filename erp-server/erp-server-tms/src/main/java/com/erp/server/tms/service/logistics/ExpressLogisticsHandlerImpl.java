@@ -77,7 +77,8 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         responseVO.setMore(true);
                         List<LogisticsOrderResponseVO> vos = new ArrayList<>(collect.size());
                         collect.forEach(waybillNoInfoList2 -> {
-                            vos.add(LogisticsOrderResponseVO.builder().deliveryNo(orderResponse.getOrderId())
+                            vos.add(LogisticsOrderResponseVO.builder()
+                                    .deliveryNo(orderResponse.getOrderId())
                                     .trackNo(waybillNoInfoList2.getWaybillNo())
                                     .transportNo(waybillNoInfoList2.getWaybillNo()).build());
                         });

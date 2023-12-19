@@ -224,6 +224,12 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
+                and sb2c.abnormal_type in
+                <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

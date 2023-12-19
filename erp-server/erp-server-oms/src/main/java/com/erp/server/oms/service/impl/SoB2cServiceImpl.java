@@ -502,13 +502,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        //明细信息
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
-        Map<String, Object> map = new HashMap<>();
-        //匹配审核规则
-        handleMatchJson(entity.getId(), detailList, map);
-        //自动匹配配货规则
-        distributionRule(entity.getId(), detailList, map);
+        //审核通过进行匹配规则
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            //明细信息
+            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
+            Map<String, Object> map = new HashMap<>();
+            //匹配审核规则
+            handleMatchJson(entity.getId(), detailList, map);
+            //自动匹配配货规则
+            distributionRule(entity.getId(), detailList, map);
+        }
         return Boolean.TRUE;
     }
 
@@ -682,6 +685,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //销售订单更新
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+        entity.setAbnormalType("");
         this.updateById(entity);
 
 
@@ -740,6 +744,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //提交发货
             submitDelivery(id);
         }
+        //更新销售订单异常信息
+        entity.setAbnormalType("");
+        this.updateById(entity);
+
         //操作日志
         String msg = "获取物流单号【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
@@ -1740,6 +1748,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //单据状态
             data.setStatus(data.getBillStatus());
             data.setStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+
+            //异常信息名称
+            data.setAbnormalTypeName(SoB2cAbnormalTypeEnum.getName(data.getAbnormalType()));
 
             //标签处理
             String label = data.getLabel();

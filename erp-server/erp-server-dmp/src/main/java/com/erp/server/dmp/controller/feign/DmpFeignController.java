@@ -268,6 +268,19 @@ public class DmpFeignController extends BaseController {
     }
 
     /**
+     * 查询sku成本
+     * @author Will
+     * @date: 2023/12/13 18:02
+     * @param skuNoList
+     * @return List<DmpSkuCostEntity>
+     */
+    @PostMapping("/listRedisBySkuNoList")
+    public List<DmpSkuCostEntity> listRedisBySkuNoList(@RequestBody List<String> skuNoList){
+        return dmpSkuCostService.listRedisBySkuNoList(skuNoList);
+    }
+
+
+    /**
      * @description: 获取是否切换金蝶数据源
      * @author Will
      * @date: 2023/11/17 14:35

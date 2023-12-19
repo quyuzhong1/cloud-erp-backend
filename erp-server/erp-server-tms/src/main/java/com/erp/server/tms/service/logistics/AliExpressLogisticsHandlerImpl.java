@@ -130,6 +130,13 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
+            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
+            if (Objects.nonNull(shopAuth)) {
+                map.put("shopId", shopAuth.getShopId());
+                map.put("token", shopAuth.getAccessToken());
+            }
+        }
         return map;
     }
 

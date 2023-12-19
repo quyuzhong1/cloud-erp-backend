@@ -36,6 +36,7 @@
         select
             ti.id,
             ti.code,
+            ti.source_code as sourceCode,
             ti.transfer_direction as transferDirection,
             ti.approve_status as approveStatus,
             ti.invalid_status as invalidStatus,
@@ -63,6 +64,9 @@
             </if>
             <if test="params.code != null and params.code != ''">
                 and ti.code ILIKE concat('%',#{params.code}::text,'%')
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != ''">
+                and ti.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and ti.invalid_status = #{params.invalidStatus}
@@ -148,6 +152,7 @@
         select
             ti.id,
             ti.code,
+            ti.source_code as sourceCode,
             ti.transfer_direction as transferDirection,
             ti.approve_status as approveStatus,
             ti.invalid_status as invalidStatus,
@@ -180,6 +185,9 @@
                 </if>
                 <if test="params.code != null and params.code != ''">
                     and ti.code ILIKE concat('%',#{params.code}::text,'%')
+                </if>
+                <if test="params.sourceCode != null and params.sourceCode != ''">
+                    and ti.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and ti.invalid_status = #{params.invalidStatus}

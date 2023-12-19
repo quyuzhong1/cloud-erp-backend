@@ -1,9 +1,11 @@
 package com.sdk.oms.shopee.dto;
 
 import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.dto.order.response.OrderItemDetail;
@@ -85,32 +87,51 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         String orderStatus = orderDetail.getStatus();
         if (OrderStatusEnum.UNPAID.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus) || OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } //已完成之前 全为待发货
-        else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus)) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus) || OrderStatusEnum.TO_CONFIRM_RECEIVE.getCode().equals(orderStatus)) {
+            //已完成之前 全为待发货
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        } else if (OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        } else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        }  else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+            orderDTO.setInvalidRemark("订单取消中");
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
         } else if (OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
             // 作废状态（false未作废，true已作废）
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(true);
+            orderDTO.setInvalidRemark("订单已取消");
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
         } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        }else if (OrderStatusEnum.TO_RETURN.getCode().equals(orderStatus) || OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
         }
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         Long paytime = orderDetail.getPayTime();
-        if (Objects.isNull(paytime)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-        } else {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        if (Objects.nonNull(paytime)) {
             Instant instant2 = Instant.ofEpochSecond(paytime);
             // 付款时间
             orderDTO.setPayTime(LocalDateTime.ofInstant(instant2, zone));
@@ -193,7 +214,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .country(recipientAddress.getRegion())
                 .provinceName(recipientAddress.getState())
                 .cityName(recipientAddress.getCity())
-                .districtName(recipientAddress.getDistrict())
+                .districtName(recipientAddress.getDistrict() + recipientAddress.getTown())
                 .postCode(recipientAddress.getZipcode())
                 .firstAddress(recipientAddress.getFullAddress())
                 .fullAddress(recipientAddress.getFullAddress())
@@ -229,7 +250,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
             return null;
         }
-        List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
                 .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))
