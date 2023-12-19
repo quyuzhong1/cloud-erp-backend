@@ -1890,9 +1890,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
         }
         //汇率不存在不支持提交
-        if (MathUtil.compareTo(entity.getExchangeRate(), MathUtil.ZERO) == MathUtil.ZERO) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
-        }
+//        if (MathUtil.compareTo(entity.getExchangeRate(), MathUtil.ZERO) == MathUtil.ZERO) {
+//            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
+//        }
 
         return;
     }

@@ -221,16 +221,19 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
+        LogisticsSupplierTypeEnum type = logisticsSupplier.getType();
+        LogisticsSupplierTypeEnum custom = LogisticsSupplierTypeEnum.CUSTOM;
+        Boolean isCustom=custom.equals(type);
         if (Objects.isNull(logisticsSupplier)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
-        if (!alreadyCode.equals(authStatus)) {
+        if (!alreadyCode.equals(authStatus)&&!isCustom) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
-        if (Objects.isNull(authEntity)) {
+        if (Objects.isNull(authEntity)&&!isCustom) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
@@ -315,7 +318,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             if (nonNull) {
                 id = logisticsWarehouse.getId();
             } else {
-                logisticsWarehouse=new LogisticsWarehouseEntity();
+                logisticsWarehouse = new LogisticsWarehouseEntity();
                 id = IdWorker.getIdStr();
                 logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
                 logisticsWarehouse.setMainId(logisticsSupplierId);

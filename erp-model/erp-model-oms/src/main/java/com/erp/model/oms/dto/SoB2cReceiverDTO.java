@@ -120,11 +120,20 @@ public class SoB2cReceiverDTO implements Serializable {
         private String cityName;
 
         /**
-         * 国家名称
+         * 国家 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
        // @NotBlank(message = "国家不能为空")
         private String country;
 
+        /**
+         *省/州
+         */
+        private String provinceName;
+
+        /**
+         *区
+         */
+        private String districtName;
 
 
 
