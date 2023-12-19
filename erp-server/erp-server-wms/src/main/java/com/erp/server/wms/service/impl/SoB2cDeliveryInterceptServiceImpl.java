@@ -6,11 +6,19 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.CancelStatusEnum;
 import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.InterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
@@ -34,6 +42,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * b2c发货拦截单 服务实现类
@@ -52,6 +63,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -65,7 +82,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         log.info("开始新增b2c发货拦截单");
         // 生成单号
         // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHLJ);
         soB2cDeliveryInterceptEntity.setCode(code);
         boolean save = super.save(soB2cDeliveryInterceptEntity);
         if(!save) {
@@ -125,7 +142,56 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     public BatchResultDTO logisticsIntercept(String id) {
-        return null;
+        SoB2cDeliveryInterceptEntity entity = this.getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
+        }
+        if(HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())){
+            throw new ServiceException("发货单已成功拦截，无法重复操作");
+        }
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(Collections.singletonList(entity.getSourceId()));
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
+        }
+        SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+        LogisticsBillDTO.CancelBillDTO dto = LogisticsBillDTO.CancelBillDTO.builder()
+                .channelId(entity.getLogisticsChannelId())
+                .transportNo(entity.getTransportNo())
+                .referenceNumber(soB2cEntity.getId())
+                .reason("b2c发货拦截单自动拦截")
+                .build();
+        //先取消订单，取消订单失败的再拦截订单
+        ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(dto);
+        boolean isSuccess = true;
+        String msg = "拦截成功";
+        if(cancelResult.isSuccess()){
+            entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+            entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+        }else{
+            entity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+            ApiResult<InterceptResponseVO> interceptResult = logisticsBillFeign.interceptBill(dto);
+            if(interceptResult.isSuccess()){
+                entity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+            }else{
+                entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+                entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
+                //判断是否不支持线上取消
+                if(cancelResult.getCode().equals(-1) && interceptResult.getCode().equals(-1)){
+                    msg = "该物流渠道不支持线上发起物流拦截，请线下与物流商沟通后，手动标记拦截结果";
+                }else{
+                    msg = StrUtil.format("取消订单失败原因：{}；拦截订单失败原因：{}", cancelResult.getMsg(),interceptResult.getMsg());
+                }
+                isSuccess = false;
+            }
+        }
+        entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+        this.updateById(entity);
+        if(isSuccess){
+            return BatchResultDTO.success(entity.getId(),entity.getCode(),msg);
+        }else{
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),msg);
+        }
     }
 
     @Override

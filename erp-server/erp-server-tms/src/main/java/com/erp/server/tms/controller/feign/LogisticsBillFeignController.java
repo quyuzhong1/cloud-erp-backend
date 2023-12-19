@@ -2,10 +2,13 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -94,10 +97,19 @@ public class LogisticsBillFeignController {
      * @return 
      */
     @PostMapping("/cancelBill")
-    public Boolean cancelBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
+    public ApiResult<CancelResponseVO> cancelBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
         return logisticsBillService.cancelBill(dto);
     }
 
+    /**
+     * 拦截物流单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/interceptBill")
+    public ApiResult<InterceptResponseVO> interceptBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
+        return logisticsBillService.interceptBill(dto);
+    }
 
     /**
      * 获取物流单数据 用于查询轨迹
