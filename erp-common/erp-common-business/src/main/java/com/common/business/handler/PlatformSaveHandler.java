@@ -1,10 +1,10 @@
-package com.erp.server.wms.sdk;
+package com.common.business.handler;
 
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
-import com.erp.server.wms.service.IPlatformService;
+import com.common.business.service.IPlatformService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class PlatformSaveHandler extends AbstractSparrowAnnotationBeanMap<Platfo
         annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
-    public static String shipOrder(ShopAuthorizeUrlDTO dto) {
+    public static String shipOrder(PlatformShipOrderDTO dto) {
         IPlatformService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.shipOrder(dto);
     }
