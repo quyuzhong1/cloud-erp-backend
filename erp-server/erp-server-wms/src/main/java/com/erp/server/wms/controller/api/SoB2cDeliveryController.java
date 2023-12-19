@@ -202,6 +202,19 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
+     * 打印拣货单
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/printPicking")
+    public ApiResult printPicking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = soB2cDeliveryService.printPicking(dto.getIds());
+        return flag ? success() : failure();
+    }
+
+    /**
      * 打印物流面单
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
