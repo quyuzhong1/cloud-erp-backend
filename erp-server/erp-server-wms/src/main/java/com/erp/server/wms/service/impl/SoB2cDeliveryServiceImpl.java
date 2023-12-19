@@ -8,14 +8,11 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -28,8 +25,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.*;
@@ -37,16 +32,12 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -60,9 +51,6 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import sun.plugin.services.PlatformService;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
