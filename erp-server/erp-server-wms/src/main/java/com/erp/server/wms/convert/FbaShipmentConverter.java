@@ -89,6 +89,8 @@ public interface FbaShipmentConverter {
             @Mapping(target = "mainId", ignore = true),
             @Mapping(target = "planQty", source = "declareQty"),
             @Mapping(target = "deliveryQty", source = "declareQty"),
+            @Mapping(target = "platformSkuNo", source = "msku"),
+            @Mapping(target = "platformSpuNo", source = "asin")
     })
     FirstMileDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
 
