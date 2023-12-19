@@ -13,6 +13,8 @@ import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
@@ -51,6 +53,9 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId) {
@@ -165,6 +170,13 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         CustomerB2cEntity customerB2cEntity = customerB2cService.getById(entity.getCustomerId());
         if (ObjectUtils.isNotEmpty(customerB2cEntity)) {
             entity.setName(customerB2cEntity.getName());
+        }
+        String country=entity.getCountry();
+        if(StringUtils.isNotBlank(country)){
+            DictCountryEntity countryEntity=sysUserFeign.getCountryById(country);
+            if(Objects.nonNull(countryEntity)){
+                entity.setCountryName(countryEntity.getNameCn());
+            }
         }
         entity.setMainId(mainId);
     }
