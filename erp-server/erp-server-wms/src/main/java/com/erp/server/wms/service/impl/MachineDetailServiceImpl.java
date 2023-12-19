@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -7,17 +9,19 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
-import com.erp.server.wms.service.MachineDetailService;
-import com.erp.server.wms.service.MachineSubComponentsService;
-import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +50,16 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
+
+    @Resource
+    private MachineInfoService machineInfoService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -164,6 +179,18 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             throw new ServiceException(ApiError.ERROR_95163);
         }
 
+        //主表信息
+        MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
+        if (ObjectUtils.isEmpty(machineInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        WarehouseEntity warehouseEntity = warehouseService.getById(machineInfoEntity.getWarehouseId());
+        if (ObjectUtils.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseEntity,newList);
+
         for (MachineDetailEntity detail:newList) {
             //验证子件数量
             checkBomChildrenSku(bomChildrenSkuList,detail);
@@ -216,5 +243,27 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             }
         }
         detail.setBomHistoryId(bomList.get(0).getBomHistoryId());
+    }
+
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<MachineDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
     }
 }

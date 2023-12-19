@@ -234,13 +234,8 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         if (ObjectUtils.isEmpty(warehouseEntity)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        //仓库配置
-        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
-        List<String> warehouseIdList = new ArrayList<>();
-        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
-            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
-            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
-        }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseEntity,list);
 
         for (PoInstockDetailEntity detailEntity : list) {
 
@@ -277,13 +272,30 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                     throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
                 }
             }
-            //判断仓位是否需要必填
-            if (warehouseIdList.contains(entity.getDeliveryWarehouseId()) && StrUtil.isBlank(detailEntity.getWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
-            }
         }
     }
 
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoInstockDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
+    }
 
     @Override
     public void updateKingdeeDetailId(JSONArray list) {
