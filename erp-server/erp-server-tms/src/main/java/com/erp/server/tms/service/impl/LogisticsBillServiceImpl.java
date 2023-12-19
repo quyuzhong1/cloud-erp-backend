@@ -664,7 +664,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      *
      * @param list
      */
-   /* @Override
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
@@ -696,9 +696,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             try {
                 labelList = service.getLabelList(labelVOArrayList);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_98004);
+                return null;
             }
+
+//            soB2cFeign.updateLogisticsWaybill()
         }
         return null;
-    }*/
+    }
 }

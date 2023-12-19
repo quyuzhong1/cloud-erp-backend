@@ -2468,6 +2468,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return map;
     }
 
+    @Override
+    public Boolean updateLogisticsWaybill(String id, String logisticsWaybill) {
+        return lambdaUpdate().set(SoB2cEntity::getLogisticsWaybill, logisticsWaybill).eq(SoB2cEntity::getId, id).update();
+    }
+
+    @Override
+    public Boolean updateDistributeWaybill(String id, String distributeWaybill) {
+        return lambdaUpdate().set(SoB2cEntity::getDistributeWaybill, distributeWaybill).eq(SoB2cEntity::getId, id).update();
+    }
 
     /**
      * 根据 字段获取值
