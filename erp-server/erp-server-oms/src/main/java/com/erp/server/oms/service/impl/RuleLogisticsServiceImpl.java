@@ -168,6 +168,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogistics = this.getById(id);
         Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
         RuleLogisticsDTO.ViewDTO view = new RuleLogisticsDTO.ViewDTO();
+        handleData(ruleLogistics);
         BeanMapper.copy(ruleLogistics, view);
         String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);

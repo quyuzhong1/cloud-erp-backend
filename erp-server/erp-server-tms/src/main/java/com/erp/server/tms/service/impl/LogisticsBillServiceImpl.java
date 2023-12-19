@@ -474,7 +474,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @param dto
      * @return
      */
-    @Override
+   // @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult<CancelResponseVO> cancelBill(LogisticsBillDTO.CancelBillDTO dto) {
 
