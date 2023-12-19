@@ -655,6 +655,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //销售订单更新
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+        entity.setAbnormalType("");
         this.updateById(entity);
 
 
@@ -670,6 +671,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -711,6 +713,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //提交发货
             submitDelivery(id);
         }
+        //更新销售订单异常信息
+        entity.setAbnormalType("");
+        this.updateById(entity);
+
         //操作日志
         String msg = "获取物流单号【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
