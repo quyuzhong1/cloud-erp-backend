@@ -26,6 +26,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
+import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
+import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -404,8 +406,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         
         List<String> list = new ArrayList<>();
 
-        List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
         //查询打印类型
+        List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
         List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
 
         //循环打印的渠道
@@ -448,7 +450,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         if (StringUtils.isNotBlank(distributeWaybill)) {
                             base64List.add(distributeWaybill);
                         }
-
+                        logisticsPrintTypeEntities.stream().filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType()) && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType()));
 
 //                        soB2cLogisticsEntities.stream().filter(req -> req.get)
                     }
