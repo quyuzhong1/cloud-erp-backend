@@ -102,7 +102,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), responseMsg.getMsg());
+                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), JSONObject.toJSONString(responseMsg.getErrors()));
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));

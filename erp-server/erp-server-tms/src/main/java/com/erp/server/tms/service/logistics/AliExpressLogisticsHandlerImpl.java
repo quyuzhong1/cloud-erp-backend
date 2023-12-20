@@ -26,6 +26,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
@@ -294,11 +295,20 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .print_detail(false)
                 .warehouseOrderQueries(warehouseOrderQueries)
                 .build();
-        LabelResult labelList = null;
+        IopResponse iopResponse = null;
         ValidatorUtil.validateEntity(labelRequest);
         try {
-            labelList = aliExpressShipperService.getLabelList(logisticsGetLabelVO.getAuthMap(), labelRequest);
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            iopResponse = aliExpressShipperService.getLabelList(logisticsGetLabelVO.getAuthMap(), labelRequest);
+            if (!StringUtils.isEmpty(iopResponse.getMessage())){
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                        logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(iopResponse));
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", iopResponse.getMessage());
+                responses.add(response);
+                return failure(responses);
+            }
+            LabelResult labelList = JSONObject.parseObject(iopResponse.getBody(), LabelResult.class);
             String result = labelList.getResult();
             LabelResponse labelResponse = JSONObject.parseObject(result, LabelResponse.class);
             //失败
@@ -326,7 +336,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             log.error("速卖通getLabelList接口调用失败：{}", e.getMessage());
             logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                     logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(iopResponse));
             return failure(e.getMessage());
         }
     }
