@@ -896,9 +896,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 // 修改
                 e.setId(detailEntity.getId());
                 e.setDeliveryQty(detailEntity.getDeliveryQty());
+                e.setReceiveDate(detailEntity.getReceiveDate());
+                if (!Objects.equals(e.getReceiveQty(), detailEntity.getReceiveQty()) && e.getReceiveQty() > 0){
+                    e.setReceiveDate(LocalDateTime.now(ZoneId.systemDefault()));
+                }
                 if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
                     e.setDiffQty(e.getReceiveQty() - detailEntity.getDeliveryQty());
-                    e.setReceiveDate(LocalDateTime.now(ZoneId.systemDefault()));
                 }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
