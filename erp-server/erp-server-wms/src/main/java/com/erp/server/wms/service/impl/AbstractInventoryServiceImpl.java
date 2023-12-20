@@ -18,16 +18,18 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.InOutStockCoreConverter;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -68,6 +70,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
 
+    @Resource
+    private AbstractInventoryServiceImpl abstractInventoryService;
     /**
      * 允许录入负数的库存业务单据（临时打开）
      */
@@ -310,17 +314,14 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
                 throw new ServiceException(ApiError.ERROR_1026);
             }
-            // 保存库存
-            InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(param.getWarehouseId(), warehouseInfo.getOrgId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getQty());
-            InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty(), inventoryStatusEnum);
-            InventoryEntity entity = inventoryService.getById(inventorySaveDTO.getInventoryId());
-            // 时间为交易日期
-            inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), entity.getQty());
+            InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventory(param,inventoryStatusEnum,warehouseInfo.getOrgId());
+            InventoryEntity inventorySaveDTO = inventoryRelationDTO.getInventory();
+            InventoryDetailEntity inventoryDetail = inventoryRelationDTO.getInventoryDetail();
 
             // 登记交易流水
-            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventorySaveDTO.getInventoryId(), businessType, inventoryDetail.getId(), inventoryStatusEnum, param.getBillDate(), param.getQty(), warehouseInfo.getOrgId());
+            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventorySaveDTO.getId(), businessType, inventoryDetail.getId(), inventoryStatusEnum, param.getBillDate(), param.getQty(), warehouseInfo.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
-            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, entity.getQty(), InventoryModeEnum.IN_STOCK);
+            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, inventorySaveDTO.getQty(), InventoryModeEnum.IN_STOCK);
         } catch (Exception e) {
             log.error("交易业务：{}，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(),e );
             throw e;
@@ -368,9 +369,16 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(param.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
 
             InventoryEntity inventory = inventoryService.findInventory(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getSkuId(), param.getWarehouseLocation(), inventoryStatusEnum.getCode());
+            if(Objects.isNull(inventory)){
+                //如果库存为空，新增一条0库存的记录,
+                InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.copyInOutStockCoreDTO(param);
+                zeroInventoryParam.setQty(0);
+                InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,inventoryStatusEnum,warehouseInfo.getOrgId());
+                inventory = inventoryRelationDTO.getInventory();
+            }
             String inventoryStatusName = Optional.of(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
             // 仓库负库存是否允许
-            if(Objects.isNull(inventory) || (inventory.getQty()<waitOutQty && !this.allowNegativeInventory(param.getWarehouseId()))) {
+            if(inventory.getQty()<waitOutQty && !this.allowNegativeInventory(param.getWarehouseId())) {
                 String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
                 log.error(errMsg);
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
@@ -588,4 +596,19 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         return Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE);
     }
 
+    public InventoryRelationDTO saveOrUpdateRelationInventory(InOutStockCoreDTO param, InventoryStatusEnum inventoryStatusEnum, String orgId) {
+        // 保存库存
+        InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(param.getWarehouseId(),orgId, param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getQty());
+        InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty(), inventoryStatusEnum);
+        InventoryEntity entity = inventoryService.getById(inventorySaveDTO.getInventoryId());
+        // 时间为交易日期
+        inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), entity.getQty());
+        return new InventoryRelationDTO(entity,inventoryDetail);
+    }
+
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class,propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    public InventoryRelationDTO saveOrUpdateRelationInventoryNewTransactional(InOutStockCoreDTO param, InventoryStatusEnum inventoryStatusEnum, String orgId) {
+       return this.saveOrUpdateRelationInventory(param,inventoryStatusEnum,orgId);
+    }
 }
