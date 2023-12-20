@@ -496,7 +496,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //验证有没有下推变更单
         List<PurchaseChangeEntity> purchaseChangeList = purchaseChangeService.listByPoIds(ids);
-        if (CollectionUtils.isEmpty(purchaseChangeList)) {
+        if (CollectionUtils.isNotEmpty(purchaseChangeList)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE);
         }
 

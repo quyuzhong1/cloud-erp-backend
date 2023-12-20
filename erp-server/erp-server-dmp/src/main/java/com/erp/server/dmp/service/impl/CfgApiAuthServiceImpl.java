@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
@@ -51,9 +52,10 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     @Override
     public CfgApiAuthEntity getByKey (String key ,String apiGroup ,String apiPlatformId) {
       return   lambdaQuery()
-              .eq(CfgApiAuthEntity::getApiPlatformId,apiPlatformId)
-              .eq(CfgApiAuthEntity::getApiGroup,apiGroup)
+              .eq(StrUtil.isNotBlank(apiPlatformId),CfgApiAuthEntity::getApiPlatformId,apiPlatformId)
+              .eq(StrUtil.isNotBlank(apiGroup),CfgApiAuthEntity::getApiGroup,apiGroup)
               .eq(CfgApiAuthEntity::getKey,key)
+              .last("limit 1")
               .one();
     }
 

@@ -456,7 +456,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.EMPTY_LIST;
         }
-        List<PurchaseChangeEntity> list = lambdaQuery().in(PurchaseChangeEntity::getPurchaseOrgId, ids)
+        List<PurchaseChangeEntity> list = lambdaQuery().in(PurchaseChangeEntity::getPurchaseOrderId, ids)
                 .eq(PurchaseChangeEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
         return list;
