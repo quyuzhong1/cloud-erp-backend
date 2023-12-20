@@ -989,8 +989,20 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     public static class SignShipOrderDTO {
 
+        /**
+         * id
+         */
         private String id;
+
+        /**
+         * 销售订单号
+         */
         private String code;
+
+        /**
+         * 交易订单号
+         */
+        private String platformCode;
         /**
          * 渠道id
          */
