@@ -373,8 +373,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsProductDTO.ProductDTO item : skuInfoList) {
             Integer qty = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).map(LogisticsBillDTO.SkuDTO::getQty).
                     findFirst().orElse(0);
-            item.setPrice(item.getDeclarePrice());
+            BigDecimal price = item.getDeclarePrice();
+            item.setPrice(price);
             item.setQuantity(qty);
+            item.setAmount(MathUtil.multiply(price,qty));
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
@@ -383,10 +385,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Boolean hasBattery = skuInfoList.stream().filter(s->s.getIsElectric()).count()>0;
         //是否带电
         parceInfo.setHasBattery(hasBattery);
-        parceInfo.setTotalQuantity(logisticsProductList.size());
+        Integer totalQuantity=skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
+        parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())). map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量
         Integer totalWeight=skuInfoList.stream().filter(s->Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
