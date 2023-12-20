@@ -370,7 +370,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
             InventoryEntity inventory = inventoryService.findInventory(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getSkuId(), param.getWarehouseLocation(), inventoryStatusEnum.getCode());
             if(Objects.isNull(inventory)){
-                //如果库存为空，新增一条0库存的记录,不加入当前事务，避免下面的负库存校验抛异常后导致0库存的记录被删除
+                //如果库存为空，新增一条0库存的记录,不加入当前事务，避免下面的负库存校验抛异常后导致0库存的记录被回滚
                 InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.copyInOutStockCoreDTO(param);
                 zeroInventoryParam.setQty(0);
                 InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,inventoryStatusEnum,warehouseInfo.getOrgId());
@@ -496,7 +496,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         }
         if(Objects.nonNull(param.getWarehouseOption())) { // 调拨类业务，包含当前仓和目的仓
             outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)
-                    && Objects.equals(r.getWarehouseOption(), param.getWarehouseOption().getCode())).collect(Collectors.toList());
+                    && Objects.equals(r.getWarehouseOption().getCode(), param.getWarehouseOption().getCode())).collect(Collectors.toList());
         } else {
             // 直接过滤得到出库类型的数据
             outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
@@ -545,8 +545,12 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(warehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
 
         if(Objects.isNull(inventory)) {
-            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocation,skuId, skuNo);
-            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg,skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName,"无",qty));
+            //如果库存为空，新增一条0库存的记录,不加入当前事务，避免下面的负库存校验抛异常后导致0库存的记录被回滚
+            WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
+            InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.baseToInOutStockCoreDTO(param);
+            zeroInventoryParam.setQty(0);
+            InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,status,warehouseInfo.getOrgId());
+            inventory = inventoryRelationDTO.getInventory();
         }
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocation,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventory.getQty());
