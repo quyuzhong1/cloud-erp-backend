@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -149,5 +150,18 @@ public class LogisticsBillFeignController {
     public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo) {
         LogisticsBillDTO.BaseDTO entity = logisticsBillService.getBaseByTrackNo(trackNo);
         return entity;
+    }
+
+    /**
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
+     * @param list
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    @PostMapping("/printLogisticsWaybill")
+    public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(@RequestBody List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+        List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(list);
+        return waybillDTOList;
     }
 }

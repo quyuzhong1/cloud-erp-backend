@@ -1534,12 +1534,26 @@ public class SoB2cDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class WaybillDTO {
-
+        /**
+         * B2C销售单号
+         */
         private String soB2cId;
-
-        private String LogisticsBase64;
-
-        private String DistributeBase64;
+        /**
+         * 运单号
+         */
+        private String transportNo;
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+        /**
+         * 物流面单base64格式
+         */
+        private String logisticsBase64;
+        /**
+         * 配货单base64格式
+         */
+        private String distributeBase64;
     }
 
 

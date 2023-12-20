@@ -92,7 +92,7 @@ public interface SoB2cFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("/feign/soB2c/updateDistributeWaybill")
-    Boolean updateDistributeWaybill(@RequestBody SoB2cDTO.WaybillDTO waybillDTOList);
+    Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
      * @description 添加异常订单信息

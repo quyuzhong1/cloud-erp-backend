@@ -681,13 +681,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillCostService.add(addDTO);
     }
 
-
     /**
-     * 打印物流面单
-     *
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
      * @param list
-     */
-//    @Override
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
@@ -708,8 +709,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
-            getLabelVO.setTransportNo(dto.getTransportNo());
+
+            //根据跟踪单号查询运单
+            LogisticsBillDTO.BaseDTO baseByTrackNo = this.getBaseByTrackNo(dto.getTrackNo());
+            if (ObjectUtil.isNotEmpty(baseByTrackNo)) {
+                getLabelVO.setTransportNo(baseByTrackNo.getTransportNo());
+            }
+            //物流跟踪号
+            getLabelVO.setTrackNo(dto.getTrackNo());
+            //授权信息
             getLabelVO.setAuthMap(authMap);
+
             //设置渠道编号
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
             LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
@@ -720,16 +730,18 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             try {
                 labelList = service.getLabelList(labelVOArrayList);
             } catch (IOException e) {
-                return null;
+                return Collections.emptyList();
             }
             SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
             waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
             waybillDTO.setSoB2cId(dto.getB2cSoId());
+            waybillDTO.setTrackNo(getLabelVO.getTrackNo());
+            waybillDTO.setTransportNo(getLabelVO.getTransportNo());
             waybillDTOList.add(waybillDTO);
         }
 
         soB2cFeign.updateLogisticsWaybill(waybillDTOList);
-        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
+        soB2cFeign.updateDistributeWaybill(waybillDTOList);
         return waybillDTOList;
     }
 }
