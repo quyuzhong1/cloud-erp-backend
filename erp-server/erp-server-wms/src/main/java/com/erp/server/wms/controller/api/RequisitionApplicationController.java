@@ -169,6 +169,11 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>>
      **/
     @PostMapping("/handleList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:handleList",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "ids")
     public ApiResult<List<RequisitionApplicationDTO.HandleListDTO>> handleList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.handleList(dto.getIds()));
     }
@@ -182,11 +187,6 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>>
      **/
     @PostMapping("/handleSave")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:requisitionApplication:handleSave",
-            serviceClass = RequisitionApplicationService.class,
-            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "处理保存:ids={ids}")
     public ApiResult handleSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.HandleListDTO> dto) {
         Boolean flag = requisitionApplicationService.handleSave(dto.getList());
