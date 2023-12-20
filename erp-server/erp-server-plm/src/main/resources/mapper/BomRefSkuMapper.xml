@@ -29,6 +29,7 @@
         select
            pbi.id as bomId,
            pbi.bom_version as bomVersion,
+           pbi.type AS type,
            pbs.parent_sku_id as parentSkuId,
            pbs.parent_sku_no as parentSkuNo,
            pbs.sku_id as skuId,
