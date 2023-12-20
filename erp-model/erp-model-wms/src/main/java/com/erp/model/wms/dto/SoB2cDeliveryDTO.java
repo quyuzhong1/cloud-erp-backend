@@ -220,7 +220,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
-        private List<String> PlatformList;
+        private List<String> platformList;
         /**
          * 店铺
          * 地址：http://172.16.100.11:3002/project/110/interface/api/24424

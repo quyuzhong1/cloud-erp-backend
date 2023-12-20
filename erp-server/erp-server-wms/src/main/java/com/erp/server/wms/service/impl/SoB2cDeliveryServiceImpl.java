@@ -397,6 +397,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //明细信息
         List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
 
+        List<String> collect = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        
+
         //循环打印的渠道
         for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
 
