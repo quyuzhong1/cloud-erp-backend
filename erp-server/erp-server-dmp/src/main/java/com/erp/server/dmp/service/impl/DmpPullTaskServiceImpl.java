@@ -144,6 +144,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         //存在则修改
         if (ObjectUtil.isNotEmpty(found)) {
             dmpPullTaskEntity.setId(found.getId());
+            dmpPullTaskEntity.setCreateTime(LocalDateTime.now());
+            dmpPullTaskEntity.setUpdateTime(LocalDateTime.now());
         }
         this.saveOrUpdate(dmpPullTaskEntity);
         return dmpPullTaskEntity.getId();
