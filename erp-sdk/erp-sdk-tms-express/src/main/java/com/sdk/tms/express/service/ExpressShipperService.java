@@ -236,14 +236,32 @@ public class ExpressShipperService {
      * @return
      * @throws UnsupportedEncodingException
      */
-    public BaseResult validateWaybillNo(Map<String, String> authMap, String waybillNo) throws UnsupportedEncodingException {
+    public BaseResponse validateWaybillNo(Map<String, String> authMap, String waybillNo) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
         validate(partnerId, md5Key);
         JSONObject jsonObject = new JSONObject();
         jsonObject.putOpt("waybillNo", waybillNo);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_VALIDATE_WAYBILLNO; //提供顺丰运单号合法性校验功能。
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(jsonObject), standardService.getCode());
+        return doPostValidate(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(jsonObject), standardService.getCode());
+    }
+
+    private static BaseResponse doPostValidate(String host, String partnerId, String md5Key, String msgData, String serviceCode) throws UnsupportedEncodingException {
+        CallExpressServiceTools tools = CallExpressServiceTools.getInstance();
+        Map<String, String> params = new HashMap<String, String>();
+
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        params.put("partnerID", partnerId);  // 顾客编码 ，对应丰桥上获取的clientCode
+        params.put("requestID", UUID.randomUUID().toString().replace("-", ""));
+        params.put("serviceCode", serviceCode);// 接口服务码
+        params.put("timestamp", timeStamp);
+        params.put("msgData", msgData);
+        params.put("msgDigest", tools.getMsgDigest(msgData, timeStamp, md5Key));
+        log.info("====调用实际请求：{}", params);
+        String result = HttpClientUtil.post(host, params);
+        log.info("====返回结果：{}", params);
+        BaseResponse baseResponse = JSONUtil.toBean(result, BaseResponse.class);
+        return baseResponse;
     }
 
     private static BaseResult doPost(String host, String partnerId, String md5Key, String msgData, String serviceCode) throws UnsupportedEncodingException {

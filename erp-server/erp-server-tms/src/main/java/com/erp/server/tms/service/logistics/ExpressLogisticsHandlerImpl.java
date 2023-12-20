@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.druid.sql.visitor.functions.If;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -17,11 +18,13 @@ import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
+import com.sdk.tms.express.model.base.BaseResponse;
 import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.express.model.order.request.*;
 import com.sdk.tms.express.model.order.response.*;
 import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.common.util.CollectionUtils;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -402,20 +405,23 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return isSuccess ? success(responseVOS) : failure(responseVOS);
     }
+
     /**
      * 授权判断
+     *
      * @param authMap
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult authorization(Map<String, String> authMap) {
         String waybillNo = "SF1040275268927";
         try {
-            BaseResult responseMsg = expressShipperService.validateWaybillNo(authMap,waybillNo);
-            if (Objects.isNull(responseMsg) || !responseMsg.isSuccess()) {
+            BaseResponse baseResponse = expressShipperService.validateWaybillNo(authMap, waybillNo);
+            BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
+            if (Objects.isNull(baseResponse) || StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !baseResult.isSuccess()) {
                 //授权失败
-                return failure("授权失败");
-            }else {
+                return failure("授权失败" + baseResponse.getApiErrorMsg());
+            } else {
                 return success("授权成功");
             }
         } catch (Exception e) {
