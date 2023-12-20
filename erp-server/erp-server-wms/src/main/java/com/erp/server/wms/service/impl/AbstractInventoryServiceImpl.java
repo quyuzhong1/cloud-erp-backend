@@ -370,7 +370,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
             InventoryEntity inventory = inventoryService.findInventory(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getSkuId(), param.getWarehouseLocation(), inventoryStatusEnum.getCode());
             if(Objects.isNull(inventory)){
-                //如果库存为空，新增一条0库存的记录,
+                //如果库存为空，新增一条0库存的记录,不加入当前事务，避免下面的负库存校验抛异常后导致0库存的记录被删除
                 InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.copyInOutStockCoreDTO(param);
                 zeroInventoryParam.setQty(0);
                 InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,inventoryStatusEnum,warehouseInfo.getOrgId());
