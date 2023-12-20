@@ -201,6 +201,11 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.finishListDTO>>
      **/
     @PostMapping("/finishList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:finishList",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "ids")
     public ApiResult<List<RequisitionApplicationDTO.FinishListDTO>> finishList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.finishList(dto.getIds()));
     }
@@ -213,11 +218,6 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/finishSave")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:requisitionApplication:finishSave",
-            serviceClass = RequisitionApplicationService.class,
-            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成保存:ids={ids}")
     public ApiResult finishSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.FinishListDTO> dto) {
         Boolean flag = requisitionApplicationService.finishSave(dto.getList());
