@@ -737,7 +737,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
                             && req.getBomVersion().equals(detailEntity.getBomVersion())
-                            && req.getType().equals(BomTypeEnum.COMBINATION.getType())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
 
             // 子件需要拆分
