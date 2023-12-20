@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.krysalis.barcode4j.impl.code39.Code39Bean;
 import org.krysalis.barcode4j.impl.upcean.EAN13Bean;
 import org.krysalis.barcode4j.output.bitmap.BitmapCanvasProvider;
@@ -17,6 +18,18 @@ public class BarcodeUtil {
         String msg = "123456789012";
         String path = "1dcode.png";
         generateFile(msg, path);
+
+        delteFile(path);
+    }
+
+    private static void delteFile(String path){
+        // 如果临时文件存在，则删除临时文件
+        if(StringUtils.isNotBlank(path)){
+            File file = new File(path);
+            if (file != null && file.isFile() && file.exists()) {
+                file.delete();
+            }
+        }
     }
 
     public static void generateFile(String msg, String path) {
