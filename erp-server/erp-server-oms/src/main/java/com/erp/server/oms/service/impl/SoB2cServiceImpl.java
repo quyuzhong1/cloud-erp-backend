@@ -3312,6 +3312,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         if (isUpdate) {
+            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
             //物流信息更新
             return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         }

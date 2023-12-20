@@ -21,5 +21,6 @@ public class AliexpressShipOrder implements IPlatformService {
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
 
+
     }
 }
