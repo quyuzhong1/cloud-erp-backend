@@ -737,7 +737,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         while (dataSign) {
             paramDTO.setLimit(pageSize);
             paramDTO.setStartRow(pageIndex);
-            paramDTO.setTopRowCount(pageSize);
+            paramDTO.setTopRowCount(MathUtil.ZERO);
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
             List<Map<String, Object>> result =  dmpSyncFeign.listKingdeeData(paramDTO);
             log.info("获取金蝶直接调拨订单数据第[{}]页 有{}条记录", pageIndex, pageSize);
