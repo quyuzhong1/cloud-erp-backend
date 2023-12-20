@@ -1,9 +1,12 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -135,7 +138,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param dto
      * @return 
      */
-    Boolean cancelBill(LogisticsBillDTO.CancelBillDTO dto);
+    ApiResult<CancelResponseVO> cancelBill(LogisticsBillDTO.CancelBillDTO dto);
+
+    /**
+     * 拦截物流单
+     * @param dto
+     * @return
+     */
+    ApiResult<InterceptResponseVO> interceptBill(LogisticsBillDTO.CancelBillDTO dto);
 
     /**
      * 根据物流单号查询物流单

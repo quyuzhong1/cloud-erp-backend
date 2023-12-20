@@ -315,7 +315,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             if (nonNull) {
                 id = logisticsWarehouse.getId();
             } else {
-                logisticsWarehouse=new LogisticsWarehouseEntity();
+                logisticsWarehouse = new LogisticsWarehouseEntity();
                 id = IdWorker.getIdStr();
                 logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
                 logisticsWarehouse.setMainId(logisticsSupplierId);

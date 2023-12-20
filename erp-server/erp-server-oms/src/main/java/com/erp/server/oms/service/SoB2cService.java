@@ -360,17 +360,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-18 14:06
      */
-    Boolean platformWarehouseOrderHandle(String id, Map<String,Object> map);
+    Boolean platformWarehouseOrderHandle(SoB2cEntity mainEntity , Map<String,Object> map);
 
   
     /** 
      * @description 正常订单拉取处理规则
-     * @param id
+     * @param entity
      * @author Lambda
      * @return 
      * @create 2023-12-18 14:52
      */
-    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
+    Boolean pullOrderHandle(SoB2cEntity entity, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
 
     /** 
      * @description 获取规则需要的map
@@ -381,4 +381,33 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-18 15:03
      */
     Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+
+    /**
+     * 修改销售订单的物流面单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param waybillDTOList 物流面单
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
+
+    /**
+     * 修改销售订单的配货单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 17:18
+     * @param waybillDTOList 配货单
+     * @return java.lang.Boolean
+     **/
+    Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
+
+    /** 
+     * @description 添加销售订单异常标示
+     * @param id
+     * @param sign
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:43
+     */
+    void addSignError(String id, String sign);
 }

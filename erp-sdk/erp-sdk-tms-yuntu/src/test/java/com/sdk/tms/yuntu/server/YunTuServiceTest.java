@@ -38,7 +38,7 @@ public class YunTuServiceTest {
     @Test
     public void createOrder() {
         YunTuCreateOrderRequest request = YunTuCreateOrderRequest.builder()
-                .customerOrderNumber("WEIJI2023110901006")
+                .customerOrderNumber("1736938321835200514")
                 .shippingMethodCode("THPHR")
                 .iossCode("IOSS0690112210251452600")
                 .height(1)
@@ -138,7 +138,7 @@ public class YunTuServiceTest {
     public void cancelOrder() {
         YunTuCancelOrderRequest request = YunTuCancelOrderRequest.builder()
                 .orderType(2)
-                .orderNumber("WEIJI2023110901001")
+                .orderNumber("1736938321835200514")
                 .build();
         YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request,authMap);
         System.out.println(response);

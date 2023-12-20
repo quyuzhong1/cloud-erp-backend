@@ -108,6 +108,11 @@ public class RuleLogisticsDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+        /**
          * 是否自动获取物流单号
          */
         private Boolean autoGetTrackNo;

@@ -7,14 +7,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -26,8 +25,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.*;
@@ -35,16 +32,12 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -58,6 +51,7 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * b2c发货单 服务实现类
@@ -180,7 +174,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
 
+        //调用第三方平台SDK发货
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(id);
+        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
 
+        //修改发货状态
         this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
     }
@@ -197,7 +197,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
         }
-        // TODO 调用第三方发货
+
+        //调用第三方平台SDK发货
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(id);
+        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
 
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
@@ -206,7 +211,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
-        List<SoB2cDeliveryEntity> list = this.listByIds(ids);
 
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
@@ -268,13 +272,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .thenComparing(SoB2cDeliveryDTO.PrintPickingViewDTO::getWarehouseLocation).reversed()
                 ).collect(Collectors.toList());
 
-        //修改打印状态
-        lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).update();
         return resultList;
     }
 
+
     @Override
-    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids) {
+    public Boolean printPicking(List<String> ids) {
+        lambdaUpdate().set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.PICKING.getCode()).update();
+        //修改打印状态
+        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.TRUE).update();
+    }
+
+    @Override
+    public Boolean printPickingCancel(List<String> ids) {
+        //修改打印状态
+        return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.FALSE).update();
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillView(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
         //查询物流商信息
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
@@ -301,6 +317,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
             for (SoB2cDeliveryEntity deliveryEntity : collect) {
                 SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO waybillDetailDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO();
+                waybillDetailDTO.setSoB2cId(deliveryEntity.getSourceId());
                 waybillDetailDTO.setSoCode(deliveryEntity.getSoCode());
                 waybillDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());
                 waybillDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
@@ -370,6 +387,56 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .or()
                 .eq(SoB2cDeliveryEntity::getTransportNo, businessCode)
         );
+    }
+
+    @Override
+    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+        //打印类型
+        String printType = dto.getPrintType();
+
+        //明细信息
+        List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
+
+        List<String> collect = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        
+
+        //循环打印的渠道
+        for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
+
+            //查询b2c订单信息
+            List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = logisticsChannelDTO.getDetailList();
+            List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+
+            //渠道包含的单据
+            for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO : waybillDetailDTOList) {
+                //匹配订单
+                SoB2cEntity soB2cEntity = soB2cEntities.stream()
+                        .filter(req -> req.getId().equals(logisticsWaybillDetailDTO.getSoB2cId()))
+                        .findFirst().orElse(new SoB2cEntity());
+
+                //如果打印面单
+                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode().equals(printType)) {
+                    //先获取订单的面单，没有就请求sdk获取
+                    if (StringUtils.isBlank(soB2cEntity.getLogisticsWaybill())) {
+
+                    }
+                } else if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
+                    //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
+                    if (StringUtils.isBlank(soB2cEntity.getDistributeWaybill())) {
+
+                    }
+                    // TODO 配货单需要根据渠道查询是否是自定义配置
+                } else {
+
+                }
+
+
+
+            }
+        }
+
+
     }
 
     /**

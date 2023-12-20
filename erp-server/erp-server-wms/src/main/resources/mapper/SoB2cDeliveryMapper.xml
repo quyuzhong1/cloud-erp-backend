@@ -18,25 +18,25 @@
         sbd.id,
         sbd.code,
         sbd.source_id,
-        sbd.dict_platform,
+        sbd.dict_platform AS dictPlatform,
         sbd.shop_id,
-        sbd.shop_name,
-        sbd.so_code,
+        sbd.shop_name AS shopName,
+        sbd.so_code AS soCode,
         sbd.status,
-        sbd.picking_type,
+        sbd.picking_type AS pickingType,
         sbd.logistics_channel_id,
-        sbd.logistics_channel_name,
-        sbd.is_print_picking,
-        sbd.is_inspection,
-        sbd.is_weigh,
+        sbd.logistics_channel_name AS logisticsChannelName,
+        sbd.is_print_picking AS isPrintPicking,
+        sbd.is_inspection AS isInspection,
+        sbd.is_weigh AS isWeigh,
         sbdd.sku_id,
-        sbdd.sku_no,
-        sbdd.delivery_qty,
+        sbdd.sku_no AS skuNo,
+        sbdd.delivery_qty AS deliveryQty,
         sbdd.warehouse_id,
-        sbdd.warehouse_name,
-        sbdd.warehouse_location,
-        sbd.create_time,
-        sbd.delivery_time
+        sbdd.warehouse_name AS warehouseName,
+        sbdd.warehouse_location AS warehouseLocation,
+        sbd.create_time AS createTime,
+        sbd.delivery_time AS deliveryTime
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
         WHERE sbdd.is_deleted = FALSE
@@ -49,10 +49,10 @@
             AND sbd.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <!--平台-->
-        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0 ">
+        <if test="params.platformList!=null and params.platformList.size>0 ">
             AND sbd.dict_platform IN
-            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
-                #{dictPlatform}
+            <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
+                #{platform}
             </foreach>
         </if>
         <!--店铺-->
@@ -123,5 +123,17 @@
             AND sbd.delivery_time &gt;= #{params.createTimeList[0]}
             AND sbd.delivery_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
         </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--排序-->
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbd.create_time desc
     </select>
 </mapper>

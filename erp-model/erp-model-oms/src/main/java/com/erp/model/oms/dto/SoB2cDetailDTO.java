@@ -265,7 +265,6 @@ public class SoB2cDetailDTO implements Serializable {
         /**
         * 仓库id
         */
-        @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 

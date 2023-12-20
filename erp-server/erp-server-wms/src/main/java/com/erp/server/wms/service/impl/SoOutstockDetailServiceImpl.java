@@ -19,6 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -75,6 +76,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
 
 
     @Override
@@ -551,15 +555,18 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> soDetailIdList = checkList.stream().map(SoOutstockDetailDTO.UpdateDTO::getSoDetailId).distinct().collect(Collectors.toList());
         //已经出库的数据
         List<SoOutstockDetailEntity> soOutstockDetailList = this.listBySoDetailIds(soDetailIdList);
-        //todo 这里要判断一下发货单的数据
+
 
         //b2c发货单
         String soB2cDelivery = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
         if (soB2cDelivery.equals(sourceType)) {
-            //发货单的数量
-            Integer deliveryQty = 0;
+            List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList =soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
+
             for (SoOutstockDetailDTO.UpdateDTO item : checkList) {
                 String soDetailId = item.getSoDetailId();
+                //发货单的数量
+                Integer deliveryQty = soB2cDeliveryDetailList.stream().
+                        filter(s->s.getSourceDetailId().equals(soDetailId)).mapToInt(SoB2cDeliveryDetailEntity::getDeliveryQty).sum();
                 Integer planQty = item.getPlanQty();
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->

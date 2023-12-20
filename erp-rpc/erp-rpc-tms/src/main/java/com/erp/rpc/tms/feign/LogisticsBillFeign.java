@@ -1,9 +1,12 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -81,7 +84,14 @@ public interface LogisticsBillFeign {
      * @return
      */
     @PostMapping("/feign/logisticsBill/cancelBill")
-    Boolean cancelBill(@RequestBody LogisticsBillDTO.CancelBillDTO dto);
+    ApiResult<CancelResponseVO> cancelBill(@RequestBody LogisticsBillDTO.CancelBillDTO dto);
+
+    /**
+     * 拦截物流单
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/interceptBill")
+    ApiResult<InterceptResponseVO> interceptBill(@RequestBody LogisticsBillDTO.CancelBillDTO dto);
 
     /**
      * 根据物流跟踪单号查询物流单详情

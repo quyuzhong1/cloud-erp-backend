@@ -387,12 +387,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
 
         //仓库信息
-        List<String> warehouseIdList = list.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            log.error("未找到仓库，warehouseIdList = {}",warehouseIdList);
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
+
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
@@ -430,21 +427,19 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
                     .filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(updateDTO)) {
-                log.error("未找到仓库，warehouseId = {}",detailEntity.getWarehouseId());
-                throw new ServiceException(ApiError.ERROR_99002);
+            if (ObjectUtils.isNotEmpty(updateDTO)) {
+                detailEntity.setWarehouseName(updateDTO.getName());
             }
-            detailEntity.setWarehouseName(updateDTO.getName());
+
 
             //库存组织
             BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream()
                     .filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(companyDTO)) {
-                log.error("未找到核算公司，orgId = {}",updateDTO.getOrgId());
-                throw new ServiceException(ApiError.ERROR_9014);
+            if (ObjectUtils.isNotEmpty(companyDTO)) {
+                detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
+                detailEntity.setWarehouseOrgName(companyDTO.getName());
             }
-            detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
-            detailEntity.setWarehouseOrgName(companyDTO.getName());
+
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
 
             //库存SKU

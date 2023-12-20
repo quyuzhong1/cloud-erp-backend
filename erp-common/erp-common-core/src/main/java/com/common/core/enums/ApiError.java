@@ -32,6 +32,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_404_NOT_FIND(404, "接口路径不存在"),
     ERROR_405(405, "方法不被允许"),
+    ERROR_500(500, "系统异常"),
     ERROR_600(600, "缺少参数"),
     ERROR_400(400, "参数错误"),
     GLOBAL_EXCEPTION_UN_KNOW(500, "未知异常：【{}】"),
@@ -543,6 +544,7 @@ public enum ApiError implements Serializable {
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
     ERP_DMP_SKU_NOT_COST(97044, "sku【{}】未发现成本数据！"),
 
+    ERROR_97044(97044, "已使用的模块不能删除"),
 
     /**
      * SCM 错误
@@ -871,6 +873,7 @@ public enum ApiError implements Serializable {
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
 
 
     /**
@@ -1022,7 +1025,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
-
+    ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
 
 
 
@@ -1062,6 +1065,9 @@ public enum ApiError implements Serializable {
 
 
 
+
+
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

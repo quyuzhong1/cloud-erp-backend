@@ -374,6 +374,9 @@ public class SoB2cDTO implements Serializable {
          * 手工订单（在ERP手动创建的订单）
          */
         private Boolean isManual;
+
+
+
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
          */
@@ -393,6 +396,11 @@ public class SoB2cDTO implements Serializable {
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
         private String shipNodeType;
+
+        /**
+         * 是否平台仓订单 true 是 fasle 不是
+         */
+        private Boolean isAliexpressPlatformWarehouseOrder;
     }
 
     /**
@@ -1519,5 +1527,20 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "明细不能为空")
         private String id;
     }
+
+    /**
+     * 打印面单/配货单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaybillDTO {
+
+        private String soB2cId;
+
+        private String LogisticsBase64;
+
+        private String DistributeBase64;
+    }
+
 
 }
