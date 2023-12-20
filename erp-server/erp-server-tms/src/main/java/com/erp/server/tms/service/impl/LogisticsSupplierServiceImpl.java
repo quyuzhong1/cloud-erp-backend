@@ -221,23 +221,17 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
-        LogisticsSupplierTypeEnum type = logisticsSupplier.getType();
-        LogisticsSupplierTypeEnum custom = LogisticsSupplierTypeEnum.CUSTOM;
-        Boolean isCustom=custom.equals(type);
         if (Objects.isNull(logisticsSupplier)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
-        if (!alreadyCode.equals(authStatus)&&!isCustom) {
+        if (!alreadyCode.equals(authStatus)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
-        if (Objects.isNull(authEntity)&&!isCustom) {
+        if (Objects.isNull(authEntity)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
-        }
-        if(Objects.isNull(authEntity)){
-            return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功 0个渠道");
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);

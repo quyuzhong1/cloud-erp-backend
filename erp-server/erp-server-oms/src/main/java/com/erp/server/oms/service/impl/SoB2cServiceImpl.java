@@ -751,7 +751,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //操作日志
         String msg = "获取物流单号【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "获取物流单号");
+        return BatchResultDTO.success(entity.getId(), logisticsCode, "获取物流单号");
     }
 
     /**
@@ -1900,10 +1900,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
         }
-        //汇率不存在不支持提交
-//        if (MathUtil.compareTo(entity.getExchangeRate(), MathUtil.ZERO) == MathUtil.ZERO) {
-//            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
-//        }
+
 
         return;
     }
@@ -2278,20 +2275,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             return Boolean.TRUE;
         }
-        //匹配审核规则未通过
-        /**
-         * 存在流程，则直接提交进入流程审核
-         * 不存在流程，则判断标记异常，进入审核不通过
-         */
-//        ProcessBusinessEntity processBusinessEntity = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
-//        if (ObjectUtils.isNotEmpty(processBusinessEntity)) {
-//            //自动提交
-//            BatchResultDTO submit = submit(id, Boolean.TRUE);
-//            if (!submit.getSuccess()) {
-//                throw new ServiceException(ApiError.ERROR_1042);
-//            }
-//            return Boolean.FALSE;
-//        }
         //标识异常并且审核不通过
         updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
         return Boolean.FALSE;
