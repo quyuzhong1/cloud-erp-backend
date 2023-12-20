@@ -368,6 +368,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         //存在则修改
         if (ObjectUtil.isNotEmpty(found)) {
             entity.setId(found.getId());
+            entity.setCreateTime(LocalDateTime.now());
+            entity.setUpdateTime(LocalDateTime.now());
         }
         this.saveOrUpdate(entity);
         return entity.getId();
