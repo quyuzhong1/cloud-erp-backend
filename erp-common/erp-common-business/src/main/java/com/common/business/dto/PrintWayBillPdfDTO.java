@@ -2,6 +2,7 @@ package com.common.business.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,7 +18,36 @@ public class PrintWayBillPdfDTO {
     /**
      * 店铺名称
      */
-    private List<String> shopName;
+    private String shopName;
+    /**
+     * 买家id
+     */
+    private String customerId;
+    /**
+     * 订单金额
+     */
+    private BigDecimal amount;
+    /**
+     * 实重
+     */
+    private BigDecimal weight;
+    /**
+     * 渠道名称
+     */
+    private String channelName;
+    /**
+     * 运单号
+     */
+    private String transportNo;
+    /**
+     * 备注
+     */
+    private String remark;
+    /**
+     * 明细信息
+     */
+    private List<PrintWayBillPdfDetailDTO> detailList;
+
 
 
 }
