@@ -954,7 +954,7 @@
         </if>
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( o.platform_order_id )) AS orderCount
-        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id and o.source_platform != 'B2B'
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">

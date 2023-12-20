@@ -283,7 +283,7 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:requisitionApplication:export",
+            menuCode = "wms:requisitionApplication:exportExcel",
             tableAlias = "ra"
     )
     public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
