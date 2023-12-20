@@ -803,8 +803,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
+        List<String> soutceCodeList = detailEntityList.stream().map(req -> req.getSourceCode()).distinct().collect(Collectors.toList());
         addDTO.setSourceId("");
-        addDTO.setSourceCode("");
+        addDTO.setSourceCode(String.join(",", soutceCodeList));
         addDTO.setRemark("");
 
         //详情信息
