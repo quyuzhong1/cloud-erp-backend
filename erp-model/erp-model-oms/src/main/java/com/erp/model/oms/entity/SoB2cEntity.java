@@ -239,6 +239,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField(exist = false)
     private String shopName;
 
+    /**
+     * 订单异常标示
+     */
+    @TableField("sign_order_error")
+    private String signOrderError;
+
 
     public static final String CODE = "code";
 

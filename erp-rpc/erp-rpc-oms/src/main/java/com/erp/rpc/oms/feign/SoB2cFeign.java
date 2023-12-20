@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -92,4 +93,25 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateDistributeWaybill")
     Boolean updateDistributeWaybill(@RequestBody SoB2cDTO.WaybillDTO waybillDTOList);
+
+    /**
+     * @description 添加异常订单信息
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:06
+     */
+    @PostMapping("/feign/soB2cError/add")
+    void addSoB2cError(SoB2cErrorDTO.AddDTO dto);
+
+    /**
+     * 删除异常信息
+     * @description
+     * @param deleteDTO
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:20
+     */
+    @PostMapping("/feign/soB2cError/delete")
+    void deleteError(SoB2cErrorDTO.DeleteDTO deleteDTO);
 }

@@ -702,7 +702,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -728,18 +727,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
         }
         LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
-
-
         //货取物流单号
         List<String> logisticsTrackNoList = logisticsBillFeign.generateBill(generateBillDTO);
         if (CollectionUtils.isEmpty(logisticsTrackNoList)) {
             throw new ServiceException("下物流单失败");
         }
         String logisticsCode = logisticsTrackNoList.stream().collect(Collectors.joining(","));
-
         soB2cLogisticsService.updateLogisticsCode(id, logisticsCode);
-
-
         if (Boolean.TRUE.equals(isDelivery)) {
             //提交发货
             submitDelivery(id);
@@ -2490,6 +2484,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
+     * 添加异常标示
+     * @param id
+     * @param sign
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addSignError(String id, String sign) {
+      this.lambdaUpdate().
+              set(SoB2cEntity::getSignOrderError,sign).
+              eq(SoB2cEntity::getId,id).update();
+    }
+
+    /**
      * 根据 字段获取值
      *
      * @param fieldCode
@@ -2538,8 +2545,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailEntity.setWarehouseId(warehouseId);
         }
         soB2cDetailService.updateWarehouse(detailList);
-        //走物流规则
-        Boolean ruleLogistics = logisticsRule(id, map);
+        try {
+            //走物流规则
+            Boolean ruleLogistics = logisticsRule(id, map);
+        }catch (Exception e){
+            log.error("物流规则报错>>>{}",e.getMessage());
+
+        }
+
         return Boolean.TRUE;
     }
 
@@ -2562,11 +2575,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (result) {
             //物流商id
             String logisticsChannelId = matchResult.getLogisticsChannelId();
+            String logisticsChannelName = matchResult.getLogisticsChannelName();
             Boolean autoGetTrackNo = matchResult.getAutoGetTrackNo();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
                 SoB2cLogisticsEntity b2cLogistics = soB2cLogisticsService.getByMainId(id);
                 if (Objects.nonNull(b2cLogistics)) {
                     b2cLogistics.setLogisticsChannelId(logisticsChannelId);
+                    b2cLogistics.setLogisticsChannelName(logisticsChannelName);
                     soB2cLogisticsService.updateById(b2cLogistics);
                 }
             }

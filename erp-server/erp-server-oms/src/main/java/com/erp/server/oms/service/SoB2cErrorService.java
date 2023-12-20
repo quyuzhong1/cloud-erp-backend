@@ -33,4 +33,13 @@ public interface SoB2cErrorService extends SuperService<SoB2cErrorEntity> {
     Boolean update(SoB2cErrorDTO.UpdateDTO dto);
 
 
+    /**
+     * 删除异常订单信息
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2023-12-20 11:22
+     */
+    Boolean delete(SoB2cErrorDTO.DeleteDTO dto);
 }

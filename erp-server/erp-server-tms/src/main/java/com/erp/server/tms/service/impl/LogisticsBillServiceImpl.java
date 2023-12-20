@@ -4,6 +4,8 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -17,7 +19,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.*;
@@ -406,6 +410,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
+            SoB2cErrorDTO.DeleteDTO  deleteDTO=new  SoB2cErrorDTO.DeleteDTO();
+            //删除异常信息
+            soB2cFeign.deleteError(deleteDTO);
             return trackNoList;
         } else {
             LogisticsOrderResponseVO responseVO= orderResult.getData();
@@ -413,8 +420,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if(Objects.nonNull(responseVO)){
                 sb.append(responseVO.getMessage());
             }
-
-            throw new ServiceException(orderResult.getCode(), sb.toString());
+            String message=sb.toString();
+            SoB2cErrorDTO.AddDTO error = new SoB2cErrorDTO.AddDTO();
+            //订单id
+            error.setMainId(dto.getOrderId());
+            error.setType(SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            error.setMessage(message);
+            error.setParamJson(JSONObject.toJSONString(logisticsOrderVO));
+            error.setReturnJson(JSONObject.toJSONString(orderResult));
+            //添加异常信息
+            soB2cFeign.addSoB2cError(error);
+            throw new ServiceException(orderResult.getCode(), message);
         }
 
 
@@ -475,7 +491,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @param dto
      * @return
      */
-   // @Override
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult<CancelResponseVO> cancelBill(LogisticsBillDTO.CancelBillDTO dto) {
 

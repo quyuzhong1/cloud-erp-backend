@@ -84,7 +84,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
-        // 数据处理
         handleData(ruleLogisticsEntity);
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
@@ -168,7 +167,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogistics = this.getById(id);
         Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
         RuleLogisticsDTO.ViewDTO view = new RuleLogisticsDTO.ViewDTO();
-        handleData(ruleLogistics);
         BeanMapper.copy(ruleLogistics, view);
         String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
@@ -210,11 +208,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
      * @return
      */
     @Override
-    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
+    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String, Object> map) {
         if (Objects.isNull(map)) {
             return null;
         }
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
+        handleDataList(ruleLogisticsList);
         List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
@@ -233,11 +232,25 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
+                ruleMatchResult.setLogisticsChannelName(item.getLogisticsChannelName());
                 return ruleMatchResult;
             }
 
         }
         return null;
+    }
+
+
+    /**
+     * 处理集合
+     *
+     * @param ruleLogisticsList
+     */
+    private void handleDataList(List<RuleLogisticsEntity> ruleLogisticsList) {
+        if (CollectionUtils.isEmpty(ruleLogisticsList)) {
+            return;
+        }
+
     }
 
 

@@ -400,4 +400,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
+
+    /** 
+     * @description 添加销售订单异常标示
+     * @param id
+     * @param sign
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:43
+     */
+    void addSignError(String id, String sign);
 }

@@ -128,5 +128,20 @@ public class SoB2cErrorDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO{
+        /**
+         * 订单id
+         */
+        private String mainId;
+
+        /**
+         * 异常类型
+         */
+        private String type;
+
+    }
+
 
 }
