@@ -218,11 +218,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String code;
         /**
-         * 平台
+         * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
-        private List<String> dictPlatformList;
+        private List<String> platformList;
         /**
          * 店铺
+         * 地址：http://172.16.100.11:3002/project/110/interface/api/24424
          */
         private List<String> shopIdList;
         /**
@@ -234,11 +235,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private List<String> statusList;
         /**
-         * 拣货类型
+         * 拣货类型：/wms/common/enumDropDown?type=PickingType
          */
         private List<String> pickingTypeList;
         /**
          * 物流渠道
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/25621
          */
         private List<String> logisticsChannelIdList;
         /**
@@ -259,6 +261,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         private List<String> skuNoList;
         /**
          * 发货仓库id
+         * 地址：http://172.16.100.11:3002/project/92/interface/api/26953
          */
         private List<String> warehouseIdList;
         /**
@@ -283,7 +286,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String id;
         /**
-         * 发货单号
+         * 发货单号【可排序】
          */
         private String code;
         /**
@@ -295,7 +298,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean isIntercept;
         /**
-         * 平台
+         * 平台【可排序】
          */
         private String dictPlatform;
         /**
@@ -307,15 +310,15 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String shopId;
         /**
-         * 店铺名称
+         * 店铺名称【可排序】
          */
         private String shopName;
         /**
-         * 销售单号
+         * 销售单号【可排序】
          */
         private String soCode;
         /**
-         * 状态
+         * 状态【可排序】
          */
         private String status;
         /**
@@ -323,7 +326,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String statusName;
         /**
-         * 拣货类型
+         * 拣货类型【可排序】
          */
         private String pickingType;
         /**
@@ -335,19 +338,19 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String logisticsChannelId;
         /**
-         * 物流渠道名称
+         * 物流渠道名称【可排序】
          */
         private String logisticsChannelName;
         /**
-         * 是否打印拣货单
+         * 是否打印拣货单【可排序】
          */
         private Boolean isPrintPicking;
         /**
-         * 是否验货
+         * 是否验货【可排序】
          */
         private Boolean isInspection;
         /**
-         * 是否称重
+         * 是否称重【可排序】
          */
         private Boolean isWeigh;
         /**
@@ -355,7 +358,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String skuId;
         /**
-         * 产品编号
+         * 产品编号【可排序】
          */
         private String skuNo;
         /**
@@ -363,7 +366,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String productName;
         /**
-         * 发货数量
+         * 发货数量【可排序】
          */
         private Integer deliveryQty;
         /**
@@ -371,19 +374,19 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
-         * 仓位
+         * 仓位【可排序】
          */
         private String warehouseLocation;
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
         /**
-         * 发货时间
+         * 发货时间【可排序】
          */
         private LocalDateTime deliveryTime;
 
@@ -438,7 +441,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintLogisticsWaybillDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
          */
         private String printType;
         /**
@@ -471,6 +474,15 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
         /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         */
+        private String printType;
+        /**
+         * 销售单id
+         */
+        private String soB2cId;
+        /**
          * 物流商名称
          */
         private String logisticsSupplierName;
@@ -501,7 +513,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintDistributionDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
          */
         private String printType;
         /**
@@ -534,6 +546,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintDistributionDetailDTO {
         /**
+         * 销售单id
+         */
+        private String soB2cId;
+        /**
          * 物流商名称
          */
         private String logisticsSupplierName;
@@ -553,5 +569,42 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流单号
          */
         private String transportNo;
+    }
+
+    /**
+     * 打印物流面单确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmDTO {
+        /**
+         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
+         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         */
+        private String printType;
+        /**
+         * 详情
+         */
+        private List<LogisticsChannelDTO> detailList;
+    }
+
+
+    /**
+     * 打印物流面单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticsChannelDTO {
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 详情
+         */
+        private List<PrintLogisticsWaybillDetailDTO> detailList;
     }
 }

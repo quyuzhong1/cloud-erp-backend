@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -50,8 +51,67 @@ public interface SoB2cFeign {
     List<SoB2cEntity> listByIds(@RequestBody List<String> soIds);
 
     /**
+     * 根据主表id查询B2C订单主表信息
+     * @param soId
+     * @return
+     */
+    @GetMapping("/feign/soB2c/getById")
+    SoB2cEntity getById(@RequestParam("soId") String soId);
+
+    /**
      * 更改销售订单已发货
      */
     @PostMapping("/feign/soB2c/orderShipped")
     SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId);
+
+    /**
+     * 根据b2c订单id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param mainIds
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/feign/soB2c/listDetailByMainIds")
+    List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+
+    /**
+     * 修改销售订单的物流面单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param waybillDTOList 物流面单
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/feign/soB2c/updateLogisticsWaybill")
+    Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
+
+    /**
+     * 修改销售订单的配货单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 17:18
+     * @param waybillDTOList 配货单
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateDistributeWaybill")
+    Boolean updateDistributeWaybill(@RequestBody SoB2cDTO.WaybillDTO waybillDTOList);
+
+    /**
+     * @description 添加异常订单信息
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:06
+     */
+    @PostMapping("/feign/soB2cError/add")
+    void addSoB2cError(SoB2cErrorDTO.AddDTO dto);
+
+    /**
+     * 删除异常信息
+     * @description
+     * @param deleteDTO
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:20
+     */
+    @PostMapping("/feign/soB2cError/delete")
+    void deleteError(SoB2cErrorDTO.DeleteDTO deleteDTO);
 }

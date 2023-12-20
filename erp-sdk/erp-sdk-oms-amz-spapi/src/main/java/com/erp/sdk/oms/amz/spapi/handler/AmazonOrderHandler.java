@@ -119,7 +119,9 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
     @Override
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
-        if (StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName()) && !CollectionUtils.isEmpty(dto.getDetails())){
+        if ( null != dto.getOrder().getShippingAddress() &&
+                StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName()) &&
+                !CollectionUtils.isEmpty(dto.getDetails())){
             // 已有信息不请求
             log.info("亚马逊详情和地址已有不请求, UniqueId={}", dto.getUniqueId());
             return dto;
@@ -143,7 +145,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
         dto.setDetails(allOrderItems);
         log.info("查询亚马逊订单详情成功, UniqueId={}", dto.getUniqueId());
-        if (StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
+        if (null != dto.getOrder().getShippingAddress() &&
+                StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
             // 已有信息不请求
             log.info("亚马逊地址详情信息已有不请求, UniqueId={}", dto.getUniqueId());
             return dto;

@@ -1,8 +1,11 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,7 +18,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.*;
@@ -25,6 +31,7 @@ import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
@@ -112,7 +119,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
-
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -404,9 +410,27 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
+            SoB2cErrorDTO.DeleteDTO  deleteDTO=new  SoB2cErrorDTO.DeleteDTO();
+            //删除异常信息
+            soB2cFeign.deleteError(deleteDTO);
             return trackNoList;
         } else {
-            throw new ServiceException(orderResult.getCode(), orderResult.getMsg());
+            LogisticsOrderResponseVO responseVO= orderResult.getData();
+            StringBuilder sb=new StringBuilder(orderResult.getMsg());
+            if(Objects.nonNull(responseVO)){
+                sb.append(responseVO.getMessage());
+            }
+            String message=sb.toString();
+            SoB2cErrorDTO.AddDTO error = new SoB2cErrorDTO.AddDTO();
+            //订单id
+            error.setMainId(dto.getOrderId());
+            error.setType(SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            error.setMessage(message);
+            error.setParamJson(JSONObject.toJSONString(logisticsOrderVO));
+            error.setReturnJson(JSONObject.toJSONString(orderResult));
+            //添加异常信息
+            soB2cFeign.addSoB2cError(error);
+            throw new ServiceException(orderResult.getCode(), message);
         }
 
 
@@ -468,37 +492,96 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @return
      */
     @Override
-    public Boolean cancelBill(LogisticsBillDTO.CancelBillDTO dto) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public ApiResult<CancelResponseVO> cancelBill(LogisticsBillDTO.CancelBillDTO dto) {
 
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        String trackNo = dto.getTrackNo();
-        LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(trackNo);
-        if (Objects.isNull(billBase)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
-        }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
-        //平台
-        String logisticsPlatform = auth.getLogisticsPlatform();
-        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        //物流商对接传运单号或参考号，在这边校验时参考号必填，如果没有运单号，判断如果有跟踪号，通过跟踪号查运单号
         //取消物流单的
         List<LogisticsCancelOrderVO> cancelOrderList = new ArrayList<>(1);
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
-        cancelOrderVO.setTransportNo(billBase.getTransportNo());
-        cancelOrderVO.setAuthMap(authMap);
-        cancelOrderVO.setTrackNo(billBase.getTrackNo());
+        cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
+        cancelOrderVO.setTransportNo(dto.getTransportNo());
+        cancelOrderVO.setReason(dto.getReason());
         cancelOrderList.add(cancelOrderVO);
-        ApiResult<List<CancelResponseVO>> result = service.cancelOrder(cancelOrderList);
-        //是否成功
-        Boolean isSuccess = result.isSuccess();
-        if (isSuccess) {
-            logisticsBillDetailService.removeById(billBase.getDetailId());
+        if(StringUtils.isBlank(dto.getTransportNo())){
+            LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
+            if (Objects.isNull(billBase.getId())) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+            }
+            cancelOrderVO.setTransportNo(billBase.getTransportNo());
         }
-        return isSuccess;
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+        cancelOrderVO.setAuthMap(authMap);
+        //平台
+        String logisticsPlatform = auth.getLogisticsPlatform();
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        ApiResult<List<CancelResponseVO>> thirdPartyResult = service.cancelOrder(cancelOrderList);
+        //是否成功
+        if (thirdPartyResult.isSuccess()) {
+            //将自发货费用状态改成作废
+            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo,dto.getTransportNo()).last("limit 1").one();
+            if(Objects.nonNull(logisticsBillEntity)){
+                logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
+            }
+        }
+        ApiResult<CancelResponseVO> result = new ApiResult<>();
+        result.setMsg(thirdPartyResult.getMsg());
+        result.setCode(thirdPartyResult.getCode());
+        if(CollectionUtils.isNotEmpty(thirdPartyResult.getData())){
+            result.setData(thirdPartyResult.getData().get(0));
+        }
+        return result;
     }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public ApiResult<InterceptResponseVO> interceptBill(LogisticsBillDTO.CancelBillDTO dto) {
+        String channelId = dto.getChannelId();
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        //物流商对接传运单号或参考号，在这边校验时参考号必填，如果没有运单号，判断如果有跟踪号，通过跟踪号查运单号
+        //取消物流单的
+        List<LogisticsInterceptOrderVO> interceptOrderVOList = new ArrayList<>(1);
+        LogisticsInterceptOrderVO interceptOrderVO = new LogisticsInterceptOrderVO();
+        interceptOrderVO.setDeliveryNo(dto.getReferenceNumber());
+        interceptOrderVO.setTransportNo(dto.getTransportNo());
+        interceptOrderVO.setInterceptReason(dto.getReason());
+        interceptOrderVOList.add(interceptOrderVO);
+        if(StringUtils.isBlank(dto.getTransportNo())){
+            LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
+            if (Objects.isNull(billBase.getId())) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+            }
+            interceptOrderVO.setTransportNo(billBase.getTransportNo());
+        }
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+        interceptOrderVO.setAuthMap(authMap);
+        //平台
+        String logisticsPlatform = auth.getLogisticsPlatform();
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        ApiResult<List<InterceptResponseVO>> thirdPartyResult = service.interceptOrder(interceptOrderVOList);
+        //是否成功
+        if (thirdPartyResult.isSuccess()) {
+            //将自发货费用状态改成作废
+            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo,dto.getTransportNo()).last("limit 1").one();
+            logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
+        }
+        ApiResult<InterceptResponseVO> result = new ApiResult<>();
+        result.setMsg(thirdPartyResult.getMsg());
+        result.setCode(thirdPartyResult.getCode());
+        if(CollectionUtils.isNotEmpty(thirdPartyResult.getData())){
+            result.setData(thirdPartyResult.getData().get(0));
+        }
+        return result;
+    }
+
 
     @Override
     public LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo) {
@@ -604,11 +687,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      *
      * @param list
      */
-   /* @Override
+//    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public List<LogisticsPrintLabelResponse> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
-        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+    public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+        List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
+
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             String channelId = dto.getChannelId();
             LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
@@ -636,9 +720,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             try {
                 labelList = service.getLabelList(labelVOArrayList);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_98004);
+                return null;
             }
+            SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
+            waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
+            waybillDTO.setSoB2cId(dto.getB2cSoId());
+            waybillDTOList.add(waybillDTO);
         }
-        return null;
-    }*/
+
+        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
+        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
+        return waybillDTOList;
+    }
 }

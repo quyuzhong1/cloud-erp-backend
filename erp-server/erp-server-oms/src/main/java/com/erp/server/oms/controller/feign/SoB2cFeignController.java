@@ -9,12 +9,14 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cLogisticsService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -101,6 +103,20 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据主表id查询B2C订单主表信息
+     *
+     * @param soId
+     * @return
+     */
+    @GetMapping("/getById")
+    public SoB2cEntity getById(@RequestParam("soId") String soId) {
+        if (StringUtils.isBlank(soId)) {
+            return null;
+        }
+        return soB2cService.getById(soId);
+    }
+
+    /**
      * @description
      * @param soId 销售订单id
      * @return
@@ -111,5 +127,47 @@ public class SoB2cFeignController extends BaseController {
     public SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId) {
         SoOutstockDTO.GenerateB2cDTO result = soB2cService.orderShipped(soId);
         return result;
+    }
+
+    /**
+     * 根据b2c订单id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param mainIds
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/listDetailByMainIds")
+    public List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cDetailEntity> list = soB2cDetailService.listByMainIds(mainIds);
+        return list;
+    }
+
+    /**
+     * 修改销售订单的物流面单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
+     * @param waybillDTOList 物流面单
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     **/
+    @PostMapping("/updateLogisticsWaybill")
+    public Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList) {
+        Boolean flag = soB2cService.updateLogisticsWaybill(waybillDTOList);
+        return flag;
+    }
+
+    /**
+     * 修改销售订单的配货单字段
+     * @Author Luo_WG
+     * @Date 2023/12/19 17:18
+     * @param waybillDTOList 配货单
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateDistributeWaybill")
+    public Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList) {
+        Boolean flag = soB2cService.updateDistributeWaybill(waybillDTOList);
+        return flag;
     }
 }

@@ -23,5 +23,13 @@ public class BaseSearchDTO extends PermissionsDTO {
     private String searchKeyword;
 
     private String flagId;
+    /**
+     * 分类Id
+     */
+    private String categoryId;
 
+    /**
+     state 启用状态 1 启用 0 为启用
+     */
+    private Integer state;
 }

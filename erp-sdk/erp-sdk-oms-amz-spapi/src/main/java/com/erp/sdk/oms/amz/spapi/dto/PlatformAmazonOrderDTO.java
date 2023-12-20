@@ -232,12 +232,12 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         detailDTO.setQty(item.getQuantityOrdered());
         // 单价
         Money itemPrice = item.getItemPrice();
-        detailDTO.setPrice(new BigDecimal(itemPrice.getAmount()));
+        detailDTO.setPrice(new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
         // 金额
         BigDecimal amount = detailDTO.getPrice().multiply(BigDecimal.valueOf(item.getQuantityOrdered()));
         detailDTO.setAmount(amount);
         // 币别（原币）
-        detailDTO.setCurrency(itemPrice.getCurrencyCode());
+        detailDTO.setCurrency(null == itemPrice ? "" : itemPrice.getCurrencyCode());
         // 汇率
         detailDTO.setExchangeRate(BigDecimal.ONE);
         // 建议售价（本位币）

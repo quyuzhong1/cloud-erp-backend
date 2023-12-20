@@ -35,10 +35,6 @@ public class SoB2cReceiverDTO implements Serializable {
         */
         private String name;
 
-        /**
-        * 城市名称
-        */
-        private String cityName;
 
         /**
         * 国家名称
@@ -120,11 +116,22 @@ public class SoB2cReceiverDTO implements Serializable {
         private String cityName;
 
         /**
-         * 国家名称
+         * 国家 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
-        @NotBlank(message = "国家名称不能为空")
-        @Size(max = 50,message = "国家名称最大长度不能超过50位")
-        private String countryName;
+       // @NotBlank(message = "国家不能为空")
+        private String country;
+
+        /**
+         *省/州
+         */
+        private String provinceName;
+
+        /**
+         *区
+         */
+        private String districtName;
+
+
 
         /**
         * 收货人名称

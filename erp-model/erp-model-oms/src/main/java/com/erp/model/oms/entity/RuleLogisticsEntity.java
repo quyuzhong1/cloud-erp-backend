@@ -55,7 +55,7 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     @TableField("logistics_supplier_id")
     private String logisticsSupplierId;
 
-    @TableField(exist = false)
+    @TableField("logistics_supplier_name")
     private String logisticsSupplierName;
     /**
     * 物流渠道id
@@ -63,7 +63,7 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     @TableField("logistics_channel_id")
     private String logisticsChannelId;
 
-    @TableField(exist = false)
+    @TableField("logistics_channel_name")
     private String logisticsChannelName;
     /**
     * 是否自动获取物流单号 

@@ -491,6 +491,7 @@
     <select id="listStockSkuNoByProductSkuIds" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListStockSkuNoByProductSkuIdView">
         SELECT
             DISTINCT
+            li.id AS listingId,
             sm.product_sku_id,
             sm.product_sku_no,
             sm.product_name,
