@@ -68,6 +68,8 @@
         end
         as shippingCostCurrency,
         sb2cl.code as logisticsCode,
+        sb2cl.logistics_channel_id as logisticsChannelId,
+        sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName,

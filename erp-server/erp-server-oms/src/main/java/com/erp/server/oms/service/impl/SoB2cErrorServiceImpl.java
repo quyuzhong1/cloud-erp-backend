@@ -49,7 +49,7 @@ public class SoB2cErrorServiceImpl extends SuperServiceImpl<SoB2cErrorMapper, So
         if(!save) {
             throw new ServiceException("B2C销售订单异常单保存失败");
         }
-        soB2cService.addSignError(soB2cErrorEntity.getId(),soB2cErrorEntity.getType());
+        soB2cService.addSignError(soB2cErrorEntity.getMainId(),soB2cErrorEntity.getType());
         return true;
     }
 
@@ -80,8 +80,15 @@ public class SoB2cErrorServiceImpl extends SuperServiceImpl<SoB2cErrorMapper, So
      * @create 2023-12-20 11:24
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(SoB2cErrorDTO.DeleteDTO dto) {
-        return null;
+        Boolean result = this.lambdaUpdate().
+                eq(SoB2cErrorEntity::getMainId, dto.getMainId()).
+                eq(SoB2cErrorEntity::getType, dto.getType()).remove();
+        if(result){
+            soB2cService.removeSignError(dto.getMainId(),dto.getType());
+        }
+        return result;
     }
 
 

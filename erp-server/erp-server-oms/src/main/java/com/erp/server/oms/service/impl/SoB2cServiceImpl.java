@@ -677,18 +677,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
+        soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         //明细仓库更新
         if (Boolean.TRUE.equals(isCover)) {
             soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId());
         }
+        //配货中
+        String billStatus = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+
+        Boolean isPlatformWarehouseOrder = entity.hasPlatformWarehouseOrder();
+        //是
+        if (isPlatformWarehouseOrder) {
+            billStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        }
         //销售订单更新
-        entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+        entity.setBillStatus(billStatus);
         entity.setAbnormalType("");
         this.updateById(entity);
-
-
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
@@ -2485,15 +2492,38 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 添加异常标示
+     *
      * @param id
      * @param sign
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addSignError(String id, String sign) {
-      this.lambdaUpdate().
-              set(SoB2cEntity::getSignOrderError,sign).
-              eq(SoB2cEntity::getId,id).update();
+        this.lambdaUpdate().
+                set(SoB2cEntity::getSignOrderError, sign).
+                eq(SoB2cEntity::getId, id).update();
+    }
+
+    /**
+     * 清空异常标示
+     *
+     * @param id
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2023-12-20 15:59
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeSignError(String id, String sign) {
+        SoB2cEntity soB2cEntity = this.getById(id);
+        if (Objects.nonNull(soB2cEntity)) {
+            String signOrderError = soB2cEntity.getSignOrderError();
+            if(signOrderError.equals(sign)){
+                soB2cEntity.setSignOrderError("");
+                this.updateById(soB2cEntity);
+            }
+        }
     }
 
     /**
@@ -2548,8 +2578,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             //走物流规则
             Boolean ruleLogistics = logisticsRule(id, map);
-        }catch (Exception e){
-            log.error("物流规则报错>>>{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("物流规则报错>>>{}", e.getMessage());
 
         }
 

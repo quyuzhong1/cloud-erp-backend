@@ -410,4 +410,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-20 11:43
      */
     void addSignError(String id, String sign);
+
+    /**
+     * 删除异常的标示
+     * @description
+     * @param id
+     * @param sign
+     * @author Lambda
+     * @return 
+     * @create 2023-12-20 15:48
+     */
+    void removeSignError(String id, String sign);
 }
