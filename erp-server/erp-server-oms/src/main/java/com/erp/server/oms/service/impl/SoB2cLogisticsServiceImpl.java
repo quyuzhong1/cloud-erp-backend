@@ -113,21 +113,24 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
      */
     private void handleLogisticsData(SoB2cLogisticsEntity entity) {
         String accessoriesSkuId = entity.getAccessoriesSkuId();
+        String accessoriesSkuNo = "";
         if (StringUtils.isNotBlank(accessoriesSkuId)) {
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(entity.getAccessoriesSkuId()));
-            if (CollectionUtils.isEmpty(skuList)) {
-                return;
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                accessoriesSkuNo = skuList.get(0).getSkuNo();
             }
-            entity.setAccessoriesSkuNo(skuList.get(0).getSkuNo());
         }
+        entity.setAccessoriesSkuNo(accessoriesSkuNo);
         //渠道id
         String logisticsChannelId = entity.getLogisticsChannelId();
+        String logisticsChannelName = "";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
             if (Objects.nonNull(channelEntity)) {
-                entity.setLogisticsChannelName(channelEntity.getName());
+                logisticsChannelName = channelEntity.getName();
             }
         }
+        entity.setLogisticsChannelName(logisticsChannelName);
         entity.setEstimatedShippingCost(ObjectUtil.isEmpty(entity.getEstimatedShippingCost()) ? BigDecimal.ZERO : entity.getEstimatedShippingCost());
         entity.setAccessoriesCost(ObjectUtil.isEmpty(entity.getAccessoriesCost()) ? BigDecimal.ZERO : entity.getAccessoriesCost());
         entity.setActualShippingCost(ObjectUtil.isEmpty(entity.getActualShippingCost()) ? BigDecimal.ZERO : entity.getActualShippingCost());
@@ -137,6 +140,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         entity.setHeight(ObjectUtil.isEmpty(entity.getHeight()) ? BigDecimal.ZERO : entity.getHeight());
         entity.setWidth(ObjectUtil.isEmpty(entity.getWidth()) ? BigDecimal.ZERO : entity.getWidth());
         entity.setLength(ObjectUtil.isEmpty(entity.getLength()) ? BigDecimal.ZERO : entity.getLength());
+        entity.setAccessoriesSkuId(StrUtil.isBlank(entity.getAccessoriesSkuId()) ? "": entity.getAccessoriesSkuId());
     }
 
     @Override

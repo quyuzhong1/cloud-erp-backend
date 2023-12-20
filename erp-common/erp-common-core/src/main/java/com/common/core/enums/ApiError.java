@@ -1022,7 +1022,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
-
+    ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
 
 
 
