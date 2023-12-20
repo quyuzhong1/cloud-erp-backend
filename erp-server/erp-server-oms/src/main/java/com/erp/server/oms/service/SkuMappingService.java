@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -192,4 +193,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto);
+
+    /**
+     * 删除映射 SkuMappingEntity
+     * @author Jim
+     * @date 2023-12-21
+     */
+    BatchResultDTO delete(String id);
 }

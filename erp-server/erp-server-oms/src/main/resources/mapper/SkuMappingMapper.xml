@@ -77,6 +77,9 @@
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
+        <if test="params.matchResult!=null">
+            AND li.match_result=#{params.matchResult}
+        </if>
         <if test="params.shopIdList !=null and params.shopIdList.size>0">
             AND sm.shop_id IN
             <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
@@ -307,6 +310,9 @@
         AND sm.is_expire = FALSE
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
+        </if>
+        <if test="params.matchResult!=null">
+            AND li.match_result=#{params.matchResult}
         </if>
         <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
             AND sm.warehouse_id IN
