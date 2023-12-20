@@ -251,6 +251,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO cancelSplit(String id);
 
+    void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
+
     /**
      * 匹配审核规则
      */

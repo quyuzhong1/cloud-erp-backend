@@ -280,6 +280,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * 消费明细处理
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity) {
         List<String> skuIds = list.stream()
                 .map(SoB2cDetailEntity::getSkuId)
