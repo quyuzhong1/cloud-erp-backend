@@ -350,7 +350,9 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             LogisticsPrintLabelResponse responseVO = new LogisticsPrintLabelResponse();
             //支持单个取消
             OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
-                    .templateCode("fm_76130_standard_{clientcode}")
+//                    .templateCode("fm_76130_standard_{clientcode}")
+                    .templateCode("fm_100_vips_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
+//                    .templateCode("fm_210_standard_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
                     .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsGetLabelVO.getTransportNo()).build()))
                     .version("2.0")
                     .fileType("pdf")
@@ -387,7 +389,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     success = true;
                 } else {
                     isSuccess = false;
-                    responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), baseResult.getErrorMsg());
+                    responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), baseResult.getErrorMessage());
                 }
             } catch (Exception e) {
                 isSuccess = false;
