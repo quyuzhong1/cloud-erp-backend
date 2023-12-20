@@ -109,7 +109,7 @@ public class MabangUtil {
                 String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), transferSku.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 skuItem.setProductName(productName);
             }
-            skuItem.setStockSku(transferSku.getSkuNo());
+            skuItem.setStockSku(skuNo);
             skuItem.setGridCode(gridCode);
 
             Integer qty = transferSku.getQty();
