@@ -115,10 +115,10 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @description: 更新明细的是否匹配仓库规则字段
      * @author Will
      * @date: 2023/12/14 9:21
-     * @param mainId
+     * @param detailIdList
      * @return Boolean
      */
-    Boolean updateIsMatchWarehouseRule(String mainId);
+    Boolean updateIsMatchWarehouseRule(List<String> detailIdList);
 
     /**
      *
@@ -129,14 +129,4 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @create 2023-12-13 20:15
      */
     List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
-
-    /**
-     * @description 根据主表更新仓库
-     * @param mainId
-     * @param warehouseId
-     * @author Lambda
-     * @return
-     * @create 2023-12-18 14:39
-     */
-    void updateWarehouseId(String mainId, String warehouseId,Boolean isMatchWarehouseRule);
 }
