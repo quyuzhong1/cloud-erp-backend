@@ -25,6 +25,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -402,6 +403,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> base64List = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
         
         List<String> list = new ArrayList<>();
+
+        List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        //查询打印类型
+        List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
+
         //循环打印的渠道
         for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
 
@@ -413,6 +419,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //获取面单
             List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
             List<SoB2cDTO.WaybillDTO> platformWaybill = this.getPlatformWaybill(soB2cEntities, soB2cLogisticsEntities);
+
 
             //渠道包含的单据
             for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO : waybillDetailDTOList) {
@@ -441,6 +448,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         if (StringUtils.isNotBlank(distributeWaybill)) {
                             base64List.add(distributeWaybill);
                         }
+
 
 //                        soB2cLogisticsEntities.stream().filter(req -> req.get)
                     }

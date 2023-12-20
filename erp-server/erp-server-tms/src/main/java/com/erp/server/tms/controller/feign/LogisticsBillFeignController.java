@@ -8,10 +8,12 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.server.tms.service.LogisticsPrintTypeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,8 @@ public class LogisticsBillFeignController {
     private LogisticsBillService logisticsBillService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private LogisticsPrintTypeService logisticsPrintTypeService;
 
     /**
      * 新增物流单
@@ -164,4 +168,18 @@ public class LogisticsBillFeignController {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(list);
         return waybillDTOList;
     }
+
+    /**
+     * 根据渠道id查询渠道打印类型
+     * @Author Luo_WG
+     * @Date 2023/12/20 17:12
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
+     **/
+    @PostMapping("/listPrintTypeByChannelIds")
+    public List<LogisticsPrintTypeEntity> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList) {
+        List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsPrintTypeService.listByChannelIds(channelIdList);
+        return logisticsPrintTypeEntities;
+    }
+
 }
