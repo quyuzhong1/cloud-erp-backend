@@ -133,7 +133,7 @@ public class AliExpressShipperService {
         return response;
     }
 
-    public LabelResult getLabelList(Map<String, String> authMap, LabelRequest labelRequest) throws ApiException {
+    public IopResponse getLabelList(Map<String, String> authMap, LabelRequest labelRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -149,7 +149,8 @@ public class AliExpressShipperService {
         request.addApiParameter("print_detail", String.valueOf(labelRequest.getPrint_detail()));
         request.addApiParameter("warehouse_order_query_d_t_os", JSONObject.toJSONString(labelRequest.getWarehouseOrderQueries()));
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        return JSONObject.parseObject(response.getBody(), LabelResult.class);
+        return response;
+//        return JSONObject.parseObject(response.getBody(), LabelResult.class);
     }
 
     public BaseResult queryLogisticsOrder(Map<String, String> authMap, QueryOrderRequest queryOrderRequest) throws ApiException {

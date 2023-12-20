@@ -40,7 +40,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
         String CLIENT_CODE = "503630";  //此处替换为您在丰桥平台获取的顾客编码
         String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";//此处替换为您在丰桥平台获取的校验码
-        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
+        String token = "50000200d18AWlnunrgd4l1fpwZvqe1c49ece4cFFR4mrvdijSI2lUWGdXHHX5FiL4Vt";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
