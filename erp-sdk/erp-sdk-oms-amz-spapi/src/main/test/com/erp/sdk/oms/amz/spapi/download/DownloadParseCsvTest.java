@@ -14,9 +14,9 @@
 package com.erp.sdk.oms.amz.spapi.download;
 
 import com.erp.sdk.oms.amz.spapi.client.JSON;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaInventoryPlanningCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.planning.ReportFbaInventoryPlanningCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.myiall.ReportFbaMyiAllInventoryCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.reserved.ReportReservedCsvEntity;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.opencsv.CSVReader;
 
@@ -33,7 +33,7 @@ public class DownloadParseCsvTest {
     public void fbaMyiAllInventoryCsvReportEntityDownload() throws Exception{
         // 亚马逊物流管理库存-已存档
         String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/2a2d3258-3b23-4f23-8eb6-c019f45bab25.amzn1.tortuga.4.na.T1507HA60E8SWN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T042816Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=47e64f25844ced3f414824af5b517964ebb4192c740db62bdae6107501248f20";
-        String cvsContent = AmazonSpApiReportUtils.download(url);
+        String cvsContent = AmazonSpApiReportUtils.download(url,"");
         System.out.println("-------------");
         System.out.println(cvsContent);
         System.out.println("-------------");

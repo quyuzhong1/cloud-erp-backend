@@ -3,17 +3,18 @@ package com.erp.sdk.oms.amz.spapi.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaInventoryPlanningCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.myiall.ReportFbaMyiAllInventoryCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.enums.csv.ReporFbaMyiAllInventoryCsvEnum;
+import com.erp.sdk.oms.amz.spapi.enums.csv.ReportFbaInventoryPlanningCsvEnum;
+import com.erp.sdk.oms.amz.spapi.enums.csv.ReportListingCsvEnum;
+import com.erp.sdk.oms.amz.spapi.enums.csv.ReportReservedCsvEnum;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,7 +32,7 @@ public enum AmazonReportRecordTypeEnum {
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-inventory
 //    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA", "库存报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
-    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
+    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEnum::getCvsClassByMarketplace, ReportListingMongoDTO.class),
 //    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA", "非在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT", "表符分隔的库存模板文件在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_LITE("GET_MERCHANT_LISTINGS_DATA_LITE", "在售商品报告精简版（仅包含数量大于零的商品的 SKU、ASIN、价格和数量字段）", false, "", null),
@@ -45,9 +46,9 @@ public enum AmazonReportRecordTypeEnum {
     // 亚马逊物流 (FBA) 报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
-    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class),
-    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED,ReportReservedCsvEntity.class, ReportReservedMongoDTO.class),
-    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class),
+    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReporFbaMyiAllInventoryCsvEnum::getCvsClassByMarketplace, ReportFbaMyiAllInventoryMongoDTO.class),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEnum::getCvsClassByMarketplace, ReportReservedMongoDTO.class),
+    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEnum::getCvsClassByMarketplace, ReportFbaInventoryPlanningMongoDTO.class),
 
     ;
 
@@ -74,9 +75,10 @@ public enum AmazonReportRecordTypeEnum {
     private final String mongoTableName;
 
     /**
-     * CSV实体
+     * 构造csv实体
      */
-    private final Class<?> cvsClass;
+    private final Function<AmazonMarketplaceEnum, Class<?>> constructSuperCsvEnum;
+
 
     /**
      * mongo表实体

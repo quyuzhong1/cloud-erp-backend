@@ -1,11 +1,11 @@
 package com.erp.server.dmp.service;
 
 import cn.hutool.json.JSONObject;
-import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
@@ -70,7 +70,7 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-11-22
      **/
-    void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException;
+    void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, AmazonMarketplaceEnum marketplaceEnum) throws IOException;
 
     /**
      * 更新亚马逊报告信息并处理
@@ -78,8 +78,17 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-11-22
      **/
-    void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException;
+    void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, AmazonMarketplaceEnum marketplaceEnum) throws IOException;
 
+
+    /**
+     * 查询CSV实体并下载
+     *
+     * @Author Jim
+     * @since 2023-12-20
+     **/
+
+    public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, AmazonMarketplaceEnum marketplaceEnum) throws IOException ;
 
     /**
      * 库存管理报告保存或更新
@@ -112,7 +121,7 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-12-04
      **/
-    void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum) throws Exception;
+    void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, AmazonMarketplaceEnum marketplaceEnum) throws Exception;
 
     /**
      * 定时任务处理

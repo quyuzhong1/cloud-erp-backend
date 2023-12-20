@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.csv;
+package com.erp.sdk.oms.amz.spapi.csv.myiall;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;

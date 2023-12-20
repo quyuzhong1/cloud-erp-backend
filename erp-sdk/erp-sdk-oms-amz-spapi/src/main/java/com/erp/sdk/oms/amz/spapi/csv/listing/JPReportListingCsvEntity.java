@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.csv;
+package com.erp.sdk.oms.amz.spapi.csv.listing;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
@@ -9,30 +9,32 @@ import java.io.Serializable;
 
 /**
  * 库存报告实体
+ * 日本
  */
 @Data
 @NoArgsConstructor
-public class ReportListingCsvEntity implements Serializable {
+public class JPReportListingCsvEntity implements Serializable {
 
-    @CsvBindByName(column = "item-name")
+
+    @CsvBindByName(column = "商品名")
     private String itemName;
 
-    @CsvBindByName(column = "item-description")
+    @CsvBindByName(column = "コンディション説明")
     private String itemDescription;
 
-    @CsvBindByName(column = "listing-id")
+    @CsvBindByName(column = "出品ID")
     private String listingId;
 
-    @CsvBindByName(column = "seller-sku")
+    @CsvBindByName(column = "出品者SKU")
     private String sellerSku;
 
-    @CsvBindByName(column = "price")
+    @CsvBindByName(column = "価格")
     private String price;
 
-    @CsvBindByName(column = "quantity")
+    @CsvBindByName(column = "数量")
     private String quantity;
 
-    @CsvBindByName(column = "open-date")
+    @CsvBindByName(column = "出品日")
     private String openDate;
 
     @CsvBindByName(column = "image-url")
@@ -41,7 +43,7 @@ public class ReportListingCsvEntity implements Serializable {
     @CsvBindByName(column = "item-is-marketplace")
     private String itemIsMarketplace;
 
-    @CsvBindByName(column = "product-id-type")
+    @CsvBindByName(column = "商品IDタイプ")
     private String productIdType;
 
     @CsvBindByName(column = "zshop-shipping-fee")
@@ -50,7 +52,7 @@ public class ReportListingCsvEntity implements Serializable {
     @CsvBindByName(column = "item-note")
     private String itemNote;
 
-    @CsvBindByName(column = "item-condition")
+    @CsvBindByName(column = "コンディション")
     private String itemCondition;
 
     @CsvBindByName(column = "zshop-category1")
@@ -74,7 +76,7 @@ public class ReportListingCsvEntity implements Serializable {
     @CsvBindByName(column = "will-ship-internationally")
     private String willShipInternationally;
 
-    @CsvBindByName(column = "expedited-shipping")
+    @CsvBindByName(column = "国外へ配送可")
     private String expeditedShipping;
 
     @CsvBindByName(column = "zshop-boldface")
