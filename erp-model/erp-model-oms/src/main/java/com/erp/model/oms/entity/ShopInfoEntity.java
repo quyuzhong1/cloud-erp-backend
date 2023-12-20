@@ -160,6 +160,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("platform_shop_code")
     private String platformShopCode;
 
+    /**
+     * ioss税号
+     */
+    @TableField("ioss_code")
+    private String iossCode;
+
     public static final String PLATFORM_DICT = "platform_dict";
 
     public static final String SHOP_CODE = "shop_code";

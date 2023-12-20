@@ -187,7 +187,7 @@ public class SoB2cDTO implements Serializable {
 
         /**
          * 是否对接了第三方海外仓
-         *  true 是
+         * true 是
          */
         private Boolean isOverseasProviderWarehouse;
 
@@ -374,7 +374,6 @@ public class SoB2cDTO implements Serializable {
          * 手工订单（在ERP手动创建的订单）
          */
         private Boolean isManual;
-
 
 
         /**
@@ -979,6 +978,40 @@ public class SoB2cDTO implements Serializable {
          */
         private BigDecimal volume;
 
+
+    }
+
+
+    /**
+     * 标记发货的dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SignShipOrderDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 销售订单号
+         */
+        private String code;
+
+        /**
+         * 交易订单号
+         */
+        private String platformCode;
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 渠道对应就是so_b2c_logistics.code
+         */
+        private String logisticsTrackNo;
 
     }
 

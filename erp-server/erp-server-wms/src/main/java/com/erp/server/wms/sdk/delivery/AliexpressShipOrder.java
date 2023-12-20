@@ -20,6 +20,7 @@ public class AliexpressShipOrder implements IPlatformService {
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
+        String soB2cId=dto.getSoB2cId();
 
 
     }
