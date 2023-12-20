@@ -31,6 +31,23 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 public class PdfUtil {
+    public static void main(String[] args) throws WriterException {
+        String barcodeText = "123456789";  // 要编码的文本
+        int width = 300;  // 条形码的宽度
+        int height = 100;  // 条形码的高度
+        Path file = FileSystems.getDefault().getPath("barcode.png");  // 输出的文件路径
+        Code128Writer code128Writer = new Code128Writer();
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");  // 设置字符集，如果你需要的话
+        BitMatrix bitMatrix = null;
+        bitMatrix = code128Writer.encode(barcodeText, BarcodeFormat.CODE_128, width, height, hints);
+        try {
+            MatrixToImageWriter.writeToPath(bitMatrix, "PNG", file);  // 输出为PNG格式，你也可以选择其他格式，如JPEG等
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * pdf 合并操作2
      * 直接将各个pdf对应的字节码，进行合并成新的pdf文件数据
