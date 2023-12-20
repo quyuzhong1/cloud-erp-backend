@@ -35,10 +35,6 @@ public class SoB2cReceiverDTO implements Serializable {
         */
         private String name;
 
-        /**
-        * 城市名称
-        */
-        private String cityName;
 
         /**
         * 国家名称
