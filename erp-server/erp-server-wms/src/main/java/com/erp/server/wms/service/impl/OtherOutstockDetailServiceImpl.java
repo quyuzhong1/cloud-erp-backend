@@ -161,7 +161,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
             throw new ServiceException(ApiError.ERROR_99002);
         }
         //仓位必填验证
-        checkWarehouseLocation(warehouseEntity,list);
+        checkWarehouseLocation(warehouseEntity,newList);
 
 
         for (OtherOutstockDetailEntity detail:newList) {
