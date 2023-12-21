@@ -98,7 +98,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //包裹信息封装
         orderRequest.setParcelList(getParcel(logisticsOrderVO));
         ValidatorUtil.validateEntity(orderRequest);
-        boolean success = false;
+        boolean success = true;
         try {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
@@ -106,6 +106,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
+                success = false;
             } else {
                 OrderResponse orderResponse = JSONObject.parseObject(JSONObject.toJSONString(responseMsg.getData()), OrderResponse.class);
                 responseVO = LogisticsOrderResponseVO.builder()
@@ -124,6 +125,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+            success = false;
         }
         return success ? success(responseVO) : failure(responseVO);
     }
