@@ -207,7 +207,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
        return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
-                .name(recipientAddress.getName())
+                .name(orderDetail.getBuyerUsername())
                 .telNumber(recipientAddress.getPhone())
                 .receiverTelNumber(recipientAddress.getPhone())
                 .email("")
@@ -287,7 +287,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 数量
         detailDTO.setQty(item.getModelQuantityPurchased());
         // 单价
-        detailDTO.setPrice(BigDecimal.valueOf(item.getModelOriginalPrice()));
+        detailDTO.setPrice(BigDecimal.valueOf(item.getModelDiscountedPrice()));
         // 金额
         try {
             BigDecimal amount = BigDecimal.valueOf(item.getModelDiscountedPrice()).multiply(BigDecimal.valueOf(item.getModelQuantityPurchased()));
