@@ -7,12 +7,14 @@ import com.erp.sdk.oms.amz.spapi.csv.ReportFbaInventoryPlanningCsvEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
-import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,7 +48,7 @@ public enum AmazonReportRecordTypeEnum {
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
     GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class),
-    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED,ReportReservedCsvEntity.class, ReportReservedMongoDTO.class),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class),
     GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class),
 
     ;

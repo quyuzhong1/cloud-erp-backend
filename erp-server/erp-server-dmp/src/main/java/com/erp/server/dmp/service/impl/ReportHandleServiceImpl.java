@@ -5,7 +5,6 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
@@ -13,7 +12,6 @@ import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.*;
-import com.common.business.handler.IBusinessHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -21,25 +19,20 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
-import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.rpc.wms.feign.WmsShipmentFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
@@ -55,14 +48,12 @@ import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.ReportColumnConfigService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +66,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -110,6 +100,8 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private WmsShipmentFeign wmsShipmentFeign;
+    @Resource
+    private ReportColumnConfigService reportColumnConfigService;
 
 
     @Override
@@ -381,13 +373,13 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         ReportsApi reportsApi = null;
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportId());
-        this.handleReport(reportsApi, report, recordTypeEnum);
+        this.handleReport(reportsApi, report, recordTypeEnum, null);
 
     }
 
     @Override
-    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException {
-        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
+    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
+        List<?> cvsList = handleDownloadAndParse(reportDocument, recordTypeEnum, columnMap);
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 
@@ -404,8 +396,20 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     }
 
     @Override
-    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException {
-        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
+    public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException {
+        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
+
+        return AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(),
+                compressionAlgorithm,
+                recordTypeEnum.getCvsClass(), columnMap);
+    }
+
+    @Override
+    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
+
+        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
+
+        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), compressionAlgorithm, recordTypeEnum.getCvsClass(), columnMap);
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 
@@ -565,7 +569,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum) throws Exception{
+    public void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception{
         if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())){
             log.error("报告状态未完成：{}",JSONUtil.toJsonStr(report));
             // 未完成也更新
@@ -601,7 +605,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 // 转换
                 ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.newReportInfoMongoDTO(report, reportDocument, reportScheduleEntity);
                 // 保存并处理
-                this.saveMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
+                this.saveMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO, columnMap);
             }
             return;
         } else {
@@ -627,7 +631,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 转换
         ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, reportDocument, report);
         // 更新并处理
-        this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
+        this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO, columnMap);
     }
 
     @Override
@@ -642,16 +646,20 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         if (null == marketplaceEnum){
             throw new ServiceException("市场不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
         }
-        //
         AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(mongoDTO.getReportType());
         if (null == recordTypeEnum){
             throw new ServiceException("报告类型不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
+        }
+        // 查询报告配置map<报告列表名, mongo保存字段名>
+        Map<String, String> columnMap = reportColumnConfigService.mayByReportType(recordTypeEnum.getRecordType());
+        if (columnMap.isEmpty()){
+            throw new ServiceException("报告类型列表配置不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
         }
 
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(mongoDTO.getReportId());
-        this.handleReport(reportsApi, report, recordTypeEnum);
+        this.handleReport(reportsApi, report, recordTypeEnum, columnMap);
     }
 
 
