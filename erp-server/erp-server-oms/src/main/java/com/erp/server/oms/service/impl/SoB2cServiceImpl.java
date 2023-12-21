@@ -753,20 +753,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //操作日志
             String msg = "获取物流单号【{}】";
             operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
+            soB2cErrorService.removeErrorOrder(id,SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             return BatchResultDTO.success(entity.getId(), logisticsCode, "获取物流单号");
         } catch (Exception e) {
-            SoB2cErrorDTO.AddDTO error = new SoB2cErrorDTO.AddDTO();
-            //订单id
-            error.setMainId(id);
-            error.setType(SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            error.setMessage(e.getMessage());
-            error.setParamJson(paramJson);
-            error.setReturnJson(returnJson);
+            String type=SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             //添加异常信息
-            soB2cErrorService.add(error);
+            soB2cErrorService.generateErrorOrder(id,type,message,paramJson,returnJson);
             message=e.getMessage();
 
-            log.error("销售订单【{}】 获取物流单失败，异常信息}", message);
+            log.error("销售订单【{}】 获取物流单失败，异常信息{}", message);
         }
         return BatchResultDTO.fail(entity.getId(), "", message);
     }
@@ -898,7 +893,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //下出库单命令
                 thirdWarehouseCreateOutStock(id, logisticsChannelId, overseasWarehouseList.get(0), list);
             } catch (Exception e) {
-                //TODO 记录异常订单信息
                 log.error("B2C订单【{}】下出库单异常", entity.getCode(), e.getMessage());
             }
         } else {
@@ -914,6 +908,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
     }
+
+
 
     /**
      * 第三方仓下出库单
@@ -940,11 +936,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         ApiResult apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
+        String type=SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
-            throw new ServiceException(ApiError.Default.code, apiResult.getMsg());
+            String message=apiResult.getMsg();
+            //生成异常订单信息
+            soB2cErrorService.generateErrorOrder(mainId,type,message,JSONObject.toJSONString(createOutboundReq),JSONObject.toJSONString(apiResult));
+            throw new ServiceException(ApiError.Default.code, message);
         }
-
+        //删除异常订单信息
+        soB2cErrorService.removeErrorOrder(mainId,type);
     }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

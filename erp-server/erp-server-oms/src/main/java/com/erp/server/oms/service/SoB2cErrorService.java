@@ -23,14 +23,7 @@ public interface SoB2cErrorService extends SuperService<SoB2cErrorEntity> {
     */
     Boolean add(SoB2cErrorDTO.AddDTO dto);
 
-    /**
-    * 修改
-    * @author lambda
-    * @date: 2023-12-20
-    * @param dto
-    * @return
-    */
-    Boolean update(SoB2cErrorDTO.UpdateDTO dto);
+
 
 
     /**
@@ -42,4 +35,24 @@ public interface SoB2cErrorService extends SuperService<SoB2cErrorEntity> {
      * @create 2023-12-20 11:22
      */
     Boolean delete(SoB2cErrorDTO.DeleteDTO dto);
+
+    /**
+     * 生成异常订单
+     * @param mainId 订单id
+     * @param type 类型
+     * @param message 错误信息
+     * @param returnJson 返回的json
+     * @param paramJson 参数
+     *
+     */
+    void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson);
+
+    /**  删除异常订单
+     * @description
+     * @param mainId
+     * @author Lambda
+     * @return 
+     * @create 2023-12-21 18:17
+     */
+    Boolean removeErrorOrder(String mainId, String type);
 }

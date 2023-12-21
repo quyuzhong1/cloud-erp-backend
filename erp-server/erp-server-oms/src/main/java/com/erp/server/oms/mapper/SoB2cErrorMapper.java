@@ -1,8 +1,8 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,9 +18,11 @@ import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -90,6 +93,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Autowired
     private ShopInfoFeign shopInfoFeign;
 
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -107,12 +112,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHDC);
         soB2cDeliveryEntity.setCode(code);
         boolean save = super.save(soB2cDeliveryEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("b2c发货单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单" , soB2cDeliveryEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", soB2cDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         // 新增明细
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
@@ -129,7 +134,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(SoB2cDeliveryDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
+            if (!existStatusList.contains(status)) {
                 list.add(new SoB2cDeliveryDTO.TabListDTO(status, 0));
             }
         });
@@ -143,7 +148,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoB2cDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -154,7 +159,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public SoB2cDeliveryDTO.ViewDTO view(String id) {
         //发货单主信息
-        SoB2cDeliveryEntity deliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到B2C发货单数据"));
+        SoB2cDeliveryEntity deliveryEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C发货单数据"));
         SoB2cDeliveryDTO.ViewDTO data = BeanMapperUtils.map(SoB2cDeliveryDTO.ViewDTO.class, deliveryEntity);
         //发货单详情
         List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(id));
@@ -167,28 +172,50 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(String id) {
-
         SoB2cDeliveryEntity entity = this.getById(id);
+        String type= SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String message="";
+        String paramJson="";
+        String returnJson ="";
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.b2c_so_delivery_NOT_EXISTS);
         }
+        try {
+            //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
+            if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
+                    || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+            ) {
+                throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
+            }
 
-        //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
-        if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
-                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
-        ) {
-            throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
+            //调用第三方平台SDK发货
+            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+            platformShipOrderDTO.setSoB2cId(id);
+            platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            paramJson=JSONObject.toJSONString(platformShipOrderDTO);
+            //修改发货状态
+            this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+
+            SoB2cErrorDTO.DeleteDTO deleteDTO=new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setType(type);
+            deleteDTO.setMainId(entity.getSourceId());
+            soB2cFeign.deleteError(deleteDTO);
+
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
+        } catch (Exception e) {
+            message=e.getMessage();
+
+            SoB2cErrorDTO.AddDTO addError=new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setParamJson(paramJson);
+            addError.setReturnJson(returnJson);
+            addError.setMainId(entity.getSourceId());
+            soB2cFeign.addSoB2cError(addError);
+            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
         }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), message);
 
-        //调用第三方平台SDK发货
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(id);
-        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-
-        //修改发货状态
-        this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
     }
 
     @Override
@@ -404,7 +431,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
 
         List<String> base64List = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
-        
+
         List<String> list = new ArrayList<>();
 
         //查询打印类型
@@ -505,11 +532,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 组装数据调用第三方接口打印面单/配货单,获取base64PDF信息
-     * @Author Luo_WG
-     * @Date 2023/12/20 15:00
-     * @param soB2cEntities 订单信息
+     *
+     * @param soB2cEntities          订单信息
      * @param soB2cLogisticsEntities 物流信息
      * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     * @Author Luo_WG
+     * @Date 2023/12/20 15:00
      **/
     private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities) {
         List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
@@ -528,8 +556,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
         int deliveryQtySum = detailEntityList.stream().mapToInt(req -> req.getDeliveryQty()).sum();
         // 单品单数：SKU1个，数量1个
@@ -578,6 +606,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 分页查询字段处理
+     *
      * @param records
      */
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
@@ -628,11 +657,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 修改单据状态
-     * @Author Luo_WG
-     * @Date 2023/12/15 11:28
-     * @param id 主键id
+     *
+     * @param id     主键id
      * @param status 状态编码
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/15 11:28
      **/
     private Boolean updateStatus(String id, String status) {
         return lambdaUpdate().set(SoB2cDeliveryEntity::getStatus, status).eq(SoB2cDeliveryEntity::getId, id).update();
