@@ -15,16 +15,13 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.sdk.oms.shopee.dto.PlatformShopeeGlobalListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
 import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
-import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.service.ShopeeGlobalProductService;
-import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,17 +45,17 @@ import java.util.stream.Collectors;
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.SHOPEE)
-@BusinessType(BusinessTypeEnum.PRODUCT)
-public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeListingDTO, PlatformProductDTO> {
+@BusinessType(BusinessTypeEnum.GLOBAL_PRODUCT)
+public class ShopeeGlobalListingHandler extends AbstractProductHandler<PlatformShopeeGlobalListingDTO, PlatformProductDTO> {
     @Resource
     private ShopeeFeign shopeeFiegn;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
-    private ShopeeProductService shopeeProductService;
+    private ShopeeGlobalProductService shopeeGlobalProductService;
 
     @Override
-    public List<PlatformShopeeListingDTO> download(JobTaskDTO data) {
+    public List<PlatformShopeeGlobalListingDTO> download(JobTaskDTO data) {
         LocalDateTime lastTime = data.getLastTime();
         long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
         log.info("lastTime:{},timeFrom:{}", lastTime, timeFrom);
@@ -85,24 +82,24 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
-        List<ItemInfo> itemInfos = new ArrayList<>();
+        List<GlobalItemInfo> itemInfos = new ArrayList<>();
 
         ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
-               && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
-            ProductRequest productRequest = ProductRequest.builder()
+               && "shopee_merchant".equalsIgnoreCase(shopeeShopById.getData().getType())) {
+            GlobalProductRequest productRequest = GlobalProductRequest.builder()
                     .host(cfgAppClient.getUrl())
                     .offset(null)
                     .token(shopeeShopById.getData().getAccessToken())
-                    .shopId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
+                    .merchantId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
                     .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                     .tmpPartnerKey(cfgAppClient.getClientSecret())
                     .timeFrom(null)
                     .timeTo(null)
                     .build();
-            List<ItemInfo> list = new ArrayList<>();
+            List<GlobalItemInfo> list = new ArrayList<>();
             try {
-                shopeeProductService.getAllProduct(productRequest, list);
+                shopeeGlobalProductService.getAllProduct(productRequest, list);
             } catch (Exception e) {
                 log.error("获取产品数据异常:{}", e.getMessage());
             }
@@ -112,18 +109,18 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         }
         // 返回下载源数据
         return itemInfos.stream()
-                .map(e -> new PlatformShopeeListingDTO(e, data))
+                .map(e -> new PlatformShopeeGlobalListingDTO(e, data))
                 .collect(Collectors.toList());
     }
 
 
     @Override
-    public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
+    public List<PlatformProductDTO> convert(List<PlatformShopeeGlobalListingDTO> sourceDataList) {
         if (CollectionUtils.isEmpty(sourceDataList)) {
             return Collections.emptyList();
         }
         return sourceDataList.stream()
-                .map(PlatformShopeeListingDTO::convertDTO)
+                .map(PlatformShopeeGlobalListingDTO::convertDTO)
                 .collect(Collectors.toList());
     }
 
