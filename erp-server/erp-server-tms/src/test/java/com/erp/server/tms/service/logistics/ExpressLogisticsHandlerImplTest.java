@@ -111,9 +111,9 @@ public class ExpressLogisticsHandlerImplTest {
         logisticsChannel.setTaxModel("DDU");
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("UBI.CA2US.CAPOST");
+        logisticsSaleChannel.setCode("1");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("1725040739275055105");
+        logisticsSaleChannel.setPlatformChannelId("1");
 
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
