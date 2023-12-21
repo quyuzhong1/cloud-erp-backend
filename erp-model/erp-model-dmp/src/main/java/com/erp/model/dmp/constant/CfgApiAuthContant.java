@@ -13,4 +13,9 @@ public interface CfgApiAuthContant {
      */
     String KINGDEE_CREATE_ORG_Id = "kingdeeCreateOrgId";
 
+    /**
+     * 仓位验证
+     */
+    String WAREHOUSE_LOCATION_VALIDATE = "warehouseLocationValidate";
+
 }

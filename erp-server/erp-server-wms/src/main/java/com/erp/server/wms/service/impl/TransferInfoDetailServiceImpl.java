@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SourceTypeEnum;
@@ -8,12 +10,16 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.service.*;
@@ -24,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +61,10 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -197,6 +208,8 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseList,newList);
 
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam = newList
@@ -282,6 +295,35 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseList
+     * @param list
+     */
+    private void checkWarehouseLocation (List<WarehouseEntity> warehouseList,List<TransferInfoDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        for (TransferInfoDetailEntity entity : list) {
+            //调入仓库
+            WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            if (warehouseIdList.contains(inWarehouse.getId()) && StrUtil.isBlank(entity.getInWarehouseLocation())) {
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
+            }
+            //调出仓库
+            WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            if (warehouseIdList.contains(outWarehouse.getId()) && StrUtil.isBlank(entity.getInWarehouseLocation())) {
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,outWarehouse.getName());
+            }
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,6 +13,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -28,6 +33,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -81,6 +87,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
 
     /**
      * @param sourceDetailIds
@@ -188,9 +198,32 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         } else {
             notProductOrderAdd(dto, id, listDetail);
         }
-
+        //仓位必填验证
+        checkWarehouseLocation(warehouse,listDetail);
         //保存详情信息
         return this.saveBatch(listDetail);
+    }
+
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:20
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PurchaseReturnOrderDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
     }
 
     /**
@@ -229,33 +262,6 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         return listDetail;
     }
 
-
-    /**
-     * 新增验证sku是否重复
-     */
-    private void checkAddDetailsRepeat(List<PurchaseReturnOrderDetailDTO.AddDTO> list) {
-        Map<String, List<PurchaseReturnOrderDetailDTO.AddDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId));
-        for (Map.Entry<String, List<PurchaseReturnOrderDetailDTO.AddDTO>> entry : map.entrySet()) {
-            List<PurchaseReturnOrderDetailDTO.AddDTO> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
-            }
-        }
-    }
-
-    /**
-     * 新增验证sku是否重复
-     */
-    private void checkAddDetailsRepeatSku(List<PurchaseOrderDetailEntity> list) {
-        Map<String, List<PurchaseOrderDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
-        for (Map.Entry<String, List<PurchaseOrderDetailEntity>> entry : map.entrySet()) {
-            List<PurchaseOrderDetailEntity> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
-            }
-        }
-    }
-
     /**
      * 修改
      *
@@ -281,9 +287,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             this.removeByIds(deleteIds);
         }
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getReturnWarehouseId()));
-
-
+        WarehouseEntity warehouse = warehouseService.getById(dto.getReturnWarehouseId());
+        if (ObjectUtils.isEmpty(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
         Integer returnQty = 0;
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
@@ -332,8 +339,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else if (entity.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
-                        WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getReturnWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                        Integer inventoryTotal = inventoryService.getInventoryTotal(warehouseDTO.getOrgId(), warehouseDTO.getId(), updateDTO.getSkuId(), updateDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
+                        Integer inventoryTotal = inventoryService.getInventoryTotal(warehouse.getOrgId(), warehouse.getId(), updateDTO.getSkuId(), updateDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
                         returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() > inventoryTotal) {
                             throw new ServiceException(ApiError.ERROR_99079, JSONUtil.toJsonStr(purchaseOrderDetailEntity.getSkuNo()));
@@ -365,6 +371,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         } else {
             notProductOrderUpdate(dto, id, listDetail);
         }
+        //仓位必填验证
+        checkWarehouseLocation(warehouse,listDetail);
+
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {

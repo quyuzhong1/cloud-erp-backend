@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -12,13 +13,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,7 +57,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
-    private QcInfoService qcInfoService;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private PoInstockService poInstockService;
@@ -62,8 +65,9 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     @Resource
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
-
-
+    @Resource
+    private WarehouseService warehouseService;
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PoInstockDetailDTO.AddDTO> details, String mainId, String sourceType,Boolean isNotCheck) {
@@ -207,18 +211,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98050);
         }
-        //验证SKU是否重复
-        // 可以增加仓位，允许重复
-        /*
-        Map<String, List<PoInstockDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PoInstockDetailEntity::getSkuId));
-        for (Map.Entry<String, List<PoInstockDetailEntity>> entry: map.entrySet()) {
-            List<PoInstockDetailEntity> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
-            }
-        }
-         */
-
+       
         //采购订单
         List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(details)) {
@@ -236,6 +229,13 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查询退货明细
         List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
 
+        //查询仓库
+        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
+        if (ObjectUtils.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseEntity,list);
 
         for (PoInstockDetailEntity detailEntity : list) {
 
@@ -275,6 +275,27 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         }
     }
 
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoInstockDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
+    }
 
     @Override
     public void updateKingdeeDetailId(JSONArray list) {

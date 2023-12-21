@@ -1,19 +1,27 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OtherInstockDetailService;
+import com.erp.server.wms.service.OtherInstockService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -21,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +48,14 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private OtherInstockService otherInstockService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -130,6 +147,19 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        //主表信息
+        OtherInstockEntity otherInstockEntity = otherInstockService.getById(mainId);
+        if (ObjectUtils.isEmpty(otherInstockEntity)) {
+            throw new ServiceException(ApiError.ERROR_99059);
+        }
+        WarehouseEntity warehouseEntity = warehouseService.getById(otherInstockEntity.getWarehouseId());
+        if (ObjectUtils.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseEntity,newList);
+
         for (OtherInstockDetailEntity detail:newList) {
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
@@ -152,6 +182,28 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<OtherInstockDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
     }
 }

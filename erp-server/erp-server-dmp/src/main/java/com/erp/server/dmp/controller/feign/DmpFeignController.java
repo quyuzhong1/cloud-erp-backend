@@ -7,6 +7,8 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -70,6 +72,10 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
+
+
+    @Resource
+    private CfgApiAuthService cfgApiAuthService;
 
 
     @PostMapping("/getShopById")
@@ -291,5 +297,18 @@ public class DmpFeignController extends BaseController {
     public Boolean needPushMQ(@RequestBody LocalDateTime lastTime) {
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
         return kingdeeApiUtils.needPushMQ(lastTime);
+    }
+
+    /**
+     * 查询权限设置
+     * @author Will
+     * @date: 2023/12/19 12:00
+     * @param feignDTO
+     * @return CfgApiAuthEntity
+     */
+    @PostMapping("/cfgApiAuth/getByKey")
+    public CfgApiAuthEntity getByKey(@RequestBody CfgApiAuthDTO.FeignDTO feignDTO) {
+        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(feignDTO.getKey(), feignDTO.getApiGroup(), feignDTO.getApiPlatformId());
+        return ObjectUtils.isEmpty(authEntity) ? new CfgApiAuthEntity() :authEntity ;
     }
 }

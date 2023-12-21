@@ -95,8 +95,9 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
 
         // 填充最新签收时间
-        if (!CollectionUtils.isEmpty(receiveDTOList)){
-            LocalDateTime maxReceiveTime = receiveDTOList.stream()
+        List<PlatformFbaShipmentReceiveDTO> receiveTimeDTO = receiveDTOList.stream().filter(e -> e.getReceiveQty() > 0).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(receiveTimeDTO)){
+            LocalDateTime maxReceiveTime = receiveTimeDTO.stream()
                     .map(PlatformFbaShipmentReceiveDTO::getReceiveDate)
                     .max(LocalDateTime::compareTo)
                     .get();

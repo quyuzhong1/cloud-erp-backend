@@ -291,6 +291,12 @@ public class PullAmazonJob {
                                         PlatformFbaShipmentReceiveDTO::merge))
                                 .values()
                 );
+                // 判断签收时间
+                detailListDTO.forEach(e-> {
+                    if (e.getReceiveQty() == 0){
+                        e.setReceiveDate(null);
+                    }
+                });
                 shipmentDTO.setDetailList(detailListDTO);
                 XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
                 businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);

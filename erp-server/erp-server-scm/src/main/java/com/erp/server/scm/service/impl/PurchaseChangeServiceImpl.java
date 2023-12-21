@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -63,10 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -451,6 +449,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 .eq(PurchaseChangeEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseChangeEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public List<PurchaseChangeEntity> listByPoIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<PurchaseChangeEntity> list = lambdaQuery().in(PurchaseChangeEntity::getPurchaseOrderId, ids)
+                .eq(PurchaseChangeEntity::getInvalidStatus, Boolean.FALSE)
+                .list();
+        return list;
     }
 
 

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -649,29 +650,27 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         //物料编码
         List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //仓库
-        List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         List<String> warehouseCodeList = warehouseList.stream().map(WarehouseEntity::getKingdeeWarehouseCode).collect(Collectors.toList());
         //组织
         List<String> orgIdList = list.stream().map(InventoryDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
         List<String> orgCodeList = orgList.stream().map(BaseIdDTO.CodeDTO::getCode).collect(Collectors.toList());
-        //金蝶库存学习
+        //金蝶库存信息
         List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
 
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
-        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.forEach(data -> {
             // 仓库名称赋值
-            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), v -> warehouseService.detailWithCache(v));
-            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                data.setWarehouseName(warehouseDetail.getName());
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+                data.setWarehouseName(warehouseEntity.getName());
             }
             // 仓库组织
-            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(), v -> sysUserFeign.getCompanyById(v));
-            if (Objects.nonNull(sysAccountingCompanyEntity)) {
-                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            BaseIdDTO.CodeDTO orgDTO = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(orgDTO)) {
+                data.setOrgName(orgDTO.getName());
             }
             if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -726,11 +725,30 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
         String filterStr = String.join(" and ", queryFilters);
         paramDTO.setFilterString(filterStr);
-        paramDTO.setTopRowCount(99999999);
-        paramDTO.setStartRow(MathUtil.ONE);
-        paramDTO.setLimit(99999999);
-        List<Map<String, Object>> listData =  dmpSyncFeign.listKingdeeData(paramDTO);
-        return listData;
+
+        boolean dataSign = true;
+        //当前页数
+        Integer pageIndex = 1;
+        //每次最多获取100条
+        Integer pageSize = 10000;
+        List<Map<String, Object>> resultAll = new ArrayList<>();
+        while (dataSign) {
+            paramDTO.setLimit(pageSize);
+            paramDTO.setStartRow(pageIndex);
+            paramDTO.setTopRowCount(MathUtil.ZERO);
+            //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
+            List<Map<String, Object>> result =  dmpSyncFeign.listKingdeeData(paramDTO);
+            log.info("获取金蝶直接调拨订单数据第[{}]页 有{}条记录", pageIndex, pageSize);
+            if (result.size() < pageSize){
+                dataSign = false;
+            }
+            if (CollectionUtil.isEmpty(result)) {
+                break;
+            }
+            resultAll.addAll(result);
+            pageIndex++;
+        }
+        return resultAll;
     }
 
 

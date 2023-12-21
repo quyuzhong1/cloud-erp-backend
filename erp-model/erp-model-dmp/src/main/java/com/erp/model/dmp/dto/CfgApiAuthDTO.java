@@ -27,7 +27,6 @@ public class CfgApiAuthDTO {
         /**
          * 平台id
          */
-        @NotBlank(message = "平台不能为空")
         private String apiPlatformId;
 
         /**
@@ -48,8 +47,32 @@ public class CfgApiAuthDTO {
         private String value;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class FeignDTO {
+
+        /**
+         * 键
+         */
+        @NotBlank(message = "键值不能为空")
+        private String key;
+
+        /**
+         * 平台id
+         */
+        private String apiPlatformId;
+
+        /**
+         * 组别,默认default
+         */
+        private String apiGroup;
 
 
+        public FeignDTO (String key) {
+            this.key = key;
+        }
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -70,5 +93,15 @@ public class CfgApiAuthDTO {
          */
         private List<Integer> orgIdList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationValidateDTO {
+
+        /**
+         * 仓库id，逗号拼接
+         */
+        private String warehouseIds;
     }
 }

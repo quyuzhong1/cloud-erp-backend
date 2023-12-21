@@ -1,18 +1,21 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
-import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.MachineSubComponentsEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineSubComponentsMapper;
 import com.erp.server.wms.service.*;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,8 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     @Resource
     private MachineInfoService machineInfoService;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -164,6 +170,9 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             throw new ServiceException(ApiError.ERROR_99052);
         }
 
+        //仓位必填验证
+        checkWarehouseLocation(warehouseList,newList);
+
         for (MachineSubComponentsEntity detail:newList) {
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
@@ -199,5 +208,29 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             operateLogService.batchAddModuleOperateLog("添加了一个子件SKU【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), addPairList, "编辑操作");
         }
     }
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseList
+     * @param list
+     */
+    private void checkWarehouseLocation (List<WarehouseEntity> warehouseList,List<MachineSubComponentsEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        for (MachineSubComponentsEntity entity : list) {
+            //仓库
+            WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            if (warehouseIdList.contains(inWarehouse.getId()) && StrUtil.isBlank(entity.getWarehouseLocation())) {
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
+            }
+        }
+    }
+
 
 }

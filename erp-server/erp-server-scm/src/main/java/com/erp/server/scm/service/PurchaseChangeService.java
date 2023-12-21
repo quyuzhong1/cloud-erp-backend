@@ -128,4 +128,12 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * 更新金蝶推送信息
      */
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId);
+    /**
+     * @description: 根据采购订单ids查询有效数据
+     * @author Will
+     * @date: 2023/12/19 10:16
+     * @param ids
+     * @return List<PurchaseChangeEntity>
+     */
+    List<PurchaseChangeEntity> listByPoIds(List<String> ids);
 }

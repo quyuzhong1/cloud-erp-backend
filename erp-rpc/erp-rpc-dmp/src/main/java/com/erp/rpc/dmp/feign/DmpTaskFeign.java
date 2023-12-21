@@ -238,4 +238,14 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/pull/needPushMQ")
     Boolean needPushMQ(@RequestBody LocalDateTime lastTime);
+
+    /**
+     * 根据key值查询权限
+     * @author Will
+     * @date: 2023/12/19 12:02
+     * @param feignDTO
+     * @return CfgApiAuthEntity
+     */
+    @PostMapping("feign/cfgApiAuth/getByKey")
+    CfgApiAuthEntity getByKey(@RequestBody @Valid CfgApiAuthDTO.FeignDTO feignDTO);
 }
