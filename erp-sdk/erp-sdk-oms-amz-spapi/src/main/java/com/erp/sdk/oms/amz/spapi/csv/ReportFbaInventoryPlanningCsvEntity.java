@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.csv.planning;
+package com.erp.sdk.oms.amz.spapi.csv;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;

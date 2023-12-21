@@ -232,6 +232,7 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.584baa05-f1b8-4d53-88fc-5c5b32051236.T2SXAUMO86QN6T.300";
         // 亚马逊物流管理库存
         String reportDocumentId = "amzn1.spdoc.1.4.fe.34a6bf51-5ba3-4f8d-9e05-58641b7b47c9.T3TS0WZB5F4DK9.300";
+//        String reportDocumentId = "amzn1.spdoc.1.4.na.1606ff87-6b67-4b20-9122-247869849a94.T2EYSN628KN5YD.300";
         // 亚马逊物流管理库存状况报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600";
         // 亚马逊物流预留库存报告
@@ -239,6 +240,7 @@ public class ReportsApiTest {
         // 沙箱环境参数
 //        String reportDocumentId = "0356cf79-b8b0-4226-b4b9-0ee058ea5760";
         String shopId = "1735479610549735425";
+//        String shopId = "1734464159535337474";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -254,15 +256,6 @@ public class ReportsApiTest {
 
         String url = response.getUrl();
         String compressionAlgorithm = null == response.getCompressionAlgorithm() ? "":response.getCompressionAlgorithm().getValue();
-
-        DownloadHandler obj = new DownloadHandler();
-        try {
-            String download = obj.download(url, compressionAlgorithm);
-            System.out.println("报告内容");
-            System.out.println(download);
-        } catch (IOException | IllegalArgumentException e) {
-            //Handle exception here.
-        }
 
         // 亚马逊物流管理库存
         // {"reportDocumentId":"amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/2a2d3258-3b23-4f23-8eb6-c019f45bab25.amzn1.tortuga.4.na.T1507HA60E8SWN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T004815Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=c3e2ede4089507b180769c7d0459665988e9cf4f4f5730c01a1a2468094de64d"}

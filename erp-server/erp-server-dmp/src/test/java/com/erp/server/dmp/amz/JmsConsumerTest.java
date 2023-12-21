@@ -17,7 +17,7 @@ import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.common.business.constant.MongoTableNameContant;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
-import com.erp.sdk.oms.amz.spapi.csv.listing.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;

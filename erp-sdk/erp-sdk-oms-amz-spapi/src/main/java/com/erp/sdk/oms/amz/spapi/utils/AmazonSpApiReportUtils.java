@@ -1,7 +1,8 @@
 package com.erp.sdk.oms.amz.spapi.utils;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
-import com.erp.sdk.oms.amz.spapi.csv.listing.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.documents.*;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.rmi.ServerException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 亚马逊SP-API报告工具类
@@ -24,24 +26,14 @@ import java.util.List;
 @Slf4j
 public class AmazonSpApiReportUtils {
 
-    /**
-     * 下载并转换库存报告
-     */
-    public static List<ReportListingCsvEntity> downloadAndParseListing(String url, String compressionAlgorithm, String countryCode) throws IOException {
-        String csvContent = download(url, compressionAlgorithm);
-        CSVReader reader = parseCSV(csvContent);
-        // 转换bean
-        return toBean(reader, ReportListingCsvEntity.class);
-    }
 
     /**
      * 下载并转换
      */
-    public static <T> List<T> downloadAndParse(String url, String compressionAlgorithm, Class<T> tClass) throws IOException {
-        String csvContent = download(url, compressionAlgorithm);
-        CSVReader reader = parseCSV(csvContent);
+    public static <T> List<T> downloadAndParse(String url, String compressionAlgorithm, Class<T> tClass, Map<String, String> columnMap) throws IOException {
+        JSONArray jsonArray = download(url, compressionAlgorithm, columnMap);
         // 转换bean
-        return toBean(reader, tClass);
+        return JSONUtil.toList(jsonArray, tClass);
     }
 
     /**
@@ -77,7 +69,7 @@ public class AmazonSpApiReportUtils {
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public static String download(String url, String compressionAlgorithm) throws IOException, IllegalArgumentException {
+    public static JSONArray download(String url, String compressionAlgorithm, Map<String, String> columnMap) throws IOException, IllegalArgumentException {
 //        OkHttpClient httpclient = new OkHttpClient();
 //        Request request = new Request.Builder()
 //                .url(url)
@@ -100,7 +92,7 @@ public class AmazonSpApiReportUtils {
 //        }
         DownloadHandler obj = new DownloadHandler();
         try {
-            return obj.download(url, compressionAlgorithm);
+            return obj.download(url, compressionAlgorithm, columnMap);
         } catch (Exception e) {
             //Handle exception here.
             throw new ServerException("下载亚马逊报告异常：url=" + url + " error="+ e.getMessage());
@@ -122,8 +114,7 @@ public class AmazonSpApiReportUtils {
 
     public static void main2(String[] args) throws Exception {
         String url = "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231220T022158Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=92127944f7f2ccee0182bfa56ad519b7fc386d7b8602667c7a5904165549dd55";
-        List<ReportListingCsvEntity> list = downloadAndParseListing(url,"", "");
-        System.out.println(JSONUtil.toJsonStr(list));
+
         // 亚马逊物流管理库存 - 已存档
 //        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/2a2d3258-3b23-4f23-8eb6-c019f45bab25.amzn1.tortuga.4.na.T1507HA60E8SWN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T004815Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=c3e2ede4089507b180769c7d0459665988e9cf4f4f5730c01a1a2468094de64d";
 //        List<FbaMyiAllInventoryCsvReportEntity> list = downloadAndParseFbaAllInventory(url);

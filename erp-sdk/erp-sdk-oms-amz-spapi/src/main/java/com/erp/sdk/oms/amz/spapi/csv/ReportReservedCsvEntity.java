@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.csv.reserved;
+package com.erp.sdk.oms.amz.spapi.csv;
 
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.opencsv.bean.CsvBindByName;
