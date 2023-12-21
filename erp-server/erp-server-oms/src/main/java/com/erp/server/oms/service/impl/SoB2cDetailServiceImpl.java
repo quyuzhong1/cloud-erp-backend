@@ -424,15 +424,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     .filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(updateDTO)) {
                 detailEntity.setWarehouseName(updateDTO.getName());
-            }
-
-
-            //库存组织
-            BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream()
-                    .filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(companyDTO)) {
-                detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
-                detailEntity.setWarehouseOrgName(companyDTO.getName());
+                //库存组织
+                BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream()
+                        .filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(companyDTO)) {
+                    detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
+                    detailEntity.setWarehouseOrgName(companyDTO.getName());
+                }
             }
 
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
