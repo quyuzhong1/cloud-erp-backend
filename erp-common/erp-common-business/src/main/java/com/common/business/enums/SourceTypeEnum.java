@@ -50,7 +50,7 @@ public enum SourceTypeEnum {
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
-    FIRST_MILE_DELIVERY("firstMileDelivery", "发货单","first_mile_delivery"),
+    FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
     OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "海外发货计划","overseas_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),

@@ -61,4 +61,13 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
      *@date 2023-11-15
      */
     void copy(String channelId, String addChannelId);
+
+    /**
+     * 根据渠道id查询渠道打印类型
+     * @Author Luo_WG
+     * @Date 2023/12/20 17:08
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
+     **/
+    List<LogisticsPrintTypeEntity> listByChannelIds(List<String> channelIdList);
 }

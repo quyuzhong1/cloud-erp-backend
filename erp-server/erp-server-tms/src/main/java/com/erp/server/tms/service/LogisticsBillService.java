@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -155,4 +156,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
      **/
     LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo);
+
+    /**
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
+     * @param list
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list);
 }

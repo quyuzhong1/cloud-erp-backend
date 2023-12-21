@@ -3,7 +3,7 @@ package com.sdk.tms.disifang.model.base;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -18,7 +18,7 @@ public class Address implements Serializable {
     /**
      * 名/姓名
      */
-    @NotNull(message = "姓名不能为空")
+    @NotBlank(message = "姓名不能为空")
     @JSONField(name = "first_name")
     private String first_name;
     /**
@@ -35,7 +35,7 @@ public class Address implements Serializable {
      * 18166668888	电话（必填）
      * 是
      */
-    @NotNull(message = "电话不能为空")
+    @NotBlank(message = "电话不能为空")
     @JSONField(name = "phone")
     private String phone;
     /**
@@ -52,13 +52,14 @@ public class Address implements Serializable {
      * 邮编
      * 是
      */
+    @NotBlank(message = "邮编不能为空")
     @JSONField(name = "post_code")
     private String post_code;
     /**
      * CN	国家（国际二字码 标准ISO 3166-2 ）
      * 是
      */
-    @NotNull(message = "国家不能为空")
+    @NotBlank(message = "国家不能为空")
     @JSONField(name = "country")
     private String country;
 
@@ -71,7 +72,7 @@ public class Address implements Serializable {
      * 深圳市	城市
      * 是
      */
-    @NotNull(message = "城市不能为空")
+    @NotBlank(message = "城市不能为空")
     @JSONField(name = "city")
     private String city;
     /**
@@ -83,7 +84,7 @@ public class Address implements Serializable {
      * 南山街道南山路南山X座1001	街道/详细地址
      * 是
      */
-    @NotNull(message = "详细地址不能为空")
+    @NotBlank(message = "详细地址不能为空")
     @JSONField(name = "street")
     private String street;
     /**

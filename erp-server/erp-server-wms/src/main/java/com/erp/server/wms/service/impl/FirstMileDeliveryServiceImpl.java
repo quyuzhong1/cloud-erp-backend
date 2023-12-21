@@ -15,6 +15,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -336,12 +337,30 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //包含组合产品的发货单，必须有关联的下推的加工组装单且加工单审核通过，否则提示：发货单【发货单号】包含组合产品，请先下推加工单并且审核通过后重试
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         List<FirstMileDeliveryDetailEntity> isCombinationList = detailEntityList.stream().filter(req -> req.getIsCombination()).collect(Collectors.toList());
+
+        List<String> skuIdList = detailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         if (CollectionUtils.isNotEmpty(isCombinationList)) {
-            //查询是否包含审核同步的加工单
-            List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Arrays.asList(entity.getId()));
-            List<MachineInfoEntity> approveMachineInfoEntityList = machineInfoEntityList.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(approveMachineInfoEntityList)) {
-                throw new ServiceException(ApiError.IS_GENERATE_MACHINE, entity.getCode());
+
+            //查询多品bom的sku
+            List<BomChildrenSkuDTO> sonSkuList = new ArrayList<>();
+            for (FirstMileDeliveryDetailEntity detailEntity : isCombinationList) {
+                //查询sku是否存在子SKU
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuList.stream()
+                        .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                        ).collect(Collectors.toList());
+                sonSkuList.addAll(bomChildrenSkuDTOS);
+            }
+            //如果包含了多品bom需要校验，加工单是否审核通过
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Arrays.asList(entity.getId()));
+                List<MachineInfoEntity> approveMachineInfoEntityList = machineInfoEntityList.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(approveMachineInfoEntityList)) {
+                    throw new ServiceException(ApiError.IS_GENERATE_MACHINE, entity.getCode());
+                }
             }
 
             List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
@@ -407,8 +426,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        //默认来源类型：头程发货单
+        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
@@ -441,6 +460,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
+            detailAddDto.setRemark(entity.getSourceCode());
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
@@ -913,7 +933,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //只有组合SKU允许下推加工单
         List<FirstMileDeliveryDetailEntity> entities = firstMileDeliveryDetailService.listByMainIds(ids);
-        List<FirstMileDeliveryDetailEntity> entityList = entities.stream().filter(req -> Boolean.TRUE.equals(req.getIsCombination())).collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> entityList = entities.stream()
+                .filter(req -> Boolean.TRUE.equals(req.getIsCombination()))
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
         }
@@ -939,6 +961,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         //查询历史子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
+        List<FirstMileDeliveryDTO.GenerateMachineView> result = new ArrayList<>();
+
         for (FirstMileDeliveryDTO.GenerateMachineView view : viewList) {
             //事务类型
             view.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
@@ -962,7 +987,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<FirstMileDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 
             //查询最新版本的sku子件信息
-            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(view.getSkuId()) && req.getBomVersion().equals(String.valueOf(bomVersion))).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(view.getSkuId())
+                            && req.getBomVersion().equals(String.valueOf(bomVersion))
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+
+            if (CollectionUtils.isEmpty(bomSonItemList)) {
+                continue;
+            }
+
             for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
                 FirstMileDeliveryDTO.SonItem sonItem = new FirstMileDeliveryDTO.SonItem();
                 sonItem.setId(view.getId());
@@ -978,8 +1012,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 sonItemList.add(sonItem);
             }
             view.setSonItemList(sonItemList);
+
+            result.add(view);
         }
-        return viewList;
+
+        return result;
     }
 
     @Override

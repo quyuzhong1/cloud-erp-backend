@@ -14,7 +14,9 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -24,6 +26,9 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
+import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
+import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -33,6 +38,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -390,15 +396,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
         //打印类型
         String printType = dto.getPrintType();
 
         //明细信息
         List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
 
-        List<String> collect = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        List<String> base64List = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
         
+        List<String> list = new ArrayList<>();
+
+        //查询打印类型
+        List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
 
         //循环打印的渠道
         for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
@@ -407,6 +418,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = logisticsChannelDTO.getDetailList();
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
             List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+
+            //获取面单
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+            List<SoB2cDTO.WaybillDTO> platformWaybill = this.getPlatformWaybill(soB2cEntities, soB2cLogisticsEntities);
+
 
             //渠道包含的单据
             for (SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO : waybillDetailDTOList) {
@@ -418,25 +434,97 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 //如果打印面单
                 if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
-                    if (StringUtils.isBlank(soB2cEntity.getLogisticsWaybill())) {
-
+                    if (StringUtils.isNotBlank(soB2cEntity.getLogisticsWaybill())) {
+                        base64List.add(soB2cEntity.getLogisticsWaybill());
+                    } else {
+                        String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(logisticsWaybill)) {
+                            base64List.add(logisticsWaybill);
+                        }
                     }
                 } else if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
                     //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
-                    if (StringUtils.isBlank(soB2cEntity.getDistributeWaybill())) {
+                    if (StringUtils.isNotBlank(soB2cEntity.getDistributeWaybill())) {
+                        base64List.add(soB2cEntity.getLogisticsWaybill());
+                    } else {
+                        String distributeWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getDistributeBase64()).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(distributeWaybill)) {
+                            base64List.add(distributeWaybill);
+                        }
 
+                        // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
+                        LogisticsPrintTypeEntity logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
+                                .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
+                                        && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
+                                ).findFirst().orElse(null);
+                        if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
+
+                        }
                     }
-                    // TODO 配货单需要根据渠道查询是否是自定义配置
+
                 } else {
+                    //先获取订单的面单，没有就请求sdk获取
+                    if (StringUtils.isNotBlank(soB2cEntity.getLogisticsWaybill())) {
+                        base64List.add(soB2cEntity.getLogisticsWaybill());
+                    } else {
+                        String logisticsWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getLogisticsBase64()).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(logisticsWaybill)) {
+                            base64List.add(logisticsWaybill);
+                        }
+                    }
+                    //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
+                    if (StringUtils.isNotBlank(soB2cEntity.getDistributeWaybill())) {
+                        base64List.add(soB2cEntity.getLogisticsWaybill());
+                    } else {
+                        String distributeWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getDistributeBase64()).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(distributeWaybill)) {
+                            base64List.add(distributeWaybill);
+                        }
 
+                        // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
+                        LogisticsPrintTypeEntity logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
+                                .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
+                                        && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
+                                ).findFirst().orElse(null);
+                        if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
+
+                        }
+                    }
                 }
-
 
 
             }
         }
 
+        try {
+            return PdfUtil.getNewMergePdfBase64(list);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+        }
+    }
 
+    /**
+     * 组装数据调用第三方接口打印面单/配货单,获取base64PDF信息
+     * @Author Luo_WG
+     * @Date 2023/12/20 15:00
+     * @param soB2cEntities 订单信息
+     * @param soB2cLogisticsEntities 物流信息
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities) {
+        List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soB2cLogisticsEntity)) {
+                printLogisticsWaybill.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+                printLogisticsWaybill.setTrackNo(soB2cLogisticsEntity.getCode());
+            }
+            printLogisticsWaybill.setB2cSoId(soB2cEntity.getId());
+            printLogisticsWaybill.setDeliveryNo(soB2cEntity.getCode());
+            logisticsWaybillDTOList.add(printLogisticsWaybill);
+        }
+        return logisticsBillFeign.printLogisticsWaybill(logisticsWaybillDTOList);
     }
 
     /**

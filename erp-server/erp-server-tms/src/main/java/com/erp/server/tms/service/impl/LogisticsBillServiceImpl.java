@@ -373,8 +373,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsProductDTO.ProductDTO item : skuInfoList) {
             Integer qty = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).map(LogisticsBillDTO.SkuDTO::getQty).
                     findFirst().orElse(0);
-            item.setPrice(item.getDeclarePrice());
+            BigDecimal price = item.getDeclarePrice();
+            item.setPrice(price);
             item.setQuantity(qty);
+            item.setAmount(MathUtil.multiply(price,qty));
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
@@ -383,10 +385,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Boolean hasBattery = skuInfoList.stream().filter(s->s.getIsElectric()).count()>0;
         //是否带电
         parceInfo.setHasBattery(hasBattery);
-        parceInfo.setTotalQuantity(logisticsProductList.size());
+        Integer totalQuantity=skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
+        parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())). map(LogisticsProductDTO.ProductDTO::getDeclarePrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量
         Integer totalWeight=skuInfoList.stream().filter(s->Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
@@ -410,9 +413,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
-            SoB2cErrorDTO.DeleteDTO  deleteDTO=new  SoB2cErrorDTO.DeleteDTO();
-            //删除异常信息
-            soB2cFeign.deleteError(deleteDTO);
             return trackNoList;
         } else {
             LogisticsOrderResponseVO responseVO= orderResult.getData();
@@ -421,15 +421,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sb.append(responseVO.getMessage());
             }
             String message=sb.toString();
-            SoB2cErrorDTO.AddDTO error = new SoB2cErrorDTO.AddDTO();
-            //订单id
-            error.setMainId(dto.getOrderId());
-            error.setType(SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            error.setMessage(message);
-            error.setParamJson(JSONObject.toJSONString(logisticsOrderVO));
-            error.setReturnJson(JSONObject.toJSONString(orderResult));
-            //添加异常信息
-            soB2cFeign.addSoB2cError(error);
             throw new ServiceException(orderResult.getCode(), message);
         }
 
@@ -681,13 +672,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillCostService.add(addDTO);
     }
 
-
     /**
-     * 打印物流面单
-     *
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
      * @param list
-     */
-//    @Override
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
@@ -708,8 +700,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
-            getLabelVO.setTransportNo(dto.getTransportNo());
+
+            //根据跟踪单号查询运单
+            LogisticsBillDTO.BaseDTO baseByTrackNo = this.getBaseByTrackNo(dto.getTrackNo());
+            if (ObjectUtil.isNotEmpty(baseByTrackNo)) {
+                getLabelVO.setTransportNo(baseByTrackNo.getTransportNo());
+            }
+            //物流跟踪号
+            getLabelVO.setTrackNo(dto.getTrackNo());
+            //授权信息
             getLabelVO.setAuthMap(authMap);
+
             //设置渠道编号
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
             LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
@@ -720,16 +721,18 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             try {
                 labelList = service.getLabelList(labelVOArrayList);
             } catch (IOException e) {
-                return null;
+                return Collections.emptyList();
             }
             SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
             waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
             waybillDTO.setSoB2cId(dto.getB2cSoId());
+            waybillDTO.setTrackNo(getLabelVO.getTrackNo());
+            waybillDTO.setTransportNo(getLabelVO.getTransportNo());
             waybillDTOList.add(waybillDTO);
         }
 
         soB2cFeign.updateLogisticsWaybill(waybillDTOList);
-        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
+        soB2cFeign.updateDistributeWaybill(waybillDTOList);
         return waybillDTOList;
     }
 }

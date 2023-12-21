@@ -5,6 +5,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.krysalis.barcode4j.impl.code39.Code39Bean;
 import org.krysalis.barcode4j.impl.upcean.EAN13Bean;
@@ -34,6 +37,7 @@ public class BarcodeUtil {
 
     public static void generateFile(String msg, String path) {
         File file = new File(path);
+
         try {
             Code39Bean bean = new Code39Bean();
             //EAN13Bean bean = new EAN13Bean();

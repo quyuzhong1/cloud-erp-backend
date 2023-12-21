@@ -891,6 +891,8 @@ public class LogisticsProductDTO {
 
        private BigDecimal price;
 
+       private BigDecimal amount;
+
         /**
          * 数量
          */
