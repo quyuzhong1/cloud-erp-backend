@@ -959,6 +959,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         //查询历史子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
         for (FirstMileDeliveryDTO.GenerateMachineView view : viewList) {
             //事务类型
             view.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
@@ -982,7 +983,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<FirstMileDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 
             //查询最新版本的sku子件信息
-            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(view.getSkuId()) && req.getBomVersion().equals(String.valueOf(bomVersion))).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(view.getSkuId())
+                            && req.getBomVersion().equals(String.valueOf(bomVersion))
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+
+            if (CollectionUtils.isEmpty(bomSonItemList)) {
+                throw new ServiceException(ApiError.DELIVERY_NOT_COMBINATION_NOT_MACHINE, view.getCode());
+            }
+
             for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
                 FirstMileDeliveryDTO.SonItem sonItem = new FirstMileDeliveryDTO.SonItem();
                 sonItem.setId(view.getId());
@@ -999,6 +1009,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             view.setSonItemList(sonItemList);
         }
+
         return viewList;
     }
 
