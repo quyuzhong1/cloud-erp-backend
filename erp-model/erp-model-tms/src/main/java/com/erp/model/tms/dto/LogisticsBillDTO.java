@@ -624,6 +624,11 @@ public class LogisticsBillDTO implements Serializable {
         private String shopName;
 
         /**
+         * IOSS 税号
+         */
+        private String iossTaxNo;
+
+        /**
          * 币别
          */
         private String currency;

@@ -403,6 +403,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
                 deliveryNo(dto.getOrderId()).
+                iossCode(dto.getIossTaxNo()).
                 senderInfo(senderInfo).
                 receiverInfoVO(receiverInfo).
                 parceInfoVO(parceInfo).

@@ -36,4 +36,17 @@ public class SoB2cErrorController extends BaseController {
     private SoB2cErrorService soB2cErrorService;
 
 
+
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody SoB2cErrorDTO.DeleteDTO dto){
+        boolean result=soB2cErrorService.delete(dto);
+
+        return result?success():failure();
+    }
+
+
+
+
+
+
 }

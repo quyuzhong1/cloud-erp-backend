@@ -362,17 +362,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-18 14:06
      */
-    Boolean platformWarehouseOrderHandle(SoB2cEntity mainEntity , Map<String,Object> map);
+    Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
 
   
     /** 
      * @description 正常订单拉取处理规则
-     * @param entity
+     * @param id
      * @author Lambda
      * @return 
      * @create 2023-12-18 14:52
      */
-    Boolean pullOrderHandle(SoB2cEntity entity, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
+    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
 
     /** 
      * @description 获取规则需要的map

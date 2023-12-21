@@ -1,9 +1,14 @@
 package com.erp.model.oms.entity;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -21,7 +26,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("so_b2c_error")
+@TableName(value="so_b2c_error")
 public class SoB2cErrorEntity extends BaseEntity<SoB2cErrorEntity>{
 
     /**
@@ -40,8 +45,8 @@ public class SoB2cErrorEntity extends BaseEntity<SoB2cErrorEntity>{
     /**
     * 传的json 字符串
     */
-    @TableField("param_json")
-    private String paramJson;
+    @TableField(value="param_json")
+    private Object paramJson;
     /**
     * 错误信息
     */
@@ -50,8 +55,8 @@ public class SoB2cErrorEntity extends BaseEntity<SoB2cErrorEntity>{
     /**
     * 返回的json 字符串
     */
-    @TableField("return_json")
-    private String returnJson;
+    @TableField(value="return_json")
+    private Object returnJson;
 
 
     public static final String MAIN_ID = "main_id";

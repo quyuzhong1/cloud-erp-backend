@@ -82,9 +82,7 @@ public class SoB2cErrorServiceImpl extends SuperServiceImpl<SoB2cErrorMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(SoB2cErrorDTO.DeleteDTO dto) {
-        Boolean result = this.lambdaUpdate().
-                eq(SoB2cErrorEntity::getMainId, dto.getMainId()).
-                eq(SoB2cErrorEntity::getType, dto.getType()).remove();
+        Boolean result = baseMapper.deleteB2cError(dto);
         if(result){
             soB2cService.removeSignError(dto.getMainId(),dto.getType());
         }

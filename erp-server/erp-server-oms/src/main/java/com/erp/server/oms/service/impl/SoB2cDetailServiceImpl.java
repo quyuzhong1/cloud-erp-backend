@@ -323,9 +323,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateIsMatchWarehouseRule(String mainId) {
+    public Boolean updateIsMatchWarehouseRule(List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return Boolean.TRUE;
+        }
         return  lambdaUpdate()
-                .eq(SoB2cDetailEntity::getMainId,mainId)
+                .in(SoB2cDetailEntity::getId,detailIdList)
                 .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.FALSE)
                 .update();
     }
