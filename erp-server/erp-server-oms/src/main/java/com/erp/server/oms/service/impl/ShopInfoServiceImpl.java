@@ -781,7 +781,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Long expireIn = shopeeAuth.getExpireIn();
         shopAuth.setType(type);
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
-            shopInfo.setName("虾皮主账号");
+            shopInfo.setName("虾皮主店铺");
             //主账号授权
             if (Objects.nonNull(dto.getMainAccountId())) {
                 shopAuth.setShopeeId(String.valueOf(dto.getMainAccountId()));
@@ -874,6 +874,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getRegion()));
                 if (CollectionUtils.isNotEmpty(countryEntities)) {
                     shopInfo.setCountryName(countryEntities.get(0).getNameCn());
+                    shopInfo.setName(countryEntities.get(0).getNameCn() +" / "+ shopInfo.getName());
                 }
             }
         } catch (Exception e) {
@@ -898,6 +899,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getMerchantRegion()));
                 if (CollectionUtils.isNotEmpty(countryEntities)) {
                     shopInfo.setCountryName(countryEntities.get(0).getNameCn());
+                    shopInfo.setName(countryEntities.get(0).getNameCn() +" / "+ shopInfo.getName());
                 }
             }
         } catch (Exception e) {
