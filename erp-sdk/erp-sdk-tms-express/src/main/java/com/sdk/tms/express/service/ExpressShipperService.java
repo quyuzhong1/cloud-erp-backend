@@ -174,6 +174,9 @@ public class ExpressShipperService {
         String md5Key = authMap.get("clientSecret");
         validate(partnerId, md5Key);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_CREATE_ORDER; //下订单
+        if (StringUtils.isEmpty(orderRequest.getMonthlyCard())){
+            orderRequest.setMonthlyCard(PathConstants.MONTH_CARD);
+        }
         return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
     }
 

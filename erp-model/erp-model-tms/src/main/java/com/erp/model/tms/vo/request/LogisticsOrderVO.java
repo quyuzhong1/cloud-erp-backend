@@ -23,6 +23,10 @@ import java.util.Map;
 @Data
 @Builder
 public class LogisticsOrderVO implements Serializable {
+    /**
+     * 顺丰月结卡号
+     */
+    private String monthlyCard;
     //订单来源
     private String orderSource;
 
