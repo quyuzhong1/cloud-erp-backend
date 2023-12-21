@@ -14,6 +14,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -395,7 +396,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public void printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
+    public String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto) {
         //打印类型
         String printType = dto.getPrintType();
 
@@ -492,11 +493,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
 
 
-
             }
         }
 
-
+        try {
+            return PdfUtil.getNewMergePdfBase64(list);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+        }
     }
 
     /**
