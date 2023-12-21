@@ -163,8 +163,8 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     /**
      * ioss税号
      */
-    @TableField("ioss_code")
-    private String iossCode;
+    @TableField("ioss_tax_no")
+    private String iossTaxNo;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

@@ -214,7 +214,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             return null;
         }
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
-        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("deliveryWarehouseId").toString())).
+        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("logisticsChannelId").toString())).
                 collect(Collectors.toList());
         if(CollectionUtils.isEmpty(mapList)){
             return new RuleLogisticsDTO.RuleMatchResultDTO();
