@@ -1,15 +1,15 @@
 package com.common.business.pfd.kit.component;
 
+import com.common.business.dto.base.BaseDicDTO;
 import com.common.business.pfd.kit.component.builder.HeaderFooterBuilder;
 import com.common.business.pfd.kit.component.builder.PDFBuilder;
 import com.common.business.pfd.kit.exception.PDFException;
 import com.common.business.pfd.kit.util.FreeMarkerUtil;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.PageSize;
+import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.XMLWorkerFontProvider;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
-import lombok.extern.slf4j.Slf4j;
+import com.lowagie.text.html.simpleparser.HTMLWorker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.xhtmlrenderer.pdf.ITextRenderer;
@@ -18,7 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.Charset;
 
-@Slf4j
+
+
 public class PDFKit {
 
     //PDF页眉、页脚定制工具
@@ -45,8 +46,10 @@ public class PDFKit {
         try{
             //设置输出路径
             outputStream=new FileOutputStream(saveFilePath);
+            //纸张100*100
+            Rectangle EXP = new RectangleReadOnly(283.0F, 425.0F);
             //设置文档大小
-            Document document = new Document(PageSize.A4);
+            Document document = new Document(EXP);
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
 
             //设置页眉页脚
@@ -64,8 +67,6 @@ public class PDFKit {
         return saveFilePath;
 
     }
-
-
 
 
     /**
@@ -157,6 +158,14 @@ public class PDFKit {
     }
 
 
-
+/*    public void convertHtmlToPdf(String htmlContent, String filePath) throws IOException, DocumentException {
+        Document document= new Document(PageSize.A4, 20, 20, 20, 20);
+        PdfWriter.getInstance(document, new FileOutputStream(new File(filePath)));
+        document.open();
+        HTMLWorker htmlWorker = new HTMLWorker(document);
+        // 解析HTML文件
+        htmlWorker.parse(new StringReader(htmlContent));
+        document.close();
+    }*/
 
 }
