@@ -67,7 +67,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param warehouseId
      * @return Boolean
      */
-    Boolean updateWarehouseIdByMainId(String mainId, String warehouseId);
+    Boolean updateWarehouseIdByMainId(String mainId, String warehouseId,Boolean isCover);
     /**
      * @description: 根据主表id删除
      * @author Will

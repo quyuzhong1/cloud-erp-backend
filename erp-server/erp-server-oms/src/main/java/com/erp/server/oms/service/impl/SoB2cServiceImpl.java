@@ -666,6 +666,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
         } else {
+            isCover = Boolean.FALSE;
             //当为空就覆盖
             if (StringUtils.isBlank(existChannelId)) {
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
@@ -679,9 +680,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         //明细仓库更新
-        if (Boolean.TRUE.equals(isCover)) {
-            soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId());
-        }
+        soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(),isCover);
         //配货中
         String billStatus = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
 
@@ -693,6 +692,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //销售订单更新
         entity.setBillStatus(billStatus);
         entity.setAbnormalType("");
+        entity.setIsMatchLogisticsRule(Boolean.TRUE);
         this.updateById(entity);
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
@@ -1595,6 +1595,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getApproveStatus, approveStatus)
                 .set(ApproveStatusEnum.REJECT.getStatus().equals(approveStatus), SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode())
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus),SoB2cEntity::getIsMatchOrderRule,Boolean.TRUE)
                 .update(new SoB2cEntity());
     }
 

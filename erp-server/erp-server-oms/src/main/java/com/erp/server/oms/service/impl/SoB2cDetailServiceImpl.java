@@ -124,7 +124,19 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Boolean updateWarehouseIdByMainId(String mainId, String warehouseId) {
+    public Boolean updateWarehouseIdByMainId(String mainId, String warehouseId,Boolean isCover) {
+
+        List<SoB2cDetailEntity> detailList = this.listByMainId(mainId);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        List<String> detailIdList = detailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+        if (!isCover) {
+            detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return Boolean.TRUE;
+        }
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
@@ -138,11 +150,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.get(0);
         return lambdaUpdate()
-                .eq(SoB2cDetailEntity::getMainId,mainId)
+                .in(SoB2cDetailEntity::getId,detailIdList)
                 .set(SoB2cDetailEntity::getWarehouseId,warehouseId)
                 .set(SoB2cDetailEntity::getWarehouseName,updateDTO.getName())
                 .set(SoB2cDetailEntity::getWarehouseOrgId,updateDTO.getOrgId())
                 .set(SoB2cDetailEntity::getWarehouseOrgName,codeDTO.getName())
+                .set(SoB2cDetailEntity::getIsMatchWarehouseRule,Boolean.TRUE)
                 .update(new SoB2cDetailEntity())
                 ;
     }
