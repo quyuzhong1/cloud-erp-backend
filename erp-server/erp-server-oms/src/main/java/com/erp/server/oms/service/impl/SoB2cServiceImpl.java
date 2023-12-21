@@ -2356,7 +2356,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //仓库数量
         long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
         map.put("deliveryWarehouseQty", warehouseCount);
-        map.put("buyLogisticsChannelId", logisticsEntity.getLogisticsChannelId());
+        map.put("buyLogisticsChannelId", logisticsEntity.getName());
         map.put("destCountry", receiverEntity.getCountry());
         map.put("destCity", receiverEntity.getCityName());
         map.put("orderTaxCost", totalTaxCost);
@@ -2377,13 +2377,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("packageLength", logisticsEntity.getLength());
             detailMap.put("packageHeight", logisticsEntity.getHeight());
             detailMap.put("shop", soB2cEntity.getShopId());
-            detailMap.put("dictLogisticsMethod", logisticsEntity.getLogisticsChannelId());
+            detailMap.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
             detailMap.put("actualShippingCost", logisticsEntity.getActualShippingCost());
             detailMap.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
             detailMap.put("dictPlatform", soB2cEntity.getDictPlatform());
             detailMap.put("isHavebuyerRemark", isHavebuyerRemark);
             detailMap.put("deliveryWarehouseQty", warehouseCount);
-            detailMap.put("sellerLogistics", logisticsEntity.getName());
+            detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
             detailMap.put("destCountry", receiverEntity.getCountry());
             detailMap.put("destCity", receiverEntity.getCityName());
             detailMap.put("orderTaxCost", totalTaxCost);
@@ -2392,7 +2392,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("deliveryWarehouseQty", warehouseCount);
-            detailMap.put("sellerLogistics", logisticsEntity.getName());
             detailMap.put("destCountry", receiverEntity.getCountry());
             detailMap.put("destCity", receiverEntity.getCityName());
             detailMap.put("orderTaxCost", totalTaxCost);
@@ -3336,6 +3335,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean platformWarehouseOrderHandle(SoB2cEntity entity, Map<String, Object> map) {
         String id = entity.getId();
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        //明细信息
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+
         //仓库匹配规则结果
         RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
@@ -3347,17 +3352,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //仓库规则不匹配,标识异常
             updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
             //明细设置仓库规则不匹配
-            soB2cDetailService.updateIsMatchWarehouseRule(entity.getId());
+            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             this.updateById(entity);
             return Boolean.FALSE;
         }
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+        this.updateById(entity);
+
         //更新明细仓库信息
         String warehouseId = ruleMatchResult.getWarehouseId();
-        this.updateById(entity);
-        soB2cDetailService.updateWarehouseId(id, warehouseId, Boolean.TRUE);
-
+        //返回了仓库则更新仓库为空的数据
+        if (StrUtil.isNotBlank(warehouseId)) {
+            for (SoB2cDetailEntity detailEntity : detailList) {
+                if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
+                    continue;
+                }
+                detailEntity.setWarehouseId(warehouseId);
+            }
+            soB2cDetailService.updateWarehouse(detailList);
+        }
         return Boolean.TRUE;
 
     }
