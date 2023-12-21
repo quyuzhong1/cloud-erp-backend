@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
 
+import java.util.List;
+
 /**
  * sku对照表匹配规则
  *
@@ -34,6 +37,16 @@ public class SkuMappingRuleController extends BaseController {
 
     @Resource
     private SkuMappingRuleService skuMappingRuleService;
+    /**
+     * 查询
+     * @author lrp
+     * @date:  2023-12-21
+     * @return ApiResult<String>
+     */
+    @PostMapping("/list")
+    public ApiResult<List<SkuMappingRuleDTO.ViewDTO>> list() {
+        return success(SkuMappingRuleConverter.INSTANCE.entityToViewDto(skuMappingRuleService.listOrderByPriority()));
+    }
 
     /**
     * 新增
@@ -66,7 +79,4 @@ public class SkuMappingRuleController extends BaseController {
         skuMappingRuleService.update(dto);
         return success();
     }
-
-
-
 }
