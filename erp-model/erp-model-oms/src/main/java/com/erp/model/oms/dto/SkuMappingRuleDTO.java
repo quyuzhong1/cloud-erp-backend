@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -23,52 +25,91 @@ import javax.validation.constraints.Digits;
 public class SkuMappingRuleDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 视图DTO
+     */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ViewDTO {
+        /**
+         * id
+         */
+        private String id;
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 优先级
+         */
+        private Integer priority;
 
         /**
-        * 优先级:1-5
-        */
-        private BigDecimal priority;
-
-        /**
-        * 规则类型:
-        */
+         * 规则类型
+         */
         private String ruleType;
 
         /**
-        * 规则正则
-        */
-        private String ruleRegular;
-
-        /**
-        * 扩展规则
-        */
-        private String extendRuleType;
-
-        /**
-        * 扩展规则正则
-        */
-        private String extendRuleRegular;
-
-        /**
-        * 是否禁用
-        */
+         * 状态
+         */
         private Boolean disabled;
 
+        /**
+         * 操作人
+         */
+        private String updateUserName;
 
+        /**
+         * 操作时间
+         */
+        private LocalDateTime updateTime;
     }
+
+    /**
+     * 规则条件
+//     */
+//    @Data
+//    @NoArgsConstructor
+//    public static class ruleConditionsDTO extends CommonDTO {
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//
+//        /**
+//         * 忽略前缀
+//         */
+//        private String ignorePrefix;
+//    }
 
     /**
     * 新增
@@ -116,8 +157,6 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
         * 规则正则
         */
-        @NotBlank(message = "规则正则不能为空")
-        @Size(max = 500,message = "规则正则最大长度不能超过500位")
         private String ruleRegular;
 
         /**
@@ -133,7 +172,6 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
         * 是否禁用
         */
-        @NotNull(message = "是否禁用不能为空")
         private Boolean disabled;
 
 

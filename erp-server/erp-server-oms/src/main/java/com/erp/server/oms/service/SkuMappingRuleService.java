@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * sku对照表匹配规则 服务类
@@ -33,4 +35,5 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
     Boolean update(SkuMappingRuleDTO.UpdateDTO dto);
 
 
+    List<SkuMappingRuleEntity> listOrderByPriority();
 }
