@@ -933,7 +933,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //只有组合SKU允许下推加工单
         List<FirstMileDeliveryDetailEntity> entities = firstMileDeliveryDetailService.listByMainIds(ids);
-        List<FirstMileDeliveryDetailEntity> entityList = entities.stream().filter(req -> Boolean.TRUE.equals(req.getIsCombination())).collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> entityList = entities.stream()
+                .filter(req -> Boolean.TRUE.equals(req.getIsCombination()))
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
         }
@@ -959,6 +961,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         //查询历史子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
+        List<FirstMileDeliveryDTO.GenerateMachineView> result = new ArrayList<>();
 
         for (FirstMileDeliveryDTO.GenerateMachineView view : viewList) {
             //事务类型
@@ -990,7 +994,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     ).collect(Collectors.toList());
 
             if (CollectionUtils.isEmpty(bomSonItemList)) {
-                throw new ServiceException(ApiError.DELIVERY_NOT_COMBINATION_NOT_MACHINE, view.getCode());
+                continue;
             }
 
             for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
@@ -1008,9 +1012,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 sonItemList.add(sonItem);
             }
             view.setSonItemList(sonItemList);
+
+            result.add(view);
         }
 
-        return viewList;
+        return result;
     }
 
     @Override
