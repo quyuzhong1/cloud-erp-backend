@@ -629,9 +629,15 @@ public class LogisticsProductDTO {
 
         /**
          * 原产国
+         * 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @Size(max =50,message = "原产国最大50字符")
         private String sourceCountry;
+
+        /**
+         * 原产国中文名
+         */
+        private String sourceCountryName;
 
 
         /**

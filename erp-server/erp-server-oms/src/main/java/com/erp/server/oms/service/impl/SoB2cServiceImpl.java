@@ -3384,7 +3384,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         if (!distributionSuccess) {
             //仓库规则不匹配,标识异常
-            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
+            entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode());
             //明细设置仓库规则不匹配
             List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
             soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
