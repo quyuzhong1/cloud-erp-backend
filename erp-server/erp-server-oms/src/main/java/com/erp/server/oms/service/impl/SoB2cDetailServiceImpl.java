@@ -431,15 +431,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
                     detailEntity.setWarehouseOrgName(companyDTO.getName());
                 }
+
+                //库存SKU
+                SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
+                    detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo());
+                }
             }
 
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
-
-            //库存SKU
-            SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
-                detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo());
-            }
             //平台SKU
             SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
