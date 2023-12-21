@@ -413,9 +413,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //表示成功
         if (orderResult.isSuccess()) {
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
-            SoB2cErrorDTO.DeleteDTO  deleteDTO=new  SoB2cErrorDTO.DeleteDTO();
-            //删除异常信息
-            soB2cFeign.deleteError(deleteDTO);
             return trackNoList;
         } else {
             LogisticsOrderResponseVO responseVO= orderResult.getData();
@@ -424,15 +421,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sb.append(responseVO.getMessage());
             }
             String message=sb.toString();
-            SoB2cErrorDTO.AddDTO error = new SoB2cErrorDTO.AddDTO();
-            //订单id
-            error.setMainId(dto.getOrderId());
-            error.setType(SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            error.setMessage(message);
-            error.setParamJson(JSONObject.toJSONString(logisticsOrderVO));
-            error.setReturnJson(JSONObject.toJSONString(orderResult));
-            //添加异常信息
-            soB2cFeign.addSoB2cError(error);
             throw new ServiceException(orderResult.getCode(), message);
         }
 
