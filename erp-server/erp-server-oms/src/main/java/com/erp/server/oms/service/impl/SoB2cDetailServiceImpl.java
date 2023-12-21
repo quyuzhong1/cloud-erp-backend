@@ -204,7 +204,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo) {
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
         // 来源为空
@@ -267,7 +267,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }).collect(Collectors.toList());
 
         // 其他处理
-        consumerHandleDetailList(saveOrUpdateList, mainEntity);
+        consumerHandleDetailList(saveOrUpdateList, mainEntity, skuList);
 
         // 批量保存和更新
          if (!this.saveOrUpdateBatch(saveOrUpdateList)){
@@ -280,17 +280,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * 消费明细处理
      */
     @Override
-    public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity) {
-        List<String> skuIds = list.stream()
-                .map(SoB2cDetailEntity::getSkuId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<SkuVO> skuList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(skuIds)){
-            skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        }
-
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuVO> skuList) {
 
         for (SoB2cDetailEntity detailEntity :list) {
             //产品信息

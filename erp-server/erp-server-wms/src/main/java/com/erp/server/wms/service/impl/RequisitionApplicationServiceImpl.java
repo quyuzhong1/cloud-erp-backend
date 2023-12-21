@@ -18,6 +18,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -25,6 +26,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -712,8 +714,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
         //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
+
+        List<String> soutceCodeList = detailEntityList.stream().map(req -> req.getSourceCode()).distinct().collect(Collectors.toList());
+
         addDTO.setSourceId("");
-        addDTO.setSourceCode("");
+        addDTO.setSourceCode(String.join(",", soutceCodeList));
         addDTO.setRemark("");
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
@@ -731,8 +736,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && req.getBomVersion().equals(detailEntity.getBomVersion()))
-                    .collect(Collectors.toList());
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
 
             // 子件需要拆分
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
@@ -797,8 +803,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
+        List<String> soutceCodeList = detailEntityList.stream().map(req -> req.getSourceCode()).distinct().collect(Collectors.toList());
         addDTO.setSourceId("");
-        addDTO.setSourceCode("");
+        addDTO.setSourceCode(String.join(",", soutceCodeList));
         addDTO.setRemark("");
 
         //详情信息
@@ -817,8 +824,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && req.getBomVersion().equals(detailEntity.getBomVersion()))
-                    .collect(Collectors.toList());
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
 
             // 子件需要拆分
             if (CollectionUtils.isNotEmpty(sonSkuList)) {

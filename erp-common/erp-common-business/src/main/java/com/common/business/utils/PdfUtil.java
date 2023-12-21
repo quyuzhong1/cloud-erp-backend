@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.StrUtils;
 import com.lowagie.text.Document;
 import lombok.Cleanup;
 import org.apache.commons.collections.CollectionUtils;
@@ -31,22 +33,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 public class PdfUtil {
-    public static void main(String[] args) throws WriterException {
-        String barcodeText = "123456789";  // 要编码的文本
-        int width = 300;  // 条形码的宽度
-        int height = 100;  // 条形码的高度
-        Path file = FileSystems.getDefault().getPath("barcode.png");  // 输出的文件路径
-        Code128Writer code128Writer = new Code128Writer();
-        Map<EncodeHintType, Object> hints = new HashMap<>();
-        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");  // 设置字符集，如果你需要的话
-        BitMatrix bitMatrix = null;
-        bitMatrix = code128Writer.encode(barcodeText, BarcodeFormat.CODE_128, width, height, hints);
-        try {
-            MatrixToImageWriter.writeToPath(bitMatrix, "PNG", file);  // 输出为PNG格式，你也可以选择其他格式，如JPEG等
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 
     /**
      * pdf 合并操作2
@@ -54,8 +41,9 @@ public class PdfUtil {
      * @param base64Pdfs  多个pdf的base64编码文件
      * @return
      */
-    public static String getNewMergePdfBase64_2(List<String> base64Pdfs) throws Exception {
+    public static String getNewMergePdfBase64(List<String> base64Pdfs) throws Exception {
         String newPdfName = null;
+        String prefix = "data:application/pdf;base64,";
         try{
             List<byte[]> byteLists = base64ToByte(base64Pdfs);
             // 将pdf的byte[] 数据生成新的pdf文件
@@ -66,7 +54,7 @@ public class PdfUtil {
             newPdfName = "report_"+UUID.randomUUID().toString()+".pdf";
             mergePdfFiles2(byteLists,newPdfName);
             @Cleanup FileInputStream fileInputStream = new FileInputStream(newPdfName);
-            return base64ForPdf(fileInputStream);
+            return prefix.concat(base64ForPdf(fileInputStream));
         }finally {
             // 如果临时文件存在，则删除临时文件
             if(StringUtils.isNotBlank(newPdfName)){

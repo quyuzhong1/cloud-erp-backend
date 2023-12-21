@@ -2,9 +2,11 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -102,4 +104,24 @@ public interface LogisticsBillFeign {
      **/
     @GetMapping("/feign/logisticsBill/getLogisticsBillByTrackNo")
     LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo);
+
+    /**
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
+     * @param list
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    @PostMapping("/feign/logisticsBill/printLogisticsWaybill")
+    List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(@RequestBody List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list);
+
+    /**
+     * 根据渠道id查询渠道打印类型
+     * @Author Luo_WG
+     * @Date 2023/12/20 17:12
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
+     **/
+    @PostMapping("/feign/logisticsBill/listPrintTypeByChannelIds")
+    List<LogisticsPrintTypeEntity> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList);
 }

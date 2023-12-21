@@ -12,6 +12,7 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
@@ -212,6 +213,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         if (Objects.isNull(map)) {
             return null;
         }
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
+        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("logisticsChannelId").toString())).
+                collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(mapList)){
+            return new RuleLogisticsDTO.RuleMatchResultDTO();
+        }
+        map.put("detailList",mapList);
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
         handleDataList(ruleLogisticsList);
         List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());

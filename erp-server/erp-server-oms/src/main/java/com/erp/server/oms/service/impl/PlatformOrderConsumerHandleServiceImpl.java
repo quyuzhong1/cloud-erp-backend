@@ -8,21 +8,21 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +60,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private ShopInfoService shopInfoService;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -124,10 +127,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 查询国家信息
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(shopInfo.getDictCountryCode()));
 
+        List<String> skuIds = listingInfoWithSkuMappingDTOMap.values().stream()
+                .map(ListingInfoWithSkuMappingDTO::getProductSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(skuIds)){
+            skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        }
+
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
         // 详情更新或保存
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo);
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存

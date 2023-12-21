@@ -101,6 +101,14 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
     }
 
+    @Override
+    public List<LogisticsPrintTypeEntity> listByChannelIds(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList).list();
+    }
+
     public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsPrintTypeEntity::getLogisticsChannelId, channelId).list();
     }
