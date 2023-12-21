@@ -650,29 +650,27 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         //物料编码
         List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //仓库
-        List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         List<String> warehouseCodeList = warehouseList.stream().map(WarehouseEntity::getKingdeeWarehouseCode).collect(Collectors.toList());
         //组织
         List<String> orgIdList = list.stream().map(InventoryDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
         List<String> orgCodeList = orgList.stream().map(BaseIdDTO.CodeDTO::getCode).collect(Collectors.toList());
-        //金蝶库存学习
+        //金蝶库存信息
         List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
 
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
-        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.forEach(data -> {
             // 仓库名称赋值
-            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), v -> warehouseService.detailWithCache(v));
-            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                data.setWarehouseName(warehouseDetail.getName());
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+                data.setWarehouseName(warehouseEntity.getName());
             }
             // 仓库组织
-            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(), v -> sysUserFeign.getCompanyById(v));
-            if (Objects.nonNull(sysAccountingCompanyEntity)) {
-                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            BaseIdDTO.CodeDTO orgDTO = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(orgDTO)) {
+                data.setOrgName(orgDTO.getName());
             }
             if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
