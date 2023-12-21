@@ -32,6 +32,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_404_NOT_FIND(404, "接口路径不存在"),
     ERROR_405(405, "方法不被允许"),
+    ERROR_500(500, "系统异常"),
     ERROR_600(600, "缺少参数"),
     ERROR_400(400, "参数错误"),
     GLOBAL_EXCEPTION_UN_KNOW(500, "未知异常：【{}】"),
@@ -543,6 +544,7 @@ public enum ApiError implements Serializable {
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
     ERP_DMP_SKU_NOT_COST(97044, "sku【{}】未发现成本数据！"),
 
+    ERROR_97044(97044, "已使用的模块不能删除"),
 
     /**
      * SCM 错误
@@ -868,6 +870,13 @@ public enum ApiError implements Serializable {
     WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
+    IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
+    b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
+    IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+    ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
+    DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"发货单【{}】的组合SKU不包含销售套装BOM，无需下推加工单"),
+
 
 
     /**
