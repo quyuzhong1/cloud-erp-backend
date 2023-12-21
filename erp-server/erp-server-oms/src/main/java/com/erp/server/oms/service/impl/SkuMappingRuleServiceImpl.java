@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
 import com.erp.server.oms.service.SkuMappingRuleService;
