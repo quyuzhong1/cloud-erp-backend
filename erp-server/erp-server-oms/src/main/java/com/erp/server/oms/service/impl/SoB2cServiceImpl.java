@@ -413,6 +413,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param dto
      */
     private void approveProcess(SoB2cEntity entity, ApproveOneDTO dto) {
+        //无需流程则直接更新状态
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
+            approveEnd(dto, entity);
+            return;
+        }
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -2270,7 +2275,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 approveMsg = "自动审核通过";
             }
             //自动审核通过
-            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg));
+            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg,Boolean.FALSE));
             if (!approve.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_94006);
             }
