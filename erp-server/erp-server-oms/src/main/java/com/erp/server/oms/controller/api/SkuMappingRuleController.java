@@ -37,6 +37,7 @@ public class SkuMappingRuleController extends BaseController {
 
     @Resource
     private SkuMappingRuleService skuMappingRuleService;
+
     /**
      * 查询
      * @author lrp
@@ -44,8 +45,20 @@ public class SkuMappingRuleController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/list")
-    public ApiResult<List<SkuMappingRuleDTO.ViewDTO>> list() {
-        return success(SkuMappingRuleConverter.INSTANCE.entityToViewDto(skuMappingRuleService.listOrderByPriority()));
+    public ApiResult<List<SkuMappingRuleDTO.ListDTO>> list() {
+        return success(SkuMappingRuleConverter.INSTANCE.entityToListDto(skuMappingRuleService.listOrderByPriority()));
+    }
+
+    /**
+     * 详情
+     * @author lrp
+     * @date:  2023-12-21
+     * @return ApiResult<String>
+     */
+    @PostMapping("/view")
+    public ApiResult<SkuMappingRuleDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        SkuMappingRuleDTO.ViewDTO viewDTO = skuMappingRuleService.view(dto.getId());
+        return success(viewDTO);
     }
 
     /**
@@ -78,5 +91,44 @@ public class SkuMappingRuleController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated SkuMappingRuleDTO.UpdateDTO dto) {
         skuMappingRuleService.update(dto);
         return success();
+    }
+
+    /**
+     * 启用或禁用
+     * @author lrp
+     * @date:  2023-12-21
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/enableOrDisable")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "sku对照表匹配规则修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:skuMappingRule:update",
+            serviceClass = SkuMappingRuleService.class,
+            keyIdName = "id")
+    public ApiResult<?> enableOrDisable(@RequestBody @Validated SkuMappingRuleDTO.StatusDTO dto) {
+        skuMappingRuleService.enableOrDisable(dto);
+        return success();
+    }
+
+
+    /**
+     * 测试
+     * @author lrp
+     * @date:  2023-12-21
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/getSkuRuleTest")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "sku对照表匹配规则修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:skuMappingRule:update",
+            serviceClass = SkuMappingRuleService.class,
+            keyIdName = "id")
+    public ApiResult<List<String>> getSkuRuleTest(@RequestBody @Validated SkuMappingRuleDTO.RuleTestDTO dto) {
+        List<String> result = skuMappingRuleService.getSkuRuleTest(dto);
+        return success(result);
     }
 }

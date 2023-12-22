@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -36,4 +37,10 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
 
 
     List<SkuMappingRuleEntity> listOrderByPriority();
+
+    Boolean enableOrDisable(SkuMappingRuleDTO.StatusDTO dto);
+
+    SkuMappingRuleDTO.ViewDTO view(String id);
+
+    List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
 }

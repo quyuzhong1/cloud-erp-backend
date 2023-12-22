@@ -1,7 +1,5 @@
 package com.common.core.constant;
 
-import java.util.Arrays;
-
 /**
  * @author Will
  * @version 1.0
@@ -18,6 +16,16 @@ public interface EnumMessage {
         for (EnumMessage enumValue : enumType.getEnumConstants()) {
             if (enumValue.getCode().equals(code)) {
                 return enumValue.getName();
+            }
+        }
+        return null;
+    }
+
+    // 默认方法，通过code获取枚举实例
+    static <T extends Enum<T> & EnumMessage> T getByCode(Class<T> enumType, Object code) {
+        for (T enumValue : enumType.getEnumConstants()) {
+            if (enumValue.getCode().equals(code)) {
+                return enumValue;
             }
         }
         return null;

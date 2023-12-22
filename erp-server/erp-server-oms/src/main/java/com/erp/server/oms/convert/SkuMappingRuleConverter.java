@@ -13,7 +13,8 @@ import java.util.List;
 public interface SkuMappingRuleConverter {
     SkuMappingRuleConverter INSTANCE = Mappers.getMapper(SkuMappingRuleConverter.class);
 
-    SkuMappingRuleDTO.ViewDTO entityToViewDto(SkuMappingRuleEntity skuMappingRuleEntity);
-    List<SkuMappingRuleDTO.ViewDTO> entityToViewDto(List<SkuMappingRuleEntity> skuMappingRuleEntity);
+    SkuMappingRuleDTO.ListDTO entityToListDto(SkuMappingRuleEntity skuMappingRuleEntity);
+    List<SkuMappingRuleDTO.ListDTO> entityToListDto(List<SkuMappingRuleEntity> skuMappingRuleEntity);
 
+    SkuMappingRuleDTO.ViewDTO entityToViewDto(SkuMappingRuleEntity skuMappingRuleEntity);
 }
