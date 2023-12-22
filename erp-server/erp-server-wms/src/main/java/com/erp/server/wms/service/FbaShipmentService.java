@@ -4,6 +4,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -143,6 +144,8 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @date 2023/11/10
      **/
     void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
+
+    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList);
 
     /**
      * 通过fbaShipmentId查询实体
