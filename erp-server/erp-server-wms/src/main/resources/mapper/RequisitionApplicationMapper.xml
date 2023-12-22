@@ -218,8 +218,8 @@
             rad.bom_version,
             rad.approve_qty AS approveQty,
             rad.picking_qty AS pickingQty
-        FROM requisition_application ra
-        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        FROM requisition_application_detail rad
+        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND ra.id IN
