@@ -170,6 +170,8 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      **/
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds);
 
+    LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById();
+
     /**
      * 根据名称匹配现在的渠道
      * @param channelName

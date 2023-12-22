@@ -405,6 +405,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return list;
     }
 
+    @Override
+    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById() {
+        return null;
+    }
+
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
