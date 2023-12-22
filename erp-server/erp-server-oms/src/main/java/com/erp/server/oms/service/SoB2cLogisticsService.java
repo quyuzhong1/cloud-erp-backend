@@ -67,10 +67,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @author Will
      * @date: 2023/8/24 15:51
      * @param mainId
-     * @param logisticsCode
+     * @param transportNo
+     * @param trackNo
      * @return Boolean
      */
-    Boolean updateLogisticsCode(String mainId, String logisticsCode);
+    Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo);
 
     /**
      * 平台订单明细更新或保存

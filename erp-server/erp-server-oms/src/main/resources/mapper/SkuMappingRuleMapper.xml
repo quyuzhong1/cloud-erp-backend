@@ -14,10 +14,12 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="priority" property="priority" />
        <result column="rule_type" property="ruleType" />
-       <result column="rule_regular" property="ruleRegular" />
+       <result column="rule_regex" property="ruleRegex" />
        <result column="extend_rule_type" property="extendRuleType" />
-       <result column="extend_rule_regular" property="extendRuleRegular" />
+       <result column="extend_rule_regex" property="extendRuleRegex" />
        <result column="disabled" property="disabled" />
+       <result column="rule_content" property="ruleContent" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
+       <result column="extend_rule_content" property="extendRuleContent" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -31,7 +33,7 @@
         update_time,
         version,
         is_deleted,
-        priority, rule_type, rule_regular, extend_rule_type, extend_rule_regular, disabled
+        priority, rule_type, rule_regex, extend_rule_type, extend_rule_regex, disabled, rule_content, extend_rule_content
     </sql>
 
 

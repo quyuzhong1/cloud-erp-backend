@@ -40,7 +40,7 @@ class YanWenServiceTest {
     @Test
     public void createWayBill() {
         YanWenCreateWayBillRequest yanWenCreateWayBillRequest = YanWenCreateWayBillRequest.builder()
-                .orderNumber("weiji1233211")
+                .orderNumber("weiji1233211123")
                 .channelId("155")
                 .orderSource("weijiERP")
                 .receiverInfo(YanWenCreateWayBillRequest.ReceiverInfo.builder()
@@ -73,11 +73,12 @@ class YanWenServiceTest {
     @Test
     public void getLabel() {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-                .waybillNumber("LR084318011CN")
+                .waybillNumber("LR098273757CN")
+                .printRemark(1)
                 .build();
         YanWenResponse<YanWenGetLabel> response = yanWenService.getLabel(request,authMap);
         String base64 = response.getData().getBase64String();
-        FileUtil.base64ToFile(base64,"wayBill.pdf","C:\\Users\\Administrator\\Desktop");
+        FileUtil.base64ToFile(base64,"wayBill1.pdf","C:\\Users\\Administrator\\Desktop");
         System.out.println(response);
     }
 
