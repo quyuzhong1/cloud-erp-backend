@@ -1435,11 +1435,8 @@ public class Order {
     /**
      * 转换订单时间为系统时区
      */
-    public LocalDateTime convertPurchaseSystemTime() {
-        return LocalDateTime.parse(this.purchaseDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                .atZone(ZoneOffset.UTC)
-                .toLocalDateTime()
-                ;
+    public LocalDateTime convertPurchaseLocalDateTime() {
+        return LocalDateTime.parse(this.purchaseDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     public String convertBillStatus() {
