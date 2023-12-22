@@ -36,6 +36,7 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -291,7 +292,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
 
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
@@ -327,7 +330,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              * 总共已发货数量同步
              *
              */
-            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSourceDetailId().equals(item.getId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSoDetailId().equals(item.getId())).
+                    map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
             /**
              * 剩余数量

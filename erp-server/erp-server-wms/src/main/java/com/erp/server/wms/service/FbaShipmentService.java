@@ -4,6 +4,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -120,6 +121,15 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
 
     /**
+     * 批量更新sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/6 11:29
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO skuMappingBatch(String id);
+
+    /**
      * FBA货件相关保存
      *
      * @author Jim
@@ -134,6 +144,8 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @date 2023/11/10
      **/
     void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
+
+    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList);
 
     /**
      * 通过fbaShipmentId查询实体
@@ -150,15 +162,6 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO delete(String id);
-
-    /**
-     * 批量更新sku映射
-     * @Author Luo_WG
-     * @Date 2023/11/6 11:29
-     * @param id
-     * @return com.common.business.dto.base.BatchResultDTO
-     **/
-    BatchResultDTO skuMappingBatch(String id);
 
     /**
      * 下推要货申请列表查询

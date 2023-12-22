@@ -119,6 +119,10 @@ public class ImlService {
         if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
             respDto.setData(respDto.getReceivingCode());
         }
+        if(StringUtils.isNotBlank(respDto.getMessage()) && respDto.getMessage().contains("不可编辑")){
+            respDto.setAsk("Success");
+            respDto.setData(imlGetReceiptReq.getReceivingCode());
+        }
         return respDto;
     }
     /**
