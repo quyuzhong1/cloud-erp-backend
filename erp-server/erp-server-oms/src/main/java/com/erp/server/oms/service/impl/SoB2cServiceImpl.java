@@ -757,10 +757,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.success(entity.getId(), logisticsCode, "获取物流单号");
         } catch (Exception e) {
             String type = SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
+            message = e.getMessage();
             //添加异常信息
             soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
-            message = e.getMessage();
-
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", message);
         }
         return BatchResultDTO.fail(entity.getId(), "", message);

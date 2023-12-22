@@ -266,7 +266,7 @@ public class ShopDTO implements Serializable {
         /**
          * ioss税号
          */
-        private Boolean  iossTaxNo;
+        private String  iossTaxNo;
 
         /**
          * 区域id
@@ -362,7 +362,7 @@ public class ShopDTO implements Serializable {
         /**
          * ioss税号
          */
-        private Boolean  iossTaxNo;
+        private String  iossTaxNo;
 
         /**
          * 国家id
@@ -503,7 +503,7 @@ public class ShopDTO implements Serializable {
         /**
          * ioss税号
          */
-        private Boolean  iossTaxNo;
+        private String  iossTaxNo;
 
         /**
          * 销售组织
