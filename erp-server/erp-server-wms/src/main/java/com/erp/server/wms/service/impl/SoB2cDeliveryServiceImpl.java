@@ -191,12 +191,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
             }
 
-            //调用第三方平台SDK发货
-            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-            platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-            platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-            paramJson=JSONObject.toJSONString(platformShipOrderDTO);
+            //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
+            if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
+                //调用第三方平台SDK发货
+                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                paramJson=JSONObject.toJSONString(platformShipOrderDTO);
+            }
+
             //修改发货状态
             this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
 

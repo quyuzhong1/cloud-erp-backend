@@ -167,8 +167,8 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167723");
-        logisticsQueryVO2.setTransportNo("SF7444475244124");
+        logisticsQueryVO2.setDeliveryNo("XSDS23122200010");
+        logisticsQueryVO2.setTransportNo("SF7444475423374");
         logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = expressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
