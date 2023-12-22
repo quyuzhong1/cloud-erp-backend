@@ -200,6 +200,61 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO skuMappingBatch(String id) {
+        FbaShipmentEntity entity = this.getById(id);
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
+
+        if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+        }
+
+        List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
+        //根据平台sku查询Listing信息
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(mskuList);
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+        //根据sku查询拥有的子sku
+        List<String> skuIds = skuDTOS.stream().map(req -> req.getProductSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
+
+            FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
+            BeanMapper.copy(detailEntity, old);
+
+            SkuMappingDTO.MappingSkuViewDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
+            //校验对照表是否有对照关系
+            if (ObjectUtil.isNotEmpty(skuDTO)) {
+                detailEntity.setSkuNo(skuDTO.getProductSkuNo());
+                detailEntity.setSkuId(skuDTO.getProductSkuId());
+                detailEntity.setAsin(skuDTO.getPlatformSpuNo());
+                //查询sku是否存在子SKU
+                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(skuDTO.getProductSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                    detailEntity.setIsCombination(Boolean.TRUE);
+                } else {
+                    detailEntity.setIsCombination(Boolean.FALSE);
+                }
+
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+                }
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(),detailEntity.getMainId(),"",String.format("【%s】",old.getSkuNo()));
+
+                fbaShipmentDetailService.updateById(detailEntity);
+            } else {
+                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无对照关系！");
+            }
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pullShipment(FbaShipmentDTO.pullShipmentDTO dto) {
         // 检查当前店铺是否授权
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
@@ -1189,50 +1244,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA货件单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "删除FBA货件单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO skuMappingBatch(String id) {
-        FbaShipmentEntity entity = this.getById(id);
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
-
-
-        if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
-        }
-
-        List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
-        //根据平台sku查询Listing信息
-        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(mskuList);
-        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
-        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-
-        for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
-
-            FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
-            BeanMapper.copy(detailEntity, old);
-
-            SkuMappingDTO.MappingSkuViewDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
-            //校验对照表是否有对照关系
-            if (ObjectUtil.isNotEmpty(skuDTO)) {
-                detailEntity.setSkuNo(skuDTO.getProductSkuNo());
-                detailEntity.setSkuId(skuDTO.getProductSkuId());
-                detailEntity.setAsin(skuDTO.getPlatformSpuNo());
-
-                if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
-                }
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(),detailEntity.getMainId(),"",String.format("【%s】",old.getSkuNo()));
-
-                fbaShipmentDetailService.updateById(detailEntity);
-            } else {
-                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无对照关系！");
-            }
-        }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
     }
 
     @Override
