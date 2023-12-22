@@ -4,16 +4,10 @@ package com.erp.server.oms.controller.feign;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.server.oms.service.ShopAuthService;
-import com.erp.server.oms.service.SoB2cDetailService;
-import com.erp.server.oms.service.SoB2cLogisticsService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +36,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
 
     /**
@@ -169,5 +166,21 @@ public class SoB2cFeignController extends BaseController {
     public Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList) {
         Boolean flag = soB2cService.updateDistributeWaybill(waybillDTOList);
         return flag;
+    }
+
+    /**
+     * 根据b2c订单id获取买家信息
+     * @Author Luo_WG
+     * @Date 2023/12/22 9:20
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cLogisticsEntity>
+     **/
+    @PostMapping("/listSoB2cReceiverByMainIdList")
+    public List<SoB2cReceiverEntity> listSoB2cReceiverByMainIdList(@RequestBody List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cReceiverEntity> list = soB2cReceiverService.listByMainIds(mainIdList);
+        return list;
     }
 }

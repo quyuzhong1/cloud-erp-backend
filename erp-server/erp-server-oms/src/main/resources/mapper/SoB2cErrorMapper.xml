@@ -15,7 +15,7 @@
        <result column="type" property="type" />
        <result column="param_json" property="paramJson" />
        <result column="message" property="message" />
-       <result column="return_json" property="returnJson" />
+       <result column="return_json" property="returnJson"  />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -30,6 +30,9 @@
         version,
         main_id, type, param_json, message, return_json
     </sql>
+    <delete id="deleteB2cError">
+        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type}
+    </delete>
 
 
 </mapper>

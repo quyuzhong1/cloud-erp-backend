@@ -49,7 +49,7 @@ public class PDFKit {
             //纸张100*100
             Rectangle EXP = new RectangleReadOnly(283.0F, 425.0F);
             //设置文档大小
-            Document document = new Document(EXP);
+            Document document = new Document(com.itextpdf.text.PageSize.A4,0,100,0,100);
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
 
             //设置页眉页脚

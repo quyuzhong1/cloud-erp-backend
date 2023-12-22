@@ -7,8 +7,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -31,6 +34,8 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -364,6 +369,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
+        skuMaping.setIsDeleted(true);
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
@@ -564,6 +570,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
+        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
         if (!updateResult){
             throw new ServiceException("更新失败");
@@ -912,6 +919,40 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
         return baseMapper.listByParams(dto);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        SkuMappingEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("SKU映射关系不存在"));
+        ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
+        // 无平台
+        if (StringUtils.isBlank(entity.getDictPlatform()) || !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())){
+            if (!this.removeById(id)){
+                throw new ServiceException("删除映射失败,请重试");
+            }
+            if( null != listingInfoEntity){
+                if (!listingInfoService.removeById(listingInfoEntity.getId())){
+                    throw new ServiceException("删除映射Listing失败,请重试");
+                }
+            }
+            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+        }
+        // 有平台
+        // 判断映射关系是否存在
+        if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())){
+            throw new ServiceException("映射关系已删除");
+        }
+        entity.setProductSkuNo("");
+        entity.setProductSkuId("");
+        if (!this.updateById(entity)){
+            throw new ServiceException("删除映射失败,请重试");
+        }
+        listingInfoEntity.setMatchResult(false);
+        if (!listingInfoService.updateById(listingInfoEntity)){
+            throw new ServiceException("删除映射Listing失败,请重试");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
     }
 
 }

@@ -43,7 +43,7 @@ public class SoB2cDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
+         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单）
          */
         private String tabFlag;
 
@@ -121,6 +121,17 @@ public class SoB2cDTO implements Serializable {
          * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
         private List<String> abnormalTypeList;
+
+        /**
+         * 异常订单（b2cOrderErrorType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> orderErrorTypeList;
+
+
+        /**
+         * 是否异常订单 前端不用赋值
+         */
+        private Boolean isOrderError;
     }
 
     /**
@@ -325,6 +336,11 @@ public class SoB2cDTO implements Serializable {
          * 是否匹配物流规则
          */
         private Boolean isMatchLogisticsRule;
+
+        /**
+         * 订单异常的标示
+         */
+        private String signOrderError;
 
 
         /**

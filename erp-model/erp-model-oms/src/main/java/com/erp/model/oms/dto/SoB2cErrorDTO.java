@@ -74,6 +74,26 @@ public class SoB2cErrorDTO implements Serializable {
     }
 
     /**
+     * 异常订单显示参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class  InfoDTO{
+
+        /**
+         * 销售订单id
+         */
+        private String id;
+
+        /**
+         * 类型 来源于订单的异常类型
+         *
+         */
+        private String type;
+
+    }
+
+    /**
     * 修改
     */
     @Data

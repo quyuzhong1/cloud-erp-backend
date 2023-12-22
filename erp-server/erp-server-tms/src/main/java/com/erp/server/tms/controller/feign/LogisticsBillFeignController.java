@@ -90,7 +90,7 @@ public class LogisticsBillFeignController {
      * @date 2023-11-23
      */
     @PostMapping("/generateBill")
-    public List<String> generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
+    public LogisticsBillDTO.GenerateBillResultDTO generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         return logisticsBillService.generateBill(dto);
     }
     
@@ -154,6 +154,18 @@ public class LogisticsBillFeignController {
     public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo) {
         LogisticsBillDTO.BaseDTO entity = logisticsBillService.getBaseByTrackNo(trackNo);
         return entity;
+    }
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param transportNoList
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @PostMapping("/listLogisticsBillByTrackNos")
+    public List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTrackNos(@RequestBody List<String> transportNoList) {
+        List<LogisticsBillDTO.BaseDTO> list = logisticsBillService.listLogisticsBillByTransportNos(transportNoList);
+        return list;
     }
 
     /**

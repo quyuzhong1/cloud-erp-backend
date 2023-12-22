@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -120,7 +121,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@author yl
      *@date 2023-11-23
      */
-    List<String> generateBill(LogisticsBillDTO.GenerateBillDTO dto);
+    LogisticsBillDTO.GenerateBillResultDTO generateBill(LogisticsBillDTO.GenerateBillDTO dto);
 
     /**
      * 根据销售出单ids获取物流单
@@ -156,6 +157,15 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
      **/
     LogisticsBillDTO.BaseDTO getBaseByTrackNo(String trackNo);
+
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param trackNoList
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTransportNos(List<String> trackNoList);
 
     /**
      * 打印物流面单/配货单

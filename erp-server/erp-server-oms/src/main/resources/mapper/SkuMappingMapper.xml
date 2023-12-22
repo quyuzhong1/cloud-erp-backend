@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SkuMappingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SkuMappingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="shop_id" property="shopId" />
+       <result column="platform_name" property="platformName" />
+       <result column="product_sku_id" property="productSkuId" />
+       <result column="product_sku_no" property="productSkuNo" />
+       <result column="effective_time" property="effectiveTime" />
+       <result column="expire_time" property="expireTime" />
+       <result column="is_expire" property="isExpire" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="product_name" property="productName" />
+       <result column="listing_id" property="listingId" />
+       <result column="type" property="type" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="has_mapping_all" property="hasMappingAll" />
+       <result column="rule_id" property="ruleId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        shop_id, platform_name, product_sku_id, product_sku_no, effective_time, expire_time, is_expire, dict_platform, product_name, listing_id, type, warehouse_id, warehouse_name, has_mapping_all, rule_id
+    </sql>
+
 
     <!--分页-->
     <select id="paging" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
@@ -34,6 +76,9 @@
         AND sm.is_expire = FALSE
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
+        </if>
+        <if test="params.matchResult!=null">
+            AND li.match_result=#{params.matchResult}
         </if>
         <if test="params.shopIdList !=null and params.shopIdList.size>0">
             AND sm.shop_id IN
@@ -266,6 +311,9 @@
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
+        <if test="params.matchResult!=null">
+            AND li.match_result=#{params.matchResult}
+        </if>
         <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
             AND sm.warehouse_id IN
             <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
@@ -431,11 +479,11 @@
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,
-               sm.product_sku_id,
-               sm.product_sku_no,
-               li.platform_sku_no,
-               li.platform_sku_name,
-               li.type
+        sm.product_sku_id,
+        sm.product_sku_no,
+        li.platform_sku_no,
+        li.platform_sku_name,
+        li.type
         FROM listing_info li
         LEFT JOIN sku_mapping sm
         ON sm.listing_id = li.id
@@ -453,13 +501,13 @@
     <!--根据平台sku查询sku映射信息-->
     <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
         SELECT li.id AS listingId,
-            sm.id,
-            sm.product_sku_id,
-            sm.product_sku_no,
-            li.platform_sku_no AS platformSkuNo,
-            li.platform_sku_name AS platformProductName,
-            li.platform_spu_no AS platformSpuNo,
-            li.platform_spu_name AS platformSpuName
+        sm.id,
+        sm.product_sku_id,
+        sm.product_sku_no,
+        li.platform_sku_no AS platformSkuNo,
+        li.platform_sku_name AS platformProductName,
+        li.platform_spu_no AS platformSpuNo,
+        li.platform_spu_name AS platformSpuName
         FROM sku_mapping sm
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE
@@ -490,16 +538,16 @@
 
     <select id="listStockSkuNoByProductSkuIds" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListStockSkuNoByProductSkuIdView">
         SELECT
-            DISTINCT
-            li.id AS listingId,
-            sm.product_sku_id,
-            sm.product_sku_no,
-            sm.product_name,
-            sm.warehouse_id,
-            sm.warehouse_name,
-            sm.dict_platform,
-            li.platform_sku_no AS stockSku,
-            li.platform_sku_name AS stockSkuName
+        DISTINCT
+        li.id AS listingId,
+        sm.product_sku_id,
+        sm.product_sku_no,
+        sm.product_name,
+        sm.warehouse_id,
+        sm.warehouse_name,
+        sm.dict_platform,
+        li.platform_sku_no AS stockSku,
+        li.platform_sku_name AS stockSkuName
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE

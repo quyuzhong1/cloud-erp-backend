@@ -57,6 +57,7 @@
         sb2c.source_code as sourceCode,
         sb2c.is_match_order_rule as isMatchOrderRule,
         sb2c.is_match_logistics_rule as isMatchLogisticsRule,
+        sb2c.sign_order_error as signOrderError,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -159,6 +160,17 @@
                     #{item}
                 </foreach>
             </if>
+            <!-- 异常订单类型 -->
+            <if test="params.orderErrorTypeList != null and params.orderErrorTypeList.size > 0">
+                and sb2c.sign_order_error in
+                <foreach collection="params.orderErrorTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <!-- 是否异常订单 -->
+            <if test="params.isOrderError != null ">
+                and sb2c.sign_order_error !=''
+            </if>
             <if test="params.labelList != null and params.labelList.size > 0">
                 <foreach collection="params.labelList" item="item">
                     <if test="item == 'frozen'">
@@ -235,6 +247,9 @@
                 <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
+            </if>
+            <if test="params.isOrderError != null ">
+                   and sb2c.sign_order_error !=''
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}

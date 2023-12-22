@@ -155,6 +155,16 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String soCode;
 
         /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名
+         */
+        private String shopName;
+
+        /**
         * 来源id
         */
         @NotBlank(message = "来源id不能为空")
@@ -473,11 +483,6 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
-        /**
-         * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
-         */
-        private String printType;
         /**
          * 销售单id
          */

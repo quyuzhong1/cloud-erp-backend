@@ -197,6 +197,11 @@ public class SkuMappingDTO implements Serializable {
          */
         private List<String> platformFnSkuList;
 
+        /**
+         * 是否匹配：true=是, false=否
+         */
+        private Boolean matchResult;
+
     }
 
 
@@ -282,7 +287,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
-
+        /**
+         * 是否匹配：true=是, false=否
+         */
+        private Boolean matchResult;
     }
 
 

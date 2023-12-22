@@ -67,6 +67,38 @@ public class FbaShipmentController extends BaseController {
         Boolean flag = fbaShipmentService.skuMapping(dto);
         return flag ? success() : failure();
     }
+
+
+    /**
+     * 批量更新sku映射
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/skuMappingBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = fbaShipmentService.skuMappingBatch(id);
+            } catch (Exception e) {
+                log.error("FBA货件单更新sku映射失败",e);
+                FbaShipmentEntity entity = fbaShipmentService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 更新sku映射失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
     /**
      * 拉取货件信息
      * @param dto
@@ -217,36 +249,6 @@ public class FbaShipmentController extends BaseController {
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 批量更新sku映射
-     * @author Luo_WG
-     * @date:  2023-10-30
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/skuMappingBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
-    public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = fbaShipmentService.skuMappingBatch(id);
-            } catch (Exception e) {
-                log.error("FBA货件单更新sku映射失败",e);
-                FbaShipmentEntity entity = fbaShipmentService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 更新sku映射失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }

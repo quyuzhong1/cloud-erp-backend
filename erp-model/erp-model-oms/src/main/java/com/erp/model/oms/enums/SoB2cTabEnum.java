@@ -20,6 +20,7 @@ public enum SoB2cTabEnum {
     ENUM_SHIPPED("shipped",  "已发货"),
     ENUM_FROZEN("frozen",  "冻结中"),
     ENUM_INVALID("invalid",  "已作废"),
+    ENUM_ORDER_ERROR("orderError",  "异常订单"),
 
     ;
     /**

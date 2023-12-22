@@ -1,8 +1,10 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +18,14 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
 
+    
+    /**
+     * 删除异常订单
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2023-12-21 15:00
+     */
+    Boolean deleteB2cError(@Param("params") SoB2cErrorDTO.DeleteDTO dto);
 }

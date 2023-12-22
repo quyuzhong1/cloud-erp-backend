@@ -264,6 +264,11 @@ public class ShopDTO implements Serializable {
         private Boolean  isHaveWarehouse;
 
         /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
+
+        /**
          * 区域id
          */
         private String dictAreaCode;
@@ -353,6 +358,11 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓  true 包含
          */
         private Boolean  isHaveWarehouse;
+
+        /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
 
         /**
          * 国家id
@@ -489,6 +499,11 @@ public class ShopDTO implements Serializable {
          */
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
+
+        /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
 
         /**
          * 销售组织

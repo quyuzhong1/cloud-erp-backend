@@ -624,6 +624,11 @@ public class LogisticsBillDTO implements Serializable {
         private String shopName;
 
         /**
+         * IOSS 税号
+         */
+        private String iossTaxNo;
+
+        /**
          * 币别
          */
         private String currency;
@@ -662,6 +667,24 @@ public class LogisticsBillDTO implements Serializable {
         @Size(min = 1,message = "sku信息不能为空")
         @NotNull(message = "sku信息不能为空L")
         private List<SkuDTO> skuList;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateBillResultDTO{
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private List<String> trackNoList;
 
 
     }
@@ -883,9 +906,9 @@ public class LogisticsBillDTO implements Serializable {
         private String channelId;
 
         /**
-         * 跟踪单号
+         * 运单号
          */
-        private String trackNo;
+        private String transportNo;
 
         /**
          * 发货单号

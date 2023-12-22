@@ -166,8 +166,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId, String logisticsCode) {
-        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).set(SoB2cLogisticsEntity::getCode, logisticsCode).update(new SoB2cLogisticsEntity());
+    public Boolean updateLogisticsCode(String mainId,  String transportNo, String trackNo) {
+        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
+                set(SoB2cLogisticsEntity::getCode, transportNo).
+                set(SoB2cLogisticsEntity::getTrackNo, trackNo).
+                update(new SoB2cLogisticsEntity());
     }
 
     @Override
@@ -196,7 +199,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
 
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPayMethod());
+        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
 
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());

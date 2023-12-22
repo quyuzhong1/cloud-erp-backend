@@ -176,6 +176,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
             rate = new BigDecimal("7.13");
         }
+        String sourceCountryName = "";
         BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
             //目的国申报价
@@ -184,7 +185,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
                 productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
             }
-
+            //原产国
+            String sourceCountry = productLogistics.getSourceCountry();
+            if (StringUtils.isNotBlank(sourceCountry)) {
+                DictCountryEntity countryEntity = sysUserFeign.getCountryById(sourceCountry);
+                if (Objects.nonNull(countryEntity)) {
+                    sourceCountryName = countryEntity.getNameCn();
+                }
+            }
             BeanMapper.copy(productLogistics, declareInfo);
         }
         //这个是属性id 可能多个逗号分割
@@ -198,7 +206,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         //物流属性
         productBaseInfo.setLogisticsPropertyName(propertyName);
-
+        declareInfo.setSourceCountryName(sourceCountryName);
         result.setDeclareInfo(declareInfo);
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
@@ -358,20 +366,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList);
-        String isElectricFlag= ProductConstant.IS_ELECTRIC;
+        String isElectricFlag = ProductConstant.IS_ELECTRIC;
         //属性
         List<String> propertyIdList = list.stream().map(LogisticsProductDTO.ProductDTO::getProductPropertyId).distinct().collect(Collectors.toList());
         List<BasicDictEntity> dictList = CollectionUtils.isNotEmpty(propertyIdList) ? basicDictService.listByIds(propertyIdList) : Collections.emptyList();
         for (LogisticsProductDTO.ProductDTO item : list) {
             //毛重
             BigDecimal grossWeight = item.getGrossWeight();
-            Integer weight=0;
-            if(Objects.nonNull(grossWeight)){
-                weight=grossWeight.intValue();
+            Integer weight = 0;
+            if (Objects.nonNull(grossWeight)) {
+                weight = grossWeight.intValue();
             }
             item.setWeight(weight);
-            String propertyId=item.getProductPropertyId();
-            String flag=dictList.stream().filter(d->d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
+            String propertyId = item.getProductPropertyId();
+            String flag = dictList.stream().filter(d -> d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
             item.setIsElectric(isElectricFlag.equals(flag));
         }
         return list;
@@ -677,8 +685,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
     public static void main(String[] args) {
-        BigDecimal grossWeight=new BigDecimal("10.2");
-       Integer weight=grossWeight.intValue();
+        BigDecimal grossWeight = new BigDecimal("10.2");
+        Integer weight = grossWeight.intValue();
         System.out.println(weight);
     }
 }
