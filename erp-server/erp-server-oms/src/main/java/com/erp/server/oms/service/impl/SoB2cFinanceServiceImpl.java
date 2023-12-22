@@ -119,7 +119,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         if (null == financeDTO){
             //获取主表下物流记录
             SoB2cFinanceEntity oldEntity = getByMainId(mainEntity.getId());
-            if( null != oldEntity ){
+            if( null == oldEntity ){
                 SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(null, mainEntity.getId());
                 // 无信息新增空表
                 if (!this.save(entity)){

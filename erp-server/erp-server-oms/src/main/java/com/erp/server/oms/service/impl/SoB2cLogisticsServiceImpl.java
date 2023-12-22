@@ -192,7 +192,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
 
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPayMethod());
+        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
 
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());

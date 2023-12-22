@@ -234,7 +234,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                     .code(p.getPackageNumber())
                     .name(LogisticsPlatformEnum.SHOPEE.getName())
                     .deliveryTime(LocalDateTime.ofInstant(instant, zone))
-                    .logisticsChannelId(p.getShippingCarrier())
+//                    .logisticsChannelId(p.getShippingCarrier())
                     .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
                     .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                     .accessoriesCostCurrency(orderDetail.getCurrency())
