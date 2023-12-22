@@ -337,7 +337,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<String> generateBill(LogisticsBillDTO.GenerateBillDTO dto) {
+    public LogisticsBillDTO.GenerateBillResultDTO generateBill(LogisticsBillDTO.GenerateBillDTO dto) {
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
@@ -376,23 +376,23 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             BigDecimal price = item.getDeclarePrice();
             item.setPrice(price);
             item.setQuantity(qty);
-            item.setAmount(MathUtil.multiply(price,qty));
+            item.setAmount(MathUtil.multiply(price, qty));
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
         List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(skuInfoList);
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
-        Boolean hasBattery = skuInfoList.stream().filter(s->s.getIsElectric()).count()>0;
+        Boolean hasBattery = skuInfoList.stream().filter(s -> s.getIsElectric()).count() > 0;
         //是否带电
         parceInfo.setHasBattery(hasBattery);
-        Integer totalQuantity=skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
+        Integer totalQuantity = skuInfoList.stream().mapToInt(LogisticsProductDTO.ProductDTO::getQuantity).sum();
         parceInfo.setTotalQuantity(totalQuantity);
 
         //申报总价
-        BigDecimal totalPrice=skuInfoList.stream().filter(s->Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice = skuInfoList.stream().filter(s -> Objects.nonNull(s.getDeclarePrice())).map(LogisticsProductDTO.ProductDTO::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         parceInfo.setTotalPrice(totalPrice);
         //总重量
-        Integer totalWeight=skuInfoList.stream().filter(s->Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
+        Integer totalWeight = skuInfoList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
         parceInfo.setTotalWeight(totalWeight);
 
         //根据销售平台和渠道code 获取到原生的渠道
@@ -413,15 +413,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {
-            List<String> trackNoList = handleBill(orderResult.getData(), dto);
-            return trackNoList;
+            LogisticsBillDTO.GenerateBillResultDTO resultDTO  = handleBill(orderResult.getData(), dto);
+            return resultDTO;
         } else {
-            LogisticsOrderResponseVO responseVO= orderResult.getData();
-            StringBuilder sb=new StringBuilder(orderResult.getMsg());
-            if(Objects.nonNull(responseVO)){
+            LogisticsOrderResponseVO responseVO = orderResult.getData();
+            StringBuilder sb = new StringBuilder(orderResult.getMsg());
+            if (Objects.nonNull(responseVO)) {
                 sb.append(responseVO.getMessage());
             }
-            String message=sb.toString();
+            String message = sb.toString();
             throw new ServiceException(orderResult.getCode(), message);
         }
 
@@ -430,7 +430,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
     @Transactional(rollbackFor = Exception.class)
-    public List<String> handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
+    public  LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
+        LogisticsBillDTO.GenerateBillResultDTO resultDTO = new LogisticsBillDTO.GenerateBillResultDTO();
         List<String> trackNoList = new ArrayList<>(2);
         LogisticsBillEntity billEntity = new LogisticsBillEntity();
         billEntity.setChannelId(dto.getChannelId());
@@ -464,7 +465,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillDetailService.add(billEntity, detailList);
         //新增物流费用单
         addLogisticsBillCost(billEntity, dto.getCurrency());
-        return trackNoList;
+        resultDTO.setTransportNo(trackNo);
+        resultDTO.setTrackNoList(trackNoList);
+        return resultDTO;
 
     }
 
@@ -500,7 +503,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderVO.setTransportNo(dto.getTransportNo());
         cancelOrderVO.setReason(dto.getReason());
         cancelOrderList.add(cancelOrderVO);
-        if(StringUtils.isBlank(dto.getTransportNo())){
+        if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (Objects.isNull(billBase.getId())) {
                 throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
@@ -516,15 +519,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //是否成功
         if (thirdPartyResult.isSuccess()) {
             //将自发货费用状态改成作废
-            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo,dto.getTransportNo()).last("limit 1").one();
-            if(Objects.nonNull(logisticsBillEntity)){
+            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo, dto.getTransportNo()).last("limit 1").one();
+            if (Objects.nonNull(logisticsBillEntity)) {
                 logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
             }
         }
         ApiResult<CancelResponseVO> result = new ApiResult<>();
         result.setMsg(thirdPartyResult.getMsg());
         result.setCode(thirdPartyResult.getCode());
-        if(CollectionUtils.isNotEmpty(thirdPartyResult.getData())){
+        if (CollectionUtils.isNotEmpty(thirdPartyResult.getData())) {
             result.setData(thirdPartyResult.getData().get(0));
         }
         return result;
@@ -546,7 +549,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         interceptOrderVO.setTransportNo(dto.getTransportNo());
         interceptOrderVO.setInterceptReason(dto.getReason());
         interceptOrderVOList.add(interceptOrderVO);
-        if(StringUtils.isBlank(dto.getTransportNo())){
+        if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (Objects.isNull(billBase.getId())) {
                 throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
@@ -562,13 +565,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //是否成功
         if (thirdPartyResult.isSuccess()) {
             //将自发货费用状态改成作废
-            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo,dto.getTransportNo()).last("limit 1").one();
+            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo, dto.getTransportNo()).last("limit 1").one();
             logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
         }
         ApiResult<InterceptResponseVO> result = new ApiResult<>();
         result.setMsg(thirdPartyResult.getMsg());
         result.setCode(thirdPartyResult.getCode());
-        if(CollectionUtils.isNotEmpty(thirdPartyResult.getData())){
+        if (CollectionUtils.isNotEmpty(thirdPartyResult.getData())) {
             result.setData(thirdPartyResult.getData().get(0));
         }
         return result;
@@ -683,10 +686,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     /**
      * 打印物流面单/配货单
-     * @Author Luo_WG
-     * @Date 2023/12/20 14:34
+     *
      * @param list
      * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
      **/
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)

@@ -671,6 +671,24 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateBillResultDTO{
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private List<String> trackNoList;
+
+
+    }
+
 
     /**
      * 取消物流单

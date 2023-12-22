@@ -79,7 +79,7 @@ public interface LogisticsBillFeign {
      * @return
      */
     @PostMapping("/feign/logisticsBill/generateBill")
-    List<String> generateBill(@RequestBody LogisticsBillDTO.GenerateBillDTO dto);
+    LogisticsBillDTO.GenerateBillResultDTO generateBill(@RequestBody LogisticsBillDTO.GenerateBillDTO dto);
 
     /**
      * 取消物流单

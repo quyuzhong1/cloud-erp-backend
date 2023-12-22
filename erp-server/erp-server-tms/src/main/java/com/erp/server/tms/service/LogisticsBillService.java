@@ -121,7 +121,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@author yl
      *@date 2023-11-23
      */
-    List<String> generateBill(LogisticsBillDTO.GenerateBillDTO dto);
+    LogisticsBillDTO.GenerateBillResultDTO generateBill(LogisticsBillDTO.GenerateBillDTO dto);
 
     /**
      * 根据销售出单ids获取物流单

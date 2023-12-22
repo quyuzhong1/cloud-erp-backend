@@ -738,12 +738,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
             paramJson = JSONObject.toJSONString(generateBillDTO);
             //货取物流单号
-            List<String> logisticsTrackNoList = logisticsBillFeign.generateBill(generateBillDTO);
-            if (CollectionUtils.isEmpty(logisticsTrackNoList)) {
+            LogisticsBillDTO.GenerateBillResultDTO resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
+            if (Objects.isNull(resultDTO)) {
                 throw new ServiceException("下物流单失败");
             }
-            String logisticsCode = logisticsTrackNoList.stream().collect(Collectors.joining(","));
-            soB2cLogisticsService.updateLogisticsCode(id, logisticsCode);
+            String trackNo = resultDTO.getTrackNoList().stream().collect(Collectors.joining(","));
+            String transportNo=resultDTO.getTransportNo();
+            soB2cLogisticsService.updateLogisticsCode(id, transportNo,trackNo);
             if (Boolean.TRUE.equals(isDelivery)) {
                 //提交发货
                 submitDelivery(id);
@@ -753,9 +754,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.updateById(entity);
             //操作日志
             String msg = "获取物流单号【{}】";
-            operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, transportNo), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
             soB2cErrorService.removeErrorOrder(id, SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            return BatchResultDTO.success(entity.getId(), logisticsCode, "获取物流单号");
+            return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
         } catch (Exception e) {
             String type = SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             message = e.getMessage();
@@ -3368,7 +3369,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 走仓库规则 通过就是审核通过 并待发货
      * 没有通过就是审核通过有待配货
      *
-     * @param entity
+     * @param
      * @param map
      * @return
      * @description
