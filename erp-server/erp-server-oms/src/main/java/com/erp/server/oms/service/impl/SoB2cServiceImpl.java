@@ -2567,9 +2567,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
+    /**
+     * 获取标记发货参数
+     * @param soB2cId
+     * @return
+     */
     @Override
-    public SoB2cDTO.SignShipOrderDTO soB2cService(String soB2cId) {
-        return null;
+    public SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId) {
+        SoB2cDTO.SignShipOrderDTO result=baseMapper.getSignShipParam(soB2cId);
+        return result;
     }
 
     /**

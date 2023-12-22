@@ -85,4 +85,11 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
+
+    /**
+     * 获取标记发货的信息
+     * @param soB2cId
+     * @return
+     */
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(@Param("id") String soB2cId);
 }

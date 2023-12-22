@@ -190,6 +190,6 @@ public class SoB2cFeignController extends BaseController {
      */
     @PostMapping("/getSignShipParam")
     public SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String soB2cId){
-         return  soB2cService.soB2cService(soB2cId);
+         return  soB2cService.getSignShipParam(soB2cId);
     }
 }

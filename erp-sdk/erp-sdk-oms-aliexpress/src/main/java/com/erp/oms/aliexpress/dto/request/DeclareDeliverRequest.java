@@ -3,6 +3,7 @@ package com.erp.oms.aliexpress.dto.request;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -45,5 +46,6 @@ public class DeclareDeliverRequest implements Serializable {
     /**
      * 物流服务名称 原生渠道服务名 对应logistics_sale_channel 表supplier_name
      */
+    @NotBlank(message = "物流服务商不能为空")
     private String serviceName;
 }
