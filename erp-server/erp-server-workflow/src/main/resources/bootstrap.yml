@@ -8,6 +8,9 @@ server:
 
 logging:
   config: classpath:logback-spring.xml
+  level:
+    com.alibaba.nacos.client.naming: WARN
+    com.alibaba.nacos.client.config.impl: WARN
 mybatis-plus:
   type-enums-package: com.common.*.enums, com.erp.model.*.enums
 

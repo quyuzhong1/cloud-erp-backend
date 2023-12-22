@@ -9,3 +9,6 @@ server:
 
 logging:
   config: classpath:logback-spring.xml
+  level:
+    com.alibaba.nacos.client.naming: WARN
+    com.alibaba.nacos.client.config.impl: WARN
