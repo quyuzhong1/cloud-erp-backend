@@ -3300,7 +3300,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!StringUtil.isEmpty(chargeId)){
             deptUser = sysUserFeign.getDeptByUserId(chargeId);
         }
-        if (Objects.isNull(deptUser)) {
+        if (Objects.nonNull(deptUser)) {
             dto.setSalesDeptId(deptUser.getDepartmentId());
         }
         if (Objects.isNull(soB2cLogistics)) {
