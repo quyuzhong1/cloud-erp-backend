@@ -876,6 +876,7 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
+    IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
 
 
 
