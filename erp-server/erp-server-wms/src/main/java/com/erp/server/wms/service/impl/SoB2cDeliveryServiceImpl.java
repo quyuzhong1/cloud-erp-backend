@@ -441,9 +441,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //明细信息
         List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
 
-        List<String> base64List = dto.getDetailList().stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
-
-        List<String> list = new ArrayList<>();
+        List<String> base64List = new ArrayList<>();
 
         //查询打印类型
         List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
@@ -519,7 +517,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     if (StringUtils.isNotBlank(soB2cEntity.getDistributeWaybill())) {
                         base64List.add(soB2cEntity.getLogisticsWaybill());
                     } else {
-                        String distributeWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getDistributeBase64()).findFirst().orElse("");
+                        String distributeWaybill = platformWaybill.stream()
+                                .filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())
+                                        && StringUtils.isNotBlank(req.getDistributeBase64())
+                                ).map(req -> req.getDistributeBase64())
+                                .findFirst().orElse("");
                         if (StringUtils.isNotBlank(distributeWaybill)) {
                             base64List.add(distributeWaybill);
                         }
@@ -539,7 +541,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         try {
-            return PdfUtil.getNewMergePdfBase64(list);
+            return PdfUtil.getNewMergePdfBase64(base64List);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_PDF_MERGE);
         }
@@ -556,7 +558,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      **/
     private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities, SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO) {
         List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
-        List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream().filter(req -> StringUtils.isBlank(req.getLogisticsWaybill()) || StringUtils.isBlank(req.getDistributeWaybill())).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream().filter(req -> StringUtils.isBlank(req.getLogisticsWaybill())).collect(Collectors.toList());
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
             LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
