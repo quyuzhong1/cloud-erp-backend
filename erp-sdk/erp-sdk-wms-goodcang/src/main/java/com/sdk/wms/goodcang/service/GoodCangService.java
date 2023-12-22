@@ -140,6 +140,10 @@ public class GoodCangService {
         if(Objects.nonNull(respDto.getData())){
             respDto.setData(JSONObject.parseObject(respDto.getData()).get("receiving_code").toString());
         }
+        if(StringUtils.isNotBlank(respDto.getMessage()) && respDto.getMessage().contains("不允许修改")){
+            respDto.setAsk("Success");
+            respDto.setData(goodCangCreateInboundReq.getReceivingCode());
+        }
         return respDto;
     }
 
