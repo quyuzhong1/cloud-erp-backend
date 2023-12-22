@@ -243,7 +243,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
-
+        if (StrUtil.isEmpty(soB2cEntity.getSourceType())) {
+            soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+        }
         // 数据处理
         handleData(soB2cEntity, true, true);
         //创建时间
@@ -1940,6 +1942,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isNotEmpty(soB2cEntity.getPayTime()) && checkPayTime) {
             soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
+
     }
 
     /**
