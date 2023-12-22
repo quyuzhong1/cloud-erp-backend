@@ -25,8 +25,8 @@
         fsd.declare_qty AS declareQty,
         fsd.diff_qty AS diffQty,
         fsd.is_combination AS isCombination
-        FROM fba_shipment fs
-        INNER JOIN fba_shipment_detail fsd ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        FROM fba_shipment_detail fsd
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE fs.is_deleted = FALSE
         <!--单据编号-->
         <if test="params.code != null and params.code != ''">
