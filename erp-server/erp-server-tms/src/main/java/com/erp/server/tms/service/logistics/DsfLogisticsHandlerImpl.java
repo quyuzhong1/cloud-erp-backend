@@ -293,6 +293,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
                 .labelSize("label_100x150")
+                .isPrintPickInfo(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark() ? "Y" : "N")
                 .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
                 .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();
@@ -367,13 +368,15 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+
     /**
      * 授权判断
+     *
      * @param authMap
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult authorization(Map<String, String> authMap) {
         try {
             ChanelRequest chanelRequest = ChanelRequest.builder()
                     .transport_mode("1")
@@ -382,13 +385,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
                 //授权失败
                 return failure("授权失败");
-            }else {
+            } else {
                 return success("授权成功");
             }
         } catch (Exception e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
+
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.DSF;

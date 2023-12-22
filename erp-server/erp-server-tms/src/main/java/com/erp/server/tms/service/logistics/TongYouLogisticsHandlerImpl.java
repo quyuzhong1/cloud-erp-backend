@@ -110,7 +110,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderNo(logisticsGetLabelVO.getDeliveryNo())
                     .trackNo(logisticsGetLabelVO.getTrackNo())
                     .logisticsId(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
-                    .isPaoc(logisticsGetLabelVO.getIsPdn())
+                    .isPaoc(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark()? "Y":"N")
                     .isPcd(logisticsGetLabelVO.getIsPcd())
                     .build();
             try {
