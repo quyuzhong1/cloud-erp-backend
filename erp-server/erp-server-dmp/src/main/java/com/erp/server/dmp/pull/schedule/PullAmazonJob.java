@@ -147,7 +147,6 @@ public class PullAmazonJob {
             try {
                 // 下载和处理详情
                 PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, null);
-                Thread.sleep(10000);
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.ORDER.getCode();
