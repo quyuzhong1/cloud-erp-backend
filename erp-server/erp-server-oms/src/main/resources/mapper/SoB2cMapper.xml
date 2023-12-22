@@ -151,14 +151,14 @@
                 </foreach>
             </if>
             <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
-                and sb2c.sign_order_error in
+                and sb2c.abnormal_type in
                 <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
             <!-- 异常订单类型 -->
             <if test="params.orderErrorTypeList != null and params.orderErrorTypeList.size > 0">
-                and sb2c.abnormal_type in
+                and sb2c.sign_order_error in
                 <foreach collection="params.orderErrorTypeList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>

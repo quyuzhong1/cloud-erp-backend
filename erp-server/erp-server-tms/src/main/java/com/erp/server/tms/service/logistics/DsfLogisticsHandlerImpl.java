@@ -293,7 +293,11 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
                 .labelSize("label_100x150")
+                .isPrintTime("Y")
+                .isPrintDeclarationList(logisticsGetLabelVO.getIsPcd())
                 .isPrintPickInfo(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark() ? "Y" : "N")
+                .createPackageLabel(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark() ? "Y" : "N")
+                .isPrintPickBarcode(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark() ? "Y" : "N")
                 .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
                 .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();
