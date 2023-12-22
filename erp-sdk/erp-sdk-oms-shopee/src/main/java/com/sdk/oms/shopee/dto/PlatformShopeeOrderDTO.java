@@ -208,6 +208,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
                 .name(orderDetail.getBuyerUsername())
+                .receiverName(orderDetail.getBuyerUsername())
                 .telNumber(recipientAddress.getPhone())
                 .receiverTelNumber(recipientAddress.getPhone())
                 .email("")
@@ -247,9 +248,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
     }
 
     public static PlatformOrderFinanceDTO parseFinances(OrderDetail orderDetail) {
-        if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
-            return null;
-        }
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
                 .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))

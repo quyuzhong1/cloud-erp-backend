@@ -3296,7 +3296,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setCustomerId(shopInfoEntity.getCustomerId());
         dto.setSellerId(chargeId);
         dto.setSellerName(shopInfoEntity.getChargeName());
-        SysDepartmentUserNumberDTO deptUser = sysUserFeign.getDeptByUserId(chargeId);
+        SysDepartmentUserNumberDTO deptUser = null;
+        if (!StringUtil.isEmpty(chargeId)){
+            deptUser = sysUserFeign.getDeptByUserId(chargeId);
+        }
         if (Objects.isNull(deptUser)) {
             dto.setSalesDeptId(deptUser.getDepartmentId());
         }
