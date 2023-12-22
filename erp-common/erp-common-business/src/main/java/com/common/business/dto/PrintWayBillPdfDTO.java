@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.List;
  * 填充html生成pfd面单
  */
 @Data
+@Accessors(chain = true)
 public class PrintWayBillPdfDTO {
     /**
      * 打印时间

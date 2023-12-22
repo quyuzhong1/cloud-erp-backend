@@ -3,10 +3,7 @@ package com.erp.rpc.oms.feign;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -114,4 +111,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2cError/delete")
     void deleteError(SoB2cErrorDTO.DeleteDTO deleteDTO);
+
+    /**
+     * 根据b2c订单id获取买家信息
+     * @Author Luo_WG
+     * @Date 2023/12/22 9:20
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cLogisticsEntity>
+     **/
+    @PostMapping("/feign/soB2c/listSoB2cReceiverByMainIdList")
+    List<SoB2cReceiverEntity> listSoB2cReceiverByMainIdList(@RequestBody List<String> mainIdList);
 }

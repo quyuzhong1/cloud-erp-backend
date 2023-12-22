@@ -888,9 +888,9 @@ public class LogisticsBillDTO implements Serializable {
         private String channelId;
 
         /**
-         * 跟踪单号
+         * 运单号
          */
-        private String trackNo;
+        private String transportNo;
 
         /**
          * 发货单号

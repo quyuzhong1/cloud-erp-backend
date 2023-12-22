@@ -583,6 +583,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return baseMapper.getBaseByTrackNo(trackNo);
     }
 
+    @Override
+    public List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTransportNos(List<String> transportNoList) {
+        if (CollectionUtils.isEmpty(transportNoList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillByTransportNos(transportNoList);
+    }
+
     private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -702,13 +710,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
 
-            //根据跟踪单号查询运单
-            LogisticsBillDTO.BaseDTO baseByTrackNo = this.getBaseByTrackNo(dto.getTrackNo());
-            if (ObjectUtil.isNotEmpty(baseByTrackNo)) {
-                getLabelVO.setTransportNo(baseByTrackNo.getTransportNo());
-            }
+            //运单号
+            getLabelVO.setTransportNo(dto.getTransportNo());
+
             //物流跟踪号
-            getLabelVO.setTrackNo(dto.getTrackNo());
+            List<LogisticsBillDTO.BaseDTO> baseDTOList = this.listLogisticsBillByTransportNos(Arrays.asList(dto.getTransportNo()));
+            if (CollectionUtils.isNotEmpty(baseDTOList)) {
+                getLabelVO.setTrackNo(baseDTOList.get(0).getTrackNo());
+            }
+
             //授权信息
             getLabelVO.setAuthMap(authMap);
 
@@ -721,10 +731,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             ApiResult<List<LogisticsPrintLabelResponse>> labelList = null;
             try {
                 labelList = service.getLabelList(labelVOArrayList);
+
             } catch (IOException e) {
+                log.info("入参：{} 获取平台物流标签失败：" + e.getMessage(), labelVOArrayList.toArray());
                 return Collections.emptyList();
             }
             SoB2cDTO.WaybillDTO waybillDTO = new SoB2cDTO.WaybillDTO();
+            for (LogisticsPrintLabelResponse datum : labelList.getData()) {
+                if ("500".equals(datum.getCode())) {
+                    log.info("入参：{} 获取平台物流标签失败", labelVOArrayList.toArray());
+                    throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, datum.getMessage());
+                }
+            }
+
             waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
             waybillDTO.setSoB2cId(dto.getB2cSoId());
             waybillDTO.setTrackNo(getLabelVO.getTrackNo());

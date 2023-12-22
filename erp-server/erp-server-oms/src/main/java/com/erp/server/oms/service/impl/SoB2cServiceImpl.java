@@ -62,6 +62,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
@@ -2500,10 +2501,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            lambdaUpdate()
-                    .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getLogisticsBase64())
-                    .eq(SoB2cEntity::getId, waybillDTO.getSoB2cId())
-                    .update();
+            if (StringUtils.isNotBlank(waybillDTO.getLogisticsBase64()) && StringUtils.isNotBlank(waybillDTO.getSoB2cId())) {
+                lambdaUpdate()
+                        .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getLogisticsBase64())
+                        .eq(SoB2cEntity::getId, waybillDTO.getSoB2cId())
+                        .update();
+            }
+
         }
         return Boolean.TRUE;
     }
@@ -2511,10 +2515,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
         for (SoB2cDTO.WaybillDTO distributeWaybillDTO : waybillDTOList) {
-            lambdaUpdate()
-                    .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeBase64())
-                    .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
-                    .update();
+            if (StringUtils.isNotBlank(distributeWaybillDTO.getDistributeBase64()) && StringUtils.isNotBlank(distributeWaybillDTO.getSoB2cId())) {
+                lambdaUpdate()
+                        .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeBase64())
+                        .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
+                        .update();
+            }
         }
         return Boolean.TRUE;
     }

@@ -106,6 +106,16 @@ public interface LogisticsBillFeign {
     LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo);
 
     /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param transportNoList
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @PostMapping("/feign/logisticsBill/listLogisticsBillByTrackNos")
+    List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTrackNos(@RequestBody List<String> transportNoList);
+
+    /**
      * 打印物流面单/配货单
      * @Author Luo_WG
      * @Date 2023/12/20 14:34
