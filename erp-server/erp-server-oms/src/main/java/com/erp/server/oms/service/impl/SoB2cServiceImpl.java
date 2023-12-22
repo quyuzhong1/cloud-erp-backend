@@ -1495,7 +1495,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 logisticsChannelName = channelEntity.getName();
             }
         }
-        logisticsDTO.setLogisticsChannelName(logisticsChannelName);
+        //虾皮存在物流渠道名称，无物流渠道id情况
+        if(StringUtil.isEmpty(logisticsDTO.getLogisticsChannelName())){
+            logisticsDTO.setLogisticsChannelName(logisticsChannelName);
+        }
         data.setLogisticsDTO(logisticsDTO);
         //买家
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
