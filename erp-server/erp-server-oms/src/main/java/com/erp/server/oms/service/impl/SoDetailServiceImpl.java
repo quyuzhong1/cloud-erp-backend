@@ -293,6 +293,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
