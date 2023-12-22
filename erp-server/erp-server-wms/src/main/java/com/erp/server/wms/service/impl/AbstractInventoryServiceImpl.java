@@ -373,7 +373,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 //如果库存为空，新增一条0库存的记录,不加入当前事务，避免下面的负库存校验抛异常后导致0库存的记录被回滚
                 InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.copyInOutStockCoreDTO(param);
                 zeroInventoryParam.setQty(0);
-                InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,inventoryStatusEnum,warehouseInfo.getOrgId());
+                InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.createZeroInventoryRecord(zeroInventoryParam,inventoryStatusEnum,warehouseInfo.getOrgId());
                 inventory = inventoryRelationDTO.getInventory();
             }
             String inventoryStatusName = Optional.of(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
@@ -549,7 +549,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
             InOutStockCoreDTO zeroInventoryParam = InOutStockCoreConverter.INSTANCE.baseToInOutStockCoreDTO(param);
             zeroInventoryParam.setQty(0);
-            InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.saveOrUpdateRelationInventoryNewTransactional(zeroInventoryParam,status,warehouseInfo.getOrgId());
+            InventoryRelationDTO inventoryRelationDTO = abstractInventoryService.createZeroInventoryRecord(zeroInventoryParam,status,warehouseInfo.getOrgId());
             inventory = inventoryRelationDTO.getInventory();
         }
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocation,skuId, skuNo, sourceTypeEnum.getName(),
@@ -612,7 +612,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class,propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
-    public InventoryRelationDTO saveOrUpdateRelationInventoryNewTransactional(InOutStockCoreDTO param, InventoryStatusEnum inventoryStatusEnum, String orgId) {
+    public InventoryRelationDTO createZeroInventoryRecord(InOutStockCoreDTO param, InventoryStatusEnum inventoryStatusEnum, String orgId) {
        return this.saveOrUpdateRelationInventory(param,inventoryStatusEnum,orgId);
     }
 }
