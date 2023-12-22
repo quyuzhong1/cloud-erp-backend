@@ -893,6 +893,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (!fbaShipmentReceiveService.saveBatch(newReceiveEntityList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
             }
+
+            handlerWarehouse(entity, newReceiveEntityList);
         }
     }
 
@@ -1037,110 +1039,115 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         });
 
 
-        //其他入库单明细信息
-        List<OtherInstockDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+
 
         if (CollectionUtils.isNotEmpty(saveReceiveList)){
             if (!fbaShipmentReceiveService.saveBatch(saveReceiveList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveReceiveList));
             }
-            // 查询是否有发货单号
-            FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
+            handlerWarehouse(entity, saveReceiveList);
+        }
+    }
 
+    @Override
+    public void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList) {
+        // 查询是否有发货单号
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
 
-            // 当前店铺
-            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
-            //根据用户id查询用户详情信息
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(shopInfoEntity.getChargeId());
-            if (null != deliveryEntity ){
+        //其他入库单明细信息
+        List<OtherInstockDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+        // 当前店铺
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+        //根据用户id查询用户详情信息
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(shopInfoEntity.getChargeId());
+        if (null != deliveryEntity ){
 
-                // 校验是否手动完结，如果已经手动完结，多余的放到其他入库，入到目的仓然后return，不用调拨
-                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
-                    //查询原签收数量，比较新获取的签收数量，多的新增其他入库
-                    for (FbaShipmentReceiveEntity detailEntity : saveReceiveList) {
-                        OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
-                        addDTO.setSkuId(detailEntity.getSkuId());
-                        addDTO.setSkuNo(detailEntity.getSkuNo());
-                        addDTO.setWarehouseLocation("");
-                        addDTO.setActualQty(detailEntity.getReceiveQty());
-                        addDTO.setRemark(StrUtil.format("FBA货件【{}】超收，自动生成其他入库报溢", entity.getCode()));
-                        detailAddList.add(addDTO);
-                    }
-                    if (CollectionUtils.isNotEmpty(detailAddList)){
-                        FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
-                        String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
-                        this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
-                    }
-                    return;
-                }
-
-                //新增直接调拨单:在途仓-目的仓
-                String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
-                if (StringUtils.isNotBlank(transferOutId)) {
-                    //提交
-                    transferInfoService.submit(Arrays.asList(transferOutId));
-                    //审核
-                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                    baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                    baseApproveParamDTO.setType(ApproveType.PASS);
-                    transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-                } else {
-                    throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
-                }
-
-                // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
-                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
-                    this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
-                }
-
-                //如果收货数量等于发货数量，修改货件状态为自动完结
-                List<FbaShipmentDetailEntity> allDetailList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-                int receiveQtySum = allDetailList.stream().mapToInt(FbaShipmentDetailEntity::getReceiveQty).sum();
-                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-                List<String> detailIds = fbaShipmentDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
-
-                //根据来源详情id查询发货详情
-                List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
-                //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                int deliveryQtySum = fbaDeliveryDetailEntities.stream()
-                        .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
-                        .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
-                        .sum();
-                if (receiveQtySum == deliveryQtySum) {
-                    this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
-                }
-
-            } else {
-
-                log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
-/*
-                for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : saveReceiveList) {
+            // 校验是否手动完结，如果已经手动完结，多余的放到其他入库，入到目的仓然后return，不用调拨
+            if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
+                //查询原签收数量，比较新获取的签收数量，多的新增其他入库
+                for (FbaShipmentReceiveEntity detailEntity : saveReceiveList) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
-                    addDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
-                    addDTO.setSkuNo(fbaShipmentReceiveEntity.getSkuNo());
+                    addDTO.setSkuId(detailEntity.getSkuId());
+                    addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(fbaShipmentReceiveEntity.getReceiveQty());
-                    addDTO.setRemark(StrUtil.format("货件【{}】未找到发货单，自动生成其他入库报溢", entity.getCode()));
+                    addDTO.setActualQty(detailEntity.getReceiveQty());
+                    addDTO.setRemark(StrUtil.format("FBA货件【{}】超收，自动生成其他入库报溢", entity.getCode()));
                     detailAddList.add(addDTO);
                 }
-                FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
-                String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
-                // 找不到发货单 直接生成其他入库到目的仓的可用
-                this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
-*/
-                //新增直接调拨单:在途仓-目的仓
-                String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
-                if (StringUtils.isNotBlank(transferOutId)) {
-                    //提交
-                    transferInfoService.submit(Arrays.asList(transferOutId));
-                    //审核
-                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                    baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                    baseApproveParamDTO.setType(ApproveType.PASS);
-                    transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-                } else {
-                    throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+                if (CollectionUtils.isNotEmpty(detailAddList)){
+                    FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
+                    String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
+                    this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
                 }
+                return;
+            }
+
+            //新增直接调拨单:在途仓-目的仓
+            String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
+            if (StringUtils.isNotBlank(transferOutId)) {
+                //提交
+                transferInfoService.submit(Arrays.asList(transferOutId));
+                //审核
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+                baseApproveParamDTO.setType(ApproveType.PASS);
+                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+            } else {
+                throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+            }
+
+            // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
+            if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
+                this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
+            }
+
+            //如果收货数量等于发货数量，修改货件状态为自动完结
+            List<FbaShipmentDetailEntity> allDetailList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            int receiveQtySum = allDetailList.stream().mapToInt(FbaShipmentDetailEntity::getReceiveQty).sum();
+            List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            List<String> detailIds = fbaShipmentDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+            //根据来源详情id查询发货详情
+            List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
+            //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+            int deliveryQtySum = fbaDeliveryDetailEntities.stream()
+                    .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
+                    .sum();
+            if (receiveQtySum == deliveryQtySum) {
+                this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
+            }
+
+        } else {
+
+            log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
+/*
+            for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : saveReceiveList) {
+                OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
+                addDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
+                addDTO.setSkuNo(fbaShipmentReceiveEntity.getSkuNo());
+                addDTO.setWarehouseLocation("");
+                addDTO.setActualQty(fbaShipmentReceiveEntity.getReceiveQty());
+                addDTO.setRemark(StrUtil.format("货件【{}】未找到发货单，自动生成其他入库报溢", entity.getCode()));
+                detailAddList.add(addDTO);
+            }
+            FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
+            String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
+            // 找不到发货单 直接生成其他入库到目的仓的可用
+            this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
+*/
+            //新增直接调拨单:在途仓-目的仓
+            String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
+            if (StringUtils.isNotBlank(transferOutId)) {
+                //提交
+                transferInfoService.submit(Arrays.asList(transferOutId));
+                //审核
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+                baseApproveParamDTO.setType(ApproveType.PASS);
+                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+            } else {
+                throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
             }
         }
     }
