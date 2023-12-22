@@ -108,14 +108,14 @@ public class ImlServerTest {
     @Test
     public void editInboundBillTest() {
         ImlCreateInboundReq imlGetReceiptReq = ImlCreateInboundReq.builder()
-                .receivingCode("RV86526-231205-0001")
-                .referenceNo("wjtest20231205")
-                .warehouseCode("UAW1")
+                .receivingCode("RV86526-231222-0009")
+                .referenceNo("FHD23122200011")
+                .warehouseCode("RUS2")
                 .verify(1)
                 .items(Arrays.asList(ImlCreateInboundReq.Item.builder()
-                        .productSku("2898")
+                        .productSku("86526-2503A")
                         .boxNo(1)
-                        .quantity(1)
+                        .quantity(13)
                         .build()))
                 .build();
         ImlResponse<String> response = imlServer.editInboundBill(imlGetReceiptReq);
