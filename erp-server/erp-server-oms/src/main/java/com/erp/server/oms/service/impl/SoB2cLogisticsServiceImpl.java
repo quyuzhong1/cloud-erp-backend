@@ -174,8 +174,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
 //        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
+        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
-
         if (CollectionUtils.isEmpty(logisticsList)) {
             //获取主表下物流记录
             SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
@@ -195,7 +195,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
 
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
+
 
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
@@ -207,6 +207,13 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
+                if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
@@ -216,6 +223,13 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             } else {
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                if (isShopee && StringUtils.isNotEmpty(entity2.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity2.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity2.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");

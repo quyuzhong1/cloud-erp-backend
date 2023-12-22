@@ -169,4 +169,11 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return java.util.List<com.erp.model.tms.dto.LogisticsChannelDTO.BaseDTO>
      **/
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds);
+
+    /**
+     * 根据名称匹配现在的渠道
+     * @param channelName
+     * @return
+     */
+    List<LogisticsChannelEntity> getChannelByName(String channelName);
 }

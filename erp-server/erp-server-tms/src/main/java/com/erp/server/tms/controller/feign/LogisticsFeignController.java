@@ -76,7 +76,15 @@ public class LogisticsFeignController {
     public LogisticsChannelEntity getChannelById(@RequestBody String channelId){
         return logisticsChannelService.getById(channelId);
     }
-
+    /**
+     * 获取渠道 根据渠道名称
+     * @param channelName
+     * @return
+     */
+    @PostMapping("/getChannelByName")
+    public List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName){
+        return logisticsChannelService.getChannelByName(channelName);
+    }
     /**
      * 获取渠道 根据渠道i
      * @param channelId

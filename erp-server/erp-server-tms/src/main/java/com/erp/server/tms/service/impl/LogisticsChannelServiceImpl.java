@@ -394,6 +394,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseDTOS;
     }
 
+    /**
+     * 匹配 原渠道名称 和 平台渠道名称获取列表
+     * @param channelName
+     * @return
+     */
+    @Override
+    public List<LogisticsChannelEntity> getChannelByName(String channelName) {
+        List<LogisticsChannelEntity> list = baseMapper.getChannelByName(channelName);
+        return list;
+    }
+
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
