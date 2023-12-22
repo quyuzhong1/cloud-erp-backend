@@ -432,5 +432,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-22 16:02
      */
-    SoB2cDTO.SignShipOrderDTO soB2cService(String soB2cId);
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId);
 }
