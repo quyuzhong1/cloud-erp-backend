@@ -221,17 +221,17 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
                 .orderIds(logisticsQueryVO.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()))
                 //TODO 根据传参决定打印单大小
                 .labelType("1")
-                .packinglist(false)
+                .packinglist(Objects.nonNull(logisticsGetLabelVO.getPrintRemark()) && 1 == logisticsGetLabelVO.getPrintRemark())
                 .merged(true)
                 .labelFormat("PDF")
                 .dpi("203")
                 .build();
-        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
-        assert logisticsGetLabelVO != null;
         ValidatorUtil.validateEntity(labelRequest);
         try {
             List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsGetLabelVO.getAuthMap(), labelRequest);
