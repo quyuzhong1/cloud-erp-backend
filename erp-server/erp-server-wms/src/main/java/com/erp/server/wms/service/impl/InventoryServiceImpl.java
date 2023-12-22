@@ -661,7 +661,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
 
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-        list.forEach(data -> {
+        list.stream().parallel().forEach(data -> {
             // 仓库名称赋值
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
