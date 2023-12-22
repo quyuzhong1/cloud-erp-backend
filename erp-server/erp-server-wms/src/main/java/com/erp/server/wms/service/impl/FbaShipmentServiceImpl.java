@@ -209,6 +209,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
 
+        //有发货单不允许修改映射关系
+        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+            throw new ServiceException(ApiError.IS_DELIVERY_NOT_UPDATE_MAPPING);
+        }
+
+
         List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
         //根据平台sku查询Listing信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
