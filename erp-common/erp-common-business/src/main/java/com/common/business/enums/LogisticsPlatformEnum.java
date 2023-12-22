@@ -12,19 +12,19 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Created by yl
  */
 public enum LogisticsPlatformEnum implements EnumMessage {
-    SHOPEE("Shopee", "Shopee", "虾皮", "003"),
+    SHOPEE("Shopee", "Shopee", "虾皮", "003","Y","N"),
     //物流平台
-    DSF("DSF", "递四方", "递四方(新)", ""),
-    SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", ""),
-    ALI_EXPRESS("AliExpress", "速卖通", "无忧物流[速卖通]", "002"),
-    UBI("UBI", "UBI", "UBI物流平台", ""),
-    TRACK123("TRACK123", "track123", "track123物流平台", ""),
-    YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", ""),
-    WEI_SHI("WeiShi", "纬狮", "深圳前海纬狮物流网络科技有限公司", ""),
-    YUN_TU("YunTu", "云途(新)", "云途(新)", ""),
-    TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", ""),
-    GOOD_CANG(OmsPlatformEnum.OMS_GOOD_CANG.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getName(), "谷仓", ""),
-    IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", ""),
+    DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),
+    SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "","Y","N"),
+    ALI_EXPRESS("AliExpress", "速卖通", "无忧物流[速卖通]", "002","Y","N"),
+    UBI("UBI", "UBI", "UBI物流平台", "","Y","N"),
+    TRACK123("TRACK123", "track123", "track123物流平台", "","N","N"),
+    YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", "","Y","Y"),
+    WEI_SHI("WeiShi", "纬狮", "深圳前海纬狮物流网络科技有限公司", "","Y","N"),
+    YUN_TU("YunTu", "云途(新)", "云途(新)", "","Y","N"),
+    TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "","Y","Y"),
+    GOOD_CANG(OmsPlatformEnum.OMS_GOOD_CANG.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getName(), "谷仓", "","",""),
+    IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", "","",""),
     ;
 
 
@@ -37,6 +37,10 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     private String desc;
 
     private String kingdeeCode;
+
+    private String printLabel;
+
+    private String printDelivery;
 
     public String getDesc() {
         return desc;
@@ -57,12 +61,14 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     }
 
 
-    LogisticsPlatformEnum(String code, String name, String desc, String kingdeeCode){
+    LogisticsPlatformEnum(String code, String name, String desc, String kingdeeCode,String printLabel,String printDelivery){
 
         this.code = code;
         this.name = name;
         this.desc = desc;
         this.kingdeeCode = kingdeeCode;
+        this.printLabel = printLabel;
+        this.printDelivery = printDelivery;
     }
 
 
