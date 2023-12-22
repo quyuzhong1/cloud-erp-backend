@@ -55,4 +55,14 @@ public interface SoB2cErrorService extends SuperService<SoB2cErrorEntity> {
      * @create 2023-12-21 18:17
      */
     Boolean removeErrorOrder(String mainId, String type);
+
+    /**
+     * 获取异常订单详情
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2023-12-22 9:07
+     */
+    SoB2cErrorDTO.ViewDTO info(SoB2cErrorDTO.InfoDTO dto);
 }

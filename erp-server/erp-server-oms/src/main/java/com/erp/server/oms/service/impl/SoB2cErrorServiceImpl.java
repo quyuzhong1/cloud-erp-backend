@@ -89,6 +89,29 @@ public class SoB2cErrorServiceImpl extends SuperServiceImpl<SoB2cErrorMapper, So
         return result;
     }
 
+    /**
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2023-12-22 9:08
+     */
+    @Override
+    public SoB2cErrorDTO.ViewDTO info(SoB2cErrorDTO.InfoDTO dto) {
+        SoB2cErrorDTO.ViewDTO viewDTO=new SoB2cErrorDTO.ViewDTO();
+        SoB2cErrorEntity entity = this.getByMainIdAndType(dto.getId(),dto.getType());
+        if(Objects.nonNull(entity)){
+             BeanMapperUtils.copy(entity,viewDTO);
+        }
+        return viewDTO;
+    }
+
+    private SoB2cErrorEntity getByMainIdAndType(String mainId, String type) {
+       return this.lambdaQuery().eq(SoB2cErrorEntity::getMainId, mainId).
+                eq(SoB2cErrorEntity::getType,type).last("LIMIT 1").
+                one();
+    }
+
 
     /**
     * 新增修改处理数据

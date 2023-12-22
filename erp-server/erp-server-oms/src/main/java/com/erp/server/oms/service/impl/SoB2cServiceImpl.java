@@ -1978,6 +1978,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //单据状态
         List<String> billStatusList = new ArrayList<>(1);
 
+        //异常订单
+        List<String> orderErrorList = new ArrayList<>(3);
+
         // 全部
         if (SearchType.ALL.equals(params.getTabFlag())) {
             params.setInvalidStatus(Boolean.FALSE);
@@ -2033,6 +2036,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(params.getTabFlag())) {
             params.setInvalidStatus(Boolean.TRUE);
         }
+        //订单异常
+        if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(params.getTabFlag())) {
+            params.setInvalidStatus(Boolean.TRUE);
+        }
+
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
             params.setApproveStatusList(approveStatusList);
         }
