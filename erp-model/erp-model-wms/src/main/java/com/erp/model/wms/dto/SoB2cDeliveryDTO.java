@@ -591,7 +591,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 详情
          */
-        private List<LogisticsChannelDTO> detailList;
+        private List<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
 
@@ -607,9 +607,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String logisticsChannelId;
 
-        /**
-         * 详情
-         */
-        private List<PrintLogisticsWaybillDetailDTO> detailList;
+
     }
 }

@@ -439,7 +439,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String printType = dto.getPrintType();
 
         //明细信息
-        List<SoB2cDeliveryDTO.LogisticsChannelDTO> detailList = dto.getDetailList();
+        List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = dto.getDetailList();
+        List<String> logisticsChannelIdList = detailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
 
         List<String> base64List = new ArrayList<>();
 
@@ -448,10 +449,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
 
         //循环打印的渠道
-        for (SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO : detailList) {
+        for (String logisticsChannel : logisticsChannelIdList) {
 
             //查询b2c订单信息
-            List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = logisticsChannelDTO.getDetailList();
+            List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList = detailList.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannel)).collect(Collectors.toList());
+
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
             List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
 
@@ -460,7 +462,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //获取SDK物流商商面单
             List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-            List<SoB2cDTO.WaybillDTO> platformWaybill = this.getPlatformWaybill(soB2cEntities, soB2cLogisticsEntities, logisticsChannelDTO);
+            List<SoB2cDTO.WaybillDTO> platformWaybill = this.getPlatformWaybill(soB2cEntities, soB2cLogisticsEntities, waybillDetailDTOList);
 
             //买家信息
             List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIds);
@@ -556,7 +558,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @Author Luo_WG
      * @Date 2023/12/20 15:00
      **/
-    private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities, SoB2cDeliveryDTO.LogisticsChannelDTO logisticsChannelDTO) {
+    private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities, List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList) {
         List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream().filter(req -> StringUtils.isBlank(req.getLogisticsWaybill())).collect(Collectors.toList());
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
@@ -568,7 +570,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setB2cSoId(soB2cEntity.getId());
             printLogisticsWaybill.setDeliveryNo(soB2cEntity.getCode());
 
-            SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = logisticsChannelDTO.getDetailList().stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {
                 printLogisticsWaybill.setTransportNo(logisticsWaybillDetailDTO.getTransportNo());
             }

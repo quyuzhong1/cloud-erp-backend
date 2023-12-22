@@ -1,6 +1,5 @@
 package com.erp.rpc.oms.feign;
 
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
