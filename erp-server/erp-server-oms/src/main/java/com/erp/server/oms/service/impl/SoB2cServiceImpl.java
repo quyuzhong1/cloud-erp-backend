@@ -2562,6 +2562,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+
+    @Override
+    public SoB2cDTO.SignShipOrderDTO soB2cService(String soB2cId) {
+        return null;
+    }
+
     /**
      * 根据 字段获取值
      *

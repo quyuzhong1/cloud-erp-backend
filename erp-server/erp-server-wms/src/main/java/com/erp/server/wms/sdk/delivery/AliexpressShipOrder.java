@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,9 +22,11 @@ public class AliexpressShipOrder implements IPlatformService {
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
-        String soB2cId=dto.getSoB2cId();
-
-      //  SoB2cDTO.SignShipOrderDTO  signShipOrderDTO=soB2cFeign.G
+        String soB2cId = dto.getSoB2cId();
+        if (StringUtils.isBlank(soB2cId)) {
+            return;
+        }
+        SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
 
 
     }

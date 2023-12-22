@@ -1027,6 +1027,8 @@ public class SoB2cDTO implements Serializable {
         /**
          * 渠道对应就是so_b2c_logistics.code
          */
+        private String logisticsTransportNo;
+
         private String logisticsTrackNo;
 
     }

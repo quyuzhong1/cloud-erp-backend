@@ -121,4 +121,14 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/listSoB2cReceiverByMainIdList")
     List<SoB2cReceiverEntity> listSoB2cReceiverByMainIdList(@RequestBody List<String> mainIdList);
+
+    /** 获取标记发货 需要的参数
+     * @description
+     * @param soB2cId 销售订单id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-22 15:33
+     */
+    @PostMapping("/feign/soB2c/getSignShipParam")
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String  soB2cId);
 }
