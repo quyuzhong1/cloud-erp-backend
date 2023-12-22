@@ -206,6 +206,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(Map<String,Object> map) {
         RuleOrderApprovalDTO.RuleMatchDTO ruleMatch = new RuleOrderApprovalDTO.RuleMatchDTO();
         if (Objects.isNull(map)) {
+            ruleMatch.setApproveSuccess(Boolean.FALSE);
             return ruleMatch;
         }
         log.info("参数为=========={}", map);
@@ -228,6 +229,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                 if(StringUtils.isNotBlank(categoryDetailId)){
                     ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
                 }
+                ruleMatch.setApproveSuccess(Boolean.TRUE);
                 return ruleMatch;
             }
         }

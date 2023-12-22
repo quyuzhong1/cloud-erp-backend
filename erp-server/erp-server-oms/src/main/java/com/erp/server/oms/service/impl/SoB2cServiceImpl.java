@@ -708,14 +708,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
-        String message="";
+        String message = "";
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        String paramJson="";
-        String returnJson="";
+        String paramJson = "";
+        String returnJson = "";
         try {
             if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_LOGISTICS_CODE, entity.getCode());
@@ -735,7 +735,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
             }
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
-            paramJson=JSONObject.toJSONString(generateBillDTO);
+            paramJson = JSONObject.toJSONString(generateBillDTO);
             //货取物流单号
             List<String> logisticsTrackNoList = logisticsBillFeign.generateBill(generateBillDTO);
             if (CollectionUtils.isEmpty(logisticsTrackNoList)) {
@@ -753,13 +753,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //操作日志
             String msg = "获取物流单号【{}】";
             operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
-            soB2cErrorService.removeErrorOrder(id,SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            soB2cErrorService.removeErrorOrder(id, SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             return BatchResultDTO.success(entity.getId(), logisticsCode, "获取物流单号");
         } catch (Exception e) {
-            String type=SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
+            String type = SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             //添加异常信息
-            soB2cErrorService.generateErrorOrder(id,type,message,paramJson,returnJson);
-            message=e.getMessage();
+            soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+            message = e.getMessage();
 
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", message);
         }
@@ -896,7 +896,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 log.error("B2C订单【{}】下出库单异常", entity.getCode(), e.getMessage());
             }
         } else {
-            //TODO生成发货单
+            //生成发货单
             SoB2cDeliveryDTO.AddDTO soB2cDelivery = B2cOrderConverter.INSTANCE.convertDelivery(entity);
             List<SoB2cDeliveryDetailDTO.AddDTO> soB2cDeliveryDetailList = B2cOrderConverter.INSTANCE.convertDeliveryDetail(list);
             soB2cDelivery.setDetailList(soB2cDeliveryDetailList);
@@ -908,7 +908,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
     }
-
 
 
     /**
@@ -936,17 +935,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         ApiResult apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
-        String type=SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+        String type = SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
-            String message=apiResult.getMsg();
+            String message = apiResult.getMsg();
             //生成异常订单信息
-            soB2cErrorService.generateErrorOrder(mainId,type,message,JSONObject.toJSONString(createOutboundReq),JSONObject.toJSONString(apiResult));
+            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
             throw new ServiceException(ApiError.Default.code, message);
         }
         //删除异常订单信息
-        soB2cErrorService.removeErrorOrder(mainId,type);
+        soB2cErrorService.removeErrorOrder(mainId, type);
     }
-
 
 
     @Override
@@ -1978,8 +1976,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //单据状态
         List<String> billStatusList = new ArrayList<>(1);
 
-        //异常订单
-        List<String> orderErrorList = new ArrayList<>(3);
 
         // 全部
         if (SearchType.ALL.equals(params.getTabFlag())) {
@@ -2038,7 +2034,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(params.getTabFlag())) {
-            params.setInvalidStatus(Boolean.TRUE);
+            params.setIsOrderError(Boolean.TRUE);
         }
 
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
@@ -2289,9 +2285,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(map);
         //审核规则是否通过
-        Boolean approveSuccess = (CollectionUtils.isEmpty(ruleOrderMatchResult.getCategoryDetailIdList()) || StrUtil.isBlank(ruleOrderMatchResult.getFlowStatus())) ? Boolean.FALSE : Boolean.TRUE;
+        Boolean approveSuccess = ruleOrderMatchResult.getApproveSuccess();
         //匹配审核规则通过,自动提交并审核
-        if (approveSuccess) {
+        if (Objects.nonNull(approveSuccess) && approveSuccess) {
             //更新流转状态和分类信息
             soB2cRefCategoryService.update(ruleOrderMatchResult.getCategoryDetailIdList(), id);
             //自动提交
@@ -2608,19 +2604,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String warehouseId = ruleMatchResult.getWarehouseId();
         //返回了仓库则更新仓库为空的数据
         if (StrUtil.isNotBlank(warehouseId)) {
-        for (SoB2cDetailEntity detailEntity : detailList) {
+            for (SoB2cDetailEntity detailEntity : detailList) {
                 if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
                     continue;
                 }
-            detailEntity.setWarehouseId(warehouseId);
-        }
-        soB2cDetailService.updateWarehouse(detailList);
+                detailEntity.setWarehouseId(warehouseId);
+            }
+            soB2cDetailService.updateWarehouse(detailList);
         }
         try {
             //走物流规则
             Boolean ruleLogistics = logisticsRule(id, map);
-        }catch (Exception e){
-            log.error("物流规则报错>>>{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("物流规则报错>>>{}", e.getMessage());
 
         }
 
@@ -3378,7 +3374,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @Async
     public Boolean platformWarehouseOrderHandle(String id, Map<String, Object> map) {
-        SoB2cEntity entity=this.getById(id);
+        SoB2cEntity entity = this.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //明细信息
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
@@ -3430,7 +3426,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     @Async
-    public Boolean pullOrderHandle( String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+    public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
 
         Boolean isSuccess = this.approveRule(id, detailList, map);
         if (isSuccess) {

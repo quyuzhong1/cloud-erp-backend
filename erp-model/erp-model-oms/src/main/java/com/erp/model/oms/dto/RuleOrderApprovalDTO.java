@@ -204,5 +204,10 @@ public class RuleOrderApprovalDTO implements Serializable {
          */
         private  List<String> categoryDetailIdList;
 
+        /**
+         * 通过结果
+         */
+        private Boolean approveSuccess;
+
     }
 }

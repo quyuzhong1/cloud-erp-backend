@@ -1,13 +1,13 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -19,10 +19,58 @@ import java.io.Serializable;
  * @since 2023-12-20
 */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("so_b2c_error")
-public class SoB2cErrorEntity extends BaseEntity<SoB2cErrorEntity>{
+public class SoB2cErrorEntity implements Serializable{
+
+
+    /**
+     * 主键
+     */
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "create_time" , fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
+
+    /**
+     * 更新时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    /**
+     * 乐观锁版本号
+     */
+    @Version
+    private Integer version;
 
     /**
     * 销售订单id
@@ -64,9 +112,6 @@ public class SoB2cErrorEntity extends BaseEntity<SoB2cErrorEntity>{
 
     public static final String RETURN_JSON = "return_json";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
+
 
 }

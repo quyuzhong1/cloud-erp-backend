@@ -571,11 +571,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             soB2cDeliveryEntity.setPickingType(PickingTypeEnum.MULTI_ITEM_MULTI.getCode());
         }
 
-        //店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cDeliveryEntity.getShopId());
-        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            soB2cDeliveryEntity.setShopName(shopInfoEntity.getName());
-        }
 
         //查询B2C销售订单
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Arrays.asList(soB2cDeliveryEntity.getSourceId()));

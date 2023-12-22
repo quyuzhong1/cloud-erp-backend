@@ -1,4 +1,5 @@
 package com.erp.server.oms.service.impl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -24,7 +26,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-public class SoB2cErrorServiceImpl extends SuperServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
+public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
 
     @Resource
     private SoB2cService soB2cService;

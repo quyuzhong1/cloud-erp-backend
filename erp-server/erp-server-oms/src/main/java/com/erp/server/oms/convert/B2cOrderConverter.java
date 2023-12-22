@@ -111,6 +111,8 @@ public interface B2cOrderConverter {
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
             @Mapping(target = "sourceType", constant  ="soB2c"),
+            @Mapping(target = "shopId", constant  ="shopId"),
+            @Mapping(target = "shopName", constant  ="shopName"),
     })
     SoB2cDeliveryDTO.AddDTO convertDelivery(SoB2cEntity entity);
 

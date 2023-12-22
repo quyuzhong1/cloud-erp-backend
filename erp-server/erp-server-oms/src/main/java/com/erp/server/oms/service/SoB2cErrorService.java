@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -12,7 +13,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
  * @author lambda
  * @since 2023-12-20
  */
-public interface SoB2cErrorService extends SuperService<SoB2cErrorEntity> {
+public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
 
     /**
     * 新增

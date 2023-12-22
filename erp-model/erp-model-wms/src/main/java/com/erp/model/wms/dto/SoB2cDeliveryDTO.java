@@ -155,6 +155,16 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String soCode;
 
         /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名
+         */
+        private String shopName;
+
+        /**
         * 来源id
         */
         @NotBlank(message = "来源id不能为空")
