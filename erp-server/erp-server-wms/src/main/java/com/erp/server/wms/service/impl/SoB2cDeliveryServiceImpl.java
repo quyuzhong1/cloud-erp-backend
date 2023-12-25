@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
@@ -19,6 +20,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
@@ -31,6 +33,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
@@ -43,6 +47,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -99,6 +104,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private ShopInfoFeign shopInfoFeign;
     @Autowired
     private SoOutstockService soOutstockService;
+    @Autowired
+    private FileTemplateFeign fileTemplateFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -513,10 +520,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
                             // TODO 自定义配货单
-                            /*           ClassPathResource resource = new ClassPathResource("");
+
+                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+                            getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
+                            getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+                            getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+                            FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+                            ClassPathResource resource = new ClassPathResource("");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", resource.getStream(), map, printWayBillPdfDTO.getDetailList());
-                        */
                         }
                     }
                 } else {
