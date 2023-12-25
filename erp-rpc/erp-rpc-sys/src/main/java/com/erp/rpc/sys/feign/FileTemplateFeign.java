@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,7 @@ public interface FileTemplateFeign {
      * @date: 2023/12/25 14:53
      * @param dto
      */
-    @PostMapping("feign/fastdfsAddOrUpdate")
+    @PostMapping("feign/fileTemplate/fastdfsAddOrUpdate")
     void fastdfsAddOrUpdate(@RequestBody @Validated FileTemplateDTO.FastdfsAddOrUpdateDTO dto);
 
     /**
@@ -30,7 +31,7 @@ public interface FileTemplateFeign {
      * @param dto
      * @return FileTemplateEntity
      */
-    @PostMapping("feign/getByFileTemplate")
+    @PostMapping("feign/fileTemplate/getByFileTemplate")
     FileTemplateEntity getByFileTemplate(@RequestBody @Validated FileTemplateDTO.GetOneDTO dto);
 
 }
