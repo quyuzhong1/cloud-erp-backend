@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.Data;
@@ -59,12 +60,12 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 处理状态 waitHandle:待处理 handle:已处理 cancel:已取消
+        * 单据状态 waitHandle:待处理 handle:已处理 cancel:已取消
         */
         private String handleStatus;
 
         /**
-        * 处理状态中文
+        * 单据状态中文
         */
         private String handleStatusName;
 
@@ -423,5 +424,26 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理时间
          */
         private String handleTime;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptResultConfirmDTO {
+        /**
+         * 单据id
+         */
+        private String id;
+        /**
+         * 处理结果：wms/common/enumDropDown?type=HandleResult
+         * 描述 success：拦截成功，failure：拦截失败
+         */
+        private String handleResult;
+        /**
+         * 处理结果描述
+         */
+        private String resultRemark;
     }
 }
