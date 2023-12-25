@@ -35,11 +35,16 @@ public class FastDFSClientUtil {
 
 	private static StorageClient1 storageClient1 = null;
 
-
+	public static String publicUrl;
 
 	@Value("${fdfs.configFile}")
 	public void setConfigFile(String configFile){
 		FastDFSClientUtil.configFile = configFile;
+	}
+
+	@Value("${fdfs.publicUrl:''}")
+	public void setPublicUrl(String publicUrl){
+		FastDFSClientUtil.publicUrl = publicUrl;
 	}
 
 	// 初始化FastDFS Client
