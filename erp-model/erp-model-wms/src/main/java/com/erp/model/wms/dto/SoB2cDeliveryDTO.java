@@ -189,6 +189,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         * 发货时间
         */
         private LocalDateTime deliveryTime;
+
+        /**
+        * 备注
+        */
+        private String remark;
     }
 
     /**
