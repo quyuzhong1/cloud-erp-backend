@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -14,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.validation.constraints.NotBlank;
 
@@ -52,25 +54,27 @@ public class SoB2cDeliveryController extends BaseController {
     private SoB2cDeliveryService soB2cDeliveryService;
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date:  2023-12-13
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Luo_WG
+     * @date: 2023-12-13
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult=soB2cDeliveryService.add(dto);
-        return addResult?success():failure();
+        Boolean addResult = soB2cDeliveryService.add(dto);
+        return addResult ? success() : failure();
     }
 
     /**
      * 获取状态统计
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.TabListDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 18:51
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.TabListDTO>>
      **/
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -84,10 +88,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 列表查询
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.SoB2cDeliveryDTO.ListDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 19:13
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoB2cDeliveryDTO.ListDTO>>
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -101,10 +106,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 详情
-     * @Author Luo_WG
-     * @Date 2023/11/17 9:03
+     *
      * @param id
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.RequisitionApplicationDTO.ViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/11/17 9:03
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -118,10 +124,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 手动发货
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 19:25
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
      **/
     @PostMapping("/manualDelivery")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -135,8 +142,8 @@ public class SoB2cDeliveryController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cDeliveryService.manualDelivery(id);
-            }catch (Exception e){
-                log.error("发货单 手动发货失败",e);
+            } catch (Exception e) {
+                log.error("发货单 手动发货失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 手动发货失败");
@@ -152,10 +159,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 虚假发货
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 19:29
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
      **/
     @PostMapping("/falseDelivery")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -169,8 +177,8 @@ public class SoB2cDeliveryController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cDeliveryService.falseDelivery(id);
-            }catch (Exception e){
-                log.error("发货单 虚假发货失败",e);
+            } catch (Exception e) {
+                log.error("发货单 虚假发货失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 虚假发货失败");
@@ -184,12 +192,37 @@ public class SoB2cDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     * 订单标记发货失败后再次触发 ids 为销售订单id
+     *
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/retryFalseDelivery")
+    public ApiResult<List<BatchResultDTO>> retryFalseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        //id 为销售订单id
+        for (String id : dto.getIds()) {
+            try {
+                List<BatchResultDTO> resultList = soB2cDeliveryService.retryFalseDelivery(id);
+                resultDTOS.addAll(resultList);
+            } catch (Exception e) {
+                log.error("发货单 虚假发货失败", e);
+            }
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
     /**
      * 打印拣货单预览
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.printPickingViewDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 19:37
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.printPickingViewDTO>>
      **/
     @PostMapping("/printPickingView")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -203,10 +236,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 打印拣货单
-     * @Author Luo_WG
-     * @Date 2023/12/19 16:12
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
      **/
     @PostMapping("/printPicking")
     public ApiResult printPicking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -216,10 +250,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     * @Author Luo_WG
-     * @Date 2023/12/19 16:12
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/12/19 16:12
      **/
     @PostMapping("/printPickingCancel")
     public ApiResult printPickingCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -229,10 +264,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 打印物流面单
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
      **/
     @PostMapping("/printLogisticsWaybill")
     public ApiResult<List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>> printLogisticsWaybill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -241,10 +277,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 打印配货单
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>>
      * @Author Luo_WG
      * @Date 2023/12/14 9:18
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>>
      **/
     @PostMapping("/printDistribution")
     public ApiResult<List<SoB2cDeliveryDTO.PrintDistributionDTO>> printDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -253,10 +290,11 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 打印物流面单确认
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
      **/
 
     @PostMapping("/printLogisticsBillConfirm")
