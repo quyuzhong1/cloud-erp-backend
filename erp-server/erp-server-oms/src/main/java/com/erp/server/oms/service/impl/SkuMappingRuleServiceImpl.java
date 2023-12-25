@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -15,6 +16,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import com.erp.model.oms.enums.SkuMappingRuleEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -23,10 +26,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
-import com.erp.server.oms.service.CommonService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingRuleService;
-import com.erp.server.oms.service.SkuMappingService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,6 +60,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ListingInfoService listingInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -194,7 +197,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             throw new ServiceException("获取规则异常,"+skuMappingRuleEntity.getRuleType());
         }
         List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(commonDTO.getRuleDTO());
-        skuMappingRuleEntity.setRuleRegex(regexList.toString());
+        String regex = regexList.toString().substring(1, regexList.toString().length() - 1);
+        skuMappingRuleEntity.setRuleRegex(regex);
 
         //处理扩展规则
         if(StringUtils.isNotBlank(skuMappingRuleEntity.getExtendRuleType())){
@@ -206,7 +210,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 throw new ServiceException("获取扩展规则异常,"+skuMappingRuleEntity.getExtendRuleType());
             }
             List<String> extendRegexList = skuMappingExtendRuleEnum.getRegexMethod().apply(commonDTO.getExtendRuleDTO());
-            skuMappingRuleEntity.setExtendRuleRegex(extendRegexList.toString());
+            String extendRegex = extendRegexList.toString().substring(1, extendRegexList.toString().length() - 1);
+            skuMappingRuleEntity.setExtendRuleRegex(extendRegex);
         }
     }
 
@@ -276,9 +281,63 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriority();
         //过滤掉已禁用
         skuMappingRuleEntityList = skuMappingRuleEntityList.stream().filter(skuMappingRuleEntity -> !skuMappingRuleEntity.getDisabled()).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(skuMappingRuleEntityList)){
+            return;
+        }
         // 匹配sku
-        for(SkuVO skuVO : skuVOList){
+        List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>();
+        List<ListingInfoEntity> updateListingList = new ArrayList<>();
+        for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
+            String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
+            for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
+                String afterHandlePlatformSkuNo = platformSkuNo;
+                //先执行扩展规则
+                //处理扩展规则
+                if(StringUtils.isNotBlank(skuMappingRuleEntity.getExtendRuleType())){
+                    //获取枚举
+                    SkuMappingRuleEnum.SkuMappingExtendRuleEnum skuMappingExtendRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingExtendRuleEnum.class, skuMappingRuleEntity.getExtendRuleType());
+                    if(Objects.isNull(skuMappingExtendRuleEnum)){
+                        throw new ServiceException("获取扩展规则异常,"+skuMappingRuleEntity.getExtendRuleType());
+                    }
+                    String entityExtendRuleRegex = skuMappingRuleEntity.getExtendRuleRegex();
+                    String[] extendRegexList = entityExtendRuleRegex.split(", ");
+                    for(String extendRegex : extendRegexList){
+                        afterHandlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,afterHandlePlatformSkuNo);
+                    }
+                }
+                //获取枚举
+                SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, skuMappingRuleEntity.getRuleType());
+                if(Objects.isNull(skuMappingRuleEnum)){
+                    throw new ServiceException("获取规则异常,");
+                }
+                String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
+                String[] ruleRegexList = ruleRegexArrStr.split(", ");
+                for(String ruleRegex : ruleRegexList){
+                    afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleRegex,afterHandlePlatformSkuNo);
+                }
+                if(skuVOMap.containsKey(afterHandlePlatformSkuNo)){
+                    SkuVO skuVO = skuVOMap.get(afterHandlePlatformSkuNo);
+                    SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                    skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
+                    skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
+                    skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+                    skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+                    skuMappingEntity.setProductName(skuVO.getSkuName());
+                    updateSkuMappingList.add(skuMappingEntity);
 
+                    ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                    listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                    listingInfoEntity.setMatchResult(true);
+                    updateListingList.add(listingInfoEntity);
+                    break;
+                }
+            }
+        }
+        if(CollectionUtils.isNotEmpty(updateSkuMappingList)){
+            skuMappingService.updateBatchById(updateSkuMappingList,2000);
+        }
+        if(CollectionUtils.isNotEmpty(updateListingList)){
+            listingInfoService.updateBatchById(updateListingList,2000);
         }
     }
 }
