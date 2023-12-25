@@ -64,10 +64,6 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -539,23 +535,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
 
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
-                            // 自定义配货单
+                            // TODO 自定义配货单
+
                             FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
                             getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
                             getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
                             FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-                            InputStream inputStream = null;
-                            try {
-                                URL url = new URL(fileTemplateEntity.getUrl());
-                                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                                inputStream = httpURLConnection.getInputStream();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            ClassPathResource resource = new ClassPathResource("");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
-                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
-
+                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", resource.getStream(), map, printWayBillPdfDTO.getDetailList());
                         }
                     }
                 } else {
@@ -588,22 +577,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                                 ).findFirst().orElse(null);
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
-                            // 自定义配货单
-                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
-                            getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
-                            getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
-                            getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-                            FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-                            InputStream inputStream = null;
-                            try {
-                                URL url = new URL(fileTemplateEntity.getUrl());
-                                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                                inputStream = httpURLConnection.getInputStream();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
-                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
 
                         }
                     }
@@ -718,9 +691,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(MathUtil.ZERO);
         soB2cDeliveryEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDeliveryEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
-        //根据物流跟踪单号查询物流单详情
-        LogisticsBillDTO.BaseDTO logisticsBillByTrackNo = logisticsBillFeign.getLogisticsBillByTrackNo(soB2cLogisticsEntity.getCode());
-        soB2cDeliveryEntity.setTransportNo(logisticsBillByTrackNo.getTransportNo());
+        String  transportNo= soB2cLogisticsEntity.getCode();
+        soB2cDeliveryEntity.setTransportNo(transportNo);
+
 
 
     }

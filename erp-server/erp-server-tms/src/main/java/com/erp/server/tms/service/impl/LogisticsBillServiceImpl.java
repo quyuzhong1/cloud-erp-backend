@@ -402,7 +402,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
-                deliveryNo(dto.getOrderId()).
+                deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
                 senderInfo(senderInfo).
                 receiverInfoVO(receiverInfo).
@@ -725,8 +725,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if (CollectionUtils.isNotEmpty(baseDTOList)) {
                 getLabelVO.setTrackNo(baseDTOList.get(0).getTrackNo());
             }
-//            getLabelVO.setIsPcd();
-//            getLabelVO.setIsPdn();
+
             //授权信息
             getLabelVO.setAuthMap(authMap);
 
