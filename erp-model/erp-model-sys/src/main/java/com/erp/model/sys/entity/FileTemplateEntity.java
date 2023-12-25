@@ -66,7 +66,7 @@ public class FileTemplateEntity extends BaseEntity<FileTemplateEntity> {
     /**
      * 获取fastdf全url
      */
-    private String getFastdfsUrl () {
+    public String getFastdfsUrl () {
         return StrUtil.format("{}{}",FastDFSClientUtil.publicUrl,this.url);
     }
 
