@@ -6,10 +6,7 @@ import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.server.sys.service.FileTemplateService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -35,7 +32,7 @@ public class FileTemplateFeignController {
      * @param dto
      */
     @PostMapping("/fastdfsAddOrUpdate")
-    public void fastdfsAddOrUpdate(@RequestBody @Validated FileTemplateDTO.FastdfsAddOrUpdateDTO  dto){
+    public void fastdfsAddOrUpdate(@Validated @ModelAttribute FileTemplateDTO.FastdfsAddOrUpdateDTO  dto){
          fileTemplateService.fastdfsAddOrUpdate(dto);
     }
 

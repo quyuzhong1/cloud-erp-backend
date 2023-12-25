@@ -72,7 +72,7 @@ public class FileTemplateController extends BaseController {
      */
     @PostMapping("/fastdfsAddOrUpdate")
     @LogAction(value = LogActionEnum.UPDATE, desc = "fdfs文件模板url表新增或修改")
-    public ApiResult<?> fastdfsAddOrUpdate(@RequestBody @Validated FileTemplateDTO.FastdfsAddOrUpdateDTO dto) {
+    public ApiResult<?> fastdfsAddOrUpdate(@Validated @ModelAttribute FileTemplateDTO.FastdfsAddOrUpdateDTO dto) {
         fileTemplateService.fastdfsAddOrUpdate(dto);
         return success();
     }
