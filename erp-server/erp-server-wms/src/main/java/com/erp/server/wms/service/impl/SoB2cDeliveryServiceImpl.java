@@ -221,6 +221,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             addError.setParamJson(paramJson);
             addError.setReturnJson(returnJson);
             addError.setMainId(entity.getSourceId());
+            addError.setMessage(message);
             soB2cFeign.addSoB2cError(addError);
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
         }
