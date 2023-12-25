@@ -109,6 +109,7 @@ public class LogisticsFeignController {
 
 
     @PostMapping("/getSignShipInfoByChannelById")
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId){
-       return logisticsChannelService.getSignShipInfoByChannelById();
+    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId) {
+        return logisticsChannelService.getSignShipInfoByChannelById();
+    }
 }
