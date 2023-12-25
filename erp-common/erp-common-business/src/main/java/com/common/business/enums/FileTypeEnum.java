@@ -11,7 +11,13 @@ public enum FileTypeEnum {
     DOC("doc", "application/msword;charset=utf-8", ".doc"),
     DOCX("docx", "application/msword;charset=utf-8", ".docx"),
     XML("xml", "application/pdf", ".xml"),
-    RTF("rtf", "application/pdf", ".rtf");
+    RTF("rtf", "application/pdf", ".rtf"),
+
+    //非导出类型
+    JRXML("jrxml", "", ".jrxml"),
+    JASPER("jasper", "", ".jasper"),
+    ;
+
     /**
      * 类型名称
      */
