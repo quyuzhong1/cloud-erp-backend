@@ -44,7 +44,7 @@ public class SkuMappingRuleController extends BaseController {
      * @date:  2023-12-21
      * @return ApiResult<String>
      */
-    @PostMapping("/list")
+    @GetMapping("/list")
     public ApiResult<List<SkuMappingRuleDTO.ListDTO>> list() {
         return success(SkuMappingRuleConverter.INSTANCE.entityToListDto(skuMappingRuleService.listOrderByPriority()));
     }
@@ -55,7 +55,7 @@ public class SkuMappingRuleController extends BaseController {
      * @date:  2023-12-21
      * @return ApiResult<String>
      */
-    @PostMapping("/view")
+    @GetMapping("/view")
     public ApiResult<SkuMappingRuleDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         SkuMappingRuleDTO.ViewDTO viewDTO = skuMappingRuleService.view(dto.getId());
         return success(viewDTO);

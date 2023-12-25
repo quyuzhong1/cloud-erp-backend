@@ -48,13 +48,13 @@ public enum SkuMappingRuleEnum implements EnumMessage{
 
     }
     /**
-     * 起始符规则
+     * 起始符结束符开始位置
      */
     @Getter
     @AllArgsConstructor
-    public enum SkuMappingEnum implements EnumMessage{
-        LEFTMOST_SIDE("leftmostSide","最左侧"),
-        FAR_RIGHT("farRight","最右侧"),
+    public enum SkuMappingSymbolicSideEnum implements EnumMessage{
+        LEFTMOST_SIDE("leftMostSide","最左侧"),
+        FAR_RIGHT("rightMostSide","最右侧"),
         ;
         private final String code;
         private final String name;
@@ -67,13 +67,29 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     @Getter
     @AllArgsConstructor
     public enum SkuMappingSymbolicEnum implements EnumMessage{
-        LEFTMOST_SIDE("leftmostSide","最左侧"),
-        FAR_RIGHT("farRight","最右侧"),
+        SYMBOLIC_1("~","~",false),
+        SYMBOLIC_2("@","@",false),
+        SYMBOLIC_3("#","#",false),
+        SYMBOLIC_4("%","%",false),
+        SYMBOLIC_5("^","^",false),
+        SYMBOLIC_6("&","&",false),
+        SYMBOLIC_7("+","+",true),
+        SYMBOLIC_8("*","*",true),
+        SYMBOLIC_9("×","×",false),
+        SYMBOLIC_10("-","-",false),
+        SYMBOLIC_11("_","_",false),
+        SYMBOLIC_12("[","]",true),
+        SYMBOLIC_13("]","]",true),
+        SYMBOLIC_14("\\","\\",true),
+        SYMBOLIC_15("/","/",false),
+        SYMBOLIC_16("|","|",false),
         ;
         private final String code;
         private final String name;
-
+        //是否需要转义
+        private final Boolean isEscape;
     }
+
     private static List<String> handleIgnorePrefixesAndSuffixes(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
@@ -99,7 +115,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> handleExtractFirstToLast(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
-            String regex = ".{"+ruleConditionsDTO.getInterceptionFrontPosition()+"}(.{"+ruleConditionsDTO.getInterceptionBehindPosition()+"}).*";
+            int prefix = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?0:ruleConditionsDTO.getInterceptionBehindPosition();
+            int suffixes = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?0:ruleConditionsDTO.getInterceptionBehindPosition();
+            String regex = ".{"+prefix+"}(.{"+suffixes+"}).*";
             list.add(regex);
         }
         return list;
@@ -116,28 +134,56 @@ public enum SkuMappingRuleEnum implements EnumMessage{
          4.起始符取右侧，结束符取左侧
          【#】替换起始符，【%】替换结束符
          */
-        if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingEnum.LEFTMOST_SIDE.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingEnum.FAR_RIGHT.code) ){
+        if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
+                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ){
             waitHandleRegex = "【#】(.*?)【%】(?!.*【%】)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingEnum.FAR_RIGHT.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingEnum.FAR_RIGHT.code) ) {
+        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
+                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) ) {
             waitHandleRegex = "【#】((?:(?!【#】).)*?)【%】(?!.*【%】)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingEnum.LEFTMOST_SIDE.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingEnum.LEFTMOST_SIDE.code) ) {
+        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) &&
+                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
             waitHandleRegex = "【#】(.*?)(?=【%】.*$)";
-        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingEnum.FAR_RIGHT.code) &&
-                commonDTO.getValidEndSymbolPosition().equals(SkuMappingEnum.LEFTMOST_SIDE.code) ) {
+        } else if (commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.FAR_RIGHT.code) &&
+                commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code) ) {
             waitHandleRegex = "【#】(?!.*【#】)(.*?)【%】";
         }else{
             throw new ServiceException("找不到起始符规则");
         }
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
-            String regex = waitHandleRegex.replaceAll("【#】",ruleConditionsDTO.getStartingSymbol()).replaceAll("【%】",ruleConditionsDTO.getEndSymbol());
+            if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
+                list.add("");
+                continue;
+            }
+            //起始符或终止符为空，正则都不一样
+            if(StringUtils.isNotBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
+                if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
+                    waitHandleRegex = "【#】(.*)";
+                }else{
+                    waitHandleRegex = ".*【#】(.*)";
+                }
+            }
+            if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isNotBlank(ruleConditionsDTO.getEndSymbol())){
+                if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
+                    waitHandleRegex = "([^【%】]*)【%】";
+                }else{
+                    waitHandleRegex = "(.*)【%】.";
+                }
+            }
+            String startSymbol = ruleConditionsDTO.getStartingSymbol();
+            String endSymbol =ruleConditionsDTO.getEndSymbol();
+            SkuMappingSymbolicEnum startSymbolEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,startSymbol);
+            SkuMappingSymbolicEnum endSymbolicEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,endSymbol);
+            if(Objects.nonNull(startSymbolEnum) && startSymbolEnum.isEscape){
+                startSymbol = "\\\\"+startSymbol;
+            }
+            if(Objects.nonNull(endSymbolicEnum) && endSymbolicEnum.isEscape){
+                endSymbol = "\\\\"+endSymbol;
+            }
+            String regex = waitHandleRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
             list.add(regex);
         }
         return list;
     }
-
     private static List<String> handleReplaceSpecifiedCharacters(SkuMappingRuleDTO.ExtendRuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getExtendRuleContentList().size());
         //字符串替换，不需要正则，存放json key为需要替换的值，value为替换值
@@ -150,6 +196,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     }
 
     private static String handleRegex(String regex,String inputStr){
+        if(StringUtils.isBlank(regex)){
+            return inputStr;
+        }
         regex = regex.replaceAll("\"","");
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(inputStr);

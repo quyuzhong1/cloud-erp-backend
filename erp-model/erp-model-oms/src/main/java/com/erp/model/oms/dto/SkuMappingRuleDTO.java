@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -51,6 +52,11 @@ public class SkuMappingRuleDTO implements Serializable {
         private String ruleType;
 
         /**
+         * 规则类型
+         */
+        private String ruleTypeName;
+
+        /**
          * 状态
          */
         private Boolean disabled;
@@ -78,6 +84,11 @@ public class SkuMappingRuleDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 规则类型名称
+         */
+        private String ruleTypeName;
     }
 
     /**
@@ -118,12 +129,12 @@ public class SkuMappingRuleDTO implements Serializable {
         private Integer interceptionBehindPosition;
 
         /**
-         * 起始符
+         * 起始符 url: common/enumDropDown?type=SkuMappingSymbolic
          */
         private String startingSymbol;
 
         /**
-         * 结束符
+         * 结束符 url: common/enumDropDown?type=SkuMappingSymbolic
          */
         private String endSymbol;
     }
@@ -217,7 +228,7 @@ public class SkuMappingRuleDTO implements Serializable {
         private Integer priority;
 
         /**
-         * 规则类型
+         * 规则类型 url: common/enumDropDown?type=SkuMappingRule
          */
         @NotBlank(message = "规则类型不能为空")
         @Size(max = 50, message = "规则类型最大长度不能超过50位")
@@ -226,6 +237,7 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 规则正则
          */
+        @JsonIgnore
         private String ruleRegex;
 
         /**
@@ -236,6 +248,7 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 扩展规则正则
          */
+        @JsonIgnore
         private String extendRuleRegex;
 
         /**
@@ -260,12 +273,12 @@ public class SkuMappingRuleDTO implements Serializable {
     @NoArgsConstructor
     public static class RuleDTO  {
         /**
-         * 起始符有效位置
+         * 起始符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
          */
         private String validStartingSymbolPosition;
 
         /**
-         * 结束符有效位置
+         * 结束符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
          */
         private String validEndSymbolPosition;
 

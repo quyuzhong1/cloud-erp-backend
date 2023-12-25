@@ -32,7 +32,7 @@ public class SkuMappingRuleEntity extends BaseEntity<SkuMappingRuleEntity> {
     * 优先级:1-5
     */
     @TableField("priority")
-    private BigDecimal priority;
+    private Integer priority;
     /**
     * 规则类型
     */
