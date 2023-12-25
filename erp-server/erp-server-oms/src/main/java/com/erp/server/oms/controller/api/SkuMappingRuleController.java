@@ -56,8 +56,8 @@ public class SkuMappingRuleController extends BaseController {
      * @return ApiResult<String>
      */
     @GetMapping("/view")
-    public ApiResult<SkuMappingRuleDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        SkuMappingRuleDTO.ViewDTO viewDTO = skuMappingRuleService.view(dto.getId());
+    public ApiResult<SkuMappingRuleDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        SkuMappingRuleDTO.ViewDTO viewDTO = skuMappingRuleService.view(id);
         return success(viewDTO);
     }
 

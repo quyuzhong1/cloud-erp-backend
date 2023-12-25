@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -86,6 +87,11 @@ public class SkuMappingRuleDTO implements Serializable {
          * 规则类型名称
          */
         private String ruleTypeName;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
     }
 
     /**
