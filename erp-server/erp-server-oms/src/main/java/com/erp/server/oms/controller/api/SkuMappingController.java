@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +44,8 @@ public class SkuMappingController extends BaseController {
     @Resource
     private SkuMappingService skuMappingService;
 
-
+    @Resource
+    private SkuMappingRuleService skuMappingRuleService;
 
 
     /**
@@ -238,5 +240,15 @@ public class SkuMappingController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 执行自动匹配规则
+     */
+    @GetMapping("/autoMatch")
+    public ApiResult<?> autoMatch() {
+        skuMappingRuleService.handleSkuMapping();
+        return success();
     }
 }

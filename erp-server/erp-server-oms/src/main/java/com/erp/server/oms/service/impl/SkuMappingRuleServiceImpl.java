@@ -12,16 +12,21 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import com.erp.model.oms.enums.SkuMappingRuleEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingRuleService;
+import com.erp.server.oms.service.SkuMappingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +54,12 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+
+    @Resource
+    private SkuMappingService skuMappingService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -239,6 +251,34 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 }
                 this.updateBatchById(updateList);
             }
+        }
+    }
+
+    /**
+     * 处理sku映射
+     */
+    @Override
+    public void handleSkuMapping() {
+        //查询未匹配的SKU
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setMatchResult(false);
+        // 查询ListingInfo和skuMapping的关系
+        List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
+        if(CollectionUtils.isEmpty(noMatchList)){
+            return;
+        }
+        // 查询plm产品
+        List<SkuVO> skuVOList = plmTaskFeign.listApproveSku();
+        if(CollectionUtils.isEmpty(skuVOList)){
+            return;
+        }
+        Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuNo,skuVO -> skuVO));
+        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriority();
+        //过滤掉已禁用
+        skuMappingRuleEntityList = skuMappingRuleEntityList.stream().filter(skuMappingRuleEntity -> !skuMappingRuleEntity.getDisabled()).collect(Collectors.toList());
+        // 匹配sku
+        for(SkuVO skuVO : skuVOList){
+
         }
     }
 }

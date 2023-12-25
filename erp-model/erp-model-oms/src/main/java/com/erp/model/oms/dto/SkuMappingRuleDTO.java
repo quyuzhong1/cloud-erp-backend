@@ -1,20 +1,17 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -250,12 +247,6 @@ public class SkuMappingRuleDTO implements Serializable {
          */
         @JsonIgnore
         private String extendRuleRegex;
-
-        /**
-         * 是否禁用
-         */
-        @NotNull(message = "是否禁用不能为空")
-        private Boolean disabled;
 
         /**
          * 规则DTO{@link com.erp.model.oms.enums.SkuMappingRuleEnum}
