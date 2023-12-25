@@ -328,6 +328,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             ProductDetailEntity entity = productDetailEntityList.stream().filter(req -> req.getId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(entity)) {
                 viewDTO.setProductName(entity.getName());
+                viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
             }
         }
     }
