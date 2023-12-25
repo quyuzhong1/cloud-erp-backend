@@ -33,6 +33,7 @@ public enum PlatformDictEnum implements EnumMessage {
     PDD("PDD", "拼多多", "Temu", "009"),
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
+    WE_CHAT_VEDIO("WeChatVedio", "微信视频号", "微信视频号", "027"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "41"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "42"),
