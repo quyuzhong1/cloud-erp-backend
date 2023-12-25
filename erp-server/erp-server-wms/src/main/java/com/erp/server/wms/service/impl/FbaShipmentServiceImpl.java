@@ -1057,6 +1057,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList) {
+
         // 查询是否有发货单号
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
 
@@ -1127,6 +1128,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         } else {
 
             log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
+            // 检查是否都有映射
+            boolean allMatch = saveReceiveList.stream().allMatch(e -> StringUtils.isBlank(e.getSkuId()) && StringUtils.isBlank(e.getSkuNo()));
+            if (!allMatch){
+                log.warn("【FBA货件更新】未找到所有映射数据, 暂下推直接调拨单");
+                return;
+            }
 /*
             for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : saveReceiveList) {
                 OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
@@ -1243,6 +1250,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 只有未发货数据允许删除
         if (!Objects.equals(FbaDeliveryStatusEnum.UN_SHIPPED.getCode(), entity.getDeliveryStatus())) {
             throw new ServiceException(ApiError.IS_DELIVERY_DELETE);
+        }
+        // 已生成调拨单不允许删除
+        Integer count = transferInfoService.lambdaQuery()
+                .in(TransferInfoEntity::getSourceCode, entity.getCode())
+                .eq(TransferInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .count();
+        if (count > 0){
+            throw new ServiceException("已生成调拨单不允许删除");
         }
 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(id));
