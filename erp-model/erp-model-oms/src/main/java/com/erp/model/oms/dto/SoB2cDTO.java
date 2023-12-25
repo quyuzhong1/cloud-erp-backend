@@ -1043,6 +1043,9 @@ public class SoB2cDTO implements Serializable {
 
         private String logisticsTrackNo;
 
+
+
+
     }
 
     /**

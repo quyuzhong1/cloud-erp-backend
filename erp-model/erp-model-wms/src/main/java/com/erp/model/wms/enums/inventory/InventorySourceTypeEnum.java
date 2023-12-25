@@ -36,6 +36,7 @@ public enum InventorySourceTypeEnum {
     STOCKTAKING_PROFIT_LOSS("stocktakingProfitLoss", "盘盈盘亏"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo", "仓位移动"),
     FBA_DELIVERY("fbaDelivery", "FBA发货单"),
+    SO_B2C_DELIVERY("soB2cDelivery", "b2c发货单"),
     ;
 
     /**

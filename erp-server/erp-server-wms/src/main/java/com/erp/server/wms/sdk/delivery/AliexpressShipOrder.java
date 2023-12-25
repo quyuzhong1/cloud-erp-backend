@@ -38,12 +38,15 @@ public class AliexpressShipOrder implements IPlatformService {
             SoB2cDTO.SignShipOrderDTO signShipOrderDTO = soB2cFeign.getSignShipParam(soB2cId);
             //渠道
             String channelId=signShipOrderDTO.getLogisticsChannelId();
-            LogisticsChannelDTO.SignShipDTO signShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
+            //获取渠道信息
+            LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getSignShipInfoByChannelById(channelId);
+
             DeclareDeliverRequest request = DeclareDeliverRequest.builder().
                     outRef(signShipOrderDTO.getPlatformCode()).
                     logisticsNo(signShipOrderDTO.getLogisticsTransportNo()).
                     shopId(signShipOrderDTO.getShopId()).
                     shopName(signShipOrderDTO.getShopName()).
+                    serviceName(tmsSignShipDTO.getSaleChannelSupplierName()).
                     build();
             aliExpressOrderService.declareDeliver(request);
         } catch (ApiException e) {

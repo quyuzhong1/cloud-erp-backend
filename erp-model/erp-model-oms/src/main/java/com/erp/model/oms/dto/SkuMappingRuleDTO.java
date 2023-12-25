@@ -1,19 +1,18 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -51,6 +50,11 @@ public class SkuMappingRuleDTO implements Serializable {
         private String ruleType;
 
         /**
+         * 规则类型
+         */
+        private String ruleTypeName;
+
+        /**
          * 状态
          */
         private Boolean disabled;
@@ -78,6 +82,16 @@ public class SkuMappingRuleDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 规则类型名称
+         */
+        private String ruleTypeName;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
     }
 
     /**
@@ -118,12 +132,12 @@ public class SkuMappingRuleDTO implements Serializable {
         private Integer interceptionBehindPosition;
 
         /**
-         * 起始符
+         * 起始符 url: common/enumDropDown?type=SkuMappingSymbolic
          */
         private String startingSymbol;
 
         /**
-         * 结束符
+         * 结束符 url: common/enumDropDown?type=SkuMappingSymbolic
          */
         private String endSymbol;
     }
@@ -217,7 +231,7 @@ public class SkuMappingRuleDTO implements Serializable {
         private Integer priority;
 
         /**
-         * 规则类型
+         * 规则类型 url: common/enumDropDown?type=SkuMappingRule
          */
         @NotBlank(message = "规则类型不能为空")
         @Size(max = 50, message = "规则类型最大长度不能超过50位")
@@ -226,6 +240,7 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 规则正则
          */
+        @JsonIgnore
         private String ruleRegex;
 
         /**
@@ -236,13 +251,8 @@ public class SkuMappingRuleDTO implements Serializable {
         /**
          * 扩展规则正则
          */
+        @JsonIgnore
         private String extendRuleRegex;
-
-        /**
-         * 是否禁用
-         */
-        @NotNull(message = "是否禁用不能为空")
-        private Boolean disabled;
 
         /**
          * 规则DTO{@link com.erp.model.oms.enums.SkuMappingRuleEnum}
@@ -260,12 +270,12 @@ public class SkuMappingRuleDTO implements Serializable {
     @NoArgsConstructor
     public static class RuleDTO  {
         /**
-         * 起始符有效位置
+         * 起始符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
          */
         private String validStartingSymbolPosition;
 
         /**
-         * 结束符有效位置
+         * 结束符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
          */
         private String validEndSymbolPosition;
 

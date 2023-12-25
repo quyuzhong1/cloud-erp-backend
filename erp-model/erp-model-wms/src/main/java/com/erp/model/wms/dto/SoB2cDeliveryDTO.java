@@ -277,11 +277,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
         /**
          * 发货时间
          */
-        private List<LocalDateTime> deliveryTimeList;
+        private List<LocalDate> deliveryTimeList;
     }
 
     /**

@@ -10,6 +10,7 @@ import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -67,7 +68,6 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
