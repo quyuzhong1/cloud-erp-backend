@@ -16,6 +16,7 @@ import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
 import com.erp.model.oms.enums.SkuMappingRuleEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
 import com.erp.server.oms.service.CommonService;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -53,7 +55,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     public BaseResultDTO.AddDTO add(SkuMappingRuleDTO.AddDTO addDTO) {
         SkuMappingRuleEntity skuMappingRuleEntity = new SkuMappingRuleEntity();
         BeanMapperUtils.copy(addDTO, skuMappingRuleEntity);
-
+        handleSamePriority(skuMappingRuleEntity);
         // 数据处理
         handleData(addDTO,skuMappingRuleEntity);
 
@@ -79,7 +81,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         SkuMappingRuleEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
         SkuMappingRuleEntity skuMappingRuleEntity =  BeanMapperUtils.map(SkuMappingRuleEntity.class, updateDTO);
-
+        handleSamePriority(skuMappingRuleEntity);
         // 数据处理
         handleData(updateDTO,skuMappingRuleEntity);
         log.info("编辑 开始修改sku对照表匹配规则数据，id：【{}】", old.getId());
@@ -193,6 +195,50 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             }
             List<String> extendRegexList = skuMappingExtendRuleEnum.getRegexMethod().apply(commonDTO.getExtendRuleDTO());
             skuMappingRuleEntity.setExtendRuleRegex(extendRegexList.toString());
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void handleSamePriority(SkuMappingRuleEntity skuMappingRuleEntity){
+        List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriority();
+        Collections.reverse(skuMappingRuleEntityList);
+        SkuMappingRuleEntity old = skuMappingRuleEntityList.stream().filter(v->v.getId().equals(skuMappingRuleEntity.getId())).findFirst().orElse(null);
+        // 优先级已全部创建完，不允许新增
+        if(skuMappingRuleEntityList.size() == OmsConstant.SKU_MAPPING_RULE_SIZE){
+            throw new ServiceException("规则已满，不允许新增");
+        }
+        SkuMappingRuleEntity originalEntity = skuMappingRuleEntityList.stream().filter(v->v.getPriority().equals(skuMappingRuleEntity.getPriority())).findFirst().orElse(null);
+        //优先级有冲突
+        if(Objects.nonNull(originalEntity)){
+            if(Objects.nonNull(old)){
+                originalEntity.setPriority(old.getPriority());
+                this.updateById(originalEntity);
+            }else{
+                //判断低优先级能不能往下顺延，不能的话抛错
+                List<SkuMappingRuleEntity> lowList = skuMappingRuleEntityList.stream().filter(v->v.getPriority()>=skuMappingRuleEntity.getPriority()).collect(Collectors.toList());
+                if(lowList.size()>=OmsConstant.SKU_MAPPING_RULE_SIZE - skuMappingRuleEntity.getPriority()+1){
+                    throw new ServiceException("低优先级规则不能往下顺延，请调整优先级");
+                }
+                List<SkuMappingRuleEntity> updateList = new ArrayList<>();
+                for(int i = 0 ;i < lowList.size();i++){
+                    SkuMappingRuleEntity nowEntity = lowList.get(i);
+                    if(OmsConstant.SKU_MAPPING_RULE_SIZE.equals(nowEntity.getPriority())){
+                        continue;
+                    }
+                    SkuMappingRuleEntity previousEntity = i == 0 ?null:lowList.get(i-1);
+                    SkuMappingRuleEntity nextEntity = i +1 >= lowList.size() ?null:lowList.get(i+1);
+                    //下个优先级与当前优先级相邻
+                    if(Objects.isNull(previousEntity) || nowEntity.getPriority() +1 != previousEntity.getPriority()){
+                        //上个优先级与当前优先级不相邻，则不需要修改
+                        if(Objects.nonNull(nextEntity) && nextEntity.getPriority() != nowEntity.getPriority()-1){
+                            continue;
+                        }
+                        nowEntity.setPriority(nowEntity.getPriority()+1);
+                        updateList.add(nowEntity);
+                    }
+                }
+                this.updateBatchById(updateList);
+            }
         }
     }
 }

@@ -50,8 +50,4 @@ public class CommonController extends BaseController {
         return success(enumMaps.get(type));
 
     }
-
-
-
-
 }
