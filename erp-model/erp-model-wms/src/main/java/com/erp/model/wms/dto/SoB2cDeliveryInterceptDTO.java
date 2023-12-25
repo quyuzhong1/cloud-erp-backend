@@ -203,16 +203,6 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String soCode;
 
         /**
-        * 发货单号
-        */
-        private String soDeliveryCode;
-
-        /**
-        * 销售出库单号
-        */
-        private String soOutstockCode;
-
-        /**
         * 物流渠道id
         */
         @NotBlank(message = "物流渠道id不能为空")

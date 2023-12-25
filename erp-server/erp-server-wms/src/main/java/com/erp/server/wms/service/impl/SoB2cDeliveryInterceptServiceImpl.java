@@ -19,18 +19,17 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
-import com.erp.server.wms.service.SoB2cDeliveryInterceptDetailService;
-import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -77,6 +76,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Resource
     private SoB2cDeliveryInterceptDetailService soB2cDeliveryInterceptDetailService;
@@ -287,6 +292,16 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     * 新增修改处理数据
     */
     private void handleData(SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity) {
-    // TODO 验证数据 & 数据赋值
+        //查询关联的出库单匹配单号
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(soB2cDeliveryInterceptEntity.getSourceId()));
+        if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+            soB2cDeliveryInterceptEntity.setSoOutstockCode(soOutstockEntities.get(MathUtil.ZERO).getCode());
+        }
+        //查询管理的发货单匹配单号
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(soB2cDeliveryInterceptEntity.getSourceId()));
+        if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
+        }
+
     }
 }
