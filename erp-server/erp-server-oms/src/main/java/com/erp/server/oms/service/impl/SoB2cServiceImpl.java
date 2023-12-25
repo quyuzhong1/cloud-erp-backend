@@ -291,11 +291,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String id = soB2cEntity.getId();
         //自动匹配订单规则
         Boolean isSuccess = approveRule(id, detailList, map);
-        if (isSuccess) {
-            //配货规则
-            Boolean ruleDeliveryWarehouse = distributionRule(id, detailList, map);
-
-        }
         return soB2cEntity;
     }
 
@@ -356,10 +351,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Map<String, Object> map = new HashMap<>();
         //自动匹配订单规则
         Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList, map);
-        if (isSuccess) {
-            //自动匹配配货规则
-            distributionRule(soB2cEntity.getId(), detailList, map);
-        }
+
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), OperationTypeEnum.SUBMIT);
@@ -762,7 +754,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             message = e.getMessage();
             //添加异常信息
             soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
-            log.error("销售订单【{}】 获取物流单失败，异常信息{}", message);
+            log.error("销售订单【{}】 获取物流单失败，异常信息{}",entity.getCode(), message);
         }
         return BatchResultDTO.fail(entity.getId(), "", message);
     }
@@ -3454,11 +3446,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
 
         Boolean isSuccess = this.approveRule(id, detailList, map);
-        if (isSuccess) {
-            //自动匹配配货规则
-            this.distributionRule(id, detailList, map);
-        }
-        return Boolean.TRUE;
+        return isSuccess;
     }
 
 

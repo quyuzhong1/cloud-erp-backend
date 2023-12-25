@@ -52,4 +52,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      * @return
      */
     List<LogisticsChannelEntity> getChannelByName(@Param("channelName") String channelName);
+
+
 }
