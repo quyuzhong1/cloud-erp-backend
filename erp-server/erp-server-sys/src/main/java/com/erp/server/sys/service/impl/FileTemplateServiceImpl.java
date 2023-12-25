@@ -77,6 +77,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void fastdfsAddOrUpdate (FileTemplateDTO.FastdfsAddOrUpdateDTO fastdfsAddDTO) {
         FileTemplateEntity fileTemplateEntity =  BeanMapperUtils.map(FileTemplateEntity.class, fastdfsAddDTO);
         //原数据
@@ -85,12 +86,21 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
             fileTemplateEntity.setId(entity.getId());
         }
         //上传新文件模板
-        String url = FastDFSClientUtil.uploadFile(fastdfsAddDTO.getFile());
+        String url = "";
+        try {
+             url = FastDFSClientUtil.uploadFile(fastdfsAddDTO.getFile());
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95018);
+        }
         fileTemplateEntity.setUrl(url);
         this.saveOrUpdate(fileTemplateEntity);
         //删除原文件
-        if (ObjectUtil.isNotEmpty(entity)) {
-            FastDFSClientUtil.deleteFile(entity.getUrl());
+        if (ObjectUtil.isNotEmpty(entity) && StrUtil.isNotBlank(entity.getUrl())) {
+            try {
+                FastDFSClientUtil.deleteFile(entity.getUrl());
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.ERROR_FILE_DELETE);
+            }
         }
     }
 
