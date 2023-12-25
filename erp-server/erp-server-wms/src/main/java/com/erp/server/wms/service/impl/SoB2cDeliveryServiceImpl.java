@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.resource.ClassPathResource;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,8 +17,10 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -506,8 +510,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                                         && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
                                 ).findFirst().orElse(null);
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
-                            PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
 
+                            PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
+                            // TODO 自定义配货单
+                            /*           ClassPathResource resource = new ClassPathResource("");
+                            Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
+                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", resource.getStream(), map, printWayBillPdfDTO.getDetailList());
+                        */
                         }
                     }
                 } else {
