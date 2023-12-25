@@ -26,4 +26,12 @@ public interface SkuMappingRuleConverter {
             @Mapping(target = "ruleTypeName", expression = "java(com.common.core.constant.EnumMessage.getNameByCode(com.erp.model.oms.enums.SkuMappingRuleEnum.class,skuMappingRuleEntity.getRuleType()))"),
     })
     SkuMappingRuleDTO.ViewDTO entityToViewDto(SkuMappingRuleEntity skuMappingRuleEntity);
+
+    SkuMappingRuleDTO.CommonDTO entityToCommonDto(SkuMappingRuleEntity skuMappingRuleEntity);
+
+
+    @Mappings({
+            @Mapping(target = "ruleTypeName", expression = "java(com.common.core.constant.EnumMessage.getNameByCode(com.erp.model.oms.enums.SkuMappingRuleEnum.class,skuMappingRuleEntity.getRuleType()))")
+    })
+    SkuMappingRuleDTO.LogDTO entityToLogDTO(SkuMappingRuleEntity skuMappingRuleEntity);
 }

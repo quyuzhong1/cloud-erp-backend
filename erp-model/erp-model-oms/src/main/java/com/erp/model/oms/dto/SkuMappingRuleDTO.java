@@ -296,4 +296,52 @@ public class SkuMappingRuleDTO implements Serializable {
          */
         List<ExtendRuleConditionsDTO> extendRuleContentList;
     }
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class LogDTO {
+
+        /**
+         * 优先级:1-5
+         */
+        private Integer priority;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 规则类型 url: common/enumDropDown?type=SkuMappingRule
+         */
+        private String ruleTypeName;
+
+        /**
+         * 扩展规则
+         */
+        private String extendRuleType;
+
+        /**
+         * 起始符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
+         */
+        private String validStartingSymbolPosition;
+
+        /**
+         * 结束符有效位置 url: common/enumDropDown?type=SkuMappingSymbolicSide
+         */
+        private String validEndSymbolPosition;
+
+        /**
+         * 规则详情
+         */
+        private List<RuleConditionsDTO> ruleContentList;
+
+        /**
+         * 扩展规则详情
+         */
+        private List<ExtendRuleConditionsDTO> extendRuleContentList;
+    }
+
 }

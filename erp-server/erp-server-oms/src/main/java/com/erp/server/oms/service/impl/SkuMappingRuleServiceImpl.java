@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.constant.EnumMessage;
@@ -36,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -107,7 +110,10 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 记录主单操作日志
         log.info("编辑 开始记录sku对照表匹配规则日志数据，id：【{}】", skuMappingRuleEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
-        operateLogService.addModuleOperateLogByObj(old, skuMappingRuleEntity, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), msg);
+        SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
+        skuMappingRuleEntity.setDisabled(old.getDisabled());
+        SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(skuMappingRuleEntity);
+        operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -119,14 +125,17 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Override
     public Boolean enableOrDisable(SkuMappingRuleDTO.StatusDTO dto) {
         SkuMappingRuleEntity old = super.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
+        oldView.setDisabled(old.getDisabled());
+        Optional.of(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
         old.setDisabled(dto.getDisabled());
         boolean save = super.updateById(old);
         if(!save) {
             throw new ServiceException("sku对照表匹配规则保存失败");
         }
+        SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(old);
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getId(), "sku对照表匹配规则");
-        operateLogService.addModuleOperateLogByObj(old, old, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), old.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -135,11 +144,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
         SkuMappingRuleEntity entity = super.getById(id);
         SkuMappingRuleDTO.ViewDTO viewDTO =  SkuMappingRuleConverter.INSTANCE.entityToViewDto(entity);
-
         JSONObject jsonObject = new JSONObject(entity.getRuleContent());
         SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
         viewDTO.setRuleDTO(ruleDTO);
-
         Map<String,Object> extendRuleMap = entity.getExtendRuleContent();
         if(MapUtils.isNotEmpty(extendRuleMap)){
             JSONObject extendJsonObject = new JSONObject(extendRuleMap);
@@ -147,6 +154,22 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             viewDTO.setExtendRuleDTO(extendRuleDto);
         }
         return viewDTO;
+    }
+
+    private SkuMappingRuleDTO.LogDTO buildLogDTO(SkuMappingRuleEntity entity){
+        SkuMappingRuleDTO.LogDTO logDTO =  SkuMappingRuleConverter.INSTANCE.entityToLogDTO(entity);
+        JSONObject jsonObject = new JSONObject(entity.getRuleContent());
+        SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
+        logDTO.setValidStartingSymbolPosition(ruleDTO.getValidStartingSymbolPosition());
+        logDTO.setValidEndSymbolPosition(ruleDTO.getValidEndSymbolPosition());
+        logDTO.setRuleContentList(ruleDTO.getRuleContentList());
+        Map<String,Object> extendRuleMap = entity.getExtendRuleContent();
+        if(MapUtils.isNotEmpty(extendRuleMap)){
+            JSONObject extendJsonObject = new JSONObject(extendRuleMap);
+            SkuMappingRuleDTO.ExtendRuleDTO extendRuleDto = JSONObject.parseObject(extendJsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.ExtendRuleDTO>() {}.getType());
+            logDTO.setExtendRuleContentList(extendRuleDto.getExtendRuleContentList());
+        }
+        return logDTO;
     }
 
     @Override
@@ -197,7 +220,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             throw new ServiceException("获取规则异常,"+skuMappingRuleEntity.getRuleType());
         }
         List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(commonDTO.getRuleDTO());
-        String regex = regexList.toString().substring(1, regexList.toString().length() - 1);
+        String regex
+                = regexList.toString().substring(1, regexList.toString().length() - 1);
         skuMappingRuleEntity.setRuleRegex(regex);
 
         //处理扩展规则
@@ -340,4 +364,5 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             listingInfoService.updateBatchById(updateListingList,2000);
         }
     }
+
 }
