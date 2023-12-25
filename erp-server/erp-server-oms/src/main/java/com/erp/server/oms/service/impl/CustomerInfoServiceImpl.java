@@ -450,7 +450,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (StringUtils.isNotBlank(areaId)) {
             DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
             if (Objects.nonNull(globalArea)) {
-                areaName = globalArea.getRegionName();
+//                areaName = globalArea.getRegionName();
+                areaName = globalArea.getSubregionName();
             }
         }
         view.setAreaName(areaName);

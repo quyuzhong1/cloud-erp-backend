@@ -131,6 +131,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setSyncOperate(task.getSyncOperate());
         entity.setBillType(task.getBillType());
         entity.setOperateType(task.getOperateType());
+        entity.setDisabled(task.getDisabled());
         return entity;
     }
 

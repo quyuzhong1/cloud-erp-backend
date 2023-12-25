@@ -105,7 +105,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         }
 
         // 卖家SKU列表
-        List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
+        List<String> sellerSkuList = dto.getDetailList().stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
         // SKU绑定的信息
         Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = new HashMap<>();
         // sku是否是组合类型
