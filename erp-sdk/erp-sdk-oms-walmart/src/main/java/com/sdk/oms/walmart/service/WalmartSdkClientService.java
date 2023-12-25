@@ -283,7 +283,7 @@ public class WalmartSdkClientService {
             log.info(String.format("::::: Walmart调用平台shipOrder发货订单 ::::: 请求地址 => %s, 请求参数 => %s, 开始时间 => %s, " +
                             "返回参数 => %s ", baseUrl, param, data));
         } else {
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, resultMap.get("code"));
+            throw new ServiceException(ApiError.WALMART_PLATFORM_SHIP_ORDER_ERROR, resultMap.get("code"));
         }
     }
 

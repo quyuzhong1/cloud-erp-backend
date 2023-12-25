@@ -242,10 +242,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         //调用第三方平台SDK发货
-        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-        platformShipOrderDTO.setSoB2cId(id);
-        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        try {
+            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+            platformShipOrderDTO.setSoB2cId(id);
+            platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+        }
+
 
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());

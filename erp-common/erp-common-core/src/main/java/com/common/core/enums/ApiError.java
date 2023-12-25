@@ -873,10 +873,11 @@ public enum ApiError implements Serializable {
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
-    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+    WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
 
 
     /**
