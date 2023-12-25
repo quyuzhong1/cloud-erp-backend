@@ -462,7 +462,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (StringUtils.isNotBlank(areaId)) {
             DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
             if (Objects.nonNull(globalArea)) {
-                areaName = globalArea.getRegionName();
+//                areaName = globalArea.getRegionName();
+                areaName = globalArea.getSubregionName();
             }
         }
         view.setAreaName(areaName);
