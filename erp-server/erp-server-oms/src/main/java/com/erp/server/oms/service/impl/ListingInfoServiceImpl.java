@@ -142,11 +142,16 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setListingId(listingInfoEntity.getId());
         skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
+
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
-        boolean save = skuMappingService.save(skuMappingEntity);
-        return save;
+        skuMappingService.save(skuMappingEntity);
+
+        return lambdaUpdate()
+                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
+                .update();
     }
 
     @Override
