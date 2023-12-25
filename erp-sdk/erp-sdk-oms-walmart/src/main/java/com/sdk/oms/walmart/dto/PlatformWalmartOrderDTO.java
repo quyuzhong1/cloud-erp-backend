@@ -123,6 +123,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogistics(orderBean.getOrderLines().getOrderLine()));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
+        orderDTO.setPlatform(PlatformDictEnum.WALMART.getCode());
+        orderDTO.setUniqueId(dto.getUniqueId());
         return orderDTO;
     }
 

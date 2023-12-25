@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
@@ -183,6 +184,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderDetail));
+        orderDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        orderDTO.setUniqueId(dto.getUniqueId());
         return orderDTO;
     }
 

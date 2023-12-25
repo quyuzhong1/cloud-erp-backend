@@ -21,7 +21,14 @@ public abstract class AbstractLogisticsTrackHandler<T extends CleanBaseDTO, R ex
         List<R> targetDataList = convert(sourceDataList);
         return new PlatformDataDTO<>(sourceDataList, targetDataList);
     }
-
+    /**
+     * 清洗未推送成功数据
+     * @return
+     */
+    public PlatformDataDTO<T, R> cleanHandle(List<T> sourceDataList) {
+        List<R> targetDataList = convert(sourceDataList);
+        return new PlatformDataDTO<>(sourceDataList, targetDataList);
+    }
     /**
      * 平台数据下载数据
      */

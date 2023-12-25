@@ -84,6 +84,18 @@ public class PlatformDataThread {
         }
     }
 
+    @Async("pullErpOpenApi")
+    public void cleanOrder(JobTaskDTO jobTaskDTO) {
+        try {
+            log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
+            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType());
+
+        } catch (Exception e) {
+            log.error(" {}重新推送数据错误:{}", jobTaskDTO.getDictPlatform(), e);
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(jobTaskDTO),e.getMessage(), JSONUtil.toJsonStr(e.getStackTrace()));
+            dmpErrorLogService.save(dmpErrorLogEntity);
+        }
+    }
     /**
      * 执行任务
      * @param taskName
