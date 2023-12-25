@@ -244,7 +244,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
         }
-
+        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String message = "";
+        String paramJson = "";
+        String returnJson = "";
         //调用第三方平台SDK发货
         try {
             PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
@@ -252,12 +255,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
             PlatformSaveHandler.shipOrder(platformShipOrderDTO);
         } catch (Exception e) {
+            message = e.getMessage();
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setParamJson(paramJson);
+            addError.setReturnJson(returnJson);
+            addError.setMainId(entity.getSourceId());
+            addError.setMessage(message);
+            soB2cFeign.addSoB2cError(addError);
+            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
             throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
         }
 
 
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(type);
+        deleteDTO.setMainId(entity.getSourceId());
+        soB2cFeign.deleteError(deleteDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
@@ -569,6 +585,23 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return Collections.emptyList();
         }
         return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> retryFalseDelivery(String soB2cId) {
+        List<BatchResultDTO>  resultList=new ArrayList<>(1);
+        List<SoB2cDeliveryEntity>  soB2cDeliveryList=this.listBySoB2cId(soB2cId);
+        for(SoB2cDeliveryEntity item:soB2cDeliveryList){
+            BatchResultDTO  resultDTO=  this.falseDelivery(item.getId());
+            resultList.add(resultDTO);
+        }
+        return resultList;
+    }
+
+    private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {
+        return this.lambdaQuery().eq(SoB2cDeliveryEntity::getSourceId,soB2cId).list();
     }
 
     /**

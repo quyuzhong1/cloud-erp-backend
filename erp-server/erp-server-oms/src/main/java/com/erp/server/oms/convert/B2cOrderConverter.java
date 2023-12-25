@@ -3,6 +3,7 @@ package com.erp.server.oms.convert;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -124,4 +125,13 @@ public interface B2cOrderConverter {
     })
     SoB2cDeliveryDetailDTO.AddDTO convertDeliveryDetail(SoB2cDetailEntity item);
     List<SoB2cDeliveryDetailDTO.AddDTO> convertDeliveryDetail(List<SoB2cDetailEntity> list );
+
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "warehouseId", source = "warehouseId"),
+    })
+    SkuMappingDTO.ListingSkuParamDTO convertFindListingSku(SoB2cDetailEntity item);
+    List<SkuMappingDTO.ListingSkuParamDTO> convertFindListingSku(List<SoB2cDetailEntity> detailList);
 }

@@ -50,6 +50,9 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         */
         private String platformWarehouseName;
 
+
+
+
         /**
         * 国家二字码
         */

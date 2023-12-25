@@ -703,6 +703,8 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ListSkuParamDTO {
+
+
         /**
          * SKU编号
          */
@@ -718,6 +720,84 @@ public class SkuMappingDTO implements Serializable {
          */
         private String dictPlatform;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListingSkuParamDTO{
+        private String type;
+
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 出库id
+         */
+        private String warehouseId;
+
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSkuResultDTO {
+
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 出库id
+         */
+        private String warehouseId;
+
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
+
+        private String listingId;
+
+
+
+        private String type;
+
+
+
+        /**
+         * 平台产品sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品sku
+         */
+        private String platformSkuName;
+
+        /**
+         * 平台产品id
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台产品名
+         */
+        private String platformSpuName;
+    }
+
+
+
 
     @Data
     @NoArgsConstructor

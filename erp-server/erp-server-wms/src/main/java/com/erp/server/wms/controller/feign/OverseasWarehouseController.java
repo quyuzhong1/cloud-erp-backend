@@ -48,19 +48,15 @@ public class OverseasWarehouseController extends BaseController {
         return overseasProviderWarehouseService.listByPlatformWarehouseCode(warehouseCodeList,platform);
     }
 
-    /**
-     * 根据erp仓库id 集合获取到海外仓
-     * @return
-     */
-    @PostMapping("/listByWarehouseId")
 
     /**
      * @description
-     * @params  warehouseIdList
+     * @params  根据erp仓库id 集合获取到海外仓
      * @author Lambda
      * @return java.util.List<com.erp.model.wms.dto.OverseasProviderWarehouseDTO.ViewDTO>
      * @create 2023-12-13 17:08
      */
+    @PostMapping("/listByWarehouseId")
     public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseId(@RequestBody List<String> warehouseIdList){
         return overseasProviderWarehouseService.listByWarehouseIdList(warehouseIdList);
     }

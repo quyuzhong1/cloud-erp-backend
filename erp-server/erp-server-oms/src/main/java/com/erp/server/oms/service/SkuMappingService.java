@@ -200,4 +200,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @date 2023-12-21
      */
     BatchResultDTO delete(String id);
+
+    /**  获取到sku 对应的信息
+     * @description
+     * @param listSkuParamList
+     * @author Lambda
+     * @return 
+     * @create 2023-12-25 15:47
+     */
+    List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList,String dictPlatform,String type);
 }
