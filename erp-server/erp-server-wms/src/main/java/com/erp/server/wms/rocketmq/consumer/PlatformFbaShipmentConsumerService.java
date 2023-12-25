@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -9,23 +10,24 @@ import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
-import com.erp.server.wms.service.FbaShipmentDetailService;
-import com.erp.server.wms.service.FbaShipmentReceiveService;
-import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.server.wms.service.FbaShipmentStatusService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -58,19 +60,15 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     @Resource
     private FbaShipmentService fbaShipmentService;
     @Resource
-    private FbaShipmentReceiveService fbaShipmentReceiveService;
-    @Resource
-    private FbaShipmentDetailService fbaShipmentDetailService;
-    @Resource
-    private FbaShipmentStatusService fbaShipmentStatusService;
-    @Resource
-    private DocNoGenHelper docNoGenHelper;
-    @Resource
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private SysUserFeign sysUserFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
 
 
     @Override
@@ -100,8 +98,9 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
 
         // 填充最新签收时间
-        if (!CollectionUtils.isEmpty(receiveDTOList)){
-            LocalDateTime maxReceiveTime = receiveDTOList.stream()
+        List<PlatformFbaShipmentReceiveDTO> receiveTimeDTO = receiveDTOList.stream().filter(e -> e.getReceiveQty() > 0).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(receiveTimeDTO)) {
+            LocalDateTime maxReceiveTime = receiveTimeDTO.stream()
                     .map(PlatformFbaShipmentReceiveDTO::getReceiveDate)
                     .max(LocalDateTime::compareTo)
                     .get();
@@ -109,13 +108,13 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         }
 
         // 卖家SKU列表
-        List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
+        List<String> sellerSkuList = dto.getDetailList().stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
         // SKU绑定的信息
         Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = new HashMap<>();
         // sku是否是组合类型
         List<String> hasChildrenSkuIds = new ArrayList<>();
 
-        if (!CollectionUtils.isEmpty(sellerSkuList)){
+        if (!CollectionUtils.isEmpty(sellerSkuList)) {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
@@ -143,20 +142,54 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .map(BomChildrenSkuDTO::getParentSkuId)
                     .collect(Collectors.toList());
         }
+        // 查询仓库中心对应国家并设置对应店铺
+        checkAndSetCountryWithShop(entity);
+
         // 查询国家信息
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
         entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
-        if (null == oldEntity){
+        if (null == oldEntity) {
             // 新增
-            fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds,   receiveDTOList, dto.checkAndGetDetailList());
+            fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds, receiveDTOList, dto.checkAndGetDetailList());
         } else {
             // 修改
             fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds, receiveDTOList, dto.checkAndGetDetailList());
         }
 
         return ApiResult.success();
+    }
+
+    /**
+     * 查询仓库中心对应国家并设置对应店铺
+     * @param entity 来源实体
+     */
+    private void checkAndSetCountryWithShop(FbaShipmentEntity entity) {
+        // 查询仓库中心对应国家
+        String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
+        // 没有配置处理？
+        if (StringUtils.isEmpty(country)) {
+//            String msg = StrUtil.format("未找到系统仓储中心:{}, 请联系管理员", entity.getFulfillmentCenter());
+//            throw new ServiceException(msg);
+            return;
+        }
+        // 国家一致
+        if (entity.getCountryId().equalsIgnoreCase(country)) {
+            return;
+        }
+        entity.setCountryId(country);
+        // 查询对应sellerId的国家店铺
+        ShopInfoDTO.RelatedDTO requestDTO = new ShopInfoDTO.RelatedDTO();
+        requestDTO.setCountry(country);
+        requestDTO.setShopId(entity.getShopId());
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getRelatedShopByIdAndCountry(requestDTO);
+        if (null == shopInfoEntity){
+            String msg = StrUtil.format("仓库中心对应国家的店铺未授权, shopId={}, country={}", entity.getShopId(), country);
+            throw new ServiceException(msg);
+        }
+        entity.setShopId(shopInfoEntity.getId());
+        entity.setShopName(shopInfoEntity.getName());
     }
 }

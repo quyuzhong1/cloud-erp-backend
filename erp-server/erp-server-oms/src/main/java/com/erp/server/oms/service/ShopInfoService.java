@@ -208,4 +208,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     ShopDTO.RedirectDTO updateAndAuth(ShopDTO.UpdateDTO dto);
+
+    /**
+     * 查询店铺关联的国家店铺
+     * @return
+     */
+    ShopInfoEntity getRelatedShopByIdAndCountry(ShopInfoDTO.RelatedDTO relateDTO);
 }

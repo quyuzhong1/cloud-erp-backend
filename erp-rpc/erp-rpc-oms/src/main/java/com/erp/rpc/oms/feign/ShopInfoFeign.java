@@ -1,6 +1,7 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -82,4 +83,12 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/updateShopAuthById")
     Boolean updateShopAuthById(@RequestBody ShopAuthEntity shopAuthEntity);
+
+
+    /**
+     * 查询店铺关联的国家店铺
+     *
+     */
+    @PostMapping("feign/shop/getRelatedShopByIdAndCountry")
+    ShopInfoEntity getRelatedShopByIdAndCountry(@RequestBody ShopInfoDTO.RelatedDTO relateDTO);
 }
