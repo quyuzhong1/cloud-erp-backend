@@ -97,7 +97,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private SoOutstockService soOutstockService;
 
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -176,10 +175,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
-        String type= SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
-        String message="";
-        String paramJson="";
-        String returnJson ="";
+        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String message = "";
+        String paramJson = "";
+        String returnJson = "";
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.b2c_so_delivery_NOT_EXISTS);
         }
@@ -198,13 +197,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.setSoB2cId(entity.getSourceId());
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
                 PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                paramJson=JSONObject.toJSONString(platformShipOrderDTO);
+                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
 
             //修改发货状态
             this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
 
-            SoB2cErrorDTO.DeleteDTO deleteDTO=new SoB2cErrorDTO.DeleteDTO();
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
             deleteDTO.setType(type);
             deleteDTO.setMainId(entity.getSourceId());
             soB2cFeign.deleteError(deleteDTO);
@@ -214,9 +213,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
         } catch (Exception e) {
-            message=e.getMessage();
+            message = e.getMessage();
 
-            SoB2cErrorDTO.AddDTO addError=new SoB2cErrorDTO.AddDTO();
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(type);
             addError.setParamJson(paramJson);
             addError.setReturnJson(returnJson);
@@ -607,11 +606,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(soB2cEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+
         //订单信息
         SoB2cEntity soB2cEntity = soB2cEntities.get(MathUtil.ZERO);
         soB2cDeliveryEntity.setDictPlatform(soB2cEntity.getDictPlatform());
+        String shopId = soB2cEntity.getShopId();
+        if (StringUtils.isNotBlank(shopId)) {
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+            if(Objects.nonNull(shopInfo)){
+                soB2cDeliveryEntity.setShopName(shopInfo.getName());
+
+            }
+        }
         soB2cDeliveryEntity.setShopId(soB2cEntity.getShopId());
-        soB2cDeliveryEntity.setShopName(soB2cEntity.getShopName());
 
         //查询B2C销售订单物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
@@ -696,6 +703,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 组装打印配货单数据
+     *
      * @param soB2cEntity
      * @param soB2cReceiverEntities
      * @param logisticsWaybillDetailDTO
