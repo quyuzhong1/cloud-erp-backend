@@ -1129,7 +1129,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
             // 检查是否都有映射
-            boolean allMatch = saveReceiveList.stream().allMatch(e -> StringUtils.isBlank(e.getSkuId()) && StringUtils.isBlank(e.getSkuNo()));
+            boolean allMatch = saveReceiveList.stream().allMatch(e -> StringUtils.isNotBlank(e.getSkuId()) && StringUtils.isNotBlank(e.getSkuNo()));
             if (!allMatch){
                 log.warn("【FBA货件更新】未找到所有映射数据, 暂下推直接调拨单");
                 return;
