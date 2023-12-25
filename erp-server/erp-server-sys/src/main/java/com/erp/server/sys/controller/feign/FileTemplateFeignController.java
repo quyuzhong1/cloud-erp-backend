@@ -24,18 +24,6 @@ public class FileTemplateFeignController {
     @Resource
     private FileTemplateService fileTemplateService;
 
-
-    /**
-     * 文件模板保存（fastdfs）
-     * @author Will
-     * @date: 2023/12/25 14:43
-     * @param dto
-     */
-    @PostMapping("/fastdfsAddOrUpdate")
-    public void fastdfsAddOrUpdate(@Validated @ModelAttribute FileTemplateDTO.FastdfsAddOrUpdateDTO  dto){
-         fileTemplateService.fastdfsAddOrUpdate(dto);
-    }
-
     /**
      * 查询文件模板
      * @author Will

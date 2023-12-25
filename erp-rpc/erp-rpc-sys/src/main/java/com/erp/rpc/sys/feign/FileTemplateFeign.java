@@ -16,15 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface FileTemplateFeign {
 
     /**
-     * @description: fastdfs文件新增或修改
-     * @author Will
-     * @date: 2023/12/25 14:53
-     * @param dto
-     */
-    @PostMapping("feign/fileTemplate/fastdfsAddOrUpdate")
-    void fastdfsAddOrUpdate(@RequestBody @Validated FileTemplateDTO.FastdfsAddOrUpdateDTO dto);
-
-    /**
      * @description: 查询模板文件
      * @author Will
      * @date: 2023/12/25 14:52
