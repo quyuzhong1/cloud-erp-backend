@@ -563,6 +563,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
     }
 
+    @Override
+    public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
+    }
+
     /**
      * 组装数据调用第三方接口打印面单/配货单,获取base64PDF信息
      *

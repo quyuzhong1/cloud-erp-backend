@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,6 +11,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -19,16 +19,17 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
-import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -73,6 +74,18 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Resource
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoB2cDeliveryInterceptDetailService soB2cDeliveryInterceptDetailService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -96,7 +109,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
-
+        soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
         return new BaseResultDTO.AddDTO(soB2cDeliveryInterceptEntity.getId(), code);
     }
 
@@ -159,7 +172,25 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
+        List<String> skuIdList = records.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
+            //取消状态名称
+            record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
+            //处理结果中文
+            record.setHandleResultName(HandleResultEnum.getName(record.getHandleResult()));
+            //处理状态名称
+            record.setHandleStatusName(SoB2cDeliveryInterceptStatusEnum.getName(record.getHandleStatus()));
+            //拦截状态名称
+            record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                record.setSkuNo(productDetailEntity.getSkuNo());
+                record.setProductName(productDetailEntity.getName());
+            }
 
+        }
     }
 
     @Override
@@ -261,6 +292,16 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     * 新增修改处理数据
     */
     private void handleData(SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity) {
-    // TODO 验证数据 & 数据赋值
+        //查询关联的出库单匹配单号
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(soB2cDeliveryInterceptEntity.getSourceId()));
+        if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+            soB2cDeliveryInterceptEntity.setSoOutstockCode(soOutstockEntities.get(MathUtil.ZERO).getCode());
+        }
+        //查询管理的发货单匹配单号
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(soB2cDeliveryInterceptEntity.getSourceId()));
+        if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
+        }
+
     }
 }

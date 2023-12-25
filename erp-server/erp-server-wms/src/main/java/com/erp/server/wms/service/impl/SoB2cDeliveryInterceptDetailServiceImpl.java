@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptDetailMapper;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptDetailService;
@@ -38,7 +39,7 @@ public class SoB2cDeliveryInterceptDetailServiceImpl extends SuperServiceImpl<So
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDetailDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String mainId) {
         SoB2cDeliveryInterceptDetailEntity soB2cDeliveryInterceptDetailEntity = new SoB2cDeliveryInterceptDetailEntity();
         BeanMapperUtils.copy(addDTO, soB2cDeliveryInterceptDetailEntity);
 

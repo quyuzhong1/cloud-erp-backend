@@ -175,7 +175,7 @@ public class FileTemplateDTO implements Serializable {
         /**
          * 文件不能为空
          */
-        @NotBlank(message = "文件不能为空")
+        @NotNull(message = "文件不能为空")
         private MultipartFile file;
     }
 }
