@@ -113,13 +113,6 @@ public class SoB2cDeliveryInterceptDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 50,message = "主表id最大长度不能超过50位")
-        private String mainId;
-
-        /**
         * 产品id
         */
         @NotBlank(message = "产品id不能为空")
@@ -149,8 +142,6 @@ public class SoB2cDeliveryInterceptDetailDTO implements Serializable {
         /**
         * 仓位
         */
-        @NotBlank(message = "仓位不能为空")
-        @Size(max = 50,message = "仓位最大长度不能超过50位")
         private String warehouseLocation;
 
         /**

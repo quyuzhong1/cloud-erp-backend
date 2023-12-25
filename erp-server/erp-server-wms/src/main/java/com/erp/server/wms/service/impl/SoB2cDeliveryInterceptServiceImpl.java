@@ -1,7 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -9,14 +12,15 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.enums.CancelStatusEnum;
-import com.erp.model.wms.enums.HandleResultEnum;
-import com.erp.model.wms.enums.InterceptStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -81,7 +85,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         log.info("开始新增b2c发货拦截单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHLJ);
         soB2cDeliveryInterceptEntity.setCode(code);
         boolean save = super.save(soB2cDeliveryInterceptEntity);
@@ -91,9 +94,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soB2cDeliveryInterceptEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
+        // 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(soB2cDeliveryInterceptEntity.getId(), code);
     }
@@ -120,19 +122,44 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         // 记录主单操作日志
             log.info("编辑 开始记录b2c发货拦截单日志数据，单号：【{}】", soB2cDeliveryInterceptEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cDeliveryInterceptEntity.getCode(), "b2c发货拦截单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soB2cDeliveryInterceptEntity, null, soB2cDeliveryInterceptEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, soB2cDeliveryInterceptEntity, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
-    public List<SoB2cDeliveryInterceptDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return null;
+    public List<SoB2cDeliveryInterceptDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SoB2cDeliveryInterceptDTO.PagingParamDTO searchParam = new SoB2cDeliveryInterceptDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SoB2cDeliveryInterceptDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<String> statusList = SoB2cDeliveryInterceptStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(SoB2cDeliveryInterceptDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        statusList.parallelStream().forEach(status -> {
+            if (!existStatusList.contains(status)) {
+                list.add(new SoB2cDeliveryInterceptDTO.TabListDTO(status, 0));
+            }
+        });
+        list.add(new SoB2cDeliveryInterceptDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryInterceptDTO.TabListDTO::getCount).sum()));
+        // 计算合计数量
+        return list;
     }
 
     @Override
-    public PagingVO<SoB2cDeliveryInterceptDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<SoB2cDeliveryInterceptDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SoB2cDeliveryInterceptDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
+
     }
 
     @Override
