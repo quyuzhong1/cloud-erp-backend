@@ -83,7 +83,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     public ApiResult<?> handle(Object ext) {
         log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(ext));
         PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
-        try {
             // Shopify来源卖家sku可能为空
             if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
                 log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
@@ -151,15 +150,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
 
             }
-            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 2);
-        }catch (Exception e){
-            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 0);
-            throw e;
-        }
         return ApiResult.success();
     }
-
-    private void updateMongodbData(String platform,String uniqueId, Integer isClean){
+    @Override
+    public void updateMongodbData(String platform,String uniqueId, Integer isClean){
         if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
             return;
         }
