@@ -95,7 +95,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertCancel());
         // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType("");
+        orderDTO.setInvalidType(orderDTO.getInvalidStatus() ? "automatic" : "");
         // 作废原因
         orderDTO.setInvalidRemark("");
         // 订单状态
@@ -117,7 +117,8 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         BigDecimal shippingFee = BigDecimal.ZERO;
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
-        orderDTO.setPayTime(purchaseLocalDateTime);
+        // 未付款无付款时间
+        orderDTO.setPayTime("payment".equalsIgnoreCase(orderDTO.getPayStatus()) ? null : purchaseLocalDateTime);
         // 付款金额
         orderDTO.setPayAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 付款方式

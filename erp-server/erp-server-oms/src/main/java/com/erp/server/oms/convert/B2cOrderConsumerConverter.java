@@ -8,6 +8,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 /**
  * <p>
  * b2c订单消费映射工具类
@@ -128,8 +130,9 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "weight", source = "allNetWeight"),
     })
-    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId);
+    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight);
 
 
     @Mappings({

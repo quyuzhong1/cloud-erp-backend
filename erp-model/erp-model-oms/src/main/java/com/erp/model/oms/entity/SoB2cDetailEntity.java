@@ -148,6 +148,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("platform_line_number")
     private String platformLineNumber;
 
+    /**
+     * 当前净重
+     */
+    @TableField(exist = false)
+    private BigDecimal currentNetWeight;
+
 
     public static final String MAIN_ID = "main_id";
 
