@@ -203,6 +203,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cErrorService soB2cErrorService;
 
+    @Autowired
+    private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
+
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1773,8 +1776,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
 
+
+        //查询拦截单
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(ids);
+
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
+            //设置拦截标识
+            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream().filter(req -> req.getId().equals(data.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
+                data.setIsIntercept(isInterceptDTO.getIsIntercept());
+            }
 
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);

@@ -515,13 +515,13 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 创建人名称
          */
-        private String createUserName;
+        private String updateUserName;
 
         /**
          * 创建时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
 
         /**
          * 平台产品SPU编号
@@ -613,13 +613,13 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 创建人名称
          */
-        private String createUserName;
+        private String updateUserName;
 
         /**
          * 创建时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
 
         /**
          * 平台

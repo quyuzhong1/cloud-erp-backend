@@ -102,6 +102,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soCode;
 
+        /**
+         * 是否拦截
+         */
+        private Boolean isIntercept;
 
         /**
          * 来源code
