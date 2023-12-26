@@ -207,7 +207,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             list.add(result);
         }
         for(String regex : regexList){
-            String regexResult = skuMappingRuleEnum.getHandleRegexMethod().apply(regex,result);
+            String regexResult = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
             list.add(regexResult);
         }
         return list;
@@ -243,6 +243,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             List<String> extendRegexList = skuMappingExtendRuleEnum.getRegexMethod().apply(commonDTO.getExtendRuleDTO());
             String extendRegex = extendRegexList.toString().substring(1, extendRegexList.toString().length() - 1);
             skuMappingRuleEntity.setExtendRuleRegex(extendRegex);
+        }else{
+            skuMappingRuleEntity.setExtendRuleContent(new HashMap<>());
         }
     }
 
@@ -344,7 +346,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
                 String[] ruleRegexList = ruleRegexArrStr.split(", ");
                 for(String ruleRegex : ruleRegexList){
-                    afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleRegex,afterHandlePlatformSkuNo);
+                    afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,afterHandlePlatformSkuNo);
                 }
                 if(skuVOMap.containsKey(afterHandlePlatformSkuNo)){
                     SkuVO skuVO = skuVOMap.get(afterHandlePlatformSkuNo);
