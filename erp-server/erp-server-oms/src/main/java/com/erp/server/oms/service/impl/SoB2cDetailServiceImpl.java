@@ -223,6 +223,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         // 来源不为空
         // 历史map
         Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
+                .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
         // 新增或更新列表
