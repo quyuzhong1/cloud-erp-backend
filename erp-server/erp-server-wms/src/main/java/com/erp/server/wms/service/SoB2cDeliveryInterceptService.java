@@ -78,5 +78,5 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
      * @param sourceIdList
      * @return void
      **/
-    Boolean getIsIntercept(List<String> sourceIdList);
+    List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> listIsIntercept(List<String> sourceIdList);
 }
