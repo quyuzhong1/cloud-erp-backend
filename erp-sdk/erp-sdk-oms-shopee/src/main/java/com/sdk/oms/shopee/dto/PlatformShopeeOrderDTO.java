@@ -63,11 +63,16 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         String shopId = dto.getShopId();
 
         Long createTime = orderDetail.getCreateTime();
-        Instant instant = Instant.ofEpochSecond(createTime);
+        Instant instant = null;
+        if(Objects.nonNull(createTime)){
+            instant = Instant.ofEpochSecond(createTime);
+        }
         ZoneId zone = ZoneId.systemDefault();
 
         // 订单日期
-        orderDTO.setBillDate(LocalDateTime.ofInstant(instant, zone).toLocalDate());
+        if (Objects.nonNull(instant)){
+            orderDTO.setBillDate(LocalDateTime.ofInstant(instant, zone).toLocalDate());
+        }
         // 平台订单号
         orderDTO.setPlatformCode(orderDetail.getOrdersn());
         // 销售平台

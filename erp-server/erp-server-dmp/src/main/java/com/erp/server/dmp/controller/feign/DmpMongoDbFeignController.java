@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
@@ -44,7 +45,10 @@ public class DmpMongoDbFeignController {
         if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getTableName()) || StringUtils.isEmpty(dto.getUniqueId()) || Objects.isNull(dto.getIsClean())){
             return;
         }
-        Class tClass = CleanDataTableEnum.getByName(dto.getTableName()).getTClass();
+        log.info("获取到配置：{}", JSONObject.toJSONString(dto));
+        CleanDataTableEnum cleanDataTableEnum = CleanDataTableEnum.getByName(dto.getTableName());
+        if (Objects.isNull(cleanDataTableEnum)) return;
+        Class tClass = cleanDataTableEnum.getTClass();
         if (Objects.isNull(tClass)) return;
         OmsMongoDTO updateDto = new OmsMongoDTO();
         updateDto.setUniqueId(dto.getUniqueId());

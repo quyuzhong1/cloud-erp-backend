@@ -69,5 +69,5 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
      * @param channelIdList
      * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
      **/
-    List<LogisticsPrintTypeEntity> listByChannelIds(List<String> channelIdList);
+    List<LogisticsPrintTypeDTO.ViewDTO> listByChannelIds(List<String> channelIdList);
 }

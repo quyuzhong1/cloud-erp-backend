@@ -194,7 +194,12 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //收寄信息
         AddressDTO addressDTO = new AddressDTO();
         addressDTO.setSender(LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO));
-        addressDTO.setPickup(LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO));
+        if (Objects.nonNull(logisticsOrderVO.getPickUpInfo())){
+            addressDTO.setPickup(LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO));
+        }
+        if (Objects.nonNull(logisticsOrderVO.getReturnInfo())){
+            addressDTO.setRefund(LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO));
+        }
 //        addressDTO.setRefund(addressDTO.getSender());
         addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         OrderRequest orderRequest = OrderRequest.builder()

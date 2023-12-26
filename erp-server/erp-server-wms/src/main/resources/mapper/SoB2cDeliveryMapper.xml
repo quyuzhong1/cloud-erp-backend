@@ -120,8 +120,8 @@
         </if>
         <!--创建时间-->
         <if test="params.deliveryTimeList != null and params.deliveryTimeList.size > 0">
-            AND sbd.delivery_time &gt;= #{params.createTimeList[0]}
-            AND sbd.delivery_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
+            AND sbd.delivery_time &gt;= #{params.deliveryTimeList[0]}
+            AND sbd.delivery_time &lt; (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
         </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">

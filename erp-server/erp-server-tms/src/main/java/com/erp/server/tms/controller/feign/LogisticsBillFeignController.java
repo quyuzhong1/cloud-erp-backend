@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
@@ -189,8 +190,8 @@ public class LogisticsBillFeignController {
      * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
      **/
     @PostMapping("/listPrintTypeByChannelIds")
-    public List<LogisticsPrintTypeEntity> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList) {
-        List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsPrintTypeService.listByChannelIds(channelIdList);
+    public List<LogisticsPrintTypeDTO.ViewDTO> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList) {
+        List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities = logisticsPrintTypeService.listByChannelIds(channelIdList);
         return logisticsPrintTypeEntities;
     }
 

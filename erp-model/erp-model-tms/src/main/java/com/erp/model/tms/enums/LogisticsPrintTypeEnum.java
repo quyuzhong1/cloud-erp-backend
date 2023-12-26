@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum LogisticsPrintTypeEnum implements EnumMessage {
     ALLOCATE_CARGO_BILL("allocateCargoBill", "配货单"),
-    ADDRESS_BILL("addressBill", "地址单"),
+    ADDRESS_BILL("logisticsBill", "物流单"),
     CUSTOMS_BILL("customsBill", "报关单"),
     ;
 

@@ -252,7 +252,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         Collections.reverse(skuMappingRuleEntityList);
         SkuMappingRuleEntity old = skuMappingRuleEntityList.stream().filter(v->v.getId().equals(skuMappingRuleEntity.getId())).findFirst().orElse(null);
         // 优先级已全部创建完，不允许新增
-        if(skuMappingRuleEntityList.size() == OmsConstant.SKU_MAPPING_RULE_SIZE){
+        if(skuMappingRuleEntityList.size() == OmsConstant.SKU_MAPPING_RULE_SIZE && Objects.isNull(old)){
             throw new ServiceException("规则已满，不允许新增");
         }
         SkuMappingRuleEntity originalEntity = skuMappingRuleEntityList.stream().filter(v->v.getPriority().equals(skuMappingRuleEntity.getPriority())).findFirst().orElse(null);

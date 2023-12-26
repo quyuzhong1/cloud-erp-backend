@@ -60,7 +60,10 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
             return null;
         }
         Long updateTime = itemInfo.getUpdateTime();
-        Instant instant = Instant.ofEpochSecond(updateTime);
+        Instant instant = null;
+        if(Objects.nonNull(updateTime)){
+            instant = Instant.ofEpochSecond(updateTime);
+        }
         ZoneId zone = ZoneId.systemDefault();
         Image image = itemInfo.getImage();
         String imageUrl = null;
@@ -88,9 +91,11 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
                 //店铺
-                .setShopId(dto.getShopId())
-                //平台最后修改时间
-                .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
+                .setShopId(dto.getShopId());
+        //平台最后修改时间
+        if (Objects.nonNull(instant)){
+            productDTO.setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
+        }
         productDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
         productDTO.setUniqueId(dto.getUniqueId());
         return productDTO;

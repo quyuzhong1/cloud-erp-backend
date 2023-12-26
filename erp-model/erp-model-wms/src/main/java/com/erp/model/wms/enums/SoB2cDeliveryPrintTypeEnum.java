@@ -7,8 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum SoB2cDeliveryPrintTypeEnum implements EnumMessage {
     ALL("all", "全部"),
-    LOGISTICS_WAYBILL("logisticsWaybill", "物流面单"),
-    DISTRIBUTION("distribution", "配货单");
+    LOGISTICS_BILL("logisticsBill", "物流面单"),
+    ALLOCATE_CARGO_BILL("allocateCargoBill", "配货单");
 
     @EnumValue
     @JsonValue

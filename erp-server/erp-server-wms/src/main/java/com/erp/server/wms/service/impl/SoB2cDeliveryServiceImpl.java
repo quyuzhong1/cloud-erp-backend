@@ -209,7 +209,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String paramJson = "";
         String returnJson = "";
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.b2c_so_delivery_NOT_EXISTS);
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
         try {
             //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
@@ -225,7 +225,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                 platformShipOrderDTO.setSoB2cId(entity.getSourceId());
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+
                 paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
 
@@ -389,13 +394,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = new ArrayList<>();
+
+        //查询打印类型
+        List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(logisticsChannelIds);
+
+
         for (String logisticsChannelId : logisticsChannelIds) {
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
             //打印类型：物流面单
-            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
             //渠道信息
             waybillDTO.setLogisticsChannelId(logisticsChannelId);
+
+            // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
+            LogisticsPrintTypeEntity logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
+                    .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
+                    ).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
+                waybillDTO.setPrintDeliveryType(logisticsPrintTypeEntity.getLabelType());
+            }
 
             //查询是否允许打印面单和配货单
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
@@ -446,7 +464,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         for (String logisticsChannelId : logisticsChannelIds) {
             SoB2cDeliveryDTO.PrintDistributionDTO waybillDTO = new SoB2cDeliveryDTO.PrintDistributionDTO();
             //打印类型：物流面单
-            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
             //渠道信息
             waybillDTO.setLogisticsChannelId(logisticsChannelId);
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
@@ -534,7 +552,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .findFirst().orElse(new SoB2cEntity());
 
                 //如果打印面单
-                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode().equals(printType)) {
+                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
                     if (StringUtils.isNotBlank(soB2cEntity.getLogisticsWaybill())) {
                         base64List.add(soB2cEntity.getLogisticsWaybill());
@@ -544,7 +562,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             base64List.add(logisticsWaybill);
                         }
                     }
-                } else if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
+                } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
                     //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
                     if (StringUtils.isNotBlank(soB2cEntity.getDistributeWaybill())) {
                         base64List.add(soB2cEntity.getLogisticsWaybill());
@@ -617,14 +635,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
                             getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
                             FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-                            InputStream inputStream = null;
+      /*                      InputStream inputStream = null;
                             try {
                                 URL url = new URL(fileTemplateEntity.getFastdfsUrl());
                                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                                 inputStream = httpURLConnection.getInputStream();
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            }
+                            }*/
                             ClassPathResource classPathResource = new ClassPathResource("Blank_A4.jasper");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             map.remove("detailList");
