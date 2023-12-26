@@ -137,8 +137,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .map(BomChildrenSkuDTO::getParentSkuId)
                     .collect(Collectors.toList());
         }
+        // 查询当前店铺
+        ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+
         // 查询仓库中心对应国家并设置对应店铺
-        checkAndSetCountryWithShop(entity, dto);
+        checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 
         // 查询国家信息
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
@@ -160,10 +163,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     /**
      * 查询仓库中心对应国家并设置对应店铺
      *
-     * @param entity 来源实体
+     * @param entity            来源实体
      * @param dto
+     * @param currentShopEntity
      */
-    private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto) {
+    private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto, ShopInfoEntity currentShopEntity) {
         // 查询仓库中心对应国家
         String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
         // 没有配置处理
@@ -177,11 +181,14 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             }
             return;
         }
+        if (StringUtils.isEmpty(currentShopEntity.getDictCountryCode())){
+            throw new ServiceException("店铺数据异常:国家为空，shopId=" +  currentShopEntity.getId());
+        }
+
         // 国家一致
-        if (entity.getCountryId().equalsIgnoreCase(country)) {
+        if (currentShopEntity.getDictCountryCode().equalsIgnoreCase(country)) {
             return;
         }
-        entity.setCountryId(country);
         // 查询对应sellerId的国家店铺
         ShopInfoDTO.RelatedDTO requestDTO = new ShopInfoDTO.RelatedDTO();
         requestDTO.setCountry(country);
