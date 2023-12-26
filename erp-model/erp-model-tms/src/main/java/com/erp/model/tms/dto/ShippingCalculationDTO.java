@@ -403,6 +403,15 @@ public class ShippingCalculationDTO {
          */
         private BigDecimal shippingCost;
 
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
     }
 
 

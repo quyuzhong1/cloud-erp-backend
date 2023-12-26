@@ -507,6 +507,10 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         List<String> templateIdList = listAll.stream().map(obj -> obj.getTemplateId()).distinct().collect(Collectors.toList());
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
 
+        //币别信息
+        List<String> currencyIdList = listAll.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         for (ShippingCalculationDTO.ListDTO item : listAll) {
             ShippingCalculationDTO.ChannelCostDTO channelCost = new ShippingCalculationDTO.ChannelCostDTO();
             channelCost.setLogisticsChannelId(item.getChannelId());
@@ -561,6 +565,10 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(shippingTemplateEntity, ruleEntity, channelEntity, costEntityList
                     , weight, params.getLength(), params.getWidth(), params.getHeight());
             channelCost.setShippingCost(shippingCalculationDTO.getTotalTrialShippingCost());
+            channelCost.setCurrency(shippingTemplateEntity.getCurrency());
+            //币别符号
+            String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(channelCost.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            channelCost.setCurrencySymbol(currencySymbol);
             channelCostList.add(channelCost);
         }
         resultDTO.setCostList(channelCostList);
