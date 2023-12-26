@@ -367,6 +367,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
+        //只拆分销售套装BOM
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+
         List<String> childSkuIds = bomChildrenSkuList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         skuIds.addAll(childSkuIds);
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);

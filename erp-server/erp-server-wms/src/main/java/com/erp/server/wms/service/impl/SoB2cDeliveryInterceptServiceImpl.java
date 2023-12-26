@@ -282,32 +282,33 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
-    public Boolean getIsIntercept(List<String> sourceIdList) {
+    public List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> listIsIntercept(List<String> sourceIdList) {
         if (CollectionUtils.isEmpty(sourceIdList)) {
-            return Boolean.FALSE;
+            return Collections.emptyList();
         }
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> dtoList = new ArrayList<>();
         List<SoB2cDeliveryInterceptEntity> list = lambdaQuery().in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIdList).list();
-
-        //如果结果确认是拦截成功,返回拦截标识
-        List<SoB2cDeliveryInterceptEntity> interceptSuccess = list.stream().filter(req -> HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(interceptSuccess)) {
-            return Boolean.TRUE;
+        for (SoB2cDeliveryInterceptEntity interceptEntity : list) {
+            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = new SoB2cDeliveryInterceptDTO.IsInterceptDTO();
+            isInterceptDTO.setId(interceptEntity.getId());
+            //如果结果确认是拦截成功,返回拦截标识
+            if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
+                isInterceptDTO.setIsIntercept(Boolean.TRUE);
+            }
+            //如果结果确认是拦截失败,取消拦截标识
+            if (HandleResultEnum.FAILURE.getCode().equals(interceptEntity.getHandleResult())) {
+                isInterceptDTO.setIsIntercept(Boolean.FALSE);
+            }
+            //如果还未手动确认拦截结果，按平台处理结果
+            if (StringUtils.isBlank(interceptEntity.getHandleResult())
+                    && !CancelStatusEnum.FAILURE.getCode().equals(interceptEntity.getCancelStatus())
+                    && !InterceptStatusEnum.FAILURE.getCode().equals(interceptEntity.getInterceptStatus())
+            ) {
+                isInterceptDTO.setIsIntercept(Boolean.TRUE);
+            }
+            dtoList.add(isInterceptDTO);
         }
-        //如果结果确认是拦截失败,返回拦截标识
-        List<SoB2cDeliveryInterceptEntity> interceptFailure = list.stream().filter(req -> HandleResultEnum.FAILURE.getCode().equals(req.getHandleResult())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(interceptFailure)) {
-            return Boolean.FALSE;
-        }
-        //如果还未手动确认拦截结果，按平台处理结果
-        List<SoB2cDeliveryInterceptEntity> intercept = list.stream()
-                .filter(req -> StringUtils.isBlank(req.getHandleResult())
-                        && !CancelStatusEnum.FAILURE.getCode().equals(req.getCancelStatus())
-                        && !InterceptStatusEnum.FAILURE.getCode().equals(req.getInterceptStatus())
-                ).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(intercept)) {
-            return Boolean.TRUE;
-        }
-        return Boolean.FALSE;
+        return dtoList;
     }
 
     /**
