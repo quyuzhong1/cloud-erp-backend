@@ -6,6 +6,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -71,6 +72,10 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SkuMappingRuleDTO.AddDTO addDTO) {
+        SkuMappingRuleEntity existEntity = this.getByRuleType(addDTO.getRuleType());
+        if(Objects.nonNull(existEntity)){
+            throw new ServiceException("相同规则类型只能新建一个");
+        }
         SkuMappingRuleEntity skuMappingRuleEntity = new SkuMappingRuleEntity();
         BeanMapperUtils.copy(addDTO, skuMappingRuleEntity);
         handleSamePriority(skuMappingRuleEntity);
@@ -98,6 +103,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     public Boolean update(SkuMappingRuleDTO.UpdateDTO updateDTO) {
         SkuMappingRuleEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        if(!old.getRuleType().equals(updateDTO.getRuleType())){
+            throw new ServiceException("不能更改规则类型");
+        }
         SkuMappingRuleEntity skuMappingRuleEntity =  BeanMapperUtils.map(SkuMappingRuleEntity.class, updateDTO);
         handleSamePriority(skuMappingRuleEntity);
         // 数据处理
@@ -365,4 +373,10 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
     }
 
+    public SkuMappingRuleEntity getByRuleType(String ruleType) {
+        LambdaQueryWrapper<SkuMappingRuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SkuMappingRuleEntity::getRuleType, ruleType);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
 }
