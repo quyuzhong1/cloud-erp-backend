@@ -4,10 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -254,7 +251,29 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(flag){
             // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
             if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
+
+                //冻结库存
                 freezeInventory(entity, detailEntityList);
+
+                //反审核销售出库单，并作废
+                List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
+                if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+                    List<String> ids = soOutstockEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+                    BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
+                    idsDTO.setIds(ids);
+                    soOutstockService.disApprove(idsDTO, Boolean.TRUE);
+                    soOutstockService.invalid(ids, "物流拦截成功,自动作废");
+                }
+
+                //回滚冻结库存
+                List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+                if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
+                    List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+                    soB2cDeliveryService.rollbackInventory(ids);
+                    soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                }
+
+
             }
             return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
         }else{
@@ -305,6 +324,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
         }
+
+
     }
 
     /**

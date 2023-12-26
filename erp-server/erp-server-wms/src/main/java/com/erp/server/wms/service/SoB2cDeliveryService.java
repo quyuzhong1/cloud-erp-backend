@@ -144,4 +144,23 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryEntity>
      **/
     List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 回滚冻结的库存
+     * @Author Luo_WG
+     * @Date 2023/12/26 12:22
+     * @param ids
+     * @return void
+     **/
+    void rollbackInventory(List<String> ids);
+
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/12/26 12:36
+     * @param ids
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateStatus(List<String> ids, String status);
 }

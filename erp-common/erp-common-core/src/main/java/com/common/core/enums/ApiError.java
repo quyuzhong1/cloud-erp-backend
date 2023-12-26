@@ -878,6 +878,7 @@ public enum ApiError implements Serializable {
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
+    NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
 
 
     /**
