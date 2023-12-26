@@ -474,6 +474,12 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Boolean printDelivery;
         /**
+         * 配货单打印类型
+         * custom 自定义
+         * authority 官方标签
+         */
+        private String printDeliveryType;
+        /**
          * 渠道名称
          */
         private String logisticsChannelName;

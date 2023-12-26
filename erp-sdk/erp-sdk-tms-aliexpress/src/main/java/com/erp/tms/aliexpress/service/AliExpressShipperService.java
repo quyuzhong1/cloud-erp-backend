@@ -22,6 +22,7 @@ import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -186,9 +187,34 @@ public class AliExpressShipperService {
         IopResponse response = client.execute(request, Protocol.GOP);
     }
 
+    public IopResponse getLogisticsAddress(Map<String, String> authMap) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.logistics.redefining.getlogisticsselleraddresses");
+        request.addApiParameter("seller_address_query", "sender,pickup,refund");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
     public static void main(String[] args) throws ApiException {
         AliExpressShipperService service = new AliExpressShipperService();
-        String code = "3_502978_F2ZeTUjueN7NNh6uow4mU1365978";
-        service.generateToken(code);
+        Map<String, String> authMap = new HashMap<>();
+        String CLIENT_CODE = "503630";  //此处替换为您在丰桥平台获取的顾客编码
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";//此处替换为您在丰桥平台获取的校验码
+        String token = "50000201525cnHtbirgwuieeiw3otviJIvhxd10c5ebdcstCi5kvwExvwQuFeQ0i1VKm";
+        authMap.put("clientId",CLIENT_CODE);
+        authMap.put("clientSecret",CHECK_WORD);
+        authMap.put("token",token);
+        authMap.put("url","https://api-sg.aliexpress.com");
+        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
+        System.out.println(logisticsAddress);
     }
 }
