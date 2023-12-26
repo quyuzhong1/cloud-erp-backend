@@ -153,10 +153,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-business</artifactId>
             <version>0.0.1-SNAPSHOT</version>

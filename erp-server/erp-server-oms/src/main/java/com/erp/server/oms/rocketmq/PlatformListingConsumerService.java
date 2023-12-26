@@ -8,24 +8,21 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.OmsMongoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
-import com.erp.server.oms.enums.CleanDataTableEnum;
-import com.erp.server.oms.mongo.MongoService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +54,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
-    private MongoService mongoService;
+    private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private ListingInfoService listingInfoService;
     @Resource
@@ -157,14 +154,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
             return;
         }
-        String tableName = getTableName(platform);
-        if (StringUtils.isEmpty(tableName)) return;
-        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
-        OmsMongoDTO updateDto = new OmsMongoDTO();
-        updateDto.setUniqueId(uniqueId);
-        MapUtil mapUtil = new MapUtil();
-        mapUtil.put("isClean", isClean);
-        mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
     }
     /**
      * 根据平台组装表名
@@ -172,22 +167,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
      * @return
      */
     private String getTableName(String platform){
-        switch (platform){
-            case "Shopee":
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPEE_PRODUCT.getCategory(),
-                        platform, CleanDataTableEnum.SHOPEE_PRODUCT.getBusiness());
-            case "AliExpress":
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.ALI_EXPRESS_PRODUCT.getCategory(),
-                        platform, CleanDataTableEnum.ALI_EXPRESS_PRODUCT.getBusiness());
-            case "Shopify":
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPIFY_PRODUCT.getCategory(),
-                        platform, CleanDataTableEnum.SHOPIFY_PRODUCT.getBusiness());
-            case "Walmart":
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.WALMART_PRODUCT.getCategory(),
-                        platform, CleanDataTableEnum.WALMART_PRODUCT.getBusiness());
-            default:
-                return null;
-        }
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM,
+                platform, BusinessTypeEnum.PRODUCT.getCode());
     }
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();

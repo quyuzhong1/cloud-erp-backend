@@ -2,41 +2,27 @@ package com.erp.server.oms.rocketmq;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.oms.constant.PlatformTypeConstants;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.OmsMongoDTO;
-import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
-import com.erp.server.oms.enums.CleanDataTableEnum;
-import com.erp.server.oms.mongo.MongoService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 下载平台订单消费服务
@@ -53,7 +39,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
-    private MongoService mongoService;
+    private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
 
@@ -81,14 +67,12 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
             return;
         }
-        String tableName = getTableName(platform);
-        if (StringUtils.isEmpty(tableName)) return;
-        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
-        OmsMongoDTO updateDto = new OmsMongoDTO();
-        updateDto.setUniqueId(uniqueId);
-        MapUtil mapUtil = new MapUtil();
-        mapUtil.put("isClean", isClean);
-        mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
     }
 
     /**
@@ -97,21 +81,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
      * @return
      */
     private String getTableName(String platform){
-        switch (platform){
-            case PlatformTypeConstants.SHOPEE:
-               return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPEE_ORDER.getCategory(),
-                       platform, CleanDataTableEnum.SHOPEE_ORDER.getBusiness());
-            case PlatformTypeConstants.ALIEXPRESS:
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.ALI_EXPRESS_ORDER.getCategory(),
-                        platform, CleanDataTableEnum.ALI_EXPRESS_ORDER.getBusiness());
-            case PlatformTypeConstants.SHOPIFY:
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPIFY_ORDER.getCategory(),
-                        platform, CleanDataTableEnum.SHOPIFY_ORDER.getBusiness());
-            case PlatformTypeConstants.WALMART:
-                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.WALMART_ORDER.getCategory(),
-                        platform, CleanDataTableEnum.WALMART_ORDER.getBusiness());
-            default:
-                return null;
-        }
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM,
+                platform, BusinessTypeEnum.ORDER.getCode());
     }
 }

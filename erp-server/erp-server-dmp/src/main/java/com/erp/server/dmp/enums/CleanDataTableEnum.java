@@ -8,6 +8,7 @@ import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
+import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.util.ArrayList;
@@ -32,6 +33,9 @@ public enum CleanDataTableEnum {
     //沃尔玛
     WALMART_ORDER("Walmart", "third_system_Walmart_order","third_system", "order","沃尔玛订单数据", PlatformWalmartOrderDTO.class),
     WALMART_PRODUCT("Walmart", "third_system_Walmart_product","third_system", "product","沃尔玛产品数据", PlatformWalmartListingDTO.class),
+
+    //track123
+    TRACK123_GET_TRACK("TRACK123", "third_system_TRACK123_getTrack","third_system", "getTrack","TRACK123物流轨迹数据", PlatformTrack123TrackDTO.class),
     ;
 
     private String platform;

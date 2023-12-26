@@ -66,8 +66,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * @param uniqueId
      * @param isClean
      */
-    public void updateMongodbData(String platform,String uniqueId, Integer isClean){// TODO
-    };
+    public abstract void updateMongodbData(String platform,String uniqueId, Integer isClean);
 
     /**
      * 预警

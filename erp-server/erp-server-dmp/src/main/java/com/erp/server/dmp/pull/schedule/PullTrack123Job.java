@@ -16,6 +16,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
+import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
@@ -25,6 +26,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -85,5 +87,25 @@ public class PullTrack123Job {
             jobTaskDTO.setBillType(BusinessTypeEnum.GET_TRACK.getCode());
             platformDataThread.pullOrder(jobTaskDTO);
         });
+    }
+
+    @XxlJob("track123CleanExecute")
+    public void track123CleanExecute() {
+        List<CleanDataTableEnum> platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.TRACK123.getCode());
+        if (CollectionUtils.isNotEmpty(platforms)){
+            platforms.forEach(cleanDataTableEnum -> {
+                JobTaskDTO jobTaskDTO = new JobTaskDTO();
+                jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
+                jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
+                jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
+                try {
+                    XxlJobHelper.log("开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
+                    platformDataThread.cleanOrder(jobTaskDTO);
+                    XxlJobHelper.log("清洗完成：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
+                }catch (Exception e){
+                    XxlJobHelper.log("清洗异常：{}", e);
+                }
+            });
+        }
     }
 }

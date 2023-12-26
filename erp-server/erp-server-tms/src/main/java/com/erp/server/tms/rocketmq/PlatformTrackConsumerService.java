@@ -1,19 +1,25 @@
 package com.erp.server.tms.rocketmq;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
@@ -41,13 +47,26 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
     private LogisticsTrackService logisticsTrackService;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
     }
-
+    @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+        if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
+    }
     @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
 
@@ -74,5 +93,16 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         }
         System.out.println(dto);
         return ApiResult.success();
+    }
+
+
+    /**
+     * 根据平台组装表名
+     * @param platform
+     * @return
+     */
+    private String getTableName(String platform){
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM,
+                platform, BusinessTypeEnum.GET_TRACK.getCode());
     }
 }
