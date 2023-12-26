@@ -327,6 +327,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
 
+        //查询是否有拦截单
+        checkIsIntercept(list);
+
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -749,6 +752,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException(ApiError.ERROR_98014);
             }
         }
+
+        //查询是否有拦截单
+        checkIsIntercept(list);
+
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT, "", null);
@@ -769,6 +776,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         return result;
+    }
+
+    /**
+     * 校验是否存在拦截单
+     * @param list
+     */
+    private void checkIsIntercept(List<SoOutstockEntity> list) {
+        List<String> soIdList = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
+        for (SoOutstockEntity soOutstockEntity : list) {
+            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream()
+                    .filter(req -> req.getId().equals(soOutstockEntity.getSoId())
+                            && !HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())
+                    ).findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soOutstockEntity.getSoCode());
+            }
+        }
     }
 
     /**
@@ -850,6 +876,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoOutstockEntity> list = this.listByIds(ids);
+
+        //查询是否有拦截单，有拦截禁止操作
+        checkIsIntercept(list);
+
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         List<String> statusList = new ArrayList<>(2);
