@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -427,6 +428,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
 
+            //获取服务商编号
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getId());
+            if (ObjectUtil.isNotEmpty(authEntity)) {
+                String logisticsPlatform = authEntity.getLogisticsPlatform();
+                item.setLogisticsPlatform(logisticsPlatform);
+            }
         }
     }
 
