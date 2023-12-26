@@ -96,6 +96,12 @@ public class AliExpressOrder  implements Serializable {
     private String buyerSignerFullname;
 
     /**
+     * 手续费
+     */
+    @JSONField(name = "escrow_fee")
+    private AmountInfo escrowFee;
+
+    /**
      * 上次订单更新时间
      */
     @JSONField(name = "gmt_update")
