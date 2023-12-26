@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.WalmartShipOrderDetailDTO;
@@ -16,16 +18,22 @@ import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.UUID;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
+import com.sdk.oms.walmart.dto.walmart.WalmartOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartShipOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
+import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.dto.walmart.ship.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,17 +63,45 @@ public class WalmartSdkClientService {
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
         Integer pageSize = 50;
-        paramMap.put("limit", pageSize);
-        paramMap.put("lastModifiedStartDate", "2023-01-01T00:00:00");
-        paramMap.put("lastModifiedEndDate", "2023-12-27T00:00:00");
-        paramMap.put("createdStartDate", "2023-01-01T00:00:00");
-        paramMap.put("createdEndDate", "2023-12-27T00:00:00");
-        paramMap.put("status", "Acknowledged,Shipped");
-        paramMap.put("productInfo", "true");
+
+
+        JobTaskDTO taskDTO = new JobTaskDTO();
+
+        taskDTO.setLastTime(LocalDateTime.parse("2023-10-20 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        taskDTO.setNextTime(LocalDateTime.parse("2023-12-21 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";
-        String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
-        System.out.println(s);
+        StringBuffer sb = new StringBuffer();
+        String nextCursor = "";
+        while(true) {
+            sb.setLength(0);
+            sb.append(baseUrl);
+            if (StringUtil.isBlank(nextCursor)) {
+                sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
+                sb.append("&lastModifiedStartDate=");
+                sb.append(taskDTO.getLastTime());
+                sb.append("&lastModifiedEndDate=");
+                sb.append(taskDTO.getNextTime());
+
+                sb.append("&limit=200&productInfo=true");
+            } else {
+                sb.append(baseUrl);
+                sb.append(nextCursor);
+            }
+            //拉取数据
+            String date = walmartSdkClientService.sendWalmartGet(sb.toString(), clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
+            System.out.println(date);
+            WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
+            if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
+                break;
+            }
+
+            nextCursor = walmartOrderDTO.getList().getMeta().getNextCursor();//下一页
+            if (StringUtil.isBlank(nextCursor)) {
+                break;
+            }
+        }
+
     }
 
     private static RedisUtil redisUtil;
@@ -283,7 +319,7 @@ public class WalmartSdkClientService {
             log.info(String.format("::::: Walmart调用平台shipOrder发货订单 ::::: 请求地址 => %s, 请求参数 => %s, 开始时间 => %s, " +
                             "返回参数 => %s ", baseUrl, param, data));
         } else {
-            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, resultMap.get("code"));
+            throw new ServiceException(ApiError.WALMART_PLATFORM_SHIP_ORDER_ERROR, resultMap.get("code"));
         }
     }
 

@@ -144,11 +144,11 @@ public class DsfLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("WJ12345167721");
+        logisticsQueryVO2.setDeliveryNo("1737775700695322626");
         logisticsQueryVO2.setPrintRemark(1);
         logisticsQueryVO2.setAuthMap(authMap);
         LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
-        logisticsChannelEntity.setCode("PY");
+        logisticsChannelEntity.setCode("D5");
         logisticsQueryVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = dsfLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);

@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -18,12 +17,9 @@ import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.PackingInspectionService;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.sdk.wms.iml.dto.response.ImlProductResp;
-import com.sdk.wms.iml.dto.response.ImlResponse;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -142,6 +137,14 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             }
             addViewDTO.setSkuSpeciesQty(addViewDTO.getWaitScanSkuList().size()+addViewDTO.getScannedSkuList().size());
             addViewDTO.setSkuTotalQty(addViewDTO.getWaitScanSkuList().stream().mapToInt(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSaleQty).sum()+addViewDTO.getScannedSkuList().stream().mapToInt(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSaleQty).sum());
+            Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = addViewDTO.getWaitScanSkuList().iterator();
+            while (it.hasNext()) {
+                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
+                if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
+                    addViewDTO.getScannedSkuList().add(scanSkuInfo);
+                    it.remove();
+                }
+            }
             viewDTO = addViewDTO;
         }
         if(StringUtils.isNotBlank(dto.getSkuNo())){
@@ -171,21 +174,21 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
                 throw new ServiceException("SKU不匹配，验货失败");
             }
-            //判断是否全部扫描完成
-            if(CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())){
-                //更新数据
-                List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-                detailEntityList.forEach(v-> v.setWaitScanQty(0));
-                entity.setIsInspection(true);
-                if(!soB2cDeliveryService.updateById(entity)){
-                    throw new ServiceException("发货单更新失败");
-                }
-                if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
-                    throw new ServiceException("发货单明细更新失败");
-                }
+        }
+        //判断是否全部扫描完成
+        if(CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())){
+            //更新数据
+            List<SoB2cDeliveryDetailEntity> detailEntityList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            detailEntityList.forEach(v-> v.setWaitScanQty(0));
+            entity.setIsInspection(true);
+            viewDTO.setStatus(true);
+            if(!soB2cDeliveryService.updateById(entity)){
+                throw new ServiceException("发货单更新失败");
+            }
+            if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
+                throw new ServiceException("发货单明细更新失败");
             }
         }
-        this.saveViewDTO(entity.getId(),viewDTO);
         if(dto.getIsAutoDelivery() && entity.getIsInspection()){
             //将发货状态更新为已发货
             entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
@@ -193,6 +196,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 throw new ServiceException("发货单更新失败");
             }
         }
+        this.saveViewDTO(entity.getId(),viewDTO);
         return viewDTO;
     }
 

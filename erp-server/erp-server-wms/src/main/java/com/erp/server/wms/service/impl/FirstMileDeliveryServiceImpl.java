@@ -43,6 +43,7 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.groovy.runtime.typehandling.BigDecimalMath;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,7 @@ import com.common.core.utils.date.DateUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -981,8 +983,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtil.isEmpty(bomVersionObj)) {
                 continue;
             }
-            List<Integer> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> Integer.valueOf(req)).collect(Collectors.toList());
-            Integer bomVersion = Collections.max(bomVersionList);
+            List<BigDecimal> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> MathUtil.valueOf(req)).collect(Collectors.toList());
+            BigDecimal bomVersion = Collections.max(bomVersionList);
             view.setBomVersion(String.valueOf(bomVersion));
             List<FirstMileDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 

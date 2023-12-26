@@ -40,7 +40,6 @@ public class SpringAsyncConfig {
 		printThreadPoolStatus(executor);
 		return executor;
 	}
-
 	@Bean("AsyncDataPhysicalThreadPool")
 	public ThreadPoolTaskExecutor AsyncDataPhysicalExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

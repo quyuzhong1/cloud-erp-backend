@@ -1,9 +1,7 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -85,7 +83,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
 
         // 订单日期
-        LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseSystemTime();
+        LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseLocalDateTime();
         orderDTO.setBillDate(purchaseLocalDateTime.toLocalDate());
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getAmazonOrderId());

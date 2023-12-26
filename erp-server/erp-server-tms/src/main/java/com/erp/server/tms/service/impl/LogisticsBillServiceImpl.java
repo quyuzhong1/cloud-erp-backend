@@ -402,7 +402,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
-                deliveryNo(dto.getOrderId()).
+                deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
                 senderInfo(senderInfo).
                 receiverInfoVO(receiverInfo).
@@ -443,10 +443,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         billEntity.setSourceCode(dto.getOrderCode());
         billEntity.setOrderTime(dto.getOrderTime());
         billEntity.setOrderType(dto.getOrderType());
-        billEntity.setTransportNo(responseVO.getTransportNo());
+        String transportNo=responseVO.getTransportNo();
+        billEntity.setTransportNo(transportNo);
         //跟踪单号
         String trackNo = responseVO.getTrackNo();
-        trackNoList.add(trackNo);
+        if(StringUtils.isNotBlank(trackNo)&&!"null".equals(trackNo)){
+            trackNoList.add(trackNo);
+        }
         List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>(2);
         LogisticsBillDetailDTO.AddDTO addDTO = new LogisticsBillDetailDTO.AddDTO();
         addDTO.setTrackNo(trackNo);
@@ -465,7 +468,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillDetailService.add(billEntity, detailList);
         //新增物流费用单
         addLogisticsBillCost(billEntity, dto.getCurrency());
-        resultDTO.setTransportNo(trackNo);
+        resultDTO.setTransportNo(transportNo);
         resultDTO.setTrackNoList(trackNoList);
         return resultDTO;
 

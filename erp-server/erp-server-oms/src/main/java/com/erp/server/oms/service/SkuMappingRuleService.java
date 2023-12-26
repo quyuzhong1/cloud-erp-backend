@@ -1,9 +1,9 @@
 package com.erp.server.oms.service;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.entity.SkuMappingRuleEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
+import com.erp.model.oms.entity.SkuMappingRuleEntity;
 
 import java.util.List;
 
@@ -43,4 +43,6 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
     SkuMappingRuleDTO.ViewDTO view(String id);
 
     List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
+
+    void handleSkuMapping();
 }

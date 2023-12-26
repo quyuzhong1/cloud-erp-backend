@@ -46,6 +46,29 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!--report sdk -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>6.20.0</version>
+            <exclusions>
+                <!--
+                    排除自带的itext依赖,因为自带的itext版本是 2.1.7.js10
+                    这个版本在中央仓库里面没有，无法下载
+                -->
+                <exclusion>
+                    <groupId>com.lowagie</groupId>
+                    <artifactId>itext</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- 自定义字体 -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports-myfonts</artifactId>
+            <version>6.19.1</version>
+        </dependency>
+
         <!-- shopify sdk 调用-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

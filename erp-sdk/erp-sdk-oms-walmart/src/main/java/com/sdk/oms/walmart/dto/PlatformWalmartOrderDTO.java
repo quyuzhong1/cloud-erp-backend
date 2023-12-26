@@ -44,7 +44,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WALMART.getCode());
-        this.setUniqueId(orderBean.getCustomerOrderId());
+        this.setUniqueId(orderBean.getPurchaseOrderId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -123,6 +123,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogistics(orderBean.getOrderLines().getOrderLine()));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
+        orderDTO.setPlatform(PlatformDictEnum.WALMART.getCode());
+        orderDTO.setUniqueId(dto.getUniqueId());
         return orderDTO;
     }
 
@@ -216,13 +218,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         List<OrderLineStatusBean> delivered = statusList.stream().filter(req -> req.getStatus().contains("Delivered")).collect(Collectors.toList());
         //沃尔玛：已取消
         List<OrderLineStatusBean> cancelled = statusList.stream().filter(req -> req.getStatus().contains("Cancelled")).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(created)) {
-            //沃尔玛：已创建 = OMS：待配货
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        } else if (CollectionUtils.isEmpty(inDistribution)) {
-            //沃尔玛：已确认 = OMS：待发货
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (CollectionUtils.isEmpty(shipped)) {
+        if (CollectionUtils.isEmpty(shipped)) {
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         } else if (CollectionUtils.isEmpty(delivered)) {
@@ -231,6 +227,12 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setInvalidStatus(Boolean.TRUE);
+        } else if (CollectionUtils.isEmpty(created)) {
+            //沃尔玛：已创建 = OMS：待配货
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+        } else if (CollectionUtils.isEmpty(inDistribution)) {
+            //沃尔玛：已确认 = OMS：待发货
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         }
 
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
@@ -266,8 +268,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
         return PlatformOrderReceiverDTO.builder()
                 .loginId("")
-                .customerId("")
+                .customerId(orderBean.getCustomerOrderId())
                 .name(orderBean.getShippingInfo().getPostalAddress().getName())
+                .receiverName(orderBean.getShippingInfo().getPostalAddress().getName())
                 .telNumber(orderBean.getShippingInfo().getPhone())
                 .receiverTelNumber(orderBean.getShippingInfo().getPhone())
                 .email(orderBean.getCustomerEmailId())

@@ -47,6 +47,9 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
         List<LogisticsPrintTypeEntity> printTypeList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
         printTypeList.forEach(p -> p.setLogisticsChannelId(channelId));
+        for(LogisticsPrintTypeEntity item:printTypeList){
+           handleData(item);
+        }
         return this.saveBatch(printTypeList);
 
     }
@@ -62,6 +65,9 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
         List<LogisticsPrintTypeEntity> updateList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
         updateList.forEach(p -> p.setLogisticsChannelId(channelId));
+        for(LogisticsPrintTypeEntity item:updateList){
+            handleData(item);
+        }
         List<LogisticsPrintTypeEntity> dbList = this.listDbByChannelId(channelId);
         List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
                 map(LogisticsPrintTypeEntity::getId).collect(Collectors.toList());
@@ -116,7 +122,14 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
     /**
      * 新增修改处理数据
      */
-    private void handleData(LogisticsPrintTypeEntity logisticsPrintTypeEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(LogisticsPrintTypeEntity entity) {
+        String printType=entity.getPrintType();
+        //标签类型
+        String labelType=entity.getLabelType();
+        if(StringUtils.isNotBlank(printType)){
+            if(StringUtils.isBlank(labelType)){
+              throw new ServiceException(ApiError.LABEL_TYPE_NOT_EMPTY);
+            }
+        }
     }
 }

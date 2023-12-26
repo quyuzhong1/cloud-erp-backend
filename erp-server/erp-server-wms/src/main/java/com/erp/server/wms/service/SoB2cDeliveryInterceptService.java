@@ -27,15 +27,6 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
     BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-12-13
-    * @param dto
-    * @return
-    */
-    Boolean update(SoB2cDeliveryInterceptDTO.UpdateDTO dto);
-
-    /**
      * 获取状态统计
      * @Author Luo_WG
      * @Date 2023/12/14 10:01
@@ -74,11 +65,11 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
     /**
      * 拦截结果确认
      * @Author Luo_WG
-     * @Date 2023/12/14 11:49
-     * @param id
+     * @Date 2023/12/25 17:13
+     * @param dto
      * @return com.common.business.dto.base.BatchResultDTO
      **/
-    BatchResultDTO interceptResultConfirm(String id);
+    BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
 
     /**
      * 查询是否拦截

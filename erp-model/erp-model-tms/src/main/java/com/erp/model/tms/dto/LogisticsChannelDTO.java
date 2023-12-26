@@ -79,6 +79,25 @@ public class LogisticsChannelDTO implements Serializable {
 
     }
 
+
+    /**
+     * 标记发货所需要的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SignShipDTO{
+
+        private String channelId;
+
+        private String code;
+
+        /**
+         * 渠道供应商名称 logistics_sale_channel
+         */
+        private String saleChannelSupplierName;
+
+    }
+
     /**
      * 详情
      */

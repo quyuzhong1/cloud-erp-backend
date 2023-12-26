@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,19 +21,18 @@ public interface SoB2cDeliveryInterceptDetailService extends SuperService<SoB2cD
     * 新增
     * @author Luo_WG
     * @date: 2023-12-13
-    * @param dto
+    * @param addDTO
+    * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDetailDTO.AddDTO dto);
+    void add(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String mainId);
 
     /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-12-13
-    * @param dto
-    * @return
-    */
-    Boolean update(SoB2cDeliveryInterceptDetailDTO.UpdateDTO dto);
-
-
+     * 根据主标id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/12/25 16:58
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity>
+     **/
+    List<SoB2cDeliveryInterceptDetailEntity> listByMainIds(List<String> mainIds);
 }

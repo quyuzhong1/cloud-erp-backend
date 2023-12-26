@@ -149,9 +149,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list= this.lambdaQuery().
+        List<LogisticsChannelEntity> list = this.lambdaQuery().
                 in(LogisticsChannelEntity::getMainId, mainIdList).
-                like(StringUtils.isNotBlank(name),LogisticsChannelEntity::getName,name).
+                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
                 orderByAsc(LogisticsChannelEntity::getDisabled).
                 orderByDesc(LogisticsChannelEntity::getCreateTime).
                 list();
@@ -168,7 +168,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setSortingCode(item.getSortingCode());
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
-            String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class,timeUnit);
+            String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, timeUnit);
             base.setEffectiveTimeStr(effectiveTime.concat(timeUnitName));
             String id = item.getId();
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
@@ -329,18 +329,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList,String mainId) {
-        if(CollectionUtils.isEmpty(syncSourceIdList)){
+    public List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList, String mainId) {
+        if (CollectionUtils.isEmpty(syncSourceIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId,mainId).in(LogisticsChannelEntity::getSyncSourceId,syncSourceIdList).list();
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, mainId).in(LogisticsChannelEntity::getSyncSourceId, syncSourceIdList).list();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeByIdList(List<String> channelIdList) {
-        if(CollectionUtils.isEmpty(channelIdList)){
-               return;
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return;
         }
         this.removeByIds(channelIdList);
         //平台物流映射
@@ -355,22 +355,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String mainId) {
-        List<LogisticsChannelEntity> channelList=this.listDbByMainIdList(Arrays.asList(mainId));
-        List<BaseDropDownDTO.DisabledDTO> resultList=LogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
+        List<LogisticsChannelEntity> channelList = this.listDbByMainIdList(Arrays.asList(mainId));
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
         return resultList;
     }
 
     @Override
     public LogisticsChannelDTO.BaseDTO getInfoById(String channelId) {
-        LogisticsChannelEntity entity=this.getById(channelId);
-        if(Objects.isNull(entity)){
+        LogisticsChannelEntity entity = this.getById(channelId);
+        if (Objects.isNull(entity)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
-        LogisticsChannelDTO.BaseDTO baseDTO=new LogisticsChannelDTO.BaseDTO();
-        BeanMapperUtils.copy(entity,baseDTO);
-        String mainId=entity.getMainId();
-        LogisticsSupplierEntity supplierEntity=logisticsSupplierService.getById(mainId);
-        if(Objects.nonNull(supplierEntity)){
+        LogisticsChannelDTO.BaseDTO baseDTO = new LogisticsChannelDTO.BaseDTO();
+        BeanMapperUtils.copy(entity, baseDTO);
+        String mainId = entity.getMainId();
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
+        if (Objects.nonNull(supplierEntity)) {
             baseDTO.setLogisticsSupplierName(supplierEntity.getSupplierName());
         }
         return baseDTO;
@@ -379,7 +379,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Override
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds) {
         List<LogisticsChannelEntity> logisticsChannelEntities = this.listByIds(channelIds);
-        if(CollectionUtils.isEmpty(logisticsChannelEntities)){
+        if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
@@ -387,11 +387,41 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
         for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
-            if(Objects.nonNull(logisticsSupplierEntity)){
+            if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
             }
         }
         return baseDTOS;
+    }
+
+    /**
+     * 匹配 原渠道名称 和 平台渠道名称获取列表
+     *
+     * @param channelName
+     * @return
+     */
+    @Override
+    public List<LogisticsChannelEntity> getChannelByName(String channelName) {
+        List<LogisticsChannelEntity> list = baseMapper.getChannelByName(channelName);
+        return list;
+    }
+
+    @Override
+    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
+        LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
+        LogisticsChannelEntity channelEntity = this.getById(channelId);
+        String code="";
+        if(Objects.nonNull(channelEntity)){
+            signShipDTO.setChannelId(channelEntity.getId());
+            code=channelEntity.getCode();
+            signShipDTO.setCode(code);
+        }
+        LogisticsSaleChannelEntity saleChannelEntity=logisticsSaleChannelService.getByCode(code);
+        if(Objects.nonNull(saleChannelEntity)){
+            signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
+        }
+        return signShipDTO;
+
     }
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
@@ -435,12 +465,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             maxWeight = zero;
         }
         logisticsChannelEntity.setMaxWeight(maxWeight);
-        String code=logisticsChannelEntity.getCode();
-        if(StringUtils.isNotBlank(code)){
-            LogisticsAuthEntity auth = logisticsAuthService.getByMainId("",mainId);
-            String platform=Objects.nonNull(auth)?auth.getLogisticsPlatform():"";
+        String code = logisticsChannelEntity.getCode();
+        if (StringUtils.isNotBlank(code)) {
+            LogisticsAuthEntity auth = logisticsAuthService.getByMainId("", mainId);
+            String platform = Objects.nonNull(auth) ? auth.getLogisticsPlatform() : "";
             //根据销售平台和渠道code 获取到原生的渠道
-            LogisticsSaleChannelEntity saleChannel =  logisticsSaleChannelService.getByPlatform(platform, code);
+            LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(platform, code);
             if (Objects.isNull(saleChannel)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }

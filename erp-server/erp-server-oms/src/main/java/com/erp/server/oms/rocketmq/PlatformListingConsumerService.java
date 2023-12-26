@@ -8,19 +8,24 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.OmsMongoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
+import com.erp.server.oms.enums.CleanDataTableEnum;
+import com.erp.server.oms.mongo.MongoService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 下载平台商品消费服务
@@ -50,6 +56,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private MongoService mongoService;
     @Resource
     private ListingInfoService listingInfoService;
     @Resource
@@ -75,77 +83,118 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     public ApiResult<?> handle(Object ext) {
         log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(ext));
         PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
-        // Shopify来源卖家sku可能为空
-        if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
-            log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
-            return ApiResult.success();
-        }
-        ListingInfoEntity oldEntity = null;
-        if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
-            oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
-        } else {
-            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-            paramDTO.setPlatform(dto.getPlatform());
-            paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
-            List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
-
-            if (!CollectionUtils.isEmpty(listDto)) {
-                oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
+        try {
+            // Shopify来源卖家sku可能为空
+            if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
+                log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
+                return ApiResult.success();
             }
-        }
-
-
-        // 转换
-        ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
-
-        if (null == oldEntity) {
-            if (!listingInfoService.save(entity)) {
-                throw new ServiceException("【listing消费】Listing 产品保存失败");
-            }
-            // 添加到映射
-            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
+            ListingInfoEntity oldEntity = null;
             if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
                     || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
-                skuMappingEntity.setHasMappingAll(true);
-            }
-            if (!skuMappingService.save(skuMappingEntity)) {
-                throw new ServiceException("【listing消费】SkuMapping保存失败");
-            }
-        } else {
-            // 是否修改
-            if (!oldEntity.toString().equals(entity.toString())) {
-                if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
-                    oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
-                }
-                if (StringUtils.isNotBlank(entity.getProductImageUrl())) {
-                    oldEntity.setProductImageUrl(entity.getProductImageUrl());
-                }
-                if (StringUtils.isNotBlank(entity.getProductSpec())) {
-                    oldEntity.setProductSpec(entity.getProductSpec());
-                }
-                if (StringUtils.isNotBlank(entity.getProductPacking())) {
-                    oldEntity.setProductPacking(entity.getProductPacking());
-                }
-                if (StringUtils.isNotBlank(entity.getPlatformFnSku())) {
-                    oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
-                }
-                if (StringUtils.isNotBlank(entity.getPlatformSkuName())) {
-                    oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
-                }
-                oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
-                if (!listingInfoService.updateById(oldEntity)) {
-                    throw new ServiceException("Listing 产品更新失败");
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+            } else {
+                ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+                paramDTO.setPlatform(dto.getPlatform());
+                paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
+                paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+                paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
+                List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+
+                if (!CollectionUtils.isEmpty(listDto)) {
+                    oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
                 }
             }
 
+
+            // 转换
+            ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
+
+            if (null == oldEntity) {
+                if (!listingInfoService.save(entity)) {
+                    throw new ServiceException("【listing消费】Listing 产品保存失败");
+                }
+                // 添加到映射
+                SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
+                if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+                        || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
+                    skuMappingEntity.setHasMappingAll(true);
+                }
+                if (!skuMappingService.save(skuMappingEntity)) {
+                    throw new ServiceException("【listing消费】SkuMapping保存失败");
+                }
+            } else {
+                // 是否修改
+                if (!oldEntity.toString().equals(entity.toString())) {
+                    if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
+                        oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+                    }
+                    if (StringUtils.isNotBlank(entity.getProductImageUrl())) {
+                        oldEntity.setProductImageUrl(entity.getProductImageUrl());
+                    }
+                    if (StringUtils.isNotBlank(entity.getProductSpec())) {
+                        oldEntity.setProductSpec(entity.getProductSpec());
+                    }
+                    if (StringUtils.isNotBlank(entity.getProductPacking())) {
+                        oldEntity.setProductPacking(entity.getProductPacking());
+                    }
+                    if (StringUtils.isNotBlank(entity.getPlatformFnSku())) {
+                        oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
+                    }
+                    if (StringUtils.isNotBlank(entity.getPlatformSkuName())) {
+                        oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
+                    }
+                    oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
+                    if (!listingInfoService.updateById(oldEntity)) {
+                        throw new ServiceException("Listing 产品更新失败");
+                    }
+                }
+
+            }
+            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 2);
+        }catch (Exception e){
+            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 0);
+            throw e;
         }
         return ApiResult.success();
     }
 
-
+    private void updateMongodbData(String platform,String uniqueId, Integer isClean){
+        if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        String tableName = getTableName(platform);
+        if (StringUtils.isEmpty(tableName)) return;
+        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
+        OmsMongoDTO updateDto = new OmsMongoDTO();
+        updateDto.setUniqueId(uniqueId);
+        MapUtil mapUtil = new MapUtil();
+        mapUtil.put("isClean", isClean);
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+    }
+    /**
+     * 根据平台组装表名
+     * @param platform
+     * @return
+     */
+    private String getTableName(String platform){
+        switch (platform){
+            case "Shopee":
+                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPEE_PRODUCT.getCategory(),
+                        platform, CleanDataTableEnum.SHOPEE_PRODUCT.getBusiness());
+            case "AliExpress":
+                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.ALI_EXPRESS_PRODUCT.getCategory(),
+                        platform, CleanDataTableEnum.ALI_EXPRESS_PRODUCT.getBusiness());
+            case "Shopify":
+                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.SHOPIFY_PRODUCT.getCategory(),
+                        platform, CleanDataTableEnum.SHOPIFY_PRODUCT.getBusiness());
+            case "Walmart":
+                return StrUtil.format("{}_{}_{}", CleanDataTableEnum.WALMART_PRODUCT.getCategory(),
+                        platform, CleanDataTableEnum.WALMART_PRODUCT.getBusiness());
+            default:
+                return null;
+        }
+    }
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));

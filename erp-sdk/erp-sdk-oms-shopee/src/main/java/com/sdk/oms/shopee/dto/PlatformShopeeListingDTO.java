@@ -7,6 +7,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.sdk.oms.shopee.dto.product.response.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ import java.util.Objects;
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
     private ItemInfo itemInfo;
@@ -90,6 +92,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 //平台最后修改时间
                 .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
         productDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        productDTO.setUniqueId(dto.getUniqueId());
         return productDTO;
     }
 

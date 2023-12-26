@@ -126,4 +126,22 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return void
      **/
     String printLogisticsBillConfirm(SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto);
+
+    /**  销售订单标记发货失败后从新标记发货
+     * @description
+     * @param soB2cId
+     * @author Lambda
+     * @return
+     * @create 2023-12-25 14:47
+     */
+    List<BatchResultDTO> retryFalseDelivery(String soB2cId);
+
+    /**
+     * 根据来源id查询发货单
+     * @Author Luo_WG
+     * @Date 2023/12/25 16:32
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryEntity>
+     **/
+    List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds);
 }

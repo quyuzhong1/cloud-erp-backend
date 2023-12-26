@@ -370,20 +370,30 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
                     responseVO.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                     List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses = new ArrayList<>();
-                    files.forEach(printFile -> {
-                        responseVO.setMore(true);
-                        LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
-                        response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
-                        response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
-                        response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
+                    if (1 == files.size()){
                         try {
-                            response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+                            responseVO.setMore(false);
+                            responseVO.setBase64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()));
                         } catch (IOException e) {
                             log.error("获取标签文件异常：{}", e.getMessage());
 //                            throw new RuntimeException(e);
                         }
-                        logisticsPrintLabelResponses.add(response);
-                    });
+                    }else {
+                        files.forEach(printFile -> {
+                            responseVO.setMore(true);
+                            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+                            response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
+                            response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
+                            response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
+                            try {
+                                response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+                            } catch (IOException e) {
+                                log.error("获取标签文件异常：{}", e.getMessage());
+//                            throw new RuntimeException(e);
+                            }
+                            logisticsPrintLabelResponses.add(response);
+                        });
+                    }
                     responseVO.setLogisticsPrintLabelResponses(logisticsPrintLabelResponses);
                     responseVO.success();
                     success = true;

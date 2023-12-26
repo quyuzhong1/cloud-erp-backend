@@ -189,6 +189,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         * 发货时间
         */
         private LocalDateTime deliveryTime;
+
+        /**
+        * 备注
+        */
+        private String remark;
     }
 
     /**
@@ -277,11 +282,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
         /**
          * 发货时间
          */
-        private List<LocalDateTime> deliveryTimeList;
+        private List<LocalDate> deliveryTimeList;
     }
 
     /**
@@ -591,7 +596,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 详情
          */
-        private List<LogisticsChannelDTO> detailList;
+        private List<PrintLogisticsWaybillDetailDTO> detailList;
     }
 
 
@@ -607,9 +612,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String logisticsChannelId;
 
-        /**
-         * 详情
-         */
-        private List<PrintLogisticsWaybillDetailDTO> detailList;
+
     }
 }

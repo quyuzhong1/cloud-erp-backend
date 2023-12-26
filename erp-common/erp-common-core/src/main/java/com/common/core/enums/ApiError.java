@@ -90,7 +90,7 @@ public enum ApiError implements Serializable {
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
     ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
-
+    ERROR_FILE_DELETE(1051,"文件删除失败"),
 
     /**
      * 警告信息 从800 开始
@@ -490,7 +490,7 @@ public enum ApiError implements Serializable {
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
-
+    LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
 
     /**
      * bi 错误
@@ -873,9 +873,11 @@ public enum ApiError implements Serializable {
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
-    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+    WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
+    IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
 
 
     /**

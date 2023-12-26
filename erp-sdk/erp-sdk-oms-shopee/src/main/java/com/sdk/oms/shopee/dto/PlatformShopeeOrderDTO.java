@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
@@ -183,6 +184,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderDetail));
+        orderDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        orderDTO.setUniqueId(dto.getUniqueId());
         return orderDTO;
     }
 
@@ -208,6 +211,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
                 .name(orderDetail.getBuyerUsername())
+                .receiverName(orderDetail.getBuyerUsername())
                 .telNumber(recipientAddress.getPhone())
                 .receiverTelNumber(recipientAddress.getPhone())
                 .email("")
@@ -234,7 +238,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                     .code(p.getPackageNumber())
                     .name(LogisticsPlatformEnum.SHOPEE.getName())
                     .deliveryTime(LocalDateTime.ofInstant(instant, zone))
-//                    .logisticsChannelId(p.getShippingCarrier())
+                    .logisticsChannelName(p.getShippingCarrier())
                     .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
                     .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                     .accessoriesCostCurrency(orderDetail.getCurrency())
@@ -247,9 +251,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
     }
 
     public static PlatformOrderFinanceDTO parseFinances(OrderDetail orderDetail) {
-        if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
-            return null;
-        }
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
                 .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))

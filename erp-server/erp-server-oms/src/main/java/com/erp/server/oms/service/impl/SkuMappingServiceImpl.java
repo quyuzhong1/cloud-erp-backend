@@ -196,7 +196,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             // 海外仓库
             List<WarehouseDTO.ListDTO> overseasWarehouseList = wmsWarehouseFeign.listByIds(warehouseIds);
             Map<String, WarehouseDTO.ListDTO> overseasWarehouseMap = new HashMap<>();
-            if (CollectionUtils.isNotEmpty(overseasWarehouseList)){
+            if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
             }
             SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, overseasWarehouseMap, list, listingInfoService);
@@ -572,7 +572,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMapping.setIsExpire(Boolean.TRUE);
         skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
-        if (!updateResult){
+        if (!updateResult) {
             throw new ServiceException("更新失败");
         }
 //        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
@@ -909,8 +909,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public Boolean add(SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO) {
         SkuMappingEntity entity = new SkuMappingEntity();
-        BeanMapperUtils.copy(addSkuMappingDTO,entity);
-        LocalDateTime now=LocalDateTime.now();
+        BeanMapperUtils.copy(addSkuMappingDTO, entity);
+        LocalDateTime now = LocalDateTime.now();
         entity.setEffectiveTime(LocalDateTime.now());
         entity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         return this.save(entity);
@@ -927,12 +927,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("SKU映射关系不存在"));
         ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
         // 无平台
-        if (StringUtils.isBlank(entity.getDictPlatform()) || !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())){
-            if (!this.removeById(id)){
+        if (StringUtils.isBlank(entity.getDictPlatform()) || !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
+            if (!this.removeById(id)) {
                 throw new ServiceException("删除映射失败,请重试");
             }
-            if( null != listingInfoEntity){
-                if (!listingInfoService.removeById(listingInfoEntity.getId())){
+            if (null != listingInfoEntity) {
+                if (!listingInfoService.removeById(listingInfoEntity.getId())) {
                     throw new ServiceException("删除映射Listing失败,请重试");
                 }
             }
@@ -940,19 +940,60 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         // 有平台
         // 判断映射关系是否存在
-        if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())){
+        if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())) {
             throw new ServiceException("映射关系已删除");
         }
         entity.setProductSkuNo("");
         entity.setProductSkuId("");
-        if (!this.updateById(entity)){
+        if (!this.updateById(entity)) {
             throw new ServiceException("删除映射失败,请重试");
         }
         listingInfoEntity.setMatchResult(false);
-        if (!listingInfoService.updateById(listingInfoEntity)){
+        if (!listingInfoService.updateById(listingInfoEntity)) {
             throw new ServiceException("删除映射Listing失败,请重试");
         }
         return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type) {
+        List<String> skuIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<SkuMappingEntity> skuMappingList = this.listByInfo(skuIdList, warehouseIdList, dictPlatform, type);
+        List<SkuMappingDTO.ListSkuResultDTO> resultList = new ArrayList<>(skuMappingList.size());
+        List<String> listingIdList = skuMappingList.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
+        List<ListingInfoEntity> listingInfoList = CollectionUtils.isNotEmpty(listingIdList) ? listingInfoService.listByIds(listingIdList) : Collections.emptyList();
+        for (SkuMappingEntity item : skuMappingList) {
+            SkuMappingDTO.ListSkuResultDTO resultDTO = new SkuMappingDTO.ListSkuResultDTO();
+            String listingId=item.getListingId();
+            resultDTO.setSkuId(item.getProductSkuId());
+            resultDTO.setSkuNo(item.getProductSkuNo());
+            resultDTO.setListingId(listingId);
+            ListingInfoEntity listingEntity=listingInfoList.stream().filter(l->l.getId().equals(listingId)).findFirst().orElse(null);
+            if(Objects.nonNull(listingEntity)){
+                resultDTO.setType(listingEntity.getType());
+                resultDTO.setPlatformSkuNo(listingEntity.getPlatformSkuNo());
+                resultDTO.setPlatformSkuName(listingEntity.getPlatformSkuName());
+                resultDTO.setPlatformSpuNo(listingEntity.getPlatformSpuNo());
+                resultDTO.setPlatformSpuName(listingEntity.getPlatformSpuName());
+            }
+            resultDTO.setDictPlatform(dictPlatform);
+            resultList.add(resultDTO);
+        }
+
+        return resultList;
+    }
+
+    private List<SkuMappingEntity> listByInfo(List<String> skuIdList, List<String> warehouseIdList, String dictPlatform, String type) {
+        LocalDateTime now = LocalDateTime.now();
+        return this.lambdaQuery().
+                ge(SkuMappingEntity::getExpireTime, now).
+                le(SkuMappingEntity::getEffectiveTime,now).
+                in(CollectionUtils.isNotEmpty(skuIdList), SkuMappingEntity::getProductSkuId, skuIdList).
+                in(CollectionUtils.isNotEmpty(warehouseIdList), SkuMappingEntity::getWarehouseId, warehouseIdList).
+                eq(SkuMappingEntity::getDictPlatform, dictPlatform).
+                eq(SkuMappingEntity::getType, type).
+                list();
     }
 
 }

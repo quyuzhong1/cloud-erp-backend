@@ -2,7 +2,9 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDateTime;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.Data;
@@ -58,12 +60,12 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 处理状态 waitHandle:待处理 handle:已处理 cancel:已取消
+        * 单据状态 waitHandle:待处理 handle:已处理 cancel:已取消
         */
         private String handleStatus;
 
         /**
-        * 处理状态中文
+        * 单据状态中文
         */
         private String handleStatusName;
 
@@ -145,7 +147,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 详情
+         */
+        private List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -161,6 +166,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 详情
+         */
+        private List<SoB2cDeliveryInterceptDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -188,46 +197,11 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 处理状态 waitHandle:待处理 handle:已处理 cancel:已取消
-        */
-        @NotBlank(message = "处理状态 waitHandle:待处理 handle:已处理 cancel:已取消不能为空")
-        @Size(max = 64,message = "处理状态 waitHandle:待处理 handle:已处理 cancel:已取消最大长度不能超过64位")
-        private String handleStatus;
-
-        /**
-        * 处理结果 success：拦截成功  failure：拦截失败
-        */
-        @NotBlank(message = "处理结果 success：拦截成功  failure：拦截失败不能为空")
-        @Size(max = 64,message = "处理结果 success：拦截成功  failure：拦截失败最大长度不能超过64位")
-        private String handleResult;
-
-        /**
-        * 处理备注
-        */
-        @NotBlank(message = "处理备注不能为空")
-        @Size(max = 255,message = "处理备注最大长度不能超过255位")
-        private String handleRemark;
-
-        /**
         * 销售单号
         */
         @NotBlank(message = "销售单号不能为空")
         @Size(max = 50,message = "销售单号最大长度不能超过50位")
         private String soCode;
-
-        /**
-        * 发货单号
-        */
-        @NotBlank(message = "发货单号不能为空")
-        @Size(max = 50,message = "发货单号最大长度不能超过50位")
-        private String soDeliveryCode;
-
-        /**
-        * 销售出库单号
-        */
-        @NotBlank(message = "销售出库单号不能为空")
-        @Size(max = 50,message = "销售出库单号最大长度不能超过50位")
-        private String soOutstockCode;
 
         /**
         * 物流渠道id
@@ -249,32 +223,6 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         @NotBlank(message = "运单号不能为空")
         @Size(max = 64,message = "运单号最大长度不能超过64位")
         private String transportNo;
-
-        /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
-        private String remark;
-
-        /**
-        * 处理人id
-        */
-        @NotBlank(message = "处理人id不能为空")
-        @Size(max = 19,message = "处理人id最大长度不能超过19位")
-        private String handleUserId;
-
-        /**
-        * 处理人名称
-        */
-        @NotBlank(message = "处理人名称不能为空")
-        @Size(max = 50,message = "处理人名称最大长度不能超过50位")
-        private String handleUserName;
-
-        /**
-        * 处理时间
-        */
-        private LocalDateTime handleTime;
     }
 
     /**
@@ -282,6 +230,7 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabListDTO {
         /**
          * 标识：wms/common/enumDropDown?type=SoB2cDeliveryInterceptStatus
@@ -302,7 +251,11 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 单据状态
+         */
+        private String tabFlag;
         /**
          * 单据编号
          */
@@ -322,7 +275,7 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         /**
          * sku编号
          */
-        private String skuNo;
+        private List<String> skuNoList;
         /**
          * 物流渠道名称
          */
@@ -471,5 +424,26 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理时间
          */
         private String handleTime;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptResultConfirmDTO {
+        /**
+         * 单据id
+         */
+        private String id;
+        /**
+         * 处理结果：wms/common/enumDropDown?type=HandleResult
+         * 描述 success：拦截成功，failure：拦截失败
+         */
+        private String handleResult;
+        /**
+         * 处理结果描述
+         */
+        private String resultRemark;
     }
 }

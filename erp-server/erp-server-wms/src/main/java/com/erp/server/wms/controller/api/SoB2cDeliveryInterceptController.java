@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -55,25 +56,6 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货拦截单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryInterceptDTO.AddDTO dto) {
         return success(soB2cDeliveryInterceptService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author Luo_WG
-    * @date:  2023-12-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "b2c发货拦截单修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:soB2cDeliveryIntercept:update",
-        serviceClass = SoB2cDeliveryInterceptService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SoB2cDeliveryInterceptDTO.UpdateDTO dto) {
-        soB2cDeliveryInterceptService.update(dto);
-        return success();
     }
 
     /**
@@ -174,17 +156,17 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             menuCode = "wms:soB2cDeliveryIntercept:interceptResultConfirm",
             serviceClass = SoB2cDeliveryInterceptService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody ValidList<SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO> dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
+        for (SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO resultConfirmDTO : dto.getList()) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryInterceptService.interceptResultConfirm(id);
+                result = soB2cDeliveryInterceptService.interceptResultConfirm(resultConfirmDTO);
             }catch (Exception e){
                 log.error("物流拦截单 拦截结果确认失败",e);
-                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
+                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(resultConfirmDTO.getId());
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "物流拦截单不存在, 拦截结果确认失败");
+                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
                     resultDTOS.add(result);
                     continue;
                 }

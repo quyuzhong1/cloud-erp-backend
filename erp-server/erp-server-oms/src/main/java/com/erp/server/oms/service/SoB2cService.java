@@ -423,4 +423,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-20 15:48
      */
     void removeSignError(String id, String sign);
+
+    /**
+     * 获取标记发货需要的参数
+     * @description
+     * @param soB2cId
+     * @author Lambda
+     * @return 
+     * @create 2023-12-22 16:02
+     */
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId);
 }

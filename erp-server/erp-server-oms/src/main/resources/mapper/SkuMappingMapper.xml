@@ -562,7 +562,7 @@
 
     <select id="listByParams" resultType="com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO">
         SELECT
-        sm.id,
+        sm.id as tableId,
         sm.shop_id,
         sm.listing_id,
         sm.dict_platform,
@@ -577,6 +577,7 @@
         sm.expire_time,
         sm.is_expire,
         sm.has_mapping_all,
+        li.id as listingId,
         li.platform_sku_no,
         li.platform_sku_name,
         li.platform,

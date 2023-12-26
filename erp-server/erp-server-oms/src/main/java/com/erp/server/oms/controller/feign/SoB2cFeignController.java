@@ -183,4 +183,13 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cReceiverEntity> list = soB2cReceiverService.listByMainIds(mainIdList);
         return list;
     }
+
+    /**
+     * 获取标记发货参数
+     * @return
+     */
+    @PostMapping("/getSignShipParam")
+    public SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String soB2cId){
+         return  soB2cService.getSignShipParam(soB2cId);
+    }
 }
