@@ -900,7 +900,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             detailDTO.setQty(soB2cDetailEntity.getQty());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
-//                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
+                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
                 if (skuVO.getVariantProperty() == null) {
                     detailDTO.setVariantProperty("");
                 } else {
