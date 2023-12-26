@@ -96,15 +96,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 soB2cService.pullOrderHandle(id,detailList,map);
             }
         }
-        //已发货就要生成销售出库单
-        if(shippedCode.equalsIgnoreCase(billStatus)&&isPlatformWarehouseOrder){
-            try {
-                soOutstockFeign.generateB2cSoOutstock(id);
-            }catch (Exception e){
-                log.error("B2C订单【{}】 更改状态为已发货,生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
-            }
-
-        }
+//        //已发货就要生成销售出库单
+//        if(shippedCode.equalsIgnoreCase(billStatus)&&isPlatformWarehouseOrder){
+//            try {
+//                soOutstockFeign.generateB2cSoOutstock(id);
+//            }catch (Exception e){
+//                log.error("B2C订单【{}】 更改状态为已发货,生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
+//            }
+//
+//        }
 
     }
 

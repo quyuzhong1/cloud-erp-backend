@@ -80,7 +80,8 @@ public class OrderItemDetail implements Serializable {
 
     /**
      * cainiaoInternationalWarehouse
-     * 表示是菜鸟认证海外仓发货的，这类订单（子订单）将由菜鸟系统下发海外仓系统，进行订单履行，商家ERP需进行过滤此类型的订单（子订单）。
+     * 表示是菜鸟认证海外仓发货的，这类订单（子订单）将由菜鸟系统下发海外仓系统，进行订单履行，
+     * 商家ERP进行过滤此类型的订单（子订单）。
      * 其他情况为空
      */
     @JSONField(name = "logistics_warehouse_type")
