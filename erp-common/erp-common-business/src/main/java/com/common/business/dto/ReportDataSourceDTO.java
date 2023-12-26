@@ -33,10 +33,12 @@ public class ReportDataSourceDTO<T> implements JRDataSource {
         for (Object key : hashMap.keySet()) {
             if (String.valueOf(key).equals(fieldName)) {
                 Object obj = hashMap.get(key);
-                if (obj.getClass() == JSONArray.class) {
-                    value = BeanUtil.toBean(obj, HashMap.class);
-                } else {
-                    value = obj;
+                if (obj != null) {
+                    if (obj.getClass() == JSONArray.class) {
+                        value = BeanUtil.toBean(obj, HashMap.class);
+                    } else {
+                        value = obj;
+                    }
                 }
             }
         }

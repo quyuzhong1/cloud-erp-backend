@@ -484,6 +484,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
         List<LogisticsPrintTypeEntity> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
 
+
         //循环打印的渠道
         for (String logisticsChannel : logisticsChannelIdList) {
 
@@ -805,6 +806,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                                                      List<SoB2cLogisticsEntity> soB2cLogisticsEntities,
                                                      List<SoB2cDetailEntity> soB2cDetailEntities) {
         PrintWayBillPdfDTO printWayBillPdfDTO = new PrintWayBillPdfDTO();
+        printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
         printWayBillPdfDTO.setPrintTime(LocalDateTime.now());
         printWayBillPdfDTO.setShopName(soB2cEntity.getShopName());
         printWayBillPdfDTO.setTransportNo(soB2cEntity.getRemark());
@@ -832,11 +834,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             detailDTO.setQty(soB2cDetailEntity.getQty());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
-                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
-                detailDTO.setVariantProperty(skuVO.getVariantProperty());
+//                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
+                if (skuVO.getVariantProperty() == null) {
+                    detailDTO.setVariantProperty("");
+                } else {
+                    detailDTO.setVariantProperty(skuVO.getVariantProperty());
+                }
                 detailDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
                 detailDTO.setSkuNo(skuVO.getSkuNo());
                 detailDTO.setProductName(skuVO.getSkuName());
+                wayBillDetailList.add(detailDTO);
             }
         }
         printWayBillPdfDTO.setDetailList(wayBillDetailList);

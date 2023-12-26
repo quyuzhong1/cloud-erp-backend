@@ -14,6 +14,10 @@ import java.util.List;
 @Accessors(chain = true)
 public class PrintWayBillPdfDTO {
     /**
+     * 销售单号
+     */
+    private String soCode;
+    /**
      * 打印时间
      */
     private LocalDateTime printTime;
