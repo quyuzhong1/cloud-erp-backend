@@ -68,7 +68,6 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Resource
     private ListingInfoService listingInfoService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SkuMappingRuleDTO.AddDTO addDTO) {
