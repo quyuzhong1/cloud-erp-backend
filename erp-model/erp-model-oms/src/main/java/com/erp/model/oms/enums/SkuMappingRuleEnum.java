@@ -2,6 +2,7 @@ package com.erp.model.oms.enums;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import lombok.AllArgsConstructor;
@@ -15,12 +16,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Getter
 @ToString
 @AllArgsConstructor
 public enum SkuMappingRuleEnum implements EnumMessage{
-    COMPLETE_SKU("completeSku","识别完整的SKU",v-> new ArrayList<>(),(regex,v)-> v),
+    COMPLETE_SKU("completeSku","识别完整的SKU",v-> new ArrayList<>(),(type,regex,v)-> v),
     IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","识别忽略前、后缀的SKU",SkuMappingRuleEnum::getIgnorePrefixesAndSuffixesRegex,SkuMappingRuleEnum::handleRegex),
     IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","识别忽略前、后位数的SKU",SkuMappingRuleEnum::getIgnoreFirstAndLastDigitsRegex,SkuMappingRuleEnum::handleRegex),
     EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","识别截取后的SKU",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleRegex),
@@ -31,8 +33,12 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     //将参数处理成正则表达式
     private final Function<SkuMappingRuleDTO.RuleDTO, List<String>> regexMethod;
     //返回正则处理后的结果
-    private final BiFunction<String,String,String> handleRegexMethod;
+    private final TriFunction<String,String,String,String> handleRegexMethod;
 
+    @FunctionalInterface
+    public interface TriFunction<T, U, V, R> {
+        R apply(T t, U u, V v);
+    }
     /**
      * 扩展规则枚举
      */
@@ -93,6 +99,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> getIgnorePrefixesAndSuffixesRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
+            if(Objects.isNull(ruleConditionsDTO.getIgnorePrefix()) && Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())){
+                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+            }
             String prefix = Objects.isNull(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
             String suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
             String regex = "\"^"+ prefix+"(.*?)"+suffixes+"$\"";
@@ -104,6 +113,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> getIgnoreFirstAndLastDigitsRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
+            if(Objects.isNull(ruleConditionsDTO.getIgnoringBeforePosition()) && Objects.isNull(ruleConditionsDTO.getIgnoringAfterPosition())){
+                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+            }
             int prefix = Objects.isNull(ruleConditionsDTO.getIgnoringBeforePosition())?0:ruleConditionsDTO.getIgnoringBeforePosition();
             int suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringAfterPosition())?0:ruleConditionsDTO.getIgnoringAfterPosition();
             String regex = "^.{"+prefix+"}(.*).{"+suffixes+"}$";
@@ -115,6 +127,9 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     private static List<String> getExtractFirstToLastRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
+            if(Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition()) && Objects.isNull(ruleConditionsDTO.getInterceptionBehindPosition())){
+                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+            }
             int prefix = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?1:ruleConditionsDTO.getInterceptionFrontPosition();
             int suffixes = Objects.isNull(ruleConditionsDTO.getInterceptionBehindPosition())?Integer.MAX_VALUE:ruleConditionsDTO.getInterceptionBehindPosition();
             if(prefix < 1 || suffixes < 1){
@@ -157,8 +172,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         }
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
-                list.add("");
-                continue;
+                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
             }
             //起始符或终止符为空，正则都不一样
             if(StringUtils.isNotBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
@@ -192,16 +206,23 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     }
     private static List<String> handleReplaceSpecifiedCharacters(SkuMappingRuleDTO.ExtendRuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getExtendRuleContentList().size());
+        Set<String> valueSet = commonDTO.getExtendRuleContentList().stream().map(SkuMappingRuleDTO.ExtendRuleConditionsDTO::getBeforeReplacingCharacters).collect(Collectors.toSet());
+        if(valueSet.size() != commonDTO.getExtendRuleContentList().size()){
+            throw new ServiceException("不能有重复的待替换值");
+        }
         //字符串替换，不需要正则，存放json key为需要替换的值，value为替换值
-        JSONObject jsonObject = new JSONObject();
         for(SkuMappingRuleDTO.ExtendRuleConditionsDTO extendRuleConditionsDTO : commonDTO.getExtendRuleContentList()){
+            if(StringUtils.isBlank(extendRuleConditionsDTO.getBeforeReplacingCharacters())){
+                throw new ServiceException("待替换值不能为空");
+            }
+            JSONObject jsonObject = new JSONObject();
             jsonObject.put(extendRuleConditionsDTO.getBeforeReplacingCharacters(),extendRuleConditionsDTO.getAfterReplacingCharacters());
             list.add(jsonObject.toJSONString());
         }
         return list;
     }
 
-    private static String handleRegex(String regex,String inputStr){
+    private static String handleRegex(String ruleType,String regex,String inputStr){
         if(StringUtils.isBlank(regex)){
             return inputStr;
         }
@@ -210,8 +231,13 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         Matcher matcher = pattern.matcher(inputStr);
         if (matcher.find()) {
             return matcher.group(1);
+        }else{
+            SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)){
+                return "";
+            }
+            return inputStr;
         }
-        return inputStr;
     }
 
     private static String handleReplace(String json,String inputStr){
@@ -220,6 +246,15 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         //正常就一对值
         for (String key : jsonObject.keySet()) {
             String value = jsonObject.getString(key);
+            //转义
+            SkuMappingSymbolicEnum keySymbolEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,key);
+            SkuMappingSymbolicEnum valueSymbolicEnum = EnumMessage.getByCode(SkuMappingRuleEnum.SkuMappingSymbolicEnum.class,value);
+            if(Objects.nonNull(keySymbolEnum) && keySymbolEnum.isEscape){
+                key = Pattern.quote(key);
+            }
+            if(Objects.nonNull(valueSymbolicEnum) && valueSymbolicEnum.isEscape){
+                value = Matcher.quoteReplacement(value);
+            }
             result = inputStr.replaceAll(key,value);
         }
         return result;
