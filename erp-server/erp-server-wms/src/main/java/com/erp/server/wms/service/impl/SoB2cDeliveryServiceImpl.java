@@ -34,6 +34,7 @@ import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
@@ -52,6 +53,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -117,6 +119,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private FileTemplateFeign fileTemplateFeign;
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
+    @Autowired
+    private LogisticsAuthFeign logisticsAuthFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -386,12 +390,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = new ArrayList<>();
         for (String logisticsChannelId : logisticsChannelIds) {
+
             SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
             //打印类型：物流面单
             waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
             //渠道信息
             waybillDTO.setLogisticsChannelId(logisticsChannelId);
-//            waybillDTO.setPrintType(LogisticsPlatformEnum.getNameByName());
+
+            //查询是否允许打印面单和配货单
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
+            LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
+            waybillDTO.setPrintLabel(logisticsPlatformEnum.getPrintLabel().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
+            waybillDTO.setPrintDelivery(logisticsPlatformEnum.getPrintDelivery().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
 
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)) {

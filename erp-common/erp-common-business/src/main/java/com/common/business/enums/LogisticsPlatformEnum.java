@@ -60,8 +60,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         return kingdeeCode;
     }
 
+    public String getPrintLabel() {
+        return printLabel;
+    }
 
-    LogisticsPlatformEnum(String code, String name, String desc, String kingdeeCode,String printLabel,String printDelivery){
+    public String getPrintDelivery() {
+        return printDelivery;
+    }
+
+    LogisticsPlatformEnum(String code, String name, String desc, String kingdeeCode, String printLabel, String printDelivery){
 
         this.code = code;
         this.name = name;
