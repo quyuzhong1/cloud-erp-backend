@@ -209,7 +209,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String paramJson = "";
         String returnJson = "";
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.b2c_so_delivery_NOT_EXISTS);
+            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
         try {
             //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
@@ -225,7 +225,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                 platformShipOrderDTO.setSoB2cId(entity.getSourceId());
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+
                 paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
 
