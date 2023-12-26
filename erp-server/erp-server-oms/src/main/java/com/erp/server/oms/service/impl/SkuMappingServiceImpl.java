@@ -36,12 +36,8 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -558,6 +554,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = new ArrayList<>();
+        if (StringUtils.isBlank(skuMapping.getDictPlatform()) || !dto.getHasMappingAll() || StringUtils.isNotBlank(warehouseId)){
+            if (StringUtils.isBlank(warehouseId)){
+                throw new ServiceException("仓库不能为空");
+            }
+            warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+            if (CollectionUtils.isEmpty(warehouseList)) {
+                throw new ServiceException("仓库不存在");
+            }
+        }
 
         ListingInfoEntity listingInfo = listingInfoService.getById(skuMapping.getListingId());
         String listingId = "";
@@ -587,14 +593,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 原数据删除失败");
         }
 //        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException("仓库不存在");
-        }
 
         SkuMappingEntity addSkuMapping = new SkuMappingEntity();
-        addSkuMapping.setWarehouseId(warehouseId);
-        addSkuMapping.setWarehouseName(warehouseList.get(0).getName());
+        addSkuMapping.setWarehouseId(StringUtils.isBlank(warehouseId) ? "" : warehouseId);
+        addSkuMapping.setWarehouseName(CollectionUtils.isEmpty(warehouseList) ? "" : warehouseList.get(0).getName());
         addSkuMapping.setType(RuleTypeEnum.WAREHOUSE);
         addSkuMapping.setProductSkuId(productSkuId);
         addSkuMapping.setProductSkuNo(skuVOList.get(0).getSkuNo());
@@ -941,17 +943,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("SKU映射关系不存在"));
         ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
         // 无平台
-        if (StringUtils.isBlank(entity.getDictPlatform()) || !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
-            if (!this.removeById(id)) {
-                throw new ServiceException("删除映射失败,请重试");
-            }
-            if (null != listingInfoEntity) {
-                if (!listingInfoService.removeById(listingInfoEntity.getId())) {
-                    throw new ServiceException("删除映射Listing失败,请重试");
-                }
-            }
+        if (StringUtils.isBlank(entity.getDictPlatform())) {
+            this.deleteAll(id, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
         }
+        // 销售平台
+        if (RuleTypeEnum.PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())){
+            this.deleteAll(id, listingInfoEntity);
+            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+        }
+        // 仓库平台
+        if (RuleTypeEnum.WAREHOUSE == entity.getType() && null == OmsPlatformEnum.getByCode(entity.getDictPlatform())){
+            this.deleteAll(id, listingInfoEntity);
+            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+        }
+
         // 有平台
         // 判断映射关系是否存在
         if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())) {
@@ -996,6 +1002,19 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAll(String id, ListingInfoEntity listingInfoEntity) {
+        if (!this.removeById(id)) {
+            throw new ServiceException("删除映射失败,请重试");
+        }
+        if (null != listingInfoEntity) {
+            if (!listingInfoService.removeById(listingInfoEntity.getId())) {
+                throw new ServiceException("删除映射Listing失败,请重试");
+            }
+        }
     }
 
     private List<SkuMappingEntity> listByInfo(List<String> skuIdList, List<String> warehouseIdList, String dictPlatform, String type) {
