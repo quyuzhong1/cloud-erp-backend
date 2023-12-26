@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -80,5 +81,11 @@ public class ShopAuthorizeUrlDTO implements Serializable {
      * 亚马逊批量授权的店铺id
      */
     private List<String> shopIdList;
+
+
+    /**
+     * 亚马逊批量授权的店铺
+     */
+    private List<ShopInfoEntity> shopInfoEntityList;
 
 }
