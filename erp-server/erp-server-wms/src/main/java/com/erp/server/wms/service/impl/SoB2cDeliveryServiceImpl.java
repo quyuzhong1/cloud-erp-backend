@@ -603,9 +603,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
+                            ClassPathResource classPathResource = new ClassPathResource("Blank_A4.jasper");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             map.remove("detailList");
-                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
+                            JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", classPathResource.getStream(), map, printWayBillPdfDTO.getDetailList());
 
                         }
                     }
