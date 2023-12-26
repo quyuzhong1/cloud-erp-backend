@@ -75,7 +75,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 获取需要授权的店铺列表
         List<ShopInfoEntity> shopInfoEntityList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(dto.getShopIdList())){
-            shopInfoEntityList = shopInfoService.listByIds(dto.getShopIdList());
+            shopInfoEntityList = dto.getShopInfoEntityList();
         }
 
         if (CollectionUtils.isEmpty(shopInfoEntityList) && StringUtils.isNotBlank(dto.getShopId())){

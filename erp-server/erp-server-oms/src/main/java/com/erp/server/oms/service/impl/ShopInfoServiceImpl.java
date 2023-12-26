@@ -1049,6 +1049,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
         authorizeUrlDTO.setShopIdList(shopIds);
         authorizeUrlDTO.setPlatformCode(infoEntity.getDictPlatform());
+        authorizeUrlDTO.setShopInfoEntityList(list);
 
         String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
