@@ -17,13 +17,17 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
+import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,6 +66,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -122,6 +132,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             } else {
                 // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
+                    ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
                         oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
                     }
@@ -144,6 +155,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (!listingInfoService.updateById(oldEntity)) {
                         throw new ServiceException("Listing 产品更新失败");
                     }
+                    //记录更新日志
+                    String msg = StrUtil.format("拉取第三方产品更新id为【{}】的【{}】单据 ", oldEntity.getId(), "平台sku表");
+                    operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
                 }
 
             }

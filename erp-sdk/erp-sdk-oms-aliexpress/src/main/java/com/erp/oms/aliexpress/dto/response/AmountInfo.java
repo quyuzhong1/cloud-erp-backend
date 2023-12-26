@@ -32,5 +32,11 @@ public class AmountInfo implements Serializable {
     @JSONField(name = "currency_code")
     private String currencyCode;
 
+    /**
+     * 乘积因子
+     */
+    @JSONField(name = "cent_factor")
+    private Integer  centFactor;
+
 
 }
