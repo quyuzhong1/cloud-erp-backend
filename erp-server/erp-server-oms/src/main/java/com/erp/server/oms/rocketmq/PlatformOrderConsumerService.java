@@ -72,17 +72,12 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        try {
-            platformOrderConsumerHandleService.handleAll(dto);
-            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 2);
-        }catch (Exception e){
-            updateMongodbData(dto.getPlatform(), dto.getUniqueId(), 0);
-            throw e;
-        }
+        platformOrderConsumerHandleService.handleAll(dto);
         return ApiResult.success();
     }
 
-    private void updateMongodbData(String platform,String uniqueId, Integer isClean){
+    @Override
+    public void updateMongodbData(String platform,String uniqueId, Integer isClean){
         if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
             return;
         }
