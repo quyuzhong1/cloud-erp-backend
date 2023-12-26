@@ -1,8 +1,8 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
@@ -143,7 +143,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .collect(Collectors.toList());
         }
         // 查询仓库中心对应国家并设置对应店铺
-        checkAndSetCountryWithShop(entity);
+        checkAndSetCountryWithShop(entity, dto);
 
         // 查询国家信息
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
@@ -164,15 +164,22 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
     /**
      * 查询仓库中心对应国家并设置对应店铺
+     *
      * @param entity 来源实体
+     * @param dto
      */
-    private void checkAndSetCountryWithShop(FbaShipmentEntity entity) {
+    private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto) {
         // 查询仓库中心对应国家
         String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
-        // 没有配置处理？
+        // 没有配置处理
         if (StringUtils.isEmpty(country)) {
-//            String msg = StrUtil.format("未找到系统仓储中心:{}, 请联系管理员", entity.getFulfillmentCenter());
-//            throw new ServiceException(msg);
+            log.error("未找到系统仓储中心:{}", entity.getFulfillmentCenter());
+            try {
+                // 未找到系统仓储中心发送预警, 不影响主流程
+                dmpTaskFeign.sendWarnMsg(dto.getDmpSyncTaskId());
+            } catch (Exception e) {
+                log.error("未找到系统仓储中心,发送预警失败:code={}, error={}", entity.getFulfillmentCenter(), ExceptionUtil.stacktraceToString(e, 2000));
+            }
             return;
         }
         // 国家一致
