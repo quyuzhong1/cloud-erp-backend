@@ -17,9 +17,6 @@ public class AutoMatchJob {
     @Resource
     private SkuMappingRuleService skuMappingRuleService;
 
-    /**
-     * 刷新速卖通的token
-     */
     @XxlJob("skuAutoMatchJob")
     public void skuAutoMatchJob() {
         skuMappingRuleService.handleSkuMapping();
