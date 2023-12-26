@@ -5,6 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
+import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
+import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -108,11 +110,21 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
     }
 
     @Override
-    public List<LogisticsPrintTypeEntity> listByChannelIds(List<String> channelIdList) {
+    public List<LogisticsPrintTypeDTO.ViewDTO> listByChannelIds(List<String> channelIdList) {
         if (CollectionUtils.isEmpty(channelIdList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList).list();
+        List<LogisticsPrintTypeEntity> list = lambdaQuery()
+                .ne(LogisticsPrintTypeEntity::getPrintType, "")
+                .in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList)
+                .list();
+
+        List<LogisticsPrintTypeDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(LogisticsPrintTypeDTO.ViewDTO.class, list);
+        for (LogisticsPrintTypeDTO.ViewDTO viewDTO : viewDTOS) {
+            viewDTO.setLabelTypeName(LogisticsLabelTypeEnum.getName(viewDTO.getLabelType()));
+            viewDTO.setPrintTypeName(LogisticsPrintTypeEnum.getName(viewDTO.getPrintType()));
+        }
+        return viewDTOS;
     }
 
     public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {

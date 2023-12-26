@@ -512,6 +512,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             channelCost.setLogisticsChannelId(item.getChannelId());
             channelCost.setLogisticsChannelName(item.getChannelName());
 
+            channelCost.setCurrency(item.getCurrency());
+            channelCost.setCurrencySymbol(item.getCurrencySymbol());
+
             /**
              * 体积重=长*宽*高/材积设置
              * 若渠道为计费重：则取值实际重量和体积重量最大值作为计费重量

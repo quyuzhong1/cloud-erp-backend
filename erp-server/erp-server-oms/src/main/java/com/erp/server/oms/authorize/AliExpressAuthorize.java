@@ -115,7 +115,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         // 校验是否是本系统发起
-        String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
+          String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
         Object shopIdObj = redisUtil.get(stateKey);
         if (null == shopIdObj){
             throw new ServiceException("信息已失效, 请重新发起授权");
