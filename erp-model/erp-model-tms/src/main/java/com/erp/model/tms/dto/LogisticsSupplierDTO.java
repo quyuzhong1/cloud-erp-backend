@@ -168,6 +168,11 @@ public class LogisticsSupplierDTO implements Serializable {
          * 服务商名称
          */
         private String logisticsPlatform;
+
+        /**
+         * 是否能打印官方面单
+         */
+        private Boolean isPrintPlatform;
     }
 
 
