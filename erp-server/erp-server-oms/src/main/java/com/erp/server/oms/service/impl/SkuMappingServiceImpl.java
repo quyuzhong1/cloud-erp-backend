@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -34,6 +35,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -48,10 +50,7 @@ import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
-import com.erp.server.oms.service.DictBasicService;
-import com.erp.server.oms.service.ListingInfoService;
-import com.erp.server.oms.service.ShopInfoService;
-import com.erp.server.oms.service.SkuMappingService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -84,6 +83,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, SkuMappingEntity> implements SkuMappingService {
 
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -369,9 +373,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-        skuMaping.setIsDeleted(true);
         if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
+        }
+        if (!this.removeById(skuMaping.getId())) {
+            throw new ServiceException("[SkuMapping] 原数据删除失败");
         }
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
@@ -387,6 +393,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表" , addSkuMaping.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
         return addSkuMaping.getId();
     }
 
@@ -570,10 +579,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
-        skuMapping.setIsDeleted(true);
         boolean updateResult = this.updateById(skuMapping);
         if (!updateResult) {
             throw new ServiceException("更新失败");
+        }
+        if (!this.removeById(skuMapping.getId())) {
+            throw new ServiceException("[SkuMapping] 原数据删除失败");
         }
 //        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -597,6 +608,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (this.save(addSkuMapping)) {
             return addSkuMapping.getId();
         }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表" , addSkuMapping.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
         return "";
 
     }
