@@ -68,7 +68,7 @@ public enum InventoryBusinessTypeEnum {
 
     WAREHOUSE_LOCATION_MOVE_INFO("warehouse_location_move_info", "31","仓位移动（PDA功能）"),
 
-    SO_B2C_DELIVERY("so_b2c_delivery", "32","b2c发货单"),
+    SO_B2C_DELIVERY("so_b2c_delivery", "34","b2c发货单"),
 
     ;
 

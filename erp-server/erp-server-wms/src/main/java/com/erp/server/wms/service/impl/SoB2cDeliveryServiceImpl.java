@@ -403,7 +403,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDTO waybillDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDTO();
             //打印类型：物流面单
-            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
             //渠道信息
             waybillDTO.setLogisticsChannelId(logisticsChannelId);
 
@@ -464,7 +464,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         for (String logisticsChannelId : logisticsChannelIds) {
             SoB2cDeliveryDTO.PrintDistributionDTO waybillDTO = new SoB2cDeliveryDTO.PrintDistributionDTO();
             //打印类型：物流面单
-            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode());
+            waybillDTO.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
             //渠道信息
             waybillDTO.setLogisticsChannelId(logisticsChannelId);
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
@@ -552,7 +552,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         .findFirst().orElse(new SoB2cEntity());
 
                 //如果打印面单
-                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_WAYBILL.getCode().equals(printType)) {
+                if (SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(printType)) {
                     //先获取订单的面单，没有就请求sdk获取
                     if (StringUtils.isNotBlank(soB2cEntity.getLogisticsWaybill())) {
                         base64List.add(soB2cEntity.getLogisticsWaybill());
@@ -562,7 +562,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             base64List.add(logisticsWaybill);
                         }
                     }
-                } else if (SoB2cDeliveryPrintTypeEnum.DISTRIBUTION.getCode().equals(printType)) {
+                } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
                     //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
                     if (StringUtils.isNotBlank(soB2cEntity.getDistributeWaybill())) {
                         base64List.add(soB2cEntity.getLogisticsWaybill());

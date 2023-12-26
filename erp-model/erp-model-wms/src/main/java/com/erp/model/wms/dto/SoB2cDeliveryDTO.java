@@ -456,7 +456,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintLogisticsWaybillDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         * logisticsBill: 物流面单 ，allocateCargoBill：配货单，all：全部
          */
         private String printType;
         /**
@@ -539,7 +539,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintDistributionDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         * logisticsBill: 物流面单 ，allocateCargoBill：配货单，all：全部
          */
         private String printType;
         /**
@@ -606,7 +606,7 @@ public class SoB2cDeliveryDTO implements Serializable {
     public static class PrintLogisticsBillConfirmDTO {
         /**
          * 打印类型 wms/common/enumDropDown?type=SoB2cDeliveryPrintType
-         * logisticsWaybill: 物流面单 ，distribution：配货单，all：全部
+         * logisticsBill: 物流面单，allocateCargoBill：配货单
          */
         private String printType;
         /**

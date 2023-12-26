@@ -21,10 +21,10 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 public enum SkuMappingRuleEnum implements EnumMessage{
     COMPLETE_SKU("completeSku","识别完整的SKU",v-> new ArrayList<>(),(regex,v)-> v),
-    IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","识别忽略前、后缀的SKU",SkuMappingRuleEnum::handleIgnorePrefixesAndSuffixes,SkuMappingRuleEnum::handleRegex),
-    IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","识别忽略前、后位数的SKU",SkuMappingRuleEnum::handleIgnoreFirstAndLastDigits,SkuMappingRuleEnum::handleRegex),
-    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","识别截取后的SKU",SkuMappingRuleEnum::handleExtractFirstToLast,SkuMappingRuleEnum::handleRegex),
-    EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取SKU起始符与结束符之间的字符",SkuMappingRuleEnum::handleExtractBetweenStartAndEnd,SkuMappingRuleEnum::handleRegex),
+    IGNORE_PREFIXES_AND_SUFFIXES("ignorePrefixesAndSuffixes","识别忽略前、后缀的SKU",SkuMappingRuleEnum::getIgnorePrefixesAndSuffixesRegex,SkuMappingRuleEnum::handleRegex),
+    IGNORE_FIRST_AND_LAST_DIGITS("ignoreFirstAndLastDigits","识别忽略前、后位数的SKU",SkuMappingRuleEnum::getIgnoreFirstAndLastDigitsRegex,SkuMappingRuleEnum::handleRegex),
+    EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","识别截取后的SKU",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleRegex),
+    EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取SKU起始符与结束符之间的字符",SkuMappingRuleEnum::getExtractBetweenStartAndEndRegex,SkuMappingRuleEnum::handleRegex),
     ;
     private final String code;
     private final String name;
@@ -90,7 +90,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         private final Boolean isEscape;
     }
 
-    private static List<String> handleIgnorePrefixesAndSuffixes(SkuMappingRuleDTO.RuleDTO commonDTO){
+    private static List<String> getIgnorePrefixesAndSuffixesRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             String prefix = Objects.isNull(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
@@ -101,7 +101,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         return list;
     }
 
-    private static List<String> handleIgnoreFirstAndLastDigits(SkuMappingRuleDTO.RuleDTO commonDTO){
+    private static List<String> getIgnoreFirstAndLastDigitsRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             int prefix = Objects.isNull(ruleConditionsDTO.getIgnoringBeforePosition())?0:ruleConditionsDTO.getIgnoringBeforePosition();
@@ -112,18 +112,24 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         return list;
     }
 
-    private static List<String> handleExtractFirstToLast(SkuMappingRuleDTO.RuleDTO commonDTO){
+    private static List<String> getExtractFirstToLastRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
-            int prefix = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?0:ruleConditionsDTO.getInterceptionBehindPosition();
-            int suffixes = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?0:ruleConditionsDTO.getInterceptionBehindPosition();
-            String regex = ".{"+prefix+"}(.{"+suffixes+"}).*";
+            int prefix = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?1:ruleConditionsDTO.getInterceptionFrontPosition();
+            int suffixes = Objects.isNull(ruleConditionsDTO.getInterceptionBehindPosition())?Integer.MAX_VALUE:ruleConditionsDTO.getInterceptionBehindPosition();
+            if(prefix < 1 || suffixes < 1){
+                throw new ServiceException("截取位数不能小于1");
+            }
+            prefix --;
+            if (suffixes<prefix){
+                throw new ServiceException("后面位数不能小于前面位数");
+            }
+            String regex = ".{" + prefix + "}(.{" + (suffixes - prefix) + "}).*";
             list.add(regex);
         }
         return list;
     }
-
-    private static List<String> handleExtractBetweenStartAndEnd(SkuMappingRuleDTO.RuleDTO commonDTO){
+    private static List<String> getExtractBetweenStartAndEndRegex(SkuMappingRuleDTO.RuleDTO commonDTO){
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         String waitHandleRegex;
         /**

@@ -86,7 +86,7 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
         //设置详情字段
         for (SoB2cDeliveryDetailEntity entity : entities) {
             entity.setMainId(mainId);
-
+            entity.setWaitScanQty(entity.getDeliveryQty());
             //匹配销售单详情，映射仓库字段
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntities.stream().filter(req -> req.getId().equals(entity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soB2cDetailEntity)) {
