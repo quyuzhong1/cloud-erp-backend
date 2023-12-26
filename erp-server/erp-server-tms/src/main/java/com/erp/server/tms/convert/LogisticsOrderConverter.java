@@ -507,17 +507,17 @@ public interface LogisticsOrderConverter {
     Address orderRequestSendUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 
     @Mappings({
-            @Mapping(target = "country",source = "senderInfo.country"),
+            @Mapping(target = "country",source = "pickUpInfo.country"),
             @Mapping(target = "member_type",constant = "pickup"),
-            @Mapping(target = "province",source = "senderInfo.provinceName"),
-            @Mapping(target = "city",source = "senderInfo.cityName"),
-            @Mapping(target = "county",source = "senderInfo.districtName"),
-            @Mapping(target = "street_address",source = "senderInfo.addressFirst"),
-            @Mapping(target = "post_code",source = "senderInfo.zipCode"),
-            @Mapping(target = "name",source = "senderInfo.name"),
-            @Mapping(target = "phone",source = "senderInfo.telNumber"),
-            @Mapping(target = "address_id",source = "senderInfo.id"),
-            @Mapping(target = "email",source = "senderInfo.email")
+            @Mapping(target = "province",source = "pickUpInfo.provinceName"),
+            @Mapping(target = "city",source = "pickUpInfo.cityName"),
+            @Mapping(target = "county",source = "pickUpInfo.districtName"),
+            @Mapping(target = "street_address",source = "pickUpInfo.addressFirst"),
+            @Mapping(target = "post_code",source = "pickUpInfo.zipCode"),
+            @Mapping(target = "name",source = "pickUpInfo.name"),
+            @Mapping(target = "phone",source = "pickUpInfo.telNumber"),
+            @Mapping(target = "address_id",source = "pickUpInfo.id"),
+            @Mapping(target = "email",source = "pickUpInfo.email")
     })
     Address orderRequestPickUpUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 
@@ -526,7 +526,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "member_type",constant = "receiver"),
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
-            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "county",source = "receiverInfoVO.district"),
             @Mapping(target = "street_address",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "post_code",source = "receiverInfoVO.zipCode"),
@@ -534,4 +534,18 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "phone",source = "receiverInfoVO.telNumber")
     })
     Address orderRequestReceiverUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
+    @Mappings({
+            @Mapping(target = "country",source = "returnInfo.country"),
+            @Mapping(target = "member_type",constant = "refund"),
+            @Mapping(target = "province",source = "returnInfo.provinceName"),
+            @Mapping(target = "city",source = "returnInfo.cityName"),
+            @Mapping(target = "county",source = "returnInfo.districtName"),
+            @Mapping(target = "street_address",source = "returnInfo.addressFirst"),
+            @Mapping(target = "post_code",source = "returnInfo.zipCode"),
+            @Mapping(target = "name",source = "returnInfo.name"),
+            @Mapping(target = "phone",source = "returnInfo.telNumber"),
+            @Mapping(target = "address_id",source = "returnInfo.id"),
+            @Mapping(target = "email",source = "returnInfo.email")
+    })
+    Address orderRequestRefundUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 }

@@ -38,9 +38,9 @@ public class AliExpressLogisticsHandlerImplTest {
 //        String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
 //        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
 //        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
-        String CLIENT_CODE = "503630";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";//此处替换为您在丰桥平台获取的校验码
-        String token = "50000200d18AWlnunrgd4l1fpwZvqe1c49ece4cFFR4mrvdijSI2lUWGdXHHX5FiL4Vt";
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000201326tOAyeueoufxwfeiat5mxXHHeLgx183c2ca0etyIE3GSShKP4IUHrpU3LN";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -64,6 +64,7 @@ public class AliExpressLogisticsHandlerImplTest {
 
     @Test
     public void createOrder(){
+        //发货人
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setId("440174196461");
         senderInfo.setAddressFirst("5-8#lift 9th floor buliding 205 xinyang street xintaiyang Industrial Park lin village");
@@ -76,6 +77,33 @@ public class AliExpressLogisticsHandlerImplTest {
         senderInfo.setEmail("dhphoto@aliyun.com");
         senderInfo.setCountry("China");
         senderInfo.setZipCode("523000");
+        //上门揽收
+        SenderInfo pickUp = new SenderInfo();
+        pickUp.setId("440174520062");
+        pickUp.setAddressFirst("5-8#lift 9th floor buliding 205 xinyang street xintaiyang Industrial Park lin village");
+        pickUp.setContact("contact");
+        pickUp.setCityName("Dongguan");
+        pickUp.setCompanyName("4PX");
+        pickUp.setName("chenxuli");
+        pickUp.setProvinceName("Guangdong Province");
+        pickUp.setTelNumber("17191087538");
+        pickUp.setEmail("dhphoto@aliyun.com");
+        pickUp.setCountry("China");
+        pickUp.setZipCode("523000");
+        //退货
+        SenderInfo returnInfo = new SenderInfo();
+        returnInfo.setId("440173332446");
+        returnInfo.setAddressFirst("5-8#lift 9th floor buliding 205 xinyang street xintaiyang Industrial Park lin village");
+        returnInfo.setContact("contact");
+        returnInfo.setCityName("Dongguan");
+        returnInfo.setCompanyName("4PX");
+        returnInfo.setName("chenxuli");
+        returnInfo.setProvinceName("Guangdong Province");
+        returnInfo.setTelNumber("17191087538");
+        returnInfo.setEmail("dhphoto@aliyun.com");
+        returnInfo.setCountry("China");
+        returnInfo.setZipCode("523000");
+
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
         logisticsProductVO.setId("12121232");
         logisticsProductVO.setSkuId("123456");
@@ -91,7 +119,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("CAINIAO_ECONOMY_TS");
+        logisticsSaleChannel.setCode("CPAM_WLB_FPXSZ;CPAM_WLB_CPHSH;CPAM_WLB_ZTOBJ;HRB_WLB_ZTOGZ;HRB_WLB_ZTOSH");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("11169435");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
@@ -105,20 +133,23 @@ public class AliExpressLogisticsHandlerImplTest {
                 .orderSource("ERP")
                 .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("8180834369177849")
+//                .deliveryNo("8180834369177849")
+                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("965656546@qq.con")
-                        .city("2900000")
+                        .city("Gongju-si")
                         .name("cl114341849dzvae")
                         .companyName("")
                         .contact("zhang san")
                         .country("CL")
                         .zipCode("13021")
-                        .province("NY")
+                        .province("Chungcheongnam-do")
                         .telNumber("1234567890")
                         .build())
                 .senderInfo(senderInfo)
+                .pickUpInfo(pickUp)
+                .returnInfo(returnInfo)
                 .parceInfoVO(ParceInfoVO.builder()
                         .currency("USD")
                         .height(1)

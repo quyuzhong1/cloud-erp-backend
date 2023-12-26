@@ -17,11 +17,13 @@ import com.erp.tms.aliexpress.model.order.request.OrderRequest;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.OrderResult;
+import com.erp.tms.aliexpress.model.query.QueryLogisticsRequest;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -204,17 +206,47 @@ public class AliExpressShipperService {
         System.out.println(response.getBody());
         return response;
     }
+
+    public IopResponse getLogisticsService(Map<String, String> authMap, QueryLogisticsRequest queryLogisticsRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.logistics.service.query");
+        request.addApiParameter("interface_request", JSONObject.toJSONString(queryLogisticsRequest));
+//        request.addApiParameter("interface_request", "{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"sub_order_list\":[{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"},{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"}],\"locale\":\"zh_CN\",\"order_id\":\"8001498863145804\",\"goods_weight\":\"0.1\"}");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
     public static void main(String[] args) throws ApiException {
         AliExpressShipperService service = new AliExpressShipperService();
         Map<String, String> authMap = new HashMap<>();
-        String CLIENT_CODE = "503630";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";//此处替换为您在丰桥平台获取的校验码
-        String token = "50000201525cnHtbirgwuieeiw3otviJIvhxd10c5ebdcstCi5kvwExvwQuFeQ0i1VKm";
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000201326tOAyeueoufxwfeiat5mxXHHeLgx183c2ca0etyIE3GSShKP4IUHrpU3LN";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
         authMap.put("url","https://api-sg.aliexpress.com");
-        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
-        System.out.println(logisticsAddress);
+//        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
+//        System.out.println(logisticsAddress);
+        QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
+                .order_id(5290188143007494L)
+//                .order_id(1102175972276889L)
+                .build();
+        QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
+                .order_id(1102175972276889L)
+                .sub_order_list(Collections.singletonList(queryLogisticsRequest))
+                .build();
+        IopResponse logisticsService = service.getLogisticsService(authMap, queryLogisticsRequest1);
+        System.out.println(logisticsService);
     }
 }
