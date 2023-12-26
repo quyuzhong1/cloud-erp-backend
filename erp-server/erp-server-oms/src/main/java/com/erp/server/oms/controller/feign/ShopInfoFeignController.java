@@ -118,8 +118,8 @@ public class ShopInfoFeignController extends BaseController {
      * 查询店铺关联的国家店铺
      *
      */
-    @PostMapping("feign/shop/getRelatedShopByIdAndCountry")
-    ShopInfoEntity getRelatedShopByIdAndCountry(@RequestBody ShopInfoDTO.RelatedDTO relateDTO){
+    @PostMapping("/getRelatedShopByIdAndCountry")
+    public ShopInfoEntity getRelatedShopByIdAndCountry(@RequestBody ShopInfoDTO.RelatedDTO relateDTO){
         return shopInfoService.getRelatedShopByIdAndCountry(relateDTO);
     }
 
