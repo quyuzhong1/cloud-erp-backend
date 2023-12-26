@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopAuthService;
@@ -111,6 +112,15 @@ public class ShopInfoFeignController extends BaseController {
     @PostMapping("/updateShopAuthById")
     public Boolean updateShopAuthById(@RequestBody ShopAuthEntity shopAuthEntity){
         return shopAuthService.updateShopAuthById(shopAuthEntity);
+    }
+
+    /**
+     * 查询店铺关联的国家店铺
+     *
+     */
+    @PostMapping("/getRelatedShopByIdAndCountry")
+    public ShopInfoEntity getRelatedShopByIdAndCountry(@RequestBody ShopInfoDTO.RelatedDTO relateDTO){
+        return shopInfoService.getRelatedShopByIdAndCountry(relateDTO);
     }
 
 }

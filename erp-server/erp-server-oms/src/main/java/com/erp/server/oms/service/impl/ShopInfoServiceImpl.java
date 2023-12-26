@@ -357,6 +357,23 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return new ShopDTO.RedirectDTO(entity.getId(), shopAuthorizeUrl);
     }
 
+    @Override
+    public ShopInfoEntity getRelatedShopByIdAndCountry(ShopInfoDTO.RelatedDTO relateDTO) {
+        ShopInfoEntity shopInfo = getById(relateDTO.getShopId());
+        if (null == shopInfo){
+            return null;
+        }
+        String platformShopCode = shopInfo.getPlatformShopCode();
+        if (StringUtils.isBlank(platformShopCode)){
+            return null;
+        }
+        return lambdaQuery()
+                .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
+                .eq(ShopInfoEntity::getDictCountryCode, relateDTO.getCountry())
+                .last("LIMIT 1")
+                .one();
+    }
+
 
     /**
      * 修改店铺
