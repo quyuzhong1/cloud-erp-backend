@@ -164,7 +164,10 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private LocalDateTime authTime;
 
-
+        /**
+         * 服务商名称
+         */
+        private String logisticsPlatform;
     }
 
 
