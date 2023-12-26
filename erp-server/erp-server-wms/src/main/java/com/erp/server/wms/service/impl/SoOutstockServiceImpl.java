@@ -48,6 +48,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1008,6 +1009,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
 
+        //查询是否有拦截单
         List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
 
         for (SoOutstockDTO.PagingViewDTO item : list) {

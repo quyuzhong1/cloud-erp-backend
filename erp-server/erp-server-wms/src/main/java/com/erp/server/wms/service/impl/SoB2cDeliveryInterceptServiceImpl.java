@@ -291,6 +291,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         for (SoB2cDeliveryInterceptEntity interceptEntity : list) {
             SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = new SoB2cDeliveryInterceptDTO.IsInterceptDTO();
             isInterceptDTO.setId(interceptEntity.getId());
+            isInterceptDTO.setHandleResult(interceptEntity.getHandleResult());
             //如果结果确认是拦截成功,返回拦截标识
             if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
                 isInterceptDTO.setIsIntercept(Boolean.TRUE);

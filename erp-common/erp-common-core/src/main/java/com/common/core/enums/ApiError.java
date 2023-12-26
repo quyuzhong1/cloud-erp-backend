@@ -879,6 +879,7 @@ public enum ApiError implements Serializable {
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
+    ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截，禁止变更状态"),
 
 
     /**
