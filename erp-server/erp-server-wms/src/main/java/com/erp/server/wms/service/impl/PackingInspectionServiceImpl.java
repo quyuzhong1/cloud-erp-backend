@@ -72,60 +72,61 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //组合产品，按最新BOM拆分为子产品和销售数量显示
             //根据SKU查询BOM判断是否是组合SKU
             List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-            List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-            //可能有多条，取最新bom版本
-            Map<String, List<BomChildrenSkuDTO>> bomChildrenSkuDTOMap = bomChildrenList.stream()
-                    .collect(Collectors.toMap(
-                            BomChildrenSkuDTO::getParentSkuId,
-                            // 如果有相同的parentSkuId，合并数据
-                            Collections::singletonList,
-                            // 合并函数，选择bomVersion最大的数据
-                            (list1, list2) -> {
-                                int maxVersion = Math.max(
-                                        Integer.parseInt(list1.get(0).getBomVersion()),
-                                        Integer.parseInt(list2.get(0).getBomVersion())
-                                );
-                                return Stream.of(list1, list2)
-                                        .flatMap(Collection::stream)
-                                        .filter(v -> Integer.parseInt(v.getBomVersion()) == maxVersion)
-                                        .collect(Collectors.toList());
-                            },
-                            // 使用LinkedHashMap保持顺序
-                            LinkedHashMap::new
-                    ));
+//            List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+//            //可能有多条，取最新bom版本
+//            Map<String, List<BomChildrenSkuDTO>> bomChildrenSkuDTOMap = bomChildrenList.stream()
+//                    .collect(Collectors.toMap(
+//                            BomChildrenSkuDTO::getParentSkuId,
+//                            // 如果有相同的parentSkuId，合并数据
+//                            Collections::singletonList,
+//                            // 合并函数，选择bomVersion最大的数据
+//                            (list1, list2) -> {
+//                                int maxVersion = Math.max(
+//                                        Integer.parseInt(list1.get(0).getBomVersion()),
+//                                        Integer.parseInt(list2.get(0).getBomVersion())
+//                                );
+//                                return Stream.of(list1, list2)
+//                                        .flatMap(Collection::stream)
+//                                        .filter(v -> Integer.parseInt(v.getBomVersion()) == maxVersion)
+//                                        .collect(Collectors.toList());
+//                            },
+//                            // 使用LinkedHashMap保持顺序
+//                            LinkedHashMap::new
+//                    ));
 
-            List<BomChildrenSkuDTO> distinctBomChildrenSkuList = bomChildrenSkuDTOMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
-            //去掉组合SKU
-            skuIdList = skuIdList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v)).collect(Collectors.toList());
+//            List<BomChildrenSkuDTO> distinctBomChildrenSkuList = bomChildrenSkuDTOMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
+//            //去掉组合SKU
+//            skuIdList = skuIdList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v)).collect(Collectors.toList());
             //增加子件SKU 现在skuIdList 里面是单品SKU+组合SKU的子件
-            skuIdList.addAll(distinctBomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList()));
+//            skuIdList.addAll(distinctBomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList()));
             //查询sku基础信息
             List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
             Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
             //组合的SKU明细
-            Map<String,SoB2cDeliveryDetailEntity> combineSkuDetailMap = detailEntityList.stream().filter(v->bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getSkuId,Function.identity()));
-            //单品SKU明细
-            List<SoB2cDeliveryDetailEntity> singleSkuDetailList = detailEntityList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toList());
+//            Map<String,SoB2cDeliveryDetailEntity> combineSkuDetailMap = detailEntityList.stream().filter(v->bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getSkuId,Function.identity()));
+//            //单品SKU明细
+//            List<SoB2cDeliveryDetailEntity> singleSkuDetailList = detailEntityList.stream().filter(v->!bomChildrenSkuDTOMap.containsKey(v.getSkuId())).collect(Collectors.toList());
             PackingInspectionDTO.ViewDTO addViewDTO;
             //新增主记录和单品SKU view
-            addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,singleSkuDetailList);
+//            addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,singleSkuDetailList);
+            addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);
             addViewDTO.setScannedSkuList(new ArrayList<>());
             //添加组合SKU的子件
-            PackingInspectionDTO.ViewDTO finalAddViewDTO = addViewDTO;
-            combineSkuDetailMap.forEach((key, value)->{
-                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuDTOMap.get(key);
-                for(BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS){
-                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = PackingInspectionDTO.ViewDTO.ScanSkuInfo.builder()
-                            .skuId(bomChildrenSkuDTO.getSkuId())
-                            .skuNo(bomChildrenSkuDTO.getSkuNo())
-                            .warehouseLocation(value.getWarehouseLocation())
-                            .waitScanQty(value.getWaitScanQty() * bomChildrenSkuDTO.getQuantity())
-                            .scannedQty((value.getDeliveryQty() - value.getWaitScanQty())* bomChildrenSkuDTO.getQuantity())
-                            .saleQty(value.getDeliveryQty()* bomChildrenSkuDTO.getQuantity())
-                            .build();
-                    finalAddViewDTO.getWaitScanSkuList().add(scanSkuInfo);
-                }
-            });
+//            PackingInspectionDTO.ViewDTO finalAddViewDTO = addViewDTO;
+//            combineSkuDetailMap.forEach((key, value)->{
+//                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuDTOMap.get(key);
+//                for(BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS){
+//                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = PackingInspectionDTO.ViewDTO.ScanSkuInfo.builder()
+//                            .skuId(bomChildrenSkuDTO.getSkuId())
+//                            .skuNo(bomChildrenSkuDTO.getSkuNo())
+//                            .warehouseLocation(value.getWarehouseLocation())
+//                            .waitScanQty(value.getWaitScanQty() * bomChildrenSkuDTO.getQuantity())
+//                            .scannedQty((value.getDeliveryQty() - value.getWaitScanQty())* bomChildrenSkuDTO.getQuantity())
+//                            .saleQty(value.getDeliveryQty()* bomChildrenSkuDTO.getQuantity())
+//                            .build();
+//                    finalAddViewDTO.getWaitScanSkuList().add(scanSkuInfo);
+//                }
+//            });
             //设置sku信息
             for (PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo: addViewDTO.getWaitScanSkuList()){
                 SkuVO skuVO = skuVOMap.get(scanSkuInfo.getSkuId());

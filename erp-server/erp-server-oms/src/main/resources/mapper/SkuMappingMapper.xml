@@ -609,7 +609,7 @@
             AND sm.dict_platform = #{params.platform}
         </if>
         <!--匹配结果吧true 已匹配 false 未匹配-->
-        <if test="params.matchResult != null and params.matchResult != ''">
+        <if test="params.matchResult != null">
             AND li.match_result = #{params.matchResult}
         </if>
         <if test="params.shopIdList !=null and params.shopIdList.size>0">

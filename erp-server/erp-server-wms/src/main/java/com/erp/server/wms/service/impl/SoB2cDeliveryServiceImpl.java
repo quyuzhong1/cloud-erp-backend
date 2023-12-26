@@ -617,14 +617,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
                             getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
                             FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-                            InputStream inputStream = null;
+      /*                      InputStream inputStream = null;
                             try {
                                 URL url = new URL(fileTemplateEntity.getFastdfsUrl());
                                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                                 inputStream = httpURLConnection.getInputStream();
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            }
+                            }*/
                             ClassPathResource classPathResource = new ClassPathResource("Blank_A4.jasper");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             map.remove("detailList");
