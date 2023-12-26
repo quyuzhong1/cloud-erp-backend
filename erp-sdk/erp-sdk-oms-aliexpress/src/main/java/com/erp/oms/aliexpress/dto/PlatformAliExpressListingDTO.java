@@ -32,7 +32,10 @@ import java.util.Objects;
 public class PlatformAliExpressListingDTO extends CleanBaseDTO {
 
     private AliExpressProduct aliExpressProduct;
-
+    /**
+     * 店铺ID
+     */
+    private String shopId;
     /**
      * 初始化
      */
@@ -43,6 +46,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
         this.setUniqueId(aliExpressProduct.getProductId().toString());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
+        this.shopId = dto.getShopId();
     }
 
 
@@ -69,11 +73,14 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             // 平台sku 名
             product.setPlatformProductName(sourceProduct.getSubject());
             product.setPlatformSkuNo(item.getSkuCode());
+
+            product.setPlatformSkuName(sourceProduct.getSubject());
             // 类型 platform 平台  warehouse 仓库
             product.setPlatformType("platform");
             String imageUrls=sourceProduct.getImageUrls();
             String imageUrl=imageUrls.split(";")[0];
             product.setProductImageUrl(imageUrl);
+            product.setShopId(dto.getShopId());
             // 包装信息
             String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
 
