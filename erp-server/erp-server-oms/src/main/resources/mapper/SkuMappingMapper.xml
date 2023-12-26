@@ -65,8 +65,8 @@
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
-        sm.create_user_name,
-        sm.create_time
+        sm.update_user_name,
+        sm.update_time
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
@@ -298,8 +298,8 @@
         li.platform_fn_sku,
         sm.warehouse_id,
         sm.warehouse_name,
-        sm.create_user_name,
-        sm.create_time,
+        sm.update_user_name,
+        sm.update_time,
         sm.dict_platform,
         sm.platform_name,
         sm.has_mapping_all
