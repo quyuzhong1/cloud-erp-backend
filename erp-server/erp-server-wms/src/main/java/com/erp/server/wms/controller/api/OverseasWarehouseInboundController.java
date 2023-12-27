@@ -289,7 +289,7 @@ public class OverseasWarehouseInboundController extends BaseController {
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:overseasWarehouseInbound:cancel",
+            menuCode = "wms:overseasWarehouseInbound:cancelProcess",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

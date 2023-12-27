@@ -340,7 +340,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:overseasDeliveryPlan:cancel",
+            menuCode = "wms:overseasDeliveryPlan:cancelProcess",
             serviceClass = OverseasDeliveryPlanService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "发货计划撤销")
