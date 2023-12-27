@@ -162,11 +162,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     }
                     scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-1);
                     scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
-                }
-                //如果已扫描数等于销售数，放到已扫描队列
-                if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
-                    viewDTO.getScannedSkuList().add(scanSkuInfo);
-                    it.remove();
+                    //如果已扫描数等于销售数，放到已扫描队列
+                    if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
+                        viewDTO.getScannedSkuList().add(scanSkuInfo);
+                        it.remove();
+                    }
+                    break;
                 }
             }
             if(!matchFlag){
