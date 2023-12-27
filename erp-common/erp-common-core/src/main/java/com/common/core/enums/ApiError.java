@@ -93,6 +93,8 @@ public enum ApiError implements Serializable {
     ERROR_FILE_DELETE(1051,"文件删除失败"),
     ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
+    EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
+    EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
 
     /**
      * 警告信息 从800 开始
@@ -1034,6 +1036,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
+    ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
 

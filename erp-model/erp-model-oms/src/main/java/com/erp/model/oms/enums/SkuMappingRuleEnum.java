@@ -200,6 +200,10 @@ public enum SkuMappingRuleEnum implements EnumMessage{
                 endSymbol = "\\\\"+endSymbol;
             }
             String regex = waitHandleRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
+            if(commonDTO.getValidStartingSymbolPosition().equals(commonDTO.getValidEndSymbolPosition())
+            &&  StringUtils.isNotBlank(startSymbol) && StringUtils.isNotBlank(endSymbol) &&startSymbol.equals(endSymbol)){
+                regex = "123";
+            }
             list.add(regex);
         }
         return list;
@@ -233,7 +237,8 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             return matcher.group(1);
         }else{
             SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, ruleType);
-            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)){
+            if(skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_FIRST_AND_LAST_DIGITS)
+            || skuMappingRuleEnum.equals(SkuMappingRuleEnum.EXTRACT_BETWEEN_START_AND_END)){
                 return "";
             }
             return inputStr;
