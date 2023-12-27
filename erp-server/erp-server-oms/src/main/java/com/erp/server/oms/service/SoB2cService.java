@@ -333,8 +333,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
 
-    /** 
-     * @description 表示订单发货
+    /**
+     * 获取销售出库单需要的数据
+     * @description
      * @param id
      * @author Lambda
      * @return 
@@ -403,8 +404,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
-    /** 
-     * @description 添加销售订单异常标示
+    /**
+     * 添加销售订单异常标示
+     * @description
      * @param id
      * @param sign
      * @author Lambda

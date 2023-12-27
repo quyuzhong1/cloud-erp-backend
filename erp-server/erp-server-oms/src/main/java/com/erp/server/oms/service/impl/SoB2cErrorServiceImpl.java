@@ -76,6 +76,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         soB2cErrorEntity.setParamJson(paramJson);
         soB2cErrorEntity.setReturnJson(returnJson);
         this.save(soB2cErrorEntity);
+        soB2cService.addSignError(mainId,type);
     }
 
     @Override
