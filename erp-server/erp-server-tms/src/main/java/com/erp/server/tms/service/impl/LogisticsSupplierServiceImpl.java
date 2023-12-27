@@ -436,12 +436,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 item.setLogisticsPlatform(logisticsPlatform);
                 String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
                 if ("N".equals(printDelivery)) {
-                    item.setIsPrintPlatform(Boolean.TRUE);
-                } else {
                     item.setIsPrintPlatform(Boolean.FALSE);
+                } else {
+                    item.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {
-                item.setIsPrintPlatform(Boolean.TRUE);
+                item.setIsPrintPlatform(Boolean.FALSE);
             }
 
         }
