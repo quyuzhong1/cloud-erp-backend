@@ -441,7 +441,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                     item.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {
-                item.setIsPrintPlatform(Boolean.FALSE);
+                item.setIsPrintPlatform(Boolean.TRUE);
             }
 
         }
