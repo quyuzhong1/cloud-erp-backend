@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -59,4 +60,15 @@ public interface SoB2cDeliveryFeign {
      **/
     @PostMapping("feign/soB2cDelivery/listBySourceId")
     List<SoB2cDeliveryEntity> listBySourceId(@RequestBody List<String> sourceIds);
+
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param ids
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/soB2cDelivery/updateStatus")
+    Boolean updateStatus(@RequestParam("ids") List<String> ids, @RequestParam("status") String status);
 }

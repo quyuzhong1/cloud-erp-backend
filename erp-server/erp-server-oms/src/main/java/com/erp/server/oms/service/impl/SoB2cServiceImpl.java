@@ -2729,33 +2729,39 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public BatchResultDTO falseDelivery(String id) {
+        SoB2cEntity entity = this.getById(id);
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
+                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+        ) {
+            throw new ServiceException(ApiError.APPROVE_IS_FALSE_DELIVERY);
+        }
+
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
-        for (SoB2cDeliveryEntity entity : deliveryEntityList) {
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        String code = logisticsEntity.getCode();
+        if (StringUtils.isBlank(code)) {
+            throw new ServiceException(ApiError.LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY);
+        }
+
+        for (SoB2cDeliveryEntity deliveryEntity : deliveryEntityList) {
             //虚假发货，已发货，取消发货的数据不允许操作虚假发货
-            if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
-                    || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
-                    || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())
+            if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(deliveryEntity.getStatus())
+                    || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(deliveryEntity.getStatus())
+                    || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(deliveryEntity.getStatus())
             ) {
-                throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
+                throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY, deliveryEntity.getCode());
             }
         }
-        return null;
-/*
-
-
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
-
         String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
         String message = "";
         String paramJson = "";
         String returnJson = "";
         //调用第三方平台SDK发货
         try {
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            if (this.checkPlatformShipOrder(id)) {
                 //调用第三方平台SDK发货
                 PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setSoB2cId(id);
                 platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
                 try {
                     PlatformSaveHandler.shipOrder(platformShipOrderDTO);
@@ -2772,19 +2778,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setReturnJson(returnJson);
             addError.setMainId(entity.getSourceId());
             addError.setMessage(message);
-            soB2cFeign.addSoB2cError(addError);
-            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+            soB2cErrorService.add(addError);
+            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), e.getMessage());
             throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
         }
-
-
         //修改状态为虚假发货
-        this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
+        List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        soB2cDeliveryFeign.updateStatus(ids, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
         deleteDTO.setType(type);
         deleteDTO.setMainId(entity.getSourceId());
-        soB2cFeign.deleteError(deleteDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");*/
+        soB2cErrorService.delete(deleteDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
     /**

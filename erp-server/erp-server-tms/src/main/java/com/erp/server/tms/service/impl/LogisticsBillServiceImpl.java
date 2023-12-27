@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -712,6 +714,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             String logisticsPlatform = auth.getLogisticsPlatform();
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
 
+
             //请求面单参数
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
@@ -728,6 +731,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
             //授权信息
             getLabelVO.setAuthMap(authMap);
+
+            //查询是否打印配货单
+            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
+            getLabelVO.setIsPdn(platformEnum.getPrintDelivery());
+//            getLabelVO.setIsPcd(platformEnum.getPrintLabel());
+
 
             //设置渠道编号
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
