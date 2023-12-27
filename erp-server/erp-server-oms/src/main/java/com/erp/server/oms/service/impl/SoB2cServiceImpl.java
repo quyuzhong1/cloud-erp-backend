@@ -640,6 +640,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
         }
+        //仓库和渠道不能全部为空
+        if (StrUtil.isBlank(dto.getWarehouseId()) && StrUtil.isBlank(dto.getLogisticsChannelId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DISTRIBUTION_NOT_NULL);
+        }
 
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
@@ -657,52 +661,75 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
-        if (Boolean.TRUE.equals(isCover)) {
-            //如果有物流单号 就要去取消
-            if (StringUtils.isNotBlank(code)) {
-                //取消物流单
-                LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                        channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
-                logisticsBillFeign.cancelBill(cancelBillDTO);
-            }
-            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
-        } else {
-            isCover = Boolean.FALSE;
-            //当为空就覆盖
-            if (StringUtils.isBlank(existChannelId)) {
+        //选择了渠道则更新
+        if (StrUtil.isNotBlank(dto.getLogisticsChannelId())) {
+            if (Boolean.TRUE.equals(isCover)) {
+                //如果有物流单号 就要去取消
+                if (StringUtils.isNotBlank(code)) {
+                    //取消物流单
+                    LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
+                            channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
+                    logisticsBillFeign.cancelBill(cancelBillDTO);
+                }
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            } else {
+                isCover = Boolean.FALSE;
+                //当为空就覆盖
+                if (StringUtils.isBlank(existChannelId)) {
+                    soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+                }
             }
+            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+            if (Objects.isNull(logisticsChannel)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+            }
+            soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
+            //物流信息更新
+            soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         }
-        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
-        if (Objects.isNull(logisticsChannel)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+        //选择了仓库则更新
+        if (StrUtil.isNotBlank(dto.getWarehouseId())) {
+            //明细仓库更新
+            soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(),isCover);
         }
-        soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
-        //物流信息更新
-        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
-        //明细仓库更新
-        soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(),isCover);
-        //配货中
-        String billStatus = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+        
+        //订单明细数据
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        //无仓库明细
+        List<SoB2cDetailEntity> notWarehouseList = soB2cDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).collect(Collectors.toList());
 
-        Boolean isPlatformWarehouseOrder = entity.hasPlatformWarehouseOrder();
-        //是
-        if (isPlatformWarehouseOrder) {
-            billStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        //只有订单的物流渠道和仓库都有值才会更新状态
+        if ((StrUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId()) || StrUtil.isNotBlank(dto.getLogisticsChannelId())
+                && CollectionUtils.isEmpty(notWarehouseList))) {
+            //配货中
+            String billStatus = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+
+            Boolean isPlatformWarehouseOrder = entity.hasPlatformWarehouseOrder();
+            //是
+            if (isPlatformWarehouseOrder) {
+                billStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+            }
+            //销售订单更新
+            entity.setBillStatus(billStatus);
+            entity.setAbnormalType("");
+            entity.setIsMatchLogisticsRule(Boolean.TRUE);
+            this.updateById(entity);
         }
-        //销售订单更新
-        entity.setBillStatus(billStatus);
-        entity.setAbnormalType("");
-        entity.setIsMatchLogisticsRule(Boolean.TRUE);
-        this.updateById(entity);
+
         //仓库信息
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+        WarehouseDTO.UpdateDTO updateDTO = new  WarehouseDTO.UpdateDTO();
+        if (StrUtil.isNotBlank(dto.getWarehouseId())) {
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                updateDTO = warehouseList.get(0);
+            }
         }
         //操作日志
         String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), warehouseList.get(0).getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
     }
 

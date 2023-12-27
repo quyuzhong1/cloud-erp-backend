@@ -915,13 +915,11 @@ public class SoB2cDTO implements Serializable {
         /**
          * 物流渠道id
          */
-        @NotBlank(message = "物流渠道不能为空")
         private String logisticsChannelId;
 
         /**
          * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
     }
 
