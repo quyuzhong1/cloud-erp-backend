@@ -61,4 +61,30 @@ public class SoB2cDeliveryFeignController extends BaseController {
         Boolean addResult=  soB2cDeliveryService.add(dto);
         return addResult;
     }
+
+    /**
+     * 虚假发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 15:30
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    @PostMapping("/falseDelivery")
+    public BatchResultDTO falseDelivery(@RequestBody String id) {
+        BatchResultDTO resultDTO = soB2cDeliveryService.falseDelivery(id);
+        return resultDTO;
+    }
+
+    /**
+     * 根据来源id查询发货单
+     * @Author Luo_WG
+     * @Date 2023/12/27 15:40
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryEntity>
+     **/
+    @PostMapping("/listBySourceId")
+    public List<SoB2cDeliveryEntity> listBySourceId(@RequestBody List<String> sourceIds) {
+        List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryService.listBySourceIds(sourceIds);
+        return deliveryEntityList;
+    }
 }
