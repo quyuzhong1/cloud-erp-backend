@@ -75,7 +75,7 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,platformEntity,map,json,type);
+            operateInvalid(apiUtils,platformEntity,map,type,operate);
         }
         /**
          * 反审核
@@ -143,33 +143,9 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
     /**
      * 作废
      */
-    public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map, JSONObject json,Integer type){
-
-        //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
-        JSONObject model;
-        try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        } catch (Exception e) {
-            //新增数据
-            Boolean isSaveOrUpdate = saveOrUpdate(apiUtils, platformEntity, map, type, json, param);
-            if (!isSaveOrUpdate) {
-                return;
-            }
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        }
-        //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //反审核
-            Boolean unAudit = kingdeeCommonService.unAudit(apiUtils, id);
-            if (!unAudit) {
-                return;
-            }
-        }
+    public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map,Integer type,String operate){
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils,map,(String) map.get("code"),(String) map.get("operate"));
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,type,operate);
     }
 
     /**

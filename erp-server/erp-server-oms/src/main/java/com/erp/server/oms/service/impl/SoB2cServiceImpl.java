@@ -16,8 +16,10 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -52,8 +54,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.HandleResultEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -1051,9 +1055,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //TODO
-        SoB2cDeliveryInterceptDTO.AddDTO dto = new SoB2cDeliveryInterceptDTO.AddDTO();
-//        soB2cDeliveryInterceptFeign.add();
+
+        //平台仓不支持拦截
+        if (entity.hasPlatformWarehouseOrder()) {
+            throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
+        }
+
+        //新增拦截单
+        SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+
+        //详情
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
+        List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
+        addDTO.setDetailList(detailList);
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
@@ -2710,6 +2725,66 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public BatchResultDTO falseDelivery(String id) {
+        List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
+        for (SoB2cDeliveryEntity entity : deliveryEntityList) {
+            //虚假发货，已发货，取消发货的数据不允许操作虚假发货
+            if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
+                    || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+                    || SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())
+            ) {
+                throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
+            }
+        }
+        return null;
+/*
+
+
+        //校验是否存在拦截单
+        checkIsIntercept(Arrays.asList(entity));
+
+        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String message = "";
+        String paramJson = "";
+        String returnJson = "";
+        //调用第三方平台SDK发货
+        try {
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                //调用第三方平台SDK发货
+                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
+            }
+        } catch (Exception e) {
+            message = e.getMessage();
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setParamJson(paramJson);
+            addError.setReturnJson(returnJson);
+            addError.setMainId(entity.getSourceId());
+            addError.setMessage(message);
+            soB2cFeign.addSoB2cError(addError);
+            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+            throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+        }
+
+
+        //修改状态为虚假发货
+        this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(type);
+        deleteDTO.setMainId(entity.getSourceId());
+        soB2cFeign.deleteError(deleteDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");*/
     }
 
     /**
