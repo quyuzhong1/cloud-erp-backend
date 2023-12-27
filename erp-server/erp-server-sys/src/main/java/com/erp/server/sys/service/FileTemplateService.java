@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.FileTemplateDTO;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 文件模板url表 服务类
@@ -48,4 +50,11 @@ public interface FileTemplateService extends SuperService<FileTemplateEntity> {
      * @param fastdfsAddDTO
      */
     void fastdfsAddOrUpdate (FileTemplateDTO.FastdfsAddOrUpdateDTO fastdfsAddDTO);
+    /**
+     * @description: 下载模板文件
+     * @author Will
+     * @date: 2023/12/27 9:38
+     * @param id
+     */
+    void downLoadFdfsFileTemplate(String id);
 }

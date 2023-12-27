@@ -4,6 +4,8 @@ package com.erp.server.sys.controller.api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -64,7 +66,7 @@ public class FileTemplateController extends BaseController {
 
 
     /**
-     * fdfs文件模板新增或修改
+     * 文件模板新增或修改
      * @author Will
      * @date: 2023/12/25 14:47
      * @param dto
@@ -74,6 +76,21 @@ public class FileTemplateController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "fdfs文件模板url表新增或修改")
     public ApiResult<?> fastdfsAddOrUpdate(@Validated @ModelAttribute FileTemplateDTO.FastdfsAddOrUpdateDTO dto) {
         fileTemplateService.fastdfsAddOrUpdate(dto);
+        return success();
+    }
+
+
+    /**
+     * 文件模板下载
+     * @author Will
+     * @date: 2023/12/27 9:54
+     * @param id
+     * @return ApiResult<?>
+     */
+    @GetMapping("/downLoadFdfsFileTemplate")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载模板文件")
+    public ApiResult<?> downLoadFdfsFileTemplate(@RequestParam(value = "id") String id) {
+        fileTemplateService.downLoadFdfsFileTemplate(id);
         return success();
     }
 }

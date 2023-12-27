@@ -5,6 +5,8 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.ReportCommonDTO.ReportDTO;
 import com.common.business.dto.ReportDataSourceDTO;
 import com.common.business.enums.FileTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.base.JRBaseReport;
@@ -16,6 +18,7 @@ import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 import net.sf.jasperreports.j2ee.servlets.ImageServlet;
+import org.apache.regexp.RE;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -183,6 +186,51 @@ public class JasperHelperUtil {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 按照类型导出不同格式文件
+     *
+     * @param is         jasper文件输入流
+     * @param parameters 参数
+     */
+    public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, List<?> dataList) {
+        return exportToPdfStream(is, parameters, null, MathUtil.ONE, dataList);
+    }
+
+    /**
+     * 按照类型导出不同格式文件
+     *
+     * @param is         jasper文件输入流
+     * @param parameters 参数
+     * @param conn       数据源连接
+     */
+    public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, Connection conn) {
+       return exportToPdfStream(is, parameters, conn, MathUtil.ZERO, null);
+    }
+
+    /**
+     * 按照类型导出不同格式文件
+     * @param is         jasper文件输入流
+     * @param parameters 参数
+     * @param conn       数据源连接
+     */
+    public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, Connection conn, Integer isCustomData, List<?> dataList) {
+        JasperPrint jasperPrint = null;
+        try {
+            JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
+            prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
+
+            if (MathUtil.compareTo(isCustomData, MathUtil.ONE) == 0) {
+                jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, new ReportDataSourceDTO(dataList));
+            } else {
+                jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
+            }
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
         }
     }
 

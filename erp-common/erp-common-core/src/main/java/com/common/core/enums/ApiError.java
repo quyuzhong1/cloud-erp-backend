@@ -91,6 +91,8 @@ public enum ApiError implements Serializable {
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
     ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
     ERROR_FILE_DELETE(1051,"文件删除失败"),
+    ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),
+    ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
 
     /**
      * 警告信息 从800 开始

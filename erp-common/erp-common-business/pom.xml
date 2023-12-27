@@ -69,6 +69,17 @@
             <version>6.19.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-bridge</artifactId>
+            <version>1.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.barbecue</groupId>
+            <artifactId>barbecue</artifactId>
+            <version>1.5-beta1</version>
+        </dependency>
+
         <!-- shopify sdk 调用-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

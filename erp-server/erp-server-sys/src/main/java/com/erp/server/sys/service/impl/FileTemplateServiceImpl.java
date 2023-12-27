@@ -3,7 +3,9 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.file.FileUpload;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
 import com.erp.server.sys.mapper.FileTemplateMapper;
@@ -22,6 +24,9 @@ import java.io.File;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 文件模板url表 服务实现类
@@ -101,6 +106,19 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
             } catch (Exception e) {
                 throw new ServiceException(ApiError.ERROR_FILE_DELETE);
             }
+        }
+    }
+
+    @Override
+    public void downLoadFdfsFileTemplate(String id) {
+        FileTemplateEntity fileTemplateEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(fileTemplateEntity) || StrUtil.isBlank(fileTemplateEntity.getUrl())) {
+            throw new ServiceException(ApiError.ERROR_FILE_TEMPLATE_NOT_EXIST);
+        }
+        try {
+            FastDFSClientUtil.downloadByte(fileTemplateEntity.getUrl(),fileTemplateEntity.getName(),"application/x-msdownload",Boolean.FALSE);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_FILE_TEMPLATE_DOWNLOAD);
         }
     }
 
