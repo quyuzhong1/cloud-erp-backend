@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -79,7 +80,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils, map);
+            operateInvalid(apiUtils,platformEntity,map,operate);
         }
         /**
          * 删除
@@ -94,13 +95,9 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
     /**
      * 作废
      */
-    public void operateInvalid(KingdeeApiUtils apiUtils,Map<String, Object> map) {
-        //业务编码
-        String code = (String) map.get("code");
-        //操作项
-        String operate = (String) map.get("operate");
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,ApiModuleTypeEnum.SO_INFO.getCode(),operate);
         return;
     }
 
