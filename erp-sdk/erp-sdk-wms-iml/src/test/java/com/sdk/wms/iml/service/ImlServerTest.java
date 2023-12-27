@@ -11,10 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= ImlService.class)
@@ -183,5 +180,15 @@ public class ImlServerTest {
         ImlResponse<String> response = imlServer.cancelOutboundBill("86526-231116-2374",null);
         System.out.println(response);
     }
+    @Test
+    public void getOutboundBillTest() {
+        ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
+                .orderCode("86526-230221-0473")
+                .pageSize(100)
+                .build();
 
+        List<ImlOutboundResp> respList = new ArrayList<>();
+        ImlResponse<List<ImlOutboundResp>> response = imlServer.getOutboundBatch(imlGetOutboundReq);
+        System.out.println(response);
+    }
 }
