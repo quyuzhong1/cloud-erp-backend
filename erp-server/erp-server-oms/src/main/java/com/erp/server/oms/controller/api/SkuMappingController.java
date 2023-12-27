@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,6 +15,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -251,4 +254,17 @@ public class SkuMappingController extends BaseController {
         skuMappingRuleService.handleSkuMapping();
         return success();
     }
+
+
+    /**
+     * 查询操作日志
+     *
+     * @return
+     */
+    @PostMapping("/getLog")
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<OperateLogDTO.ListDTO> pagingVO = skuMappingService.getLog(dto);
+        return success(pagingVO);
+    }
+
 }

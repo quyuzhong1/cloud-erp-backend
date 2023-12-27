@@ -458,6 +458,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          */
         private String id;
         /**
+         * 确认结果状态
+         */
+        private String handleResult;
+        /**
          * 是否拦截
          */
         private Boolean isIntercept;

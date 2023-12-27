@@ -320,7 +320,7 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:cancel",
+            menuCode = "wms:fbaDelivery:cancelProcess",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "头程发货单撤销")

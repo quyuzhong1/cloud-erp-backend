@@ -359,7 +359,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
+//        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
         /**
@@ -513,12 +513,12 @@ public class SkuMappingDTO implements Serializable {
 
 
         /**
-         * 创建人名称
+         * 更新人名称
          */
         private String updateUserName;
 
         /**
-         * 创建时间
+         * 更新时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;
@@ -611,12 +611,12 @@ public class SkuMappingDTO implements Serializable {
 
 
         /**
-         * 创建人名称
+         * 更新人名称
          */
         private String updateUserName;
 
         /**
-         * 创建时间
+         * 更新时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;

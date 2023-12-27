@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -7,9 +8,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import org.apache.ibatis.annotations.Param;
+import com.erp.model.scm.dto.OperateLogDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -209,4 +211,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @create 2023-12-25 15:47
      */
     List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList,String dictPlatform,String type);
+
+    /**
+     * 逻辑删除映射 SkuMappingEntity
+     * @author Jim
+     * @date 2023-12-25
+     */
+    void deleteAll(String id, ListingInfoEntity listingInfoEntity);
+
+    PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
 }

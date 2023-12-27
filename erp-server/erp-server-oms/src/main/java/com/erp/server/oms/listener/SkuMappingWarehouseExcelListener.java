@@ -124,6 +124,13 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             errorMsgList.addAll(msgList);
         }
 
+        //存在错误数据则直接返回
+        if (!errorMsgList.isEmpty()) {
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+
         if (StringUtils.isNotBlank(importExcelDTO.getHasMappingAllStr())) {
             if (!importExcelDTO.getHasMappingAllStr().equals("是") && !importExcelDTO.getHasMappingAllStr().equals("否")) {
                 errorMsgList.add("[对照关系适用于该服务商所有仓库]请输入'是'或'否'");
@@ -282,6 +289,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             if (null != skuMappingEntity){
                 skuMappingEntity.setProductSkuId(sku.getSkuId());
                 skuMappingEntity.setProductSkuNo(sku.getSkuNo());
+                skuMappingEntity.setWarehouseName(warehouseName);
+                skuMappingEntity.setWarehouseId(warehouseId);
+                skuMappingEntity.setHasMappingAll(currentHasMappingAll);
                 updateSkuMappingList.add(skuMappingEntity);
                 listingInfoEntity.setMatchResult(true);
                 updateListingInfoList.add(listingInfoEntity);

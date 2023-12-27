@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -79,7 +80,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight);
 
     /**
      * 获取物流费用参数
