@@ -178,7 +178,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setSourceId(item.getSourceId());
 
             //获取服务商编号
-            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getId());
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
             if (ObjectUtil.isNotEmpty(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 base.setLogisticsPlatform(logisticsPlatform);
