@@ -218,17 +218,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
             if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                try {
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                } catch (Exception e) {
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                    //调用第三方平台SDK发货
+                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                    try {
+                        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                    } catch (Exception e) {
+                        throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                    }
+                    paramJson = JSONObject.toJSONString(platformShipOrderDTO);
                 }
-
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
 
             //修改发货状态
@@ -277,10 +278,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String returnJson = "";
         //调用第三方平台SDK发货
         try {
-            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-            platformShipOrderDTO.setSoB2cId(id);
-            platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                //调用第三方平台SDK发货
+                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
+            }
         } catch (Exception e) {
             message = e.getMessage();
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -578,6 +587,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
                             // 自定义配货单
+/*
                             FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
                             getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
@@ -593,6 +603,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             }
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
+*/
 
                         }
                     }
@@ -627,23 +638,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
                             // 自定义配货单
-                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+/*                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
                             getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
                             getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
                             FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-      /*                      InputStream inputStream = null;
+
+                            InputStream inputStream = null;
                             try {
                                 URL url = new URL(fileTemplateEntity.getFastdfsUrl());
                                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                                 inputStream = httpURLConnection.getInputStream();
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            }*/
+                            }
                             ClassPathResource classPathResource = new ClassPathResource("Blank_A4.jasper");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             map.remove("detailList");
                             JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", classPathResource.getStream(), map, printWayBillPdfDTO.getDetailList());
+*/
 
                         }
                     }
@@ -767,25 +780,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
             if(Objects.nonNull(shopInfo)){
                 soB2cDeliveryEntity.setShopName(shopInfo.getName());
-
             }
         }
         soB2cDeliveryEntity.setShopId(soB2cEntity.getShopId());
 
         //查询B2C销售订单物流信息
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
+/*        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cDeliveryEntity.getSourceId()));
         if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntities.get(MathUtil.ZERO).getLogisticsChannelId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL);
         }
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(MathUtil.ZERO);
         soB2cDeliveryEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDeliveryEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         String  transportNo= soB2cLogisticsEntity.getCode();
-        soB2cDeliveryEntity.setTransportNo(transportNo);
-
-
-
+        soB2cDeliveryEntity.setTransportNo(transportNo);*/
     }
 
     /**

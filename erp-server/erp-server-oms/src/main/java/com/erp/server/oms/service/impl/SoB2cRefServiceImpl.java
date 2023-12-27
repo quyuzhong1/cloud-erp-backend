@@ -72,11 +72,11 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
     }
 
     @Override
-    public List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum) {
-        if (CollectionUtils.isEmpty(targetIdList) || ObjectUtil.isEmpty(typeEnum)) {
+    public List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, String typeEnum) {
+        if (CollectionUtils.isEmpty(targetIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return baseMapper.listSourceByTargetIds(targetIdList,typeEnum.getCode());
+        return baseMapper.listSourceByTargetIds(targetIdList, typeEnum);
     }
 
 
@@ -88,6 +88,9 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
 
     @Override
     public List<SoB2cRefEntity> listBySourceIds(List<String> sourceIdList, SoB2cOptionTypeEnum typeEnum) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         return lambdaQuery()
                 .in(SoB2cRefEntity::getSourceId,sourceIdList)
                 .eq(ObjectUtils.isEmpty(typeEnum),SoB2cRefEntity::getType,typeEnum.getCode())

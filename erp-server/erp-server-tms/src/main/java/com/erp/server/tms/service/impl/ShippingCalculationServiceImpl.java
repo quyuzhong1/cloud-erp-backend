@@ -506,14 +506,18 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //其他费用
         List<String> templateIdList = listAll.stream().map(obj -> obj.getTemplateId()).distinct().collect(Collectors.toList());
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
-
+        List<String> currencyList=listAll.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO>  currencyInfoList=  sysUserFeign.listByCurrency(currencyList);
         for (ShippingCalculationDTO.ListDTO item : listAll) {
             ShippingCalculationDTO.ChannelCostDTO channelCost = new ShippingCalculationDTO.ChannelCostDTO();
             channelCost.setLogisticsChannelId(item.getChannelId());
             channelCost.setLogisticsChannelName(item.getChannelName());
 
-            channelCost.setCurrency(item.getCurrency());
-            channelCost.setCurrencySymbol(item.getCurrencySymbol());
+            String currency=item.getCurrency();
+            String currencySymbol=currencyInfoList.stream().filter(c->c.getId().equals(currency)).map(CurrencyDTO.ViewDTO::getSymbol).
+                    findFirst().orElse("");
+            channelCost.setCurrency(currency);
+            channelCost.setCurrencySymbol(currencySymbol);
 
             /**
              * 体积重=长*宽*高/材积设置

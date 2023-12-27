@@ -19,6 +19,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -341,6 +343,51 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     public List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId) {
         List<SoB2cDetailDTO.OutstockDTO> outstockList=baseMapper.listOutstockByMainId(mainId);
+        List<String> parentSkuIdList = outstockList.stream().map(SoB2cDetailDTO.OutstockDTO::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(parentSkuIdList);
+        if(CollectionUtils.isEmpty(bomChildrenSkuList)){
+            return outstockList;
+        }else{
+            List<SoB2cDetailDTO.OutstockDTO> hasBomOutstockList=new ArrayList<>(bomChildrenSkuList.size());
+            //表示有Bom
+            for(SoB2cDetailDTO.OutstockDTO item:outstockList){
+                //相当于父级
+                String skuId = item.getSkuId();
+                //相当于父级
+                String skuNo = item.getSkuNo();
+                //数量
+                Integer qty = item.getQty();
+                //套装的bom
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuList.stream()
+                        .filter(req -> req.getParentSkuId().equals(skuId)
+                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                        ).collect(Collectors.toList());
+
+               if(CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)){
+                   for(BomChildrenSkuDTO bomSku:bomChildrenSkuDTOS){
+                       SoB2cDetailDTO.OutstockDTO  outstock=new SoB2cDetailDTO.OutstockDTO();
+                       outstock.setSkuId(bomSku.getSkuId());
+                       outstock.setSkuNo(bomSku.getSkuNo());
+                       Integer quantity=bomSku.getQuantity();
+                       outstock.setQty(qty*quantity);
+                       outstock.setMianId(item.getMianId());
+                       outstock.setWarehouseId(item.getWarehouseId());
+                       outstock.setWarehouseName(item.getWarehouseName());
+                       outstock.setWarehouseOrgId(item.getWarehouseOrgId());
+                       outstock.setWarehouseOrgName(item.getWarehouseOrgName());
+                       outstock.setWarehouseLocation(item.getWarehouseLocation());
+                       outstock.setRemark(item.getRemark());
+                       outstock.setSoDetailId(item.getSoDetailId());
+                   }
+
+               }else{
+                   //表示没有套装bom
+                   hasBomOutstockList.add(item);
+               }
+
+            }
+        }
         return outstockList;
     }
 

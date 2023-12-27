@@ -5,6 +5,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.*;
@@ -39,6 +40,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+
+    @Resource
+    private SoB2cRefService soB2cRefService;
 
 
     /**
@@ -191,5 +195,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/getSignShipParam")
     public SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String soB2cId){
          return  soB2cService.getSignShipParam(soB2cId);
+    }
+
+    /**
+     * 校验是否需要调用第三方标记发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 11:29
+     * @param soB2cId
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/checkPlatformShipOrder")
+    public Boolean checkPlatformShipOrder(@RequestBody String soB2cId) {
+        return soB2cService.checkPlatformShipOrder(soB2cId);
     }
 }

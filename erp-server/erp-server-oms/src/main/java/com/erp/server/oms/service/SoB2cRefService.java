@@ -63,7 +63,7 @@ public interface SoB2cRefService extends SuperService<SoB2cRefEntity> {
      * @param typeEnum
      * @return List<SoB2cRefEntity>
      */
-    List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum);
+    List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, String typeEnum);
 
     /**
      * @description: 根据主表id删除
