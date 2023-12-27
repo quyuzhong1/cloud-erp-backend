@@ -1034,6 +1034,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
+    PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
 
 
 

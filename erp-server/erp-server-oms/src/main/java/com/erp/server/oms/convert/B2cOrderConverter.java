@@ -8,10 +8,7 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import org.mapstruct.Mapper;
@@ -21,6 +18,7 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.List;
 
@@ -148,4 +146,15 @@ public interface B2cOrderConverter {
     })
     SoB2cDeliveryInterceptDTO.AddDTO convertIntercept(SoB2cEntity entity);
 
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "deliveryQty", source = "qty"),
+            @Mapping(target = "warehouseId", source = "warehouseId"),
+            @Mapping(target = "warehouseName", source = "warehouseName"),
+            @Mapping(target = "warehouseLocation", source = "warehouseLocation"),
+            @Mapping(target = "sourceDetailId", source = "id"),
+    })
+    SoB2cDeliveryInterceptDetailDTO.AddDTO convertInterceptDetail(SoB2cDetailEntity detailEntity);
+    List<SoB2cDeliveryInterceptDetailDTO.AddDTO> convertInterceptDetail(List<SoB2cDetailEntity> detailList);
 }

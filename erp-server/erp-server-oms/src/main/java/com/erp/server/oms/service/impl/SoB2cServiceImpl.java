@@ -1051,11 +1051,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //TODO
-        SoB2cDeliveryInterceptDTO.AddDTO dto = new SoB2cDeliveryInterceptDTO.AddDTO();
-//        soB2cDeliveryInterceptFeign.add();
+
+        //平台仓不支持拦截
+        if (entity.hasPlatformWarehouseOrder()) {
+            throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
+        }
+
+        //新增拦截单
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+
+        //详情
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
+        List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
+        addDTO.setDetailList(detailList);
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
 
@@ -2711,6 +2721,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public BatchResultDTO falseDelivery(String id) {
+        return null;
     }
 
     /**
