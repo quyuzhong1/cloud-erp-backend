@@ -73,7 +73,7 @@ class YanWenServiceTest {
     @Test
     public void getLabel() {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-                .waybillNumber("LR098273757CN")
+                .waybillNumber("LR083592414CN")
                 .printRemark(0)
                 .build();
         YanWenResponse<YanWenGetLabel> response = yanWenService.getLabel(request,authMap);

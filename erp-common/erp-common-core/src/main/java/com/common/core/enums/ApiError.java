@@ -93,6 +93,8 @@ public enum ApiError implements Serializable {
     ERROR_FILE_DELETE(1051,"文件删除失败"),
     ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
+    EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
+    EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
 
     /**
      * 警告信息 从800 开始
