@@ -175,6 +175,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
                 throw new ServiceException("SKU不匹配，验货失败");
             }
+        }else{
+            if(entity.getIsInspection()){
+                throw new ServiceException("订单已验货，无法重复验货");
+            }
         }
         //判断是否全部扫描完成
         if(CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())){
