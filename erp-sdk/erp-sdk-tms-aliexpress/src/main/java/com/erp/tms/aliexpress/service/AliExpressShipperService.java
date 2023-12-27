@@ -87,6 +87,7 @@ public class AliExpressShipperService {
         request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.info("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response.getBody(), OrderResult.class);
     }
     public OrderResult createWareHouseOrder(Map<String, String> authMap, OrderRequest orderRequest) throws ApiException, InterruptedException {
@@ -239,11 +240,19 @@ public class AliExpressShipperService {
 //        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
 //        System.out.println(logisticsAddress);
         QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(5290188143007494L)
+                .order_id(8182864532297635L)
+                .goods_weight("1")
+                .goods_height(1L)
+                .goods_width(1L)
+                .goods_length(1L)
 //                .order_id(1102175972276889L)
                 .build();
         QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
-                .order_id(1102175972276889L)
+                .order_id(8182864532297635L)
+                .goods_weight("1")
+                .goods_height(1L)
+                .goods_width(1L)
+                .goods_length(1L)
                 .sub_order_list(Collections.singletonList(queryLogisticsRequest))
                 .build();
         IopResponse logisticsService = service.getLogisticsService(authMap, queryLogisticsRequest1);
