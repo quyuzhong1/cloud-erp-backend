@@ -175,13 +175,13 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
             if (null != shippingAddress){
+                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
                 receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
-                receiverDTO.setSecondAddress(
-                        StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2()
-                );
+                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
 
                 receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountry()) ? "" : shippingAddress.getCountry());
+                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
                 receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
                 receiverDTO.setFullAddress("");
                 receiverDTO.setPostCode(shippingAddress.getZip());
