@@ -767,7 +767,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
             if(Objects.nonNull(shopInfo)){
                 soB2cDeliveryEntity.setShopName(shopInfo.getName());
-
             }
         }
         soB2cDeliveryEntity.setShopId(soB2cEntity.getShopId());
@@ -777,15 +776,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+        if (StringUtils.isBlank(soB2cLogisticsEntities.get(MathUtil.ZERO).getLogisticsChannelId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL);
+        }
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(MathUtil.ZERO);
         soB2cDeliveryEntity.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDeliveryEntity.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         String  transportNo= soB2cLogisticsEntity.getCode();
         soB2cDeliveryEntity.setTransportNo(transportNo);
-
-
-
     }
 
     /**
