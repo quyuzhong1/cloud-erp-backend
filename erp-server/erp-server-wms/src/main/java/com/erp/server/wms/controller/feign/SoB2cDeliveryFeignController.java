@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,5 +87,19 @@ public class SoB2cDeliveryFeignController extends BaseController {
     public List<SoB2cDeliveryEntity> listBySourceId(@RequestBody List<String> sourceIds) {
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryService.listBySourceIds(sourceIds);
         return deliveryEntityList;
+    }
+
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param ids
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateStatus")
+    public Boolean updateStatus(@RequestParam("ids") List<String> ids, @RequestParam("status") String status) {
+        Boolean flag = soB2cDeliveryService.updateStatus(ids, status);
+        return flag;
     }
 }

@@ -749,7 +749,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate().set(SoB2cDeliveryEntity::getStatus, status).in(SoB2cDeliveryEntity::getId, ids).update();
+        return lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getStatus, status)
+                .in(SoB2cDeliveryEntity::getId, ids)
+                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .update();
     }
 
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {
@@ -767,7 +771,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      **/
     private List<SoB2cDTO.WaybillDTO> getPlatformWaybill(List<SoB2cEntity> soB2cEntities, List<SoB2cLogisticsEntity> soB2cLogisticsEntities, List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> waybillDetailDTOList) {
         List<LogisticsBillDTO.PrintLogisticsWaybillDTO> logisticsWaybillDTOList = new ArrayList<>();
-        List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream().filter(req -> StringUtils.isBlank(req.getLogisticsWaybill())).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cEntities.stream()
+                .filter(req -> StringUtils.isBlank(req.getLogisticsWaybill()))
+                .collect(Collectors.toList());
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
             LogisticsBillDTO.PrintLogisticsWaybillDTO printLogisticsWaybill = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
