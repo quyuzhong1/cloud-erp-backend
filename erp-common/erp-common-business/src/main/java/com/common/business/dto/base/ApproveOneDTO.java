@@ -38,4 +38,17 @@ public class ApproveOneDTO extends PermissionsDTO {
      */
     @Size(max = 255, message = "审核意见最大255个字符")
     private String comment;
+
+    /**
+     * 是否需要流程，false则跳过
+     */
+    private Boolean isNeedProcess;
+
+
+    public ApproveOneDTO (String id,String type,String comment) {
+        this.id = id;
+        this.type = type;
+        this.comment = comment;
+
+    }
 }

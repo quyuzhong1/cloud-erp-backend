@@ -34,7 +34,6 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        distinct
         sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
@@ -82,11 +81,9 @@
         select
         <include refid="Base_Column_List"></include>
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-
         <where>
             sb2c.is_deleted = false
             <if test="params.code != null and params.code != '' ">
@@ -98,13 +95,20 @@
             <if test="params.invalidStatus != null ">
                 and sb2c.invalid_status = #{params.invalidStatus}
             </if>
-            <!-- 平台sku -->
-            <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
-                and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
-            </if>
-            <!-- 平台产品id -->
-            <if test="params.platformSpuNo != null and params.platformSpuNo != '' ">
-                and sb2cd.platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
+            <if test="(params.platformSkuNo != null and params.platformSkuNo != '') or (params.platformSpuNo != null and params.platformSpuNo != '') or (params.labelList != null and params.labelList.size > 0 and params.labelList.contains('aliexpressTaxed'))">
+                and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id
+                <!-- 平台sku -->
+                <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
+                    and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
+                </if>
+                <!-- 平台产品id -->
+                <if test="params.platformSpuNo != null and params.platformSpuNo != '' ">
+                    and sb2cd.platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
+                </if>
+                <if test="params.labelList != null and params.labelList.size > 0 and params.labelList.contains('aliexpressTaxed'))">
+                    and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
+                </if>
+                )
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in

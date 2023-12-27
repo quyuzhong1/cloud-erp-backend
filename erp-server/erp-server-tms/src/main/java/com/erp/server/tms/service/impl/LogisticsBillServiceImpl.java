@@ -510,7 +510,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         cancelOrderList.add(cancelOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
-            if (Objects.isNull(billBase.getId())) {
+            if (ObjectUtil.isEmpty(billBase) || Objects.isNull(billBase.getId())) {
                 throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
             }
             cancelOrderVO.setTransportNo(billBase.getTransportNo());
