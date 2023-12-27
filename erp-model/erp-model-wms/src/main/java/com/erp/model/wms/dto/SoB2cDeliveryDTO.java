@@ -194,6 +194,20 @@ public class SoB2cDeliveryDTO implements Serializable {
         * 备注
         */
         private String remark;
+        /**
+         * 物流渠道id
+         */
+        @NotBlank(message = "物流渠道id不能为空")
+        private String  logisticsChannelId;
+        /**
+         * 物流渠道名
+         */
+        private String  logisticsChannelName;
+
+        /**
+         * 运输单号
+         */
+        private String  transportNo;
     }
 
     /**

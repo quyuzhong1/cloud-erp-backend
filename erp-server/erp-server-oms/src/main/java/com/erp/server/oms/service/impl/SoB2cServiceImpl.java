@@ -898,7 +898,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             //生成发货单
-            generateSoB2cDeliveryBill(entity, list);
+            generateSoB2cDeliveryBill(entity, list,logisticsEntity);
         }
         this.updateById(entity);
         //操作日志
@@ -919,8 +919,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @create 2023-12-26 19:48
      */
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void generateSoB2cDeliveryBill(SoB2cEntity entity, List<SoB2cDetailEntity> list) {
+    public void generateSoB2cDeliveryBill(SoB2cEntity entity, List<SoB2cDetailEntity> list,SoB2cLogisticsEntity soB2cLogisticsEntity) {
         SoB2cDeliveryDTO.AddDTO soB2cDelivery = B2cOrderConverter.INSTANCE.convertDelivery(entity);
+        soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
+        soB2cDelivery.setTransportNo(soB2cLogisticsEntity.getCode());
         List<String> parentSkuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(parentSkuIdList);
