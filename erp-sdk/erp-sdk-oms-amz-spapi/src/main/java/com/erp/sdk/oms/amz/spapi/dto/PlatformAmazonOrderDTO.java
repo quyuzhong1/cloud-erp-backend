@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
@@ -183,20 +184,21 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
             if (null != shippingAddress){
                 receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
                 receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
-                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddressLine2()) ? "" : shippingAddress.getAddressLine2());
-                if (StringUtils.isBlank(shippingAddress.getAddressLine3())){
-                    receiverDTO.setSecondAddress(receiverDTO.getSecondAddress() + shippingAddress.getAddressLine3());
-                }
+                String secondAddress = StrUtil.concat(true, shippingAddress.getAddressLine2(), shippingAddress.getAddressLine3());
+                receiverDTO.setSecondAddress(secondAddress);
+
                 receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
                 receiverDTO.setTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
                 receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCounty()) ? "" : shippingAddress.getCounty());
+                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
                 receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                receiverDTO.setFullAddress(
-                        (StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict()) +
-                        (StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion()) +
-                        (StringUtils.isBlank(shippingAddress.getPostalCode()) ? "" : shippingAddress.getPostalCode())
-                );
+                // 区域
+                receiverDTO.setDistrictName(StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict());
+                // 省/州
+                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion());
+
+                String fullAddress = StrUtil.concat(true,  shippingAddress.getMunicipality());
+                receiverDTO.setFullAddress(fullAddress);
                 receiverDTO.setPostCode(shippingAddress.getPostalCode());
             }
             orderDTO.setReceiver(receiverDTO);
