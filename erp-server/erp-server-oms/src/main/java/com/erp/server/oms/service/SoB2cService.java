@@ -312,7 +312,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto);
+    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto);
 
     /**
      * 通过哟平台订单ID和类型查询

@@ -86,6 +86,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -212,6 +213,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Autowired
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
 
     @Override
@@ -916,7 +920,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             //生成发货单
-            generateSoB2cDeliveryBill(entity, list,logisticsEntity);
+            generateSoB2cDeliveryBill(entity, list, logisticsEntity);
         }
         this.updateById(entity);
         //操作日志
@@ -937,7 +941,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @create 2023-12-26 19:48
      */
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void generateSoB2cDeliveryBill(SoB2cEntity entity, List<SoB2cDetailEntity> list,SoB2cLogisticsEntity soB2cLogisticsEntity) {
+    public void generateSoB2cDeliveryBill(SoB2cEntity entity, List<SoB2cDetailEntity> list, SoB2cLogisticsEntity soB2cLogisticsEntity) {
         SoB2cDeliveryDTO.AddDTO soB2cDelivery = B2cOrderConverter.INSTANCE.convertDelivery(entity);
         soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
@@ -962,17 +966,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         ).collect(Collectors.toList());
                 //表示有
                 if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
-                    for(BomChildrenSkuDTO bomSku:bomChildrenSkuDTOS){
+                    for (BomChildrenSkuDTO bomSku : bomChildrenSkuDTOS) {
                         //该sku 不是套装Bom
                         SoB2cDeliveryDetailDTO.AddDTO deliveryDetailDTO = new SoB2cDeliveryDetailDTO.AddDTO();
                         deliveryDetailDTO.setSkuId(bomSku.getSkuId());
                         deliveryDetailDTO.setSkuNo(bomSku.getSkuNo());
-                        Integer quantity=bomSku.getQuantity();
-                        deliveryDetailDTO.setDeliveryQty(qty*quantity);
+                        Integer quantity = bomSku.getQuantity();
+                        deliveryDetailDTO.setDeliveryQty(qty * quantity);
                         deliveryDetailDTO.setSourceDetailId(detailItem.getId());
                         deliveryDetailList.add(deliveryDetailDTO);
                     }
-                }else{
+                } else {
                     //该sku 不是套装Bom
                     SoB2cDeliveryDetailDTO.AddDTO deliveryDetailDTO = new SoB2cDeliveryDetailDTO.AddDTO();
                     deliveryDetailDTO.setSkuId(skuId);
@@ -3326,9 +3330,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto) {
+    public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto) {
+        SoB2cDTO.PullOrderResultDTO resultDTO=new SoB2cDTO.PullOrderResultDTO();
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
+        //是否生成销售出库单
+        Boolean isGenerateB2cSoOutstock=Boolean.FALSE;
         try {
             oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
         } catch (Exception e) {
@@ -3363,7 +3370,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 新增日志
             String msg = StrUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "新增操作");
-            return entity;
+            resultDTO.setSoB2cEntity(entity);
+            resultDTO.setIsGenerateB2cSoOutstock(isGenerateB2cSoOutstock);
+            return resultDTO;
         } else {
             // 历史异常记录修复
             if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")) {
@@ -3384,19 +3393,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);
             }
-//            if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)){
-//                oldEntity.setApproveStatus(ApproveStatusEnum.REJECT);
-//                oldEntity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_RATE_NOT_EXIST_REJECT.getCode());
-//                oldEntity.setRemark("汇率配置不存在");
-//            }
+            //已发货
+            String shippedCode = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+            //旧的订单状态
+            String oldBillStatus = oldEntity.getBillStatus();
+            String newBillStatus = dto.getBillStatus();
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
                 }
+                //表示是从未发货到发货 就要生成销售出库单
+                if(!oldBillStatus.equals(newBillStatus)&&shippedCode.equals(newBillStatus)){
+                    isGenerateB2cSoOutstock=Boolean.TRUE;
+                }
             }
-            return oldEntity;
+            resultDTO.setSoB2cEntity(entity);
+            resultDTO.setIsGenerateB2cSoOutstock(isGenerateB2cSoOutstock);
+            return resultDTO;
         }
 
     }
@@ -3673,6 +3688,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 校验是否存在拦截单
+     *
      * @param list
      */
     private void checkIsIntercept(List<SoB2cEntity> list) {

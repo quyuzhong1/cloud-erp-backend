@@ -69,15 +69,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
         if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
-            //TODO 已发货自动生成销售出库单并自动审核,扣减可用库存
             //这个是B2c销售订单id
             String soB2cId=dto.getReferenceNo();
            try {
                soOutstockService.generateB2cSoOutstock(soB2cId);
            }catch (Exception e){
-             //TODO生成异常单
+             log.error("销售订单{} 生成销售出库单失败>>>>>>{}",soB2cId,e.getMessage());
            }
-
 
         }
         return ApiResult.success();

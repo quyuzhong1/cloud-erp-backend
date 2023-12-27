@@ -355,7 +355,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
 
     /**
-     * 生成销售出库单
+     * 生成B2C销售出库单
      * @author yl
      * @date 2023-12-11 16:16
      * @param b2cSoId 销售订单id

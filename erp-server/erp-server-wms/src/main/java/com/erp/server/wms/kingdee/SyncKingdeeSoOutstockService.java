@@ -19,10 +19,22 @@ public interface SyncKingdeeSoOutstockService {
     void syncDataToKingdee(SoOutstockEntity entity, String operate);
 
     /**
+     * 发送消息同步金蝶
+     * @description
+     * @param entity
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2023-12-27 16:50
+     */
+    void syncB2cDataToKingdee(SoOutstockEntity entity, String operate);
+    /**
      * 推送订单到mq
      *
      * @param entity
      * @param syncOperate
      */
     void syncOrderToDmp(SoOutstockEntity entity, String syncOperate);
+
+
 }

@@ -513,13 +513,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        String orderType=entity.getOrderType();
+        String b2b = OrderTypeEnum.B2B.getCode();
+        Boolean isB2b=b2b.equals(orderType);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
             //审核通过发送金蝶
-            syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            handleData(entity);
+            if(isB2b){
+                syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                handleData(entity);
+            }else{
+                syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         }
         return Boolean.TRUE;
     }
@@ -2019,7 +2026,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 this.submit(Arrays.asList(id));
                 this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             } catch (Exception e) {
-                //TODO  异常订单？
               log.error("销售出库单【{}】，提交或者审核失败 {}",code, e.getMessage());
             }
             return Boolean.TRUE;

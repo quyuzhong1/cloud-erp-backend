@@ -6,8 +6,10 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * 平台消费处理接口
+ *
  * @param
  * @author Jim
  * @date 2023/12/18 16:42
@@ -47,16 +50,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoB2cFinanceService soB2cFinanceService;
-    @Resource
-    private DocNoGenHelper docNoGenHelper;
+
     @Resource
     private CustomerB2cService customerB2cService;
     @Resource
     private CustomerB2cAddressService customerB2cAddressService;
     @Resource
     private CustomerB2cContactService customerB2cContactService;
-    @Resource
-    private SoOutstockFeign soOutstockFeign;
+
     @Resource
     private ShopInfoService shopInfoService;
     @Resource
@@ -64,55 +65,60 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        SoB2cEntity mainEntity = this.checkAndSaveAll(dto);
+        SoB2cDTO.PullOrderResultDTO resultDTO = this.checkAndSaveAll(dto);
+        SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
+        Boolean isGenerateB2cSoOutstock = resultDTO.getIsGenerateB2cSoOutstock();
         try {
-            handleRule(mainEntity);
+            if (Objects.nonNull(mainEntity)) {
+                handleRule(mainEntity);
+                if(isGenerateB2cSoOutstock){
+                    soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
+                }
+            }
+
         } catch (Exception e) {
             log.error("[订单规则处理失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
         }
 
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();
-        //已发货
-        String shippedCode= SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-        String id=mainEntity.getId();
+
+        String id = mainEntity.getId();
         //是否是平台仓订单 true 是
-        Boolean isPlatformWarehouseOrder= mainEntity.hasPlatformWarehouseOrder();
-        //自动匹配订单规则
-        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)) {
-            List<SoB2cDetailEntity>  detailList=soB2cDetailService.listByMainId(id);
-            Map<String,Object> map=soB2cService.handleMatchJson(id,detailList,new HashMap<>());
-            if(isPlatformWarehouseOrder){
-                soB2cService.platformWarehouseOrderHandle(id,map);
-            }else{
+        Boolean isPlatformWarehouseOrder = mainEntity.hasPlatformWarehouseOrder();
+        //付款状态
+        String payStatus = mainEntity.getPayStatus();
+        //已付款
+        String paid = SoB2cPayStatusEnum.ENUM_PAID.getCode();
+        //自动匹配订单规则 待配貨和已付款 就要订单规则
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus) && paid.equalsIgnoreCase(payStatus)) {
+            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+            Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
+            if (isPlatformWarehouseOrder) {
+                soB2cService.platformWarehouseOrderHandle(id, map);
+            } else {
                 //拉取订单正常处理
-                soB2cService.pullOrderHandle(id,detailList,map);
+                soB2cService.pullOrderHandle(id, detailList, map);
             }
         }
-//        //已发货就要生成销售出库单
-//        if(shippedCode.equalsIgnoreCase(billStatus)&&isPlatformWarehouseOrder){
-//            try {
-//                soOutstockFeign.generateB2cSoOutstock(id);
-//            }catch (Exception e){
-//                log.error("B2C订单【{}】 更改状态为已发货,生成销售出库单失败{}",mainEntity.getCode(),e.getMessage());
-//            }
-//
-//        }
-
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public SoB2cEntity checkAndSaveAll(PlatformOrderDTO dto) {
+    public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
                 .stream()
@@ -134,12 +140,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .distinct()
                 .collect(Collectors.toList());
         List<SkuVO> skuList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(skuIds)){
+        if (CollectionUtils.isNotEmpty(skuIds)) {
             skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         }
 
         // 主表更新或保存
-        SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
+        SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto);
+        SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
 
@@ -164,9 +171,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)){
+        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
             throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
         }
-        return mainEntity;
+        return resultDTO;
     }
 }

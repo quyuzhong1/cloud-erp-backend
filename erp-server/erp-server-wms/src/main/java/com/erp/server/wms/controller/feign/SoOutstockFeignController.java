@@ -112,7 +112,7 @@ public class SoOutstockFeignController {
     }
 
     /**
-     * 生成销售出库单
+     * 生成B2C销售出库单
      * @param b2cSoId
      * @return
      */

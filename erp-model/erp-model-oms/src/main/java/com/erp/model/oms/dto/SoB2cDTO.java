@@ -1622,5 +1622,21 @@ public class SoB2cDTO implements Serializable {
         private String distributeBase64;
     }
 
+    /**
+     * 拉取的结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PullOrderResultDTO{
+
+        private SoB2cEntity soB2cEntity;
+
+        /**
+         * 是否成成销售出库单
+         * true 是
+         */
+        private Boolean isGenerateB2cSoOutstock;
+
+    }
 
 }

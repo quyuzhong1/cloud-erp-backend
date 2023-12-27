@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,5 +28,5 @@ public interface PlatformOrderConsumerHandleService {
      * 保存所有
      */
 
-    SoB2cEntity checkAndSaveAll(PlatformOrderDTO dto);
+    SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto);
 }
