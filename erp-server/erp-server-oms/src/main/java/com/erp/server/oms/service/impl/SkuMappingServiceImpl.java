@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
@@ -22,6 +23,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -35,6 +38,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -1015,6 +1019,36 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 throw new ServiceException("删除映射Listing失败,请重试");
             }
         }
+    }
+
+    @Override
+    public PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto) {
+        SkuMappingEntity skuMappingEntity = this.getById(dto.getParams().getId());
+        if(Objects.isNull(skuMappingEntity)){
+            throw new ServiceException("sku对照表为空");
+        }
+        //查询Listing日志
+        PagingVO<OperateLogDTO.ListDTO> listDTOPagingVO = new PagingVO<>();
+        PagingDTO<OperateLogDTO.SearchDTO> logDTO = new PagingDTO<>();
+        OperateLogDTO.SearchDTO logSearchDTO = new OperateLogDTO.SearchDTO();
+        logDTO.setCurrPage(dto.getCurrPage());
+        logDTO.setPageSize(dto.getPageSize());
+        logDTO.setParams(logSearchDTO);
+        if(StringUtils.isNotBlank(skuMappingEntity.getListingId())){
+            logSearchDTO.setBusinessId(skuMappingEntity.getListingId());
+            logSearchDTO.setModuleType(ModuleTypeEnum.LISTING_INFO.getCode());
+            listDTOPagingVO = operateLogService.paging(logDTO);
+        }
+        //查询sku对照表日志
+        if(listDTOPagingVO.getCurrPage() == listDTOPagingVO.getTotalPage()){
+            logSearchDTO.setBusinessId(skuMappingEntity.getId());
+            logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
+            PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
+            List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();
+            List<OperateLogDTO.ListDTO> allList = (List<OperateLogDTO.ListDTO>) listDTOPagingVO.getList();
+            allList.addAll(skuLogList);
+        }
+        return listDTOPagingVO;
     }
 
     private List<SkuMappingEntity> listByInfo(List<String> skuIdList, List<String> warehouseIdList, String dictPlatform, String type) {

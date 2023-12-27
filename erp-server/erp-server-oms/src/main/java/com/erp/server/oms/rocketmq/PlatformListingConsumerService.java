@@ -156,7 +156,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                         throw new ServiceException("Listing 产品更新失败");
                     }
                     //记录更新日志
-                    String msg = StrUtil.format("拉取第三方产品更新id为【{}】的【{}】单据 ", oldEntity.getId(), "平台sku表");
+                    String msg = StrUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
                 }
 
