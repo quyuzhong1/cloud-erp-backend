@@ -435,4 +435,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-22 16:02
      */
     SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId);
+
+    /**
+     * 校验是否需要调用第三方标记发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 11:30
+     * @param soB2cId
+     * @return java.lang.Boolean
+     **/
+    Boolean checkPlatformShipOrder(String soB2cId);
 }

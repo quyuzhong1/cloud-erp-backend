@@ -3,6 +3,7 @@ package com.erp.rpc.oms.feign;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,7 @@ public interface SoB2cFeign {
 
     /**
      * 获取明细信息
+     *
      * @param soDetailIdList
      * @return
      */
@@ -40,6 +42,7 @@ public interface SoB2cFeign {
 
     /**
      * 根据主表id查询B2C订单主表信息
+     *
      * @param soIds
      * @return
      */
@@ -48,6 +51,7 @@ public interface SoB2cFeign {
 
     /**
      * 根据主表id查询B2C订单主表信息
+     *
      * @param soId
      * @return
      */
@@ -62,39 +66,42 @@ public interface SoB2cFeign {
 
     /**
      * 根据b2c订单id查询详情信息
-     * @Author Luo_WG
-     * @Date 2023/12/19 15:22
+     *
      * @param mainIds
      * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
      **/
     @PostMapping("/feign/soB2c/listDetailByMainIds")
     List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
 
     /**
      * 修改销售订单的物流面单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 15:22
+     *
      * @param waybillDTOList 物流面单
      * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/12/19 15:22
      **/
     @PostMapping("/feign/soB2c/updateLogisticsWaybill")
     Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
      * 修改销售订单的配货单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 17:18
+     *
      * @param waybillDTOList 配货单
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/19 17:18
      **/
     @PostMapping("/feign/soB2c/updateDistributeWaybill")
     Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
-     * @description 添加异常订单信息
      * @param dto
-     * @author Lambda
      * @return
+     * @description 添加异常订单信息
+     * @author Lambda
      * @create 2023-12-20 11:06
      */
     @PostMapping("/feign/soB2cError/add")
@@ -102,10 +109,11 @@ public interface SoB2cFeign {
 
     /**
      * 删除异常信息
-     * @description
+     *
      * @param deleteDTO
-     * @author Lambda
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-20 11:20
      */
     @PostMapping("/feign/soB2cError/delete")
@@ -113,21 +121,35 @@ public interface SoB2cFeign {
 
     /**
      * 根据b2c订单id获取买家信息
-     * @Author Luo_WG
-     * @Date 2023/12/22 9:20
+     *
      * @param mainIdList
      * @return java.util.List<com.erp.model.oms.entity.SoB2cLogisticsEntity>
+     * @Author Luo_WG
+     * @Date 2023/12/22 9:20
      **/
     @PostMapping("/feign/soB2c/listSoB2cReceiverByMainIdList")
     List<SoB2cReceiverEntity> listSoB2cReceiverByMainIdList(@RequestBody List<String> mainIdList);
 
-    /** 获取标记发货 需要的参数
-     * @description
+    /**
+     * 获取标记发货 需要的参数
+     *
      * @param soB2cId 销售订单id
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2023-12-22 15:33
      */
     @PostMapping("/feign/soB2c/getSignShipParam")
-    SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String  soB2cId);
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(@RequestBody String soB2cId);
+
+    /**
+     * 校验是否需要调用第三方标记发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 11:29
+     * @param soB2cId
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/checkPlatformShipOrder")
+    Boolean checkPlatformShipOrder(@RequestBody String soB2cId);
+
 }

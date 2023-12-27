@@ -1500,7 +1500,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_CANCEL_SPLIT, entity.getCode());
         }
         //关联关系
-        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
         if (CollectionUtils.isEmpty(soB2cRefList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT, entity.getCode());
         }
@@ -2667,6 +2667,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId) {
         SoB2cDTO.SignShipOrderDTO result = baseMapper.getSignShipParam(soB2cId);
         return result;
+    }
+
+    @Override
+    public Boolean checkPlatformShipOrder(String soB2cId) {
+        SoB2cEntity soB2cEntity = this.getById(soB2cId);
+        //如果不是手工新增订单需要同步第三方发货标识
+        if (!SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+            return Boolean.TRUE;
+        } else {
+            //如果类型是手工单，可能是拆分或者合并的，需要查询原单是否是第三方平台单
+            List<SoB2cRefEntity> soB2cRefEntities = soB2cRefService.listSourceByTargetIds(Arrays.asList(soB2cEntity.getId()), "");
+            List<String> soIds = soB2cRefEntities.stream().map(req -> req.getSourceId()).collect(Collectors.toList());
+            //查询原单，判断SourceType是否有平台单
+            if (CollectionUtils.isNotEmpty(soIds)) {
+                List<SoB2cEntity> soB2cEntityList = this.listByIds(soIds);
+                List<SoB2cEntity> soB2cEntities = soB2cEntityList.stream()
+                        .filter(req -> !SourceTypeEnum.SELF_ADD.getCode().equals(req.getSourceType()))
+                        .collect(Collectors.toList());
+                //如果包含平台单需要同步第三方发货
+                if (CollectionUtils.isNotEmpty(soB2cEntities)) {
+                    return Boolean.TRUE;
+                }
+            }
+        }
+        return Boolean.FALSE;
     }
 
     /**

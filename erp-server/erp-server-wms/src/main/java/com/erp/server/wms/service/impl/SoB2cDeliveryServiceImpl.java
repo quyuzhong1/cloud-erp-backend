@@ -218,17 +218,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
             if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
-                //调用第三方平台SDK发货
-                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                try {
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                } catch (Exception e) {
-                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                    //调用第三方平台SDK发货
+                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                    try {
+                        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                    } catch (Exception e) {
+                        throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                    }
+                    paramJson = JSONObject.toJSONString(platformShipOrderDTO);
                 }
-
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
 
             //修改发货状态
@@ -277,10 +278,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String returnJson = "";
         //调用第三方平台SDK发货
         try {
-            PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-            platformShipOrderDTO.setSoB2cId(id);
-            platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-            PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                //调用第三方平台SDK发货
+                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
+            }
         } catch (Exception e) {
             message = e.getMessage();
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
