@@ -172,6 +172,16 @@ public interface KingdeeCommonService {
      * @param number
      */
     void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number);
+
+
+    /** 
+     * @description : 作废
+     * @param apiUtils
+     * @author Lambda
+     * @return 
+     * @create 2023-12-27 12:12
+     */
+    void handleInvalid (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number);
     /**
      * @param apiUtils
      * @param platformEntity

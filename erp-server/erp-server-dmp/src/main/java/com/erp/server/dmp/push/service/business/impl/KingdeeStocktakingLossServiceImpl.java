@@ -59,7 +59,7 @@ public class KingdeeStocktakingLossServiceImpl implements KingdeeStocktakingLoss
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,map);
+            operateInvalid(apiUtils,platformEntity,map,type,operate);
         }
         /**
          * 反审核
@@ -84,12 +84,9 @@ public class KingdeeStocktakingLossServiceImpl implements KingdeeStocktakingLoss
     /**
      * 作废
      */
-    public void operateInvalid(KingdeeApiUtils apiUtils,Map<String, Object> map) {
-        //业务编码
-        String code = (String) map.getOrDefault("code","");
-        String operate = (String) map.get("operate");
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String operate) {
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,type,operate);
         return;
     }
 
