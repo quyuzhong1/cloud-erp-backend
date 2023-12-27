@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -797,5 +798,41 @@ public class SoB2cController extends BaseController {
         Map<String, Object> map = soB2cService.getJson(id);
         return success(map);
 
+    }
+
+
+    /**
+     * 虚假发货
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
+     * @Author Luo_WG
+     * @Date 2023/12/13 19:29
+     **/
+    @PostMapping("/falseDelivery")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2c:falseDelivery",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> falseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.falseDelivery(id);
+            } catch (Exception e) {
+                log.error("b2c订单 虚假发货失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 虚假发货失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

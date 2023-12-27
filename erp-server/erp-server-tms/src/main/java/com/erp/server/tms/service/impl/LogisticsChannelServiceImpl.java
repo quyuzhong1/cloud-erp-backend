@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.constant.EnumMessage;
@@ -175,6 +176,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
             base.setSourceId(item.getSourceId());
+
+            //获取服务商编号
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
+            if (ObjectUtil.isNotEmpty(authEntity)) {
+                String logisticsPlatform = authEntity.getLogisticsPlatform();
+                base.setLogisticsPlatform(logisticsPlatform);
+                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                if ("N".equals(printDelivery)) {
+                    base.setIsPrintPlatform(Boolean.FALSE);
+                } else {
+                    base.setIsPrintPlatform(Boolean.TRUE);
+                }
+            } else {
+                base.setIsPrintPlatform(Boolean.TRUE);
+            }
+
             resultList.add(base);
         }
         return resultList;

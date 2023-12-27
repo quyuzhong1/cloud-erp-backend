@@ -128,8 +128,8 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
         warnMsgInfo.setTitle(StrUtil.format("物流平台【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
-        warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setTableId(entity.getId());
+        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }

@@ -66,7 +66,7 @@ public class KingdeeOtherOutstockConsumerServiceImpl implements KingdeeOtherOuts
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,map,code,operate);
+            operateInvalid(apiUtils,platformEntity,map,type,operate);
         }
         /**
          * 反审核
@@ -93,13 +93,11 @@ public class KingdeeOtherOutstockConsumerServiceImpl implements KingdeeOtherOuts
      * @author Will
      * @date: 2023/5/24 17:57
      * @param apiUtils
-     * @param map
-     * @param code
      * @param operate
      */
-    public void operateInvalid(KingdeeApiUtils apiUtils,Map<String, Object> map, String code,String operate) {
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String operate) {
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,type,operate);
         return;
     }
 

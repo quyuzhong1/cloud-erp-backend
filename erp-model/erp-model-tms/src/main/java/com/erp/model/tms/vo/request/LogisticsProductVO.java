@@ -152,5 +152,8 @@ public class LogisticsProductVO  implements Serializable {
      */
 
     private String combinationDeclareType;
-
+    /**
+     * 交易子单号
+     */
+    private Long childOrderId;
 }

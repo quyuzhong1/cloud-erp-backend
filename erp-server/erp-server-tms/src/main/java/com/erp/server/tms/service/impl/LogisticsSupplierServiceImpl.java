@@ -170,6 +170,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
         List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id), name);
+
         List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {

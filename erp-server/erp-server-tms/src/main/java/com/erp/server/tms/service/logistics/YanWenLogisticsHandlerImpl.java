@@ -124,10 +124,10 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),labelResponse.getMessage());
                     isSuccess = false;
                 }else {
-                    response.setBase64(labelResponse.getData().getBase64String());
+                    String prefix = "data:application/pdf;base64,";
+                    response.setBase64(prefix + labelResponse.getData().getBase64String());
                     response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
                     response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
-                    result.add(response);
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));

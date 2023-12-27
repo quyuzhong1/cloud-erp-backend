@@ -75,7 +75,7 @@ public class AliExpressLogisticsHandlerImplTest {
         senderInfo.setProvinceName("Guangdong Province");
         senderInfo.setTelNumber("17191087538");
         senderInfo.setEmail("dhphoto@aliyun.com");
-        senderInfo.setCountry("China");
+        senderInfo.setCountry("CN");
         senderInfo.setZipCode("523000");
         //上门揽收
         SenderInfo pickUp = new SenderInfo();
@@ -88,7 +88,7 @@ public class AliExpressLogisticsHandlerImplTest {
         pickUp.setProvinceName("Guangdong Province");
         pickUp.setTelNumber("17191087538");
         pickUp.setEmail("dhphoto@aliyun.com");
-        pickUp.setCountry("China");
+        pickUp.setCountry("CN");
         pickUp.setZipCode("523000");
         //退货
         SenderInfo returnInfo = new SenderInfo();
@@ -101,12 +101,12 @@ public class AliExpressLogisticsHandlerImplTest {
         returnInfo.setProvinceName("Guangdong Province");
         returnInfo.setTelNumber("17191087538");
         returnInfo.setEmail("dhphoto@aliyun.com");
-        returnInfo.setCountry("China");
+        returnInfo.setCountry("CN");
         returnInfo.setZipCode("523000");
 
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
-        logisticsProductVO.setId("12121232");
-        logisticsProductVO.setSkuId("123456");
+        logisticsProductVO.setId("1005004996443696");
+        logisticsProductVO.setSkuId("1005004996443696");
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
@@ -117,9 +117,10 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
+        logisticsProductVO.setChildOrderId(8182870059366446L);
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("CPAM_WLB_FPXSZ;CPAM_WLB_CPHSH;CPAM_WLB_ZTOBJ;HRB_WLB_ZTOGZ;HRB_WLB_ZTOSH");
+        logisticsSaleChannel.setCode("CAINIAO_STANDARD_FPXDG");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("11169435");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
@@ -133,18 +134,18 @@ public class AliExpressLogisticsHandlerImplTest {
                 .orderSource("ERP")
                 .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("8180834369177849")
+                .deliveryNo("8182870059366446")
 //                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
-                        .addressFirst("address")
+                        .addressFirst("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
                         .email("965656546@qq.con")
-                        .city("Gongju-si")
-                        .name("cl114341849dzvae")
+                        .city("Sao Vicente")
+                        .name("br1973509635zvlae")
                         .companyName("")
                         .contact("zhang san")
-                        .country("CL")
-                        .zipCode("13021")
-                        .province("Chungcheongnam-do")
+                        .country("UZ")
+                        .zipCode("100171")
+                        .province("Sao Paulo")
                         .telNumber("1234567890")
                         .build())
                 .senderInfo(senderInfo)

@@ -263,7 +263,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
         soOutstock.setOrderType(soInfo.getOrderType());
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSCK);
         soOutstock.setCode(code);
         soOutstock.setSalesDeptId(soInfo.getSalesDeptId());
         soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
@@ -846,6 +847,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+
+        //查询是否有拦截单
+        checkIsIntercept(list);
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志

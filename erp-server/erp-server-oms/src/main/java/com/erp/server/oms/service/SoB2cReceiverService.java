@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 
 import java.util.List;
 
@@ -68,5 +69,5 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList);
 }
