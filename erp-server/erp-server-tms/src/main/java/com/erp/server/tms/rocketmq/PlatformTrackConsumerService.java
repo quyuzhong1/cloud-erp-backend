@@ -8,6 +8,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -53,7 +54,11 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+        try {
+            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+        }catch (Exception e){
+            throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
+        }
     }
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {

@@ -112,7 +112,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     public List<SoB2cDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cDetailEntity::getMainId,mainId).list();
+        return lambdaQuery().eq(SoB2cDetailEntity::getIsDeleted, false).eq(SoB2cDetailEntity::getMainId,mainId).list();
     }
 
     @Override

@@ -75,7 +75,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+        try {
+            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+        }catch (Exception e){
+            throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
+        }
     }
 
     @Override

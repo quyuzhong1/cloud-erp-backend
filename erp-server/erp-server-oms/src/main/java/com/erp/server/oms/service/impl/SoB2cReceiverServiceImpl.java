@@ -114,7 +114,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             if( null == oldEntity){
                 SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
                 //处理买家信息
-                handleSoB2cReceiver(entity, mainEntity.getId());
+//                handleSoB2cReceiver(entity, mainEntity.getId());
                 return entity;
             } else {
                 return oldEntity;
