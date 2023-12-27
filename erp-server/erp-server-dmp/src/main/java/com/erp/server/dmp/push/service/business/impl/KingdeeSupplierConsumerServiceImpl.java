@@ -90,7 +90,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
          * 删除
          */
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            operateDelete(apiUtils,platformEntity, map,type);
+            operateDelete(apiUtils,platformEntity,map,type,operate);
         }
 
     }
@@ -221,14 +221,11 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
      * @param map
      * @param type
      */
-    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //操作项
-        String operate = (String) map.get("operate");
-        //反审核
-        operateDisapprove(apiUtils,platformEntity, map,type);
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String operate) {
         //删除
-        kingdeeCommonService.delete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SUPPLIER.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,type,operate);
         return;
+
     }
 
 
