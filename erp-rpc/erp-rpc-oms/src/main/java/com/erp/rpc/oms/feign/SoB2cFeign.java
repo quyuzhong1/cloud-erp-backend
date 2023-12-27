@@ -152,4 +152,15 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/checkPlatformShipOrder")
     Boolean checkPlatformShipOrder(@RequestBody String soB2cId);
 
+    /**
+     * 修改b2c销售单状态
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
+     * @param soB2cIds
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateSoB2cStatus")
+    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status);
+
 }

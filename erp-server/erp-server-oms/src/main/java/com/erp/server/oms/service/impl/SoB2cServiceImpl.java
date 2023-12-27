@@ -3720,6 +3720,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    public Boolean updateSoB2cStatus(List<String> ids, String status) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(SoB2cEntity::getId, ids)
+                .set(SoB2cEntity::getBillStatus, status)
+                .update();
+    }
+
     /**
      * @param entity
      * @return

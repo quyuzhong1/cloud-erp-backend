@@ -208,4 +208,17 @@ public class SoB2cFeignController extends BaseController {
     public Boolean checkPlatformShipOrder(@RequestBody String soB2cId) {
         return soB2cService.checkPlatformShipOrder(soB2cId);
     }
+
+    /**
+     * 修改b2c销售单状态
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
+     * @param soB2cIds
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateSoB2cStatus")
+    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status) {
+        return soB2cService.updateSoB2cStatus(soB2cIds, status);
+    }
 }
