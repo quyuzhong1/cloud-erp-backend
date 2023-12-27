@@ -681,6 +681,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 logisticsBillFeign.cancelBill(cancelBillDTO);
             }
             soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            soB2cLogisticsEntity.setCode("");
         } else {
             //当为空就覆盖
             if (StringUtils.isBlank(existChannelId)) {
@@ -1006,8 +1007,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void thirdWarehouseCreateOutStock(String mainId, String code, String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
         ThirdWarehouseCreateOutboundReq createOutboundReq = new ThirdWarehouseCreateOutboundReq();
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(mainId);
+        String secondAddress=receiver.getSecondAddress();
+        String fullAddress=receiver.getFullAddress();
+        String address2=secondAddress+fullAddress;
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
+        receiverInfo.setAddress2(address2);
         createOutboundReq.setReceiverInfo(receiverInfo);
         List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = B2cOrderConverter.INSTANCE.convertFindListingSku(detailList);
         String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
