@@ -242,40 +242,36 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
-        Boolean flag = lambdaUpdate()
-                .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
-                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
-                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
-                .eq(SoB2cDeliveryInterceptEntity::getId, dto.getId())
-                .update();
-        if(flag){
-            // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
-            if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
 
-                //冻结库存
-                freezeInventory(entity, detailEntityList);
+        // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
+        if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
 
-                //反审核销售出库单，并作废
-                List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
-                if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
-                    List<String> ids = soOutstockEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-                    BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-                    idsDTO.setIds(ids);
-                    soOutstockService.disApprove(idsDTO, Boolean.TRUE);
-                    soOutstockService.invalid(ids, "物流拦截成功,自动作废");
-                }
-
-                //回滚冻结库存
-                List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
-                if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
-                    List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-                    soB2cDeliveryService.rollbackInventory(ids);
-                    soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                }
-
-
+            //反审核销售出库单，并作废
+            List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+                List<String> ids = soOutstockEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+                BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
+                idsDTO.setIds(ids);
+                soOutstockService.disApprove(idsDTO, Boolean.TRUE);
+                soOutstockService.delete(ids);
             }
-            return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
+
+            //回滚冻结库存
+            List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
+                List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+                soB2cDeliveryService.rollbackInventory(ids);
+                soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+            }
+
+            //修改状态
+            lambdaUpdate()
+                    .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
+                    .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
+                    .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                    .eq(SoB2cDeliveryInterceptEntity::getId, dto.getId())
+                    .update();
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "拦截结果确认");
         }else{
             return BatchResultDTO.fail(entity.getId(),entity.getCode(), "拦截结果确认");
         }
@@ -354,38 +350,5 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
             }
         }
-    }
-
-
-    /**
-     * 冻结库存
-     * @Author Luo_WG
-     * @Date 2023/12/25 17:47
-     * @param entity
-     * @param detailEntityList
-     * @return void
-     **/
-    private void freezeInventory(SoB2cDeliveryInterceptEntity entity, List<SoB2cDeliveryInterceptDetailEntity> detailEntityList) {
-        List<InOutStockDTO> inOutStockList = new ArrayList<>();
-        for (SoB2cDeliveryInterceptDetailEntity detailEntity : detailEntityList) {
-            InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-            inOutStockDTO.setSourceId(entity.getId());
-            inOutStockDTO.setSourceCode(entity.getCode());
-            inOutStockDTO.setSourceDetailId(detailEntity.getId());
-            inOutStockDTO.setBillDate(LocalDate.now());
-            inOutStockDTO.setSkuId(detailEntity.getSkuId());
-            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
-            inOutStockDTO.setQty(detailEntity.getDeliveryQty());
-            inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
-            inOutStockDTO.setWarehouseLocation("");
-            inOutStockList.add(inOutStockDTO);
-        }
-        //添加冻结库存
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setParamList(inOutStockList);
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
-        //更新库存
-        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 }

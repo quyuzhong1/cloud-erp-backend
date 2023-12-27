@@ -121,6 +121,11 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("delivery_time")
     private LocalDateTime deliveryTime;
+    /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String CODE = "code";

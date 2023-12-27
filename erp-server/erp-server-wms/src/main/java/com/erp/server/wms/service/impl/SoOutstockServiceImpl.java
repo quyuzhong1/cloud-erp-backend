@@ -846,6 +846,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+
+        //查询是否有拦截单
+        checkIsIntercept(list);
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
