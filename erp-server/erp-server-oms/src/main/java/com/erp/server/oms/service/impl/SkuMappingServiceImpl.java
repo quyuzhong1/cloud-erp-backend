@@ -356,11 +356,24 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_92053);
         }
         String platformSkuNo = dto.getPlatformSkuNo();
-        ListingInfoEntity listing = listingInfoService.getByPlatformSkuNo(platformDict, platformSkuNo);
-        if (Objects.isNull(listing)) {
-            throw new ServiceException("平台sku不存在");
+        ListingInfoEntity listing = listingInfoService.getById(skuMaping.getListingId());
+        if (null == listing){
+            throw new ServiceException("listing记录不存在");
         }
+
         checkExist(id, listing.getId(), dto.getShopId());
+
+        // 平台sku校验
+        if (PlatformDictEnum.hasConnectionPlatform().contains(platformSkuNo)){
+            // 已对接api的平台
+            if (!platformSkuNo.equalsIgnoreCase(listing.getPlatformSkuNo())) {
+                throw new ServiceException("平台sku不存在");
+            }
+        } else {
+            // 未对接api的平台
+            listing.setPlatformSkuNo(platformSkuNo);
+            listing.setPlatformSkuName(dto.getPlatformProductName());
+        }
         // listing 更新匹配关系
         listing.setMatchResult(true);
         if (!listingInfoService.updateById(listing)) {
@@ -963,20 +976,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         // 有平台
+        throw new ServiceException("API接口新增的平台SKU和库存SKU不允许删除");
         // 判断映射关系是否存在
-        if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())) {
-            throw new ServiceException("映射关系已删除");
-        }
-        entity.setProductSkuNo("");
-        entity.setProductSkuId("");
-        if (!this.updateById(entity)) {
-            throw new ServiceException("删除映射失败,请重试");
-        }
-        listingInfoEntity.setMatchResult(false);
-        if (!listingInfoService.updateById(listingInfoEntity)) {
-            throw new ServiceException("删除映射Listing失败,请重试");
-        }
-        return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+//        if (StringUtils.isBlank(entity.getProductSkuId()) || StringUtils.isBlank(entity.getProductSkuNo())) {
+//            throw new ServiceException("映射关系已删除");
+//        }
+//        entity.setProductSkuNo("");
+//        entity.setProductSkuId("");
+//        if (!this.updateById(entity)) {
+//            throw new ServiceException("删除映射失败,请重试");
+//        }
+//        listingInfoEntity.setMatchResult(false);
+//        if (!listingInfoService.updateById(listingInfoEntity)) {
+//            throw new ServiceException("删除映射Listing失败,请重试");
+//        }
+//        return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
     }
 
     @Override
