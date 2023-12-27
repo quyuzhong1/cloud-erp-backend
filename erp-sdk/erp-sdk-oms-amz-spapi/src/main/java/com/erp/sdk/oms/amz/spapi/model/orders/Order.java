@@ -1553,7 +1553,11 @@ public class Order {
             }
         }
         if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
-            return "waitSubmit";
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
         }
         if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
             return "approve";

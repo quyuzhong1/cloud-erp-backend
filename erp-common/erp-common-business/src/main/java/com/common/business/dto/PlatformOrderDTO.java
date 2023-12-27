@@ -213,4 +213,11 @@ public class PlatformOrderDTO extends UniqueDto {
      * 订单买家信息
      */
     private PlatformOrderReceiverDTO receiver;
+
+
+    /**
+     * 平台订单来源状态
+     * shopify=financial_status
+     */
+    private String platformOrderStatus;
 }

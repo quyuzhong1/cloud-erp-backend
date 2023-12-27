@@ -35,7 +35,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
     /**
      * Shopify SDK 订单信息
      */
-    private ShopifyShopInfoDTO shopInfoDTO;
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
+    private String shopId;
 
     /**
      * 详情或其他数据下载状态
@@ -68,7 +69,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(shopifyOrder.getId());
 //        this.setLastPushTime(dto.getNextTime());
-        this.shopInfoDTO = shopInfoDTO;
+        this.shopId = dto.getShopId();
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.downloadStatus = 0;
@@ -80,8 +81,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformShopifyOrderDTO dto) {
         // 原订单信息
         ShopifyOrder sourceOrder = dto.getShopifyOrder();
-        // 本ERP店铺信息
-        ShopifyShopInfoDTO shopInfoDTO = dto.getShopInfoDTO();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 平台类型
@@ -94,15 +93,15 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单日期
         orderDTO.setBillDate(sourceOrder.getCreatedAt().toLocalDate());
         // 平台订单号
-        orderDTO.setPlatformCode(sourceOrder.getId());
+        orderDTO.setPlatformCode(dto.getUniqueId());
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
         // 店铺ID
-        orderDTO.setShopId(shopInfoDTO.getId());
+        orderDTO.setShopId(dto.getShopId());
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(false);
+        orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType("");
+        orderDTO.setInvalidType(orderDTO.getInvalidStatus() ? "automatic" : "");
         // 作废原因
         orderDTO.setInvalidRemark("");
         // 订单状态
@@ -123,8 +122,11 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         orderDTO.setShippingFee(shippingFee);
+        // 审核状态
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatusStr());
+
         // 付款时间
-        orderDTO.setPayTime(dto.getPayTime());
+        orderDTO.setPayTime("paid".equalsIgnoreCase(orderDTO.getPayStatus())? dto.getPayTime() : null);
         // 付款金额
         orderDTO.setPayAmount(sourceOrder.getSubtotalPrice());
         // 付款方式
@@ -153,6 +155,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        // 来源状态
+        orderDTO.setPlatformOrderStatus(sourceOrder.getFinancialStatus());
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);

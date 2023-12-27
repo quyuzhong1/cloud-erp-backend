@@ -3447,6 +3447,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //旧的订单状态
             String oldBillStatus = oldEntity.getBillStatus();
             String newBillStatus = dto.getBillStatus();
+            // 亚马逊作废保留以前状态
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()){
+                dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                dto.setPayStatus(oldEntity.getPayStatus());
+                dto.setPayTime(oldEntity.getPayTime());
+                dto.setBillStatus(oldEntity.getBillStatus());
+            }
+            // Shopify作废保留以前状态
+            if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getDictPlatform()) &&
+                    ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))){
+                dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                dto.setPayStatus(oldEntity.getPayStatus());
+                dto.setPayTime(oldEntity.getPayTime());
+                dto.setBillStatus(oldEntity.getBillStatus());
+            }
+
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
