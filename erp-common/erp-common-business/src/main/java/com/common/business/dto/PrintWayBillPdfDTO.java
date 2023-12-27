@@ -20,7 +20,7 @@ public class PrintWayBillPdfDTO {
     /**
      * 打印时间
      */
-    private LocalDateTime printTime;
+    private String printTime;
     /**
      * 店铺名称
      */
@@ -49,6 +49,14 @@ public class PrintWayBillPdfDTO {
      * 备注
      */
     private String remark;
+    /**
+     * sku数量
+     */
+    private Integer skuTotal;
+    /**
+     * 商品数量
+     */
+    private Integer qtySum;
     /**
      * 明细信息
      */

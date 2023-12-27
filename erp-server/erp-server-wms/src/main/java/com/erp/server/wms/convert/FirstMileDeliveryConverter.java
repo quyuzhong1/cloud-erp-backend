@@ -1,10 +1,8 @@
 package com.erp.server.wms.convert;
 
 
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
@@ -45,4 +43,12 @@ public interface FirstMileDeliveryConverter {
     })
     OverseasWarehouseInboundDetailDTO.ViewDTO fmdToOverseasWarehouseInboundDetailView(FirstMileDeliveryDetailEntity detailEntityList);
     List<OverseasWarehouseInboundDetailDTO.ViewDTO> fmdToOverseasWarehouseInboundDetailView(List<FirstMileDeliveryDetailEntity> detailEntityList);
+
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "sku"),
+            @Mapping(target = "packQty", source = "singleBoxQuantity"),
+    })
+    FirstMileCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
+    List<FirstMileCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);
 }

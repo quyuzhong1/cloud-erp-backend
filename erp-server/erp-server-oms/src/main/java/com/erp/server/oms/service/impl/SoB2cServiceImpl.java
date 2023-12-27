@@ -2798,6 +2798,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         deleteDTO.setType(type);
         deleteDTO.setMainId(entity.getSourceId());
         soB2cErrorService.delete(deleteDTO);
+
+        //修改订单状态为发货中
+        this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 
