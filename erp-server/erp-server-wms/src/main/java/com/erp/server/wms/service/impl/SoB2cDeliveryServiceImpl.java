@@ -587,6 +587,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
                             // 自定义配货单
+/*
                             FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
                             getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
@@ -602,6 +603,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             }
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
+*/
 
                         }
                     }
@@ -636,23 +638,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
                             PrintWayBillPdfDTO printWayBillPdfDTO = printWayBillPdfHandle(soB2cEntity, soB2cReceiverEntities, logisticsWaybillDetailDTO, soB2cLogisticsEntities, soB2cDetailEntities);
                             // 自定义配货单
-                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+/*                            FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
                             getOneDTO.setName(FileTemplateConstant.DISTRIBUTE_WAYBILL);
                             getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
                             getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
                             FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-      /*                      InputStream inputStream = null;
+
+                            InputStream inputStream = null;
                             try {
                                 URL url = new URL(fileTemplateEntity.getFastdfsUrl());
                                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                                 inputStream = httpURLConnection.getInputStream();
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            }*/
+                            }
                             ClassPathResource classPathResource = new ClassPathResource("Blank_A4.jasper");
                             Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
                             map.remove("detailList");
                             JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", classPathResource.getStream(), map, printWayBillPdfDTO.getDetailList());
+*/
 
                         }
                     }
