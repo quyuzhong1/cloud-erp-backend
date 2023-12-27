@@ -52,6 +52,8 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -399,6 +401,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        //校验是否存在拦截单
+        checkIsIntercept(Arrays.asList(entity));
+
         // 调用流程审核
         approveProcess(entity, dto);
 
@@ -478,6 +484,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!soB2cInvalidTypeEnum.getCode().equals(entity.getInvalidType())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_INVALID, entity.getCode(), soB2cInvalidTypeEnum.getName());
         }
+
+        //校验是否存在拦截单
+        checkIsIntercept(Arrays.asList(entity));
+
         log.info("反作废 开始修改B2C销售订单表状态数据，id：【{}】", id);
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
@@ -830,6 +840,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+
+        //校验是否存在拦截单
+        checkIsIntercept(Arrays.asList(entity));
+
         //物流渠道
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
         //物流单号
@@ -1038,6 +1052,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //TODO
+        SoB2cDeliveryInterceptDTO.AddDTO dto = new SoB2cDeliveryInterceptDTO.AddDTO();
+//        soB2cDeliveryInterceptFeign.add();
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
 
@@ -2377,6 +2394,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(map);
         //审核规则是否通过
         Boolean approveSuccess = ruleOrderMatchResult.getApproveSuccess();
+
         //匹配审核规则通过,自动提交并审核
         if (Objects.nonNull(approveSuccess) && approveSuccess) {
             //更新流转状态和分类信息
@@ -3519,6 +3537,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
 
+        //校验是否存在拦截单
+        checkIsIntercept(Arrays.asList(entity));
+
         //仓库匹配规则结果
         RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
@@ -3570,4 +3591,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
+    /**
+     * 校验是否存在拦截单
+     * @param list
+     */
+    private void checkIsIntercept(List<SoB2cEntity> list) {
+        List<String> soIdList = list.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(soIdList);
+        for (SoB2cEntity soB2cEntity : list) {
+            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream()
+                    .filter(req -> req.getId().equals(soB2cEntity.getId())
+                            && !HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())
+                    ).findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
+    }
 }

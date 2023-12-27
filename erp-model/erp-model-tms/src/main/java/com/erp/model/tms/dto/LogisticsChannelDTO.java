@@ -76,7 +76,15 @@ public class LogisticsChannelDTO implements Serializable {
 
         private Boolean disabled;
 
+        /**
+         * 平台编码
+         */
+        private String logisticsPlatform;
 
+        /**
+         * 平台是否允许打印
+         */
+        private Boolean isPrintPlatform;
     }
 
 
