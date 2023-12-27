@@ -1054,7 +1054,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //TODO
         SoB2cDeliveryInterceptDTO.AddDTO dto = new SoB2cDeliveryInterceptDTO.AddDTO();
 //        soB2cDeliveryInterceptFeign.add();
-
+        SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
 
