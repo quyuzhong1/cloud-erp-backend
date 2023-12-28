@@ -134,6 +134,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     scanSkuInfo.setProductName(skuVO.getSkuName());
                     scanSkuInfo.setSkuImageUrl(skuVO.getSkuImagesUrl());
                     scanSkuInfo.setSkuNo(skuVO.getSkuNo());
+                    scanSkuInfo.setWarehouseLocation(skuVO.getWarehouseLocation());
                 }
             }
             addViewDTO.setSkuSpeciesQty(addViewDTO.getWaitScanSkuList().size()+addViewDTO.getScannedSkuList().size());
