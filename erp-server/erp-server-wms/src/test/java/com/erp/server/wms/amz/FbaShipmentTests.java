@@ -1,8 +1,9 @@
-package com.erp.server.wms.service;
+package com.erp.server.wms.amz;
 
 import cn.hutool.json.JSONUtil;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.server.wms.ErpServerWmsApplication;
+import com.erp.server.wms.service.FbaShipmentService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +28,6 @@ public class FbaShipmentTests {
         FbaShipmentEntity entity = fbaShipmentService.getByFbaShipmentId("FBA16GQW2VDC");
         System.out.println(JSONUtil.toJsonStr(entity));
     }
-
-
 
 
 

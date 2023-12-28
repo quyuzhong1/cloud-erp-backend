@@ -49,7 +49,6 @@ public class OverseasWarehouseTest {
         List<CfgOperateLogFieldEntity> logFields =  Arrays.asList(
                 new CfgOperateLogFieldEntity().setField("priority").setFieldName("优先级").setClassPath(classPath).setType(0) .setEnumClass("")
 
-
         );
          cfgOperateLogFieldService.saveBatch(logFields);
     }
