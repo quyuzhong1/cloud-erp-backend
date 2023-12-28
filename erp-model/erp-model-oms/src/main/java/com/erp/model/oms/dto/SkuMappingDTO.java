@@ -182,6 +182,17 @@ public class SkuMappingDTO implements Serializable {
         private List<String> platformList;
 
 
+
+        /**
+         * 更新人 id 集合
+         */
+        private List<String> updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
+
         /**
          * 创建人 id 集合
          */
@@ -276,6 +287,16 @@ public class SkuMappingDTO implements Serializable {
         @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String tabFlag;
+
+        /**
+         * 更新人 id 集合
+         */
+        private List<String> updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
 
         /**
          * 创建人 id 集合
