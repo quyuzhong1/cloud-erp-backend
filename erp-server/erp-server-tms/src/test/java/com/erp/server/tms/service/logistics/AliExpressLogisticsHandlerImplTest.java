@@ -7,6 +7,10 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
+import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.model.query.QueryLogisticsRequest;
+import com.erp.tms.aliexpress.service.AliExpressShipperService;
+import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +35,8 @@ import java.util.*;
 public class AliExpressLogisticsHandlerImplTest {
     @Resource
     private AliExpressLogisticsHandlerImpl aliExpressLogisticsHandler;
+    @Resource
+    private AliExpressShipperService aliExpressShipperService;
 
     private Map<String, String> authMap = new HashMap<>();
 
@@ -38,9 +44,9 @@ public class AliExpressLogisticsHandlerImplTest {
 //        String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
 //        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
 //        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
-        String CLIENT_CODE = "503630";
-        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-        String token = "50000201326tOAyeueoufxwfeiat5mxXHHeLgx183c2ca0etyIE3GSShKP4IUHrpU3LN";
+        String CLIENT_CODE = "502978";
+        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+        String token = "50000200a44O1S6gAp1PpAb3HTkLwhWQDWDeRer0TGIEvm3jS0I5fdki145b733d0YY2";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -106,21 +112,26 @@ public class AliExpressLogisticsHandlerImplTest {
 
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
         logisticsProductVO.setId("1005004996443696");
-        logisticsProductVO.setSkuId("1005004996443696");
+        logisticsProductVO.setSkuId("1005006019200385");
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
         logisticsProductVO.setPrice(new BigDecimal("12"));
-        logisticsProductVO.setWeight(1999);
-        logisticsProductVO.setQuantity(10);
+        logisticsProductVO.setWeight(1);
+        logisticsProductVO.setQuantity(1);
         logisticsProductVO.setSourceCountry("CN");
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
-        logisticsProductVO.setChildOrderId(8182870059366446L);
+        logisticsProductVO.setChildOrderId(3027883474280186L);
+        logisticsProductVO.setScItemCode("");
+        logisticsProductVO.setScItemId(40414943126L);
+        logisticsProductVO.setScItemName("");
+        logisticsProductVO.setSkuCode("A018GBB1");
+        logisticsProductVO.setSkuName("A018GBB1");
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("CAINIAO_STANDARD_FPXDG");
+        logisticsSaleChannel.setCode("CAINIAO_STANDARD_30500252");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("11169435");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
@@ -132,35 +143,37 @@ public class AliExpressLogisticsHandlerImplTest {
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
                 .orderSource("ERP")
-                .pickupType("SELF_POST")
+//                .pickupType("DOOR_PICKUP")
+                .pickupType("SELF_SEND")
+//                .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("8182870059366446")
+                .deliveryNo("3027883474270186")
 //                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
                         .email("965656546@qq.con")
-                        .city("Sao Vicente")
-                        .name("br1973509635zvlae")
-                        .companyName("")
+                        .city("Uskudar")
+                        .name("tr1011044319")
+                        .companyName("tr1011044319")
                         .contact("zhang san")
-                        .country("UZ")
-                        .zipCode("100171")
-                        .province("Sao Paulo")
+                        .country("TR")
+                        .zipCode("34690")
+                        .province("Istanbul")
                         .telNumber("1234567890")
                         .build())
                 .senderInfo(senderInfo)
                 .pickUpInfo(pickUp)
                 .returnInfo(returnInfo)
                 .parceInfoVO(ParceInfoVO.builder()
-                        .currency("USD")
+                        .currency("CNY")
                         .height(1)
                         .hasBattery(true)
-                        .totalPrice(new BigDecimal("20"))
-                        .totalQuantity(10)
-                        .totalWeight(1999)
+                        .totalPrice(new BigDecimal("503.75"))
+                        .totalQuantity(1)
+                        .totalWeight(1)
                         .length(1)
-                        .totalWeight(123)
-                        .width(123)
+                        .totalWeight(1)
+                        .width(1)
                         .build())
                 .logisticsProductVOList(Arrays.asList(
                         logisticsProductVO
@@ -194,5 +207,27 @@ public class AliExpressLogisticsHandlerImplTest {
     public void authorization() {
         ApiResult apiResult = aliExpressLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
+    }
+
+    @Test
+    public void getLogisticsService() throws ApiException {
+        QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
+                .order_id(3027883474270186L)
+                .goods_weight("1")
+                .goods_height(1L)
+                .goods_width(1L)
+                .goods_length(1L)
+//                .order_id(1102175972276889L)
+                .build();
+        QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
+                .order_id(3027883474270186L)
+                .goods_weight("1")
+                .goods_height(1L)
+                .goods_width(1L)
+                .goods_length(1L)
+                .sub_order_list(Collections.singletonList(queryLogisticsRequest))
+                .build();
+        IopResponse logisticsService = aliExpressShipperService.getLogisticsService(authMap, queryLogisticsRequest1);
+        System.out.println(logisticsService);
     }
 }
