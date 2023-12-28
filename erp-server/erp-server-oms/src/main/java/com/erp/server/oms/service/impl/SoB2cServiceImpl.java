@@ -767,24 +767,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String paramJson = "";
         String returnJson = "";
-        try {
-            if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_LOGISTICS_CODE, entity.getCode());
-            }
-            //只有已审核数据支持配货
-            if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
-            }
 
-            //物流信息
-            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
-            if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-            }
-            if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())
-                    || StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
-            }
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_LOGISTICS_CODE, entity.getCode());
+        }
+        //只有已审核数据支持配货
+        if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
+        }
+
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())
+                || StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
+        }
+        try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
             paramJson = JSONObject.toJSONString(generateBillDTO);
             //货取物流单号
@@ -2933,8 +2934,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (ObjectUtil.isNotEmpty(autoGetTrackNo) && autoGetTrackNo) {
                 try {
                     this.getLogisticsCode(id, Boolean.TRUE);
-                    //自动发货(物流规则有设置则自动发货)
-                    submitDelivery(id);
                 } catch (Exception e) {
                     log.error("获取物流单号出错了>>>>>>>>{}", e.getMessage());
                 }
@@ -3509,30 +3508,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //平台产品id
         String platformSpuNo = detailEntity.getPlatformSpuNo();
 
-        SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO = new SkuMappingDTO.AddSkuMappingDTO();
+        SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
         String skuNo = skuEntity.getSkuNo();
-        addSkuMappingDTO.setProductName(skuEntity.getName());
-        addSkuMappingDTO.setProductSkuId(skuEntity.getId());
-        addSkuMappingDTO.setProductSkuNo(skuNo);
-        addSkuMappingDTO.setShopId(soB2cEntity.getShopId());
+        updateSkuMappingDTO.setProductName(skuEntity.getName());
+        updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
+        updateSkuMappingDTO.setProductSkuNo(skuNo);
         String typeCode = RuleTypeEnum.PLATFORM.getCode();
-        addSkuMappingDTO.setType(RuleTypeEnum.PLATFORM);
         String salesPlatform = soB2cEntity.getDictPlatform();
-        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(salesPlatform);
-        String salesPlatformName = Objects.nonNull(platformDictEnum) ? platformDictEnum.getName() : "";
-        addSkuMappingDTO.setDictPlatform(salesPlatform);
-        addSkuMappingDTO.setPlatformName(salesPlatformName);
         ListingInfoEntity listingInfo = listingInfoService.getByPlatformSkuNoAndSpu(platformSkuNo, platformSpuNo, typeCode);
         if (Objects.isNull(listingInfo)) {
             throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
         }
-        addSkuMappingDTO.setListingId(listingInfo.getId());
+        updateSkuMappingDTO.setListingId(listingInfo.getId());
 
         detailEntity.setSkuId(skuId);
         detailEntity.setSkuNo(skuNo);
         soB2cDetailService.updateById(detailEntity);
-        //添加对应关系
-        return skuMappingService.add(addSkuMappingDTO);
+        //对应关系
+        return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
 
     }
 

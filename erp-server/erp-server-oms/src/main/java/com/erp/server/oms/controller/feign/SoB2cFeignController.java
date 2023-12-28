@@ -41,8 +41,7 @@ public class SoB2cFeignController extends BaseController {
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
 
-    @Resource
-    private SoB2cRefService soB2cRefService;
+
 
 
     /**

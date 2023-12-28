@@ -253,11 +253,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //生成销售出库单
             soOutstockService.generateB2cSoOutstock(entity.getSourceId());
-
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
         } catch (Exception e) {
             message = e.getMessage();
-
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(type);
             addError.setParamJson(paramJson);
@@ -268,11 +269,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
-
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), message);
+        return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
 
     }
 

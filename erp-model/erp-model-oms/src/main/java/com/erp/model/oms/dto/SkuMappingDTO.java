@@ -1040,15 +1040,7 @@ public class SkuMappingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddSkuMappingDTO {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-        /**
-         * 平台名称
-         */
-        private String platformName;
+    public static class UpdateSkuMappingDTO {
         /**
          * 产品sku id
          */
@@ -1058,34 +1050,21 @@ public class SkuMappingDTO implements Serializable {
          */
         private String productSkuNo;
 
-        /**
-         * 平台
-         */
-        private String dictPlatform;
 
         /**
          * 产品名称
          */
         private String productName;
 
-        /**
-         * 类型
-         */
-        private RuleTypeEnum type;
+
 
         /**
          *
          */
         private String listingId;
-        /**
-         * 仓库名称
-         */
-        private String warehouseName;
 
-        /**
-         * 仓库名称
-         */
-        private String warehouseId;
+
+
 
 
     }

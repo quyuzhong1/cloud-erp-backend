@@ -182,11 +182,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     SkuMappingEntity getByAttribute(String productSkuId, String warehouseId, RuleTypeEnum warehouseType);
 
     /**
-     * 添加映射
-     * @param addSkuMappingDTO
+     * 修改
+     * @param dto
      * @return
      */
-    Boolean add(SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO);
+    Boolean updateSkuMapping(SkuMappingDTO.UpdateSkuMappingDTO dto);
 
 
     /**
@@ -220,4 +220,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     void deleteAll(String id, ListingInfoEntity listingInfoEntity);
 
     PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
+
+
 }
