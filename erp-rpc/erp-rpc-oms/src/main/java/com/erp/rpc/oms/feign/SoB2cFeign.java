@@ -59,10 +59,25 @@ public interface SoB2cFeign {
     SoB2cEntity getById(@RequestParam("soId") String soId);
 
     /**
-     * 更改销售订单已发货
+     * 获取销售出库的需要的参数 根据销售code
+     */
+    @PostMapping("/feign/soB2c/getSoOutstockInfoByCode")
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoByCode(@RequestBody String code);
+
+    /**
+     * 取销售出库的需要的参数 根据销售单id
+     */
+    @PostMapping("/feign/soB2c/getSoOutstockInfoById")
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(@RequestBody String soId);
+
+    /**
+     * 获取销售出库的需要的参数
      */
     @PostMapping("/feign/soB2c/orderShipped")
-    SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId);
+    Boolean orderShipped(@RequestBody String soId);
+
+
+
 
     /**
      * 根据b2c订单id查询详情信息
@@ -151,5 +166,16 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateSoB2cStatus")
     Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status);
+
+
+    /**
+     * 获取销售订单物流渠道
+     * @Author yl
+     * @Date 2023/12/28 11:29
+     * @param channelId
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/listSoB2cLogisticsByChannelId")
+    List<SoB2cLogisticsEntity> listSoB2cLogisticsByChannelId(@RequestBody String channelId);
 
 }

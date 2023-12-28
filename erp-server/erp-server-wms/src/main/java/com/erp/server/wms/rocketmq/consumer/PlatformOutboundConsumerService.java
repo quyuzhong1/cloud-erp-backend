@@ -70,11 +70,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
         if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             //这个是B2c销售订单id
-            String soB2cId=dto.getReferenceNo();
+            String soB2cCode=dto.getReferenceNo();
            try {
-               soOutstockService.generateB2cSoOutstock(soB2cId);
+               soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
            }catch (Exception e){
-             log.error("销售订单{} 生成销售出库单失败>>>>>>{}",soB2cId,e.getMessage());
+             log.error("销售订单{} 生成销售出库单失败>>>>>>{}",soB2cCode,e.getMessage());
            }
 
         }

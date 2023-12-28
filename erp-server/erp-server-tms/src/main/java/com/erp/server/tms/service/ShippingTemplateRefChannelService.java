@@ -52,4 +52,14 @@ public interface ShippingTemplateRefChannelService extends SuperService<Shipping
      *@date 2023-11-15
      */
     void addRef(String channelId, String templateId);
+
+    /**
+     * 删除渠道与模板信息
+     * @description
+     * @param channelIdList
+     * @author Lambda
+     * @return 
+     * @create 2023-12-27 20:14
+     */
+    void removeRef(List<String> channelIdList);
 }

@@ -1,29 +1,20 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.ShippingRegionCityEntity;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
 import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.server.tms.mapper.ShippingTemplateRefChannelMapper;
 import com.erp.server.tms.service.ShippingTemplateRefChannelService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <p>
@@ -83,7 +74,15 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
         this.save(entity);
     }
 
-    private void deleteByChannelId(String channelId) {
+    @Override
+    public void removeRef(List<String> channelIdList) {
+         if(CollectionUtils.isNotEmpty(channelIdList)){
+             lambdaUpdate().in(ShippingTemplateRefChannelEntity::getLogisticsChannelId, channelIdList).remove();
+
+         }
+    }
+
+    public void deleteByChannelId(String channelId) {
         lambdaUpdate().eq(ShippingTemplateRefChannelEntity::getLogisticsChannelId, channelId).remove();
     }
 

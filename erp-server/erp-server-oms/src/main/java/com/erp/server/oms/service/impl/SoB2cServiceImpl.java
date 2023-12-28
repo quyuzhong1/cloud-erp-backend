@@ -713,7 +713,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //选择了仓库则更新
         if (StrUtil.isNotBlank(dto.getWarehouseId())) {
             //明细仓库更新
-            soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(),isCover);
+            soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(), isCover);
         }
 
         //订单明细数据
@@ -743,7 +743,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //仓库信息
-        WarehouseDTO.UpdateDTO updateDTO = new  WarehouseDTO.UpdateDTO();
+        WarehouseDTO.UpdateDTO updateDTO = new WarehouseDTO.UpdateDTO();
         if (StrUtil.isNotBlank(dto.getWarehouseId())) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
             if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -1045,9 +1045,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void thirdWarehouseCreateOutStock(String mainId, String code, String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
         ThirdWarehouseCreateOutboundReq createOutboundReq = new ThirdWarehouseCreateOutboundReq();
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(mainId);
-        String secondAddress=receiver.getSecondAddress();
-        String fullAddress=receiver.getFullAddress();
-        String address2=secondAddress+fullAddress;
+        String secondAddress = receiver.getSecondAddress();
+        String fullAddress = receiver.getFullAddress();
+        String address2 = secondAddress + fullAddress;
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
         receiverInfo.setAddress2(address2);
@@ -1776,7 +1776,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getApproveStatus, approveStatus)
                 .set(ApproveStatusEnum.REJECT.getStatus().equals(approveStatus), SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus),SoB2cEntity::getIsMatchOrderRule,Boolean.TRUE)
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), SoB2cEntity::getIsMatchOrderRule, Boolean.TRUE)
                 .update(new SoB2cEntity());
     }
 
@@ -2474,7 +2474,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 approveMsg = "自动审核通过";
             }
             //自动审核通过
-            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg,Boolean.FALSE));
+            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE));
             if (!approve.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_94006);
             }
@@ -2828,6 +2828,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
+
 
     /**
      * 根据 字段获取值
@@ -3365,11 +3366,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto) {
-        SoB2cDTO.PullOrderResultDTO resultDTO=new SoB2cDTO.PullOrderResultDTO();
+        SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         //是否生成销售出库单
-        Boolean isGenerateB2cSoOutstock=Boolean.FALSE;
+        Boolean isGenerateB2cSoOutstock = Boolean.FALSE;
         try {
             oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
         } catch (Exception e) {
@@ -3455,8 +3456,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     throw new ServiceException("soB2c订单更新失败");
                 }
                 //表示是从未发货到发货 就要生成销售出库单
-                if(!oldBillStatus.equals(newBillStatus)&&shippedCode.equals(newBillStatus)){
-                    isGenerateB2cSoOutstock=Boolean.TRUE;
+                if (!oldBillStatus.equals(newBillStatus) && shippedCode.equals(newBillStatus)) {
+                    isGenerateB2cSoOutstock = Boolean.TRUE;
                 }
             }
             resultDTO.setSoB2cEntity(entity);
@@ -3538,23 +3539,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * @param id
      * @return
-     * @description 更改订单为发货 并且生成销售出库单
+     * @description 更改订单为发货
      * @author Lambda
      * @create 2023-12-13 17:49
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoOutstockDTO.GenerateB2cDTO orderShipped(String id) {
+    public Boolean orderShipped(String id) {
+        Boolean updateResult = this.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()).
+                eq(SoB2cEntity::getId, id).update();
+        if(updateResult){
+            String msg = "销售订单已发货";
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
+        }
+         return updateResult;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoByCode(String soCode) {
+
+        SoB2cEntity entity = this.getByCode(soCode);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单");
+        }
+        String id = entity.getId();
+        return this.getSoOutstockInfoById(id);
+
+    }
+
+    @Override
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(String id) {
         SoB2cEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单");
         }
         SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
-        entity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        //更改状态
-        this.updateById(entity);
-        String msg = "销售订单已发货";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "已发货");
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
@@ -3563,9 +3583,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
         dto.setSoCode(entity.getCode());
-        dto.setSourceId(id);
-        dto.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-        dto.setSourceCode(entity.getCode());
+
+        String sourceId = id;
+        String sourceType = SourceTypeEnum.SO_B2C.getCode();
+        String sourceCode = entity.getCode();
+
+        //发货的
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(soB2cDeliveryList)) {
+            sourceId = soB2cDeliveryList.get(0).getId();
+            soB2cDeliveryList.get(0).getId();
+            sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+            sourceCode = soB2cDeliveryList.get(0).getCode();
+        }
+        dto.setSourceId(sourceId);
+        dto.setSourceType(sourceType);
+        dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
         dto.setSellerId(chargeId);
@@ -3604,7 +3637,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoOutstockDetailDTO.AddDTO> wantDetailList = B2cOrderConverter.INSTANCE.convertOutstockDetail(detailList);
         dto.setDetailList(wantDetailList);
         return dto;
+    }
 
+
+    private SoB2cEntity getByCode(String soCode) {
+        return this.lambdaQuery().eq(SoB2cEntity::getCode, soCode).last("LIMIT 1").one();
     }
 
     /**

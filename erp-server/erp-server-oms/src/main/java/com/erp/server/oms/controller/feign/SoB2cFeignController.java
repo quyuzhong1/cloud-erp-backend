@@ -131,6 +131,36 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据code 获取到需要销售出单的数据
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-27 19:54
+     */
+    @PostMapping("/getSoOutstockInfoByCode")
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoByCode(@RequestBody String soCode) {
+        SoOutstockDTO.GenerateB2cDTO result = soB2cService.getSoOutstockInfoByCode(soCode);
+        return result;
+    }
+
+    /**
+     * 根据id 获取到需要销售出单的数据
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-27 19:54
+     */
+    @PostMapping("/getSoOutstockInfoById")
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(@RequestBody String soId) {
+        SoOutstockDTO.GenerateB2cDTO result = soB2cService.getSoOutstockInfoById(soId);
+        return result;
+    }
+
+
+
+    /**
      * 根据b2c订单id查询详情信息
      * @Author Luo_WG
      * @Date 2023/12/19 15:22
@@ -207,5 +237,18 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/updateSoB2cStatus")
     Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status) {
         return soB2cService.updateSoB2cStatus(soB2cIds, status);
+    }
+
+
+    /**
+     * 获取销售订单物流渠道 根据渠道id
+     * @Author yl
+     * @Date 2023/12/27 11:29
+     * @param channelId
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/listSoB2cLogisticsByChannelId")
+    public List<SoB2cLogisticsEntity> listSoB2cLogisticsByChannelId(@RequestBody String channelId) {
+        return soB2cLogisticsService.listByChannelId(channelId);
     }
 }
