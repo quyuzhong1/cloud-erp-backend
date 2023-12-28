@@ -222,18 +222,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private Boolean isMatchLogisticsRule;
 
     /**
-     * 物流面单
-     */
-    @TableField("logistics_waybill")
-    private String logisticsWaybill;
-
-    /**
-     * 配货单
-     */
-    @TableField("distribute_waybill")
-    private String distributeWaybill;
-
-    /**
      * 店铺名称
      */
     @TableField(exist = false)

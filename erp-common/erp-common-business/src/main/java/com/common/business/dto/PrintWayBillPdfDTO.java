@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -13,6 +14,10 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class PrintWayBillPdfDTO {
+    /**
+     * 销售单id
+     */
+    private String soId;
     /**
      * 销售单号
      */

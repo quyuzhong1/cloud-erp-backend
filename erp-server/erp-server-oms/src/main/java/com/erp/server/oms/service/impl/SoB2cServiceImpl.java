@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -17,6 +18,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
@@ -2672,22 +2674,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return map;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
-        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
-            if (StringUtils.isNotBlank(waybillDTO.getLogisticsBase64()) && StringUtils.isNotBlank(waybillDTO.getSoB2cId())) {
-                lambdaUpdate()
-                        .set(SoB2cEntity::getLogisticsWaybill, waybillDTO.getLogisticsBase64())
-                        .eq(SoB2cEntity::getId, waybillDTO.getSoB2cId())
-                        .update();
-            }
-
-        }
-        return Boolean.TRUE;
-    }
-
     /**
      * 添加异常标示
      *
@@ -3765,6 +3751,52 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
         }
         return updateResult;
+    }
+
+    @Override
+    public List<PrintWayBillPdfDTO> printWayBillPdf(List<String> soIds) {
+        List<SoB2cEntity> soB2cEntities = this.listByIds(soIds);
+
+        //查询店铺信息
+        List<String> list = soB2cEntities.stream().map(req -> req.getShopId()).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntities = shopInfoService.listByIds(list);
+
+        //查询买家信息
+        List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cReceiverService.listByMainIds(soIds);
+
+        //物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIds);
+        List<PrintWayBillPdfDTO> resultList = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            PrintWayBillPdfDTO printWayBillPdfDTO = new PrintWayBillPdfDTO();
+            printWayBillPdfDTO.setSoId(soB2cEntity.getId());
+            printWayBillPdfDTO.setSoCode(soB2cEntity.getCode());
+            printWayBillPdfDTO.setAmount(soB2cEntity.getAmount());
+            printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
+            printWayBillPdfDTO.setPrintTime(cn.hutool.core.date.DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
+            //店铺信息
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                printWayBillPdfDTO.setShopName(shopInfoEntity.getName());
+            }
+
+            //买家信息
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
+                printWayBillPdfDTO.setCustomerId(soB2cReceiverEntity.getCustomerId());
+            }
+
+            //物流信息
+            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsEntity)) {
+                printWayBillPdfDTO.setTransportNo(logisticsEntity.getCode());
+                printWayBillPdfDTO.setChannelName(logisticsEntity.getLogisticsChannelName());
+                printWayBillPdfDTO.setWeight(logisticsEntity.getWeight());
+            }
+            resultList.add(printWayBillPdfDTO);
+        }
+
+        return resultList;
     }
 
     /**

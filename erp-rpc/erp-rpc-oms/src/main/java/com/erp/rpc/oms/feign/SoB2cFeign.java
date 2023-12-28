@@ -1,5 +1,8 @@
 package com.erp.rpc.oms.feign;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soB2c")
@@ -91,17 +95,6 @@ public interface SoB2cFeign {
     List<SoB2cDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
 
     /**
-     * 修改销售订单的物流面单字段
-     *
-     * @param waybillDTOList 物流面单
-     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
-     * @Author Luo_WG
-     * @Date 2023/12/19 15:22
-     **/
-    @PostMapping("/feign/soB2c/updateLogisticsWaybill")
-    Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
-
-    /**
      * @param dto
      * @return
      * @description 添加异常订单信息
@@ -167,7 +160,6 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateSoB2cStatus")
     Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status);
 
-
     /**
      * 获取销售订单物流渠道
      * @Author yl
@@ -177,5 +169,15 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/listSoB2cLogisticsByChannelId")
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByChannelId(@RequestBody String channelId);
+
+    /**
+     * 设置打印面单需要的字段
+     * @Author Luo_WG
+     * @Date 2023/12/28 15:37
+     * @param soIds
+     * @return java.util.List<com.common.business.dto.PrintWayBillPdfDTO>
+     **/
+    @PostMapping("/feign/soB2c/printWayBillPdf")
+    List<PrintWayBillPdfDTO> printWayBillPdf(@RequestBody List<String> soIds);
 
 }

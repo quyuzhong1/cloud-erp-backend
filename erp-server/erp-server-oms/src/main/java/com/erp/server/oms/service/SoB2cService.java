@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -385,16 +386,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
 
-
-    /**
-     * 修改销售订单的物流面单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 15:22
-     * @param waybillDTOList 物流面单
-     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
-     **/
-    Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
-
     /**
      * 添加销售订单异常标示
      * @description
@@ -474,4 +465,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+
+    /**
+     * 设置打印面单需要的字段
+     * @Author Luo_WG
+     * @Date 2023/12/28 15:39
+     * @param soIds
+     * @return java.util.List<com.common.business.dto.PrintWayBillPdfDTO>
+     **/
+    List<PrintWayBillPdfDTO> printWayBillPdf(List<String> soIds);
 }

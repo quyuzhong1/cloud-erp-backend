@@ -27,10 +27,7 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.LogisticTrackStatusEnum;
-import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
-import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -56,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -121,6 +119,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
+
+    @Autowired
+    private LogisticsPrintTypeService logisticsPrintTypeService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -737,9 +738,18 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
             //查询是否打印配货单
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-            getLabelVO.setIsPdn(platformEnum.getPrintDelivery());
-//            getLabelVO.setIsPcd(platformEnum.getPrintLabel());
 
+            //查询是否配置自定义
+            List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities = logisticsPrintTypeService.listByChannelIds(Arrays.asList(channelId));
+            LogisticsPrintTypeDTO.ViewDTO logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
+                    .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
+                            && LogisticsLabelTypeEnum.CUSTOM.getCode().equals(req.getLabelType())
+                    ).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity)) {
+                getLabelVO.setIsPdn("N");
+            } else {
+                getLabelVO.setIsPdn(platformEnum.getPrintDelivery());
+            }
 
             //设置渠道编号
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
@@ -771,8 +781,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             waybillDTO.setTransportNo(getLabelVO.getTransportNo());
             waybillDTOList.add(waybillDTO);
         }
-
-        soB2cFeign.updateLogisticsWaybill(waybillDTOList);
         return waybillDTOList;
     }
 }

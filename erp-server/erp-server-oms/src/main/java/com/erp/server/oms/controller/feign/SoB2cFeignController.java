@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -176,19 +177,6 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
-     * 修改销售订单的物流面单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 15:22
-     * @param waybillDTOList 物流面单
-     * @return java.util.List<com.erp.model.oms.entity.SoB2cDetailEntity>
-     **/
-    @PostMapping("/updateLogisticsWaybill")
-    public Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList) {
-        Boolean flag = soB2cService.updateLogisticsWaybill(waybillDTOList);
-        return flag;
-    }
-
-    /**
      * 根据b2c订单id获取买家信息
      * @Author Luo_WG
      * @Date 2023/12/22 9:20
@@ -249,5 +237,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/listSoB2cLogisticsByChannelId")
     public List<SoB2cLogisticsEntity> listSoB2cLogisticsByChannelId(@RequestBody String channelId) {
         return soB2cLogisticsService.listByChannelId(channelId);
+    }
+
+    /**
+     * 设置打印面单需要的字段
+     * @Author Luo_WG
+     * @Date 2023/12/28 15:37
+     * @param soIds
+     * @return java.util.List<com.common.business.dto.PrintWayBillPdfDTO>
+     **/
+    @PostMapping("/printWayBillPdf")
+    public List<PrintWayBillPdfDTO> printWayBillPdf(@RequestBody List<String> soIds) {
+        return soB2cService.printWayBillPdf(soIds);
     }
 }
