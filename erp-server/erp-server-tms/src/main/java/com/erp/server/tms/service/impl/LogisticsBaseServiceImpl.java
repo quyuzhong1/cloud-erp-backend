@@ -24,6 +24,7 @@ import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -69,6 +70,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncSingleChannel(platform);
         }
     }
+
 
     @Override
     public List<LogisticsOrderResponseVO> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
