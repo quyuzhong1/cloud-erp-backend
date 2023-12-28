@@ -132,10 +132,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isNotEmpty(supplierIdList) ? scmTaskFeign.listSupplierSkuPrice(supplierIdList) : Collections.emptyList();
         if (CollectionUtils.isNotEmpty(supplierSkuPriceList)) {
             PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(Objects.nonNull(supplierSkuPrice)){
+                //不含税价=含税价÷（1+税率）
+                actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
+                actualTaxCost = supplierSkuPrice.getTaxPrice();
+            }
 
-            //不含税价=含税价÷（1+税率）
-            actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-            actualTaxCost = supplierSkuPrice.getTaxPrice();
         } else {
             //含税成本
             String actualTaxCostStr = productBaseInfo.getActualTaxCost();

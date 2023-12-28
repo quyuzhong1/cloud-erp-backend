@@ -1082,7 +1082,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 return baseIdDTO;
             }).collect(Collectors.toList());
         }
-        return null;
+        return new ArrayList<>(0);
     }
 
     @Override

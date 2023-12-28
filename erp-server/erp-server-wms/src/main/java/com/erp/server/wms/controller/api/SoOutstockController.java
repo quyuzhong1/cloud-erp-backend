@@ -42,6 +42,9 @@ public class SoOutstockController extends BaseController {
     @Resource
     private SoOutstockService soOutstockService;
 
+
+
+
     /**
      * 获取 tab列表
      *
@@ -52,6 +55,8 @@ public class SoOutstockController extends BaseController {
         List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
     }
+
+
 
     /**
      * 分页列表
