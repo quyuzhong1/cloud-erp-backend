@@ -1078,6 +1078,7 @@ public enum ApiError implements Serializable {
     ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【{}】渠道,【{}】类型的地址为空"),
     ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【{}】渠道,尚未配置销售渠道"),
     PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
+    ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
 
 
 

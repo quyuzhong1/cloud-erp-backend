@@ -76,7 +76,7 @@ public class DeclareProduct implements Serializable {
     @JSONField(name = "sc_item_code")
     private String sc_item_code;
     /**
-     * scItem id
+     * 仓储发货属性代码
      */
     @JSONField(name = "sc_item_id")
     private Long sc_item_id;
@@ -91,7 +91,7 @@ public class DeclareProduct implements Serializable {
     @JSONField(name = "sku_code")
     private String sku_code;
     /**
-     * sku value
+     * sku 属性名称
      */
     @JSONField(name = "sku_value")
     private String sku_value;

@@ -362,4 +362,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return 
      */
     Boolean generateB2cSoOutstock(String b2cSoId);
+
+    /**
+     * 生成B2C销售出库单
+     * @author yl
+     * @date 2023-12-11 16:16
+     * @param soB2cCode 销售订单cdode
+     * @return
+     */
+    Boolean generateB2cSoOutstockByCode(String soB2cCode);
 }

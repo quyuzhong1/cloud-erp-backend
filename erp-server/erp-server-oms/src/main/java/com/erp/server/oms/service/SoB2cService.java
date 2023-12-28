@@ -446,6 +446,26 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO falseDelivery(String id);
 
     /**
+     * 根据销售单code 获取
+     * @description
+     * @param soCode
+     * @author Lambda
+     * @return
+     * @create 2023-12-27 19:55
+     */
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoByCode(String soCode);
+
+    /**
+     * 根据销售订单id 获取销售出库详情
+     * @description
+     * @param soId
+     * @author Lambda
+     * @return
+     * @create 2023-12-28 12:12
+     */
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(String soId);
+
+    /**
      * 修改b2c销售单状态
      * @Author Luo_WG
      * @Date 2023/12/27 20:19

@@ -278,6 +278,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return shippingCalculationDTO;
     }
 
+    @Override
+    public List<SoB2cLogisticsEntity> listByChannelId(String channelId) {
+        return this.lambdaQuery().eq(SoB2cLogisticsEntity::getLogisticsChannelId, channelId).list();
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());

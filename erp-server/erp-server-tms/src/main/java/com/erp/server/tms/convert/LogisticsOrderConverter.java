@@ -487,7 +487,12 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "product_id" ,source = "skuId"),
             @Mapping(target = "product_num" ,source = "quantity"),
             @Mapping(target = "product_weight" ,source = "weight"),
-            @Mapping(target = "child_order_id" ,source = "childOrderId")
+            @Mapping(target = "child_order_id" ,source = "childOrderId"),
+            @Mapping(target = "sc_item_code" ,source = "scItemCode"),
+            @Mapping(target = "sc_item_id" ,source = "scItemId"),
+            @Mapping(target = "sc_item_name" ,source = "scItemName"),
+            @Mapping(target = "sku_code" ,source = "skuCode"),
+            @Mapping(target = "sku_value" ,source = "skuName")
     })
     DeclareProduct orderRequestProductByAliExpress(LogisticsProductVO logisticsProductVO);
     List<DeclareProduct> orderRequestProductByAliExpress(List<LogisticsProductVO> logisticsProductVOList);

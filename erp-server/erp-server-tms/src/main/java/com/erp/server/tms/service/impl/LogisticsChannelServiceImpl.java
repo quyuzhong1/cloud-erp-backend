@@ -12,10 +12,12 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.constant.EnumMessage;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.PaperSizeEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -80,6 +82,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Autowired
     private LogisticsAuthService logisticsAuthService;
 
+    @Autowired
+    private SoB2cFeign soB2cFeign;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -134,6 +139,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.update(channelId, updateDTO.getAddressList());
         //发货限制 黑名单
         logisticsChannelBlacklistService.update(channelId, updateDTO.getBlackList());
+        //模板id
+        String templateId = updateDTO.getShippingTemplateId();
+        //保存模板和渠道的关系表
+        shippingTemplateRefChannelService.addRef(channelId, templateId);
+
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
         operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), msg);
@@ -249,8 +259,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (Objects.isNull(entity)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
+        List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
+        if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
+            new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+        }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
+
+
         removeById(id);
         List<String> channelIdList = Arrays.asList(id);
         //平台物流映射
@@ -261,6 +277,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.removeByChannelIdList(channelIdList);
         //发货限制 黑名单
         logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
+
+        //删除模板和渠道的关系表
+        shippingTemplateRefChannelService.removeRef(channelIdList);
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
@@ -430,14 +449,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);
-        String code="";
-        if(Objects.nonNull(channelEntity)){
+        String code = "";
+        if (Objects.nonNull(channelEntity)) {
             signShipDTO.setChannelId(channelEntity.getId());
-            code=channelEntity.getCode();
+            code = channelEntity.getCode();
             signShipDTO.setCode(code);
         }
-        LogisticsSaleChannelEntity saleChannelEntity=logisticsSaleChannelService.getByCode(code);
-        if(Objects.nonNull(saleChannelEntity)){
+        LogisticsSaleChannelEntity saleChannelEntity = logisticsSaleChannelService.getByCode(code);
+        if (Objects.nonNull(saleChannelEntity)) {
             signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
         }
         return signShipDTO;

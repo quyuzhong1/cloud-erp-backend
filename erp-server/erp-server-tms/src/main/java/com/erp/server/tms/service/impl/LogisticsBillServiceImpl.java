@@ -647,7 +647,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @author Will
      * @date: 2023/11/20 12:27
      */
-    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
+    public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
         try {
             LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
             //渠道关联模板

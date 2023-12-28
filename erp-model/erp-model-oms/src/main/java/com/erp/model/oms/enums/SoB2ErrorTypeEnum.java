@@ -15,6 +15,7 @@ public enum SoB2ErrorTypeEnum {
     SUBMIT_DELIVERY("submitDelivery",  "提交发货异常"),
     SIGN_DELIVERY("signDelivery",  "标记发货异常"),
     GET_LOGISTICS_CODE("getLogisticsCode",  "获取物流单异常"),
+    GENERATE_OUTSTOCK("generateOutstock",  "生成销售出库单"),
     ;
     /**
      * 类型

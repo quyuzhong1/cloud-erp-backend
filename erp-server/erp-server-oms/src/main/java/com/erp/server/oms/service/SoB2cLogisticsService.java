@@ -88,4 +88,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return
      */
     SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(String orderId);
+
+   /**  根据物流渠道查询
+    * @description
+    * @param
+    * @author Lambda
+    * @return
+    * @create 2023-12-28 10:37
+    */
+   List<SoB2cLogisticsEntity> listByChannelId(String channelId);
 }

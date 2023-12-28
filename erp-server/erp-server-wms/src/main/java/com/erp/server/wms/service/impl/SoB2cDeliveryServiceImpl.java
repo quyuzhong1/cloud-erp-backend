@@ -586,11 +586,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     }
                 } else if (SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(printType)) {
 
-                    String distributeWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getDistributeBase64()).findFirst().orElse("");
+                    /*String distributeWaybill = platformWaybill.stream().filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())).map(req -> req.getDistributeBase64()).findFirst().orElse("");
                     if (StringUtils.isNotBlank(distributeWaybill)) {
                         base64List.add(distributeWaybill);
                     }
-
+*/
                     // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
                     LogisticsPrintTypeEntity logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
                             .filter(req -> LogisticsPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(req.getPrintType())
@@ -613,15 +613,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         }
                     }
                     //如果打印配货单，先获取订单的配货单，没有就请求sdk获取
-
-                    String distributeWaybill = platformWaybill.stream()
+                    /*String distributeWaybill = platformWaybill.stream()
                             .filter(req -> req.getSoB2cId().equals(soB2cEntity.getId())
                                     && StringUtils.isNotBlank(req.getDistributeBase64())
                             ).map(req -> req.getDistributeBase64())
                             .findFirst().orElse("");
                     if (StringUtils.isNotBlank(distributeWaybill)) {
                         base64List.add(distributeWaybill);
-                    }
+                    }*/
 
                     // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
                     LogisticsPrintTypeEntity logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
