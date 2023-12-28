@@ -519,6 +519,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @AllArgsConstructor
     public static class PrintLogisticsWaybillDetailDTO {
         /**
+         * 发货单id
+         */
+        private String id;
+        /**
          * 销售单id
          */
         private String soB2cId;

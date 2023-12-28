@@ -503,6 +503,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO> detailList = new ArrayList<>();
             for (SoB2cDeliveryEntity deliveryEntity : collect) {
                 SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO waybillDetailDTO = new SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO();
+                waybillDetailDTO.setId(deliveryEntity.getId());
                 waybillDetailDTO.setSoB2cId(deliveryEntity.getSourceId());
                 waybillDetailDTO.setSoCode(deliveryEntity.getSoCode());
                 waybillDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());

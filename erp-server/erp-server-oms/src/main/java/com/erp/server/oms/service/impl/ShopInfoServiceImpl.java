@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -438,6 +439,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
 
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        shopInfo.setCustomerId(customerInfoEntity.getId());
+        shopInfo.setCustomerCode(customerInfoEntity.getCode());
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");

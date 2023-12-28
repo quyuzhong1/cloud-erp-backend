@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -515,6 +516,12 @@ public class ShopDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 客户的id
+         */
+        @NotBlank(message = "客户的id不能为空")
+        private String customerId;
 
     }
 
