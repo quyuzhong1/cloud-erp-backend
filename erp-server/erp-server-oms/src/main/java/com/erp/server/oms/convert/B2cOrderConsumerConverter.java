@@ -70,6 +70,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseOrgId", source = "oldEntity.warehouseOrgId"),
             @Mapping(target = "warehouseOrgName", source = "oldEntity.warehouseOrgName"),
             @Mapping(target = "warehouseLocation", source = "oldEntity.warehouseLocation"),
+            @Mapping(target = "platformLineNumber", source = "oldEntity.platformLineNumber"),
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
