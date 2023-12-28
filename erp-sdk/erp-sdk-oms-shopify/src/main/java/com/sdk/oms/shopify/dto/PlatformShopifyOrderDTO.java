@@ -132,7 +132,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 付款方式
         orderDTO.setDictPayMethod(dto.getDictPayMethod());
         // 买家备注
-        orderDTO.setBuyerRemark("");
+        String buyerRemark  = "";
+        if (null != sourceOrder.getCustomer()){
+            String note = sourceOrder.getCustomer().getNote();
+            if (StringUtils.isNotBlank(note)){
+                buyerRemark = note;
+            }
+        }
+        orderDTO.setBuyerRemark(buyerRemark);
         // 订单备注
         orderDTO.setRemark(sourceOrder.getNote());
         // 销售组织id
