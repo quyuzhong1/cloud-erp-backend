@@ -30,6 +30,7 @@ import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.server.YanWenService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -110,7 +111,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         boolean isSuccess = true;
         for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
             Integer printRemark = 0;
-            if("Y".equals(logisticsGetLabelVO.getIsPdn())){
+            if(StringUtils.isNotEmpty(logisticsGetLabelVO.getIsPdn()) && "Y".equals(logisticsGetLabelVO.getIsPdn())){
                 printRemark = 1;
             }
             YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()

@@ -145,7 +145,7 @@ public class DsfLogisticsHandlerImplTest {
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
         logisticsQueryVO2.setDeliveryNo("1737775700695322626");
-        logisticsQueryVO2.setPrintRemark(1);
+        logisticsQueryVO2.setIsPdn("Y");
         logisticsQueryVO2.setAuthMap(authMap);
         LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
         logisticsChannelEntity.setCode("D5");
