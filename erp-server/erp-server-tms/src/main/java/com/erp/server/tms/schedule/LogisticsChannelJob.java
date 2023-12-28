@@ -14,6 +14,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -63,12 +64,13 @@ public class LogisticsChannelJob {
     /**
      * 同步物流渠道
      */
-//     @Scheduled(cron = "*/5 * * * * ?")
-    @XxlJob("syncLogisticsChannel")
+     @Scheduled(cron = "*/5 * * * * ?")
+//    @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
         log.info("====全部渠道同步开始=====");
-        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
+//        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
+        LogisticsPlatformEnum[] platformEnums = {LogisticsPlatformEnum.WALMART};
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
             //跳过track123
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;

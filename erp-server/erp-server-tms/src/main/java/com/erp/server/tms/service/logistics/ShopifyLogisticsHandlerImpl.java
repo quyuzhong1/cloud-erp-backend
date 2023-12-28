@@ -57,61 +57,6 @@ public class ShopifyLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
 
     /**
-     * 创建订单
-     */
-    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return null;
-    }
-
-    /**
-     * 订单数据整理
-     */
-    private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO) {
-        return null;
-    }
-
-    /**
-     * 确认订单
-     */
-    @Override
-    public ApiResult<List<ConfirmResponseVO>> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
-        return null;
-    }
-
-    /**
-     * 取消订单
-     */
-    @Override
-    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsQueryVOS) {
-        return null;
-    }
-
-    /**
-     * 查询订单(批量)
-     */
-    @Override
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        return null;
-    }
-
-
-    /**
-     * 获取标签
-     */
-    @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsGetLabelVOS) throws IOException {
-        return null;
-    }
-
-    /**
-     * 授权判断
-     */
-    @Override
-    public ApiResult<?> authorization(Map<String, String> authMap) {
-        return null;
-    }
-
-    /**
      * 渠道查询
      */
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {

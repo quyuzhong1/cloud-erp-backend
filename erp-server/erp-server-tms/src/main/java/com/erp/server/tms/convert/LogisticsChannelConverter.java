@@ -10,6 +10,7 @@ import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
+import com.sdk.oms.walmart.dto.walmart.WalmartCarriersDTO;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
@@ -216,4 +217,18 @@ public interface LogisticsChannelConverter {
 
 
     List<LogisticsSaleChannelEntity> channelConvertByShopify(List<ShopifyFulfillmentServicesItem> fulfillmentServices);
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "carrierId"),
+            @Mapping(target = "code", source = "carrierId"),
+            @Mapping(target = "cnName", source = "carrierName"),
+            @Mapping(target = "enName", source = "carrierName"),
+            // 渠道状态0正常1.暂停2.已关闭（默认0）
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "logisticsPlatform", constant = "Walmart"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByWalmart(WalmartCarriersDTO.Carrier logisticsChannel);
+
+    List<LogisticsSaleChannelEntity> channelConvertByWalmart(List<WalmartCarriersDTO.Carrier> carrierList);
 }
