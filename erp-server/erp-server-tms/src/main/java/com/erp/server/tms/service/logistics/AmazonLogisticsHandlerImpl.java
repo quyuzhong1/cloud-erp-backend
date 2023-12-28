@@ -44,21 +44,6 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.AMAZON)
 public class AmazonLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
-    /**
-     * 创建订单
-     *
-     */
-    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return null;
-    }
-
-    /**
-     * 订单数据整理
-     *
-     */
-    private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO) {
-        return null;
-    }
 
     /**
      * 确认订单
@@ -84,10 +69,6 @@ public class AmazonLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        return null;
-    }
-
-    private ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
         return null;
     }
 

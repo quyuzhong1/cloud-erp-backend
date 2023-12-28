@@ -8,6 +8,8 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
@@ -198,4 +200,20 @@ public interface LogisticsChannelConverter {
     BaseChildDTO.ListChildTreeDTO convertTree(LogisticsChannelEntity entity);
      List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsChannelEntity> channelList);
 
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "id"),
+            @Mapping(target = "code", source = "id"),
+            @Mapping(target = "cnName", expression = "java(cn.hutool.core.util.StrUtil.format(\"{}【{}】\",logisticsChannel.getName(),logisticsChannel.getId()))"),
+            @Mapping(target = "enName", source = "name"),
+            // 渠道状态0正常1.暂停2.已关闭（默认0）
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "logisticsPlatform", constant = "Shopify"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByShopify(ShopifyFulfillmentServicesItem logisticsChannel);
+
+
+
+    List<LogisticsSaleChannelEntity> channelConvertByShopify(List<ShopifyFulfillmentServicesItem> fulfillmentServices);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,6 +63,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncShoppeeChannel(platform);
         } else if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)) {
             return syncAliExpressChannel(platform);
+        } else if (LogisticsPlatformEnum.SHOPIFY.getCode().equalsIgnoreCase(platform)) {
+            return syncShopifyChannel(platform);
         } else {
             return syncSingleChannel(platform);
         }
@@ -338,6 +340,51 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 }
             }
         }
+        log.info("{}渠道同步结束", platform);
+        return batchResultDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> syncShopifyChannel(String platform) {
+        log.info("{}渠道同步开始", platform);
+        ApiResult<List<ShopAuthEntity>> result = shopInfoFeign.getAuthShopByPlatformType(platform);
+
+        if (Objects.isNull(result)) {
+            log.warn("{}渠道同步结束:查询已授权店铺为空", platform);
+            return Collections.emptyList();
+        }
+        if (!result.isSuccess()){
+            log.warn("{}渠道同步结束：查询已授权店铺异常：result={}", platform, JSONUtil.toJsonStr(result));
+            return Collections.emptyList();
+        }
+        List<ShopAuthEntity> data = result.getData();
+        if (CollectionUtils.isEmpty(data)){
+            log.warn("{}渠道同步结束:无已授权店铺", platform);
+            return Collections.emptyList();
+        }
+
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
+        LogisticsService service = logisticsRegistry.getHandler(platform);
+        for (ShopAuthEntity shopAuthEntity : data) {
+            ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
+            Map<String, String> authMap = new HashMap<>();
+            authMap.put("shopId", shopAuthEntity.getShopId());
+            chanelQueryVO.setAuthMap(authMap);
+            ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+            //先暂停该渠道数据，然后进行更新动作
+            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
+            if (channels.isSuccess()) {
+                channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
+                    logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+                });
+                batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), "同步成功"));
+            } else {
+                batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), channels.getMsg()));
+                log.error(channels.getMsg());
+            }
+        }
+
         log.info("{}渠道同步结束", platform);
         return batchResultDTOS;
     }
