@@ -817,7 +817,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
         }
-        return BatchResultDTO.fail(entity.getId(), "", message);
+        return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
     }
 
     /**
