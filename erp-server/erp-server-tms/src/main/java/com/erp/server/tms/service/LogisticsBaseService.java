@@ -69,4 +69,10 @@ public interface LogisticsBaseService {
      * @return
      */
     List<BatchResultDTO> syncSingleChannel(String platform);
+    /**
+     * 同步Shopify渠道
+     * @param platform
+     * @return
+     */
+    List<BatchResultDTO> syncShopifyChannel(String platform);
 }

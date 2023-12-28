@@ -1,10 +1,8 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.*;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -28,9 +26,9 @@ import java.util.*;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
-public class AmazonLogisticsHandlerImplTest {
+public class ShopifyLogisticsHandlerImplTest {
     @Resource
-    private AmazonLogisticsHandlerImpl amazonLogisticsHandler;
+    private ShopifyLogisticsHandlerImpl shopifyLogisticsHandler;
     @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
 
@@ -39,13 +37,14 @@ public class AmazonLogisticsHandlerImplTest {
 
     @Test
     public void getChannel() {
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = amazonLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = shopifyLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
         System.out.println(channel);
     }
 
     @Test
     public void createChannelData() {
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = amazonLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
+        authMap.put("shopId", "1729456380676411394");
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = shopifyLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
         List<LogisticsSaleChannelEntity> entityList = channel.getData();
         entityList.forEach(logisticsSaleChannelEntity -> {
             logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
