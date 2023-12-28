@@ -28,9 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -60,7 +62,14 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+        List<ShopInfoEntity> shopInfoEntityList = dto.getShopInfoEntityList();
+        ShopInfoEntity shopInfo;
+        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+            shopInfo = shopInfoService.getById(dto.getShopId());
+        } else {
+            shopInfo = shopInfoEntityList.get(0);
+        }
+
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException("店铺不存在");
         }
