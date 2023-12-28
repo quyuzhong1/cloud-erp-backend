@@ -87,17 +87,6 @@ public interface SoB2cFeign {
     Boolean updateLogisticsWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
-     * 修改销售订单的配货单字段
-     *
-     * @param waybillDTOList 配货单
-     * @return java.lang.Boolean
-     * @Author Luo_WG
-     * @Date 2023/12/19 17:18
-     **/
-    @PostMapping("/feign/soB2c/updateDistributeWaybill")
-    Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList);
-
-    /**
      * @param dto
      * @return
      * @description 添加异常订单信息

@@ -276,19 +276,6 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 打印配货单
-     *
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintDistributionDTO>>
-     * @Author Luo_WG
-     * @Date 2023/12/14 9:18
-     **/
-    @PostMapping("/printDistribution")
-    public ApiResult<List<SoB2cDeliveryDTO.PrintDistributionDTO>> printDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cDeliveryService.printDistribution(dto.getIds()));
-    }
-
-    /**
      * 打印物流面单确认
      *
      * @param dto

@@ -160,19 +160,6 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
-     * 修改销售订单的配货单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 17:18
-     * @param waybillDTOList 配货单
-     * @return java.lang.Boolean
-     **/
-    @PostMapping("/updateDistributeWaybill")
-    public Boolean updateDistributeWaybill(@RequestBody List<SoB2cDTO.WaybillDTO> waybillDTOList) {
-        Boolean flag = soB2cService.updateDistributeWaybill(waybillDTOList);
-        return flag;
-    }
-
-    /**
      * 根据b2c订单id获取买家信息
      * @Author Luo_WG
      * @Date 2023/12/22 9:20

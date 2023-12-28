@@ -2687,21 +2687,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.TRUE;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList) {
-        for (SoB2cDTO.WaybillDTO distributeWaybillDTO : waybillDTOList) {
-            if (StringUtils.isNotBlank(distributeWaybillDTO.getDistributeBase64()) && StringUtils.isNotBlank(distributeWaybillDTO.getSoB2cId())) {
-                lambdaUpdate()
-                        .set(SoB2cEntity::getDistributeWaybill, distributeWaybillDTO.getDistributeBase64())
-                        .eq(SoB2cEntity::getId, distributeWaybillDTO.getSoB2cId())
-                        .update();
-            }
-        }
-        return Boolean.TRUE;
-    }
-
     /**
      * 添加异常标示
      *

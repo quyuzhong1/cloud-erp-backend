@@ -396,15 +396,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean updateLogisticsWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
 
     /**
-     * 修改销售订单的配货单字段
-     * @Author Luo_WG
-     * @Date 2023/12/19 17:18
-     * @param waybillDTOList 配货单
-     * @return java.lang.Boolean
-     **/
-    Boolean updateDistributeWaybill(List<SoB2cDTO.WaybillDTO> waybillDTOList);
-
-    /**
      * 添加销售订单异常标示
      * @description
      * @param id

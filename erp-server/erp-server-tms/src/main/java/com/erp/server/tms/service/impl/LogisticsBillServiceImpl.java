@@ -745,6 +745,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
             LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
             entity.setCode(channelEntity.getCode());
+            getLabelVO.setLogisticsSaleChannelEntity(entity);
             labelVOArrayList.add(getLabelVO);
 
             ApiResult<List<LogisticsPrintLabelResponse>> labelList = null;
@@ -764,6 +765,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
 
             waybillDTO.setLogisticsBase64(labelList.getData().get(0).getBase64());
+            waybillDTO.setDistributeBase64(labelList.getData().get(0).getBase64());
             waybillDTO.setSoB2cId(dto.getB2cSoId());
             waybillDTO.setTrackNo(getLabelVO.getTrackNo());
             waybillDTO.setTransportNo(getLabelVO.getTransportNo());
@@ -771,7 +773,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
 
         soB2cFeign.updateLogisticsWaybill(waybillDTOList);
-        soB2cFeign.updateDistributeWaybill(waybillDTOList);
         return waybillDTOList;
     }
 }
