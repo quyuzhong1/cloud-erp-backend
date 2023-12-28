@@ -15,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -231,12 +232,15 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(item.getQuantityOrdered());
-        // 单价
+        // item总价
         Money itemPrice = item.getItemPrice();
-        detailDTO.setPrice(new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
         // 金额
-        BigDecimal amount = detailDTO.getPrice().multiply(BigDecimal.valueOf(item.getQuantityOrdered()));
-        detailDTO.setAmount(amount);
+        detailDTO.setAmount(new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
+
+        BigDecimal price = detailDTO.getAmount().divide(BigDecimal.valueOf(item.getQuantityOrdered()), 2, RoundingMode.DOWN);
+        // 单价
+        detailDTO.setPrice(price);
+
         // 币别（原币）
         detailDTO.setCurrency(null == itemPrice ? "" : itemPrice.getCurrencyCode());
         // 汇率
