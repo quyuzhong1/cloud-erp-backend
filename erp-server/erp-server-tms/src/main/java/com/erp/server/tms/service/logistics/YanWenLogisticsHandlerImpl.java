@@ -109,9 +109,13 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<LogisticsPrintLabelResponse> result = new ArrayList<>();
         boolean isSuccess = true;
         for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
+            Integer printRemark = 0;
+            if("Y".equals(logisticsGetLabelVO.getIsPdn())){
+                printRemark = 1;
+            }
             YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
                     .waybillNumber(logisticsGetLabelVO.getTransportNo())
-                    .printRemark(logisticsGetLabelVO.getPrintRemark())
+                    .printRemark(printRemark)
                     .build();
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             try {
