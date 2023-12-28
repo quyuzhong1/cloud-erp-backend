@@ -25,6 +25,7 @@ import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -320,7 +321,7 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:cancel",
+            menuCode = "wms:fbaDelivery:cancelProcess",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "头程发货单撤销")
@@ -544,5 +545,26 @@ public class FirstMileDeliveryController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 下载装箱模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
+    @GetMapping("/downloadPackingTemplate")
+    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+        firstMileDeliveryService.downloadPackingTemplate(response);
+        return success();
+    }
 
+
+    /**
+     * 导入
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
+    @PostMapping("/importPacking")
+    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = firstMileDeliveryService.importFile(excelFile, response);
+        return result == true ? success() : failure();
+    }
 }

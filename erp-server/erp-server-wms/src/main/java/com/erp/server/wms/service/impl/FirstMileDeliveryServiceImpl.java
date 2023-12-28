@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.enums.CellExtraTypeEnum;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -20,8 +22,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -31,9 +32,9 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
+import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -43,7 +44,9 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.groovy.runtime.typehandling.BigDecimalMath;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +66,8 @@ import com.common.core.utils.date.DateUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -71,6 +76,8 @@ import java.util.*;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * <p>
  * 发货单 服务实现类
@@ -1179,6 +1186,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return lambdaQuery().in(FirstMileDeliveryEntity::getSourceId, sourceIds).list();
     }
 
+    @Override
+    public List<FirstMileDeliveryEntity> listByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FirstMileDeliveryEntity::getCode, codes).list();
+    }
+
     /**
     * 分页查询、导出 数据处理
     */
@@ -1575,6 +1590,31 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .one();
     }
 
+    @Override
+    public void downloadPackingTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/packing.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("packing downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+
+
     /**
      * 删除原装箱信息
      * @param id
@@ -1604,4 +1644,82 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        // 读取 Excel 文件
+        PackingExcelListener listener = new PackingExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PackingExcelDTO.class, listener).extraRead(CellExtraTypeEnum.MERGE).sheet(0).doRead();
+        }catch (ExcelAnalysisException excelAnalysisException){
+            throw new ServiceException(excelAnalysisException.getMessage());
+        } catch (Exception e) {
+            log.error("excel导入错误", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<PackingExcelDTO> packingExcelDTOList = listener.getPackingExcelDTOList();
+        List<PackingExcelDTO> errorList = listener.getErrorList();
+        //过滤掉错误数据
+        Set<String> errorCodeSet = errorList.stream().map(PackingExcelDTO::getCode).collect(Collectors.toSet());
+        packingExcelDTOList = packingExcelDTOList.stream().filter(v->!errorCodeSet.contains(v.getCode())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(packingExcelDTOList)){
+            //根据发货单分组
+            Map<String,List<PackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(PackingExcelDTO::getCode));
+            map.forEach((key,value)->{
+                FirstMileDeliveryEntity firstMileDeliveryEntity = this.listByCodes(Collections.singletonList(key)).get(0);
+                FirstMileDeliveryDTO.FirstMileCartonAdd dto = new FirstMileDeliveryDTO.FirstMileCartonAdd();
+                dto.setId(firstMileDeliveryEntity.getId());
+                dto.setCode(key);
+                List<FirstMileCartonDTO.AddDTO> firstMileCartonList = new ArrayList<>();
+                //根据箱号分组
+                Map<Integer,List<PackingExcelDTO>> boxMap = value.stream().collect(Collectors.groupingBy(PackingExcelDTO::getBoxNo));
+                boxMap.forEach((boxKey,valByBox)->{
+                    FirstMileCartonDTO.AddDTO addDTO = new FirstMileCartonDTO.AddDTO();
+                    addDTO.setBoxSpecNo(boxKey);
+                    addDTO.setBoxLength(valByBox.get(0).getSingleBoxLength());
+                    addDTO.setBoxWidth(valByBox.get(0).getSingleBoxWidth());
+                    addDTO.setBoxHeight(valByBox.get(0).getSingleBoxHeight());
+                    addDTO.setPackageWeight(valByBox.get(0).getSingleBoxWeight());
+                    addDTO.setBoxQty(1);
+                    List<FirstMileCartonDetailDTO.AddDTO> detailList = FirstMileDeliveryConverter.INSTANCE.importToPackingSku(valByBox);
+                    addDTO.setDetailList(detailList);
+                    firstMileCartonList.add(addDTO);
+                });
+                dto.setFirstMileCartonList(firstMileCartonList);
+                if(!this.packingSave(dto)){
+                    throw new ServiceException("保存装箱信息失败");
+                }
+                //如果已下推海外仓入库单，需要更新海外仓的数据
+                //查询是否下推了入库单
+                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(firstMileDeliveryEntity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
+                if (Objects.nonNull(inboundEntity)) {
+                    //用目的仓查询是否绑定第三方仓
+                    List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(firstMileDeliveryEntity.getDestWarehouseId()));
+
+                    //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
+                    if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
+                        // 查询发货目的仓平台
+                        OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(firstMileDeliveryEntity.getDestWarehouseId());
+                        //查询发货详情
+                        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
+                        ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
+                        if (200 != resultInfo.getCode()) {
+                            log.error("改第三方仓库装箱信息失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                            throw new ServiceException("修改第三方仓库装箱信息失败:" + resultInfo.getMsg());
+                        }
+
+                    }
+                }
+            });
+        }
+        if (!errorList.isEmpty()) {
+            String fileName = "装箱错误数据";
+            ExcelUtil.export(fileName, "error", errorList, PackingExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return true;
+    }
+
 }
+
