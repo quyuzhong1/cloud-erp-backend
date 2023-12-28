@@ -217,7 +217,7 @@ public class SoB2cFeignController extends BaseController {
      * @param status
      * @return java.lang.Boolean
      **/
-    @PostMapping("/feign/soB2c/updateSoB2cStatus")
+    @PostMapping("/updateSoB2cStatus")
     Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status) {
         return soB2cService.updateSoB2cStatus(soB2cIds, status);
     }
