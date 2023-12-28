@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
+import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -691,11 +692,6 @@ public class SoB2cDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         * 来源订单id
-         */
-        private String sourceId;
-
-        /**
          * 来源类型
          */
         private String sourceType;
@@ -722,6 +718,12 @@ public class SoB2cDTO implements Serializable {
         @NotEmpty(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.AddDTO> detailList;
+
+        /**
+         * SoB2cOptionTypeEnum枚举（拆分、合并）
+         */
+        private SoB2cOptionTypeEnum operateType;
+
     }
 
     /**

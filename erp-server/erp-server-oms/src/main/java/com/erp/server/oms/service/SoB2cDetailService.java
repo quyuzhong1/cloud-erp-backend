@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -27,11 +28,11 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @description: 新增
      * @author Will
      * @date: 2023/8/21 17:13
-     * @param detailList
+     * @param addDTO
      * @param mainId
      * @return Boolean
      */
-    Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId);
+    Boolean add(SoB2cDTO.AddDTO addDTO, String mainId);
     /**
      * @description: 修改
      * @author Will

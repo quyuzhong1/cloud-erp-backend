@@ -11,14 +11,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -75,18 +73,27 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     private SoB2cService soB2cService;
 
     @Resource
-    private ListingInfoService listingInfoService;
+    private SoB2cRefService soB2cRefService;
 
     @Override
-    public Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId) {
+    public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
+        List<SoB2cDetailDTO.AddDTO> detailList = addDTO.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
         }
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
+
+        //主表信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
+        if (ObjectUtils.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
         //处理明细中的数据id
-        handleDetailList(list,mainId,Boolean.TRUE);
+        handleDetailList(list,soB2cEntity,Boolean.TRUE);
         //批量新增
         boolean flag = this.saveBatch(list);
+        //新增拆分订单关联关系
+        addSoB2cRef(addDTO,list,soB2cEntity);
         return flag;
     }
 
@@ -107,8 +114,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
 
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
+        //主表信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
+        if (ObjectUtils.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
         //处理明细中的数据id
-        handleDetailList(list,mainId,Boolean.FALSE);
+        handleDetailList(list,soB2cEntity,Boolean.FALSE);
         return this.saveOrUpdateBatch(list);
     }
 
@@ -419,16 +431,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      * @author Will
      * @date: 2023/8/22 11:06
      * @param list
-     * @param mainId
      * @param isAdd
      */
-    private void handleDetailList (List<SoB2cDetailEntity> list,String mainId,Boolean isAdd) {
-
-        //主表信息
-        SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
-        if (ObjectUtils.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-        }
+    private void handleDetailList (List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity,Boolean isAdd) {
 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -464,7 +469,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            detailEntity.setMainId(mainId);
+            detailEntity.setMainId(soB2cEntity.getId());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setCurrency(soB2cEntity.getCurrency());
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
@@ -518,8 +523,41 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SoB2cDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //新增不需要添加新增SKU的日志
         if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(soB2cEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.SO_B2C.getCode(), addPairList, "编辑操作");
         }
+    }
+
+    /**
+     * @description: 新增b2c关联信息
+     * @author Will
+     * @date: 2023/12/28 11:36
+     * @param addDTO
+     * @param list
+     * @param soB2cEntity
+     */
+    private void addSoB2cRef (SoB2cDTO.AddDTO addDTO,List<SoB2cDetailEntity> list,SoB2cEntity soB2cEntity) {
+        if (ObjectUtils.isEmpty(addDTO.getOperateType())) {
+            return;
+        }
+        List<SoB2cRefDTO.AddDTO> refList = new ArrayList<>();
+        List<String> operateDetailIdList = list.stream().map(SoB2cDetailEntity::getOperateDetailId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> operateDetailList = this.listByIds(operateDetailIdList);
+
+        for (SoB2cDetailEntity detailEntity :list) {
+            SoB2cRefDTO.AddDTO addRefDTO = new SoB2cRefDTO.AddDTO();
+            String sourceId = operateDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getMainId())).orElse("");
+            if (StrUtil.isBlank(sourceId)) {
+                log.error("addSoB2cRef >>>>>> 未找到销售订单明细，detailId = {}",detailEntity.getId());
+                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            }
+            addRefDTO.setSourceId(sourceId);
+            addRefDTO.setTargetId(soB2cEntity.getId());
+            addRefDTO.setSourceDetailId(detailEntity.getOperateDetailId());
+            addRefDTO.setTargetDetailId(detailEntity.getId());
+            addRefDTO.setType(addDTO.getOperateType().getCode());
+            refList.add(addRefDTO);
+        }
+        soB2cRefService.add(refList);
     }
 }

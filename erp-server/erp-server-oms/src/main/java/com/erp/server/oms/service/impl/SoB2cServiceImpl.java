@@ -289,7 +289,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //新增买家信息
         soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
         //新增明细
-        soB2cDetailService.add(addDTO.getDetailList(), soB2cEntity.getId());
+        soB2cDetailService.add(addDTO, soB2cEntity.getId());
         //新增财务信息
         addSoB2cFinance(soB2cEntity);
         //新增订单分类
@@ -1231,12 +1231,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //合并后取最小付款时间
         LocalDateTime payTime = list.stream().map(SoB2cEntity::getPayTime).min((x, y) -> x.compareTo(y)).orElse(null);
         addDTO.setPayTime(payTime);
-
-        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-        addDTO.setSourceId(StrUtil.join(",", ids));
-        String codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        addDTO.setSourceCode(codes);
-
+        addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         //平台订单号
         String platformCode = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getPlatformCode())).map(SoB2cEntity::getPlatformCode).collect(Collectors.joining("*"));
         addDTO.setPlatformCode(platformCode);
@@ -1278,7 +1273,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal weight = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
         logisticsAddDTO.setWeight(weight);
 
-
+        //操作类型
+        addDTO.setOperateType(SoB2cOptionTypeEnum.ENUM_MERGE);
         addDTO.setLogisticsDTO(logisticsAddDTO);
         //买家信息
         SoB2cReceiverDTO.AddDTO receiverAddDTO = new SoB2cReceiverDTO.AddDTO();
@@ -1297,8 +1293,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : soB2cDetailList) {
             SoB2cDetailDTO.AddDTO detailAddDTO = new SoB2cDetailDTO.AddDTO();
             BeanMapperUtils.copy(detailEntity, detailAddDTO);
+            detailAddDTO.setOperateDetailId(detailEntity.getId());
             detailList.add(detailAddDTO);
         }
+        String codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         addDTO.setRemark(StrUtil.format("订单【{}】合并新订单", codes));
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
@@ -1458,10 +1456,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
-
-            addDTO.setSourceId(entity.getId());
-            addDTO.setSourceCode(entity.getCode());
-            addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+            addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
             if (CollectionUtils.isNotEmpty(soB2cRefCategoryList)) {
                 List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).collect(Collectors.toList());
                 addDTO.setCategoryIdList(categoryIdList);
@@ -1484,7 +1479,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDetailDTO.AddDTO addDetailDTO = new SoB2cDetailDTO.AddDTO();
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
-                addDetailDTO.setSourceDetailId(detailEntity.getId());
+                addDetailDTO.setOperateDetailId(detailEntity.getId());
                 detailList.add(addDetailDTO);
                 //累加拆分金额
                 splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiply(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
@@ -1495,7 +1490,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             //基本信息金额
             addDTO.setAmount(MathUtil.multiply(rate, entity.getAmount()));
-
             //预估费用
             logisticsAddDTO.setEstimatedShippingCost(MathUtil.multiply(rate, soB2cLogisticsEntity.getEstimatedShippingCost()));
             //实际费用
@@ -1510,12 +1504,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
+            //操作信息
+            addDTO.setOperateType(SoB2cOptionTypeEnum.ENUM_SPLIT);
+
             //新增拆分后订单
             String code = StrUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = this.add(addDTO, code);
-            String soB2cId = add.getId();
-            //新增拆分订单关联关系
-            soB2cRefService.add(SoB2cOptionTypeEnum.ENUM_SPLIT.getCode(), entity.getId(), soB2cId);
             flag++;
         }
         this.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);

@@ -227,6 +227,10 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private String sourceDetailId;
 
+        /**
+         * 操作明细集合id
+         */
+        private String operateDetailId;
     }
 
     /**
@@ -275,6 +279,11 @@ public class SoB2cDetailDTO implements Serializable {
         @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
         @DecimalMin(value = "0", message = "单价最小值必须大于0")
         private BigDecimal price;
+
+        /**
+         * 来源平台
+         */
+        private String sourcePlatform;
     }
 
 
