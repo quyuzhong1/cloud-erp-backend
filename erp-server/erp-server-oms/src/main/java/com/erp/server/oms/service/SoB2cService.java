@@ -341,7 +341,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return 
      * @create 2023-12-13 17:40
      */
-    SoOutstockDTO.GenerateB2cDTO  orderShipped(String  id);
+    Boolean  orderShipped(String  id);
 
     /** 
      * @description 运费测算后选择物流渠道

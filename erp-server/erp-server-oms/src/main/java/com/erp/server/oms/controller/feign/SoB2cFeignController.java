@@ -125,8 +125,8 @@ public class SoB2cFeignController extends BaseController {
      * @create 2023-12-18 11:09
      */
     @PostMapping("/orderShipped")
-    public SoOutstockDTO.GenerateB2cDTO orderShipped(@RequestBody String soId) {
-        SoOutstockDTO.GenerateB2cDTO result = soB2cService.orderShipped(soId);
+    public Boolean orderShipped(@RequestBody String soId) {
+        Boolean result = soB2cService.orderShipped(soId);
         return result;
     }
 

@@ -1999,7 +1999,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateB2cSoOutstock(String soB2cId) {
-        SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.orderShipped(soB2cId);
+        SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
         Boolean result=createB2cSoOutstock(dto);
         return result;
     }

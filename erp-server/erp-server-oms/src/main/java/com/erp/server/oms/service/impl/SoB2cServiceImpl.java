@@ -3434,7 +3434,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String oldBillStatus = oldEntity.getBillStatus();
             String newBillStatus = dto.getBillStatus();
             // 亚马逊作废保留以前状态
-            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()){
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
                 dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
@@ -3442,7 +3442,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // Shopify作废保留以前状态
             if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getDictPlatform()) &&
-                    ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))){
+                    ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
                 dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
                 dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
@@ -3548,11 +3548,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean orderShipped(String id) {
         Boolean updateResult = this.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()).
                 eq(SoB2cEntity::getId, id).update();
-        if(updateResult){
+        if (updateResult) {
             String msg = "销售订单已发货";
             operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
         }
-         return updateResult;
+        return updateResult;
     }
 
     @Override
@@ -3758,17 +3758,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    @Override
     public Boolean updateSoB2cStatus(List<String> ids, String status) {
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
-        return lambdaUpdate().in(SoB2cEntity::getId, ids)
+        Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
                 .set(SoB2cEntity::getBillStatus, status)
                 .update();
+        String statusName = SoB2cBillStatusEnum.getName(status);
+        String msg = "销售订单状态变更为:" + statusName;
+        for (String id : ids) {
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
+        }
+        return updateResult;
     }
 
     /**
-     * @param entity
+     * @param
      * @return
      * @description 正常订单规则
      * @author Lambda
