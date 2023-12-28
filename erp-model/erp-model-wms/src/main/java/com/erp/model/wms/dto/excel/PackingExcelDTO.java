@@ -3,13 +3,11 @@ package com.erp.model.wms.dto.excel;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * 导入装箱信息Excel数据体
