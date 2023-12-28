@@ -4,11 +4,14 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -52,6 +55,9 @@ public class SoB2cDeliveryController extends BaseController {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     /**
      * 新增
@@ -138,16 +144,25 @@ public class SoB2cDeliveryController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> manualDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cDeliveryService.manualDelivery(id);
             } catch (Exception e) {
-                log.error("发货单 手动发货失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 手动发货失败");
                     resultDTOS.add(result);
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(type);
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(entity.getSourceId());
+                    addError.setMessage(e.getMessage());
+                    soB2cFeign.addSoB2cError(addError);
+                    log.error("发货单 手动发货失败", e);
+
                     continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());

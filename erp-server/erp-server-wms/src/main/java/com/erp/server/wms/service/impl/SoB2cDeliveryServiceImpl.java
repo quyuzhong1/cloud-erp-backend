@@ -207,70 +207,58 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    @GlobalTransactional
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
-        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
-        String message = "";
-        String paramJson = "";
-        String returnJson = "";
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
         //校验是否存在拦截单
         checkIsIntercept(Arrays.asList(entity));
-        try {
-            //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
-            if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
-                    || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
-            ) {
-                throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
-            }
 
-            //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
-            if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
-                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                    //调用第三方平台SDK发货
-                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                    try {
-                        PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
-                    }
-                    paramJson = JSONObject.toJSONString(platformShipOrderDTO);
-                }
-            }
-
-            //修改发货状态
-            this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setType(type);
-            deleteDTO.setMainId(entity.getSourceId());
-            soB2cFeign.deleteError(deleteDTO);
-
-            //生成销售出库单
-            soOutstockService.generateB2cSoOutstock(entity.getSourceId());
-            // 操作日志
-            String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
-        } catch (Exception e) {
-            message = e.getMessage();
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setParamJson(paramJson);
-            addError.setReturnJson(returnJson);
-            addError.setMainId(entity.getSourceId());
-            addError.setMessage(message);
-            soB2cFeign.addSoB2cError(addError);
-            log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
+        //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
+        if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
+        ) {
+            throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
 
-        return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+        //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
+        if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                //调用第三方平台SDK发货
+                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
+                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                try {
+                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
+                }
+            }
+        }
+
+        //修改发货状态
+        this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+
+
+
+        //生成销售出库单
+        soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
+        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(type);
+        deleteDTO.setMainId(entity.getSourceId());
+        soB2cFeign.deleteError(deleteDTO);
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
+
+
+
 
     }
 
@@ -660,10 +648,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> retryFalseDelivery(String soB2cId) {
-        List<BatchResultDTO>  resultList=new ArrayList<>(1);
-        List<SoB2cDeliveryEntity>  soB2cDeliveryList=this.listBySoB2cId(soB2cId);
-        for(SoB2cDeliveryEntity item:soB2cDeliveryList){
-            BatchResultDTO  resultDTO=  this.falseDelivery(item.getId());
+        List<BatchResultDTO> resultList = new ArrayList<>(1);
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
+        for (SoB2cDeliveryEntity item : soB2cDeliveryList) {
+            BatchResultDTO resultDTO = this.falseDelivery(item.getId());
             resultList.add(resultDTO);
         }
         return resultList;
@@ -703,7 +691,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {
-        return this.lambdaQuery().eq(SoB2cDeliveryEntity::getSourceId,soB2cId).list();
+        return this.lambdaQuery().eq(SoB2cDeliveryEntity::getSourceId, soB2cId).list();
     }
 
     /**
@@ -771,7 +759,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String shopId = soB2cEntity.getShopId();
         if (StringUtils.isNotBlank(shopId)) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-            if(Objects.nonNull(shopInfo)){
+            if (Objects.nonNull(shopInfo)) {
                 soB2cDeliveryEntity.setShopName(shopInfo.getName());
             }
         }
@@ -910,11 +898,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 冻结库存
-     * @Author Luo_WG
-     * @Date 2023/12/25 17:47
+     *
      * @param entity
      * @param detailEntityList
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/12/25 17:47
      **/
     private void freezeInventory(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> detailEntityList) {
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
@@ -942,6 +931,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 校验是否存在拦截单
+     *
      * @param list
      */
     private void checkIsIntercept(List<SoB2cDeliveryEntity> list) {

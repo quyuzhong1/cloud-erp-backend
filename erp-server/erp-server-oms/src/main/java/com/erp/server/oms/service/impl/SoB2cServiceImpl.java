@@ -2679,7 +2679,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void addSignError(String id, String sign) {
         this.lambdaUpdate().
                 set(SoB2cEntity::getSignOrderError, sign).
-                eq(SoB2cEntity::getId, id).update();
+                eq(SoB2cEntity::getId, id).update(new SoB2cEntity());
     }
 
     /**

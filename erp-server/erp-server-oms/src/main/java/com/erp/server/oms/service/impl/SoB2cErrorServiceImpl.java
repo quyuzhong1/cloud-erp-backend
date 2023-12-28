@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -33,12 +34,11 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     private SoB2cService soB2cService;
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         BeanMapperUtils.copy(addDTO, soB2cErrorEntity);
-        // 数据处理
-        handleData(soB2cErrorEntity);
         boolean save = super.save(soB2cErrorEntity);
         if(!save) {
             throw new ServiceException("B2C销售订单异常单保存失败");
