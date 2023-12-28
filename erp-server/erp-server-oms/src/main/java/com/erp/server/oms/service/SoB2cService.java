@@ -474,4 +474,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.util.List<com.common.business.dto.PrintWayBillPdfDTO>
      **/
     List<PrintWayBillPdfDTO> printWayBillPdf(List<String> soIds);
+
+    /** 更改订单状态 根据code
+     * @description
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2023-12-28 18:58
+     */
+    Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto);
 }

@@ -1044,8 +1044,6 @@ public class SoB2cDTO implements Serializable {
         private String logisticsTrackNo;
 
 
-
-
     }
 
     /**
@@ -1627,7 +1625,7 @@ public class SoB2cDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PullOrderResultDTO{
+    public static class PullOrderResultDTO {
 
         private SoB2cEntity soB2cEntity;
 
@@ -1639,4 +1637,17 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+
+        private String soCode;
+
+
+        private String billStatus;
+
+    }
 }

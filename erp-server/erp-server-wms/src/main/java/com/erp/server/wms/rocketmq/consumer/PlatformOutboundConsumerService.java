@@ -15,8 +15,10 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +49,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
@@ -60,7 +65,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity, msg);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
@@ -68,14 +73,19 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
-        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
-            //这个是B2c销售订单id
-            String soB2cCode=dto.getReferenceNo();
-           try {
-               soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
-           }catch (Exception e){
-             log.error("销售订单{} 生成销售出库单失败>>>>>>{}",soB2cCode,e.getMessage());
-           }
+        //这个是B2c销售订单code
+        String soB2cCode = dto.getReferenceNo();
+        String billStatus = dto.getOrderStatus();
+        SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
+        updateStatus.setSoCode(soB2cCode);
+        updateStatus.setBillStatus(billStatus);
+        soB2cFeign.updateSoB2cStatusByParams(updateStatus);
+        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
+            try {
+                soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
+            } catch (Exception e) {
+                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
+            }
 
         }
         return ApiResult.success();
@@ -85,10 +95,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台入库消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(StrUtil.format("平台入库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

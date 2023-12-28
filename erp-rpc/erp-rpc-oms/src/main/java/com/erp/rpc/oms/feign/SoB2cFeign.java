@@ -180,4 +180,14 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/printWayBillPdf")
     List<PrintWayBillPdfDTO> printWayBillPdf(@RequestBody List<String> soIds);
 
+
+    /**
+     * 修改b2c销售单状态
+     * @Author yl
+     * @Date 2023/12/27 20:14
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateSoB2cStatusByParams")
+    Boolean updateSoB2cStatusByParams(@RequestBody SoB2cDTO.UpdateStatusDTO dto);
+
 }

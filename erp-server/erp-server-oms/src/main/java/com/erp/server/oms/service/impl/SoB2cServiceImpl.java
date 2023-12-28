@@ -3793,6 +3793,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultList;
     }
 
+    @Override
+    public Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto) {
+        String billStatus=dto.getBillStatus();
+        if(StringUtils.isBlank(dto.getSoCode())){
+             return Boolean.FALSE;
+        }
+        return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
+                set(SoB2cEntity::getBillStatus,billStatus).update(new SoB2cEntity());
+    }
+
     /**
      * @param
      * @return

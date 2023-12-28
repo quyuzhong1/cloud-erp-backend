@@ -250,4 +250,15 @@ public class SoB2cFeignController extends BaseController {
     public List<PrintWayBillPdfDTO> printWayBillPdf(@RequestBody List<String> soIds) {
         return soB2cService.printWayBillPdf(soIds);
     }
+
+    /**
+     * 更改订单状态
+     * @Author yl
+     * @Date 2023/12/28 15:37
+     * @param dto
+     **/
+    @PostMapping("/updateSoB2cStatusByParams")
+    public Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto) {
+        return soB2cService.updateSoB2cStatusByParams(dto);
+    }
 }
