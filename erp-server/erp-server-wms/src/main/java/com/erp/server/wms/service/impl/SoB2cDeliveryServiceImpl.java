@@ -972,7 +972,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         printWayBillPdfDTO.setPrintTime(DateUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
         printWayBillPdfDTO.setShopName(shopInfoEntity.getName());
-        printWayBillPdfDTO.setTransportNo(soB2cEntity.getRemark());
+
         //买家信息
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
@@ -988,21 +988,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         printWayBillPdfDTO.setRemark(soB2cEntity.getRemark());
 
-
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailEntities.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         //查询产品信息
         List<String> skuNoList = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuNoList);
         List<PrintWayBillPdfDetailDTO> wayBillDetailList = new ArrayList<>();
+
         //商品种类个数
         printWayBillPdfDTO.setSkuTotal(soB2cDetailEntityList.size());
+
         //商品件数
         int qtySum = soB2cDetailEntityList.stream().mapToInt(req -> req.getQty()).sum();
         printWayBillPdfDTO.setQtySum(qtySum);
-        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+
+        //详情信息
+        List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(logisticsWaybillDetailDTO.getId()));
+        for (SoB2cDeliveryDetailEntity deliveryDetailEntity : deliveryDetailEntityList) {
             PrintWayBillPdfDetailDTO detailDTO = new PrintWayBillPdfDetailDTO();
-            detailDTO.setQty(soB2cDetailEntity.getQty());
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
+            detailDTO.setQty(deliveryDetailEntity.getDeliveryQty());
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
                 detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
                 if (skuVO.getVariantProperty() == null) {
