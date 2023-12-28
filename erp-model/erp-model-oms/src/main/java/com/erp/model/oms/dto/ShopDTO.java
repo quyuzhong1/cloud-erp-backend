@@ -425,6 +425,21 @@ public class ShopDTO implements Serializable {
          */
         private String warehouseName;
 
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 客户编号
+         */
+        private String customerCode;
+
 
     }
 
@@ -519,6 +534,7 @@ public class ShopDTO implements Serializable {
 
         /**
          * 客户的id
+         * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
         @NotBlank(message = "客户的id不能为空")
         private String customerId;

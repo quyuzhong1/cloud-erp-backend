@@ -560,6 +560,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
+
+        //客户名称
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(shop.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            view.setCustomerName(customerInfoEntity.getName());
+        }
         return view;
     }
 
