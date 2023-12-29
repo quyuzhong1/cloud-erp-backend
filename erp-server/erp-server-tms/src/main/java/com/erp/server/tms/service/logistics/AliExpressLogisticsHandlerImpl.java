@@ -104,6 +104,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             map.put("clientId", finalCfgAppClient.getClientId());
             map.put("url", finalCfgAppClient.getUrl());
             map.put("token", shopAuthEntity.getToken());
+            map.put("shopId", shopAuthEntity.getShopId());
             map.put("orderId", "8182808069884648");
             map.put("childOrderId","8182808069884648");
             mapList.add(map);

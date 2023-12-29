@@ -8,6 +8,7 @@ import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -42,6 +43,7 @@ public interface LogisticsBaseService {
 
     /**
      * 注册物流单号
+     *
      * @param platformType
      * @param records
      * @return
@@ -52,12 +54,15 @@ public interface LogisticsBaseService {
 
     /**
      * 同步虾皮渠道
+     *
      * @param platform
      * @return
      */
     List<BatchResultDTO> syncShoppeeChannel(String platform);
+
     /**
      * 同步虾皮渠道
+     *
      * @param platform
      * @return
      */
@@ -65,14 +70,24 @@ public interface LogisticsBaseService {
 
     /**
      * 同步单一渠道
+     *
      * @param platform
      * @return
      */
     List<BatchResultDTO> syncSingleChannel(String platform);
+
     /**
      * 同步Shopify渠道
+     *
      * @param platform
      * @return
      */
     List<BatchResultDTO> syncShopifyChannel(String platform);
+
+    /**
+     * 速卖通同步物流地址
+     *
+     * @param authMap
+     */
+    void syncLogisticsAddress(Map<String, String> authMap);
 }

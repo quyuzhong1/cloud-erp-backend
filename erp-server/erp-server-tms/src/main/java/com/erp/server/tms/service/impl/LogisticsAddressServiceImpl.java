@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -100,6 +101,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     public Boolean update(LogisticsAddressDTO.UpdateDTO updateDTO) {
         LogisticsAddressEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址单"));
+        if (old.getIsBySync()) throw new ServiceException(ApiError.ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_EDIT);
         LogisticsAddressEntity logisticsAddressEntity = BeanMapperUtils.map(LogisticsAddressEntity.class, updateDTO);
         // 数据处理
         handleData(logisticsAddressEntity);
@@ -167,6 +169,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         LogisticsAddressEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("物流地址"));
+        if (entity.getIsBySync()) throw new ServiceException(ApiError.ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_DEL);
         List<LogisticsChannelEntity> channelList= logisticsChannelService.listByAddressId(id);
         if(CollectionUtils.isNotEmpty(channelList)){
                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST,entity.getName());
@@ -196,7 +199,32 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         return list.stream().filter(a->"all".equals(a.getShopId())).collect(Collectors.toList());
     }
 
+    @Override
+    public void batchSaveOrUpdateLogisticsAddress(List<LogisticsAddressEntity> list) {
+        if (CollectionUtils.isNotEmpty(list)){
+            list.forEach(logisticsAddressEntity -> {
+                //根据地址id 和店铺id 区分数据是否已存在
+                LogisticsAddressEntity logisticsServiceAddress = getLogisticsServiceAddress(logisticsAddressEntity.getAddressId(), logisticsAddressEntity.getShopId());
+                if (Objects.nonNull(logisticsServiceAddress)){
+                    logisticsAddressEntity.setId(logisticsServiceAddress.getId());
+                }
+            });
+            this.saveOrUpdateBatch(list);
+        }
+    }
 
+    private LogisticsAddressEntity getLogisticsServiceAddress(String addressId,String shopId){
+        if (StringUtils.isEmpty(addressId) || StringUtils.isEmpty(shopId)) return null;
+        LambdaQueryWrapper<LogisticsAddressEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(LogisticsAddressEntity::getAddressId, addressId);
+        queryWrapper.eq(LogisticsAddressEntity::getShopId, shopId);
+        List<LogisticsAddressEntity> addressEntities = baseMapper.selectList(queryWrapper);
+        if (CollectionUtils.isNotEmpty(addressEntities)){
+            return addressEntities.get(0);
+        }else {
+            return null;
+        }
+    }
     /**
      * 新增修改处理数据
      */
