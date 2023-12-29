@@ -242,7 +242,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //修改发货状态
         this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
 
-        //修改订单状态待发货
+        //修改订单状态已发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
 
         //生成销售出库单
