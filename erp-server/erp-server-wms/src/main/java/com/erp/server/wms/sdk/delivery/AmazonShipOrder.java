@@ -101,7 +101,7 @@ public class AmazonShipOrder implements IPlatformService {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
         PackageDetail packageDetail = new PackageDetail();
-        packageDetail.setPackageReferenceId(logisticsEntity.getId());
+//        packageDetail.setPackageReferenceId(logisticsEntity.getId());
         packageDetail.setCarrierCode(tmsSignShipDTO.getCode());
         packageDetail.setTrackingNumber(logisticsEntity.getTrackNo());
         // 发货时间
