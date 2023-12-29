@@ -258,7 +258,20 @@ public class SoB2cFeignController extends BaseController {
      * @param dto
      **/
     @PostMapping("/updateSoB2cStatusByParams")
-    public Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto) {
+    public Boolean updateSoB2cStatusByParams(@RequestBody SoB2cDTO.UpdateStatusDTO dto) {
         return soB2cService.updateSoB2cStatusByParams(dto);
+    }
+
+  /**
+   * 获取客户信息
+   * @description
+   * @param soId
+   * @author Lambda
+   * @return
+   * @create 2023-12-29 16:42
+   */
+    @PostMapping("/getB2cCustomerById")
+    public SoB2cDTO.CustomerDTO  getB2cCustomerById(@RequestBody String soId){
+        return soB2cService.getB2cCustomerById(soId);
     }
 }

@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -856,4 +857,10 @@ public class CustomerDTO implements Serializable {
          */
         private Integer count;
     }
+
+
+
+
+
+
 }

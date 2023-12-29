@@ -214,6 +214,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
+    @Autowired
+    private CustomerInfoService customerInfoService;
 
 
     @Override
@@ -3003,6 +3005,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         resultDTO.setIsRuleMatch(result);
         resultDTO.setAutoGetTrackNo(autoGetTrackNo);
         return resultDTO;
+    }
+
+    @Override
+    public SoB2cDTO.CustomerDTO getB2cCustomerById(String soId) {
+        SoB2cEntity soB2cEntity = this.getById(soId);
+        if (Objects.isNull(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        SoB2cDTO.CustomerDTO b2cCustomer = new SoB2cDTO.CustomerDTO();
+        b2cCustomer.setSalesOrgId(soB2cEntity.getOrgId());
+        b2cCustomer.setSalesOrgName(soB2cEntity.getOrgName());
+        //店铺
+        String shopId=soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo=shopInfoService.getById(shopId);
+        SoB2cReceiverEntity receiver=soB2cReceiverService.getByMainId(soId);
+        if(Objects.nonNull(shopInfo)){
+            b2cCustomer.setSellerId(shopInfo.getChargeId());
+            b2cCustomer.setSellerName(shopInfo.getChargeName());
+            b2cCustomer.setCustomerName(shopInfo.getName());
+        }
+        if(Objects.nonNull(receiver)){
+            b2cCustomer.setReceiverAddress(receiver.getFirstAddress());
+            b2cCustomer.setReceiverName(receiver.getReceiverName());
+            b2cCustomer.setTelNumber(receiver.getTelNumber());
+        }
+
+
+        return b2cCustomer;
     }
 
     /**
