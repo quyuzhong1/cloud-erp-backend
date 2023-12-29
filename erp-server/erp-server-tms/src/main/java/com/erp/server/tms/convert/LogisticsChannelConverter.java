@@ -8,6 +8,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
+import com.erp.tms.aliexpress.model.query.response.ServiceResult;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
 import com.sdk.oms.walmart.dto.walmart.WalmartCarriersDTO;
@@ -231,4 +232,18 @@ public interface LogisticsChannelConverter {
     LogisticsSaleChannelEntity channelConvertByWalmart(WalmartCarriersDTO.Carrier logisticsChannel);
 
     List<LogisticsSaleChannelEntity> channelConvertByWalmart(List<WalmartCarriersDTO.Carrier> carrierList);
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "logisticsServiceId"),
+            @Mapping(target = "code", source = "logisticsServiceId"),
+            @Mapping(target = "cnName", source = "warehouseName"),
+//            @Mapping(target = "enName", source = "displayName"),
+            @Mapping(target = "supplierName", source = "logisticsServiceName"),
+            @Mapping(target = "isTrack", constant = "true"),
+            @Mapping(target = "aging", source = "logisticsTimeliness"),
+            @Mapping(target = "logisticsPlatform", constant = "AliExpress"),
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity serviceConvertByAliExpress(ServiceResult serviceResult);
+    List<LogisticsSaleChannelEntity> serviceConvertByAliExpress(List<ServiceResult> serviceResults);
 }

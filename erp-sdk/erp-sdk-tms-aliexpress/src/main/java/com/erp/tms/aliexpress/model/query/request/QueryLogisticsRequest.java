@@ -1,4 +1,4 @@
-package com.erp.tms.aliexpress.model.query;
+package com.erp.tms.aliexpress.model.query.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Builder;

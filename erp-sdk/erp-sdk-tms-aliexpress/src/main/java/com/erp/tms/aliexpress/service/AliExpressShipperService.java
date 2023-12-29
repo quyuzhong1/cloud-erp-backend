@@ -1,9 +1,7 @@
 package com.erp.tms.aliexpress.service;
 
-import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.UUID;
 import com.erp.tms.aliexpress.api.IopClient;
 import com.erp.tms.aliexpress.api.IopClientImpl;
 import com.erp.tms.aliexpress.api.IopRequest;
@@ -12,12 +10,11 @@ import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.domain.Protocol;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
-import com.erp.tms.aliexpress.model.label.response.LabelResult;
 import com.erp.tms.aliexpress.model.order.request.OrderRequest;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.OrderResult;
-import com.erp.tms.aliexpress.model.query.QueryLogisticsRequest;
+import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -203,6 +200,7 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.redefining.getlogisticsselleraddresses");
         request.addApiParameter("seller_address_query", "sender,pickup,refund");
+        request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return response;
@@ -221,6 +219,7 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.service.query");
         request.addApiParameter("interface_request", JSONObject.toJSONString(queryLogisticsRequest));
+        request.addApiParameter("simplify", "true");
 //        request.addApiParameter("interface_request", "{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"sub_order_list\":[{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"},{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"}],\"locale\":\"zh_CN\",\"order_id\":\"8001498863145804\",\"goods_weight\":\"0.1\"}");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
@@ -239,6 +238,7 @@ public class AliExpressShipperService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.merchant.profile.get");
+        request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return response;

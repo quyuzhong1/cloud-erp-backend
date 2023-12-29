@@ -2,7 +2,6 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
@@ -13,7 +12,7 @@ import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.tms.aliexpress.api.IopResponse;
-import com.erp.tms.aliexpress.model.query.QueryLogisticsRequest;
+import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
