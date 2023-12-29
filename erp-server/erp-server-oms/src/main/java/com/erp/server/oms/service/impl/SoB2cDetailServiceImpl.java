@@ -568,7 +568,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         for (SoB2cDetailEntity detailEntity :list) {
             SoB2cRefDTO.AddDTO addRefDTO = new SoB2cRefDTO.AddDTO();
-            String sourceId = operateDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getMainId())).orElse("");
+            String sourceId = operateDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getOperateDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getMainId())).orElse("");
             if (StrUtil.isBlank(sourceId)) {
                 log.error("addSoB2cRef >>>>>> 未找到销售订单明细，detailId = {}",detailEntity.getId());
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
