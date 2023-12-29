@@ -10,9 +10,11 @@ import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.RequisitionApplicationService;
+import com.erp.server.wms.service.SoOutstockService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,6 +57,9 @@ public class SoB2cDeliveryController extends BaseController {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -129,26 +134,44 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 手动发货
+     * 发货
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
      * @Author Luo_WG
      * @Date 2023/12/13 19:25
      **/
-    @PostMapping("/manualDelivery")
+    @PostMapping("/delivery")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:manualDelivery",
+            menuCode = "wms:soB2cDelivery:delivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> manualDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delivery(@RequestBody SoB2cDeliveryDTO.DeliverDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String deliveryType = dto.getType();
+        Boolean isManual = DeliverTypeEnum.MANUAL.getCode().equals(deliveryType);
         String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryService.manualDelivery(id);
+                result = soB2cDeliveryService.delivery(id, deliveryType);
+                Boolean isSuccess = result.getSuccess();
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (isManual) {
+                    //生成销售出库单
+                    if(isSuccess){
+                        //生成销售出库单
+                        soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+                    }
+                }
+                //清状态
+                if(isSuccess){
+                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                    deleteDTO.setType(type);
+                    deleteDTO.setMainId(entity.getSourceId());
+                    soB2cFeign.deleteError(deleteDTO);
+                }
             } catch (Exception e) {
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
@@ -161,8 +184,7 @@ public class SoB2cDeliveryController extends BaseController {
                     addError.setMainId(entity.getSourceId());
                     addError.setMessage(e.getMessage());
                     soB2cFeign.addSoB2cError(addError);
-                    log.error("发货单 手动发货失败", e);
-
+                    log.error("发货单发货失败", e);
                     continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -210,7 +232,6 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 订单标记发货失败后再次触发 ids 为销售订单id
-     *
      *
      * @param dto
      * @return
