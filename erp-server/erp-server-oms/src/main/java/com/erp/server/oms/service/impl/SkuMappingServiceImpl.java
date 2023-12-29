@@ -704,6 +704,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                         SkuMappingEntity finalWarehouseSkuMapping = warehouseSkuMapping;
                         ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(finalWarehouseSkuMapping.getListingId())).findFirst().orElse(null);
                         if (ObjectUtils.isNotEmpty(warehouseListing)) {
+                            listSkuDTO.setWarehouseId(viewDTO.getWarehouseId());
                             listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
                             listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
                         }

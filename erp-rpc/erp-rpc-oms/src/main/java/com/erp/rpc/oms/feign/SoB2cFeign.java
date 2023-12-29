@@ -190,4 +190,12 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateSoB2cStatusByParams")
     Boolean updateSoB2cStatusByParams(@RequestBody SoB2cDTO.UpdateStatusDTO dto);
 
+
+    /**
+     * 获取销售订单客户信息
+     * @param soId
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getB2cCustomerById")
+    SoB2cDTO.CustomerDTO getB2cCustomerById(@RequestBody String soId);
 }

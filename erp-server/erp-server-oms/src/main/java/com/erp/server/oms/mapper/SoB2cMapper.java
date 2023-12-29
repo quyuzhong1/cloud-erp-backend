@@ -29,7 +29,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params);
+    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * 状态数量
@@ -37,7 +37,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
+    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param query
@@ -47,7 +47,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params);
+    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param params
@@ -56,7 +56,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params);
+    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * @param mergeParamDTO
@@ -65,7 +65,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 18:36
      */
-    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO);
+    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * 销售订单统计

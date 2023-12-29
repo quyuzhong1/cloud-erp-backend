@@ -1676,4 +1676,58 @@ public class SoB2cDTO implements Serializable {
         private String billStatus;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthResultDTO {
+
+        /**
+         * 授权类型
+         */
+        private String authType;
+
+        /**
+         * 用户id
+         */
+        private String userId;
+    }
+
+    /**
+     * 客户信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class  CustomerDTO{
+        /**
+         * 收货地址
+         */
+        private String receiverAddress;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 销售员
+         */
+        private  String sellerId;
+
+        private String customerName;
+
+        /**
+         * 销售员
+         */
+        private  String sellerName;
+
+        private String salesOrgId;
+
+        private String salesOrgName;
+    }
 }

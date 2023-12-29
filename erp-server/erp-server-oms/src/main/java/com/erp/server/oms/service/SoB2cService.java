@@ -518,4 +518,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-29 8:41
      */
     SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+
+    /**
+     * 获取客户信息
+     * @description
+     * @param soId
+     * @author Lambda
+     * @return
+     * @create 2023-12-29 16:42
+     */
+    SoB2cDTO.CustomerDTO getB2cCustomerById(String soId);
 }

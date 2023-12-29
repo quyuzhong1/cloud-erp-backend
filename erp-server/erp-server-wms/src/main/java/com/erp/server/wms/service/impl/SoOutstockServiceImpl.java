@@ -27,9 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -402,7 +400,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         ApproveStatusEnum approveStatus = soOutstock.getApproveStatus();
         result.setApproveStatusName(approveStatus.getName());
         List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(Arrays.asList(soOutstock.getCustomerId()));
-
         //国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         if (CollectionUtils.isNotEmpty(countryList) && CollectionUtils.isNotEmpty(customerList)) {
@@ -418,23 +415,37 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         String soId = soOutstock.getSoId();
-        SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
-        if (soInfo != null) {
-            result.setCustomerName(soInfo.getCustomerName());
-            result.setSoCode(soInfo.getCode());
-            result.setSoRemark(soInfo.getSoRemark());
-            result.setReceiveAddress(soInfo.getReceiveAddress());
-            result.setReceiverName(soInfo.getReceiverName());
-            result.setDeliveryModeName(soInfo.getDeliveryModeName());
-            result.setRequireDate(soInfo.getRequireDate());
-            result.setTelNumber(soInfo.getTelNumber());
-            result.setTypeName(soInfo.getOrderTypeName());
-            result.setSellerId(soInfo.getSellerId());
-            result.setSellerName(soInfo.getSellerName());
-            result.setSalesDeptId(soInfo.getSalesDeptId());
-            result.setSalesDeptName(soInfo.getSalesDeptName());
-            result.setSalesOrgName(soInfo.getSalesOrgName());
+        String orderType= soOutstock.getOrderType();
+        String b2b = OrderTypeEnum.B2B.getCode();
+        Boolean isB2b = b2b.equals(orderType);
+        result.setTypeName(OrderTypeEnum.getName(orderType));
+        result.setSoCode(soOutstock.getCode());
+        result.setSellerId(soOutstock.getSellerId());
+        if(isB2b){
+            SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
+            if (soInfo != null) {
+                result.setCustomerName(soInfo.getCustomerName());
+                result.setSoRemark(soInfo.getSoRemark());
+                result.setReceiveAddress(soInfo.getReceiveAddress());
+                result.setReceiverName(soInfo.getReceiverName());
+                result.setDeliveryModeName(soInfo.getDeliveryModeName());
+                result.setRequireDate(soInfo.getRequireDate());
+                result.setTelNumber(soInfo.getTelNumber());
+                result.setTypeName(soInfo.getOrderTypeName());
+                result.setSellerName(soInfo.getSellerName());
+                result.setSalesDeptId(soInfo.getSalesDeptId());
+                result.setSalesDeptName(soInfo.getSalesDeptName());
+                result.setSalesOrgName(soInfo.getSalesOrgName());
+            }
+        }else{
+            SoB2cDTO.CustomerDTO customer=soB2cFeign.getB2cCustomerById(soId);
+            result.setCustomerName(customer.getCustomerName());
+            result.setReceiveAddress(customer.getReceiverAddress());
+            result.setTelNumber(customer.getTelNumber());
+            result.setSellerName(customer.getSellerName());
+            result.setSalesOrgName(customer.getSalesOrgName());
         }
+
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(soOutstock.getWarehouseId()));
         for (SoOutstockDetailDTO.ViewDTO viewDTO : detailList) {
@@ -2091,6 +2102,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setBillDate(LocalDate.now());
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
+            soOutstockDetailService.add(soOutstock.getId(), detailList, soOutstock.getOrderType());
+            //添加日志
+            String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
+
             return soOutstock.getId();
         }
         return "";
