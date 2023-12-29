@@ -3,6 +3,7 @@ package com.sdk.oms.walmart.dto;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -75,9 +76,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
-
-        // 付款状态（待付款、已付款）
-        orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
 
         //付款时间
         Instant instant = Instant.ofEpochMilli(orderBean.getOrderDate());
@@ -214,28 +212,36 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //沃尔玛：已创建
         List<OrderLineStatusBean> created = statusList.stream().filter(req -> req.getStatus().contains("Created")).collect(Collectors.toList());
         //沃尔玛：已确认
-        List<OrderLineStatusBean> inDistribution = statusList.stream().filter(req -> req.getStatus().contains("Acknowledged")).collect(Collectors.toList());
+        List<OrderLineStatusBean> acknowledged = statusList.stream().filter(req -> req.getStatus().contains("Acknowledged")).collect(Collectors.toList());
         //沃尔玛：已发货
         List<OrderLineStatusBean> shipped = statusList.stream().filter(req -> req.getStatus().contains("Shipped")).collect(Collectors.toList());
         //沃尔玛：已交付
         List<OrderLineStatusBean> delivered = statusList.stream().filter(req -> req.getStatus().contains("Delivered")).collect(Collectors.toList());
         //沃尔玛：已取消
         List<OrderLineStatusBean> cancelled = statusList.stream().filter(req -> req.getStatus().contains("Cancelled")).collect(Collectors.toList());
+        orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        orderDTO.setInvalidStatus(false);
         if (CollectionUtils.isEmpty(shipped)) {
             //沃尔玛：已发货 = OMS：已发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         } else if (CollectionUtils.isEmpty(delivered)) {
             //沃尔玛：已交付 = OMS：已发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        } else if (CollectionUtils.isEmpty(acknowledged)) {
+            //沃尔玛：已确认 = OMS：待发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
-            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         } else if (CollectionUtils.isEmpty(created)) {
             //沃尔玛：已创建 = OMS：待配货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        } else if (CollectionUtils.isEmpty(inDistribution)) {
-            //沃尔玛：已确认 = OMS：待发货
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         }
 
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
