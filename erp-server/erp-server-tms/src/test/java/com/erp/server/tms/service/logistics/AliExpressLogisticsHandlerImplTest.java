@@ -1,9 +1,12 @@
 package com.erp.server.tms.service.logistics;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
@@ -11,11 +14,17 @@ import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.tms.ErpServerTmsApplication;
+import com.erp.server.tms.convert.LogisticsAddressConverter;
+import com.erp.server.tms.service.LogisticsAddressService;
 import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.model.address.SellerResponse;
+import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
+import com.erp.tms.aliexpress.model.query.response.LogisticsServiceResponse;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,6 +53,9 @@ public class AliExpressLogisticsHandlerImplTest {
 
     @Resource
     private AliExpressOrderService aliExpressOrderService;
+
+    @Resource
+    private LogisticsAddressService logisticsAddressService;
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
@@ -275,5 +287,39 @@ public class AliExpressLogisticsHandlerImplTest {
     public void getSellerInfo() throws ApiException {
         IopResponse sellerInfo = aliExpressShipperService.getSellerInfo(authMap);
         System.out.println(sellerInfo);
+    }
+
+    /**
+     * 卖家地址信息
+     */
+    @Test
+    public void getLogisticsAddress() throws ApiException {
+        IopResponse sellerInfo = aliExpressShipperService.getLogisticsAddress(authMap);
+        SellerResponse responseMsg = JSONObject.parseObject(sellerInfo.getBody(), SellerResponse.class);
+        List<Address> senders = responseMsg.getSenders();
+        List<Address> pickups = responseMsg.getPickups();
+        List<Address> refunds = responseMsg.getRefunds();
+        if (CollectionUtils.isNotEmpty(senders)){
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(senders);
+            addressEntities.forEach(sender ->{
+                sender.setType(LogisticsAddressTypeEnum.DELIVER);
+            });
+            logisticsAddressService.saveBatch(addressEntities);
+        }
+        if (CollectionUtils.isNotEmpty(pickups)){
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(pickups);
+            addressEntities.forEach(sender ->{
+                sender.setType(LogisticsAddressTypeEnum.COLLECT);
+            });
+            logisticsAddressService.saveBatch(addressEntities);
+        }
+        if (CollectionUtils.isNotEmpty(refunds)){
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(refunds);
+            addressEntities.forEach(sender ->{
+                sender.setType(LogisticsAddressTypeEnum.REFUND);
+            });
+            logisticsAddressService.saveBatch(addressEntities);
+        }
+        System.out.println(responseMsg);
     }
 }

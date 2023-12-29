@@ -1,6 +1,7 @@
 package com.erp.tms.aliexpress.model.order.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -25,20 +26,30 @@ public class Address implements Serializable {
     @JSONField(name = "fax")
     private String fax;
     /**
+     *是否需要更新
+     */
+    @JSONField(name = "need_to_update")
+    private String needToUpdate;
+    /**
+     *是否需要更新
+     */
+    @JSONField(name = "is_default")
+    private int isDefault;
+    /**
      *类型
      */
     @JSONField(name = "member_type")
-    private String member_type;
+    private String memberType;
     /**
      *旺旺
      */
     @JSONField(name = "trademanage_id")
-    private String trademanage_id;
+    private String tradeManageId;
     /**
      *邮编
      */
     @JSONField(name = "post_code")
-    private String post_code;
+    private String postCode;
     /**
      *街道
      */
@@ -68,7 +79,7 @@ public class Address implements Serializable {
      *卖家后台地址id,用来获取卖家详细地址信息，传入值为Long型；传入addressId后，其余字段值无效。
      */
     @JSONField(name = "address_id")
-    private String address_id;
+    private String addressId;
     /**
      *
      * 姓名
@@ -84,11 +95,15 @@ public class Address implements Serializable {
      *详细地址
      */
     @JSONField(name = "street_address")
-    private String street_address;
+    private String streetAddress;
     /**
      *电话
      */
     @JSONField(name = "mobile")
     private String mobile;
-
+    /**
+     *语言 默认CN
+     */
+    @TableField("language")
+    private String language;
 }
