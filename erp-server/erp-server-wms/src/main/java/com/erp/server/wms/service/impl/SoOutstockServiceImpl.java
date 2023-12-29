@@ -1997,7 +1997,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-12-11 16:17
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {

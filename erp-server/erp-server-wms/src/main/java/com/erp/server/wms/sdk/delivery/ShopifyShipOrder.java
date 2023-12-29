@@ -59,9 +59,10 @@ public class ShopifyShipOrder implements IPlatformService {
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        if (soB2cDetailEntityList.stream().anyMatch(e-> StringUtils.isBlank(e.getSourceDetailId()))){
+        if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
             throw new ServiceException("平台来源详情ID为空");
         }
+        Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
         String shopId = mainEntity.getShopId();
         ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
@@ -77,61 +78,60 @@ public class ShopifyShipOrder implements IPlatformService {
         ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
         // Retrieves a list of fulfillment orders for a specific order
         List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrderList = shopifyRestClient.getFulfillmentOrdersFromOrder(platformOrderId);
-        if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)){
+        if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
             throw new ServiceException("找不到Shopify发货单");
         }
-        // 校验不为空
-//        if (fulfillmentOrdersFromOrderList.stream().anyMatch(e-> CollectionUtils.isEmpty(e.getLineItems()))){
-//            log.error("[Shopify标记发货]Shopify数据异常: json={}", JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
-//            throw new ServiceException("Shopify数据异常：详情LineItems为空");
-//        }
-//        // Map<lineItemId, ShopifyFulfillmentOrder>
-//        Map<String, ShopifyFulfillmentOrder> fulfillmentOrderMap = fulfillmentOrdersFromOrderList.stream().collect(Collectors.toMap(e -> e.getLineItems().get(0).getLineItemId(), Function.identity()));
-//
-//        // 组合请求参数
-//        List<ShopifyLineItemsByFulfillmentOrder> orderList = new LinkedList<>();
-//        for (SoB2cDetailEntity detailEntity : soB2cDetailEntityList) {
-//            ShopifyFulfillmentOrder fulfillmentOrder = fulfillmentOrderMap.get(detailEntity.getSourceDetailId());
-//            if (null == fulfillmentOrder){
-//                throw new ServiceException("未找到对应Shopify的发货配送信息：lineItemId=" + detailEntity.getSourceDetailId());
-//            }
-//            // 组合请求参数
-//            ShopifyLineItemsByFulfillmentOrder orderRequestDTO = convertRequestOrderDTO(detailEntity, fulfillmentOrder);
-//            orderList.add(orderRequestDTO);
-//        }
-//
-//        ShopifyFulfillmentPayload payload = new ShopifyFulfillmentPayload();
-//        ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
-//        trackingInfo.setNumber(logisticsEntity.getTrackNo());
-//        trackingInfo.setUrl("");
-//
-//        payload.setLineItemsByFulfillmentOrder(orderList);
-//        payload.setTrackingInfo(trackingInfo);
-//        ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
-//        request.setFulfillment(payload);
-//        // Creates a fulfillment for one or many fulfillment orders
-//        final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
-//        log.warn("[Shopify标记发货]创建Fulfillment结果：{}",JSONUtil.toJsonStr(actualShopifyFulfillment));
-//        if (null == actualShopifyFulfillment){
-//            throw new ServiceException("Shopify创建Fulfillment失败");
-//        }
-    }
+        // 未签收的单
+        fulfillmentOrdersFromOrderList = fulfillmentOrdersFromOrderList.stream().filter(e -> e.getStatus().equalsIgnoreCase("open")).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
+            log.warn("Shopify 忽略表发货, 订单已标记, platformCode={}, fulfillment={}", platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
+            return;
+        }
 
-    /**
-     * 组合Order请求参数
-     */
-    private ShopifyLineItemsByFulfillmentOrder convertRequestOrderDTO(SoB2cDetailEntity detailEntity, ShopifyFulfillmentOrder fulfillmentOrder) {
-        final String lineItemId = detailEntity.getSourceDetailId();
-        final String fulfillmentOrderId = fulfillmentOrder.getId();
-        final long quantity = detailEntity.getQty();
-        ShopifyLineItemsByFulfillmentOrder order = new ShopifyLineItemsByFulfillmentOrder();
-        order.setFulfillmentOrderId(fulfillmentOrderId);
-        List<ShopifyFulfillmentOrderPayloadLineItem> items = new LinkedList<>();
-        ShopifyFulfillmentOrderPayloadLineItem item = new ShopifyFulfillmentOrderPayloadLineItem();
-        item.setQuantity(quantity);
-        item.setId(lineItemId);
-        items.add(item);
-        order.setFulfillmentOrderLineItems(items);
-        return order;
+        // 校验不为空
+        if (fulfillmentOrdersFromOrderList.stream().anyMatch(e -> CollectionUtils.isEmpty(e.getLineItems()))) {
+            log.error("[Shopify标记发货]Shopify数据异常: json={}", JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
+            throw new ServiceException("Shopify数据异常：详情LineItems为空");
+        }
+
+
+        // 需要根据配送服务分组请求参数
+        for (ShopifyFulfillmentOrder fulfillmentOrder : fulfillmentOrdersFromOrderList) {
+            // 组合请求参数
+            List<ShopifyLineItemsByFulfillmentOrder> orderList = new LinkedList<>();
+            List<ShopifyFulfillmentOrderPayloadLineItem> items = new LinkedList<>();
+            // 组合请求参数
+            ShopifyLineItemsByFulfillmentOrder orderRequestDTO = new ShopifyLineItemsByFulfillmentOrder();
+            for (ShopifyFulfillmentOrderLineItem lineItem : fulfillmentOrder.getLineItems()) {
+                SoB2cDetailEntity detailEntity = detailEntityMap.get(lineItem.getLineItemId());
+                if (null == detailEntity) {
+                    continue;
+                }
+                ShopifyFulfillmentOrderPayloadLineItem item = new ShopifyFulfillmentOrderPayloadLineItem();
+                item.setQuantity(detailEntity.getQty());
+                item.setId(lineItem.getId());
+                items.add(item);
+            }
+            orderRequestDTO.setFulfillmentOrderId(fulfillmentOrder.getId());
+            orderRequestDTO.setFulfillmentOrderLineItems(items);
+            orderList.add(orderRequestDTO);
+
+            ShopifyFulfillmentPayload payload = new ShopifyFulfillmentPayload();
+            ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
+            trackingInfo.setNumber(logisticsEntity.getTrackNo());
+            trackingInfo.setUrl("");
+            trackingInfo.setCompany(logisticsEntity.getCode());
+            payload.setLineItemsByFulfillmentOrder(orderList);
+            payload.setTrackingInfo(trackingInfo);
+            ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
+            request.setFulfillment(payload);
+            log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+            // Creates a fulfillment for one or many fulfillment orders
+            final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
+            log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
+            if (null == actualShopifyFulfillment) {
+                throw new ServiceException("Shopify创建Fulfillment失败");
+            }
+        }
     }
 }
