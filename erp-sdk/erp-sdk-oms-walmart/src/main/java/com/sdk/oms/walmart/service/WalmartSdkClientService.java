@@ -209,7 +209,7 @@ public class WalmartSdkClientService {
         Map<String, Object> ressultMap = new HashMap<>();
         MediaType mediaType = MediaType.parse("application/json");
         try {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 response = this.doSend(
                         new Request.Builder()
                         .header("Content-Type", WalmartStaticKey.accept_json)
