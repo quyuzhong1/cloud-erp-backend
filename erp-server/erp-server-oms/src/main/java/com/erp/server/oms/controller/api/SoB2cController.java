@@ -82,8 +82,9 @@ public class SoB2cController extends BaseController {
         SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
         //匹配成功
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
+        Boolean isPass = orderRuleResult.getIsPass();
         //todo 可以优化
-        if (ruleMatch) {
+        if (ruleMatch && isPass) {
             //仓库规则
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
@@ -163,7 +164,7 @@ public class SoB2cController extends BaseController {
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-                    if(approveStatus.equals(entity.getApproveStatus())){
+                    if (approveStatus.equals(entity.getApproveStatus())) {
                         //仓库规则
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();

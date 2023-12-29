@@ -1059,9 +1059,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String salesDeptName = deptList.stream().filter(d -> d.getId().equals(salesDeptId)).
                     map(SysDepartmentEntity::getName).findFirst().orElse("");
             item.setSalesDeptName(salesDeptName);
-            String sourceType = item.getSourceType();
-            String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
-            item.setSourceCode(sourceCode);
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
             item.setOrderTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());

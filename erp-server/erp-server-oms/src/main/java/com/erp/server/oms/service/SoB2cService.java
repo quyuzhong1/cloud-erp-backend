@@ -263,7 +263,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 匹配审核规则
      */
-    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
+    Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 匹配配货规则

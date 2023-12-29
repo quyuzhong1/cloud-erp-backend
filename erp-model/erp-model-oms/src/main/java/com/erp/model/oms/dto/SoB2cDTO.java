@@ -736,7 +736,11 @@ public class SoB2cDTO implements Serializable {
     public static class RuleResultDTO{
 
         private Boolean isRuleMatch;
-        
+
+        /**
+         * 是否审核通过
+         */
+        private Boolean isPass;
         private String id;
         
         private Map<String,Object> map;
