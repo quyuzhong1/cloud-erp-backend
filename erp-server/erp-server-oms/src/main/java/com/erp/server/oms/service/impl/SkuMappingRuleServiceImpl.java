@@ -322,8 +322,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         List<ListingInfoEntity> updateListingList = new ArrayList<>();
         for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
             String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
-            for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
-                String afterHandlePlatformSkuNo = platformSkuNo;
+            ruleLoop : for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
+                String afterExtendHandlePlatformSkuNo = platformSkuNo;
                 //先执行扩展规则
                 //处理扩展规则
                 if(StringUtils.isNotBlank(skuMappingRuleEntity.getExtendRuleType())){
@@ -335,7 +335,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     String entityExtendRuleRegex = skuMappingRuleEntity.getExtendRuleRegex();
                     String[] extendRegexList = entityExtendRuleRegex.split(", ");
                     for(String extendRegex : extendRegexList){
-                        afterHandlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,afterHandlePlatformSkuNo);
+                        afterExtendHandlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,afterExtendHandlePlatformSkuNo);
                     }
                 }
                 //获取枚举
@@ -346,23 +346,23 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
                 String[] ruleRegexList = ruleRegexArrStr.split(", ");
                 for(String ruleRegex : ruleRegexList){
-                    afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,afterHandlePlatformSkuNo);
-                }
-                if(skuVOMap.containsKey(afterHandlePlatformSkuNo)){
-                    SkuVO skuVO = skuVOMap.get(afterHandlePlatformSkuNo);
-                    SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
-                    skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
-                    skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
-                    skuMappingEntity.setProductSkuId(skuVO.getSkuId());
-                    skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
-                    skuMappingEntity.setProductName(skuVO.getSkuName());
-                    updateSkuMappingList.add(skuMappingEntity);
+                    String afterHandlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,afterExtendHandlePlatformSkuNo);
+                    if(skuVOMap.containsKey(afterHandlePlatformSkuNo)){
+                        SkuVO skuVO = skuVOMap.get(afterHandlePlatformSkuNo);
+                        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                        skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
+                        skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
+                        skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+                        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+                        skuMappingEntity.setProductName(skuVO.getSkuName());
+                        updateSkuMappingList.add(skuMappingEntity);
 
-                    ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
-                    listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                    listingInfoEntity.setMatchResult(true);
-                    updateListingList.add(listingInfoEntity);
-                    break;
+                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                        listingInfoEntity.setMatchResult(true);
+                        updateListingList.add(listingInfoEntity);
+                        break ruleLoop;
+                    }
                 }
             }
         }
