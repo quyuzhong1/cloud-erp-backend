@@ -832,14 +832,14 @@ public class ShopifyRestClient {
      * @return ShopifyFulfillment
      */
     public ShopifyFulfillment updateFulfillment(final ShopifyFulfillmentUpdateRequest shopifyFulfillmentUpdateRequest) {
-        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
-        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
-        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
-        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
-                shopifyFulfillmentRoot);
-        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
-        return shopifyFulfillmentRootResponse.getFulfillment();
-//        return null;
+//        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
+//        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
+//        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
+//        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
+//                shopifyFulfillmentRoot);
+//        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
+//        return shopifyFulfillmentRootResponse.getFulfillment();
+        return null;
     }
 
 
