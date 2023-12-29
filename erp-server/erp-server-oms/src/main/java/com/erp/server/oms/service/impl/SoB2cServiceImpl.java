@@ -675,8 +675,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                     //取消物流单
                     LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                            channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
-                    logisticsBillFeign.cancelBill(cancelBillDTO);
+                            channelId(existChannelId).transportNo(code).
+                            referenceNumber(entity.getId()).build();
+                    ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+                    //取消失败
+                    if (!cancelResult.isSuccess()) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
+                    }
                 }
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
                 soB2cLogisticsEntity.setCode("");
@@ -3706,7 +3711,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(code)) {
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
+                    channelId(existChannelId).transportNo(code).
+                    referenceNumber(entity.getId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
             if (!cancelResult.isSuccess()) {
