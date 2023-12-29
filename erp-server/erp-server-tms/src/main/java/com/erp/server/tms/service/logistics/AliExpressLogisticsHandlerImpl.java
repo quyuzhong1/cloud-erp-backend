@@ -6,6 +6,7 @@ import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -44,6 +45,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -232,6 +234,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        if (logisticsQueryVOList.size() > 20){
+            throw new ServiceException("速卖通：单次打印面单不能超过20个");
+        }
         List<LogisticsOrderResponseVO> list = new ArrayList<>();
         logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
             QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
@@ -256,16 +261,31 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     List<QueryResult> responses = queryResponse.getResultList();
                     if (CollectionUtils.isNotEmpty(responses)) {
                         responses.forEach(queryOrderResponse -> {
-                            LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                    .transportNo(queryOrderResponse.getInternational_logistics_num())
-                                    .trackNo(queryOrderResponse.getLogistics_order_id())
-                                    .deliveryNo(queryOrderResponse.getTrade_order_id())
-                                    .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
-                                    .build();
-                            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
-                                    logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
-                            list.add(orderResponseVO);
+                            if (!StringUtils.isEmpty(logisticsQueryBaseVO.getTransportNo()) && !StringUtils.isEmpty(queryOrderResponse.getLogistics_order_id())){
+                                if (logisticsQueryBaseVO.getTransportNo().equalsIgnoreCase(queryOrderResponse.getLogistics_order_id())){
+                                    LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                                            .transportNo(queryOrderResponse.getInternational_logistics_num())
+                                            .trackNo(queryOrderResponse.getLogistics_order_id())
+                                            .deliveryNo(queryOrderResponse.getTrade_order_id())
+                                            .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
+                                            .build();
+                                    logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                                            logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
+                                    list.add(orderResponseVO);
+                                }
+                            }else {
+                                LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                                        .transportNo(queryOrderResponse.getInternational_logistics_num())
+                                        .trackNo(queryOrderResponse.getLogistics_order_id())
+                                        .deliveryNo(queryOrderResponse.getTrade_order_id())
+                                        .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
+                                        .build();
+                                logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                                        logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
+                                list.add(orderResponseVO);
+                            }
                         });
                     }
                 }
@@ -283,14 +303,49 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     /**
+     * 根据查询记录获取 面单编号 然后进行面单查询
+     *
+     * @param logisticsQueryVO
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+        //组装查询订单详情列表
+        List<LogisticsQueryBaseVO> logisticsQueryVOList = new ArrayList<>(logisticsQueryVO.size());
+        logisticsQueryVO.forEach(logisticsGetLabelVO -> {
+            LogisticsQueryBaseVO logisticsQueryBaseVO = LogisticsQueryBaseVO.builder()
+                    .authMap(logisticsGetLabelVO.getAuthMap())
+                    .deliveryNo(logisticsGetLabelVO.getDeliveryNo())
+                    .transportNo(logisticsGetLabelVO.getTransportNo())
+                    .build();
+            logisticsQueryVOList.add(logisticsQueryBaseVO);
+        });
+        ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
+        //根据查询结果进行打印
+        if (queryOrderList.isSuccess()){
+            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
+            Map<String, LogisticsOrderResponseVO> collect = data.stream().collect(Collectors.toMap(LogisticsOrderResponseVO::getDeliveryNo, Function.identity()));
+            logisticsQueryVO.forEach(logisticsGetLabelVO -> {
+                LogisticsOrderResponseVO responseVO = collect.get(logisticsGetLabelVO.getDeliveryNo());
+                logisticsGetLabelVO.setTransportNo(responseVO.getTransportNo());
+            });
+            ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
+            return label;
+        }else {
+            return failure("速卖通：查询订单异常");
+        }
+    }
+
+    /**
      * 获取标签
      * request_no 请求单号（支持4PX单号、客户单号和面单号
      *
      * @param logisticsQueryVO
      * @return
      */
-    @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabel(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
         List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
         LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         assert logisticsGetLabelVO != null;
@@ -309,6 +364,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             iopResponse = aliExpressShipperService.getLabelList(logisticsGetLabelVO.getAuthMap(), labelRequest);
+
             if (!StringUtils.isEmpty(iopResponse.getMessage())){
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
@@ -318,8 +374,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return failure(responses);
             }
             LabelResult labelList = JSONObject.parseObject(iopResponse.getBody(), LabelResult.class);
-            String result = labelList.getResult();
-            LabelResponse labelResponse = JSONObject.parseObject(result, LabelResponse.class);
+//            LabelResponse labelResponse = labelList.getResult();
+            LabelResponse labelResponse = JSONObject.parseObject(labelList.getResult(), LabelResponse.class);
             //失败
             if (Objects.isNull(labelList.getResult()) || Objects.isNull(labelResponse) || !StringUtils.isBlank(labelResponse.getErrorDesc())) {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),

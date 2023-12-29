@@ -195,7 +195,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("580555992124");
+        logisticsQueryVOList.setDeliveryNo("3028833906081879");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
@@ -208,7 +208,9 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setTransportNo("8180522992920473");
+        logisticsQueryVO2.setDeliveryNo("3028833906081879");
+        logisticsQueryVO2.setTransportNo("241166290576312");
+//        logisticsQueryVO2.setTransportNo("PQ936A0792035050134690Z ");
         logisticsQueryVO2.setAuthMap(authMap);
         logisticsQueryVO2.setLabelType("1");
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
