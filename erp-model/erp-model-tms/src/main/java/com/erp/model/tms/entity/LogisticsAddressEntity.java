@@ -105,7 +105,36 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     */
     @TableField("zip_code")
     private String zipCode;
-
+    /**
+     * 街道
+     */
+    @TableField("street")
+    private String street;
+    /**
+     *传真
+     */
+    @TableField("fax")
+    private String fax;
+    /**
+     *交易管理id
+     */
+    @TableField("trade_manage_id")
+    private String trade_manage_id;
+    /**
+     *源地址id
+     */
+    @TableField("address_id")
+    private String address_id;
+    /**
+     *是否默认 false 不是默认
+     */
+    @TableField("is_default")
+    private int is_default;
+    /**
+     *语言 默认CN
+     */
+    @TableField("language")
+    private String language;
     /**
      * 店铺id
      */
