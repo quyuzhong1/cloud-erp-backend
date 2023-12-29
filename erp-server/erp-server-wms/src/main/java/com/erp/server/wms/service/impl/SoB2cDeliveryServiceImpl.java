@@ -239,7 +239,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //修改发货状态
-        this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+        lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
+                .set(SoB2cDeliveryEntity::getDeliveryTime, LocalDateTime.now())
+                .eq(SoB2cDeliveryEntity::getId, id).update();
+
         //修改订单状态待发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         // 操作日志
