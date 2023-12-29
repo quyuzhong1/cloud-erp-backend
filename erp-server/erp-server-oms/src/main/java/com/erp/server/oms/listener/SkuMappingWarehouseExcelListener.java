@@ -203,9 +203,10 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 }
             }
         }
+
         if (null == platformEnum && StringUtils.isNotBlank(warehouseId)){
             WarehouseDTO.ListDTO dto = overseasWareHouseMap.get(warehouseId);
-            if (null != dto){
+            if (null != dto && StringUtils.isNotBlank(dto.getDictPlatform())){
                 errorMsgList.add("仓库已配置有服务商,不允许无服务商映射配置");
             }
         }

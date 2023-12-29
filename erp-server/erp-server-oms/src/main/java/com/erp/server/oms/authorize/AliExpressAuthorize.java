@@ -32,14 +32,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 速卖通授权
@@ -72,9 +70,12 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
-        if (Objects.isNull(shopInfo)) {
-            throw new ServiceException("店铺不存在");
+        List<ShopInfoEntity> shopInfoEntityList = dto.getShopInfoEntityList();
+        ShopInfoEntity shopInfo;
+        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+            shopInfo = shopInfoService.getById(dto.getShopId());
+        } else {
+            shopInfo = shopInfoEntityList.get(0);
         }
         AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_AUTHORIZE;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();

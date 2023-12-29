@@ -28,6 +28,12 @@ import java.util.Map;
  */
 public interface SoB2cService extends SuperService<SoB2cEntity> {
 
+
+
+
+
+
+
       /**
       * 分页列表查询
       * @author Will
@@ -483,4 +489,33 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-28 18:58
      */
     Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto);
+
+    /**
+     * 订单规则
+     * @description
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-28 20:57
+     */
+    SoB2cDTO.RuleResultDTO orderRule(String id);
+
+    /**
+     * 仓库规则
+     * @param id
+     * @param soB2cDetailList
+     * @param map
+     * @return
+     */
+    SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> soB2cDetailList, Map<String, Object> map);
+
+    /**
+     * 物流规则
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-29 8:41
+     */
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
 }

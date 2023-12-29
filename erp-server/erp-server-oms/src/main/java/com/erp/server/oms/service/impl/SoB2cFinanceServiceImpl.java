@@ -134,7 +134,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
             //新增
             SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(financeDTO, mainEntity.getId());
             // 补充数据
-            fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, entity);
+            fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, entity, true);
             log.info("消费:开始新增B2C销售订单财务信息单");
             if (!this.save(entity)){
                 throw new ServiceException("[SoB2cFinanceEntity] 保存失败");
@@ -144,7 +144,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
             SoB2cFinanceEntity newEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateFinance(oldEntity, financeDTO);
             // 历史数据修复
             if (!BusinessCommonConstants.hasProfile("prod")){
-                fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, newEntity);
+                fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, newEntity, false);
             }
             if (!this.updateById(newEntity)){
                 throw new ServiceException("[SoB2cFinanceEntity] 更新失败");
@@ -152,14 +152,15 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         }
     }
 
-    private void fillAndHandleData(SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList, PlatformOrderFinanceDTO financeDTO, SoB2cFinanceEntity newEntity) {
+    private void fillAndHandleData(SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity, List<SoB2cDetailEntity> detailList, PlatformOrderFinanceDTO financeDTO, SoB2cFinanceEntity newEntity, Boolean isAdd) {
         SoB2cDTO.FinancialParamDTO paramDTO = new SoB2cDTO.FinancialParamDTO();
         paramDTO.setId(mainEntity.getId());
         paramDTO.setIsCny(CurrencyEnum.CNY.getCurrencyCode().equalsIgnoreCase(financeDTO.getCurrency()));
         paramDTO.setSoB2cEntity(mainEntity);
         paramDTO.setSoB2cLogisticsEntity(logisticsEntity);
         paramDTO.setSoB2cDetailList(detailList);
-        SoB2cDTO.FinancialInfoDTO financialInfoDTO = soB2cService.getFinancialInfo(paramDTO, Boolean.TRUE);
+        paramDTO.setSoB2cFinanceEntity(newEntity);
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = soB2cService.getFinancialInfo(paramDTO, isAdd);
         SoB2cFinanceDTO.AddDTO addDTO = BeanMapperUtils.map(SoB2cFinanceDTO.AddDTO.class, financialInfoDTO);
         addDTO.setMainId(mainEntity.getId());
         BeanMapperUtils.copy(addDTO, newEntity);

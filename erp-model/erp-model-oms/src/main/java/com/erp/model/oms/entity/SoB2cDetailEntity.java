@@ -149,7 +149,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     private String platformLineNumber;
 
     /**
-     * 来源平台
+     * 来源平台 SoB2cSourcePlatformEnum枚举
      */
     @TableField("source_platform")
     private String sourcePlatform;

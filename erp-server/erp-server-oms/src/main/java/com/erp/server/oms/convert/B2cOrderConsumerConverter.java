@@ -1,5 +1,6 @@
 package com.erp.server.oms.convert;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
@@ -162,6 +163,17 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "currency", source = "dto.currency"),
+            @Mapping(target = "shippingCost", source = "dto.shippingCost"),
+            @Mapping(target = "itemCost", source = "dto.itemCost"),
+            @Mapping(target = "logisticsCost", source = "dto.logisticsCost"),
+            @Mapping(target = "accessoriesCost", source = "dto.accessoriesCost"),
+            @Mapping(target = "platformRate", source = "dto.platformRate"),
+            @Mapping(target = "vatRate", source = "dto.vatRate"),
+            @Mapping(target = "transferRate", source = "dto.transferRate"),
+            @Mapping(target = "platformCostType", source = "dto.platformCostType"),
+            @Mapping(target = "transferCostType", source = "dto.transferCostType"),
+            @Mapping(target = "vatCostType", source = "dto.vatCostType"),
     })
     SoB2cFinanceEntity convertNewFinance(PlatformOrderFinanceDTO dto, String mainId);
 
