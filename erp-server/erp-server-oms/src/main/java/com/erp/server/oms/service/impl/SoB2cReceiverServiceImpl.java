@@ -107,7 +107,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList) {
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
         // 当前国家
-        DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
+        DictCountryEntity dictCountryEntity = countryList.stream()
+                .filter(e-> e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
+                .findFirst()
+                .orElse(null);
         if (null == receiverDTO){
             //获取主表下物流记录
             SoB2cReceiverEntity oldEntity = getByMainId(mainEntity.getId());

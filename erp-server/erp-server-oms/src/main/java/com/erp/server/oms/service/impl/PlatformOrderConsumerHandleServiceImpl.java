@@ -27,6 +27,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 平台消费处理接口
@@ -132,7 +133,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             throw new ServiceException("未找到订单的店铺" + dto.getShopId());
         }
         // 查询国家信息
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(shopInfo.getDictCountryCode()));
+        List<String> countryIds = Stream.of(shopInfo.getDictCountryCode(), dto.getReceiver().getCountry()).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIds);
 
         List<String> skuIds = listingInfoWithSkuMappingDTOMap.values().stream()
                 .map(ListingInfoWithSkuMappingDTO::getProductSkuId)
