@@ -188,11 +188,11 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
-            SoB2cEntity entity = soB2cService.getById(id);
             try {
                 approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
-                    String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+                    ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
                     if(approveStatus.equals(entity.getApproveStatus())){
                         //仓库规则
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
@@ -209,6 +209,7 @@ public class SoB2cController extends BaseController {
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 审核失败");
                     resultDTOS.add(approveResult);

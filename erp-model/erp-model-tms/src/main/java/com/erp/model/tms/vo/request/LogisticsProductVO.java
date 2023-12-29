@@ -155,7 +155,7 @@ public class LogisticsProductVO  implements Serializable {
     /**
      * 交易子单号
      */
-    private Long childOrderId;
+    private String childOrderId;
     /**
      * 仓库发货属性名称
      */

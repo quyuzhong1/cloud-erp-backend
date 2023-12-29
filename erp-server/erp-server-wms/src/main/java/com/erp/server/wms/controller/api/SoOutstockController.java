@@ -56,17 +56,7 @@ public class SoOutstockController extends BaseController {
         return success(tabList);
     }
 
-    /**  重新生成销售出库单
-     * @description
-     * @param
-     * @author Lambda
-     * @return 
-     * @create 2023-12-28 19:43
-     */
-    @PostMapping("afreshGenerateB2cOutstock")
-    public ApiResult<Void> afreshGenerateB2cOutstock(){
-        return success();
-    }
+
 
     /**
      * 分页列表
@@ -266,6 +256,21 @@ public class SoOutstockController extends BaseController {
 
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure();
 
+    }
+
+    /**  重新生成销售出库单
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-28 19:43
+     */
+    @PostMapping("afreshGenerateB2cOutstock")
+    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto){
+        for (String id : dto.getIds()) {
+            Boolean result = soOutstockService.generateB2cSoOutstock(id);
+        }
+        return success();
     }
 
     /**

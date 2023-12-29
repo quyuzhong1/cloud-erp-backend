@@ -73,6 +73,7 @@ import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jnr.ffi.Struct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
@@ -1093,8 +1094,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (entity.hasPlatformWarehouseOrder()) {
             throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
         }
+        //销售订单状态只有待发货、已发货的订单可以发起拦截
+        if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())
+                || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus()))
+        {
+            throw new ServiceException(ApiError.NOT_DELIVERY_NOT_INTERCEPT);
+        }
 
-        //新增拦截单
+        //打标拦截的订单不支持重复发起拦截
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(Arrays.asList(id));
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> intercepts = interceptDTOList.stream().filter(req -> req.getIsIntercept()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(intercepts)) {
+            throw new ServiceException(ApiError.IS_EXIST_NOT_INTERCEPT);
+        }
+
+        //映射拦截单主表信息
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
@@ -1102,6 +1116,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
         List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
         addDTO.setDetailList(detailList);
+
+        //新增拦截单
+        soB2cDeliveryInterceptFeign.add(addDTO);
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
@@ -1447,7 +1464,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SPLIT_SIZE);
         }
         Integer flag = MathUtil.ONE;
-        for (SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO : splitList) {
+        //分组金额
+        BigDecimal groupAmount = BigDecimal.ZERO;
+        //分组预估费用
+        BigDecimal groupEstimatedShippingCost = BigDecimal.ZERO;
+        //分组实际费用
+        BigDecimal groupActualShippingCost = BigDecimal.ZERO;
+        //分组包装辅料费
+        BigDecimal groupAccessoriesCost = BigDecimal.ZERO;
+        //分组包装净重
+        BigDecimal groupAccessoriesNw = BigDecimal.ZERO;
+        //分组包装重量
+        BigDecimal groupWeight = BigDecimal.ZERO;
+
+        for (int i = 0 ;i < splitList.size(); i ++) {
+            SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = splitList.get(i);
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
@@ -1463,6 +1494,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             List<SoB2cDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO : groupSplitSaveDTO.getDetailList()) {
+
                 SoB2cDetailEntity detailEntity = oldDetailList.stream().filter(obj -> obj.getId().equals(splitDetailSaveDTO.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(detailEntity)) {
                     throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
@@ -1481,21 +1513,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             }
             addDTO.setDetailList(detailList);
+
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
+            BigDecimal amount = MathUtil.multiply(rate, entity.getAmount());
+            BigDecimal estimatedShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getEstimatedShippingCost());
+            BigDecimal actualShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost());
+            BigDecimal accessoriesCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesCost());
+            BigDecimal accessoriesNw = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw());
+            BigDecimal weight = MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight());
+            //最后一条根据减法计算金额
+            if ( i == splitList.size() - 1) {
+                amount = MathUtil.subtract(entity.getAmount(),groupAmount);
+                estimatedShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getEstimatedShippingCost(),groupEstimatedShippingCost);
+                actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(),groupActualShippingCost);
+                accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(),groupAccessoriesCost);
+                accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(),groupAccessoriesNw);
+                weight = MathUtil.subtract(soB2cLogisticsEntity.getWeight(),groupWeight);
+            }
             //基本信息金额
-            addDTO.setAmount(MathUtil.multiply(rate, entity.getAmount()));
+            addDTO.setAmount(amount);
             //预估费用
-            logisticsAddDTO.setEstimatedShippingCost(MathUtil.multiply(rate, soB2cLogisticsEntity.getEstimatedShippingCost()));
+            logisticsAddDTO.setEstimatedShippingCost(estimatedShippingCost);
             //实际费用
-            logisticsAddDTO.setActualShippingCost(MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost()));
+            logisticsAddDTO.setActualShippingCost(actualShippingCost);
             //包装辅料费
-            logisticsAddDTO.setAccessoriesCost(MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost()));
+            logisticsAddDTO.setAccessoriesCost(accessoriesCost);
             //包装净重
-            logisticsAddDTO.setAccessoriesNw(MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw()));
+            logisticsAddDTO.setAccessoriesNw(accessoriesNw);
             //包装重量
-            logisticsAddDTO.setWeight(MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight()));
-
+            logisticsAddDTO.setWeight(weight);
             addDTO.setLogisticsDTO(logisticsAddDTO);
             addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
 
@@ -1505,6 +1552,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //新增拆分后订单
             String code = StrUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = this.add(addDTO, code);
+
+            //计算已生成金额
+            groupAmount = MathUtil.add(addDTO.getAmount(),groupAmount);
+            groupEstimatedShippingCost = MathUtil.add(logisticsAddDTO.getEstimatedShippingCost(),groupEstimatedShippingCost);
+            groupActualShippingCost = MathUtil.add(logisticsAddDTO.getActualShippingCost(),groupActualShippingCost);
+            groupAccessoriesCost = MathUtil.add(logisticsAddDTO.getAccessoriesCost(),groupAccessoriesCost);
+            groupAccessoriesNw = MathUtil.add(logisticsAddDTO.getAccessoriesNw(),groupAccessoriesNw);
+            groupWeight = MathUtil.add(logisticsAddDTO.getWeight(),groupWeight);
             flag++;
         }
         this.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
@@ -3126,17 +3181,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(soB2cFinanceEntity, financialInfoDTO);
 
         //商品成本,订单SKU*数量的含税成本价汇总
-        BigDecimal itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal itemCost = soB2cDetailList.stream().map(obj -> MathUtil.multiply(obj.getTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        //商品金额
+        BigDecimal totalAmount = soB2cDetailList.stream().map(SoB2cDetailEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //判断是否是人民币
         if (ObjectUtils.isNotEmpty(dto.getIsCny()) && dto.getIsCny()) {
             financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
+            financialInfoDTO.setAmount(MathUtil.multiply(totalAmount, soB2cEntity.getExchangeRate()));
             financialInfoDTO.setItemCost(itemCost);
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
-            financialInfoDTO.setAmount(soB2cEntity.getAmount());
+            financialInfoDTO.setAmount(totalAmount);
             financialInfoDTO.setItemCost(MathUtil.divide(itemCost, soB2cEntity.getExchangeRate()));
         }
 

@@ -112,6 +112,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
         soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
+
+        //触发物流拦截
+        this.logisticsIntercept(soB2cDeliveryInterceptEntity.getId());
+
         return new BaseResultDTO.AddDTO(soB2cDeliveryInterceptEntity.getId(), code);
     }
 
