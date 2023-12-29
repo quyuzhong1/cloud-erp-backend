@@ -1121,7 +1121,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 }
             });
         }
-        return dataList;
+        List<SupplierDTO.SupplierSimpleDTO> wantList=new ArrayList<>(dataList.size());
+        List<SupplierDTO.SupplierSimpleDTO> list1=dataList.stream().filter(d->!d.getDisabled()).collect(Collectors.toList());
+        List<SupplierDTO.SupplierSimpleDTO> list2=dataList.stream().filter(d->d.getDisabled()).collect(Collectors.toList());
+        wantList.addAll(list1);
+        wantList.addAll(list2);
+        return wantList;
     }
 
     @Override

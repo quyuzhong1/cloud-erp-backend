@@ -130,10 +130,19 @@ public class WalmartSdkClientService {
         Map<String, Object> param = new HashMap();
         param.put("grant_type", "client_credentials");
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headers);
-        WalmartTokenDTO tokenDTO = JSONUtil.toBean(bodyStr, WalmartTokenDTO.class);
+
+        WalmartTokenDTO tokenDTO = null;
+        try {
+            tokenDTO = JSONUtil.toBean(bodyStr, WalmartTokenDTO.class);
+            log.info(String.format("::::: 沃尔玛授权 ::::: clientId => %s, clientSecret => %s, 返回参数 => %s ", clientId, clientSecret, tokenDTO));
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, bodyStr);
+        }
+
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
             throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, bodyStr);
         }
+
         return tokenDTO;
     }
 
@@ -200,7 +209,7 @@ public class WalmartSdkClientService {
         Map<String, Object> ressultMap = new HashMap<>();
         MediaType mediaType = MediaType.parse("application/json");
         try {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 response = this.doSend(
                         new Request.Builder()
                         .header("Content-Type", WalmartStaticKey.accept_json)

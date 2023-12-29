@@ -12,8 +12,11 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +45,8 @@ public class SoOutstockController extends BaseController {
     @Resource
     private SoOutstockService soOutstockService;
 
-
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
 
     /**
@@ -56,17 +60,7 @@ public class SoOutstockController extends BaseController {
         return success(tabList);
     }
 
-    /**  重新生成销售出库单
-     * @description
-     * @param
-     * @author Lambda
-     * @return 
-     * @create 2023-12-28 19:43
-     */
-    @PostMapping("afreshGenerateB2cOutstock")
-    public ApiResult<Void> afreshGenerateB2cOutstock(){
-        return success();
-    }
+
 
     /**
      * 分页列表
@@ -266,6 +260,28 @@ public class SoOutstockController extends BaseController {
 
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure();
 
+    }
+
+    /**  重新生成销售出库单
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-28 19:43
+     */
+    @PostMapping("afreshGenerateB2cOutstock")
+    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto){
+        String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        for (String id : dto.getIds()) {
+            Boolean result = soOutstockService.generateB2cSoOutstock(id);
+            if(result){
+                SoB2cErrorDTO.DeleteDTO deleteDTO= new SoB2cErrorDTO.DeleteDTO();
+                deleteDTO.setMainId(id);
+                deleteDTO.setType(type);
+                soB2cFeign.deleteError(deleteDTO);
+            }
+        }
+        return success();
     }
 
     /**

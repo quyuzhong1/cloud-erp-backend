@@ -669,6 +669,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Boolean.TRUE.equals(isCover)) {
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
+                    //已存在的渠道为空
+                    if(StringUtils.isBlank(existChannelId)){
+                       throw  new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
+                    }
                     //取消物流单
                     LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                             channelId(existChannelId).trackNo(code).referenceNumber(entity.getId()).build();
@@ -2855,8 +2859,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         deleteDTO.setMainId(entity.getSourceId());
         soB2cErrorService.delete(deleteDTO);
 
-        //修改订单状态为发货中
-        this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "虚假发货");
     }
 

@@ -64,13 +64,12 @@ public class LogisticsChannelJob {
     /**
      * 同步物流渠道
      */
-     @Scheduled(cron = "*/5 * * * * ?")
-//    @XxlJob("syncLogisticsChannel")
+//     @Scheduled(cron = "*/5 * * * * ?")
+    @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
         log.info("====全部渠道同步开始=====");
-//        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
-        LogisticsPlatformEnum[] platformEnums = {LogisticsPlatformEnum.WALMART};
+        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
             //跳过track123
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;
@@ -78,6 +77,8 @@ public class LogisticsChannelJob {
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.SF_EXPRESS.getCode())) continue;
             //亚马逊渠道静态
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.AMAZON.getCode())) continue;
+            //Shopify静态
+            if (platformEnum.getCode().equals(LogisticsPlatformEnum.SHOPIFY.getCode())) continue;
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
             List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncLogisticsChannel(platformEnum.getCode());
             XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));

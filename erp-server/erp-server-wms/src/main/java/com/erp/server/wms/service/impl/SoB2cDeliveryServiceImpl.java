@@ -238,27 +238,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 }
             }
         }
-
         //修改发货状态
-        this.updateStatus(id, SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+        lambdaUpdate()
+                .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
+                .set(SoB2cDeliveryEntity::getDeliveryTime, LocalDateTime.now())
+                .eq(SoB2cDeliveryEntity::getId, id).update();
 
-        //修改订单状态已发货
+        //修改订单状态待发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
-        //生成销售出库单
-        soOutstockService.generateB2cSoOutstock(entity.getSourceId());
         // 操作日志
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
-        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(type);
-        deleteDTO.setMainId(entity.getSourceId());
-        soB2cFeign.deleteError(deleteDTO);
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
-
-
 
 
     }
@@ -275,14 +266,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
         }
-
         //校验是否存在拦截单
         checkIsIntercept(Arrays.asList(entity));
-
-        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
-        String message = "";
-        String paramJson = "";
-        String returnJson = "";
         //调用第三方平台SDK发货
         try {
             if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
@@ -295,31 +280,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
                 }
-                paramJson = JSONObject.toJSONString(platformShipOrderDTO);
             }
         } catch (Exception e) {
-            message = e.getMessage();
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setParamJson(paramJson);
-            addError.setReturnJson(returnJson);
-            addError.setMainId(entity.getSourceId());
-            addError.setMessage(message);
-            soB2cFeign.addSoB2cError(addError);
             log.error("销售单【{}】 标记发货失败 >>>错误信息{}", e.getMessage());
             throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform());
         }
-
         //修改状态为虚假发货
         this.updateStatus(id, SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getStatus());
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(type);
-        deleteDTO.setMainId(entity.getSourceId());
-        soB2cFeign.deleteError(deleteDTO);
-
         //修改订单状态待发货
         soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-
         // 操作日志
         String msg = StrUtil.format("用户【{}】虚假发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "虚假发货");
@@ -632,7 +601,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         map.put("detail", detail);
 //        JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
 
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, printWayBillPdfDTO.getDetailList());
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(printWayBillPdfDTO));
         String base = Base64.getEncoder().encodeToString(bytes);
         base64List.add("data:application/pdf;base64," + base);
     }
@@ -689,6 +658,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .in(SoB2cDeliveryEntity::getId, ids)
                 .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .update();
+    }
+
+    /**
+     * 发货
+     *
+     * @param id
+     * @param deliveryType
+     * @return
+     */
+    @Override
+    public BatchResultDTO delivery(String id, String deliveryType) {
+        //手工发货
+        String manual = DeliverTypeEnum.MANUAL.getCode();
+        if (manual.equals(deliveryType)) {
+            return this.manualDelivery(id);
+        } else {
+            return this.falseDelivery(id);
+        }
+
     }
 
     private List<SoB2cDeliveryEntity> listBySoB2cId(String soB2cId) {

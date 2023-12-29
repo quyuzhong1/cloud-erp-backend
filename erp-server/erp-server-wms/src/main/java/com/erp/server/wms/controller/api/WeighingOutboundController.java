@@ -38,11 +38,6 @@ public class WeighingOutboundController extends BaseController {
      */
     @PostMapping("/scan")
     @LogAction(value = LogActionEnum.UPDATE, desc = "称重出库扫描")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:weighingOutbound:scan",
-            serviceClass = SoB2cDeliveryService.class,
-            keyIdName = "ids")
     public ApiResult<WeightingOutboundDTO.ViewDTO> scan(@RequestBody @Validated WeightingOutboundDTO.ScanDTO dto) {
         WeightingOutboundDTO.ViewDTO list = weightingOutboundService.scan(dto);
         return success(list);

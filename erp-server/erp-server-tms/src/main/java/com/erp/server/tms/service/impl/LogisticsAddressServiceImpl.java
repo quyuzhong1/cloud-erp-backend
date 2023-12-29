@@ -35,6 +35,7 @@ import com.erp.model.tms.dto.LogisticsAddressDTO;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -186,7 +187,13 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
     @Override
     public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId) {
-        return baseMapper.listByTypeAndChannelId(type,channelId,shopId);
+        //根据类型和渠道ID查询地址
+        List<LogisticsAddressEntity> list=baseMapper.listByTypeAndChannelId(type,channelId);
+        List<LogisticsAddressEntity> shopAddressList=list.stream().filter(a->shopId.equals(a.getShopId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(shopAddressList)){
+             return shopAddressList;
+        }
+        return list.stream().filter(a->"all".equals(a.getShopId())).collect(Collectors.toList());
     }
 
 
