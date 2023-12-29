@@ -601,7 +601,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         map.put("detail", detail);
 //        JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, printWayBillPdfDTO.getDetailList());
 
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, printWayBillPdfDTO.getDetailList());
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(printWayBillPdfDTO));
         String base = Base64.getEncoder().encodeToString(bytes);
         base64List.add("data:application/pdf;base64," + base);
     }

@@ -21,8 +21,8 @@ public enum UnitEnum {
     @Getter
     @AllArgsConstructor
     public enum WeightUnitEnum implements EnumMessage{
-        G("g","克"),
-        KG("kg","千克")
+        G("g","g"),
+        KG("kg","kg")
         ;
         private final String code;
         private final String name;
