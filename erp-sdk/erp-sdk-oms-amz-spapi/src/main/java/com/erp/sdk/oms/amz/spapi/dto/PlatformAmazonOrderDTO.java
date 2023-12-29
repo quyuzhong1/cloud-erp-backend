@@ -237,7 +237,12 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 金额
         detailDTO.setAmount(new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
 
-        BigDecimal price = detailDTO.getAmount().divide(BigDecimal.valueOf(item.getQuantityOrdered()), 2, RoundingMode.DOWN);
+        // 计算单价
+        BigDecimal price = BigDecimal.ZERO;
+        if (null != item.getQuantityOrdered() && 0 < item.getQuantityOrdered()){
+            price = detailDTO.getAmount().divide(BigDecimal.valueOf(item.getQuantityOrdered()), 2, RoundingMode.DOWN);
+        }
+
         // 单价
         detailDTO.setPrice(price);
 
