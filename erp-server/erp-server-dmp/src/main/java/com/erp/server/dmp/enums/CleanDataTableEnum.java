@@ -1,5 +1,6 @@
 package com.erp.server.dmp.enums;
 
+import com.common.business.dto.PlatformCityDictDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
@@ -9,6 +10,8 @@ import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
+import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.iml.dto.response.*;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.util.ArrayList;
@@ -36,6 +39,21 @@ public enum CleanDataTableEnum {
 
     //track123
     TRACK123_GET_TRACK("TRACK123", "third_system_TRACK123_getTrack","third_system", "getTrack","TRACK123物流轨迹数据", PlatformTrack123TrackDTO.class),
+    //IML
+    IML_CITY_DICT("iml", "third_system_iml_city_dict","third_system", "city_dict","iml区域数据", ImlRegionResp.class),
+    IML_INBOUND("iml", "third_system_iml_inbound","third_system", "inbound","iml入库数据", ImlReceiptResp.class),
+    IML_INVENTORY("iml", "third_system_iml_inventory","third_system", "inventory","iml库存数据", ImlInventoryResp.class),
+    IML_OUTBOUND("iml", "third_system_iml_outbound","third_system", "outbound","iml出库数据", ImlOutboundResp.class),
+    IML_PRODUCT("iml", "third_system_iml_product","third_system", "product","iml产品数据", ImlProductResp.class),
+    IML_WAREHOUSE("iml", "third_system_iml_warehouse","third_system", "warehouse","iml仓库数据", ImlWarehouseResp.class),
+
+    //goodcang
+    GOODCANG_CITY_DICT("goodcang", "third_system_goodcang_transfer","third_system", "transfer","goodcang中转仓数据", GoodCangTransferWarehouseResp.class),
+    GOODCANG_INBOUND("goodcang", "third_system_goodcang_inbound","third_system", "inbound","goodcang入库数据", GoodCangReceiptBatchResp.class),
+    GOODCANG_INVENTORY("goodcang", "third_system_goodcang_inventory","third_system", "inventory","goodcang库存数据", GoodCangInventoryResp.class),
+    GOODCANG_OUTBOUND("goodcang", "third_system_goodcang_outbound","third_system", "outbound","goodcang出库数据", GoodCangOutboundResp.class),
+    GOODCANG_PRODUCT("goodcang", "third_system_goodcang_product","third_system", "product","goodcang产品数据", GoodCangSkuResp.class),
+    GOODCANG_WAREHOUSE("goodcang", "third_system_goodcang_warehouse","third_system", "warehouse","goodcang仓库数据", GoodCangWarehouseResp.class),
     ;
 
     private String platform;
