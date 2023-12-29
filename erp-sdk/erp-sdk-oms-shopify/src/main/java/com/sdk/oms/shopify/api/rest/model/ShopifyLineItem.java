@@ -14,8 +14,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ShopifyLineItem {
-
-	private String id;
+	@JsonProperty("id")
+	private String lineItemId;
 	@JsonProperty("variant_id")
 	private String variantId;
 	private String title;
