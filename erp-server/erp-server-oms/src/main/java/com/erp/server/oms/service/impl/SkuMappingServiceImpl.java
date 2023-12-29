@@ -1065,13 +1065,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listDTOPagingVO = operateLogService.paging(logDTO);
         }
         //查询sku对照表日志
-        if (listDTOPagingVO.getCurrPage() == listDTOPagingVO.getTotalPage()) {
+        if (listDTOPagingVO.getCurrPage() >= listDTOPagingVO.getTotalPage()) {
             logSearchDTO.setBusinessId(skuMappingEntity.getId());
             logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
             PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
             List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();
             List<OperateLogDTO.ListDTO> allList = (List<OperateLogDTO.ListDTO>) listDTOPagingVO.getList();
+            allList = CollectionUtils.isEmpty(allList)? new ArrayList<>():allList;
             allList.addAll(skuLogList);
+            listDTOPagingVO.setList(allList);
         }
         return listDTOPagingVO;
     }
