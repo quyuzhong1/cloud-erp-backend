@@ -359,8 +359,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soB2cEntity.getOrgId(), entity.getWarehouseOrgId()));
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+
         //部门信息
-        SysDepartmentDTO dept = sysUserFeign.getUserDeptById(deptId);
+        SysDepartmentDTO dept =StringUtils.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
         //查询供应商信息
         SupplierEntity supplierEntity = null;
         if (StringUtils.isNotBlank(entity.getCarrierId())) {
