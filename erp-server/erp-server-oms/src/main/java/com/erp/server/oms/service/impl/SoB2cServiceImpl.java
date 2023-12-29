@@ -254,9 +254,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+
+
+
+
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
@@ -302,11 +306,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        String id = soB2cEntity.getId();
-        //自动匹配订单规则
-        Boolean isSuccess = approveRule(id, detailList, map);
         return soB2cEntity;
     }
+
+
 
 
     /**
@@ -510,17 +513,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-
-        //审核通过进行匹配规则
-        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
-            //明细信息
-            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
-            Map<String, Object> map = new HashMap<>();
-            //匹配审核规则
-            handleMatchJson(entity.getId(), detailList, map);
-            //自动匹配配货规则
-            distributionRule(entity.getId(), detailList, map);
-        }
         return Boolean.TRUE;
     }
 
@@ -746,6 +738,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
         String message = "";
         //B2C销售订单主表信息
@@ -2872,7 +2865,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         try {
             //走物流规则
-            Boolean ruleLogistics = logisticsRule(id, map);
+            SoB2cDTO.RuleResultDTO  ruleLogistics = logisticsRule(id, map);
         } catch (Exception e) {
             log.error("物流规则报错>>>{}", e.getMessage());
 
@@ -2889,19 +2882,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Lambda
      * @create 2023-12-14 15:11
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean logisticsRule(String id, Map<String, Object> map) {
+    public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        if(map.isEmpty()){
+            List<SoB2cDetailEntity> detailList=soB2cDetailService.listByMainId(id);
+            handleMatchJson(id,detailList,map);
+        }
         //规则结果
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(map);
         Boolean result = Objects.nonNull(matchResult);
+        SoB2cDTO.RuleResultDTO resultDTO=new SoB2cDTO.RuleResultDTO();
+        Boolean autoGetTrackNo = Boolean.FALSE;
         //表示通过
         if (result) {
             //物流商id
             String logisticsChannelId = matchResult.getLogisticsChannelId();
             String logisticsChannelName = matchResult.getLogisticsChannelName();
-            Boolean autoGetTrackNo = matchResult.getAutoGetTrackNo();
+            autoGetTrackNo = matchResult.getAutoGetTrackNo();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
                 SoB2cLogisticsEntity b2cLogistics = soB2cLogisticsService.getByMainId(id);
                 if (Objects.nonNull(b2cLogistics)) {
@@ -2912,18 +2912,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //状态更新为配货中
             updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
-            //获取跟踪单号
-            if (ObjectUtil.isNotEmpty(autoGetTrackNo) && autoGetTrackNo) {
-                try {
-                    this.getLogisticsCode(id, Boolean.TRUE);
-                } catch (Exception e) {
-                    log.error("获取物流单号出错了>>>>>>>>{}", e.getMessage());
-                }
-            }
         } else {
             updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
         }
-        return result;
+
+        resultDTO.setIsRuleMatch(result);
+        resultDTO.setAutoGetTrackNo(autoGetTrackNo);
+        return resultDTO;
     }
 
     /**
@@ -3698,39 +3693,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         checkIsIntercept(Arrays.asList(entity));
 
         //仓库匹配规则结果
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
+        SoB2cDTO.RuleResultDTO ruleMatchResult = this.warehouseRule(entity.getId(),detailList,new HashMap<>());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         entity.setApproveStatus(approveStatus);
-        //配货规则是否通过
-        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
-
-        if (!distributionSuccess) {
-            //仓库规则不匹配,标识异常
-            entity.setAbnormalType(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode());
-            //明细设置仓库规则不匹配
-            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
-            soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
-            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            this.updateById(entity);
-            return Boolean.FALSE;
+        Boolean isRuleMatch=ruleMatchResult.getIsRuleMatch();
+        if(isRuleMatch){
+            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         }
-        entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         this.updateById(entity);
-
-        //更新明细仓库信息
-        String warehouseId = ruleMatchResult.getWarehouseId();
-        //返回了仓库则更新仓库为空的数据
-        if (StrUtil.isNotBlank(warehouseId)) {
-            for (SoB2cDetailEntity detailEntity : detailList) {
-                if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
-                    continue;
-                }
-                detailEntity.setWarehouseId(warehouseId);
-            }
-            soB2cDetailService.updateWarehouse(detailList);
-        }
-        return Boolean.TRUE;
-
+        return isRuleMatch;
     }
 
     @Override
@@ -3805,6 +3776,71 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 set(SoB2cEntity::getBillStatus,billStatus).update(new SoB2cEntity());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public SoB2cDTO.RuleResultDTO orderRule(String id) {
+        Map<String,Object> map=new HashMap<>();
+        List<SoB2cDetailEntity> detailList=soB2cDetailService.listByMainId(id);
+        //自动匹配订单规则
+        Boolean isSuccess = approveRule(id, detailList, map);
+        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
+        ruleResult.setId(id);
+        ruleResult.setIsRuleMatch(isSuccess);
+        ruleResult.setMap(map);
+        ruleResult.setSoB2cDetailList(detailList);
+        return ruleResult;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        SoB2cEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        if(CollectionUtils.isEmpty(detailList)){
+            detailList=soB2cDetailService.listByMainId(id);
+        }
+        if(map.isEmpty()){
+            handleMatchJson(id, detailList, map);
+        }
+        //仓库匹配规则结果
+        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = ruleDeliveryWarehouseService.getRuleOrderMatchResult(map);
+
+        //配货规则是否通过
+        Boolean distributionSuccess = Objects.nonNull(ruleMatchResult);
+        Boolean isRuleMatch=Boolean.FALSE;
+        if (!distributionSuccess) {
+            //仓库规则不匹配,标识异常
+            updateWarehouseAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
+            //明细设置仓库规则不匹配
+            List<String> detailIdList = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+            soB2cDetailService.updateIsMatchWarehouseRule(detailIdList);
+        }else{
+            isRuleMatch=Boolean.TRUE;
+            //更新明细仓库信息
+            String warehouseId = ruleMatchResult.getWarehouseId();
+            //返回了仓库则更新仓库为空的数据
+            if (StrUtil.isNotBlank(warehouseId)) {
+                for (SoB2cDetailEntity detailEntity : detailList) {
+                    if (StrUtil.isNotBlank(detailEntity.getWarehouseId())) {
+                        continue;
+                    }
+                    detailEntity.setWarehouseId(warehouseId);
+                }
+                soB2cDetailService.updateWarehouse(detailList);
+            }
+        }
+
+        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
+        ruleResult.setId(id);
+        ruleResult.setIsRuleMatch(isRuleMatch);
+        ruleResult.setMap(map);
+        ruleResult.setSoB2cDetailList(detailList);
+        return ruleResult;
+    }
+
     /**
      * @param
      * @return
@@ -3815,8 +3851,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Async
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-
         Boolean isSuccess = this.approveRule(id, detailList, map);
+        SoB2cDTO.RuleResultDTO warehouseRuleResult=  this.warehouseRule(id,detailList, map);
+        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+        if (warehouseRuleMatch) {
+            SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>());
+            Boolean autoGetTrackNo =logisticsRuleResult.getAutoGetTrackNo();
+            if(Objects.nonNull(autoGetTrackNo)&&autoGetTrackNo){
+                this.getLogisticsCode(id,autoGetTrackNo);
+            }
+        }
         return isSuccess;
     }
 

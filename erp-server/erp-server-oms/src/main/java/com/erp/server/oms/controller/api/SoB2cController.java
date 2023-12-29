@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -19,9 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * B2C销售订单表
@@ -86,7 +85,32 @@ public class SoB2cController extends BaseController {
             serviceClass = SoB2cService.class,
             keyIdName = "id")
     public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        /**
+         * 1,创建订单
+         * 2,匹配订单规则
+         * 3.匹配物流仓储规则
+         * 4.创建物流运单
+         * 5.创建发货单
+         */
         SoB2cEntity add = soB2cService.add(dto, null);
+        String id = add.getId();
+        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
+        //匹配成功
+        Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
+        //todo 可以优化
+        if (ruleMatch) {
+            //仓库规则
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+            Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+            if (warehouseRuleMatch) {
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                    soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                }
+            }
+
+        }
         return success(add.getId());
     }
 
@@ -164,11 +188,27 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
+            SoB2cEntity entity = soB2cService.getById(id);
             try {
                 approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                if (Objects.nonNull(entity)) {
+                    String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+                    if(approveStatus.equals(entity.getApproveStatus())){
+                        //仓库规则
+                        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
+                        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                        if (warehouseRuleMatch) {
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                            if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                                soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                            }
+                        }
+
+                    }
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
-                SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 审核失败");
                     resultDTOS.add(approveResult);
@@ -775,22 +815,23 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/matchSku")
     public ApiResult matchSku(@RequestBody @Validated SoB2cDTO.MatchSkuDTO dto) {
-       Boolean result= soB2cService.matchSku(dto);
-        return result?success():failure();
+        Boolean result = soB2cService.matchSku(dto);
+        return result ? success() : failure();
     }
 
     /**
      * 运费测算后选择渠道
-     * @description
+     *
      * @param
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2023-12-15 12:22
      */
     @PostMapping("/selectLogisticsChannel")
-    public ApiResult selectLogisticsChannel(@RequestBody SoB2cLogisticsDTO.SelectChannelDTO  dto){
-        Boolean result= soB2cService.selectLogisticsChannel(dto);
-        return result?success():failure();
+    public ApiResult selectLogisticsChannel(@RequestBody SoB2cLogisticsDTO.SelectChannelDTO dto) {
+        Boolean result = soB2cService.selectLogisticsChannel(dto);
+        return result ? success() : failure();
     }
 
     @GetMapping("/getJson")

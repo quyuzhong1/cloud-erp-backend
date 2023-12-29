@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -723,6 +724,31 @@ public class SoB2cDTO implements Serializable {
          * SoB2cOptionTypeEnum枚举（拆分、合并）
          */
         private SoB2cOptionTypeEnum operateType;
+
+    }
+
+
+    /**
+     * 订单规则结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RuleResultDTO{
+
+        private Boolean isRuleMatch;
+        
+        private String id;
+        
+        private Map<String,Object> map;
+        
+        private List<SoB2cDetailEntity> soB2cDetailList;
+
+        /**
+         * 是否自动获取跟踪单号
+         */
+        private Boolean autoGetTrackNo;
+        
+
 
     }
 
