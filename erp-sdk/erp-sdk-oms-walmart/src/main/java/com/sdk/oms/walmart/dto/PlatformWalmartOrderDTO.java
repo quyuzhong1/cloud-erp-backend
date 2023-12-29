@@ -125,7 +125,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
         orderDTO.setPlatform(PlatformDictEnum.WALMART.getCode());
-        orderDTO.setUniqueId(dto.getUniqueId());
+        orderDTO.setUniqueId(orderBean.getPurchaseOrderId());
         return orderDTO;
     }
 
@@ -171,7 +171,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 单价
         detailDTO.setPrice(BigDecimal.ZERO);
         // 金额
-        BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "PRODUCT".equals(req.getChargeType()))
+        BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
                 .map(req -> req.getChargeAmount().getAmount())
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
@@ -228,20 +228,23 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isEmpty(delivered)) {
             //沃尔玛：已交付 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isEmpty(acknowledged)) {
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        } else if (CollectionUtils.isEmpty(created)) {
-            //沃尔玛：已创建 = OMS：待配货
+            orderDTO.setInvalidStatus(true);
+        } else {
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
@@ -318,14 +321,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 if (ObjectUtil.isEmpty(trackingInfo)) {
                     continue;
                 }
-                //chargeAmount中chargeType=SHIPPING时amount的订单行汇总
-                BigDecimal cost = orderLineBean.getCharges().getCharge().stream()
-                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
-                        .map(req -> req.getChargeAmount().getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                String currency = orderLineBean.getCharges().getCharge().stream()
-                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
-                        .map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
 
 
                 Instant instant = Instant.ofEpochSecond(trackingInfo.getShipDateTime());
@@ -336,9 +331,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                         .deliveryTime(LocalDateTime.ofInstant(instant, zone))
                         .logisticsChannelId(trackingInfo.getCarrierName().getCarrier())
                         .estimatedShippingCost(BigDecimal.ZERO)
-                        .actualShippingCost(cost)
+                        .actualShippingCost(BigDecimal.ZERO)
                         .accessoriesCostCurrency("")
-                        .actualShippingCurrency(currency)
+                        .actualShippingCurrency("")
                         .estimatedShippingCurrency("")
                         .build();
                 logisticsDTOS.add(dto);
