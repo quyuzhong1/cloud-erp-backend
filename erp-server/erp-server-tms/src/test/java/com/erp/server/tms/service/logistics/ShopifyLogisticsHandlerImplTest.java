@@ -43,7 +43,6 @@ public class ShopifyLogisticsHandlerImplTest {
 
     @Test
     public void createChannelData() {
-        authMap.put("shopId", "1729456380676411394");
         ApiResult<List<LogisticsSaleChannelEntity>> channel = shopifyLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
         List<LogisticsSaleChannelEntity> entityList = channel.getData();
         entityList.forEach(logisticsSaleChannelEntity -> {
