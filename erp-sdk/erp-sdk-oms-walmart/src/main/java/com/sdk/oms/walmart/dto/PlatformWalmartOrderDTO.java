@@ -1,6 +1,7 @@
 package com.sdk.oms.walmart.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -22,10 +23,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -85,8 +83,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
 
-
-
         // 是否拦截
         orderDTO.setIsIntercept(false);
 
@@ -103,7 +99,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceCode("");
 
         // 标签json
-        orderDTO.setLabelJson("{}");
+        Map<String, String> lableMap = new HashMap<>();
+        lableMap.put("shipNodeType", orderBean.getShipNode().getType());
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+        //如果是平台仓，状态审核通过
+        if ("WFSFulfilled".equals(orderBean.getShipNode().getType()) || "3PLFulfilled".equals(orderBean.getShipNode().getType())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+        }
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -233,7 +236,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
