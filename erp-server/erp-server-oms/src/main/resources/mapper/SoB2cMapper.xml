@@ -209,7 +209,12 @@
                     </if>
                 </foreach>
             </if>
-
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+            </if>
         </where>
         order by sb2c.id desc
     </select>
@@ -251,8 +256,11 @@
             <if test="params.isOrderError != null ">
                    and sb2c.sign_order_error !=''
             </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
         </where>
     </select>
@@ -309,8 +317,11 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
         </where>
         group by
@@ -361,8 +372,11 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
         </where>
         group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
@@ -465,6 +479,12 @@
                 <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
+                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            </if>
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
         </where>
         order by sb2c.id desc

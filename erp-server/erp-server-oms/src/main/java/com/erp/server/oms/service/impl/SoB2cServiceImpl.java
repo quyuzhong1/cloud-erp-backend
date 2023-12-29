@@ -213,7 +213,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
 
     @Resource
-    private SoOutstockFeign soOutstockFeign;
+    private ShopSysUserAuthService shopSysUserAuthService;
 
 
     @Override
@@ -222,7 +222,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         //列表Tab查询状态处理
         handleTableParam(pagingParamDTO.getParams());
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return new PagingVO(new Page<>());
+        }
+        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(),shopAuthResultDTO);
         if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
@@ -230,6 +235,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+
 
     @Override
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -245,7 +251,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean isFlag = handleTableParam(searchParamDTO);
             Integer count = MathUtil.ZERO;
             if (isFlag) {
-                count = this.baseMapper.listCount(searchParamDTO);
+                //查询店铺设置权限
+                SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+                if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+                    count = MathUtil.ZERO;
+                } else {
+                    count = this.baseMapper.listCount(searchParamDTO,shopAuthResultDTO);
+                }
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
@@ -1148,16 +1160,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<SoB2cDTO.MergeListDTO> pageData = this.baseMapper.mergePaging(query, pagingParamDTO.getParams());
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return new PagingVO(new Page<>());
+        }
+        IPage<SoB2cDTO.MergeListDTO> pageData = this.baseMapper.mergePaging(query, pagingParamDTO.getParams(),shopAuthResultDTO);
         List<SoB2cDTO.MergeListDTO> records = pageData.getRecords();
-        fillMergeData(records);
+        fillMergeData(records,shopAuthResultDTO);
         return new PagingVO(pageData);
     }
 
     @Override
     public Integer mergePagingCount(SoB2cDTO.MergePagingParamDTO pagingParamDTO) {
         pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
-        List<Integer> list = this.baseMapper.mergePagingCount(pagingParamDTO);
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return MathUtil.ZERO;
+        }
+        List<Integer> list = this.baseMapper.mergePagingCount(pagingParamDTO,shopAuthResultDTO);
         return CollectionUtils.isEmpty(list) ? MathUtil.ZERO : list.stream().reduce(MathUtil.ZERO, Integer::sum);
     }
 
@@ -2283,7 +2305,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/23 9:32
      */
-    private void fillMergeData(List<SoB2cDTO.MergeListDTO> records) {
+    private void fillMergeData(List<SoB2cDTO.MergeListDTO> records,SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -2332,7 +2354,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         mergeParamDTO.setFullAddressList(fullAddressList);
         mergeParamDTO.setWarehouseIdList(warehouseIdList);
         mergeParamDTO.setLogisticsChannelIdList(logisticsChannelIdList);
-        List<SoB2cDTO.MergeMainDTO> mergeMainList = baseMapper.listMerge(mergeParamDTO);
+        List<SoB2cDTO.MergeMainDTO> mergeMainList = baseMapper.listMerge(mergeParamDTO,shopAuthResultDTO);
         if (CollectionUtils.isEmpty(mergeMainList)) {
             return;
         }
@@ -3948,5 +3970,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
+    }
+
+    /**
+     * 查询店铺权限设置
+     */
+    private SoB2cDTO.ShopAuthResultDTO handleShopSysUserAuth () {
+        SoB2cDTO.ShopAuthResultDTO resultDTO = new SoB2cDTO.ShopAuthResultDTO();
+        LoginUser userInfo = commonService.getUserInfo();
+        if (ObjectUtil.isEmpty(userInfo)) {
+            return null;
+        }
+        List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(list)) {
+            return null;
+        }
+        resultDTO.setUserId(userInfo.getUid());
+        resultDTO.setAuthType(list.get(0).getAuthType());
+        return resultDTO;
     }
 }
