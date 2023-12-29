@@ -106,6 +106,12 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     @TableField("zip_code")
     private String zipCode;
 
+    /**
+     * 店铺id
+     */
+    @TableField(exist = false)
+    private String shopId;
+
 
     public static final String NAME = "name";
 

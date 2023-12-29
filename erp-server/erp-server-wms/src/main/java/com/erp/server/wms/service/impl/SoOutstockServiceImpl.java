@@ -2006,8 +2006,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return result;
         }
         return Boolean.TRUE;
-
-
     }
 
     private SoOutstockEntity getBySoId(String soB2cId) {
@@ -2017,67 +2015,86 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 创建B2C销售出库单
+     * 1.先添加
+     * 2.提交审核
+     * 3.审核通过
      *
      * @param dto
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
     public Boolean createB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+
         String soB2cId = dto.getSoId();
         String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
         String paramJson = JSONUtil.toJsonStr(dto);
         try {
-            //来源类型
-            String sourceType = dto.getSourceType();
-            if (StringUtils.isBlank(sourceType)) {
-                sourceType = SourceTypeEnum.SELF_ADD.getCode();
+            String id = this.addB2cSoOutstock(dto);
+            //表示添加成功
+            if (StringUtils.isNotBlank(id)) {
+                //提交
+                Boolean submitResult = this.submit(Arrays.asList(id));
+                if(submitResult){
+                    this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+                }
             }
-            String sourceId = dto.getSourceId();
-            List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
-            if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_92029);
-            }
-            //检查出库数量
-            List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
-            soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
-            SoOutstockEntity soOutstock = new SoOutstockEntity();
-            BeanMapper.copy(dto, soOutstock);
-            //处理保存或者修改数据
-            handleSaveOrUpdateDb(soOutstock);
-            BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.CODE_XSCK;
-            String code = docNoGenHelper.generateCode(businessNoType);
-            soOutstock.setCode(code);
-            // 出库日期
-            soOutstock.setBillDate(LocalDate.now());
-            Boolean addResult = this.save(soOutstock);
-
-            //添加成功
-            if (addResult) {
-                soOutstockDetailService.add(soOutstock.getId(), detailList, soOutstock.getOrderType());
-                //添加日志
-                String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-                addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
-                String id = soOutstock.getId();
-                this.submit(Arrays.asList(id));
-                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
-                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                deleteDTO.setMainId(soB2cId);
-                deleteDTO.setType(type);
-                soB2cFeign.deleteError(deleteDTO);
-                return Boolean.FALSE;
-            }
-        } catch (Exception e) {
-            log.error("销售出库单创建失败，提交或者审核失败 {}", e.getMessage());
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setMainId(soB2cId);
+            deleteDTO.setType(type);
+            soB2cFeign.deleteError(deleteDTO);
+        }catch (Exception e){
+            String message = e.getMessage();
+            log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}",soB2cId,paramJson,message);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(type);
             addError.setMainId(soB2cId);
-            addError.setMessage(e.getMessage());
+            addError.setMessage(message);
             addError.setParamJson(paramJson);
             soB2cFeign.addSoB2cError(addError);
         }
 
 
-        return Boolean.TRUE;
+
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 添加B2C销售出库单
+     *
+     * @param dto
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2023-12-29 11:51
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+        //来源类型
+        String sourceType = dto.getSourceType();
+        if (StringUtils.isBlank(sourceType)) {
+            sourceType = SourceTypeEnum.SELF_ADD.getCode();
+        }
+        String sourceId = dto.getSourceId();
+        List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92029);
+        }
+        //检查出库数量
+        List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
+        soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
+        SoOutstockEntity soOutstock = new SoOutstockEntity();
+        BeanMapper.copy(dto, soOutstock);
+        //处理保存或者修改数据
+        handleSaveOrUpdateDb(soOutstock);
+        BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.CODE_XSCK;
+        String code = docNoGenHelper.generateCode(businessNoType);
+        soOutstock.setCode(code);
+        // 出库日期
+        soOutstock.setBillDate(LocalDate.now());
+        Boolean addResult = this.save(soOutstock);
+        if (addResult) {
+            return soOutstock.getId();
+        }
+        return "";
     }
 
     @Override
