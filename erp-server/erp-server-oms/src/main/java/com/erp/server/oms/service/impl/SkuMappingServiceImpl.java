@@ -1064,16 +1064,24 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             logSearchDTO.setModuleType(ModuleTypeEnum.LISTING_INFO.getCode());
             listDTOPagingVO = operateLogService.paging(logDTO);
         }
+
         //查询sku对照表日志
         if (listDTOPagingVO.getCurrPage() >= listDTOPagingVO.getTotalPage()) {
-            logSearchDTO.setBusinessId(skuMappingEntity.getId());
-            logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
-            PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
-            List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();
             List<OperateLogDTO.ListDTO> allList = (List<OperateLogDTO.ListDTO>) listDTOPagingVO.getList();
-            allList = CollectionUtils.isEmpty(allList)? new ArrayList<>():allList;
-            allList.addAll(skuLogList);
-            listDTOPagingVO.setList(allList);
+            if(allList.size() < listDTOPagingVO.getPageSize()){
+                logSearchDTO.setBusinessId(skuMappingEntity.getId());
+                logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
+                logDTO.setCurrPage(1);
+                PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
+                List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();
+                allList = CollectionUtils.isEmpty(allList)? new ArrayList<>():allList;
+                allList.addAll(skuLogList);
+                listDTOPagingVO.setList(allList);
+                listDTOPagingVO.setTotalCount(listDTOPagingVO.getTotalCount()+skuLogList.size());
+                if(listDTOPagingVO.getTotalPage() == 0){
+                    listDTOPagingVO.setTotalPage(1);
+                }
+            }
         }
         return listDTOPagingVO;
     }

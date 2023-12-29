@@ -154,4 +154,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.lang.Boolean
      **/
     Boolean updateStatus(List<String> ids, String status);
+
+    /** 发货
+     * @description
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2023-12-29 10:37
+     */
+    BatchResultDTO delivery(String id, String deliveryType);
 }

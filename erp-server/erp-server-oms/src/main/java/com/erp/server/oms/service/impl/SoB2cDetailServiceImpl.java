@@ -492,11 +492,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
             detailEntity.setImageUrl(skuVO.getSkuImagesUrl());
             //建议售价
-            BigDecimal advicePrice = MathUtil.multiply(skuVO.getRetailPrice(), detailEntity.getQty());
-            detailEntity.setAdvicePrice(advicePrice);
+            detailEntity.setAdvicePrice(skuVO.getRetailPrice());
             //含税单价
             BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
-            detailEntity.setTaxCost(MathUtil.multiply(costPrice,detailEntity.getQty()));
+            detailEntity.setTaxCost(costPrice);
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()

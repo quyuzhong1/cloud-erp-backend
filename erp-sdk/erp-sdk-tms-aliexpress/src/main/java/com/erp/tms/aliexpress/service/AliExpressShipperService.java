@@ -84,7 +84,7 @@ public class AliExpressShipperService {
         request.addApiParameter("warehouse_carrier_service", orderRequest.getWarehouse_carrier_service());
         request.addApiParameter("invoice_number", orderRequest.getInvoice_number());
         request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
-        request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
+//        request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         log.info("下单完成：{}",JSONObject.toJSONString(response));
@@ -222,6 +222,23 @@ public class AliExpressShipperService {
         request.setApiName("aliexpress.logistics.service.query");
         request.addApiParameter("interface_request", JSONObject.toJSONString(queryLogisticsRequest));
 //        request.addApiParameter("interface_request", "{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"sub_order_list\":[{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"},{\"goods_length\":\"1\",\"goods_height\":\"1\",\"goods_width\":\"1\",\"locale\":\"zh_CN\",\"order_id\":\"8001498863155804\",\"goods_weight\":\"0.1\"}],\"locale\":\"zh_CN\",\"order_id\":\"8001498863145804\",\"goods_weight\":\"0.1\"}");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    public IopResponse getSellerInfo(Map<String, String> authMap) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.merchant.profile.get");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return response;

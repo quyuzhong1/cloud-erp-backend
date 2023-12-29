@@ -30,7 +30,17 @@ import javax.validation.constraints.*;
 @NoArgsConstructor
 public class SoB2cDeliveryDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class DeliverDTO{
+        /**
+         * manual 手动
+         * falsehood 虚假发货
+         */
+      private String type;
 
+      private List<String> ids;
+    }
 
 
     /**

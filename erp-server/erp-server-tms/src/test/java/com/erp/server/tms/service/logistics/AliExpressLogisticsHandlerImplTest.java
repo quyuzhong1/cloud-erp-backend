@@ -2,10 +2,15 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
+import com.erp.oms.aliexpress.dto.request.OrderRequest;
+import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.query.QueryLogisticsRequest;
@@ -38,6 +43,8 @@ public class AliExpressLogisticsHandlerImplTest {
     @Resource
     private AliExpressShipperService aliExpressShipperService;
 
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
@@ -46,7 +53,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200a44O1S6gAp1PpAb3HTkLwhWQDWDeRer0TGIEvm3jS0I5fdki145b733d0YY2";
+        String token = "50000200808eDwdp7jFQ11c2502cvNseAYnXjpUBSoEaDBwCKVWDHjRmXlzLs7s2E3KQ";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -112,26 +119,26 @@ public class AliExpressLogisticsHandlerImplTest {
 
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
         logisticsProductVO.setId("1005004996443696");
-        logisticsProductVO.setSkuId("1005006019200385");
+        logisticsProductVO.setSkuId("1005005616949322");
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("12"));
+        logisticsProductVO.setPrice(new BigDecimal("197.07"));
         logisticsProductVO.setWeight(1);
-        logisticsProductVO.setQuantity(1);
+        logisticsProductVO.setQuantity(2);
         logisticsProductVO.setSourceCountry("CN");
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
-        logisticsProductVO.setChildOrderId(3027883474280186L);
+        logisticsProductVO.setChildOrderId("3028833906091879");
         logisticsProductVO.setScItemCode("");
-        logisticsProductVO.setScItemId(40414943126L);
-        logisticsProductVO.setScItemName("");
-        logisticsProductVO.setSkuCode("A018GBB1");
-        logisticsProductVO.setSkuName("A018GBB1");
+//        logisticsProductVO.setScItemId(40414943126L);
+//        logisticsProductVO.setScItemName("");
+//        logisticsProductVO.setSkuCode("L083GBB1");
+//        logisticsProductVO.setSkuName("A018GBB1");
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("CAINIAO_STANDARD_30500252");
+        logisticsSaleChannel.setCode("CAINIAO_STANDARD_FPXQZ");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("11169435");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
@@ -143,11 +150,11 @@ public class AliExpressLogisticsHandlerImplTest {
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
                 .orderSource("ERP")
-//                .pickupType("DOOR_PICKUP")
-                .pickupType("SELF_SEND")
+                .pickupType("DOOR_PICKUP")
+//                .pickupType("SELF_SEND")
 //                .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("3027883474270186")
+                .deliveryNo("3028833906081879")
 //                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
@@ -156,7 +163,7 @@ public class AliExpressLogisticsHandlerImplTest {
                         .name("tr1011044319")
                         .companyName("tr1011044319")
                         .contact("zhang san")
-                        .country("TR")
+                        .country("ES")
                         .zipCode("34690")
                         .province("Istanbul")
                         .telNumber("1234567890")
@@ -168,7 +175,7 @@ public class AliExpressLogisticsHandlerImplTest {
                         .currency("CNY")
                         .height(1)
                         .hasBattery(true)
-                        .totalPrice(new BigDecimal("503.75"))
+                        .totalPrice(new BigDecimal("394.14"))
                         .totalQuantity(1)
                         .totalWeight(1)
                         .length(1)
@@ -194,10 +201,14 @@ public class AliExpressLogisticsHandlerImplTest {
         System.out.println(listApiResult);
     }
 
+    /**
+     * 获取面签
+     * @throws IOException
+     */
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setTransportNo("580555992124");
+        logisticsQueryVO2.setTransportNo("8180522992920473");
         logisticsQueryVO2.setAuthMap(authMap);
         logisticsQueryVO2.setLabelType("1");
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
@@ -209,10 +220,14 @@ public class AliExpressLogisticsHandlerImplTest {
         System.out.println(apiResult);
     }
 
+    /**
+     * 订单可发仓库列表
+     * @throws ApiException
+     */
     @Test
     public void getLogisticsService() throws ApiException {
         QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(3027883474270186L)
+                .order_id(8182808069884648L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
@@ -220,7 +235,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //                .order_id(1102175972276889L)
                 .build();
         QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
-                .order_id(3027883474270186L)
+                .order_id(8182808069884648L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
@@ -229,5 +244,35 @@ public class AliExpressLogisticsHandlerImplTest {
                 .build();
         IopResponse logisticsService = aliExpressShipperService.getLogisticsService(authMap, queryLogisticsRequest1);
         System.out.println(logisticsService);
+    }
+
+    /**
+     * 订单列表
+     * @throws com.erp.oms.aliexpress.util.ApiException
+     */
+    @Test
+    public void getOrderList() throws com.erp.oms.aliexpress.util.ApiException {
+        String apiName = AliexpressConstants.LIST_ORDER;
+        OrderRequest orderRequest = OrderRequest.builder().
+                clientId(authMap.get("clientId")).
+                clientSecret(authMap.get("clientSecret")).
+                startTime("2023-12-27 00:00:00").
+                endTime("2023-12-29 00:00:00").
+                baseUrl(authMap.get("url")).
+                apiName(apiName).
+                currentPage(1).
+                token(authMap.get("token")).build();
+        List<AliExpressOrder > orderList = new ArrayList<>();
+        aliExpressOrderService.listOrder(orderRequest, orderList);
+        System.out.println(orderList);
+    }
+
+    /**
+     * 卖家信息
+     */
+    @Test
+    public void getSellerInfo() throws ApiException {
+        IopResponse sellerInfo = aliExpressShipperService.getSellerInfo(authMap);
+        System.out.println(sellerInfo);
     }
 }

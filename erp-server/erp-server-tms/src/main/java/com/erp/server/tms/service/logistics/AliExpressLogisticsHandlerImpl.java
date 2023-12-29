@@ -158,8 +158,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             //转换实体
             if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && response.getResultSuccess()) {
                 OrderResponse orderResponse = response.getResult();
-                responseVO.setDeliveryNo(orderResponse.getOutOrderId());
-                responseVO.setTransportNo(orderResponse.getIntlTrackingNo());
+                responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
+                responseVO.setTransportNo(orderResponse.getWarehouseOrderId());
                 responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
@@ -193,7 +193,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
         //收寄信息
         AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setSender(LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO));
+        if (Objects.nonNull(logisticsOrderVO.getSenderInfo())){
+            addressDTO.setSender(LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO));
+        }
         if (Objects.nonNull(logisticsOrderVO.getPickUpInfo())){
             addressDTO.setPickup(LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO));
         }
@@ -201,7 +203,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.setRefund(LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO));
         }
 //        addressDTO.setRefund(addressDTO.getSender());
-        addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
+        if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
+            addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
+        }
         OrderRequest orderRequest = OrderRequest.builder()
                 .pickup_type(logisticsOrderVO.getPickupType())
                 .declareProducts(declareProducts)
