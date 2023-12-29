@@ -40,11 +40,6 @@ public class PackingInspectionController extends BaseController {
      */
     @PostMapping("/scan")
     @LogAction(value = LogActionEnum.UPDATE, desc = "包装验货扫描")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:packingInspection:scan",
-            serviceClass = SoB2cDeliveryService.class,
-            keyIdName = "ids")
     public ApiResult<PackingInspectionDTO.ViewDTO> scan(@RequestBody @Validated PackingInspectionDTO.ScanDTO dto) {
         PackingInspectionDTO.ViewDTO list = packingInspectionService.scan(dto);
         return success(list);
