@@ -80,6 +80,7 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
+//        paramMap.put("order_status", "WAIT_SELLER_SEND_GOODS");
         paramMap.put("page_size", pageSize);
         paramMap.put("create_date_start", orderRequest.getStartTime());
         paramMap.put("create_date_end", orderRequest.getEndTime());
