@@ -415,13 +415,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         String soId = soOutstock.getSoId();
-        String orderType= soOutstock.getOrderType();
+        String orderType = soOutstock.getOrderType();
         String b2b = OrderTypeEnum.B2B.getCode();
         Boolean isB2b = b2b.equals(orderType);
         result.setTypeName(OrderTypeEnum.getName(orderType));
         result.setSoCode(soOutstock.getCode());
         result.setSellerId(soOutstock.getSellerId());
-        if(isB2b){
+        if (isB2b) {
             SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
             if (soInfo != null) {
                 result.setCustomerName(soInfo.getCustomerName());
@@ -437,8 +437,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setSalesDeptName(soInfo.getSalesDeptName());
                 result.setSalesOrgName(soInfo.getSalesOrgName());
             }
-        }else{
-            SoB2cDTO.CustomerDTO customer=soB2cFeign.getB2cCustomerById(soId);
+        } else {
+            SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
             result.setCustomerName(customer.getCustomerName());
             result.setReceiveAddress(customer.getReceiverAddress());
             result.setTelNumber(customer.getTelNumber());
@@ -544,10 +544,41 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 syncKingdeeSoOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 handleData(entity);
             } else {
+                handleSoB2cData(entity);
                 syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 处理B2c销售出库单
+     *
+     * @param entity
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2024-01-01 10:50
+     */
+    private void handleSoB2cData(SoOutstockEntity entity) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        //这个是销售出库单id
+        List<String> allList = Arrays.asList(entity.getId());
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
+        InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
+        for (InOutStockDTO member : members) {
+            member.setSourceType(sourceTypeEnum);
+        }
+        if (CollectionUtils.isNotEmpty(members)) {
+            inventoryInOutStockDTO.setParamList(members);
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        }
+
     }
 
 
@@ -1023,8 +1054,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        //处理分页数据
+        fillPaging(list);
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 填充分页数据
+     *
+     * @param list
+     */
+    private void fillPaging(List<SoOutstockDTO.PagingViewDTO> list) {
         List<String> soIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSoId).collect(Collectors.toList());
         List<SoInfoDTO.CustomerDTO> soCustomerList = soInfoFeign.listSoCustomer(soIdList);
+        List<SoB2cDTO.CustomerDTO> b2cCustomerList = soB2cFeign.listCustomer(soIdList);
+        //B2C 客户列表
+        List<String> b2cCountryList = b2cCustomerList.stream().map(SoB2cDTO.CustomerDTO::getCountry).collect(Collectors.toList());
         //sku id
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -1035,15 +1080,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //部门id集合
         List<String> deptIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSalesDeptId).collect(Collectors.toList());
         List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(deptIdList);
-
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        //发货通知单
-        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
 
         //查询是否有拦截单
         List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
-
+        String b2b = OrderTypeEnum.B2B.getCode();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置拦截标识
             SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream().filter(req -> req.getId().equals(item.getSoId())).findFirst().orElse(null);
@@ -1059,10 +1101,35 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String salesDeptName = deptList.stream().filter(d -> d.getId().equals(salesDeptId)).
                     map(SysDepartmentEntity::getName).findFirst().orElse("");
             item.setSalesDeptName(salesDeptName);
-            SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setOrderTypeName(soInfo.getOrderTypeName());
-            item.setSalesOrgName(soInfo.getSalesOrgName());
-            item.setCustomerName(soInfo.getCustomerName());
+            String orderType = item.getOrderType();
+            Boolean isB2b = b2b.equals(orderType);
+            if (isB2b) {
+                SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+                item.setSalesOrgName(soInfo.getSalesOrgName());
+                item.setCustomerName(soInfo.getCustomerName());
+
+                //国家id
+                if (CollectionUtils.isNotEmpty(customerList)) {
+                    String countryId = customerList.stream().filter(obj -> obj.getId().equals(item.getCustomerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCountryId())).orElse("");
+                    item.setCountryId(countryId);
+                }
+
+                //国家名称
+                if (CollectionUtils.isNotEmpty(countryList)) {
+                    String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                    item.setCountryName(countryName);
+                }
+
+            } else {
+                SoB2cDTO.CustomerDTO b2cCustomer = b2cCustomerList.stream().filter(s -> s.getSoId().equals(soId)).findFirst().orElse(new SoB2cDTO.CustomerDTO());
+                item.setSalesOrgName(b2cCustomer.getSalesOrgName());
+                item.setCustomerName(b2cCustomer.getCustomerName());
+                String country = b2cCustomer.getCountry();
+                String countryName = countryList.stream().filter(obj -> country.equals(obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                item.setCountryName(countryName);
+            }
+            String orderTypeName = OrderTypeEnum.getName(orderType);
+            item.setOrderTypeName(orderTypeName);
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
@@ -1095,19 +1162,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
-            //国家id
-            if (CollectionUtils.isNotEmpty(customerList)) {
-                String countryId = customerList.stream().filter(obj -> obj.getId().equals(item.getCustomerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCountryId())).orElse("");
-                item.setCountryId(countryId);
-            }
 
-            //国家名称
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                item.setCountryName(countryName);
-            }
         }
-        return new PagingVO<>(pageData);
     }
 
 
@@ -1132,83 +1188,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-
-        List<String> soIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSoId).collect(Collectors.toList());
-        List<SoInfoDTO.CustomerDTO> soCustomerList = soInfoFeign.listSoCustomer(soIdList);
-        //sku id
-        List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        //发货通知单
-        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-        //部门id集合
-        List<String> deptIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSalesDeptId).collect(Collectors.toList());
-        List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(deptIdList);
-        //客户信息
-        List<String> customerIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
-        List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(customerIdList);
-        // 国家
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-
-        for (SoOutstockDTO.PagingViewDTO item : list) {
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
-            item.setApproveStatusName(approveStatus.getName());
-            String soId = item.getSoId();
-            String sourceType = item.getSourceType();
-            String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
-            //部门id
-            String salesDeptId = item.getSalesDeptId();
-            String salesDeptName = deptList.stream().filter(d -> d.getId().equals(salesDeptId)).
-                    map(SysDepartmentEntity::getName).findFirst().orElse("");
-            item.setSalesDeptName(salesDeptName);
-            item.setSourceCode(sourceCode);
-            SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setOrderTypeName(soInfo.getOrderTypeName());
-            item.setSalesOrgName(soInfo.getSalesOrgName());
-            item.setCustomerName(soInfo.getCustomerName());
-            Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
-            item.setInvalidStatusName(invalidStatusName);
-
-            //税率
-            BigDecimal taxRate = item.getTaxRate();
-            BigDecimal price = item.getPrice();
-            item.setPrice(price);
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //汇率
-            BigDecimal exchangeRate = item.getExchangeRate();
-            if (Objects.isNull(exchangeRate)) {
-                exchangeRate = MathUtil.BigDecimal_1;
-            }
-            //销售单价(本位币)
-            item.setCnyPrice(MathUtil.multiply(price, exchangeRate));
-
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            item.setTaxPrice(taxPrice);
-            //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
-            item.setCurrency(item.getCurrency());
-            item.setCurrencySymbol(item.getCurrencySymbol());
-            item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
-
-            //国家id
-            if (CollectionUtils.isNotEmpty(customerList)) {
-                String countryId = customerList.stream().filter(obj -> obj.getId().equals(item.getCustomerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCountryId())).orElse("");
-                item.setCountryId(countryId);
-            }
-
-            //国家名称
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                item.setCountryName(countryName);
-            }
-            String skuId = item.getSkuId();
-            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
-            item.setProductName(sku.getSkuName());
-            item.setUnit(sku.getUnitName());
-        }
+        fillPaging(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soOutstock.xlsx";
         String name = "销售订单出库列表";
@@ -1246,15 +1226,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isBlank(sourceType)) {
             sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
-
-        //销售订单详情集合
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
-        if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException("销售订单详情不存在");
+        String orderType = soOutstock.getOrderType();
+        String b2b = OrderTypeEnum.B2B.getCode();
+        Boolean isB2b = b2b.equals(orderType);
+        List<SoDetailEntity> soDetailList = Collections.emptyList();
+        if (isB2b) {
+            //销售订单详情集合
+            soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
+            if (CollectionUtils.isEmpty(soDetailList)) {
+                throw new ServiceException("销售订单详情不存在");
+            }
+            //检查出库数量
+            soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
+        } else {
+            soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         }
 
-        //检查出库数量
-        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
+
         String code = soOutstock.getCode();
         LocalDate billDate = dto.getBillDate();
         //旧的
@@ -2040,7 +2028,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (StringUtils.isNotBlank(id)) {
                 //提交
                 Boolean submitResult = this.submit(Arrays.asList(id));
-                if(submitResult){
+                if (submitResult) {
                     this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
                 }
             }
@@ -2048,9 +2036,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             deleteDTO.setMainId(soB2cId);
             deleteDTO.setType(type);
             soB2cFeign.deleteError(deleteDTO);
-        }catch (Exception e){
+        } catch (Exception e) {
             String message = e.getMessage();
-            log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}",soB2cId,paramJson,message);
+            log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(type);
             addError.setMainId(soB2cId);
@@ -2058,7 +2046,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setParamJson(paramJson);
             soB2cFeign.addSoB2cError(addError);
         }
-
 
 
         return Boolean.FALSE;

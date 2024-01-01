@@ -177,15 +177,16 @@ public class SoB2cDeliveryController extends BaseController {
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 手动发货失败");
                     resultDTOS.add(result);
+                    continue;
+                }else{
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                     addError.setType(type);
-                    addError.setParamJson("");
+                    addError.setParamJson(deliveryType);
                     addError.setReturnJson("");
                     addError.setMainId(entity.getSourceId());
                     addError.setMessage(e.getMessage());
                     soB2cFeign.addSoB2cError(addError);
                     log.error("发货单发货失败", e);
-                    continue;
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
@@ -237,7 +238,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @return
      */
     @PostMapping("/retryFalseDelivery")
-    public ApiResult<List<BatchResultDTO>> retryFalseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> retryDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         //id 为销售订单id
         for (String id : dto.getIds()) {

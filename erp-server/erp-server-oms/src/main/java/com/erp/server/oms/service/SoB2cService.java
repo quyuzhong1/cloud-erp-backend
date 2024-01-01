@@ -528,4 +528,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-29 16:42
      */
     SoB2cDTO.CustomerDTO getB2cCustomerById(String soId);
+
+    /**
+     * 获取客户信息
+     * @param soIdList
+     * @return
+     */
+    List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList);
 }

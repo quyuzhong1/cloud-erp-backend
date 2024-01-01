@@ -3020,16 +3020,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(shopInfo)) {
             b2cCustomer.setSellerId(shopInfo.getChargeId());
             b2cCustomer.setSellerName(shopInfo.getChargeName());
-            b2cCustomer.setCustomerName(shopInfo.getName());
         }
         if (Objects.nonNull(receiver)) {
-            b2cCustomer.setReceiverAddress(receiver.getFirstAddress());
+            b2cCustomer.setReceiverAddress(receiver.getFullAddress());
             b2cCustomer.setReceiverName(receiver.getReceiverName());
             b2cCustomer.setTelNumber(receiver.getTelNumber());
+            b2cCustomer.setCustomerName(receiver.getName());
+
         }
-
-
+        String deliveryMode=DeliveryModeEnum.DELIVERGOODS.getCode();
+        String deliveryModeName=DeliveryModeEnum.DELIVERGOODS.getName();
+        b2cCustomer.setDeliveryMode(deliveryMode);
+        b2cCustomer.setDeliveryModeName(deliveryModeName);
         return b2cCustomer;
+    }
+
+    @Override
+    public List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList) {
+        if(CollectionUtils.isEmpty(soIdList)){
+            return Collections.emptyList();
+        }
+        List<SoB2cDTO.CustomerDTO> customerList = baseMapper.listCustomer(soIdList);
+        return customerList;
+
     }
 
     /**
@@ -3666,10 +3679,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
         dto.setSoCode(entity.getCode());
-
+        dto.setPlanDeliveryDate(entity.getCreateTime().toLocalDate());
         String sourceId = id;
         String sourceType = SourceTypeEnum.SO_B2C.getCode();
         String sourceCode = entity.getCode();
+        String  detailRemark="";
 
         //发货的
         List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
@@ -3678,6 +3692,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDeliveryList.get(0).getId();
             sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
             sourceCode = soB2cDeliveryList.get(0).getCode();
+        }else{
+            detailRemark="B2C订单发货自动生成";
         }
         dto.setSourceId(sourceId);
         dto.setSourceType(sourceType);
@@ -3694,10 +3710,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dto.setSalesDeptId(deptUser.getDepartmentId());
         }
         if (Objects.isNull(soB2cLogistics)) {
-            dto.setTrackNo(soB2cLogistics.getCode());
+            dto.setTrackNo(soB2cLogistics.getTrackNo());
+            dto.setTransportNo(soB2cLogistics.getCode());
         }
         //根据主表id 查询出库的信息
         List<SoB2cDetailDTO.OutstockDTO> detailList = soB2cDetailService.listOutstockByMainId(id);
+        String finalDetailRemark = detailRemark;
+        detailList.stream().forEach(d->d.setRemark(finalDetailRemark));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
