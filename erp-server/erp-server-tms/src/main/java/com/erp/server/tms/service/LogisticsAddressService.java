@@ -88,4 +88,10 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @return
      */
     List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId);
+
+    /**
+     * 批量保存或更新 同步物流商物流地址
+     * @param list
+     */
+    void batchSaveOrUpdateLogisticsAddress(List<LogisticsAddressEntity> list);
 }

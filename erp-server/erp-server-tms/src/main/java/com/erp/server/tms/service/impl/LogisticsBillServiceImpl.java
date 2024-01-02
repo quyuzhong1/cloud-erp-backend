@@ -359,7 +359,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //发货人信息
         SenderInfo senderInfo = new SenderInfo();
-        BeanMapperUtils.copy(deliverList.get(0), senderInfo);
+        LogisticsAddressEntity logisticsAddress=deliverList.get(0);
+        BeanMapperUtils.copy(logisticsAddress, senderInfo);
+        //地址id
+        senderInfo.setId(logisticsAddress.getAddressId());
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);

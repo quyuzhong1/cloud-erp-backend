@@ -66,4 +66,6 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @create 2023-12-22 9:07
      */
     SoB2cErrorDTO.ViewDTO info(SoB2cErrorDTO.InfoDTO dto);
+
+    SoB2cErrorEntity getByMainIdAndType(String mainId, String errorType);
 }

@@ -89,7 +89,7 @@ public class SoB2cErrorEntity implements Serializable{
     * 传的json 字符串
     */
     @TableField(value="param_json")
-    private Object paramJson;
+    private String paramJson;
     /**
     * 错误信息
     */

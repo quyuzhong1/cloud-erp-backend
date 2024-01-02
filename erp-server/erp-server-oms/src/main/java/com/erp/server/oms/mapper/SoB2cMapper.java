@@ -92,4 +92,14 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     SoB2cDTO.SignShipOrderDTO getSignShipParam(@Param("id") String soB2cId);
+
+    /**
+     * 获取客户信息
+     * @description
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2024-01-01 9:49
+     */
+    List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList")List<String> soIdList);
 }

@@ -192,6 +192,7 @@
          WHERE lca.logistics_channel_id=#{channelId}
          AND lca.is_deleted=false
          AND la.type=#{type}
+         ORDER BY la.create_time DESC
 
 
 

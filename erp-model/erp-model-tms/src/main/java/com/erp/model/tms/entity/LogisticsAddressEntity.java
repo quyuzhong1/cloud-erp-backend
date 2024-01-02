@@ -119,26 +119,31 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
      *交易管理id
      */
     @TableField("trade_manage_id")
-    private String trade_manage_id;
+    private String tradeManageId;
     /**
      *源地址id
      */
     @TableField("address_id")
-    private String address_id;
+    private String addressId;
     /**
      *是否默认 false 不是默认
      */
     @TableField("is_default")
-    private int is_default;
+    private int isDefault;
     /**
      *语言 默认CN
      */
     @TableField("language")
     private String language;
     /**
-     * 店铺id
+     * 数据同步方式
      */
-    @TableField(exist = false)
+    @TableField("is_by_sync")
+    private Boolean isBySync;
+     /**
+     * 店铺id shop_id
+     */
+     @TableField("shop_id")
     private String shopId;
 
 

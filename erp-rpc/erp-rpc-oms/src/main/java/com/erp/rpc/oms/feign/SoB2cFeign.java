@@ -102,7 +102,7 @@ public interface SoB2cFeign {
      * @create 2023-12-20 11:06
      */
     @PostMapping("/feign/soB2cError/add")
-    void addSoB2cError(SoB2cErrorDTO.AddDTO dto);
+    void addSoB2cError(@RequestBody SoB2cErrorDTO.AddDTO dto);
 
     /**
      * 删除异常信息
@@ -114,7 +114,7 @@ public interface SoB2cFeign {
      * @create 2023-12-20 11:20
      */
     @PostMapping("/feign/soB2cError/delete")
-    void deleteError(SoB2cErrorDTO.DeleteDTO deleteDTO);
+    void deleteError(@RequestBody SoB2cErrorDTO.DeleteDTO deleteDTO);
 
     /**
      * 根据b2c订单id获取买家信息
@@ -198,4 +198,24 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/getB2cCustomerById")
     SoB2cDTO.CustomerDTO getB2cCustomerById(@RequestBody String soId);
+
+    /**
+     * 根据销售订单idlist 获取到客户信息
+     * @param soIdList
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listCustomer")
+    List<SoB2cDTO.CustomerDTO> listCustomer(@RequestBody List<String> soIdList);
+
+    /**
+     * 获取异常信息
+     * @description
+     * @param mainId
+     * @param errorType
+     * @author Lambda
+     * @return 
+     * @create 2024-01-01 12:27
+     */
+    @PostMapping("/feign/soB2cError/getB2cError")
+    SoB2cErrorEntity getB2cError(@RequestParam("mainId")String mainId, @RequestParam("errorType") String errorType);
 }

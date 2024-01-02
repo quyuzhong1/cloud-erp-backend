@@ -109,10 +109,15 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         return viewDTO;
     }
 
-    private SoB2cErrorEntity getByMainIdAndType(String mainId, String type) {
+
+
+    @Override
+    public SoB2cErrorEntity getByMainIdAndType(String mainId, String type) {
        return this.lambdaQuery().eq(SoB2cErrorEntity::getMainId, mainId).
-                eq(SoB2cErrorEntity::getType,type).last("LIMIT 1").
-                one();
+                eq(SoB2cErrorEntity::getType,type).
+               orderByDesc(SoB2cErrorEntity::getCreateTime).
+               last("LIMIT 1").
+               one();
     }
 
 

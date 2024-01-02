@@ -95,6 +95,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
+        log.error("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
         //这个是B2c销售订单code
         String soB2cCode = dto.getReferenceNo();
         String billStatus = dto.getOrderStatus();

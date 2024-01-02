@@ -156,15 +156,15 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             menuCode = "wms:soB2cDeliveryIntercept:interceptResultConfirm",
             serviceClass = SoB2cDeliveryInterceptService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody ValidList<SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO> dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
-        for (SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO resultConfirmDTO : dto.getList()) {
+    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryInterceptService.interceptResultConfirm(resultConfirmDTO);
+                result = soB2cDeliveryInterceptService.interceptResultConfirm(dto, id);
             }catch (Exception e){
                 log.error("物流拦截单 拦截结果确认失败",e);
-                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(resultConfirmDTO.getId());
+                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
                     resultDTOS.add(result);

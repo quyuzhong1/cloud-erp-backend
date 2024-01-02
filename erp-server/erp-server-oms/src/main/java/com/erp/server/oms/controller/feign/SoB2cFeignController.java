@@ -274,4 +274,16 @@ public class SoB2cFeignController extends BaseController {
     public SoB2cDTO.CustomerDTO  getB2cCustomerById(@RequestBody String soId){
         return soB2cService.getB2cCustomerById(soId);
     }
+
+   /** 
+    * @description
+    * @param soIdList
+    * @author Lambda
+    * @return 
+    * @create 2024-01-01 9:38
+    */
+    @PostMapping("/listCustomer")
+    public List<SoB2cDTO.CustomerDTO>  listCustomer(@RequestBody List<String> soIdList){
+        return soB2cService.listCustomer(soIdList);
+    }
 }

@@ -138,6 +138,7 @@ public interface B2cOrderConverter {
 
 
     @Mappings({
+            @Mapping(target = "soId", source = "id"),
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
             @Mapping(target = "sourceType", ignore = true),

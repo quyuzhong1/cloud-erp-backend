@@ -171,6 +171,9 @@
             <if test="params.isOrderError != null ">
                 and sb2c.sign_order_error !=''
             </if>
+            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
+                and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
+            </if>
             <if test="params.labelList != null and params.labelList.size > 0">
                 <foreach collection="params.labelList" item="item">
                     <if test="item == 'frozen'">
@@ -606,6 +609,30 @@
        INNER JOIN so_b2c_logistics sb2cl
        ON sb2c.id = sb2cl.main_id and sb2cl.is_deleted=FALSE
        WHERE sb2c.id = #{id} AND sb2c.is_deleted=FALSE
+    </select>
+    <select id="listCustomer" resultType="com.erp.model.oms.dto.SoB2cDTO$CustomerDTO">
+        SELECT
+            sb2c.id AS soId,
+            sb2c.shop_id,
+            sb2c.org_id AS salesOrgId,
+            sb2c.org_name AS salesOrgName,
+            si.name AS customerName,
+            sb2r.country,
+            sb2r.full_address AS receiverAddress,
+            sb2r.receiver_name AS receiverName
+         FROM so_b2c sb2c
+         LEFT JOIN so_b2c_receiver sb2r
+         ON sb2c.id = sb2r.main_id AND sb2r.is_deleted = FALSE
+         LEFT JOIN shop_info si
+         ON sb2c.shop_id = si.id AND si.is_deleted = FALSE
+         WHERE  sb2c.is_deleted = FALSE
+         <if test="idList !=null and idList.size >0">
+            AND sb2c.id IN
+            <foreach collection="idList" item="item" open="(" separator="," close=")">
+                 #{item}
+            </foreach>
+         </if>
+
     </select>
 
 

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -8,18 +9,27 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.server.tms.convert.LogisticsAddressConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.*;
+import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.model.address.SellerResponse;
+import com.erp.tms.aliexpress.model.order.request.Address;
+import com.erp.tms.aliexpress.service.AliExpressShipperService;
+import com.erp.tms.aliexpress.util.ApiException;
 import com.google.common.collect.Lists;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +64,10 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private LogisticsTrackService logisticsTrackService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private AliExpressShipperService aliExpressShipperService;
+    @Resource
+    private LogisticsAddressService logisticsAddressService;
 
 
     @Override
@@ -389,5 +403,52 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
         log.info("{}渠道同步结束", platform);
         return batchResultDTOS;
+    }
+
+    @Override
+    public void syncLogisticsAddress(Map<String, String> authMap) {
+        IopResponse sellerInfo = null;
+        String shopId = authMap.get("shopId");
+        try {
+            sellerInfo = aliExpressShipperService.getLogisticsAddress(authMap);
+        } catch (ApiException e) {
+            XxlJobHelper.log("获取店铺:{}物流地址异常：{}", authMap.get("shopId"), e.getMessage());
+            return;
+        }
+        SellerResponse responseMsg = JSONObject.parseObject(sellerInfo.getBody(), SellerResponse.class);
+        List<Address> senders = responseMsg.getSenders();
+        List<Address> pickups = responseMsg.getPickups();
+        List<Address> refunds = responseMsg.getRefunds();
+        List<LogisticsAddressEntity> list = new ArrayList<>();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(senders)) {
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(senders);
+            addressEntities.forEach(sender -> {
+                sender.setType(LogisticsAddressTypeEnum.DELIVER);
+                sender.setIsBySync(true);
+                sender.setShopId(shopId);
+                list.add(sender);
+            });
+        }
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(pickups)) {
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(pickups);
+            addressEntities.forEach(sender -> {
+                sender.setType(LogisticsAddressTypeEnum.COLLECT);
+                sender.setIsBySync(true);
+                sender.setShopId(shopId);
+                list.add(sender);
+            });
+        }
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(refunds)) {
+            List<LogisticsAddressEntity> addressEntities = LogisticsAddressConverter.INSTANCE.sellerAddressToLogisticsAddress(refunds);
+            addressEntities.forEach(sender -> {
+                sender.setType(LogisticsAddressTypeEnum.REFUND);
+                sender.setIsBySync(true);
+                sender.setShopId(shopId);
+                list.add(sender);
+            });
+        }
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
+            logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
+        }
     }
 }

@@ -42,9 +42,6 @@ public class SoB2cDeliveryInterceptDetailServiceImpl extends SuperServiceImpl<So
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String mainId) {
-        SoB2cDeliveryInterceptDetailEntity soB2cDeliveryInterceptDetailEntity = new SoB2cDeliveryInterceptDetailEntity();
-        BeanMapperUtils.copy(addDTO, soB2cDeliveryInterceptDetailEntity);
-
         List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), SoB2cDeliveryInterceptDetailEntity.class);
 
         // 数据处理

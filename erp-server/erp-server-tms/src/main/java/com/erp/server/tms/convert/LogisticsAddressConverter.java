@@ -41,10 +41,11 @@ public interface LogisticsAddressConverter {
             @Mapping(target = "zipCode", source = "postCode"),
             @Mapping(target = "street", source = "street"),
             @Mapping(target = "fax", source = "fax"),
-            @Mapping(target = "address_id", source = "addressId"),
-            @Mapping(target = "is_default", source = "isDefault"),
+            @Mapping(target = "addressId", source = "addressId"),
+            @Mapping(target = "isDefault", source = "isDefault"),
             @Mapping(target = "language", source = "language"),
-            @Mapping(target = "trade_manage_id", source = "tradeManageId")
+            @Mapping(target = "isBySync", constant = "true"),
+            @Mapping(target = "tradeManageId", source = "tradeManageId")
     })
     LogisticsAddressEntity sellerAddressToLogisticsAddress(Address sender);
     List<LogisticsAddressEntity> sellerAddressToLogisticsAddress(List<Address> senders);

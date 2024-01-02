@@ -263,7 +263,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 匹配审核规则
      */
-    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
+    Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 匹配配货规则
@@ -528,4 +528,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2023-12-29 16:42
      */
     SoB2cDTO.CustomerDTO getB2cCustomerById(String soId);
+
+    /**
+     * 获取客户信息
+     * @param soIdList
+     * @return
+     */
+    List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList);
 }

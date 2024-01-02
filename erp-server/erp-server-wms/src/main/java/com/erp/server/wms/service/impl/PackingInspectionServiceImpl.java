@@ -12,11 +12,13 @@ import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.PackingInspectionService;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.SoOutstockService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
     @Resource
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -142,8 +150,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = addViewDTO.getWaitScanSkuList().iterator();
             while (it.hasNext()) {
                 PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
-                if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
+                if(scanSkuInfo.getScannedQty() > 0){
                     addViewDTO.getScannedSkuList().add(scanSkuInfo);
+                }
+                if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
                     it.remove();
                 }
             }
@@ -152,7 +162,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         if(StringUtils.isNotBlank(dto.getSkuNo())){
             //修改对应SKU扫描数量
             Iterator<PackingInspectionDTO.ViewDTO.ScanSkuInfo> it = viewDTO.getWaitScanSkuList().iterator();
-            List<String> scannedSkuNoList = viewDTO.getScannedSkuList().stream().map(PackingInspectionDTO.ViewDTO.ScanSkuInfo::getSkuNo).collect(Collectors.toList());
+            List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> scannedList = viewDTO.getScannedSkuList();
             boolean matchFlag = false;
             while (it.hasNext()) {
                 PackingInspectionDTO.ViewDTO.ScanSkuInfo scanSkuInfo = it.next();
@@ -161,18 +171,25 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     if(scanSkuInfo.getWaitScanQty() <= 0){
                         throw new ServiceException("SKU已验货完成，无需再次验货");
                     }
+                    //更新已扫描的数据
+                    PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo()) && !v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
+                    if(Objects.isNull(scanned)){
+                        viewDTO.getScannedSkuList().add(scanSkuInfo);
+                    }else{
+                        scanned.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
+                    }
                     scanSkuInfo.setWaitScanQty(scanSkuInfo.getWaitScanQty()-1);
                     scanSkuInfo.setScannedQty(scanSkuInfo.getSaleQty() - scanSkuInfo.getWaitScanQty());
                     //如果已扫描数等于销售数，放到已扫描队列
                     if(scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())){
-                        viewDTO.getScannedSkuList().add(scanSkuInfo);
                         it.remove();
                     }
                     break;
                 }
             }
             if(!matchFlag){
-                if(scannedSkuNoList.contains(dto.getSkuNo())){
+                PackingInspectionDTO.ViewDTO.ScanSkuInfo scanned = scannedList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo()) && v.getScannedQty().equals(v.getSaleQty())).findFirst().orElse(null);
+                if(Objects.nonNull(scanned)){
                     throw new ServiceException("SKU已验货完成，无需再次验货");
                 }
                 throw new ServiceException("SKU不匹配，验货失败");
@@ -202,6 +219,8 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
+            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            soOutstockService.generateB2cSoOutstock(entity.getSourceId());
         }
         this.saveViewDTO(entity.getId(),viewDTO);
         return viewDTO;

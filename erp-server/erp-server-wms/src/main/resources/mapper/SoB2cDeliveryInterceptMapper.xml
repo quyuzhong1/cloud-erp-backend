@@ -5,11 +5,11 @@
     <!--获取状态统计-->
     <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO$TabListDTO">
         SELECT
-        sbdi.status AS tabFlag,
+        sbdi.handle_status AS tabFlag,
         count(*) AS count
         FROM so_b2c_delivery_intercept sbdi
         WHERE is_deleted=FALSE
-        GROUP BY sbd.status
+        GROUP BY sbdi.handle_status
     </select>
 
     <!--分页查询-->
@@ -22,10 +22,12 @@
             sbdi.so_outstock_code,
             sbdid.sku_id,
             sbdid.sku_no,
+            sbdid.delivery_qty,
             sbdid.warehouse_id,
             sbdid.warehouse_name,
             sbdi.logistics_channel_id,
             sbdi.logistics_channel_name,
+            sbdi.bill_type,
             sbdi.transport_no,
             sbdi.cancel_status,
             sbdi.intercept_status,

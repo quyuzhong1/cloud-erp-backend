@@ -1493,13 +1493,17 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerId;
 
-
+        /**
+         *
+         * 物流轨迹号
+         */
+        private String trackNo;
 
         /**
          *
-         * 物流轨迹好
+         * 物流运输单号
          */
-        private String trackNo;
+        private String transportNo;
 
         /**
          * 销售员id
@@ -1507,14 +1511,18 @@ public class SoOutstockDTO implements Serializable {
         private String sellerId;
 
         /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+
+
+        /**
          * 销售员
          */
         private String sellerName;
 
-        /**
-         * 销售部门
-         */
-        private String salesDeptId;
+
 
 
 

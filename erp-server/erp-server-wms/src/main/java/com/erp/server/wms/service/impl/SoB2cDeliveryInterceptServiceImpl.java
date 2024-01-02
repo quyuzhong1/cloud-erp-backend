@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -163,6 +164,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             record.setHandleStatusName(SoB2cDeliveryInterceptStatusEnum.getName(record.getHandleStatus()));
             //拦截状态名称
             record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
+            //单据类型
+            record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
             //产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
@@ -240,9 +243,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
-    public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
-        SoB2cDeliveryInterceptEntity entity = this.getById(dto.getId());
-        List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = soB2cDeliveryInterceptDetailService.listByMainIds(Arrays.asList(dto.getId()));
+    public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
+        SoB2cDeliveryInterceptEntity entity = this.getById(id);
+        List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = soB2cDeliveryInterceptDetailService.listByMainIds(Arrays.asList(id));
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
@@ -273,7 +276,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
                     .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
                     .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
-                    .eq(SoB2cDeliveryInterceptEntity::getId, dto.getId())
+                    .eq(SoB2cDeliveryInterceptEntity::getId, id)
                     .update();
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "拦截结果确认");
         }else{
@@ -354,5 +357,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
             }
         }
+        data.setDetailList(viewDetailList);
     }
 }
