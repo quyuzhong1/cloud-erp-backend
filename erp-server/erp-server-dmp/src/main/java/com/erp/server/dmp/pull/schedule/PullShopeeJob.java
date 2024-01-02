@@ -1,15 +1,11 @@
 package com.erp.server.dmp.pull.schedule;
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -19,9 +15,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -37,14 +30,23 @@ public class PullShopeeJob {
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
+
     /**
      * 拉取Shopify任务
      */
     @XxlJob("shopeeExecute")
     public void execute() {
-        threadPoolTaskExecutor.execute(() -> {
-            platformDataThread.executeTask(PlatformDictEnum.SHOPEE.getCode());
-        });
+        // 分组查询
+        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.SHOPEE.getCode());
+        if (CollectionUtils.isEmpty(groupIds)) {
+            XxlJobHelper.log("[拉取shopee任务] 任务结束:无任务 =====");
+            return;
+        }
+        groupIds.forEach(x -> threadPoolTaskExecutor.execute(() -> {
+            platformDataThread.executeTask(x, true);
+        }));
     }
     @XxlJob("shopeeCleanExecute")
     public void shopeeCleanExecute() {

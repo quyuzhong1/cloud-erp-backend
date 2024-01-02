@@ -119,7 +119,8 @@ public class AmazonShipOrder implements IPlatformService {
         }
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        // TODO
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         try {
             ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, mainEntity.getPlatformCode());

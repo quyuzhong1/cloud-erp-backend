@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.JobTaskDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,12 @@ public class CreateRequestReportTaskService {
     public void addTaskToQueue(List<JobTaskDTO> list) {
         for (JobTaskDTO tbTask : list) {
             JobTaskDTO jobTask = new JobTaskDTO(tbTask);
-            redisTemplate.boundListOps(tbTask.getDictPlatform()).leftPush(JSONObject.toJSONString(jobTask));
+//            redisTemplate.boundListOps(tbTask.getDictPlatform()).leftPush(JSONObject.toJSONString(jobTask));
+            String groupId = tbTask.getGroupId();
+            if (StringUtils.isBlank(groupId)){
+                groupId = tbTask.getDictPlatform();
+            }
+            redisTemplate.boundListOps(groupId).leftPush(JSONObject.toJSONString(jobTask));
         }
     }
 }

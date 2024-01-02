@@ -10,11 +10,10 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
 import com.sdk.oms.shopify.handler.ShopifyOrderHandler;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,14 +52,23 @@ public class PullShopifyJob {
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
+
     /**
      * 拉取Shopify任务
      */
     @XxlJob("shopifyExecute")
     public void execute() {
-        threadPoolTaskExecutor.execute(() -> {
-            platformDataThread.executeTask(PlatformDictEnum.SHOPIFY.getCode());
-        });
+        // 分组查询
+        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        if (CollectionUtils.isEmpty(groupIds)) {
+            XxlJobHelper.log("[拉取Shopify任务] 任务结束:无任务 =====");
+            return;
+        }
+        groupIds.forEach(x -> threadPoolTaskExecutor.execute(() -> {
+            platformDataThread.executeTask(x, true);
+        }));
     }
 
     @XxlJob("shopifyCleanExecute")

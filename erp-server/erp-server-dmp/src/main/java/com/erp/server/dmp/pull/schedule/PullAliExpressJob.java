@@ -4,6 +4,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -26,14 +27,23 @@ public class PullAliExpressJob {
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
+
     /**
      * 拉取Shopify任务
      */
     @XxlJob("aliExpressExecute")
     public void execute() {
-        threadPoolTaskExecutor.execute(() -> {
-            platformDataThread.executeTask(PlatformDictEnum.ALI_EXPRESS.getCode());
-        });
+        // 分组查询
+        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        if(CollectionUtils.isEmpty(groupIds)){
+            XxlJobHelper.log("[拉取速卖通任务] 任务结束:无任务 =====");
+            return;
+        }
+        groupIds.forEach(x-> threadPoolTaskExecutor.execute(() -> {
+            platformDataThread.executeTask(x, true);
+        }));
     }
     @XxlJob("aliExpressCleanExecute")
     public void aliExpressCleanExecute() {
