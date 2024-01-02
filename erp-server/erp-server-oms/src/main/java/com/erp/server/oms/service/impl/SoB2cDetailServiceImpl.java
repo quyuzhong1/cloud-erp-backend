@@ -342,7 +342,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setCurrentNetWeight(currentNetWeight);
 
             //建议售价
-            BigDecimal advicePrice = null == skuVO ? BigDecimal.ZERO : MathUtil.multiply(skuVO.getRetailPrice(), detailEntity.getQty());
+            BigDecimal advicePrice = null == skuVO ? BigDecimal.ZERO : skuVO.getRetailPrice();
             detailEntity.setAdvicePrice(advicePrice);
             //含税单价
             BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
