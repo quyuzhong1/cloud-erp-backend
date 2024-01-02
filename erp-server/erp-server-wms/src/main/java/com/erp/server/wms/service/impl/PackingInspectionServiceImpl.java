@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.PackingInspectionService;
@@ -54,6 +55,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
     @Resource
     private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -215,6 +219,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
+            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             soOutstockService.generateB2cSoOutstock(entity.getSourceId());
         }
         this.saveViewDTO(entity.getId(),viewDTO);
