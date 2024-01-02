@@ -552,7 +552,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2b = OrderTypeEnum.B2B.getCode();
         Boolean isB2b = b2b.equals(orderType);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus(),isB2b);
+
         Boolean isPass = ApproveStatusEnum.APPROVE.equals(approveStatus);
         if (isPass) {
             //审核通过发送金蝶
@@ -582,8 +583,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
-        entity.setActualDeliveryDate(LocalDate.now());
-        this.updateById(entity);
+
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
@@ -607,13 +607,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param id
      * @param approveStatus
      */
-    public void updateForApprove(String id, String approveStatus) {
+    public void updateForApprove(String id, String approveStatus,Boolean isB2b) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().eq(SoOutstockEntity::getId, id)
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)
                 .set(SoOutstockEntity::getApproveTime, LocalDateTime.now())
+                .set(Objects.nonNull(isB2b)&&isB2b,SoOutstockEntity::getActualDeliveryDate,LocalDate.now())
                 .update(new SoOutstockEntity());
     }
 
