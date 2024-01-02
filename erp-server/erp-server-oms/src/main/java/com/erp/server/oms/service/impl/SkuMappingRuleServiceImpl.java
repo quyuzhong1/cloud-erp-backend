@@ -26,6 +26,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
 import com.erp.server.oms.service.*;
@@ -41,6 +42,7 @@ import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -296,6 +298,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
      * 处理sku映射
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void handleSkuMapping() {
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
@@ -368,6 +371,16 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         if(CollectionUtils.isNotEmpty(updateSkuMappingList)){
             skuMappingService.updateBatchById(updateSkuMappingList,2000);
+            //记录更新日志
+            Map<String,ListingInfoWithSkuMappingDTO> oldSkuMap = noMatchList.stream().collect(Collectors.toMap(v->v.getTableId(), Function.identity(),(v1,v2)->v1));
+            for(SkuMappingEntity skuMappingEntitity : updateSkuMappingList){
+                ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = oldSkuMap.get(skuMappingEntitity.getId());
+                SkuMappingEntity oldLogEntity = SkuMappingConverter.INSTANCE.copySkuMappingEntity(skuMappingEntitity);
+                oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
+                oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
+                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(), oldLogEntity.getId(), "自动匹配sku对照表");
+            }
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);

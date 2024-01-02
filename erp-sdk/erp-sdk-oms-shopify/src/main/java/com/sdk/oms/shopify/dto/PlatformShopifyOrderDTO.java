@@ -14,7 +14,6 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +66,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         this.shopifyOrder = shopifyOrder;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
-        this.setUniqueId(shopifyOrder.getId());
+        this.setUniqueId(shopifyOrder.getOrderId());
 //        this.setLastPushTime(dto.getNextTime());
         this.shopId = dto.getShopId();
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
@@ -133,15 +132,20 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPayMethod(dto.getDictPayMethod());
         // 买家备注
         String buyerRemark  = "";
-        if (null != sourceOrder.getCustomer()){
-            String note = sourceOrder.getCustomer().getNote();
-            if (StringUtils.isNotBlank(note)){
-                buyerRemark = note;
+        if (StringUtils.isBlank(sourceOrder.getNote())){
+            if (null != sourceOrder.getCustomer()){
+                String note = sourceOrder.getCustomer().getNote();
+                if (StringUtils.isNotBlank(note)){
+                    buyerRemark = note;
+                }
             }
+        } else {
+            buyerRemark = sourceOrder.getNote();
         }
+
         orderDTO.setBuyerRemark(buyerRemark);
         // 订单备注
-        orderDTO.setRemark(sourceOrder.getNote());
+        orderDTO.setRemark("");
         // 销售组织id
         orderDTO.setOrgId("");
         // 销售组织名称
@@ -153,7 +157,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 来源类型
         orderDTO.setSourceType("soB2c");
         // 来源id
-        orderDTO.setSourceId(sourceOrder.getId());
+        orderDTO.setSourceId(sourceOrder.getOrderId());
         // 来源编码
         orderDTO.setSourceCode("");
         // 标签json
@@ -263,7 +267,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(item.getId());
+        detailDTO.setSourceDetailId(item.getLineItemId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id

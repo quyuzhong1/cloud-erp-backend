@@ -736,7 +736,11 @@ public class SoB2cDTO implements Serializable {
     public static class RuleResultDTO{
 
         private Boolean isRuleMatch;
-        
+
+        /**
+         * 是否审核通过
+         */
+        private Boolean isPass;
         private String id;
         
         private Map<String,Object> map;
@@ -1675,5 +1679,84 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthResultDTO {
+
+        /**
+         * 授权类型
+         */
+        private String authType;
+
+        /**
+         * 用户id
+         */
+        private String userId;
+    }
+
+    /**
+     * 客户信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class  CustomerDTO{
+
+        private String soId;
+
+        private String shopId;
+
+        /**
+         * 收货地址 对应 fullAddress
+         */
+        private String receiverAddress;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+
+        /**
+         * 交货方式
+         */
+        private String deliveryMode;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryModeName;
+
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 销售员
+         */
+        private  String sellerId;
+
+        /**
+         * 对应买家全名
+         */
+        private String customerName;
+
+        /**
+         * 销售员
+         */
+        private  String sellerName;
+
+        private String salesOrgId;
+
+        private String salesOrgName;
+
+
+        /**
+         * 国家
+         */
+        private String country;
     }
 }

@@ -15,8 +15,6 @@ import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeSerializer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,8 +26,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ShopifyOrder {
-
-    private String id;
+    @JsonProperty("id")
+    private String orderId;
     private String email;
     @JsonProperty("closed_at")
     @JsonSerialize(using = LocalDateTimeSerializer.class)

@@ -29,9 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -193,7 +190,7 @@ public class ErpServerOmsShopifyApplicationTests {
         final long quantity = 1L;
 
         final ShopifyLineItem lineItem = new ShopifyLineItem();
-        lineItem.setId(lineItemId);
+        lineItem.setLineItemId(lineItemId);
         lineItem.setQuantity(1L);
 
         ShopifyLineItemsByFulfillmentOrder order = new ShopifyLineItemsByFulfillmentOrder();

@@ -47,6 +47,7 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -409,6 +410,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
+        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), StrUtil.format("用户【{}】编辑sku映射表",commonService.getUserInfo().getUserName()));
         return addSkuMaping.getId();
     }
 
@@ -624,13 +626,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //生效时间
         addSkuMapping.setEffectiveTime(now);
         addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
-        if (this.save(addSkuMapping)) {
-            return addSkuMapping.getId();
+        if (!this.save(addSkuMapping)) {
+            throw new ServiceException("[SkuMapping] 数据新增失败");
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMapping.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
-        return "";
+        operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "编辑sku映射表");
+        return addSkuMapping.getId();
 
     }
 
@@ -701,6 +704,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                         SkuMappingEntity finalWarehouseSkuMapping = warehouseSkuMapping;
                         ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(finalWarehouseSkuMapping.getListingId())).findFirst().orElse(null);
                         if (ObjectUtils.isNotEmpty(warehouseListing)) {
+                            listSkuDTO.setWarehouseId(viewDTO.getWarehouseId());
                             listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
                             listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
                         }

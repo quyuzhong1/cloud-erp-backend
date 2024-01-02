@@ -43,7 +43,7 @@
                 AND ol.module_type = #{params.moduleType}
             </if>
         </where>
-        group by ol.module_type,ol.business_id,ol.create_time
+        group by ol.module_type,ol.business_id,ol.create_time,ol.field_name
         order by ol.create_time desc
     </select>
 

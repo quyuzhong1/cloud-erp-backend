@@ -120,8 +120,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private LogisticsFeign logisticsFeign;
     @Autowired
     private ShopInfoFeign shopInfoFeign;
-    @Autowired
-    private SoOutstockService soOutstockService;
+
     @Autowired
     private FileTemplateFeign fileTemplateFeign;
     @Autowired
@@ -620,10 +619,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<BatchResultDTO> retryFalseDelivery(String soB2cId) {
         List<BatchResultDTO> resultList = new ArrayList<>(1);
         List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
-        for (SoB2cDeliveryEntity item : soB2cDeliveryList) {
-            BatchResultDTO resultDTO = this.falseDelivery(item.getId());
-            resultList.add(resultDTO);
+        String errorType = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        SoB2cErrorEntity soB2cError = soB2cFeign.getB2cError(soB2cId, errorType);
+        if (Objects.nonNull(soB2cError)) {
+            String type = soB2cError.getParamJson();
+            for (SoB2cDeliveryEntity item : soB2cDeliveryList) {
+                BatchResultDTO resultDTO = this.delivery(item.getId(),type);
+                resultList.add(resultDTO);
+            }
         }
+
         return resultList;
     }
 

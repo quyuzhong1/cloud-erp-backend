@@ -376,13 +376,7 @@ public class SoOutstockController extends BaseController {
 
 
 
-   /* @LogAction(value = LogActionEnum.INSERT, desc = "销售订单下推")
-    @PostMapping("/generateSoOutstock")
-    public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
-        Boolean result = soOutstockService.generateSoSave(dto);
-        return result ? success() : failure();
 
-    }*/
 
 
     /**
