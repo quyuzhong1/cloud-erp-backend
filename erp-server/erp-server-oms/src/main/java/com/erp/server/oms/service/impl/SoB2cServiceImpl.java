@@ -3754,7 +3754,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
                     for (BomChildrenSkuDTO bomSku : bomChildrenSkuDTOS) {
                         //该sku 不是套装Bom
-                        SoB2cDetailDTO.OutstockDTO outstockDTO = new SoB2cDetailDTO.OutstockDTO;
+                        SoB2cDetailDTO.OutstockDTO outstockDTO = new SoB2cDetailDTO.OutstockDTO();
                         outstockDTO.setSkuId(bomSku.getSkuId());
                         outstockDTO.setSkuNo(bomSku.getSkuNo());
                         Integer quantity = bomSku.getQuantity();
@@ -3770,7 +3770,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }else{
                     //该sku 不是套装Bom
-                    SoB2cDetailDTO.OutstockDTO notBomOutstockDTO = new  SoB2cDetailDTO.OutstockDTO;
+                    SoB2cDetailDTO.OutstockDTO notBomOutstockDTO = new  SoB2cDetailDTO.OutstockDTO();
                     notBomOutstockDTO.setSkuId(skuId);
                     notBomOutstockDTO.setSkuNo(skuNo);
                     notBomOutstockDTO.setQty(qty);

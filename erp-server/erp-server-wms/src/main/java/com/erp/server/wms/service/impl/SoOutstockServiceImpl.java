@@ -2019,6 +2019,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
             Boolean result = createB2cSoOutstock(dto);
             return result;
+        }else{
+            ApproveStatusEnum approveStatus=outstock.getApproveStatus();
+            //待提交
+            if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){
+                this.submit(Arrays.asList(soB2cId));
+            }
+            //审核中
+            if(ApproveStatusEnum.APPROVE_ING.equals(approveStatus)){
+                this.approve(new ApproveOneDTO(soB2cId, ApproveTypeEnum.PASS.getStatus(), ""));
+            }
         }
         return Boolean.TRUE;
     }
