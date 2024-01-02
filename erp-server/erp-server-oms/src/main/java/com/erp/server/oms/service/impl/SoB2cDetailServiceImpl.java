@@ -346,7 +346,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setAdvicePrice(advicePrice);
             //含税单价
             BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
-            detailEntity.setTaxCost(MathUtil.multiply(costPrice,detailEntity.getQty()));
+            detailEntity.setTaxCost(costPrice);
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
         }
     }
