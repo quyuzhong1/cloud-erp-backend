@@ -614,7 +614,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)
                 .set(SoOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(Objects.nonNull(isB2b)&&isB2b,SoOutstockEntity::getActualDeliveryDate,LocalDate.now())
+                .set(Objects.nonNull(isB2b)&&!isB2b,SoOutstockEntity::getActualDeliveryDate,LocalDate.now())
                 .update(new SoOutstockEntity());
     }
 
@@ -2021,14 +2021,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Boolean result = createB2cSoOutstock(dto);
             return result;
         }else{
+            String id=outstock.getId();
             ApproveStatusEnum approveStatus=outstock.getApproveStatus();
             //待提交
             if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){
-                this.submit(Arrays.asList(soB2cId));
+                this.submit(Arrays.asList(id));
             }
             //审核中
             if(ApproveStatusEnum.APPROVE_ING.equals(approveStatus)){
-                this.approve(new ApproveOneDTO(soB2cId, ApproveTypeEnum.PASS.getStatus(), ""));
+                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
             return Boolean.TRUE;
         }

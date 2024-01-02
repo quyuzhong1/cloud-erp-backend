@@ -45,6 +45,12 @@ public class ApproveOneDTO extends PermissionsDTO {
     private Boolean isNeedProcess;
 
 
+    /**
+     * 是否规则匹配成功
+     */
+    private Boolean isMatch;
+
+
     public ApproveOneDTO (String id,String type,String comment) {
         this.id = id;
         this.type = type;

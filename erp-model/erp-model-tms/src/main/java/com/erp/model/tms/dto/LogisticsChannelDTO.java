@@ -53,6 +53,8 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsSupplierName;
 
+        private String logisticsSupplierId;
+
         /**
          * 渠道代码
          */

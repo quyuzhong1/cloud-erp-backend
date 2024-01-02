@@ -386,6 +386,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     public List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId) {
         List<SoB2cDetailDTO.OutstockDTO> outstockList=baseMapper.listOutstockByMainId(mainId);
         List<String> parentSkuIdList = outstockList.stream().map(SoB2cDetailDTO.OutstockDTO::getSkuId).collect(Collectors.toList());
+        String combinationType= BomTypeEnum.COMBINATION.getType();
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(parentSkuIdList);
         if(CollectionUtils.isEmpty(bomChildrenSkuList)){
@@ -403,10 +404,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 //套装的bom
                 List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuList.stream()
                         .filter(req -> req.getParentSkuId().equals(skuId)
-                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                                && combinationType.equals(req.getType())
                         ).collect(Collectors.toList());
 
                if(CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)){
+                   //该sk是套装Bom
                    for(BomChildrenSkuDTO bomSku:bomChildrenSkuDTOS){
                        SoB2cDetailDTO.OutstockDTO  outstock=new SoB2cDetailDTO.OutstockDTO();
                        outstock.setSkuId(bomSku.getSkuId());
@@ -419,18 +421,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                        outstock.setWarehouseOrgId(item.getWarehouseOrgId());
                        outstock.setWarehouseOrgName(item.getWarehouseOrgName());
                        outstock.setWarehouseLocation(item.getWarehouseLocation());
+                       outstock.setCurrency(item.getCurrency());
+                       outstock.setExchangeRate(item.getExchangeRate());
                        outstock.setRemark(item.getRemark());
                        outstock.setSoDetailId(item.getSoDetailId());
+                       hasBomOutstockList.add(outstock);
                    }
-
                }else{
                    //表示没有套装bom
                    hasBomOutstockList.add(item);
                }
-
             }
+            return hasBomOutstockList;
         }
-        return outstockList;
+
     }
 
     /**

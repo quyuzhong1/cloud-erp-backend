@@ -16,6 +16,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -27,6 +28,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -62,7 +64,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private SoB2cFeign soB2cFeign;
-
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
@@ -142,10 +145,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
         }
         String b2b = OrderTypeEnum.B2B.getCode();
-        if(b2b.equals(orderType)){
+        if (b2b.equals(orderType)) {
             //处理明细数据
             handleDetailData(addList);
-        }else{
+        } else {
             //处理明细数据
             handleB2cDetailData(addList);
         }
@@ -154,7 +157,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         this.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
     }
-
 
 
     /**
@@ -560,13 +562,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         //b2c发货单
         String soB2cDelivery = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
         if (soB2cDelivery.equals(sourceType)) {
-            List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList =soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
+            List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listBySoDetailIds(soDetailIdList);
 
             for (SoOutstockDetailDTO.UpdateDTO item : checkList) {
                 String soDetailId = item.getSoDetailId();
                 //发货单的数量
                 Integer deliveryQty = soB2cDeliveryDetailList.stream().
-                        filter(s->s.getSourceDetailId().equals(soDetailId)).mapToInt(SoB2cDeliveryDetailEntity::getDeliveryQty).sum();
+                        filter(s -> s.getSourceDetailId().equals(soDetailId)).mapToInt(SoB2cDeliveryDetailEntity::getDeliveryQty).sum();
                 Integer planQty = item.getPlanQty();
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
@@ -752,6 +754,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     /**
      * 处理b2c 销售订单明细信息
+     *
      * @param detailList
      */
     private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList) {
@@ -760,7 +763,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByIds(soDetailIdList);
-
+        List<String> currencyIdList = soDetailList.stream().map(SoB2cDetailEntity::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = CollectionUtils.isNotEmpty(currencyIdList) ? sysUserFeign.listByCurrency(currencyIdList) : Collections.emptyList();
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
@@ -771,8 +775,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setPrice(soDetailEntity.getPrice());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
             detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
-            detailEntity.setCurrency(soDetailEntity.getCurrency());
-            //detailEntity.setCurrencySymbol(soDetailEntity.get());
+            String currency = soDetailEntity.getCurrency();
+            detailEntity.setCurrency(currency);
+            String symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            detailEntity.setCurrencySymbol(symbol);
             detailEntity.setAllAmountLocalCurrency(soDetailEntity.getAmount());
         }
     }
