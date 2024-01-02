@@ -1125,7 +1125,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setSalesOrgName(b2cCustomer.getSalesOrgName());
                 item.setCustomerName(b2cCustomer.getCustomerName());
                 String country = b2cCustomer.getCountry();
-                String countryName = countryList.stream().filter(obj -> country.equals(obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                String countryName ="";
+                if(StringUtils.isNotBlank(country)){
+                     countryName = countryList.stream().filter(obj -> country.equals(obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                }
                 item.setCountryName(countryName);
             }
             String orderTypeName = OrderTypeEnum.getName(orderType);

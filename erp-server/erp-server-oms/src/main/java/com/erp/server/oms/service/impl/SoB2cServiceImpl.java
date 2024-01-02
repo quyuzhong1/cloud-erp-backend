@@ -2800,6 +2800,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean checkPlatformShipOrder(String soB2cId) {
         SoB2cEntity soB2cEntity = this.getById(soB2cId);
+        if(Objects.isNull(soB2cEntity)){
+           return Boolean.FALSE;
+        }
         //如果不是手工新增订单需要同步第三方发货标识
         if (!SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
             return Boolean.TRUE;
