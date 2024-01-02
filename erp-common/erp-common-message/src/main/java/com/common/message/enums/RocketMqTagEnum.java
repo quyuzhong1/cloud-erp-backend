@@ -337,6 +337,10 @@ public enum RocketMqTagEnum {
      * 订单审核通过后同步dmp
      */
     APPROVED_RETURN_ORDER_TO_DMP_TAG(2010, RocketMqTagEnum.SYNC_DMP,"approved_return_order_to_dmp_tag"),
+    /**
+     * b2c订单同步dmp
+     */
+    SO_B2C_TO_DMP_TAG(2013, RocketMqTagEnum.SYNC_DMP,"so_b2c_to_dmp_tag"),
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间

@@ -41,6 +41,9 @@ public enum SettingEnum {
     WMS_OVERSEAS_INBOUND_STREET("street",SettingEnum.WMS_OVERSEAS_INBOUND, "发货地址"),
     WMS_OVERSEAS_INBOUND_COUNTRY_CODE("country_code",SettingEnum.WMS_OVERSEAS_INBOUND, "国家代号"),
 
+    //同步ERP的b2c订单同步到中台启动时间
+    ERP_B2C_TO_DMP_LISTING_DATE("listing_date",SettingEnum.ERP_B2C_TO_DMP, "同步ERP的b2c订单同步到中台启动时间"),
+
     ;
 
     @EnumValue
@@ -77,6 +80,11 @@ public enum SettingEnum {
      * WMS海外入库单默认发货信息
      */
     public static final String WMS_OVERSEAS_INBOUND = "wms_overseas_inbound";
+
+    /**
+     * 同步erp的b2c订单到dmp中台
+     */
+    public static final String ERP_B2C_TO_DMP = "erp_b2c_to_dmp";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;
