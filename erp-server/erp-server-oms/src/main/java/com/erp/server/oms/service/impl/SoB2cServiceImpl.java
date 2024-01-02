@@ -1111,8 +1111,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT);
         }
         //销售订单状态只有待发货、已发货的订单可以发起拦截
-        if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())
-                || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
+        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())
+                && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.NOT_DELIVERY_NOT_INTERCEPT);
         }
 
@@ -1127,6 +1127,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setBillType(OrderTypeEnum.B2C.getCode());
+        addDTO.setRemark(remark);
+
+        //物流信息
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        addDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
+        addDTO.setLogisticsChannelName(logisticsEntity.getLogisticsChannelName());
+        addDTO.setTransportNo(logisticsEntity.getCode());
 
         //详情
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());

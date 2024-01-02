@@ -230,6 +230,11 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         @NotBlank(message = "单据类型不能为空")
         @Size(max = 64,message = "单据类型最大长度不能超过64位")
         private String billType;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
