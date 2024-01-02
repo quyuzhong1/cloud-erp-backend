@@ -2029,8 +2029,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if(ApproveStatusEnum.APPROVE_ING.equals(approveStatus)){
                 this.approve(new ApproveOneDTO(soB2cId, ApproveTypeEnum.PASS.getStatus(), ""));
             }
+            return Boolean.TRUE;
         }
-        return Boolean.TRUE;
+
     }
 
     private SoOutstockEntity getBySoId(String soB2cId) {

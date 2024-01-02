@@ -63,7 +63,6 @@ public class SoOutstockController extends BaseController {
     }
 
 
-
     /**
      * 分页列表
      *
@@ -244,10 +243,10 @@ public class SoOutstockController extends BaseController {
         for (String id : ids) {
             BatchResultDTO result;
             try {
-                 result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
             } catch (Exception e) {
                 log.error("销售出库 审核失败>>>>{}", e);
-                 SoOutstockEntity entity=soOutstockService.getById(id);
+                SoOutstockEntity entity = soOutstockService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "销售出库单不存在, 审核失败");
                     resultDTOS.add(result);
@@ -264,24 +263,36 @@ public class SoOutstockController extends BaseController {
 
     }
 
-    /**  重新生成销售出库单
-     * @description
+    /**
+     * 重新生成销售出库单
+     *
      * @param
-     * @author Lambda
      * @return
+     * @description
+     * @author Lambda
      * @create 2023-12-28 19:43
      */
     @PostMapping("afreshGenerateB2cOutstock")
-    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto){
+    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
         String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
         for (String id : dto.getIds()) {
-            Boolean result = soOutstockService.generateB2cSoOutstock(id);
-            if(result){
-                SoB2cErrorDTO.DeleteDTO deleteDTO= new SoB2cErrorDTO.DeleteDTO();
+            try {
+                Boolean result = soOutstockService.generateB2cSoOutstock(id);
+                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
                 deleteDTO.setMainId(id);
                 deleteDTO.setType(type);
                 soB2cFeign.deleteError(deleteDTO);
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
             }
+
         }
         return success();
     }
@@ -377,10 +388,6 @@ public class SoOutstockController extends BaseController {
     }
 
 
-
-
-
-
     /**
      * 销售订单关联销售出库单
      *
@@ -426,7 +433,7 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/test")
-    public ApiResult test(){
+    public ApiResult test() {
         String soB2cCode = "XSDS23122700025";
         String billStatus = "shipped";
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
