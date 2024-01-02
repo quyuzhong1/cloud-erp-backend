@@ -2098,6 +2098,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 detailDTO.setAmount(amount);
                 detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 
+                detailDTO.setTaxCost(MathUtil.multiply(detailDTO.getTaxCost(),detailDTO.getQty()));
+
                 //标签处理
                 SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
                 String detailLabel = detailDTO.getLabel();
