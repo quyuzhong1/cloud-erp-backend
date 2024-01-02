@@ -277,7 +277,7 @@ public class CustomerB2cController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
             menuCode = "oms:customerB2c:paging",
-            tableAlias = "customerB2c_info"
+            tableAlias = "customer_b2c"
     )
     public ApiResult<List<CustomerDTO.InfoDTO>> listEnable(PermissionsDTO dto) {
         List<CustomerDTO.InfoDTO> list = customerB2cService.listEnable(dto.getPermissionSql());
