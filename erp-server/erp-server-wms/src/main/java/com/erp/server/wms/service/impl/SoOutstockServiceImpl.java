@@ -420,7 +420,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2b = OrderTypeEnum.B2B.getCode();
         Boolean isB2b = b2b.equals(orderType);
         result.setTypeName(OrderTypeEnum.getName(orderType));
-        result.setSoCode(soOutstock.getCode());
+        result.setSoCode(soOutstock.getSoCode());
         result.setSellerId(soOutstock.getSellerId());
         if (isB2b) {
             SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
@@ -1087,8 +1087,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> soIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSoId).collect(Collectors.toList());
         List<SoInfoDTO.CustomerDTO> soCustomerList = soInfoFeign.listSoCustomer(soIdList);
         List<SoB2cDTO.CustomerDTO> b2cCustomerList = soB2cFeign.listCustomer(soIdList);
-        //B2C 客户列表
-        List<String> b2cCountryList = b2cCustomerList.stream().map(SoB2cDTO.CustomerDTO::getCountry).collect(Collectors.toList());
         //sku id
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);

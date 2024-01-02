@@ -3697,7 +3697,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setPlanDeliveryDate(entity.getCreateTime().toLocalDate());
         String sourceId = id;
         String sourceType = SourceTypeEnum.SO_B2C.getCode();
-        String sourceCode = entity.getCode();
+        String sourceCode = "";
         String detailRemark = "";
 
         //发货的
@@ -3730,16 +3730,77 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //根据主表id 查询出库的信息
         List<SoB2cDetailDTO.OutstockDTO> detailList = soB2cDetailService.listOutstockByMainId(id);
+        List<String> parentSkuIdList = detailList.stream().map(SoB2cDetailDTO.OutstockDTO::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(parentSkuIdList);
+        List<SoB2cDetailDTO.OutstockDTO> splitDetailList = new ArrayList<>(detailList.size());
+        //套装
+        String combinationType=BomTypeEnum.COMBINATION.getType();
+        Boolean isBomList=CollectionUtils.isNotEmpty(bomChildrenSkuList);
+        if(isBomList){
+            for (SoB2cDetailDTO.OutstockDTO detailItem : detailList) {
+                //相当于父级
+                String skuId = detailItem.getSkuId();
+                //相当于父级
+                String skuNo = detailItem.getSkuNo();
+                //数量
+                Integer qty = detailItem.getQty();
+                //套装的bom
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenSkuList.stream()
+                        .filter(req -> req.getParentSkuId().equals(skuId)
+                                &&combinationType.equals(req.getType())
+                        ).collect(Collectors.toList());
+                //表示有
+                if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
+                    for (BomChildrenSkuDTO bomSku : bomChildrenSkuDTOS) {
+                        //该sku 不是套装Bom
+                        SoB2cDetailDTO.OutstockDTO outstockDTO = new SoB2cDetailDTO.OutstockDTO;
+                        outstockDTO.setSkuId(bomSku.getSkuId());
+                        outstockDTO.setSkuNo(bomSku.getSkuNo());
+                        Integer quantity = bomSku.getQuantity();
+                        outstockDTO.setQty(qty * quantity);
+                        outstockDTO.setSoDetailId(detailItem.getSoDetailId());
+                        outstockDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                        outstockDTO.setWarehouseOrgId(detailItem.getWarehouseOrgId());
+                        outstockDTO.setWarehouseOrgName(detailItem.getWarehouseOrgName());
+                        outstockDTO.setWarehouseId(detailItem.getWarehouseId());
+                        outstockDTO.setWarehouseName(detailItem.getWarehouseName());
+                        outstockDTO.setSoDetailId(detailItem.getSoDetailId());
+                        splitDetailList.add(outstockDTO);
+                    }
+                }else{
+                    //该sku 不是套装Bom
+                    SoB2cDetailDTO.OutstockDTO notBomOutstockDTO = new  SoB2cDetailDTO.OutstockDTO;
+                    notBomOutstockDTO.setSkuId(skuId);
+                    notBomOutstockDTO.setSkuNo(skuNo);
+                    notBomOutstockDTO.setQty(qty);
+                    notBomOutstockDTO.setSoDetailId(detailItem.getSoDetailId());
+                    notBomOutstockDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                    notBomOutstockDTO.setWarehouseOrgId(detailItem.getWarehouseOrgId());
+                    notBomOutstockDTO.setWarehouseOrgName(detailItem.getWarehouseOrgName());
+                    notBomOutstockDTO.setWarehouseId(detailItem.getWarehouseId());
+                    notBomOutstockDTO.setWarehouseName(detailItem.getWarehouseName());
+                    notBomOutstockDTO.setSoDetailId(detailItem.getSoDetailId());
+                    splitDetailList.add(notBomOutstockDTO);
+                }
+
+            }
+        }else{
+            splitDetailList=detailList;
+        }
+
+
         String finalDetailRemark = detailRemark;
-        detailList.stream().forEach(d -> d.setRemark(finalDetailRemark));
-        if (CollectionUtils.isEmpty(detailList)) {
+        if (CollectionUtils.isEmpty(splitDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        dto.setWarehouseId(detailList.get(0).getWarehouseId());
-        dto.setWarehouseName(detailList.get(0).getWarehouseName());
-        dto.setWarehouseOrgId(detailList.get(0).getWarehouseOrgId());
+        splitDetailList.stream().forEach(d -> d.setRemark(finalDetailRemark));
 
-        List<String> soDetailIdList = detailList.stream().map(SoB2cDetailDTO.OutstockDTO::getSoDetailId).collect(Collectors.toList());
+        dto.setWarehouseId(splitDetailList.get(0).getWarehouseId());
+        dto.setWarehouseName(splitDetailList.get(0).getWarehouseName());
+        dto.setWarehouseOrgId(splitDetailList.get(0).getWarehouseOrgId());
+
+        List<String> soDetailIdList = splitDetailList.stream().map(SoB2cDetailDTO.OutstockDTO::getSoDetailId).collect(Collectors.toList());
         /**
          * 发货详情
          */
@@ -3747,11 +3808,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailDTO.OutstockDTO item : detailList) {
             String soDetailId = item.getSoDetailId();
             String sourceDetailId = soB2cDeliveryDetailList.stream().filter(s -> s.getSourceDetailId().equals(soDetailId)).
-                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse(soDetailId);
+                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
             item.setSourceDetailId(sourceDetailId);
         }
 
-        List<SoOutstockDetailDTO.AddDTO> wantDetailList = B2cOrderConverter.INSTANCE.convertOutstockDetail(detailList);
+        List<SoOutstockDetailDTO.AddDTO> wantDetailList = B2cOrderConverter.INSTANCE.convertOutstockDetail(splitDetailList);
         dto.setDetailList(wantDetailList);
         return dto;
     }
