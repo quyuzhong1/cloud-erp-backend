@@ -14,6 +14,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -74,6 +75,10 @@ public class LogisticsChannelJob {
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;
             //顺丰没有渠道 只支持手动写入
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.SF_EXPRESS.getCode())) continue;
+            //亚马逊渠道静态
+            if (platformEnum.getCode().equals(LogisticsPlatformEnum.AMAZON.getCode())) continue;
+            //Shopify静态
+            if (platformEnum.getCode().equals(LogisticsPlatformEnum.SHOPIFY.getCode())) continue;
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
             List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncLogisticsChannel(platformEnum.getCode());
             XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));

@@ -36,6 +36,10 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      */
     private String logisticsChannelId;
     /**
+     * 物流渠道名称
+     */
+    private String logisticsChannelName;
+    /**
      * 发货时间
      */
     private LocalDateTime deliveryTime;

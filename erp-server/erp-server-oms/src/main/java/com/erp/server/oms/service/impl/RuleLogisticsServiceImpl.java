@@ -12,6 +12,7 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
@@ -84,7 +85,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
-        // 数据处理
         handleData(ruleLogisticsEntity);
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
@@ -205,16 +205,23 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     /**
      * 获取到物流匹配结果
      *
-     * @param jsonObject
+     * @param map
      * @return
      */
     @Override
-    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(JSONObject jsonObject) {
-        RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
-        if (Objects.isNull(jsonObject)) {
-            return ruleMatchResult;
+    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String, Object> map) {
+        if (Objects.isNull(map)) {
+            return null;
         }
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
+        mapList= mapList.stream().filter(m->Objects.isNull(m.get("logisticsChannelId"))||StringUtils.isBlank(m.get("logisticsChannelId").toString())).
+                collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(mapList)){
+            return new RuleLogisticsDTO.RuleMatchResultDTO();
+        }
+        map.put("detailList",mapList);
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
+        handleDataList(ruleLogisticsList);
         List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
@@ -227,16 +234,31 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
 
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
+                RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
+                ruleMatchResult.setLogisticsChannelName(item.getLogisticsChannelName());
                 return ruleMatchResult;
             }
 
         }
-        return ruleMatchResult;
+        return null;
+    }
+
+
+    /**
+     * 处理集合
+     *
+     * @param ruleLogisticsList
+     */
+    private void handleDataList(List<RuleLogisticsEntity> ruleLogisticsList) {
+        if (CollectionUtils.isEmpty(ruleLogisticsList)) {
+            return;
+        }
+
     }
 
 
@@ -246,7 +268,10 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
      * @return
      */
     private List<RuleLogisticsEntity> listOrderByPriority() {
-        return this.lambdaQuery().eq(RuleLogisticsEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleLogisticsEntity::getPriority).list();
+        return this.lambdaQuery().eq(RuleLogisticsEntity::getDisabled, Boolean.FALSE).
+                orderByAsc(RuleLogisticsEntity::getPriority).
+                orderByDesc(RuleLogisticsEntity::getUpdateTime).
+                list();
 
     }
 

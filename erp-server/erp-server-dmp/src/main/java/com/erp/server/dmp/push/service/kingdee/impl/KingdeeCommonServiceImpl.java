@@ -246,6 +246,27 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
     }
 
+    /**
+     * 处理作废
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param operate
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleInvalid(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String operate) {
+        //作废之前判断状态
+        Boolean ifInvalid = this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
+        if (ifInvalid) {
+            //业务编码
+            String code = (String) map.get("code");
+            //作废
+            this.excuteOperation(apiUtils,map,code,operate);
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {

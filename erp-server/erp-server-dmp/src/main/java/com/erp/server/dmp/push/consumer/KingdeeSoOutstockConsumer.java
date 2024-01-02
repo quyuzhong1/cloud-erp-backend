@@ -70,6 +70,10 @@ public class KingdeeSoOutstockConsumer<T extends DmpSyncTaskIdDTO> extends Abstr
     }
 
     @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+
+    }
+    @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }

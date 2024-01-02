@@ -1,5 +1,7 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -176,6 +178,11 @@ public class PlatformOrderDTO extends UniqueDto {
     private String syncOperate;
 
     /**
+     * 审核状态
+     */
+    private String approveStatusStr;
+
+    /**
      * 数据下载状态
      * 0 详情数据需要更新
      * 1 详情数据已更新
@@ -206,4 +213,11 @@ public class PlatformOrderDTO extends UniqueDto {
      * 订单买家信息
      */
     private PlatformOrderReceiverDTO receiver;
+
+
+    /**
+     * 平台订单来源状态
+     * shopify=financial_status
+     */
+    private String platformOrderStatus;
 }

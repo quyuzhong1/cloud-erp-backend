@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -67,10 +68,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @author Will
      * @date: 2023/8/24 15:51
      * @param mainId
-     * @param logisticsCode
+     * @param transportNo
+     * @param trackNo
      * @return Boolean
      */
-    Boolean updateLogisticsCode(String mainId, String logisticsCode);
+    Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo);
 
     /**
      * 平台订单明细更新或保存
@@ -78,7 +80,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @Author Jim
      * @since 2023-11-10
      **/
-    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight);
 
     /**
      * 获取物流费用参数
@@ -86,4 +88,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return
      */
     SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(String orderId);
+
+   /**  根据物流渠道查询
+    * @description
+    * @param
+    * @author Lambda
+    * @return
+    * @create 2023-12-28 10:37
+    */
+   List<SoB2cLogisticsEntity> listByChannelId(String channelId);
 }

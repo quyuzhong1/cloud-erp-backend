@@ -1,9 +1,12 @@
 package com.erp.oms.aliexpress.dto;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -97,9 +100,16 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setCurrency(amountCurrency);
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
-        // 运费收入
-        BigDecimal shippingFee = BigDecimal.ZERO;
+
+        //手续费
+        String escrowFeeStr = sourceOrder.getEscrowFee().getAmount();
+        BigDecimal escrowFee=new BigDecimal(escrowFeeStr);
         AliExpressOrderDetail detail = sourceOrder.getDetail();
+        //物流成本
+        String logisticsCostStr = detail.getLogisticsAmount().getAmount();
+        //物流成本
+        BigDecimal logisticsCost = new BigDecimal(logisticsCostStr);
+        BigDecimal shippingFee=BigDecimal.ZERO;
         Boolean detailIsNull = Objects.nonNull(detail);
         if (detailIsNull) {
             String shippingFeeStr = detail.getLogisticsAmount().getAmount();
@@ -107,7 +117,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
-        orderDTO.setPayTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtCreate()));
+        orderDTO.setPayTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtPayTime()));
         // 付款金额
         orderDTO.setPayAmount(new BigDecimal(amountStr));
         // 付款方式
@@ -130,6 +140,22 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceId(sourceOrder.getOrderId());
         // 来源编码
         orderDTO.setSourceCode(sourceOrder.getOrderId());
+
+        // 标签json
+        Map<String, Object> lableMap = new HashMap<>();
+        lableMap.put("aliexpressStatus", sourceOrder.getOrderStatus());
+
+        //订单明细
+        List<OrderItemDetail> orderItemDetailList = sourceOrder.getDetail().getChildOrderList();
+        Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
+        if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
+            long count = orderItemDetailList.stream().
+                    filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
+            isAliexpressPlatformWarehouseOrder = count > 0;
+        }
+        lableMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
+        lableMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+
         // 标签json
         orderDTO.setLabelJson("{}");
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
@@ -139,14 +165,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailList(detailIsNull ? detail.getChildOrderList() : Collections.emptyList());
         orderDTO.setDetails(details);
-        // 订单买家信息
-        List<PlatformOrderReceiverDTO> receiverList = new ArrayList<>(1);
+
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailIsNull) {
             //收货信息
             ReceiptInfo receiptInfo = detail.getReceiptInfo();
             BuyerInfo buyerInfo = detail.getBuyerInfo();
-
+            receiverDTO.setLoginId(buyerInfo.getLoginId());
             receiverDTO.setCountry(receiptInfo.getCountry());
             receiverDTO.setName(sourceOrder.getBuyerSignerFullname());
             receiverDTO.setEmail("");
@@ -182,8 +207,8 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 订单财务信息
         PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
         financeDTO.setShippingCost(shippingFee);
+        financeDTO.setLogisticsCost(logisticsCost);
         orderDTO.setFinances(financeDTO);
-
         return orderDTO;
     }
 
@@ -224,18 +249,21 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseName("");
         // 仓库名称
         detailDTO.setWarehouseId("");
-
+        Integer qty=item.getProductCount();
         // 数量
-        detailDTO.setQty(item.getProductCount());
+        detailDTO.setQty(qty);
+
         String priceStr = item.getProductPrice().getAmount();
+
+        BigDecimal price=new BigDecimal(priceStr);
+
         // 单价
-        detailDTO.setPrice(new BigDecimal(priceStr));
+        detailDTO.setPrice(price);
         // 金额
-        String amountStr = item.getProductPrice().getAmount();
+        BigDecimal amount = MathUtil.multiply(price,qty);
         // 金额
         String currency = item.getProductPrice().getCurrencyCode();
-        // 金额
-        BigDecimal amount = new BigDecimal(amountStr);
+
         detailDTO.setAmount(amount);
         detailDTO.setCurrency(currency);
         // 汇率
@@ -247,7 +275,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 来源明细id
         detailDTO.setSourceDetailId(item.getChildOrderId());
         // 标签json
-        detailDTO.setLabelJson("");
+        Map<String, Object> lableMap = new HashMap<>();
+        lableMap.put("alreadyTaxed", item.getAlreadyTaxed());
+        lableMap.put("logisticsWarehouseType", item.getLogisticsWarehouseType());
+        lableMap.put("tagList", item.getTags());
+
+        // 标签json
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         // 库存组织id
         detailDTO.setWarehouseOrgId("");
         // 库存组织名称

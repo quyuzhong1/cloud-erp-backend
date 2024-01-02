@@ -29,4 +29,13 @@ public class ChanelQueryVO implements Serializable {
      * 授权信息
      */
     Map<String, String> authMap;
+    /**
+     * 订单id
+     */
+    private String orderId;
+    /**
+     *
+     * 子订单id
+     */
+    private String childOrderId;
 }

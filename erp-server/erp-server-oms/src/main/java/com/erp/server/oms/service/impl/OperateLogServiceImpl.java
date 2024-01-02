@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +80,8 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
             Pair<String, String> keyPair = entry.getKey();
-            String field = keyPair.getKey();
+            //去掉属性里的数字
+            String field = this.removeDigits(keyPair.getKey());
             String fieldClass = keyPair.getValue();
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
@@ -256,5 +259,20 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
         }
         return new Pair<>(oldValue,newValue);
+    }
+
+    private String removeDigits(String input) {
+        if(StringUtils.isBlank(input)){
+            return input;
+        }
+        // 定义匹配数字的正则表达式
+        String regex = "\\d";
+        // 创建 Pattern 对象
+        Pattern pattern = Pattern.compile(regex);
+        // 创建 Matcher 对象
+        Matcher matcher = pattern.matcher(input);
+        // 使用 replaceAll 方法替换匹配的数字为空字符串
+        String result = matcher.replaceAll("");
+        return result;
     }
 }

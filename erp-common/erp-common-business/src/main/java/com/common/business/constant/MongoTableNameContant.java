@@ -205,7 +205,15 @@ public interface MongoTableNameContant {
      * Shopify订单表
      */
     String THIRD_SYSTEM_SHOPIFY_ORDER = "third_system_Shopify_order";
+    /**
+     * 虾皮订单表
+     */
+    String THIRD_SYSTEM_SHOPEE_ORDER = "third_system_Shopee_order";
 
+    /**
+     * 虾皮商品表
+     */
+    String THIRD_SYSTEM_SHOPEE_PRODUCT = "third_system_Shopee_product";
 
     /**
      * 根据任务 key 获取表名

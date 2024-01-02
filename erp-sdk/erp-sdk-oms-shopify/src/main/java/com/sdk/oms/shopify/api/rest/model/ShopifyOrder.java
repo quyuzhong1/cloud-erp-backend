@@ -15,8 +15,6 @@ import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeSerializer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,8 +26,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ShopifyOrder {
-
-    private String id;
+    @JsonProperty("id")
+    private String orderId;
     private String email;
     @JsonProperty("closed_at")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -122,7 +120,6 @@ public class ShopifyOrder {
     private ShopifyPaymentTerms paymentTerms;
 
 
-
     /**
      * @param name
      * @param value
@@ -135,30 +132,29 @@ public class ShopifyOrder {
     /**
      * shopify 订单状态转换ERP订单状态
      * soB2cBillStatus字典类型
-     *
+     * <p>
      * shipped: Show orders that have been shipped. Returns orders with fulfillment_status of fulfilled.
      * partial: Show partially shipped orders.
      * unshipped: Show orders that have not yet been shipped. Returns orders with fulfillment_status of null.
      * any: Show orders of any fulfillment status.
      * unfulfilled: Returns orders with fulfillment_status of null or partial
-     *
      */
     public String convertBillStatus() {
-        if (null == this.fulfillmentStatus || StringUtils.isBlank(this.fulfillmentStatus)){
-            // 配货中
-            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-        }
-        // 已发货
-        if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
-            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-        }
-        // 待发货
+        // 配货中
         return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+
+//        if (null == this.fulfillmentStatus || StringUtils.isBlank(this.fulfillmentStatus)){
+//            // 配货中
+//            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+//        }
+//        // 已发货
+//        if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
+//            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+//        }
+//        // 待发货
+//        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
     }
 
-    private final static String PAYMENT_STATUS = "payment";
-
-    private final static String PAY_STATUS = "paid";
 
     /**
      * shopify 订单付款状态转换ERP订单付款状态
@@ -183,16 +179,44 @@ public class ShopifyOrder {
             return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
         }
         // 已付款
-        if (ShopifyOrderFinancialStatusEnum.PAID.equals(statusEnum)) {
-            return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
+        if (ShopifyOrderFinancialStatusEnum.PAID.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.VOIDED.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.REFUNDED.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.PARTIALLY_REFUNDED.equals(statusEnum)
+        ) {
+            return SoB2cPayStatusEnum.ENUM_PAID.getCode();
         }
         // 待付款
         if (ShopifyOrderFinancialStatusEnum.PENDING.equals(statusEnum) ||
-            ShopifyOrderFinancialStatusEnum.UNPAID.equals(statusEnum)||
-            ShopifyOrderFinancialStatusEnum.PARTIALLY_PAID.equals(statusEnum)
+                ShopifyOrderFinancialStatusEnum.UNPAID.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.AUTHORIZED.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.PARTIALLY_PAID.equals(statusEnum)
         ) {
             return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
         }
         return "unknow";
+    }
+
+    public Boolean convertInvalidStatus() {
+        return ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(this.financialStatus);
+    }
+
+    public String convertApproveStatusStr() {
+        //                WAIT_SUBMIT("waitSubmit", "待提交"),
+//                APPROVE_ING("approveIng", "审核中"),
+//                REJECT("reject", "审核不通过"),
+//                APPROVE("approve", "已审核");
+        String code = this.financialStatus;
+        ShopifyOrderFinancialStatusEnum statusEnum = ShopifyOrderFinancialStatusEnum.getByCode(code);
+        if (null == statusEnum) {
+            return "waitSubmit";
+        }
+        if (ShopifyOrderFinancialStatusEnum.REFUNDED.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.PARTIALLY_REFUNDED.equals(statusEnum) ||
+                ShopifyOrderFinancialStatusEnum.VOIDED.equals(statusEnum)
+        ) {
+            return "reject";
+        }
+        return "waitSubmit";
     }
 }

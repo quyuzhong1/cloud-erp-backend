@@ -38,25 +38,25 @@
     </sql>
     <select id="listByWarehouseIdList" resultType="com.erp.model.wms.dto.OverseasProviderWarehouseDTO$ViewDTO">
         SELECT
-        opw.main_id,
-        opw.platform_warehouse_code,
-        opw.platform_warehouse_name,
-        opw.country,
-        opw.country_name,
-        opw.warehouse_id,
-        opw.warehouse_name,
-        opw.warehouse_code,
-        opw.disabled,
-        op.code AS providerCode
+            opw.main_id,
+            opw.platform_warehouse_code,
+            opw.platform_warehouse_name,
+            opw.country,
+            opw.country_name,
+            opw.warehouse_id,
+            opw.warehouse_name,
+            opw.warehouse_code,
+            opw.disabled,
+            op.code AS providerCode
         FROM overseas_provider_warehouse opw
         INNER JOIN overseas_provider op
         ON op.id = opw.main_id and op.is_deleted=false
         WHERE opw.is_deleted=false
         <if test="warehouseIds!=null and warehouseIds.size>0">
-            AND opw.warehouse_id IN
-            <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
+           AND opw.warehouse_id IN
+           <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+               #{item}
+           </foreach>
         </if>
     </select>
 

@@ -1,16 +1,18 @@
 package com.erp.server.oms.service;
 
-import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -25,6 +27,12 @@ import java.util.Map;
  * @since 2023-08-18
  */
 public interface SoB2cService extends SuperService<SoB2cEntity> {
+
+
+
+
+
+
 
       /**
       * 分页列表查询
@@ -250,10 +258,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO cancelSplit(String id);
 
+    void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
+
     /**
      * 匹配审核规则
      */
-    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
+    Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 匹配配货规则
@@ -309,7 +319,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto);
+    SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto);
 
     /**
      * 通过哟平台订单ID和类型查询
@@ -329,4 +339,200 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
+
+    /**
+     * 获取销售出库单需要的数据
+     * @description
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-13 17:40
+     */
+    Boolean  orderShipped(String  id);
+
+    /** 
+     * @description 运费测算后选择物流渠道
+     * @param dto
+     * @author Lambda
+     * @return Boolean
+     * @create 2023-12-15 12:27
+     */
+    Boolean selectLogisticsChannel(SoB2cLogisticsDTO.SelectChannelDTO dto);
+
+    /**
+     * 平台仓订单处理
+     * 走仓库规则 通过就是审核通过 并待发货
+     * 没有通过就是审核通过有待配货
+     * @description
+     * @param id
+     * @param  map
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 14:06
+     */
+    Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
+
+  
+    /** 
+     * @description 正常订单拉取处理规则
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 14:52
+     */
+    Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList,Map<String, Object> map);
+
+    /** 
+     * @description 获取规则需要的map
+     * @param id 订单id
+     * @param detailList 详情
+     * @author Lambda
+     * @return 
+     * @create 2023-12-18 15:03
+     */
+    Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+    /**
+     * 添加销售订单异常标示
+     * @description
+     * @param id
+     * @param sign
+     * @author Lambda
+     * @return
+     * @create 2023-12-20 11:43
+     */
+    void addSignError(String id, String sign);
+
+    /**
+     * 删除异常的标示
+     * @description
+     * @param id
+     * @param sign
+     * @author Lambda
+     * @return 
+     * @create 2023-12-20 15:48
+     */
+    void removeSignError(String id, String sign);
+
+    /**
+     * 获取标记发货需要的参数
+     * @description
+     * @param soB2cId
+     * @author Lambda
+     * @return 
+     * @create 2023-12-22 16:02
+     */
+    SoB2cDTO.SignShipOrderDTO getSignShipParam(String soB2cId);
+
+    /**
+     * 校验是否需要调用第三方标记发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 11:30
+     * @param soB2cId
+     * @return java.lang.Boolean
+     **/
+    Boolean checkPlatformShipOrder(String soB2cId);
+
+    /**
+     * 虚假发货
+     * @Author Luo_WG
+     * @Date 2023/12/27 15:07
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO falseDelivery(String id);
+
+    /**
+     * 根据销售单code 获取
+     * @description
+     * @param soCode
+     * @author Lambda
+     * @return
+     * @create 2023-12-27 19:55
+     */
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoByCode(String soCode);
+
+    /**
+     * 根据销售订单id 获取销售出库详情
+     * @description
+     * @param soId
+     * @author Lambda
+     * @return
+     * @create 2023-12-28 12:12
+     */
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockInfoById(String soId);
+
+    /**
+     * 修改b2c销售单状态
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:19
+     * @param soB2cIds
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+
+    /**
+     * 设置打印面单需要的字段
+     * @Author Luo_WG
+     * @Date 2023/12/28 15:39
+     * @param soIds
+     * @return java.util.List<com.common.business.dto.PrintWayBillPdfDTO>
+     **/
+    List<PrintWayBillPdfDTO> printWayBillPdf(List<String> soIds);
+
+    /** 更改订单状态 根据code
+     * @description
+     * @param
+     * @author Lambda
+     * @return 
+     * @create 2023-12-28 18:58
+     */
+    Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto);
+
+    /**
+     * 订单规则
+     * @description
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2023-12-28 20:57
+     */
+    SoB2cDTO.RuleResultDTO orderRule(String id);
+
+    /**
+     * 仓库规则
+     * @param id
+     * @param soB2cDetailList
+     * @param map
+     * @return
+     */
+    SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> soB2cDetailList, Map<String, Object> map);
+
+    /**
+     * 物流规则
+     * @description
+     * @param
+     * @author Lambda
+     * @return
+     * @create 2023-12-29 8:41
+     */
+    SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map);
+
+    /**
+     * 获取客户信息
+     * @description
+     * @param soId
+     * @author Lambda
+     * @return
+     * @create 2023-12-29 16:42
+     */
+    SoB2cDTO.CustomerDTO getB2cCustomerById(String soId);
+
+    /**
+     * 获取客户信息
+     * @param soIdList
+     * @return
+     */
+    List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList);
 }

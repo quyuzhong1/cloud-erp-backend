@@ -56,5 +56,5 @@ public interface OmsConstant {
      */
     String NOT = "not";
 
-
+    Integer SKU_MAPPING_RULE_SIZE = 5;
 }

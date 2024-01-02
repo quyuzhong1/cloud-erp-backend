@@ -14,11 +14,11 @@ import java.util.HashMap;
  */
 public class WalmartTest {
     public static void main(String[] args) throws Exception {
-        String baseUrl = "https://sandbox.walmartapis.com/v3/token";
+        String baseUrl = "";
         String clientId = "2434a35c-7c42-4420-9618-0c179b68a8c2";
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
         //获取令牌
-        baseUrl = WalmartStaticKey.baseUrlTest + "token";
+        baseUrl = WalmartStaticKey.baseUrl + "token";
 
 
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();

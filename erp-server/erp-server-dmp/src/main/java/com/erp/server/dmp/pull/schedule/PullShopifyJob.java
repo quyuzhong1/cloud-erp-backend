@@ -5,12 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
@@ -20,6 +22,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -61,7 +64,25 @@ public class PullShopifyJob {
         });
     }
 
-
+    @XxlJob("shopifyCleanExecute")
+    public void shopifyCleanExecute() {
+        List<CleanDataTableEnum> platforms = CleanDataTableEnum.getByPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        if (CollectionUtils.isNotEmpty(platforms)){
+            platforms.forEach(cleanDataTableEnum -> {
+                JobTaskDTO jobTaskDTO = new JobTaskDTO();
+                jobTaskDTO.setPlatformCategory(cleanDataTableEnum.getCategory());
+                jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
+                jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
+                try {
+                    XxlJobHelper.log("开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
+                    platformDataThread.cleanOrder(jobTaskDTO);
+                    XxlJobHelper.log("清洗完成：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
+                }catch (Exception e){
+                    XxlJobHelper.log("清洗异常：{}", e);
+                }
+            });
+        }
+    }
     /**
      * 拉取Shopify订单详情任务
      */

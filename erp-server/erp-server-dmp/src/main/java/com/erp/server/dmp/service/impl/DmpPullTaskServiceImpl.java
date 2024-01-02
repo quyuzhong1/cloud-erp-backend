@@ -120,13 +120,23 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateSyncInfo(String id, String syncStatus, String responseMsg) {
-        LambdaUpdateWrapper<DmpPullTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(DmpPullTaskEntity::getId, id);
-        updateWrapper.set(DmpPullTaskEntity::getLastSyncTime, LocalDateTime.now());
-        updateWrapper.set(DmpPullTaskEntity::getStatus, syncStatus);
-        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpPullTaskEntity::getReturnMsg, responseMsg);
-        updateWrapper.set(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now());
-        this.update(updateWrapper);
+        DmpPullTaskEntity entity = new DmpPullTaskEntity();
+        entity.setId(id);
+        entity.setLastSyncTime(LocalDateTime.now());
+        entity.setStatus(syncStatus);
+        if (StrUtil.isNotBlank(responseMsg)){
+            entity.setReturnMsg(responseMsg);
+        }
+
+        entity.setUpdateTime(LocalDateTime.now());
+        baseMapper.updateById(entity);
+//        LambdaUpdateWrapper<DmpPullTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+//        updateWrapper.eq(DmpPullTaskEntity::getId, id);
+//        updateWrapper.set(DmpPullTaskEntity::getLastSyncTime, LocalDateTime.now());
+//        updateWrapper.set(DmpPullTaskEntity::getStatus, syncStatus);
+//        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpPullTaskEntity::getReturnMsg, responseMsg);
+//        updateWrapper.set(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now());
+//        this.update(updateWrapper);
     }
 
     @Override

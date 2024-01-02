@@ -268,6 +268,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean invalidByLogisticsBillId(String logisticsBillId) {
+        LogisticsBillCostEntity entity = this.lambdaQuery().eq(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillId).one();
+        if(Objects.isNull(entity)){
+            return true;
+        }
+        entity.setReconciliationStatus(ReconciliationStatusEnum.INVALID.getCode());
+        return this.updateById(entity);
+    }
+
     /**
      * @description: 根据物流单id集合查询
      * @author Will

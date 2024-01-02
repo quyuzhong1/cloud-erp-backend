@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -63,7 +64,7 @@ public class ShippingTemplateEntity extends BaseEntity<ShippingTemplateEntity> {
     /**
     * 失效日期
     */
-    @TableField("expire_date")
+    @TableField(value = "expire_date", fill = FieldFill.INSERT_UPDATE)
     private LocalDate expireDate;
     /**
     * 是否禁用

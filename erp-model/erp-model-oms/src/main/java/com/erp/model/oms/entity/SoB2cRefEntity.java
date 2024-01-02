@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 
@@ -39,6 +41,19 @@ public class SoB2cRefEntity extends BaseEntity<SoB2cRefEntity> {
     */
     @TableField("target_id")
     private String targetId;
+
+    /**
+     * 来源单据明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
+     * 目标单据明细id
+     */
+    @TableField("target_detail_id")
+    private String targetDetailId;
+
 
 
     public static final String TYPE = "type";

@@ -3,10 +3,12 @@ package com.erp.server.oms.service;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.plm.vo.SkuVO;
 
 import java.util.List;
 import java.util.Map;
@@ -26,11 +28,11 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @description: 新增
      * @author Will
      * @date: 2023/8/21 17:13
-     * @param detailList
+     * @param addDTO
      * @param mainId
      * @return Boolean
      */
-    Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId);
+    Boolean add(SoB2cDTO.AddDTO addDTO, String mainId);
     /**
      * @description: 修改
      * @author Will
@@ -66,7 +68,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param warehouseId
      * @return Boolean
      */
-    Boolean updateWarehouseIdByMainId(String mainId, String warehouseId);
+    Boolean updateWarehouseIdByMainId(String mainId, String warehouseId,Boolean isCover);
     /**
      * @description: 根据主表id删除
      * @author Will
@@ -91,7 +93,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo);
+    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList);
 
     /**
      * 通过platformSkuNo查询关联关系
@@ -109,6 +111,24 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @param list
      * @param mainEntity
      */
-    void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity);
+    void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuVO> skuList);
 
+    /**
+     * @description: 更新明细的是否匹配仓库规则字段
+     * @author Will
+     * @date: 2023/12/14 9:21
+     * @param detailIdList
+     * @return Boolean
+     */
+    Boolean updateIsMatchWarehouseRule(List<String> detailIdList);
+
+    /**
+     *
+     * @description
+     * @param mainId
+     * @author Lambda
+     * @return
+     * @create 2023-12-13 20:15
+     */
+    List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
 }

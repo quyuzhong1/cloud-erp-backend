@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -258,6 +259,17 @@ public class ShopDTO implements Serializable {
         private String salesOrgId;
 
         /**
+         * 是否包含平台仓 true 包含
+         */
+        @NotNull(message = "是否包含平台仓不能为空")
+        private Boolean  isHaveWarehouse;
+
+        /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
+
+        /**
          * 区域id
          */
         private String dictAreaCode;
@@ -344,6 +356,16 @@ public class ShopDTO implements Serializable {
         private String areaName;
 
         /**
+         * 是否包含平台仓  true 包含
+         */
+        private Boolean  isHaveWarehouse;
+
+        /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
+
+        /**
          * 国家id
          */
         private String dictCountryCode;
@@ -402,6 +424,21 @@ public class ShopDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 客户编号
+         */
+        private String customerCode;
 
 
     }
@@ -474,6 +511,17 @@ public class ShopDTO implements Serializable {
         private String chargeId;
 
         /**
+         * 是否包含平台仓  true 包含
+         */
+        @NotNull(message = "是否包含平台仓不能为空")
+        private Boolean  isHaveWarehouse;
+
+        /**
+         * ioss税号
+         */
+        private String  iossTaxNo;
+
+        /**
          * 销售组织
          */
         @NotBlank(message = "销售组织不能为空")
@@ -482,8 +530,14 @@ public class ShopDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
+
+        /**
+         * 客户的id
+         * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
+         */
+        @NotBlank(message = "客户的id不能为空")
+        private String customerId;
 
     }
 
@@ -677,6 +731,11 @@ public class ShopDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+
+        /**
+         * 店铺名
+         */
+        private String shopName;
 
         /**
          * 店铺授权id

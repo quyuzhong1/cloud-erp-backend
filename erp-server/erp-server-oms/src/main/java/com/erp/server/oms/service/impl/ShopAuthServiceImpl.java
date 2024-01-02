@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -310,6 +311,16 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public List<ShopAuthEntity> listByClientId(String clientId) {
         return this.lambdaQuery().eq(ShopAuthEntity::getAppClientId,clientId).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn) {
+        this.lambdaUpdate().set(ShopAuthEntity::getAccessToken, accessToken).
+                set(ShopAuthEntity::getRefreshToken, refreshToken).
+                set(ShopAuthEntity::getExpiresIn, expiresIn).eq(ShopAuthEntity::getId, shopAuthId).
+                set(ShopAuthEntity::getToken,accessToken).set(ShopAuthEntity::getUpdateTime, LocalDateTime.now()).
+                update();
     }
 
 

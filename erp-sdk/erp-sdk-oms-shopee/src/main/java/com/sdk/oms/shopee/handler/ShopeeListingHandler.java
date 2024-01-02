@@ -55,7 +55,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
-    private ShopeeGlobalProductService shopeeGlobalProductService;
+    private ShopeeProductService shopeeProductService;
 
     @Override
     public List<PlatformShopeeListingDTO> download(JobTaskDTO data) {
@@ -85,24 +85,24 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
-        List<GlobalItemInfo> itemInfos = new ArrayList<>();
+        List<ItemInfo> itemInfos = new ArrayList<>();
 
         ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
-               && "shopee_merchant".equalsIgnoreCase(shopeeShopById.getData().getType())) {
-            GlobalProductRequest productRequest = GlobalProductRequest.builder()
+               && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
+            ProductRequest productRequest = ProductRequest.builder()
                     .host(cfgAppClient.getUrl())
                     .offset(null)
                     .token(shopeeShopById.getData().getAccessToken())
-                    .merchantId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
+                    .shopId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
                     .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                     .tmpPartnerKey(cfgAppClient.getClientSecret())
-                    .timeFrom(timeFrom)
-                    .timeTo(timeTo)
+                    .timeFrom(null)
+                    .timeTo(null)
                     .build();
-            List<GlobalItemInfo> list = new ArrayList<>();
+            List<ItemInfo> list = new ArrayList<>();
             try {
-                shopeeGlobalProductService.getAllProduct(productRequest, list);
+                shopeeProductService.getAllProduct(productRequest, list);
             } catch (Exception e) {
                 log.error("获取产品数据异常:{}", e.getMessage());
             }

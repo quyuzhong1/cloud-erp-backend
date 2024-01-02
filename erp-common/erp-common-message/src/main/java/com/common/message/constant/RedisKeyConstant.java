@@ -33,4 +33,6 @@ public class RedisKeyConstant {
      * skuNo
      */
     public static String DMP_SKU_COST_CODE = "DMP_SKU_COST:{}_*";
+
+    public static String WMS_PACKING_INSPECTION = "WMS:PACKING_INSPECTION:{}";
 }

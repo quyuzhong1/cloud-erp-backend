@@ -35,14 +35,11 @@ public class AliExpressProduct implements Serializable {
     private String gmtModified;
 
 
-
     /**
      * 图片URL.静态单图主图个数为1,动态多图主图个数为2-6. 多个图片url用‘;’分隔符连接。
      */
     @JSONField(name = "image_u_r_ls")
     private String imageUrls;
-
-
 
 
 

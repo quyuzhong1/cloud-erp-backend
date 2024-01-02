@@ -182,6 +182,17 @@ public class SkuMappingDTO implements Serializable {
         private List<String> platformList;
 
 
+
+        /**
+         * 更新人 id 集合
+         */
+        private List<String> updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
+
         /**
          * 创建人 id 集合
          */
@@ -196,6 +207,11 @@ public class SkuMappingDTO implements Serializable {
          * 平台SKU编号模糊搜索条件
          */
         private List<String> platformFnSkuList;
+
+        /**
+         * 是否匹配：true=是, false=否
+         */
+        private Boolean matchResult;
 
     }
 
@@ -273,6 +289,16 @@ public class SkuMappingDTO implements Serializable {
         private String tabFlag;
 
         /**
+         * 更新人 id 集合
+         */
+        private List<String> updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
+
+        /**
          * 创建人 id 集合
          */
         private List<String> createUserIdList;
@@ -282,7 +308,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
-
+        /**
+         * 是否匹配：true=是, false=否
+         */
+        private Boolean matchResult;
     }
 
 
@@ -351,7 +380,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
+//        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
         /**
@@ -505,15 +534,15 @@ public class SkuMappingDTO implements Serializable {
 
 
         /**
-         * 创建人名称
+         * 更新人名称
          */
-        private String createUserName;
+        private String updateUserName;
 
         /**
-         * 创建时间
+         * 更新时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
 
         /**
          * 平台产品SPU编号
@@ -603,15 +632,15 @@ public class SkuMappingDTO implements Serializable {
 
 
         /**
-         * 创建人名称
+         * 更新人名称
          */
-        private String createUserName;
+        private String updateUserName;
 
         /**
-         * 创建时间
+         * 更新时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
 
         /**
          * 平台
@@ -695,6 +724,8 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ListSkuParamDTO {
+
+
         /**
          * SKU编号
          */
@@ -710,6 +741,84 @@ public class SkuMappingDTO implements Serializable {
          */
         private String dictPlatform;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListingSkuParamDTO{
+        private String type;
+
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 出库id
+         */
+        private String warehouseId;
+
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSkuResultDTO {
+
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 出库id
+         */
+        private String warehouseId;
+
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
+
+        private String listingId;
+
+
+
+        private String type;
+
+
+
+        /**
+         * 平台产品sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品sku
+         */
+        private String platformSkuName;
+
+        /**
+         * 平台产品id
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台产品名
+         */
+        private String platformSpuName;
+    }
+
+
+
 
     @Data
     @NoArgsConstructor
@@ -931,15 +1040,7 @@ public class SkuMappingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddSkuMappingDTO {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-        /**
-         * 平台名称
-         */
-        private String platformName;
+    public static class UpdateSkuMappingDTO {
         /**
          * 产品sku id
          */
@@ -949,34 +1050,21 @@ public class SkuMappingDTO implements Serializable {
          */
         private String productSkuNo;
 
-        /**
-         * 平台
-         */
-        private String dictPlatform;
 
         /**
          * 产品名称
          */
         private String productName;
 
-        /**
-         * 类型
-         */
-        private RuleTypeEnum type;
+
 
         /**
          *
          */
         private String listingId;
-        /**
-         * 仓库名称
-         */
-        private String warehouseName;
 
-        /**
-         * 仓库名称
-         */
-        private String warehouseId;
+
+
 
 
     }

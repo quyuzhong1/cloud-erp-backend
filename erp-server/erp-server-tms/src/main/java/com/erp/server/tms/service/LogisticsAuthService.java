@@ -78,12 +78,12 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     List<Map<String, String>> getLogisticsAuthByPlatform(String platform);
-
     /**
      * 授权完成后 同步销售渠道
-     * @param authId
+     * @param logisticsPlatform
+     * @param authConfig
      */
-    void syncUpdateSaleChannel(String authId,String logisticsPlatform);
+    void syncUpdateSaleChannel(String logisticsPlatform,Map<String, String> authConfig);
 
     /**
      * 根据供应商id 获取信息
@@ -103,6 +103,14 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 
     ApiResult authLogistics(String id, String logisticsPlatform);
+
+    /**
+     * 根据授权信息进行校验
+     * @param logisticsPlatform
+     * @param authConfig
+     * @return
+     */
+    ApiResult authLogistics(String logisticsPlatform,Map<String, String> authConfig);
 
     /**
      *

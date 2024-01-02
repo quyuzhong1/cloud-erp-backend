@@ -14,7 +14,10 @@ public interface PathConstants {
      **/
     String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
     String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
-
+    //测试
+    String MONTH_CARD = "7551234567";
+    //正式
+//    String MONTH_CARD = "7690307412";
 
     //沙箱环境的地址 -PRO
     String BASE_URL = "https://sfapi-sbox.sf-express.com/std/service";

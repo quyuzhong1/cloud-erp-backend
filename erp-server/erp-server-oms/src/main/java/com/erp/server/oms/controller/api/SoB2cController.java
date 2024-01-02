@@ -4,22 +4,23 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * B2C销售订单表
@@ -42,11 +43,6 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:paging",
-            tableAlias = "sb2c"
-    )
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(soB2cService.tabList(dto));
     }
@@ -60,11 +56,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:paging",
-            tableAlias = "sb2c"
-    )
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         return success(soB2cService.paging(dto));
     }
@@ -78,13 +69,34 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:add",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
     public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
+        /**
+         * 1,创建订单
+         * 2,匹配订单规则
+         * 3.匹配物流仓储规则
+         * 4.创建物流运单
+         * 5.创建发货单
+         */
         SoB2cEntity add = soB2cService.add(dto, null);
+        String id = add.getId();
+        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
+        //匹配成功
+        Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
+        Boolean isPass = orderRuleResult.getIsPass();
+        //todo 可以优化
+        if (ruleMatch && isPass) {
+            //仓库规则
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+            Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+            if (warehouseRuleMatch) {
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                    soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                }
+            }
+
+        }
         return success(add.getId());
     }
 
@@ -97,11 +109,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/update")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:update",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         return success();
@@ -116,11 +123,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/submit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:submit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -152,11 +154,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/approve")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:approve",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -164,6 +161,23 @@ public class SoB2cController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (Objects.nonNull(entity)) {
+                    ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+                    if (approveStatus.equals(entity.getApproveStatus())) {
+                        //仓库规则
+                        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
+                        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                        if (warehouseRuleMatch) {
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                            if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                                soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                            }
+                        }
+
+                    }
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -188,11 +202,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/invalid")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:invalid",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -223,11 +232,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 15:32
      */
     @PostMapping("/unInvalid")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:unInvalid",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -259,11 +263,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:view",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
     public ApiResult<SoB2cDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(soB2cService.view(id));
     }
@@ -277,11 +276,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/9/6 15:43
      */
     @PostMapping("/getFinancialInfo")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:getFinancialInfo",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
     public ApiResult<SoB2cDTO.FinancialInfoDTO> getFinancialInfo(@RequestBody @Validated SoB2cDTO.FinancialParamDTO dto) {
         return success(soB2cService.getFinancialInfoById(dto));
     }
@@ -296,11 +290,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 15:37
      */
     @PostMapping("/updateRemark")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:updateRemark",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -331,11 +320,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 15:46
      */
     @PostMapping("/updateCategory")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:updateCategory",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateCategory(@RequestBody @Validated SoB2cDTO.SoB2cAddCategoryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -366,11 +350,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:36
      */
     @PostMapping("/viewSoB2cDistribution")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:viewSoB2cDistribution",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<SoB2cDTO.ViewSoB2cDistributionDTO>> viewSoB2cDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SoB2cDTO.ViewSoB2cDistributionDTO> list = soB2cService.viewSoB2cDistribution(dto);
         return success(list);
@@ -385,11 +364,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:43
      */
     @PostMapping("/saveSoB2cDistribution")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:saveSoB2cDistribution",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -420,11 +394,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:47
      */
     @PostMapping("/getLogisticsCode")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:getLogisticsCode",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> getLogisticsCode(@RequestBody @Validated SoB2cDTO.GetLogisticsCode dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -455,11 +424,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:49
      */
     @PostMapping("/submitDelivery")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:submitDelivery",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -490,11 +454,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:51
      */
     @PostMapping("/deliveryIntercept")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:deliveryIntercept",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -525,11 +484,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:53
      */
     @PostMapping("/cancelDeliveryIntercept")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:cancelDeliveryIntercept",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelDeliveryIntercept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -560,11 +514,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 18:31
      */
     @PostMapping("/mergePaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:mergePaging",
-            tableAlias = "sb2c"
-    )
     public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
         return success(soB2cService.mergePaging(dto));
     }
@@ -578,11 +527,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/24 16:18
      */
     @PostMapping("/mergePagingCount")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:mergePaging",
-            tableAlias = "sb2c"
-    )
     public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
         return success(soB2cService.mergePagingCount(dto));
     }
@@ -596,11 +540,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 18:35
      */
     @PostMapping("/mergeSave")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:mergeSave",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = soB2cService.mergeSave(dto.getIds());
         return flag.equals(Boolean.TRUE) ? success() : failure();
@@ -615,11 +554,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/9/11 9:23
      */
     @PostMapping("/isNotNeedMerge")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:isNotNeedMerge",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> isNotNeedMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -650,11 +584,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:07
      */
     @PostMapping("/cancelMerge")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:cancelMerge",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -685,11 +614,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:19
      */
     @PostMapping("/viewSplit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:viewSplit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
     public ApiResult<SoB2cDTO.ViewSplitDTO> viewSplit(@RequestBody @Validated BaseIdDTO dto) {
         return success(soB2cService.viewSplit(dto.getId()));
     }
@@ -703,11 +627,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:20
      */
     @PostMapping("/splitSave")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:splitSave",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
         Boolean flag = soB2cService.splitSave(dto);
         return flag.equals(Boolean.TRUE) ? success() : failure();
@@ -722,11 +641,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/24 11:50
      */
     @PostMapping("/checkCancelSplit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:checkCancelSplit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<SoB2cDTO.CheckCancelSplitDTO>> checkCancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(soB2cService.checkCancelSplit(dto.getIds()));
     }
@@ -739,11 +653,6 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:24
      */
     @PostMapping("/cancelSplit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:cancelSplit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -773,8 +682,23 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/matchSku")
     public ApiResult matchSku(@RequestBody @Validated SoB2cDTO.MatchSkuDTO dto) {
-       Boolean result= soB2cService.matchSku(dto);
-        return result?success():failure();
+        Boolean result = soB2cService.matchSku(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 运费测算后选择渠道
+     *
+     * @param
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2023-12-15 12:22
+     */
+    @PostMapping("/selectLogisticsChannel")
+    public ApiResult selectLogisticsChannel(@RequestBody SoB2cLogisticsDTO.SelectChannelDTO dto) {
+        Boolean result = soB2cService.selectLogisticsChannel(dto);
+        return result ? success() : failure();
     }
 
     @GetMapping("/getJson")
@@ -782,5 +706,36 @@ public class SoB2cController extends BaseController {
         Map<String, Object> map = soB2cService.getJson(id);
         return success(map);
 
+    }
+
+
+    /**
+     * 虚假发货
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
+     * @Author Luo_WG
+     * @Date 2023/12/13 19:29
+     **/
+    @PostMapping("/falseDelivery")
+    public ApiResult<List<BatchResultDTO>> falseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.falseDelivery(id);
+            } catch (Exception e) {
+                log.error("b2c订单 虚假发货失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 虚假发货失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

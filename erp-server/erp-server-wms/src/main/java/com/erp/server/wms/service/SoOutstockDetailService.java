@@ -31,9 +31,10 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @date 2023-05-19 10:18
      * @param mainId
      * @param detailList
+     * @param orderType 订单类型
      * @return void
      */
-    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList);
+    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList,String orderType);
 
     
     /**
@@ -125,4 +126,13 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
      */
     List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds);
+
+    /**
+     * 检测b2c 订单的出库的数量
+     * @author yl
+     * @date 2023-12-11 17:16
+     * @param
+     * @return 
+     */
+    void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList);
 }

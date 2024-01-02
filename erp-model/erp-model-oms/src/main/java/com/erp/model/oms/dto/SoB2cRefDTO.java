@@ -47,7 +47,15 @@ public class SoB2cRefDTO implements Serializable {
         */
         private String targetId;
 
+        /**
+         * 来源单据明细id
+         */
+        private String sourceDetailId;
 
+        /**
+         * 目标单据明细id
+         */
+        private String targetDetailId;
     }
 
     /**
@@ -100,7 +108,19 @@ public class SoB2cRefDTO implements Serializable {
         @Size(max = 19,message = "目标单据id最大长度不能超过19位")
         private String targetId;
 
+        /**
+         * 来源单据明细id
+         */
+        @NotBlank(message = "来源单据明细id不能为空")
+        @Size(max = 19,message = "来源单据明细id最大长度不能超过19位")
+        private String sourceDetailId;
 
+        /**
+         * 目标单据明细id
+         */
+        @NotBlank(message = "目标单据明细id不能为空")
+        @Size(max = 19,message = "目标单据明细id最大长度不能超过19位")
+        private String targetDetailId;
     }
 
 

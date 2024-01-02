@@ -63,6 +63,11 @@ public class KingdeeSubcontractOrderConsumer<T extends DmpSyncTaskIdDTO> extends
     }
 
     @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+
+    }
+
+    @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }

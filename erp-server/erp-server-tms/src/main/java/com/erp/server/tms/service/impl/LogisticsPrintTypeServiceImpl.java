@@ -5,6 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
+import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
+import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -47,6 +49,9 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
         List<LogisticsPrintTypeEntity> printTypeList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
         printTypeList.forEach(p -> p.setLogisticsChannelId(channelId));
+        for(LogisticsPrintTypeEntity item:printTypeList){
+           handleData(item);
+        }
         return this.saveBatch(printTypeList);
 
     }
@@ -62,6 +67,9 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
         List<LogisticsPrintTypeEntity> updateList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
         updateList.forEach(p -> p.setLogisticsChannelId(channelId));
+        for(LogisticsPrintTypeEntity item:updateList){
+            handleData(item);
+        }
         List<LogisticsPrintTypeEntity> dbList = this.listDbByChannelId(channelId);
         List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
                 map(LogisticsPrintTypeEntity::getId).collect(Collectors.toList());
@@ -101,6 +109,24 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
     }
 
+    @Override
+    public List<LogisticsPrintTypeDTO.ViewDTO> listByChannelIds(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsPrintTypeEntity> list = lambdaQuery()
+                .ne(LogisticsPrintTypeEntity::getPrintType, "")
+                .in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList)
+                .list();
+
+        List<LogisticsPrintTypeDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(LogisticsPrintTypeDTO.ViewDTO.class, list);
+        for (LogisticsPrintTypeDTO.ViewDTO viewDTO : viewDTOS) {
+            viewDTO.setLabelTypeName(LogisticsLabelTypeEnum.getName(viewDTO.getLabelType()));
+            viewDTO.setPrintTypeName(LogisticsPrintTypeEnum.getName(viewDTO.getPrintType()));
+        }
+        return viewDTOS;
+    }
+
     public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsPrintTypeEntity::getLogisticsChannelId, channelId).list();
     }
@@ -108,7 +134,14 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
     /**
      * 新增修改处理数据
      */
-    private void handleData(LogisticsPrintTypeEntity logisticsPrintTypeEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(LogisticsPrintTypeEntity entity) {
+        String printType=entity.getPrintType();
+        //标签类型
+        String labelType=entity.getLabelType();
+        if(StringUtils.isNotBlank(printType)){
+            if(StringUtils.isBlank(labelType)){
+              throw new ServiceException(ApiError.LABEL_TYPE_NOT_EMPTY);
+            }
+        }
     }
 }

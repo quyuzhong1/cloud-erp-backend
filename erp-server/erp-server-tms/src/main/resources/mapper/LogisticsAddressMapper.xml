@@ -183,7 +183,8 @@
               la.province_name,
               la.city_name,
               la.district_name,
-              la.country_name
+              la.country_name,
+              lca.shop_id
          FROM  logistics_channel_address lca
          LEFT JOIN  logistics_address la
          ON la.ID = lca.address_id
@@ -191,7 +192,8 @@
          WHERE lca.logistics_channel_id=#{channelId}
          AND lca.is_deleted=false
          AND la.type=#{type}
-         AND lca.shop_id=#{shopId}
+         ORDER BY la.create_time DESC
+
 
 
     </select>

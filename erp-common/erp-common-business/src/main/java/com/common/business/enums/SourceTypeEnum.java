@@ -45,6 +45,8 @@ public enum SourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库","other_instock"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
+    SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),

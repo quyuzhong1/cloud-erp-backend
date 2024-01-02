@@ -1,5 +1,6 @@
 package com.erp.server.oms.convert;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
@@ -7,6 +8,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -68,6 +71,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseOrgId", source = "oldEntity.warehouseOrgId"),
             @Mapping(target = "warehouseOrgName", source = "oldEntity.warehouseOrgName"),
             @Mapping(target = "warehouseLocation", source = "oldEntity.warehouseLocation"),
+            @Mapping(target = "platformLineNumber", source = "oldEntity.platformLineNumber"),
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
@@ -82,21 +86,21 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "payStatus", source = "dto.payStatus"),
             @Mapping(target = "amount", source = "dto.amount"),
             @Mapping(target = "currency", source = "dto.currency"),
-            @Mapping(target = "exchangeRate", source = "dto.exchangeRate"),
             @Mapping(target = "shippingFee", source = "dto.shippingFee"),
             @Mapping(target = "payTime", source = "dto.payTime"),
             @Mapping(target = "payAmount", source = "dto.payAmount"),
             @Mapping(target = "dictPayMethod", source = "dto.dictPayMethod"),
             @Mapping(target = "buyerRemark", source = "dto.buyerRemark"),
+            @Mapping(target = "invalidStatus", source = "dto.invalidStatus"),
+            @Mapping(target = "invalidType", source = "dto.invalidType"),
+            @Mapping(target = "invalidRemark", source = "dto.invalidRemark"),
             // 历史实体
+            @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
             @Mapping(target = "approveStatus", source = "oldEntity.approveStatus"),
             @Mapping(target = "platformCode", source = "oldEntity.platformCode"),
             @Mapping(target = "dictPlatform", source = "oldEntity.dictPlatform"),
             @Mapping(target = "shopId", source = "oldEntity.shopId"),
-            @Mapping(target = "invalidStatus", source = "oldEntity.invalidStatus"),
-            @Mapping(target = "invalidType", source = "oldEntity.invalidType"),
-            @Mapping(target = "invalidRemark", source = "oldEntity.invalidRemark"),
             @Mapping(target = "remark", source = "oldEntity.remark"),
             @Mapping(target = "orgId", source = "oldEntity.orgId"),
             @Mapping(target = "orgName", source = "oldEntity.orgName"),
@@ -128,8 +132,9 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "weight", source = "allNetWeight"),
     })
-    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId);
+    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight);
 
 
     @Mappings({
@@ -158,6 +163,17 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "currency", source = "dto.currency"),
+            @Mapping(target = "shippingCost", source = "dto.shippingCost"),
+            @Mapping(target = "itemCost", source = "dto.itemCost"),
+            @Mapping(target = "logisticsCost", source = "dto.logisticsCost"),
+            @Mapping(target = "accessoriesCost", source = "dto.accessoriesCost"),
+            @Mapping(target = "platformRate", source = "dto.platformRate"),
+            @Mapping(target = "vatRate", source = "dto.vatRate"),
+            @Mapping(target = "transferRate", source = "dto.transferRate"),
+            @Mapping(target = "platformCostType", source = "dto.platformCostType"),
+            @Mapping(target = "transferCostType", source = "dto.transferCostType"),
+            @Mapping(target = "vatCostType", source = "dto.vatCostType"),
     })
     SoB2cFinanceEntity convertNewFinance(PlatformOrderFinanceDTO dto, String mainId);
 
