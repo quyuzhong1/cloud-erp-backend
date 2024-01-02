@@ -1,5 +1,6 @@
 package com.erp.server.wms.handler;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -128,6 +129,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             return result;
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
+            ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,500));
+            pushOperateLog(businessType,500,erpBusinessCode);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
