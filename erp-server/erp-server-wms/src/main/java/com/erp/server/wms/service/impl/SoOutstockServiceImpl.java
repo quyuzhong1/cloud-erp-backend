@@ -38,6 +38,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -441,10 +442,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
             result.setCustomerName(customer.getCustomerName());
             result.setReceiveAddress(customer.getReceiverAddress());
+            result.setReceiverName(customer.getReceiverName());
             result.setTelNumber(customer.getTelNumber());
             result.setSellerName(customer.getSellerName());
             result.setSalesOrgName(customer.getSalesOrgName());
+            result.setDeliveryModeName(customer.getDeliveryModeName());
+            //要货日期通销售订单创建日期
+            result.setRequireDate(soOutstock.getPlanDeliveryDate());
+            result.setCountryId(customer.getCountry());
+            result.setCountryName(customer.getCountryName());
+            String salesDeptId=soOutstock.getSalesDeptId();
+            if(StringUtils.isNotBlank(salesDeptId)){
+                SysDepartmentDTO department=  sysUserFeign.getUserDeptById(salesDeptId);
+                if(Objects.nonNull(department)){
+                    result.setSalesDeptName(department.getName());
+                }
+            }
+
         }
+
 
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(soOutstock.getWarehouseId()));
@@ -561,10 +577,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @author Lambda
      * @create 2024-01-01 10:50
      */
-    private void handleSoB2cData(SoOutstockEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void handleSoB2cData(SoOutstockEntity entity) {
         if (Objects.isNull(entity)) {
             return;
         }
+        entity.setActualDeliveryDate(LocalDate.now());
+        this.updateById(entity);
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
@@ -1125,7 +1144,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setSalesOrgName(b2cCustomer.getSalesOrgName());
                 item.setCustomerName(b2cCustomer.getCustomerName());
                 String country = b2cCustomer.getCountry();
-                String countryName = countryList.stream().filter(obj -> country.equals(obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                String countryName ="";
+                if(StringUtils.isNotBlank(country)){
+                     countryName = countryList.stream().filter(obj -> country.equals(obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                }
                 item.setCountryName(countryName);
             }
             String orderTypeName = OrderTypeEnum.getName(orderType);

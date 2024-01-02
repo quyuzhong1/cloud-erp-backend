@@ -1758,5 +1758,10 @@ public class SoB2cDTO implements Serializable {
          * 国家
          */
         private String country;
+
+        /**
+         * 国家名
+         */
+        private String countryName;
     }
 }

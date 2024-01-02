@@ -216,6 +216,6 @@ public interface SoB2cFeign {
      * @return 
      * @create 2024-01-01 12:27
      */
-    @GetMapping("/feign/soB2cError/getB2cError")
+    @PostMapping("/feign/soB2cError/getB2cError")
     SoB2cErrorEntity getB2cError(@RequestParam("mainId")String mainId, @RequestParam("errorType") String errorType);
 }
