@@ -135,6 +135,21 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private LocalDateTime handleTime;
 
         /**
+        * 创建人
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建人时间
+        */
+        private LocalDateTime createTime;
+
+        /**
          * 详情
          */
         private List<SoB2cDeliveryInterceptDetailDTO.ViewDTO> detailList;

@@ -357,5 +357,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
             }
         }
+        data.setDetailList(viewDetailList);
     }
 }
