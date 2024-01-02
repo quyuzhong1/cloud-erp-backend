@@ -79,12 +79,7 @@ public class BiModuleEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    /**
-     * 逻辑删除 FALSE 未删除 TRUE 已删除
-     */
-    @TableField(value = "is_deleted")
-    @TableLogic
-    private Boolean isDeleted;
+
 
 }
 

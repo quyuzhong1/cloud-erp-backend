@@ -80,8 +80,10 @@ public class ShopSalesVO  implements Serializable {
      * 近三十天日销量
      */
     private Integer lastThirtyDaysSalesQuantity;
+
+
     /**
-     * 销售趋势 带时间
+     * 销售趋势
      */
-    private List<SalesBaseVO> salesTrendList;
+    private List<BigDecimal> salesTrend;
 }
