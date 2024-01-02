@@ -441,6 +441,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
             result.setCustomerName(customer.getCustomerName());
             result.setReceiveAddress(customer.getReceiverAddress());
+            result.setReceiverName(customer.getReceiverName());
             result.setTelNumber(customer.getTelNumber());
             result.setSellerName(customer.getSellerName());
             result.setSalesOrgName(customer.getSalesOrgName());
