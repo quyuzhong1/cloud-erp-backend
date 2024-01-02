@@ -1,6 +1,7 @@
 package com.erp.server.dmp.convert;
 
 import com.erp.model.dmp.entity.*;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -142,6 +143,38 @@ public interface DmpOrderConverter {
             @Mapping(target = "originalSkuNo", source = "skuNo")
     })
     DmpReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
+
+    /*@Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "platformOrderId", source = "code"),
+            @Mapping(target = "canSend", constant = "1"),
+            @Mapping(target = "isReturned", constant = "2"),
+            @Mapping(target = "isRefund", constant = "2"),
+            @Mapping(target = "salesRecordNumber", source = "code"),
+            @Mapping(target = "platformOrderStatus", source = "approveStatus"),
+            @Mapping(target = "orderFee", source = "amount"),
+            @Mapping(target = "sourcePlatform", constant = "ERP"),
+            @Mapping(target = "isUnion", constant = "2"),
+            @Mapping(target = "isSplit", constant = "2"),
+            @Mapping(target = "isResend", constant = "2"),
+            @Mapping(target = "hasGoods", constant = "0"),
+            @Mapping(target = "manStreet", source = "receiveAddress"),
+            @Mapping(target = "manPhone", source = "telNumber"),
+            @Mapping(target = "fbaFlag", constant = "1"),
+            @Mapping(target = "sellerMessage", source = "remark"),
+            @Mapping(target = "currencyCode", source = "currency"),
+            @Mapping(target = "platformFee", constant = "0"),
+            @Mapping(target = "subsidyAmount", constant = "0"),
+            @Mapping(target = "platformSign", constant = "erp-oms"),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "companyId", source = "salesOrgId"),
+            @Mapping(target = "companyName", source = "salesOrgName"),
+            @Mapping(target = "platformCreateTime", source = "createTime"),
+            @Mapping(target = "chargeName", source = "sellerName"),
+            @Mapping(target = "deptId", source = "salesDeptId"),
+            @Mapping(target = "chargeId", source = "sellerId")
+    })*/
+    DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {
