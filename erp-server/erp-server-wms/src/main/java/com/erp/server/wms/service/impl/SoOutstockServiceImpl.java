@@ -38,6 +38,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -450,8 +451,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setRequireDate(soOutstock.getPlanDeliveryDate());
             result.setCountryId(customer.getCountry());
             result.setCountryName(customer.getCountryName());
+            String salesDeptId=soOutstock.getSalesDeptId();
+            if(StringUtils.isNotBlank(salesDeptId)){
+                SysDepartmentDTO department=  sysUserFeign.getUserDeptById(salesDeptId);
+                if(Objects.nonNull(department)){
+                    result.setSalesDeptName(department.getName());
+                }
+            }
 
         }
+
 
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(soOutstock.getWarehouseId()));
