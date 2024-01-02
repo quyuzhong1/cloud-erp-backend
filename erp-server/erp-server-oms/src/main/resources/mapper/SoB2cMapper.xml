@@ -171,7 +171,7 @@
             <if test="params.isOrderError != null ">
                 and sb2c.sign_order_error !=''
             </if>
-            <if test="params.tabFlag != null and params.tabFlag != 'pending'">
+            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
                 and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
             </if>
             <if test="params.labelList != null and params.labelList.size > 0">
