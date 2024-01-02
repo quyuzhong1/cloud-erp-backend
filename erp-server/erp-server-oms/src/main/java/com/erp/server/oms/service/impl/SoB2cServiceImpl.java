@@ -30,8 +30,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.file.FileUpload;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -73,7 +74,6 @@ import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import jnr.ffi.Struct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
@@ -2056,7 +2056,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
             List<String> warehouseList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
-            long warehouseCount = overseasProviderWarehouseList.stream().filter(o ->warehouseList.contains(o.getWarehouseId())).count();
+            long warehouseCount = overseasProviderWarehouseList.stream().filter(o -> warehouseList.contains(o.getWarehouseId())).count();
             Boolean isOverseasProviderWarehouse = warehouseCount > 0;
             data.setIsOverseasProviderWarehouse(isOverseasProviderWarehouse);
             List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
@@ -2800,8 +2800,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean checkPlatformShipOrder(String soB2cId) {
         SoB2cEntity soB2cEntity = this.getById(soB2cId);
-        if(Objects.isNull(soB2cEntity)){
-           return Boolean.FALSE;
+        if (Objects.isNull(soB2cEntity)) {
+            return Boolean.FALSE;
         }
         //如果不是手工新增订单需要同步第三方发货标识
         if (!SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
@@ -3023,24 +3023,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(shopInfo)) {
             b2cCustomer.setSellerId(shopInfo.getChargeId());
             b2cCustomer.setSellerName(shopInfo.getChargeName());
+            b2cCustomer.setCustomerName(shopInfo.getName());
         }
+        String country = "";
+        String countryName = "";
         if (Objects.nonNull(receiver)) {
             b2cCustomer.setReceiverAddress(receiver.getFullAddress());
             b2cCustomer.setReceiverName(receiver.getReceiverName());
             b2cCustomer.setTelNumber(receiver.getTelNumber());
-            b2cCustomer.setCustomerName(receiver.getName());
-
+            country=receiver.getCountry();
+            countryName=receiver.getCountryName();
         }
-        String deliveryMode=DeliveryModeEnum.DELIVERGOODS.getCode();
-        String deliveryModeName=DeliveryModeEnum.DELIVERGOODS.getName();
+        String deliveryMode = DeliveryModeEnum.DELIVERGOODS.getCode();
+        String deliveryModeName = DeliveryModeEnum.DELIVERGOODS.getName();
         b2cCustomer.setDeliveryMode(deliveryMode);
         b2cCustomer.setDeliveryModeName(deliveryModeName);
+        if (StringUtils.isBlank(countryName) && StringUtils.isNotBlank(country)) {
+            DictCountryEntity countryEntity = sysUserFeign.getCountryById(country);
+            if (Objects.nonNull(countryEntity)) {
+                countryName = countryEntity.getNameCn();
+            }
+        }
+        b2cCustomer.setCountry(country);
+        b2cCustomer.setCountryName(countryName);
         return b2cCustomer;
     }
 
     @Override
     public List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList) {
-        if(CollectionUtils.isEmpty(soIdList)){
+        if (CollectionUtils.isEmpty(soIdList)) {
             return Collections.emptyList();
         }
         List<SoB2cDTO.CustomerDTO> customerList = baseMapper.listCustomer(soIdList);
@@ -3686,7 +3697,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String sourceId = id;
         String sourceType = SourceTypeEnum.SO_B2C.getCode();
         String sourceCode = entity.getCode();
-        String  detailRemark="";
+        String detailRemark = "";
 
         //发货的
         List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
@@ -3695,8 +3706,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDeliveryList.get(0).getId();
             sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
             sourceCode = soB2cDeliveryList.get(0).getCode();
-        }else{
-            detailRemark="B2C订单发货自动生成";
+        } else {
+            detailRemark = "B2C订单发货自动生成";
         }
         dto.setSourceId(sourceId);
         dto.setSourceType(sourceType);
@@ -3719,7 +3730,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //根据主表id 查询出库的信息
         List<SoB2cDetailDTO.OutstockDTO> detailList = soB2cDetailService.listOutstockByMainId(id);
         String finalDetailRemark = detailRemark;
-        detailList.stream().forEach(d->d.setRemark(finalDetailRemark));
+        detailList.stream().forEach(d -> d.setRemark(finalDetailRemark));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
@@ -3993,7 +4004,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
         Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
         Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
-        if(isMatch&&isPass){
+        if (isMatch && isPass) {
             SoB2cDTO.RuleResultDTO warehouseRuleResult = this.warehouseRule(id, detailList, map);
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
@@ -4034,7 +4045,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDTO.ShopAuthResultDTO handleShopSysUserAuth() {
         SoB2cDTO.ShopAuthResultDTO resultDTO = new SoB2cDTO.ShopAuthResultDTO();
         LoginUser userInfo = commonService.getUserInfo();
-        if (ObjectUtil.isEmpty(userInfo)||StringUtils.isBlank(userInfo.getUid())) {
+        if (ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())) {
             return null;
         }
         List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));

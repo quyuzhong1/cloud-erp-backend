@@ -444,6 +444,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setTelNumber(customer.getTelNumber());
             result.setSellerName(customer.getSellerName());
             result.setSalesOrgName(customer.getSalesOrgName());
+            result.setDeliveryModeName(customer.getDeliveryModeName());
+            //要货日期通销售订单创建日期
+            result.setRequireDate(soOutstock.getPlanDeliveryDate());
+            result.setCountryId(customer.getCountry());
+            result.setCountryName(customer.getCountryName());
+
         }
 
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
@@ -561,10 +567,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @author Lambda
      * @create 2024-01-01 10:50
      */
-    private void handleSoB2cData(SoOutstockEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void handleSoB2cData(SoOutstockEntity entity) {
         if (Objects.isNull(entity)) {
             return;
         }
+        entity.setActualDeliveryDate(LocalDate.now());
+        this.updateById(entity);
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();

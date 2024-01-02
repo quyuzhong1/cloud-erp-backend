@@ -12,8 +12,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -415,6 +417,30 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/tempRepairHistoryDb")
     public ApiResult tempRepairHistoryDb() {
         soOutstockService.tempRepairHistoryDb();
+        return success();
+    }
+
+    /**
+     * 修复销售出库单历史数据
+     *
+     * @return
+     */
+    @PostMapping("/test")
+    public ApiResult test(){
+        String soB2cCode = "XSDS23122700025";
+        String billStatus = "shipped";
+        SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
+        updateStatus.setSoCode(soB2cCode);
+        updateStatus.setBillStatus(billStatus);
+        soB2cFeign.updateSoB2cStatusByParams(updateStatus);
+        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
+            try {
+                soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
+            } catch (Exception e) {
+                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
+            }
+
+        }
         return success();
     }
 }
