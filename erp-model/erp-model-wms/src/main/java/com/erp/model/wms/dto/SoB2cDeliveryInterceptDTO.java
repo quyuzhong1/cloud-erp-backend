@@ -225,6 +225,13 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String transportNo;
 
         /**
+        * 销售单id
+        */
+        @NotBlank(message = "销售单id不能为空")
+        @Size(max = 64,message = "销售单id最大长度不能超过64位")
+        private String soId;
+
+        /**
         * 单据类型
         */
         @NotBlank(message = "单据类型不能为空")

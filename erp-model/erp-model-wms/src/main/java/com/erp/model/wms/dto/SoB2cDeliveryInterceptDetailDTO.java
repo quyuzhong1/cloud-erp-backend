@@ -120,6 +120,13 @@ public class SoB2cDeliveryInterceptDetailDTO implements Serializable {
         private String skuId;
 
         /**
+        * 产品编号
+        */
+        @NotBlank(message = "产品编号不能为空")
+        @Size(max = 19,message = "产品编号最大长度不能超过19位")
+        private String skuNo;
+
+        /**
         * 发货数量
         */
         @NotNull(message = "发货数量不能为空")
