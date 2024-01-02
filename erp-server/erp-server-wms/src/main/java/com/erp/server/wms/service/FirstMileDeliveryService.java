@@ -7,6 +7,8 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
@@ -220,6 +222,14 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryEntity> listBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据单号查询发货信息
+     * @Author Luo_WG
+     * @Date 2023/11/8 10:00
+     * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryEntity>
+     **/
+    List<FirstMileDeliveryEntity> listByCodes(List<String> codes);
+
+    /**
      * 根据版本号重新获取下推加工单的子件详情
      * @Author Luo_WG
      * @Date 2023/11/8 11:18
@@ -279,4 +289,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity findBySourceId(String sourceId);
+
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

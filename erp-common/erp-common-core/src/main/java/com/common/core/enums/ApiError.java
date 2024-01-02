@@ -90,7 +90,11 @@ public enum ApiError implements Serializable {
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
     ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
-
+    ERROR_FILE_DELETE(1051,"文件删除失败"),
+    ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),
+    ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
+    EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
+    EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
 
     /**
      * 警告信息 从800 开始
@@ -871,15 +875,18 @@ public enum ApiError implements Serializable {
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
     IS_NOT_FALSE_SHIPMENT(99151,"虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
-    b2c_so_delivery_NOT_EXISTS(99152,"b2c发货单不存在"),
+    B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
-    PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+    WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
-
-
-
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
+    NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
+    ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截，禁止变更状态"),
+    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
+    LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -972,14 +979,14 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_SPLIT_SIZE(92081,"请录入需要拆分的订单"),
     ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
     ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
-    ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持【{}】"),
+    ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持取消【{}】"),
     ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持作废"),
     ERROR_SO_B2C_MERGE_SIZE(92086, "请至少选择2条订单数据进行合并"),
     ERROR_SO_B2C_PARENT_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
     ERROR_SO_B2C_CHILD_NOT_EXIST(92082,"B2C销售订单【{}】未发现拆分后单据"),
     ERROR_SO_B2C_CHILD_HAS_INVALID(92083,"拆分后B2C销售订单【{}】已作废不支持取消拆分"),
     ERROR_SO_B2C_CHILD_HAS_APPROVE(92084,"拆分后B2C销售订单【{}】已审核不支持取消拆分"),
-    ERROR_SO_B2C_NOT_LOGISTICS_CODE(92085,"B2C销售订单【{}】只有待配货或配货中支持获取物流单号"),
+    ERROR_SO_B2C_NOT_LOGISTICS_CODE(92085,"B2C销售订单【{}】只有配货中支持获取物流单号"),
     ERROR_SO_B2C_NOT_SUBMIT_DELIVERY(92086,"B2C销售订单【{}】只有配货中支持提交发货"),
     ERROR_SO_B2C_NOT_MERGE(92087,"B2C销售订单【{}】只有待提交和审核不通过支持合并"),
     ERROR_SO_B2C_STATE_NOT_SPLIT(92088,"B2C销售订单【{}】只有待提交和审核不通过支持拆分"),
@@ -1013,6 +1020,24 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_RECEIVER_NOT_NULL(92112,"买家信息不能为空"),
     ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL(92113,"B2C销售订单【{}】物流渠道不能为空"),
     ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL(92114,"B2C销售订单【{}】物流渠道和物流单号不能为空"),
+    ERROR_SO_B2C_UPDATE_CATEGORY(92115,"冻结中和已作废不支持更新分类"),
+    ERROR_SO_B2C_UPDATE_REMARK(92116,"冻结中和已作废不支持更新备注"),
+    ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】未审核不支持配货"),
+    ERROR_SO_B2C_APPROVE_NOT_GET_LOGISTICS(92118,"B2C销售订单【{}】未审核不支持获取物流单"),
+    ERROR_SO_B2C_UPDATE_SUBMIT(92116,"B2C销售订单【{}】冻结中和已作废不支持提交"),
+    ERROR_SO_B2C_SAVE_SPLIT_INVALID(92117,"冻结中和已作废不支持拆分"),
+    ERROR_SO_B2C_SAVE_MERGE_INVALID(92118,"冻结中和已作废不支持合并"),
+    ERROR_SO_B2C_SHOPEE_NOT_SPLIT(92119,"B2C销售订单【{}】为shopee订单不支持拆分"),
+    ERROR_SO_B2C_MERGE_FBA(92120,"B2C销售订单【{}】为FBA订单不支持合并"),
+    ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
+    ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
+    ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
+    ERROR_SO_B2C_PAYMENT_NOT_UPDATE(92124,"B2C销售订单【{}】未付款不支持编辑"),
+    ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
+    ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
+    ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
+    ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
+    PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
 
 
 
@@ -1050,9 +1075,13 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_CHANNEL_NOT_EXIST(94026,"物流渠道不存在"),
     ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【{}】渠道,【{}】类型的地址为空"),
     ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【{}】渠道,尚未配置销售渠道"),
+    PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
 
 
 
+
+
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
