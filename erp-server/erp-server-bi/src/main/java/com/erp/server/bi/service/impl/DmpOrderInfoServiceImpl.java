@@ -15,7 +15,9 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
+import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
+import com.common.business.vo.SeriesVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -37,10 +39,10 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.enums.DateTypeEnum;
+import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
@@ -66,7 +68,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -132,7 +133,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumSales", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:sumSales",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
 //        BigDecimal amount = BigDecimal.ZERO;
@@ -147,53 +148,87 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 //        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
 //        // 根据订单号获取订单详情，筛选sku
 //        amount = dmpOrderItemService.sumSales(orderIds, dto);
-//        Integer flag = null;
+        Integer flag = null;
         if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
-            dto.setNewSign(1);
+            flag = 1;
         }
-        //获取到结算汇率
-        String settleRate = getSettleRate(dto.getSettleMethod());
-        BigDecimal amount = baseMapper.sumSales(dto, settleRate);
-        if (Objects.nonNull(amount)) {
-            return new TargetSaleSumVO(amount);
-        } else {
-            return new TargetSaleSumVO(BigDecimal.ZERO);
-        }
+        BigDecimal amount = baseMapper.sumSales(dto, flag);
+        return new TargetSaleSumVO(amount.setScale(4, RoundingMode.DOWN));
     }
 
     @Override
-    public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO dto) {
+    public StatisticalDataVO salePriceDistribution(BiFilterDTO dto) {
+
         //获取区间列表
         List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());
-        //获取店铺列表
-        List<DmpShopInfoEntity> shopInfoList = dmpShopInfoService.listByStoreSign();
-        String cn = BiConstant.CN;
-        if (1 == dto.getRangeType()) {
-            dto.setShopNo(shopInfoList.stream().filter(s -> cn.equals(s.getStoreSign())).
-                    map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+        //判断区间是否存在部门，存在则覆盖请求参数，不存在则查询为空
+        SalesPriceRangeVO salesPriceRangeVO1 = rangeVOS.stream().filter(rangeVO -> StringUtils.isNotEmpty(rangeVO.getDeptId())).findFirst().orElse(null);
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setChartType(ChartType.BAR);
+        statistical.setName("销售单价分布");
+        Integer dataType;
+        if (Objects.isNull(dto.getDataType())) {
+            dataType = 1;
         } else {
-            dto.setShopNo(shopInfoList.stream().filter(s -> !cn.equals(s.getStoreSign())).
-                    map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+            dataType = dto.getDataType();
         }
-        String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.countSalePriceDistribution(dto, settleRate, rangeVOS);
-        BigDecimal salesTotal = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSaleAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO,BigDecimal::add);
-        Integer qtyTotal = salePriceDistributionVOS.stream().filter(s -> Objects.nonNull(s.getSalesQuantity())).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
-            //占比计算
-        salePriceDistributionVOS.forEach(salePriceDistributionVO -> {
-            BigDecimal saleRate = BigDecimal.ZERO;
-            if (Objects.nonNull(salePriceDistributionVO.getSaleAmount()) && salesTotal.compareTo(BigDecimal.ZERO) > 0){
-                saleRate = MathUtil.divide(salePriceDistributionVO.getSaleAmount(), salesTotal).multiply(MathUtil.BigDecimal_100);
+        if (Objects.nonNull(salesPriceRangeVO1) && StringUtils.isNotEmpty(salesPriceRangeVO1.getDeptId())) {
+            //汇总组织下全部组织列表（包括本级和中间级）
+            List<SysDepartmentTreeDTO> depts = sysUserFeign.getDeptByParentId(salesPriceRangeVO1.getDeptId());
+            List<String> deptIds;
+            if (CollectionUtils.isNotEmpty(depts)) {
+                deptIds = depts.stream().map(SysDepartmentTreeDTO::getId).collect(Collectors.toList());
+                deptIds.add(salesPriceRangeVO1.getDeptId());
+            } else {
+                deptIds = Collections.singletonList(salesPriceRangeVO1.getDeptId());
             }
-            salePriceDistributionVO.setSaleAmountRate(saleRate.stripTrailingZeros().toPlainString());
-            BigDecimal qtyRate = BigDecimal.ZERO;
-            if (Objects.nonNull(salePriceDistributionVO.getSalesQuantity()) && qtyTotal > 0){
-                qtyRate = MathUtil.divide(BigDecimal.valueOf(salePriceDistributionVO.getSalesQuantity()), BigDecimal.valueOf(qtyTotal)).multiply(MathUtil.BigDecimal_100);
+            dto.setDepartment(deptIds);
+            //获取到结算汇率
+        }
+        List<String> xAxisList = rangeVOS.stream().map(e -> {
+            if (e.getEndValue() == -1) {
+                return e.getStartValue() + "及以上";
+            } else {
+                return e.getStartValue() + "-" + e.getEndValue();
             }
-            salePriceDistributionVO.setSalesQuantityRate(qtyRate.stripTrailingZeros().toPlainString());
-            });
-        salePriceDistributionVOS.sort(Comparator.comparingInt(SalePriceDistributionVO::getStartValue));
-        return salePriceDistributionVOS;
+        }).collect(Collectors.toList());
+        ChartVO chart = new ChartVO();
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
+        SeriesVO series = new SeriesVO();
+        if (2 == dataType) {
+            series.setName("销量");
+        } else {
+            series.setName("销售额");
+        }
+        List<String> dataList = new ArrayList<>(rangeVOS.size());
+        //根据区间进行汇总
+        rangeVOS.forEach(salesPriceRangeVO -> {
+            //防止最后范围统计不到最大单价
+            String settleRate = getSettleRate(dto.getSettleMethod());
+            if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue())) {
+                SalePriceDistributionVO vo = baseMapper.countSalePriceDistribution(dto, settleRate, salesPriceRangeVO.getStartValue(), salesPriceRangeVO.getEndValue());
+                if (2 == dataType) {
+                    if (Objects.isNull(vo) || Objects.isNull(vo.getSalesQuantity())) {
+                        dataList.add("0");
+                    } else {
+                        dataList.add(String.valueOf(vo.getSalesQuantity()));
+                    }
+                } else {
+                    if (Objects.isNull(vo) || Objects.isNull(vo.getSaleAmount())) {
+                        dataList.add("0");
+                    } else {
+                        dataList.add(vo.getSaleAmount().stripTrailingZeros().toPlainString());
+                    }
+
+                }
+            }
+        });
+        series.setData(dataList);
+        seriesList.add(series);
+        chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
+        statistical.setData(chart);
+        return statistical;
     }
 
     /**
@@ -361,7 +396,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:statisticsCustomerPrice", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:statisticsCustomerPrice",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO statisticsCustomerPrice(BiFilterDTO dto) {
         // 销售额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
@@ -381,7 +416,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:statisticsDomesticSalesRatio", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:statisticsDomesticSalesRatio",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO statisticsDomesticSalesRatio(BiFilterDTO dto) {
         // 销售总额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
@@ -445,7 +480,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumQuarterSales", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:sumQuarterSales",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto) {
         // 获取年度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
@@ -497,7 +532,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumQuarterSalesVolume", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:sumQuarterSalesVolume",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumQuarterSalesVolume(BiFilterDTO dto) {
         // 获取年度开始时间和结束时间
         int year = dto.getStartTime().getYear();
@@ -544,7 +579,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumMonthSales", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:sumMonthSales",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVO> sumMonthSales(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
@@ -590,7 +625,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:sumMonthSalesVolume", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:sumMonthSalesVolume",keyGenerator = "myKeyGenerator")
     public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
@@ -944,7 +979,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:getSalesAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:getSalesAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
 //        dto.setEndTime(dto.getEndTime());
@@ -970,7 +1005,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countSalesVolumeAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:countSalesVolumeAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
 //        dto.setEndTime(dto.getEndTime());
@@ -996,7 +1031,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countOrderQuantityAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:countOrderQuantityAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         TargetSaleCountVO currentVo = countOrderQuantity(dto);
@@ -1021,7 +1056,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundRateAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:countRefundRateAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO countRefundRateAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));
@@ -1047,7 +1082,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundAmountAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:countRefundAmountAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO countRefundAmountAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));
@@ -1073,7 +1108,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:bi:countRefundOrderNumAndYoy", keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:countRefundOrderNumAndYoy",keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countRefundOrderNumAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
         dto.setEndTime(dto.getEndTime().plusMinutes(1));

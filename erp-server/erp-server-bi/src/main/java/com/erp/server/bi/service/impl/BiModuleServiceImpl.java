@@ -20,7 +20,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
-import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
@@ -42,7 +41,10 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -103,18 +105,13 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                     l -> l.getSubjectCreateTime().compareTo(monthStart) >= 0 &&
                             l.getSubjectCreateTime().compareTo(monthEnd) <= 0
             ).map(LayoutVO::getLayoutId).collect(Collectors.toList());
-            List<BiDictEntity> biDictEntities = dictService.listEntityByType(DictEnum.MODULE.getType());
-            Map<String, String> dictMap = new HashMap<>();
-            if (CollectionUtils.isNotEmpty(biDictEntities)){
-                dictMap = biDictEntities.stream().collect(Collectors.toMap(BiDictEntity::getId, BiDictEntity::getName));
-            }
+
             for (ModulePagingDTO item : list) {
                 String moduleId = item.getId();
                 long monthUsageCount = layoutRefModuleList.stream().filter(m -> monthLayoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
                 long usageCount = layoutRefModuleList.stream().filter(m -> layoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
                 item.setMonthUsageCount((int) monthUsageCount);
                 item.setUsageCount((int) usageCount);
-                item.setCategoryName(dictMap.get(item.getCategoryId()));
             }
             List<String> moduleIds = list.stream().map(ModulePagingDTO::getId).collect(Collectors.toList());
             Map<String, List<BiModulePermissionEntity>> permissionMap = modulePermissionService.mapByModuleIds(moduleIds);
@@ -309,7 +306,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public void checkName(String id, String name) {
         LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiModuleEntity::getName, name);
-        queryWrapper.eq(BiModuleEntity::getIsDeleted, false);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(BiModuleEntity::getId, id);
         }
@@ -325,7 +321,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public void checkCode(String id, String code) {
         LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiModuleEntity::getCode, code);
-        queryWrapper.eq(BiModuleEntity::getIsDeleted, false);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(BiModuleEntity::getId, id);
         }
@@ -408,11 +403,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
      */
     @Override
     public Boolean deleteById(String id) {
-        //校验是否已使用
-        List<BiLayoutRefModuleEntity> refModuleServiceByModuleIds = layoutRefModuleService.getByModuleIds(Collections.singletonList(id));
-        if (CollectionUtils.isNotEmpty(refModuleServiceByModuleIds)){
-            throw new ServiceException(ApiError.ERROR_97044);
-        }
         Boolean flag = this.removeById(id);
         if (flag) {
             modulePermissionService.deleteByModuleId(id);

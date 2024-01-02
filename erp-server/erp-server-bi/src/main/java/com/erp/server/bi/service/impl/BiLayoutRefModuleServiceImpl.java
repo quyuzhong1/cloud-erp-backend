@@ -173,15 +173,6 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
         return baseMapper.listByLayoutIds(layoutIdList);
     }
 
-    @Override
-    public List<BiLayoutRefModuleEntity> getByModuleIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
-        }
-        return lambdaQuery()
-                .in(BiLayoutRefModuleEntity::getModuleId,ids).list();
-    }
-
 
     /**
      * 复制布局与模块关系表

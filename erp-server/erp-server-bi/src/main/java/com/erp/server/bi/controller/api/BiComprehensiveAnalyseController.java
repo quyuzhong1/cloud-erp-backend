@@ -6,7 +6,9 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiSkuDetailTopDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
 import com.erp.model.bi.dto.SkuDetailDTO;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.vo.SaleDetailVO;
+import com.erp.model.bi.vo.SkuDateSaleTrendVO;
+import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -114,11 +116,10 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/salePriceDistribution")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<List<SalePriceDistributionVO>> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<SalePriceDistributionVO> salesPriceRangeVOS = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
-        return success(salesPriceRangeVOS);
+    public ApiResult<StatisticalDataVO> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
+        return success(statisticalDataVO);
     }
-
     /**
      * 销售明细表-店铺
      *

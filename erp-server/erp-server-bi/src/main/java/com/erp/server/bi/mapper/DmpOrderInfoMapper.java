@@ -7,7 +7,6 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.vo.DimensionSalesVO;
 import com.erp.model.bi.vo.SalePriceDistributionVO;
-import com.erp.model.bi.vo.SalesPriceRangeVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
@@ -56,10 +55,10 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * 根据不同维度统计销售额
      *
      * @param dto
-     * @param settleRate
+     * @param flag
      * @return
      */
-    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
 
     /**
      * 获取销售单价分布 获取列表
@@ -75,8 +74,8 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    List<SalePriceDistributionVO> countSalePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate,
-                                                       @Param("rangeVOS") List<SalesPriceRangeVO> rangeVOS );
+    SalePriceDistributionVO countSalePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate,
+                                                       @Param("startValue") Integer startValue, @Param("endValue") Integer endValue );
     /**
      * 根据不同维度统计销售量
      *
@@ -89,10 +88,29 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @author Will
      * @date: 2023/9/25 9:34
      * @param dto
-     * @param dataType sales  qty
+     * @param groupViewDTO
      * @return List<ViewDTO>
      */
-    List<TargetFinishDTO.ViewDTO>  listSalesBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("dataType") String dataType);
+    List<TargetFinishDTO.ViewDTO>  listSalesAmountBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
+    /**
+     * @description: 查询销量
+     * @author Will
+     * @date: 2023/9/25 9:34
+     * @param dto
+     * @param groupViewDTO
+     * @return List<ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO>  listSalesQtyBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
+    /**
+     * @description: 查询订单净销售额
+     * @author Will
+     * @date: 2023/9/25 9:34
+     * @param dto
+     * @param groupViewDTO
+     * @return List<ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO>  listNetSalesAmountBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("viewParams") TargetFinishDTO.GroupViewDTO groupViewDTO);
+
     /**
      * @description: 查询订单退款数据
      * @author Will

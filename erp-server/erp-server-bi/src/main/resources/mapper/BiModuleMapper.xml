@@ -4,20 +4,16 @@
 
 
     <select id="paging" resultType="com.erp.model.bi.dto.ModulePagingDTO">
-        SELECT bm1.id, bm1.name, bm1.remark, bm1.image_url,bm1.category_id,
+        SELECT bm1.id, bm1.name, bm1.remark, bm1.image_url,
         bm1.state, bm1.view_code,bs.name AS sysModuleName
         FROM bi_module AS bm1
         INNER JOIN bi_sys_module bs ON  bs.id=bm1.sys_module_id
-        WHERE bm1.is_deleted = false
-        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND (bm1.name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR bs.name ILIKE concat('%',#{params.searchKeyword}::text,'%'))
-        </if>
-        <if test="params.categoryId != null and params.categoryId != ''">
-            AND bm1.category_id = #{params.categoryId}
-        </if>
-        <if test="params.state != null">
-            AND bm1.state = #{params.state}
-        </if>
+        WHERE NOT EXISTS(SELECT 1 FROM bi_module AS bm2 WHERE code ILIKE 'bi:indicator:%' AND bm1."id" = bm2."id")
+            <if test="params.searchKeyword!=null and params.searchKeyword!=''">
+               AND (bm1.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+                     OR bs.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+                    )
+            </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

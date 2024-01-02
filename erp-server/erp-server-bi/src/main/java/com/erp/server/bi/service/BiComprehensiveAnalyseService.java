@@ -60,7 +60,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO biFilterDTO);
+    StatisticalDataVO salePriceDistribution(BiFilterDTO biFilterDTO);
 
     /**
      * 销售明细表-店铺

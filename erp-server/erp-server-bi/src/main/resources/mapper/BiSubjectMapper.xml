@@ -38,12 +38,6 @@
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
-        <if test="params.categoryId != null and params.categoryId != ''">
-            AND category_id = #{params.categoryId}
-        </if>
-        <if test="params.state != null">
-            AND state = #{params.state}
-        </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

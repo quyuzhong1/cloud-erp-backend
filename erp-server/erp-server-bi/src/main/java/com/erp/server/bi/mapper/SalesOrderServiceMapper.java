@@ -48,9 +48,10 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      *
      * @param dto
      * @param settleRate
+     * @param findTime
      * @return
      */
-    List<SalesBaseVO> getLastDays(@Param("params") SkuSalesDTO.SearchSkuDTO dto, @Param("settleRate") String settleRate);
+    List<SalesBaseVO> getLastDays(@Param("params") SkuSalesDTO.SearchSkuDTO dto, @Param("settleRate") String settleRate, @Param("findTime") String findTime);
 
 
     List<SalesVO> getBySpu(@Param("params") BiFilterDTO dto);
@@ -80,7 +81,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate, @Param("findTime") String findTime);
 
     @MapKey("shop")
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
@@ -131,7 +132,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<ShopSalesVO> bySite(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
     List<SalesBaseVO> byOldProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     List<SalesBaseVO> byNewProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
@@ -139,7 +139,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
-    List<SkuItemVO> getSkuItemName();
 
     List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
@@ -155,9 +154,29 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesFlagVO> byTobToc(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> getSalesByReport(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
 
-    List<SalesFlagVO> newAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate,@Param("dataType") String dataType);
+    List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByWeek(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByWeekCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String salesPrice);
+
+    List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByQuarter(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByQuarterCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByYear(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> getByYearCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
+
+    List<SalesFlagVO> deptNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    List<SalesFlagVO> userNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 
 
     /**
@@ -208,11 +227,11 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     /**
      * 计算客户销售额
      *
-     * @param filterDTOS
+     * @param dto
      * @param settleRate
      * @return
      */
-    List<CustomerSaleVO> customerLevelProportion(@Param("dtos") List<CustomerBiFilterDTO> filterDTOS, @Param("settleRate") String settleRate);
+    BigDecimal customerLevelProportion(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     /**
      * 净销售额

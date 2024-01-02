@@ -126,6 +126,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:sumSalesProfit",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSalesProfit(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
@@ -203,6 +204,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:sumSalesRatio",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSalesRatio(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
@@ -238,6 +240,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:sumMainRevenue",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumMainRevenue(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
@@ -270,6 +273,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:sumSalesCost",keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSalesCost(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_saleExpenses"));
@@ -481,6 +485,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getDeptCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getDeptCostProfit(BiFilterDTO dto) {
         // 统计成本数据
         List<DeptCostVO> deptCostVOS = this.sumCostByCondition(dto,"dept_name");
@@ -562,6 +567,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getShopCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getShopCostProfit(BiFilterDTO dto) {
         // 查询成本数据
         List<DeptCostVO> shopCostVos = sumCostByCondition(dto, "shop_name");
@@ -586,6 +592,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getPlatformCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getPlatformCostProfit(BiFilterDTO dto) {
         // 查询成本数据
         List<DeptCostVO> shopCostVos = sumCostByCondition(dto, "platform_name");
@@ -622,6 +629,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getPlatformCostPercent",keyGenerator = "myKeyGenerator")
     public List<PieChartVO> getPlatformCostPercent(BiFilterDTO dto) {
         // 查询成本数据
         List<DeptCostVO> shopCostVos =sumCostByCondition(dto, "platform_name");
@@ -661,6 +669,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getMonthCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getMonthCostProfit(BiFilterDTO dto) {
         // 成本 利润
         // 统计成本数据
@@ -772,6 +781,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getQuarterCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getQuarterCostProfit(BiFilterDTO dto) {
         // 成本 利润
         // 统计成本数据
@@ -817,6 +827,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getYearCostProfit",keyGenerator = "myKeyGenerator")
     public List<SeriesVO> getYearCostProfit(BiFilterDTO dto) {
         // 成本 利润
         // 统计成本数据
@@ -858,6 +869,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getDeptCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getDeptCostProfitRank(BiFilterDTO dto) {
         List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "dept_name", "dept_name");
         return rankResult;
@@ -906,18 +918,21 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getPlatformCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getPlatformCostProfitRank(BiFilterDTO dto) {
         List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "platform_name", "source_platform");
         return rankResult;
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getShopCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getShopCostProfitRank(BiFilterDTO dto) {
         List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "shop_name", "shop_name");
         return rankResult;
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getUserCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto) {
         List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "charge_name", "charge_name");
         return rankResult;

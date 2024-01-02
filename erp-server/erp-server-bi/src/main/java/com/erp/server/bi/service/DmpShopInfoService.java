@@ -3,7 +3,6 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.DmpShopInfoChangeDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDeptChangeDTO;
@@ -110,7 +109,7 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      */
     List<ShopSiteVO> getShopCategoryList();
 
-    
+
     /**
      * 根据 shopno 获取对应的店铺信息
      * @author yl
@@ -126,19 +125,6 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return
      */
     List<DmpShopInfoEntity> listByNames(List<String> shopNameList);
-
-    /**
-     * 获取店铺下拉列表
-     * @param status
-     * @return
-     */
-    List<ShopDropDownVO.ShopDropDownNameVO> listShopDropDown(Integer status);
-
-    /**
-     * 获取站点列表
-     * @return
-     */
-    List<ShopDropDownVO.ShopDropDownNameVO> listSiteDropDown();
 
     /**
      * 获取店铺信息 根据 非空的店铺标识

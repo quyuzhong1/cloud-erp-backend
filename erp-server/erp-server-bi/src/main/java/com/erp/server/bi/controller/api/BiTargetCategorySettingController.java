@@ -7,13 +7,8 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.utils.ExcelUtil;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.excel.TargetCategorySettingExportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
-import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetCategorySettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,8 +25,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 /**
  * 目标管理-品类
@@ -69,22 +62,6 @@ public class BiTargetCategorySettingController extends BaseController {
         return success(pagingVO);
     }
 
-    /**
-     * 按照品类导出目标
-     * @param dto
-     * @return
-     */
-    @PostMapping("/export")
-    public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
-        dto.setPageSize(1000);
-        dto.setCurrPage(1);
-        PagingVO<BiTargetCategorySettingDTO.PagingViewDTO> pagingVO = biTargetCategorySettingService.paging(dto);
-        List<BiTargetCategorySettingDTO.PagingViewDTO> list = (List<BiTargetCategorySettingDTO.PagingViewDTO>) pagingVO.getList();
-        List<TargetCategorySettingExportExcelDTO> excels = BiExportConverter.INSTANCE.exportCategoryTargetStaff(list);
-        //数据转换
-        ExcelUtil.export("按品类导出目标报表", "品类", excels, TargetCategorySettingExportExcelDTO.class, response);
-        return Boolean.TRUE;
-    }
     /**
      * 分页
      *
