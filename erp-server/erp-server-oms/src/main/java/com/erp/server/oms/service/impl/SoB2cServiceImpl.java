@@ -1126,6 +1126,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //映射拦截单主表信息
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        addDTO.setBillType(OrderTypeEnum.B2C.getCode());
 
         //详情
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());

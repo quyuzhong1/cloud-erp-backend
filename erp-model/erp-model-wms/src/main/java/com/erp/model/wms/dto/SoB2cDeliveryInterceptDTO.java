@@ -223,6 +223,13 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         @NotBlank(message = "运单号不能为空")
         @Size(max = 64,message = "运单号最大长度不能超过64位")
         private String transportNo;
+
+        /**
+        * 单据类型
+        */
+        @NotBlank(message = "单据类型不能为空")
+        @Size(max = 64,message = "单据类型最大长度不能超过64位")
+        private String billType;
     }
 
     /**
@@ -353,6 +360,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          */
         private String productName;
         /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
          * 仓库id
          */
         private String warehouseId;
@@ -368,6 +379,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 物流渠道名称
          */
         private String logisticsChannelName;
+        /**
+         * 单据类型
+         */
+        private String billType;
+        /**
+         * 单据类型名称
+         */
+        private String billTypeName;
         /**
          * 运单号
          */
