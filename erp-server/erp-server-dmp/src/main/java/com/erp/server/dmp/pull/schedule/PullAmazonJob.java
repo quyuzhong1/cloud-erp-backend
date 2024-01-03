@@ -18,7 +18,6 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
@@ -36,6 +35,7 @@ import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.DmpPushTaskService;
@@ -50,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -112,6 +115,9 @@ public class PullAmazonJob {
 
     @Resource
     private RedissonClient redissonClient;
+
+    @Resource
+    private MongoTemplate mongoTemplate;
 
     /**
      * 拉取亚马逊任务
@@ -227,12 +233,15 @@ public class PullAmazonJob {
             size = jobParam.getInteger("size");
         }
         XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 任务开始,size={}", size);
-        // 根据状态查询未下载数据
-        PlatformAmazonOrderDTO orderMongoDTO = PlatformAmazonOrderDTO.getByAddressDownloadStatus();
-        List<PlatformAmazonOrderDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class);
+        // 查出下MFN订单
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(),1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
-            XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 任务结束,无需要更新的信息");
-            return ReturnT.SUCCESS;
+            // 查询AFN订单
+            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(),1, size);
+            if (CollectionUtil.isEmpty(orderEntityList)){
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 任务结束,无需要更新的信息");
+                return ReturnT.SUCCESS;
+            }
         }
         Map<String, List<PlatformAmazonOrderDTO>> dtoMap = groupByPlatformShopCode(orderEntityList);
 
@@ -290,6 +299,21 @@ public class PullAmazonJob {
                 }));
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderAddressDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    private List<PlatformAmazonOrderDTO> findGroupByFulfillmentChannel(String value,
+                                                                       int currentPage,
+                                                                       Integer pageSize
+    ) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("order.fulfillmentChannel").is(value)
+                .and("downloadStatus").is(1)
+                .and("downloadAddressStatus").is(0));
+
+        if(currentPage > 0 && pageSize> 0) {
+            query.skip((long) (currentPage - 1) *pageSize).limit(pageSize);
+        }
+        return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
     }
 
 
