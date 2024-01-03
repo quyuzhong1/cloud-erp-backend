@@ -95,7 +95,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @param dto
     * @return
     */
-    BatchResultDTO approve(ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto,Boolean isMatch,String ruleName);
 
     /**
     * 作废
@@ -123,7 +123,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @param entity
     * @return
     */
-    Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity,Boolean isMatch);
     /**
      * 修改订单备注
      * @author Will

@@ -209,5 +209,10 @@ public class RuleOrderApprovalDTO implements Serializable {
          */
         private Boolean approveSuccess;
 
+        /**
+         * 规则名称
+         */
+        private String ruleName;
+
     }
 }

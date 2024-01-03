@@ -399,7 +399,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto, Boolean isMatch, String ruleName) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
@@ -414,10 +414,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         checkIsIntercept(Arrays.asList(entity));
 
         // 调用流程审核
-        approveProcess(entity, dto);
+        approveProcess(entity, dto,isMatch);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), ruleName, dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -429,10 +429,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param entity
      * @param dto
      */
-    private void approveProcess(SoB2cEntity entity, ApproveOneDTO dto) {
+    private void approveProcess(SoB2cEntity entity, ApproveOneDTO dto, Boolean isMatch) {
         //无需流程则直接更新状态
         if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
-            approveEnd(dto, entity);
+            approveEnd(dto, entity,isMatch);
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
@@ -455,7 +455,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
+            approveEnd(dto, entity,isMatch);
         }
     }
 
@@ -514,12 +514,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity) {
+    public Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity,Boolean isMatch) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus(), dto.getIsMatch());
+        updateForApprove(entity.getId(), approveStatus.getStatus(), isMatch);
         return Boolean.TRUE;
     }
 
@@ -962,7 +962,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //生成发货单
             generateSoB2cDeliveryBill(entity, list, logisticsEntity);
         }
-        this.updateBillStatus(id,SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         //操作日志
         String msg = "B2C销售订单【{}】提交发货";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
@@ -2098,7 +2098,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 detailDTO.setAmount(amount);
                 detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 
-                detailDTO.setTaxCost(MathUtil.multiply(detailDTO.getTaxCost(),detailDTO.getQty()));
+                detailDTO.setTaxCost(MathUtil.multiply(detailDTO.getTaxCost(), detailDTO.getQty()));
 
                 //标签处理
                 SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
@@ -2561,7 +2561,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 approveMsg = "自动审核通过";
             }
             //自动审核通过
-            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE, isMatch));
+            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg, Boolean.FALSE), isMatch, ruleOrderMatchResult.getRuleName());
             if (!approve.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_94006);
             }
@@ -3740,7 +3740,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String logisticsChannelId = soB2cLogistics.getLogisticsChannelId();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
                 LogisticsChannelDTO.BaseDTO logisticsBase = logisticsFeign.getChannelInfoById(logisticsChannelId);
-                if(Objects.nonNull(logisticsBase)){
+                if (Objects.nonNull(logisticsBase)) {
                     dto.setCarrierId(logisticsBase.getLogisticsSupplierId());
                 }
             }
@@ -3942,12 +3942,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(dto.getSoCode())) {
             return Boolean.FALSE;
         }
-        String shipped=SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         //表示已发货
-        Boolean isShipped=shipped.equals(billStatus);
-        soB2cErrorService.deleteByCodeAndType(dto.getSoCode(),SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        Boolean isShipped = shipped.equals(billStatus);
+        soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
-                set(isShipped,SoB2cEntity::getSignOrderError, "").
+                set(isShipped, SoB2cEntity::getSignOrderError, "").
                 set(SoB2cEntity::getBillStatus, billStatus).update(new SoB2cEntity());
     }
 

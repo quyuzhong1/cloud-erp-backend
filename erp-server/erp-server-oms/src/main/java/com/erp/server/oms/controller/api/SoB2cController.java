@@ -160,7 +160,7 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),null,"");
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;

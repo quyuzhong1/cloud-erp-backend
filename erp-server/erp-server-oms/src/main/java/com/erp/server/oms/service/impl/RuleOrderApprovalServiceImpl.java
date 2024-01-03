@@ -230,6 +230,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                     ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
                 }
                 ruleMatch.setApproveSuccess(Boolean.TRUE);
+                ruleMatch.setRuleName(item.getName());
                 return ruleMatch;
             }
         }
