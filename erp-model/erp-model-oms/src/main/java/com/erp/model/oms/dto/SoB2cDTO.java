@@ -1675,10 +1675,15 @@ public class SoB2cDTO implements Serializable {
         private SoB2cEntity soB2cEntity;
 
         /**
-         * 是否成成销售出库单
-         * true 是
+         * 店铺仓库id
          */
-        private Boolean isGenerateB2cSoOutstock;
+        private String shopWarehouseId;
+
+        /**
+         * 仓库是否是空的
+         */
+        private Boolean isWarehouseEmpty;
+
 
     }
 

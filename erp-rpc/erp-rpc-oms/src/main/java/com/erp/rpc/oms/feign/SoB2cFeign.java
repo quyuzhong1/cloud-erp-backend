@@ -229,4 +229,18 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/getWalmartShipOrderParam")
     List<WalmartShipDTO> getWalmartShipOrderParam(@RequestBody String soId);
+
+    /**
+     * 查询仓库为空的销售订单
+     * @description
+     * @param ids
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 17:12
+     */
+    @PostMapping("/feign/soB2c/listWarehouseIsEmpty")
+    List<SoB2cEntity> listWarehouseIsEmpty(@RequestBody List<String> ids);
+
+    @PostMapping("/feign/soB2c/updateWarehouseByShopId")
+    Boolean updateWarehouseByShopId(@RequestParam("id")String id,@RequestParam("shopId") String shopId);
 }

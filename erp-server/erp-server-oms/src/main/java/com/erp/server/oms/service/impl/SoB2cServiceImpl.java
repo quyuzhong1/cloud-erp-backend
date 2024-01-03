@@ -414,7 +414,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         checkIsIntercept(Arrays.asList(entity));
 
         // 调用流程审核
-        approveProcess(entity, dto,isMatch);
+        approveProcess(entity, dto, isMatch);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), ruleName, dto.getComment());
@@ -432,7 +432,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void approveProcess(SoB2cEntity entity, ApproveOneDTO dto, Boolean isMatch) {
         //无需流程则直接更新状态
         if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
-            approveEnd(dto, entity,isMatch);
+            approveEnd(dto, entity, isMatch);
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
@@ -455,7 +455,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity,isMatch);
+            approveEnd(dto, entity, isMatch);
         }
     }
 
@@ -514,7 +514,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity,Boolean isMatch) {
+    public Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity, Boolean isMatch) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -3117,6 +3117,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultList;
     }
 
+    @Override
+    public List<SoB2cEntity> listWarehouseIsEmpty(List<String> soIdList) {
+        if (CollectionUtils.isEmpty(soIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listWarehouseIsEmpty(soIdList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateWarehouseByShopId(String id, String shopId) {
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.nonNull(shopInfo)) {
+            String warehouseId = shopInfo.getWarehouseId();
+            if(StringUtils.isNotBlank(warehouseId)){
+              return   soB2cDetailService.updateWarehouseIdByMainId(id,warehouseId,Boolean.TRUE);
+            }
+        }
+        return Boolean.FALSE;
+    }
+
     /**
      * @param id
      * @param approveStatusEnum
@@ -3543,8 +3564,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
-        //是否生成销售出库单
-        Boolean isGenerateB2cSoOutstock = Boolean.FALSE;
         try {
             oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
         } catch (Exception e) {
@@ -3580,7 +3599,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String msg = StrUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "新增操作");
             resultDTO.setSoB2cEntity(entity);
-            resultDTO.setIsGenerateB2cSoOutstock(isGenerateB2cSoOutstock);
             return resultDTO;
         } else {
             // 历史异常记录修复
@@ -3629,13 +3647,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
                 }
-                //表示是从未发货到发货 就要生成销售出库单
-                if (!oldBillStatus.equals(newBillStatus) && shippedCode.equals(newBillStatus)) {
-                    isGenerateB2cSoOutstock = Boolean.TRUE;
-                }
             }
             resultDTO.setSoB2cEntity(entity);
-            resultDTO.setIsGenerateB2cSoOutstock(isGenerateB2cSoOutstock);
             return resultDTO;
         }
 
