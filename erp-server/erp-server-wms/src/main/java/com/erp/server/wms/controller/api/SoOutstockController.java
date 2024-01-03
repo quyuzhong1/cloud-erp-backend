@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库-销售出库单
@@ -276,8 +278,23 @@ public class SoOutstockController extends BaseController {
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
         String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());
         for (String id : dto.getIds()) {
             try {
+                SoB2cEntity soB2c = soB2cList.stream().filter(s ->
+                                s.getId().equals(id)&&
+                                        shipped.equals(s.getBillStatus())&&
+                                        s.hasPlatformWarehouseOrder()
+                        ).findFirst().orElse(null);
+                /**
+                 * 表示有仓库为空且是已发货并且是平台仓订单
+                 * 那么就要去找店铺的仓库 然后匹配上仓库
+                 */
+                if (Objects.nonNull(soB2c)) {
+                    soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
+                }
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);
                 if (result) {
                     SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();

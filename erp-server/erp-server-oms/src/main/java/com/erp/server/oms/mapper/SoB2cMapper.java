@@ -102,4 +102,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @create 2024-01-01 9:49
      */
     List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList")List<String> soIdList);
+
+    List<SoB2cEntity> listWarehouseIsEmpty(@Param("idList") List<String> soIdList);
 }

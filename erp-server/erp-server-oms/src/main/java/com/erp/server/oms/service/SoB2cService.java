@@ -545,4 +545,23 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.util.List<com.common.business.dto.WalmartShipDTO>
      **/
     List<WalmartShipDTO> getWalmartShipOrderParam(String soId);
+
+    /**
+     * 获取b2c 销售订单仓库为空列表
+     * @description
+     * @param soIdList
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 16:48
+     */
+    List<SoB2cEntity> listWarehouseIsEmpty(List<String> soIdList);
+
+    /**
+     * 根据店铺的仓库更改仓库
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 17:37
+     */
+    Boolean updateWarehouseByShopId(String id, String shopId);
 }
