@@ -28,4 +28,13 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
      * @create 2023-12-21 15:00
      */
     Boolean deleteB2cError(@Param("params") SoB2cErrorDTO.DeleteDTO dto);
+
+    /**
+     * 删除异常订单
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2023-12-21 15:00
+     */
+    void deleteByCodeAndType(@Param("code") String soCode,@Param("type") String type);
 }

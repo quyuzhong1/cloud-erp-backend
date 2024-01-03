@@ -586,38 +586,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
         InventorySourceTypeEnum inventorySourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         String sourceType=entity.getSourceType();
 
         //如果来源类型为b2c发货单就是扣冻结库存
         String soB2cDelivery= SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         if(soB2cDelivery.equals(sourceType)){
-            for (InOutStockDTO member : members) {
-                member.setSourceType(inventorySourceTypeEnum);
-            }
-            if (CollectionUtils.isNotEmpty(members)) {
-                inventoryInOutStockDTO.setParamList(members);
-                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-            }
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         }else{
-            //不是就是扣可用库存
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
-            for (InOutStockDTO member : members) {
-                member.setSourceType(inventorySourceTypeEnum);
-                Integer qty = member.getQty();
-                member.setQty(Math.abs(qty));
-                member.setInventoryStatus(inventoryStatus);
-            }
-            if (CollectionUtils.isNotEmpty(members)) {
-                inventoryInOutStockDTO.setParamList(members);
-                //扣减库存
-                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-            }
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
-
+        for (InOutStockDTO member : members) {
+            member.setSourceType(inventorySourceTypeEnum);
+        }
+        if (CollectionUtils.isNotEmpty(members)) {
+            inventoryInOutStockDTO.setParamList(members);
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        }
     }
 
 
@@ -2089,6 +2076,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             deleteDTO.setMainId(soB2cId);
             deleteDTO.setType(type);
             soB2cFeign.deleteError(deleteDTO);
+            return Boolean.TRUE;
         } catch (Exception e) {
             String message = e.getMessage();
             log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);

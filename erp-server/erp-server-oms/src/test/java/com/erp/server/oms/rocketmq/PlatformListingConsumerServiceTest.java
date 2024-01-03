@@ -3,14 +3,13 @@ package com.erp.server.oms.rocketmq;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformProductDTO;
 import com.erp.server.oms.ErpServerOmsApplication;
+import com.erp.server.oms.rocketmq.consumer.PlatformListingConsumerService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-
-import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerOmsApplication.class})

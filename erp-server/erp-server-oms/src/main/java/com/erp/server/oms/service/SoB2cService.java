@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -95,7 +96,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @param dto
     * @return
     */
-    BatchResultDTO approve(ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto,Boolean isMatch,String ruleName);
 
     /**
     * 作废
@@ -123,7 +124,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @param entity
     * @return
     */
-    Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity,Boolean isMatch);
     /**
      * 修改订单备注
      * @author Will
@@ -535,4 +536,32 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList);
+
+    /**
+     * 获取沃尔玛发货参数
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
+     * @param soId
+     * @return java.util.List<com.common.business.dto.WalmartShipDTO>
+     **/
+    List<WalmartShipDTO> getWalmartShipOrderParam(String soId);
+
+    /**
+     * 获取b2c 销售订单仓库为空列表
+     * @description
+     * @param soIdList
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 16:48
+     */
+    List<SoB2cEntity> listWarehouseIsEmpty(List<String> soIdList);
+
+    /**
+     * 根据店铺的仓库更改仓库
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 17:37
+     */
+    Boolean updateWarehouseByShopId(String id, String shopId);
 }

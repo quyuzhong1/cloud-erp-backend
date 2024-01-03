@@ -1047,6 +1047,8 @@ public enum ApiError implements Serializable {
     NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货、已发货的订单可以发起拦截"),
     IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
+    NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
+    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
 
 
     /**

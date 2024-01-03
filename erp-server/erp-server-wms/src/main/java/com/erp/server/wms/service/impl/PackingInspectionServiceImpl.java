@@ -8,6 +8,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -15,10 +16,7 @@ import com.erp.model.wms.enums.PackingInspectionOperationEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
-import com.erp.server.wms.service.PackingInspectionService;
-import com.erp.server.wms.service.SoB2cDeliveryDetailService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +56,12 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -212,6 +216,8 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
                 throw new ServiceException("发货单明细更新失败");
             }
+            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         if(dto.getIsAutoDelivery() && entity.getIsInspection()){
             //将发货状态更新为已发货

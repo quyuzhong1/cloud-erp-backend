@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库-销售出库单
@@ -276,13 +278,30 @@ public class SoOutstockController extends BaseController {
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
         String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());
         for (String id : dto.getIds()) {
             try {
+                SoB2cEntity soB2c = soB2cList.stream().filter(s ->
+                                s.getId().equals(id)&&
+                                        shipped.equals(s.getBillStatus())&&
+                                        s.hasPlatformWarehouseOrder()
+                        ).findFirst().orElse(null);
+                /**
+                 * 表示有仓库为空且是已发货并且是平台仓订单
+                 * 那么就要去找店铺的仓库 然后匹配上仓库
+                 */
+                if (Objects.nonNull(soB2c)) {
+                    soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
+                }
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);
-                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                deleteDTO.setMainId(id);
-                deleteDTO.setType(type);
-                soB2cFeign.deleteError(deleteDTO);
+                if (result) {
+                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                    deleteDTO.setMainId(id);
+                    deleteDTO.setType(type);
+                    soB2cFeign.deleteError(deleteDTO);
+                }
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
@@ -433,22 +452,16 @@ public class SoOutstockController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/test")
-    public ApiResult test() {
-        String soB2cCode = "XSDS23122700025";
-        String billStatus = "shipped";
-        SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
-        updateStatus.setSoCode(soB2cCode);
-        updateStatus.setBillStatus(billStatus);
-        soB2cFeign.updateSoB2cStatusByParams(updateStatus);
-        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
-            try {
-                soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
-            } catch (Exception e) {
-                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
-            }
-
+    @GetMapping("/test")
+    public ApiResult test(@RequestParam("code") String code) {
+        String soB2cCode = "XSDD24010300005";
+        try {
+            soOutstockService.generateB2cSoOutstockByCode(code);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
         }
+
+
         return success();
     }
 }

@@ -234,6 +234,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String signOrderError;
 
 
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

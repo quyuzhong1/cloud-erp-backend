@@ -120,6 +120,11 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
                one();
     }
 
+    @Override
+    public void deleteByCodeAndType(String soCode, String type) {
+         baseMapper.deleteByCodeAndType(soCode,type);
+    }
+
 
     /**
     * 新增修改处理数据

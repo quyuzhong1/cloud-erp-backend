@@ -259,6 +259,9 @@
             <if test="params.isOrderError != null ">
                    and sb2c.sign_order_error !=''
             </if>
+            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
+                and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
+            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
@@ -289,6 +292,8 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
+            and exists (select warehouse_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by warehouse_id having  count(warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -343,6 +348,8 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
+            and exists (select warehouse_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by warehouse_id having  count(warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -421,6 +428,8 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
+            and exists (select warehouse_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by warehouse_id having  count(warehouse_id) = 1)
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
@@ -631,6 +640,20 @@
             </foreach>
          </if>
 
+    </select>
+    <select id="listWarehouseIsEmpty" resultType="com.erp.model.oms.entity.SoB2cEntity">
+        SELECT
+         sb2c.*
+        FROM so_b2c sb2c
+        INNER JOIN so_b2c_detail sb2cd
+        ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        WHERE sb2cd.is_deleted=FALSE AND sb2cd.warehouse_id ==''
+        <if test="idList !=null and idList.size >0">
+            AND sb2c.id IN
+            <foreach collection="idList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

@@ -74,11 +74,24 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     public void handleAll(PlatformOrderDTO dto) {
         SoB2cDTO.PullOrderResultDTO resultDTO = this.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
-        Boolean isGenerateB2cSoOutstock = resultDTO.getIsGenerateB2cSoOutstock();
+        //平台仓订单
+        Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
+        Boolean isWarehouseEmpty = resultDTO.getIsWarehouseEmpty();
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String billStatus = mainEntity.getBillStatus();
+        Boolean isShipped = shipped.equals(billStatus);
+        //如果已发货且仓库为空且是平台仓订单
+        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse) {
+            String warehouseId = resultDTO.getShopWarehouseId();
+            if(StringUtils.isNotBlank(warehouseId)){
+              soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
+            }
+        }
         try {
             if (Objects.nonNull(mainEntity)) {
                 handleRule(mainEntity);
-                if(isGenerateB2cSoOutstock){
+                if (isShipped) {
                     soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
                 }
             }
@@ -149,9 +162,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 主表更新或保存
         SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
+        resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
-
+        Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
+        resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
         // 净重
         BigDecimal allNetWeight = detailList.stream().map(SoB2cDetailEntity::getCurrentNetWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         //物流信息更新保存

@@ -31,7 +31,7 @@ public enum InventoryBusinessTypeEnum {
     TRANSFER_IN("transfer_in", "09","分步式调拨调入"),
 
     SO_DELIVERY_NOTICE("so_delivery_notice", "10","销售发货通知单"),
-    SO_OUTSTOCK("so_outstock", "11","销售出库"),
+    SO_OUTSTOCK("so_outstock", "11","销售出库冻结"),
     SO_RETURN_INSTOCK("so_return_instock", "12","销售退货"),
 
     STOCKTAKING_PROFIT("stocktaking_profit_loss", "13","盘盈"),
@@ -69,6 +69,7 @@ public enum InventoryBusinessTypeEnum {
     WAREHOUSE_LOCATION_MOVE_INFO("warehouse_location_move_info", "31","仓位移动（PDA功能）"),
 
     SO_B2C_DELIVERY("so_b2c_delivery", "34","b2c发货单"),
+    SO_OUTSTOCK_USABLE("so_outstock_usable", "35","销售出库扣可用库存"),
 
     ;
 

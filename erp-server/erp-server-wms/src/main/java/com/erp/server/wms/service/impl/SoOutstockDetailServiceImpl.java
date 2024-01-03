@@ -547,6 +547,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     @Override
     public void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList) {
+        if(StringUtils.isBlank(warehouseId)){
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
@@ -771,15 +774,22 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
+            BigDecimal price=soDetailEntity.getPrice();
             //单价信息
-            detailEntity.setPrice(soDetailEntity.getPrice());
-            detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
-            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
+            detailEntity.setPrice(price);
+            BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
+            detailEntity.setExchangeRate(exchangeRate);
+            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            detailEntity.setAmount(amount);
             String currency = soDetailEntity.getCurrency();
             detailEntity.setCurrency(currency);
             String symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
-            detailEntity.setAllAmountLocalCurrency(soDetailEntity.getAmount());
+            BigDecimal amountLocalCurrency=amount;
+            if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
+                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+            }
+            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
         }
     }
 

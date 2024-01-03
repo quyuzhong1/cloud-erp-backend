@@ -180,9 +180,24 @@ public class SoB2cDetailDTO implements Serializable {
         private String  id;
 
         /**
+        * 主表Id
+        */
+        private String  mainId;
+
+        /**
         * 图片URL
         */
         private String imageUrl;
+
+        /**
+        * 平台sku
+        */
+        private String platformSkuNo;
+
+        /**
+        * 平台产品id
+        */
+        private String platformSpuNo;
 
         /**
         * 产品sku编号
@@ -205,6 +220,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String warehouseName;
 
         /**
+        * 仓位
+        */
+        private String warehouseLocation;
+
+        /**
         * 建议售价（本位币）
         */
         private BigDecimal advicePrice;
@@ -213,6 +233,16 @@ public class SoB2cDetailDTO implements Serializable {
         * 成本（本位币）
         */
         private BigDecimal taxCost;
+
+        /**
+        * 金额
+        */
+        private BigDecimal amount;
+
+        /**
+        * 汇率
+        */
+        private BigDecimal exchangeRate;
 
     }
 

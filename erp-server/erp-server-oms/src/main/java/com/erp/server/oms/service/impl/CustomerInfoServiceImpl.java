@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -1680,6 +1681,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date: 2023/7/3 15:24
      */
     private void approveProcess(List<CustomerInfoEntity> list, BaseApproveParamDTO dto) {
+        //无需流程则直接更新状态
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
+            approveEnd(dto, list);
+            return;
+        }
+
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {

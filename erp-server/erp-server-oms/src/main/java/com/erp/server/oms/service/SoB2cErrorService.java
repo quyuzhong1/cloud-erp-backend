@@ -68,4 +68,14 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     SoB2cErrorDTO.ViewDTO info(SoB2cErrorDTO.InfoDTO dto);
 
     SoB2cErrorEntity getByMainIdAndType(String mainId, String errorType);
+
+    /**
+     * 根据code 和类型删除
+     * @description
+     * @param type
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 11:55
+     */
+    void deleteByCodeAndType(String soCode, String type);
 }

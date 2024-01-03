@@ -3,6 +3,7 @@ package com.erp.rpc.oms.feign;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.WalmartShipDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
@@ -218,4 +219,28 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2cError/getB2cError")
     SoB2cErrorEntity getB2cError(@RequestParam("mainId")String mainId, @RequestParam("errorType") String errorType);
+
+    /**
+     * 获取沃尔玛发货参数
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
+     * @param soId
+     * @return com.common.business.dto.WalmartShipDTO
+     **/
+    @PostMapping("/feign/soB2c/getWalmartShipOrderParam")
+    List<WalmartShipDTO> getWalmartShipOrderParam(@RequestBody String soId);
+
+    /**
+     * 查询仓库为空的销售订单
+     * @description
+     * @param ids
+     * @author Lambda
+     * @return
+     * @create 2024-01-03 17:12
+     */
+    @PostMapping("/feign/soB2c/listWarehouseIsEmpty")
+    List<SoB2cEntity> listWarehouseIsEmpty(@RequestBody List<String> ids);
+
+    @PostMapping("/feign/soB2c/updateWarehouseByShopId")
+    Boolean updateWarehouseByShopId(@RequestParam("id")String id,@RequestParam("shopId") String shopId);
 }
