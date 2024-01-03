@@ -144,12 +144,17 @@ public interface DmpOrderConverter {
     })
     DmpReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
 
-    /*@Mappings({
+    @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "platformOrderId", source = "code"),
+            @Mapping(target = "buyerUserId", source = "viewDTO.receiverDTO.loginId"),
+            @Mapping(target = "buyerName", source = "viewDTO.receiverDTO.name"),
+            @Mapping(target = "shopNo", source = "shopId"),
+            @Mapping(target = "shopName", source = "shopName"),
             @Mapping(target = "canSend", constant = "1"),
             @Mapping(target = "isReturned", constant = "2"),
             @Mapping(target = "isRefund", constant = "2"),
+            @Mapping(target = "paidTime", source = "payTime"),
             @Mapping(target = "salesRecordNumber", source = "code"),
             @Mapping(target = "platformOrderStatus", source = "approveStatus"),
             @Mapping(target = "orderFee", source = "amount"),
@@ -158,22 +163,28 @@ public interface DmpOrderConverter {
             @Mapping(target = "isSplit", constant = "2"),
             @Mapping(target = "isResend", constant = "2"),
             @Mapping(target = "hasGoods", constant = "0"),
-            @Mapping(target = "manStreet", source = "receiveAddress"),
-            @Mapping(target = "manPhone", source = "telNumber"),
+            @Mapping(target = "district", source = "viewDTO.receiverDTO.districtName"),
+            @Mapping(target = "city", source = "viewDTO.receiverDTO.cityName"),
+            @Mapping(target = "province", source = "viewDTO.receiverDTO.provinceName"),
+            @Mapping(target = "manStreet", source = "viewDTO.receiverDTO.firstAddress"),
+            @Mapping(target = "secondStreet", source = "viewDTO.receiverDTO.secondAddress"),
+            @Mapping(target = "manPhone", source = "viewDTO.receiverDTO.telNumber"),
+            @Mapping(target = "secondPhone", source = "viewDTO.receiverDTO.receiverTelNumber"),
             @Mapping(target = "fbaFlag", constant = "1"),
             @Mapping(target = "sellerMessage", source = "remark"),
             @Mapping(target = "currencyCode", source = "currency"),
-            @Mapping(target = "platformFee", constant = "0"),
+            @Mapping(target = "currencyRate", source = "exchangeRate"),
+            @Mapping(target = "itemTotal", source = "amount"),
+            @Mapping(target = "platformFee", source = "viewDTO.financialInfoDTO.platformCost"),
             @Mapping(target = "subsidyAmount", constant = "0"),
+            @Mapping(target = "countryNameEn", source = "viewDTO.receiverDTO.country"),
+            @Mapping(target = "countryNameCn", source = "viewDTO.receiverDTO.countryName"),
             @Mapping(target = "platformSign", constant = "erp-oms"),
             @Mapping(target = "createTime", ignore = true),
-            @Mapping(target = "companyId", source = "salesOrgId"),
-            @Mapping(target = "companyName", source = "salesOrgName"),
-            @Mapping(target = "platformCreateTime", source = "createTime"),
-            @Mapping(target = "chargeName", source = "sellerName"),
-            @Mapping(target = "deptId", source = "salesDeptId"),
-            @Mapping(target = "chargeId", source = "sellerId")
-    })*/
+            @Mapping(target = "companyId", source = "orgId"),
+            @Mapping(target = "companyName", source = "orgName"),
+            @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
+    })
     DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {

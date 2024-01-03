@@ -483,6 +483,21 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
+         * 销售组织id
+         */
+        private String orgId;
+
+        /**
+         * 销售组织名称
+         */
+        private String orgName;
+
+        /**
+         * 平台创建时间
+         */
+        private String platformOrderCreateTime;
+
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;
