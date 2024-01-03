@@ -2,22 +2,34 @@ package com.erp.server.dmp.push.consumer.erp;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.service.DmpOrderInfoService;
+import com.erp.server.dmp.service.DmpOrderItemService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * ERP的b2c订单推送到金蝶消费者
  */
+@Service
+@Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_B2C_ORDER_TO_DMP_TOPIC, selectorExpression = "so_b2c_to_dmp_tag",
         consumerGroup = RocketMqConsumerGroup.SYNC_ERP_SO_B2C_TO_DMP,
         consumeMode = ConsumeMode.ORDERLY)
@@ -25,12 +37,13 @@ public class B2cOrderPushDmpOrderConsumer implements RocketMQListener<DmpSyncMqD
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     @Override
     public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
         SoB2cDTO.ViewDTO viewDTO = JSONObject.parseObject(dmpSyncMqDTO.getMqData(), SoB2cDTO.ViewDTO.class);
-
-
+        this.cleanOrderField(viewDTO);
     }
 
     /**
@@ -38,7 +51,21 @@ public class B2cOrderPushDmpOrderConsumer implements RocketMQListener<DmpSyncMqD
      */
     private void cleanOrderField(SoB2cDTO.ViewDTO viewDTO) {
         DmpOrderInfoEntity dmpOrderInfoEntity = DmpOrderConverter.INSTANCE.soB2cToDmpOrder(viewDTO);
+        String billStatus = viewDTO.getBillStatus();
 
-//        dmpOrderInfoService.add()
+        //订单状态 1.待配货 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(billStatus)) {
+            dmpOrderInfoEntity.setOrderStatus(1);
+        } else if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(billStatus)) {
+            dmpOrderInfoEntity.setOrderStatus(2);
+        } else if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
+            dmpOrderInfoEntity.setOrderStatus(3);
+        } else {
+            dmpOrderInfoEntity.setOrderStatus(1);
+        }
+
+        List<DmpOrderItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cToDmpOrderItem(viewDTO.getDetailList());
+        dmpOrderInfoEntity.setItemList(itemEntityList);
+        dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
     }
 }

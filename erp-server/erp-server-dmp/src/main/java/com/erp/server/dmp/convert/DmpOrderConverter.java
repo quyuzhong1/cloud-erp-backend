@@ -1,7 +1,11 @@
 package com.erp.server.dmp.convert;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -14,6 +18,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -186,6 +192,35 @@ public interface DmpOrderConverter {
             @Mapping(target = "platformCreateTime", source = "platformOrderCreateTime"),
     })
     DmpOrderInfoEntity soB2cToDmpOrder(SoB2cDTO.ViewDTO viewDTO);
+
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "orderId", source = "detailViewDTO.mainId"),
+            @Mapping(target = "itemId", source = "detailViewDTO.id"),
+            @Mapping(target = "platformSku", source = "detailViewDTO.platformSkuNo"),
+            @Mapping(target = "platformQuantity", source = "detailViewDTO.qty"),
+            @Mapping(target = "itemName", source = "detailViewDTO.productName"),
+            @Mapping(target = "pictureUrl", source = "detailViewDTO.imageUrl"),
+            @Mapping(target = "costPrice", source = "detailViewDTO.taxCost"),
+            @Mapping(target = "sellPriceOrigin", source = "detailViewDTO.advicePrice"),
+            @Mapping(target = "sellPrice", source = "detailViewDTO.amount"),
+            @Mapping(target = "quantity", source = "detailViewDTO.qty"),
+            @Mapping(target = "hasGoods", constant = "1"),
+            @Mapping(target = "isCombo", constant = "2"),
+            @Mapping(target = "status", constant = "2"),
+            @Mapping(target = "specifics", constant = ""),
+            @Mapping(target = "stockGrid", source = "detailViewDTO.warehouseLocation"),
+            @Mapping(target = "skuNo", source = "detailViewDTO.skuNo"),
+            @Mapping(target = "stockStatus", constant = "3"),
+            @Mapping(target = "stockWarehouseId", source = "detailViewDTO.warehouseId"),
+            @Mapping(target = "erpOrderItemId", source = "detailViewDTO.skuId"),
+            @Mapping(target = "currencyRate", source = "detailViewDTO.exchangeRate"),
+            @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
+            @Mapping(target = "sourceItemId", source = "id")
+    })
+    DmpOrderItemEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
+    List<DmpOrderItemEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {
