@@ -328,7 +328,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         jobTaskDTO.setApiCode("products");
         jobTaskDTO.setApiName("亚马逊Listing");
         jobTaskDTO.setIntervalTime(900);
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setStatus(3);
         jobTaskDTO.setRetryTimes(0);
         jobTaskDTO.setCreateTime(LocalDateTime.now());
         jobTaskDTO.setUpdateTime(LocalDateTime.now());

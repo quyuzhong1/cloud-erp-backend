@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.JobTaskDTO;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class CreateRequestReportTaskService {
 //            redisTemplate.boundListOps(tbTask.getDictPlatform()).leftPush(JSONObject.toJSONString(jobTask));
             String groupId = tbTask.getGroupId();
             if (StringUtils.isBlank(groupId)){
-                groupId = tbTask.getDictPlatform();
+                throw new ServiceException("groupId为空");
             }
             redisTemplate.boundListOps(groupId).leftPush(JSONObject.toJSONString(jobTask));
         }
