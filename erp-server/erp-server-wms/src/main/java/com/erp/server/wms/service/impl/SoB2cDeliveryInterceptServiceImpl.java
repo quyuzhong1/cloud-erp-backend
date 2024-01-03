@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -256,10 +257,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //反审核销售出库单，并作废
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+
+                //查询已审核的出库单，进行反审核
+                List<String> approveIds = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getSoId()).collect(Collectors.toList());
+                BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
+                approveIdDto.setIds(approveIds);
+                soOutstockService.disApprove(approveIdDto, Boolean.TRUE);
+
+                //反审核后删除
                 List<String> ids = soOutstockEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
                 BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
                 idsDTO.setIds(ids);
-                soOutstockService.disApprove(idsDTO, Boolean.TRUE);
                 soOutstockService.delete(ids);
             }
 
