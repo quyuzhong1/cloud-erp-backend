@@ -244,6 +244,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = soB2cDeliveryInterceptDetailService.listByMainIds(Arrays.asList(id));
@@ -257,17 +258,22 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //反审核销售出库单，并作废
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
-
                 //查询已审核的出库单，进行反审核
-                List<String> approveIds = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getSoId()).collect(Collectors.toList());
+                List<String> approveIds = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
                 BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
                 approveIdDto.setIds(approveIds);
-                soOutstockService.disApprove(approveIdDto, Boolean.TRUE);
+                if (CollectionUtils.isNotEmpty(approveIds)) {
+                    soOutstockService.disApprove(approveIdDto, Boolean.TRUE);
+                }
+
+                //查询已提交的出库单，进行撤销
+                List<String> approveIng = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(approveIng)) {
+                    soOutstockService.cancelProcess(approveIng);
+                }
 
                 //反审核后删除
                 List<String> ids = soOutstockEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-                BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-                idsDTO.setIds(ids);
                 soOutstockService.delete(ids);
             }
 
