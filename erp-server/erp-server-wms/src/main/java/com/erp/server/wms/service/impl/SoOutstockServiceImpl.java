@@ -54,6 +54,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -583,19 +584,38 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
-
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
-        for (InOutStockDTO member : members) {
-            member.setSourceType(sourceTypeEnum);
-        }
-        if (CollectionUtils.isNotEmpty(members)) {
-            inventoryInOutStockDTO.setParamList(members);
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        InventorySourceTypeEnum inventorySourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
+        String sourceType=entity.getSourceType();
+
+        //如果来源类型为b2c发货单就是扣冻结库存
+        String soB2cDelivery= SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+        if(soB2cDelivery.equals(sourceType)){
+            for (InOutStockDTO member : members) {
+                member.setSourceType(inventorySourceTypeEnum);
+            }
+            if (CollectionUtils.isNotEmpty(members)) {
+                inventoryInOutStockDTO.setParamList(members);
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            }
+        }else{
+            //不是就是扣可用库存
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
+            for (InOutStockDTO member : members) {
+                member.setSourceType(inventorySourceTypeEnum);
+                Integer qty = member.getQty();
+                member.setQty(Math.abs(qty));
+                member.setInventoryStatus(inventoryStatus);
+            }
+            if (CollectionUtils.isNotEmpty(members)) {
+                inventoryInOutStockDTO.setParamList(members);
+                //扣减库存
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            }
         }
 
     }
