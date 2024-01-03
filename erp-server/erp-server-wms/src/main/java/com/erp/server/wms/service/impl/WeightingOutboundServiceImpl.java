@@ -1,15 +1,15 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.UnitEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.WeightingOutboundService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +36,12 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     @Resource
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WeightingOutboundDTO.ViewDTO scan(WeightingOutboundDTO.ScanDTO dto) {
@@ -56,6 +62,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if(!soB2cDeliveryService.updateById(entity)){
                 throw new ServiceException("发货单更新失败");
             }
+            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
         }
         if(dto.getIsAutoDelivery() && entity.getIsWeigh()){
             //将发货状态更新为已发货
