@@ -83,8 +83,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
-                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
+//                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
+//                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
+                .orderCode("G1149-231207-0027")
                 .page(1)
                 .pageSize(20)
                 .build();
