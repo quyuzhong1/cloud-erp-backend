@@ -3,6 +3,7 @@ package com.common.business.dto.base;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +20,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class BaseApproveParamDTO extends PermissionsDTO {
 
     /**
@@ -39,4 +41,9 @@ public class BaseApproveParamDTO extends PermissionsDTO {
      */
     @Size(max = 255, message = "审核意见最大255个字符")
     private String comment;
+
+    /**
+     * 是否需要流程，false则跳过
+     */
+    private Boolean isNeedProcess;
 }

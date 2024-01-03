@@ -176,27 +176,23 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         shop.setChargeName(chargeName);
-        String warehouseId=dto.getWarehouseId();
-        if(StringUtils.isNotBlank(warehouseId)){
+        String warehouseId = dto.getWarehouseId();
+        if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             shop.setWarehouseName(updateDTO.getName());
             shop.setWarehouseId(dto.getWarehouseId());
         }
         Boolean result = this.save(shop);
-        if (result) {
-            //店铺客户信息
-            autoCreateShopCustomer(shop.getId());
-        }
         return Collections.singletonList(shop);
 
     }
 
     private void checkWarehouseExist(Boolean isHaveWarehouse, String warehouseId) {
-        if(Objects.nonNull(isHaveWarehouse)&&isHaveWarehouse){
-             if(StringUtils.isBlank(warehouseId)){
+        if (Objects.nonNull(isHaveWarehouse) && isHaveWarehouse) {
+            if (StringUtils.isBlank(warehouseId)) {
                 throw new ServiceException(ApiError.ERROR_99001);
-             }
+            }
         }
     }
 
@@ -205,11 +201,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      *
      * @param shopId
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void autoCreateShopCustomer(String shopId) {
+    public String autoCreateShopCustomer(String shopId) {
         ShopInfoEntity shop = this.getById(shopId);
         if (Objects.isNull(shop)) {
-            return;
+            return "";
         }
         CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
         customer.setUseOrgId(shop.getSalesOrgId());
@@ -246,6 +243,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 this.updateById(shop);
             }
         }
+        return id;
 
 
     }
@@ -328,12 +326,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
-        String warehouseId=dto.getWarehouseId();
-        String warehouseName="";
-        if(StringUtils.isNotBlank(warehouseId)){
+        String warehouseId = dto.getWarehouseId();
+        String warehouseName = "";
+        if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-            warehouseName=updateDTO.getName();
+            warehouseName = updateDTO.getName();
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
 
@@ -380,11 +378,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     public ShopInfoEntity getRelatedShopByIdAndCountry(ShopInfoDTO.RelatedDTO relateDTO) {
         ShopInfoEntity shopInfo = getById(relateDTO.getShopId());
-        if (null == shopInfo){
+        if (null == shopInfo) {
             return null;
         }
         String platformShopCode = shopInfo.getPlatformShopCode();
-        if (StringUtils.isBlank(platformShopCode)){
+        if (StringUtils.isBlank(platformShopCode)) {
             return null;
         }
         return lambdaQuery()
@@ -431,8 +429,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
-        String warehouseId=dto.getWarehouseId();
-        if(StringUtils.isNotBlank(warehouseId)){
+        String warehouseId = dto.getWarehouseId();
+        if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             shopInfo.setWarehouseName(updateDTO.getName());
@@ -732,7 +730,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 mainShopInfo = this.getById(shopAuthEntity.getShopId());
             }
         }
-        if(Objects.isNull(mainShopInfo)){
+        if (Objects.isNull(mainShopInfo)) {
             mainShopInfo = this.getById(dto.getId());
         }
         if (Objects.isNull(mainShopInfo)) {
@@ -905,7 +903,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getRegion()));
                 if (CollectionUtils.isNotEmpty(countryEntities)) {
                     shopInfo.setCountryName(countryEntities.get(0).getNameCn());
-                    shopInfo.setName(countryEntities.get(0).getNameCn() +" / "+ shopInfo.getName());
+                    shopInfo.setName(countryEntities.get(0).getNameCn() + " / " + shopInfo.getName());
                 }
             }
         } catch (Exception e) {
@@ -930,7 +928,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getMerchantRegion()));
                 if (CollectionUtils.isNotEmpty(countryEntities)) {
                     shopInfo.setCountryName(countryEntities.get(0).getNameCn());
-                    shopInfo.setName(countryEntities.get(0).getNameCn() +" / "+ shopInfo.getName());
+                    shopInfo.setName(countryEntities.get(0).getNameCn() + " / " + shopInfo.getName());
                 }
             }
         } catch (Exception e) {
@@ -1018,6 +1016,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return list;
     }
 
+    @Override
     public List<ShopInfoEntity> listShopByAmazon() {
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
         return list;
