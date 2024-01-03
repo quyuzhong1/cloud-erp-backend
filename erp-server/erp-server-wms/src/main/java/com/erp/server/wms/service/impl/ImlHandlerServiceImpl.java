@@ -76,6 +76,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         redisUtil.set("wms-iml:"+createOutboundReq.getReferenceNo(),createOutboundReq.getReferenceNo(),300);
         ImlResponse<String> response =  imlService.createOutboundBill(imlCreateOutboundReq);
+        if(response.getMessage().contains("参考编号已存在")){
+            return ApiResult.success();
+        }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
