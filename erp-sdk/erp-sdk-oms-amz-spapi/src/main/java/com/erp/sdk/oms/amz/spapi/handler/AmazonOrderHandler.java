@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.constant.RedisCacheConstants;
@@ -159,12 +160,13 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
-        if (!CollectionUtils.isEmpty(dto.getDetails())){
-            // 已有信息不请求
-            log.info("亚马逊详情已有不请求, UniqueId={}", dto.getUniqueId());
-            return dto;
-        }
+//        if (!CollectionUtils.isEmpty(dto.getDetails())){
+//            // 已有信息不请求
+//            log.info("亚马逊详情已有不请求, UniqueId={}", dto.getUniqueId());
+//            return dto;
+//        }
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         // 默认请求速率配置
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
@@ -244,6 +246,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
 
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadAddress(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         if ( null != dto.getOrder().getShippingAddress() &&
                 StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
@@ -258,10 +261,9 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
-        String rateLimitStr;
-
-        // 查询订单详情
         OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+        // 查询订单详情
+        String rateLimitStr;
 
         // 生成RDT权限获取地址信息
         // amazon-rdt-token:店铺ID:订单ID

@@ -87,4 +87,12 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @return List<String> groupIds
      */
     List<String> findGroupIdByPlatform(String dictPlatform);
+
+
+    /**
+     * 查询指定平台和
+     *
+     * @return List<PlatformApiTaskEntity> 任务列表
+     */
+    List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType);
 }

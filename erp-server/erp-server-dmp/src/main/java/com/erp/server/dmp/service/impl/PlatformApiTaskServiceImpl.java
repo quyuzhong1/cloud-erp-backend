@@ -279,4 +279,14 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         queryWrapper.groupBy(PlatformApiTaskEntity::getGroupId);
         return listObjs(queryWrapper, Object::toString);
     }
+
+    @Override
+    public List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType) {
+        return lambdaQuery()
+                .eq(PlatformApiTaskEntity::getDictPlatform, dictPlatform)
+                .eq(PlatformApiTaskEntity::getBillType, billType)
+                .eq(PlatformApiTaskEntity::getIsDeleted, Boolean.FALSE)
+                .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
+                .list();
+    }
 }

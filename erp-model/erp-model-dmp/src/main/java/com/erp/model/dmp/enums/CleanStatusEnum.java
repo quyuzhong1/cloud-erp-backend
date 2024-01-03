@@ -8,6 +8,7 @@ package com.erp.model.dmp.enums;
  */
 public enum CleanStatusEnum {
 
+    NONE(-1, "无需清洗"),
     UNCLEAN(0, "未清洗"),
     CLEANING(1, "清洗中"),
     CLEANED(2, "清洗完成");
