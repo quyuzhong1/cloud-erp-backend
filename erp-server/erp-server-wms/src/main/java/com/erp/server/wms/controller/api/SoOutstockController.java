@@ -279,10 +279,12 @@ public class SoOutstockController extends BaseController {
         for (String id : dto.getIds()) {
             try {
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);
-                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                deleteDTO.setMainId(id);
-                deleteDTO.setType(type);
-                soB2cFeign.deleteError(deleteDTO);
+                if (result) {
+                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                    deleteDTO.setMainId(id);
+                    deleteDTO.setType(type);
+                    soB2cFeign.deleteError(deleteDTO);
+                }
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
@@ -433,22 +435,16 @@ public class SoOutstockController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/test")
-    public ApiResult test() {
-        String soB2cCode = "XSDS23122700025";
-        String billStatus = "shipped";
-        SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
-        updateStatus.setSoCode(soB2cCode);
-        updateStatus.setBillStatus(billStatus);
-        soB2cFeign.updateSoB2cStatusByParams(updateStatus);
-        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
-            try {
-                soOutstockService.generateB2cSoOutstockByCode(soB2cCode);
-            } catch (Exception e) {
-                log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
-            }
-
+    @GetMapping("/test")
+    public ApiResult test(@RequestParam("code") String code) {
+        String soB2cCode = "XSDD24010300005";
+        try {
+            soOutstockService.generateB2cSoOutstockByCode(code);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
         }
+
+
         return success();
     }
 }

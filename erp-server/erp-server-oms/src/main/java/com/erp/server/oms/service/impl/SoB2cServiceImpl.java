@@ -3936,12 +3936,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoB2cStatusByParams(SoB2cDTO.UpdateStatusDTO dto) {
         String billStatus = dto.getBillStatus();
         if (StringUtils.isBlank(dto.getSoCode())) {
             return Boolean.FALSE;
         }
+        String shipped=SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        //表示已发货
+        Boolean isShipped=shipped.equals(billStatus);
+        soB2cErrorService.deleteByCodeAndType(dto.getSoCode(),SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
+                set(isShipped,SoB2cEntity::getSignOrderError, "").
                 set(SoB2cEntity::getBillStatus, billStatus).update(new SoB2cEntity());
     }
 

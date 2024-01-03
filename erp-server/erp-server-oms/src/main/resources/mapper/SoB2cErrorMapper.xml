@@ -33,6 +33,12 @@
     <delete id="deleteB2cError">
         DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type}
     </delete>
+    <delete id="deleteByCodeAndType">
+        DELETE FROM so_b2c_error
+        WHERE main_id=(select id from so_b2c where code = #{code} and is_deleted=false limit 1)
+                                       and  type = #{type}
+
+    </delete>
 
 
 </mapper>
