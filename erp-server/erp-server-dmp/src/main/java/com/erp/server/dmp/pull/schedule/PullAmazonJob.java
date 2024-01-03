@@ -270,6 +270,7 @@ public class PullAmazonJob {
                             extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, limitKey);
                             // 下载和处理地址
                             PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadAddress(dto, extentJsonObj);
+                            newDto.setDownloadStatus(1);
                             newDto.setDownloadAddressStatus(1);
                             newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                             List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
