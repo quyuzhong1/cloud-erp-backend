@@ -1,8 +1,10 @@
 package com.erp.server.dmp.enums;
 
 import com.common.business.dto.PlatformCityDictDTO;
+import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
@@ -36,6 +38,11 @@ public enum CleanDataTableEnum {
     //沃尔玛
     WALMART_ORDER("Walmart", "third_system_Walmart_order","third_system", "order","沃尔玛订单数据", PlatformWalmartOrderDTO.class),
     WALMART_PRODUCT("Walmart", "third_system_Walmart_product","third_system", "product","沃尔玛产品数据", PlatformWalmartListingDTO.class),
+    // 亚马逊
+    AMAZON_ORDER("Amazon", "third_system_Amazon_order","third_system", "order","Amazon订单数据", PlatformAmazonOrderDTO.class),
+    AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonOrderDTO.class),
+    AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformFbaShipmentDTO.class),
+
 
     //track123
     TRACK123_GET_TRACK("TRACK123", "third_system_TRACK123_getTrack","third_system", "getTrack","TRACK123物流轨迹数据", PlatformTrack123TrackDTO.class),

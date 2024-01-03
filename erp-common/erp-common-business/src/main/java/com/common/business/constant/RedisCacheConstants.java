@@ -98,6 +98,12 @@ public interface RedisCacheConstants {
      */
     String PLATFORM_REQUEST = "platform_request:{}:{}:{}";
 
+
+    /**
+     * 平台请求中前缀:groupId
+     */
+    String PLATFORM_REQUEST_PREFIX = "platform_request:{}";
+
     /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型
      */

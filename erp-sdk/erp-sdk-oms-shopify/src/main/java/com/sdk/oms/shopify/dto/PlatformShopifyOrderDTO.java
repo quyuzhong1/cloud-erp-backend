@@ -4,6 +4,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -64,7 +65,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
 
     public PlatformShopifyOrderDTO(JobTaskDTO dto, ShopifyOrder shopifyOrder, ShopifyShopInfoDTO shopInfoDTO) {
         this.shopifyOrder = shopifyOrder;
-        this.setIsClean(0);
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(shopifyOrder.getOrderId());
 //        this.setLastPushTime(dto.getNextTime());

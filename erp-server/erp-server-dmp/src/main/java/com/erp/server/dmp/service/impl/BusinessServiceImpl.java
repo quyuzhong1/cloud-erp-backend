@@ -55,7 +55,7 @@ public class BusinessServiceImpl {
     private MQProducerService mqProducerService;
     @Resource
     private DmpPullTaskService dmpPullTaskService;
-    private static final int size = 1000;
+    private static final int size = 100;
 
     /**
      * 业务处理
@@ -103,9 +103,8 @@ public class BusinessServiceImpl {
             PlatformDataDTO<T, R> platformData = handler.cleanHandle(sourceDataList);
 
             String targetPlatform = handler.getTargetPlatform();
-            Boolean isSendMq = handler.getIsSendMq();
             // 保存mongo 并发送mq
-            List<R> toMqList = compareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
+            List<R> toMqList = compareAndSaveMongo(true, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
         } else {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);

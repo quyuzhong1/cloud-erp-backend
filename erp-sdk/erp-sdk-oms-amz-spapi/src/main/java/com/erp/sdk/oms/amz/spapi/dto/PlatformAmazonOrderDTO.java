@@ -7,6 +7,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -58,24 +59,25 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
      */
     private OrderItemList details;
 
+    /**
+     * redisson执行中key
+     */
+    private String redissonKey;
+
     public PlatformAmazonOrderDTO(Order order, String shopId) {
         this.order = order;
         this.shopId = shopId;
         this.setUniqueId(order.getAmazonOrderId());
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
         this.setDownloadStatus(0);
+        this.setDownloadAddressStatus(0);
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
     }
 
     public static PlatformAmazonOrderDTO getByAddressDownloadStatus() {
         PlatformAmazonOrderDTO orderMongoDTO = new PlatformAmazonOrderDTO();
         orderMongoDTO.setDownloadStatus(1);
         orderMongoDTO.setDownloadAddressStatus(0);
-        return orderMongoDTO;
-    }
-
-    public static PlatformAmazonOrderDTO getByDownloadStatus(Integer status) {
-        PlatformAmazonOrderDTO orderMongoDTO = new PlatformAmazonOrderDTO();
-        orderMongoDTO.setDownloadStatus(status);
         return orderMongoDTO;
     }
 
