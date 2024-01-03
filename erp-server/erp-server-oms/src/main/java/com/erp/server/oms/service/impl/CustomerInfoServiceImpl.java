@@ -1681,7 +1681,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     private void approveProcess(List<CustomerInfoEntity> list, BaseApproveParamDTO dto) {
         //无需流程则直接更新状态
-        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && dto.getIsNeedProcess()) {
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
             approveEnd(dto, list);
             return;
         }
