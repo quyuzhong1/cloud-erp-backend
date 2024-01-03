@@ -43,6 +43,9 @@ public class SoB2cFeignController extends BaseController {
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
 
+    @Resource
+    private SoB2cRefService soB2cRefService;
+
 
     /**
      * 根据b2c订单id获取物流信息
@@ -334,5 +337,20 @@ public class SoB2cFeignController extends BaseController {
     public Boolean updateWarehouseByShopId(@RequestParam("id") String id, @RequestParam("shopId") String shopId) {
         return soB2cService.updateWarehouseByShopId(id, shopId);
     }
+
+    /**
+     * 查询合并来源关系
+     *
+     * @return
+     * @description
+     * @author Jim
+     * @create 2024-01-03
+     */
+    @GetMapping("/findMergeByTargetId")
+    public List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId) {
+        return soB2cRefService.listByTargetId(targetId, SoB2cOptionTypeEnum.ENUM_MERGE);
+    }
+
+
 
 }

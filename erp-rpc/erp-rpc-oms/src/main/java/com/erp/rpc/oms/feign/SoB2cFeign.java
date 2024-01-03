@@ -243,4 +243,7 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2c/updateWarehouseByShopId")
     Boolean updateWarehouseByShopId(@RequestParam("id")String id,@RequestParam("shopId") String shopId);
+
+    @GetMapping("/feign/soB2c/findMergeByTargetId")
+    List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId);
 }
