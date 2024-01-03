@@ -36,5 +36,5 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
      * @return
      * @create 2023-12-21 15:00
      */
-    void deleteByCodeAndType(@Param("soCode") String soCode,@Param("type") String type);
+    void deleteByCodeAndType(@Param("code") String soCode,@Param("type") String type);
 }
