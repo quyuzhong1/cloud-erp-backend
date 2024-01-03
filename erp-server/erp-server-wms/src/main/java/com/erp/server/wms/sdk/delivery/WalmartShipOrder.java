@@ -37,31 +37,12 @@ public class WalmartShipOrder implements IPlatformService {
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
-        //检查销售订单是否存在
-        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getSoB2cId());
-        if (ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-        }
-        //检查销售订单物流信息是否存在
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
-        if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-        }
-        //映射主表字段
-        WalmartShipDTO walmartShipDTO = WalmartShipOrderConverter.INSTANCE.soB2cEntityToWalmartShipDTO(soB2cEntity, soB2cLogisticsEntities.get(MathUtil.ZERO));
-
-        //检查销售订单详情是否存在
-        List<SoB2cDetailEntity> soB2cDetailEntities = soB2cFeign.listDetailByMainIds(Arrays.asList(dto.getSoB2cId()));
-        if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-        }
-
-        //映射详情字段
-        List<WalmartShipOrderDetailDTO> walmartShipOrderDetailDTOS = WalmartShipOrderConverter.INSTANCE.soB2cDetailEntityToWalmartShipOrderDetail(soB2cDetailEntities);
-        walmartShipDTO.setDetailList(walmartShipOrderDetailDTOS);
+        List<WalmartShipDTO> walmartShipOrderParam = soB2cFeign.getWalmartShipOrderParam(dto.getSoB2cId());
 
         //调用sdk发货
-        WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
-        walmartSdkClientService.shipOrder(walmartShipDTO);
+        for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
+            WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+            walmartSdkClientService.shipOrder(walmartShipDTO);
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -535,4 +536,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.CustomerDTO> listCustomer(List<String> soIdList);
+
+    /**
+     * 获取沃尔玛发货参数
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
+     * @param soId
+     * @return java.util.List<com.common.business.dto.WalmartShipDTO>
+     **/
+    List<WalmartShipDTO> getWalmartShipOrderParam(String soId);
 }

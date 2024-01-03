@@ -3,6 +3,7 @@ package com.erp.rpc.oms.feign;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.WalmartShipDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
@@ -218,4 +219,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2cError/getB2cError")
     SoB2cErrorEntity getB2cError(@RequestParam("mainId")String mainId, @RequestParam("errorType") String errorType);
+
+    /**
+     * 获取沃尔玛发货参数
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
+     * @param soId
+     * @return com.common.business.dto.WalmartShipDTO
+     **/
+    @PostMapping("/feign/soB2c/getWalmartShipOrderParam")
+    List<WalmartShipDTO> getWalmartShipOrderParam(@RequestBody String soId);
 }
