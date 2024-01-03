@@ -259,6 +259,9 @@
             <if test="params.isOrderError != null ">
                    and sb2c.sign_order_error !=''
             </if>
+            <if test="params.tabFlag != null and params.tabFlag == 'pending'">
+                and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))
+            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
@@ -289,6 +292,7 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -343,6 +347,7 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -421,6 +426,7 @@
         <where>
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
+            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
