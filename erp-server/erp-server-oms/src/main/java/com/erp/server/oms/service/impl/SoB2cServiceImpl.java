@@ -15,9 +15,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.SearchType;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.handler.PlatformSaveHandler;
@@ -72,6 +70,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
+import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -79,6 +78,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -3069,6 +3069,52 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDTO.CustomerDTO> customerList = baseMapper.listCustomer(soIdList);
         return customerList;
 
+    }
+
+    @Override
+    public List<WalmartShipDTO> getWalmartShipOrderParam(String soId) {
+        List<WalmartShipDTO> resultList = new ArrayList<>();
+        List<String> soIdList = new ArrayList<>();
+        //如果是合并的单，要拆开发货
+        List<SoB2cRefEntity> soB2cRefEntities = soB2cRefService.listByTargetId(soId, SoB2cOptionTypeEnum.ENUM_MERGE);
+        if (CollectionUtils.isNotEmpty(soB2cRefEntities)) {
+            List<String> soIds = soB2cRefEntities.stream().map(req -> req.getSourceId()).collect(Collectors.toList());
+            soIdList.addAll(soIds);
+        } else {
+            soIdList.add(soId);
+        }
+
+        //检查销售订单是否存在
+        List<SoB2cEntity> soB2cEntities = this.listByIds(soIdList);
+        if (CollectionUtils.isEmpty(soB2cEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
+        //检查销售订单物流信息是否存在
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(soIdList);
+        if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+
+        //检查销售订单详情是否存在
+        List<SoB2cDetailEntity> soB2cDetailEntities = soB2cDetailService.listByMainIds(soIdList);
+        if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            //映射主表字段
+            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            WalmartShipDTO walmartShipDTO = WalmartShipOrderConverter.INSTANCE.soB2cEntityToWalmartShipDTO(soB2cEntity, logisticsEntity);
+
+            //映射详情字段
+            List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).collect(Collectors.toList());
+            List<WalmartShipOrderDetailDTO> walmartShipOrderDetailDTOS = WalmartShipOrderConverter.INSTANCE.soB2cDetailEntityToWalmartShipOrderDetail(detailList);
+            walmartShipDTO.setDetailList(walmartShipOrderDetailDTOS);
+
+            resultList.add(walmartShipDTO);
+        }
+        return resultList;
     }
 
     /**

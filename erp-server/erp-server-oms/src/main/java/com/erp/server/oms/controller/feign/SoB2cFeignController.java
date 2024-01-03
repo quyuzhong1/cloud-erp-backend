@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.feign;
 
 
 import com.common.business.dto.PrintWayBillPdfDTO;
+import com.common.business.dto.WalmartShipDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -285,5 +286,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/listCustomer")
     public List<SoB2cDTO.CustomerDTO>  listCustomer(@RequestBody List<String> soIdList){
         return soB2cService.listCustomer(soIdList);
+    }
+
+    /**
+     * 获取沃尔玛发货参数
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
+     * @param soId
+     * @return com.common.business.dto.WalmartShipDTO
+     **/
+    @PostMapping("/getWalmartShipOrderParam")
+    public List<WalmartShipDTO> getWalmartShipOrderParam(@RequestBody String soId) {
+        return soB2cService.getWalmartShipOrderParam(soId);
     }
 }
