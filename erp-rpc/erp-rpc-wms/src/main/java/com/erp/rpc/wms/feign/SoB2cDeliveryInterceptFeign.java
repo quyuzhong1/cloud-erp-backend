@@ -4,9 +4,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -48,4 +50,25 @@ public interface SoB2cDeliveryInterceptFeign {
      **/
     @PostMapping("feign/soB2cDeliveryIntercept/logisticsIntercept")
     BatchResultDTO logisticsIntercept(@RequestBody String id);
+
+    /**
+     * 根据来源id查询拦截单
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:19
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity>
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/listBySourceIds")
+    List<SoB2cDeliveryInterceptEntity> listBySourceIds(@RequestBody List<String> sourceIds);
+
+    /**
+     * 根据来源id修改拦截单状态
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:36
+     * @param sourceIds
+     * @param status
+     * @return void
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/updateHandleStatus")
+    Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status);
 }

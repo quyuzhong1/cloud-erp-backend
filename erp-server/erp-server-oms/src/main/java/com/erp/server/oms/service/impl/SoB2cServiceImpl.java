@@ -33,6 +33,9 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -55,10 +58,13 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.HandleResultEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -78,7 +84,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -216,6 +221,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -309,15 +316,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
-        Map<String, Object> map = new HashMap<>();
         //明细信息
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+
+        //推送B2c订单到dmp
+        SoB2cDTO.ViewDTO view = this.view(soB2cEntity.getId());
+        this.syncOrderToDmp(view);
+
         return soB2cEntity;
     }
 
+    /**
+     * 推送B2c订单到dmp
+     * @Author Luo_WG
+     * @Date 2024/1/3 18:48
+     * @param viewDTO
+     * @return void
+     **/
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void syncOrderToDmp(SoB2cDTO.ViewDTO viewDTO) {
+        //判断是否需要推送记录
+        if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())){
+            return;
+        }
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(viewDTO.getId());
+        taskFeignDTO.setSourceCode(viewDTO.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_SO_B2C_ORDER_TO_DMP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.SO_B2C_TO_DMP_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(viewDTO));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
+        taskFeignDTO.setSyncOperate(viewDTO.getApproveStatus().getCode());
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
 
     /**
      * 修改
@@ -388,12 +426,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isProcess) {
             startProcess(entity);
         }
+        //推送B2c订单到dmp
+        SoB2cDTO.ViewDTO view = this.view(entity.getId());
+        this.syncOrderToDmp(view);
 
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -415,6 +457,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 调用流程审核
         approveProcess(entity, dto, isMatch);
+
+        //推送B2c订单到dmp
+        SoB2cDTO.ViewDTO view = this.view(entity.getId());
+        this.syncOrderToDmp(view);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), ruleName, dto.getComment());
@@ -480,6 +526,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.equals(soB2cInvalidTypeEnum), SoB2cEntity::getRemark, remark)
                 .set(SoB2cEntity::getInvalidType, soB2cInvalidTypeEnum.getCode())
                 .update();
+
+        //推送B2c订单到dmp
+        SoB2cDTO.ViewDTO view = this.view(entity.getId());
+        this.syncOrderToDmp(view);
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", remark);
@@ -1152,7 +1202,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //TODO
+
+        //未打标拦截的订单不支持取消拦截
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(interceptDTOList)) {
+            throw new ServiceException(ApiError.NOT_INTERCEPT_NOT_CANCEL_INTERCEPT);
+        }
+
+        //物流商处理状态为空
+        List<SoB2cDeliveryInterceptEntity> interceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Arrays.asList(id));
+        List<SoB2cDeliveryInterceptEntity> interceptList = interceptEntities.stream()
+                .filter(req -> StringUtils.isBlank(req.getInterceptStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(interceptList)) {
+            throw new ServiceException(ApiError.INTERCEPT_STATUS_IS_NOT_BLANK);
+        }
+
+        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getSourceId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消发货拦截");
     }
 

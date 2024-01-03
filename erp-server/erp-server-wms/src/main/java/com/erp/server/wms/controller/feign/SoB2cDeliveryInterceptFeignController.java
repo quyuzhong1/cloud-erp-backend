@@ -6,14 +6,12 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryInterceptService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -70,5 +68,32 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
     public BatchResultDTO logisticsIntercept(@RequestBody String id) {
         BatchResultDTO resultDTO = soB2cDeliveryInterceptService.logisticsIntercept(id);
         return resultDTO;
+    }
+
+    /**
+     * 根据来源id查询拦截单
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:19
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity>
+     **/
+    @PostMapping("/listBySourceIds")
+    public List<SoB2cDeliveryInterceptEntity> listBySourceIds(@RequestBody List<String> sourceIds) {
+        List<SoB2cDeliveryInterceptEntity> resultList = soB2cDeliveryInterceptService.listBySourceIds(sourceIds);
+        return resultList;
+    }
+
+    /**
+     * 根据来源id修改拦截单状态
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:36
+     * @param sourceIds
+     * @param status
+     * @return void
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/updateHandleStatus")
+    public Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status) {
+        Boolean flag = soB2cDeliveryInterceptService.updateHandleStatus(sourceIds, status);
+        return flag;
     }
 }

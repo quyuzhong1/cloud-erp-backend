@@ -1,4 +1,4 @@
-package com.erp.server.oms.rocketmq;
+package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;

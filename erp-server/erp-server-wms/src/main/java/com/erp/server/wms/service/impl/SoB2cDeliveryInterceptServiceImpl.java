@@ -304,7 +304,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             return Collections.emptyList();
         }
         List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> dtoList = new ArrayList<>();
-        List<SoB2cDeliveryInterceptEntity> list = lambdaQuery().in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIdList).list();
+        List<SoB2cDeliveryInterceptEntity> list = lambdaQuery()
+                .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIdList)
+                .ne(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode())
+                .list();
         for (SoB2cDeliveryInterceptEntity interceptEntity : list) {
             SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = new SoB2cDeliveryInterceptDTO.IsInterceptDTO();
             isInterceptDTO.setId(interceptEntity.getId());
@@ -327,6 +330,25 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             dtoList.add(isInterceptDTO);
         }
         return dtoList;
+    }
+
+    @Override
+    public List<SoB2cDeliveryInterceptEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    public Boolean updateHandleStatus(List<String> sourceIds, String status) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate()
+                .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, status)
+                .update();
     }
 
     /**

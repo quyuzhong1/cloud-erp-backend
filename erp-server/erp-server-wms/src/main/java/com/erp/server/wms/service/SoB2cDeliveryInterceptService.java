@@ -85,4 +85,23 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
      * @return void
      **/
     List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> listIsIntercept(List<String> sourceIdList);
+
+    /**
+     * 根据来源id查询拦截单
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:21
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity>
+     **/
+    List<SoB2cDeliveryInterceptEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 根据来源id修改拦截单状态
+     * @Author Luo_WG
+     * @Date 2024/1/3 19:36
+     * @param sourceIds
+     * @param status
+     * @return void
+     **/
+    Boolean updateHandleStatus(List<String> sourceIds, String status);
 }
