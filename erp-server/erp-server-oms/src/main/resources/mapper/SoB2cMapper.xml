@@ -299,8 +299,7 @@
                 and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
             </if>
             <if test="params.address != null and params.address != '' ">
-                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
-                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike concat('%',#{params.address}::text,'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
@@ -354,8 +353,7 @@
                 and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
             </if>
             <if test="params.address != null and params.address != '' ">
-                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
-                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike concat('%',#{params.address}::text,'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
