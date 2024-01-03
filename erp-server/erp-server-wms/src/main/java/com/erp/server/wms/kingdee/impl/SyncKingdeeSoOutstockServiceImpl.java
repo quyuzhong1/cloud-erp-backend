@@ -499,13 +499,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("FSrcBillNo", soB2cEntity.getCode());
             map.put("FSoorDerno", soB2cEntity.getCode());
 
-            List<Map<String, Object>> mapList = new ArrayList<>();
-            Map<String, Object> mapPush = new HashMap<>();
-            mapPush.put("soKingdeeDetailId", soSyncKingdeeId);
-            mapPush.put("soSyncKingdeeId", soB2cEntity.getSyncKingdeeId());
-            mapList.add(mapPush);
-            //销售单金蝶明细id
-            map.put("FEntity_Link", mapList);
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
