@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,16 @@ public class PlatformTaskDTO {
         @NotEmpty(message = "平台编码不能为空")
         private String dictPlatform;
 
+        /**
+         * 平台店铺代号/平台卖家ID
+         */
+        private String platformShopCode;
+
+        public AddDTO(String shopId, String shopName, String dictPlatform) {
+            this.shopId = shopId;
+            this.shopName = shopName;
+            this.dictPlatform = dictPlatform;
+        }
     }
 
     @Data

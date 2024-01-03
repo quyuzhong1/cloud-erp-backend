@@ -34,7 +34,8 @@
         pat.platform_api_id,
         pat.api_code,
         pat.api_name,
-        pat.platform_category
+        pat.platform_category,
+        pat.group_id
         FROM platform_api_task pat
         WHERE (pat.next_time  &lt; #{localTime} and pat.next_time IS NOT NULL)
         and pat.is_deleted = false and pat.disabled = FALSE

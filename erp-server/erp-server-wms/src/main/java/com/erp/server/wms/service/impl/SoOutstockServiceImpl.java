@@ -54,6 +54,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -583,19 +584,38 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
-
         //这个是销售出库单id
         List<String> allList = Arrays.asList(entity.getId());
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
-        for (InOutStockDTO member : members) {
-            member.setSourceType(sourceTypeEnum);
-        }
-        if (CollectionUtils.isNotEmpty(members)) {
-            inventoryInOutStockDTO.setParamList(members);
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        InventorySourceTypeEnum inventorySourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
+        String sourceType=entity.getSourceType();
+
+        //如果来源类型为b2c发货单就是扣冻结库存
+        String soB2cDelivery= SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+        if(soB2cDelivery.equals(sourceType)){
+            for (InOutStockDTO member : members) {
+                member.setSourceType(inventorySourceTypeEnum);
+            }
+            if (CollectionUtils.isNotEmpty(members)) {
+                inventoryInOutStockDTO.setParamList(members);
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            }
+        }else{
+            //不是就是扣可用库存
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
+            for (InOutStockDTO member : members) {
+                member.setSourceType(inventorySourceTypeEnum);
+                Integer qty = member.getQty();
+                member.setQty(Math.abs(qty));
+                member.setInventoryStatus(inventoryStatus);
+            }
+            if (CollectionUtils.isNotEmpty(members)) {
+                inventoryInOutStockDTO.setParamList(members);
+                //扣减库存
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            }
         }
 
     }
@@ -614,7 +634,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)
                 .set(SoOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(Objects.nonNull(isB2b)&&isB2b,SoOutstockEntity::getActualDeliveryDate,LocalDate.now())
+                .set(Objects.nonNull(isB2b)&&!isB2b,SoOutstockEntity::getActualDeliveryDate,LocalDate.now())
                 .update(new SoOutstockEntity());
     }
 
@@ -2021,14 +2041,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Boolean result = createB2cSoOutstock(dto);
             return result;
         }else{
+            String id=outstock.getId();
             ApproveStatusEnum approveStatus=outstock.getApproveStatus();
             //待提交
             if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){
-                this.submit(Arrays.asList(soB2cId));
+                this.submit(Arrays.asList(id));
             }
             //审核中
             if(ApproveStatusEnum.APPROVE_ING.equals(approveStatus)){
-                this.approve(new ApproveOneDTO(soB2cId, ApproveTypeEnum.PASS.getStatus(), ""));
+                this.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
             return Boolean.TRUE;
         }

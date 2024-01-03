@@ -329,6 +329,10 @@ public class SoB2cDetailDTO implements Serializable {
 
         private String sourceDetailId;
 
+        private String currency;
+
+        private BigDecimal exchangeRate;
+
     }
 
 

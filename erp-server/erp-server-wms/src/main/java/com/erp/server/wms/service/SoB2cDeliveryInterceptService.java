@@ -75,7 +75,7 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
      * @param dto
      * @return com.common.business.dto.base.BatchResultDTO
      **/
-    BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
+    BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id);
 
     /**
      * 查询是否拦截

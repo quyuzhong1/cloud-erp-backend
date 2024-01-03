@@ -2,18 +2,26 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import org.springframework.stereotype.Service;
@@ -21,8 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -132,6 +140,31 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setBillType(task.getBillType());
         entity.setOperateType(task.getOperateType());
         entity.setDisabled(task.getDisabled());
+        entity.setTimeoutSeconds(task.getTimeoutSeconds());
+        // 分组ID
+        String groupId = task.getDictPlatform();
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(task.getDictPlatform());
+        // 平台不存在
+        if (null == platformDictEnum){
+            entity.setGroupId(groupId);
+            return entity;
+        }
+        // 店铺不存在
+        String shopId = dto.getShopId();
+        if (StringUtils.isBlank(shopId)){
+            entity.setGroupId(groupId);
+            return entity;
+        }
+        if (PlatformDictEnum.AMAZON == platformDictEnum){
+            // 亚马逊平台自定义分组ID：平台:卖家ID:业务类型
+            groupId = StrUtil.format("{}:{}:{}", task.getDictPlatform(), dto.getPlatformShopCode(), task.getBillType());
+            entity.setGroupId(groupId);
+            return entity;
+        }
+        // 其他平台分组ID规则:平台:店铺ID
+        groupId = StrUtil.format("{}:{}", task.getDictPlatform(), shopId);
+        entity.setGroupId(groupId);
+        entity.setDisabled(task.getDisabled());
         return entity;
     }
 
@@ -234,5 +267,16 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setBillType(task.getBillType());
         entity.setOperateType(task.getOperateType());
         return entity;
+    }
+
+    @Override
+    public List<String> findGroupIdByPlatform(String dictPlatform) {
+        LambdaQueryWrapper<PlatformApiTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(PlatformApiTaskEntity::getGroupId);
+        queryWrapper.eq(PlatformApiTaskEntity::getDictPlatform, dictPlatform);
+        queryWrapper.eq(PlatformApiTaskEntity::getIsDeleted, Boolean.FALSE);
+        queryWrapper.eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE);
+        queryWrapper.groupBy(PlatformApiTaskEntity::getGroupId);
+        return listObjs(queryWrapper, Object::toString);
     }
 }

@@ -1456,6 +1456,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseOrgId;
 
+        /**
+         * 承运商
+         */
+        private String carrierId;
+
 
 
         /**

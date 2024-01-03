@@ -135,6 +135,21 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private LocalDateTime handleTime;
 
         /**
+        * 创建人
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建人时间
+        */
+        private LocalDateTime createTime;
+
+        /**
          * 详情
          */
         private List<SoB2cDeliveryInterceptDetailDTO.ViewDTO> detailList;
@@ -466,7 +481,31 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         /**
          * 单据id
          */
-        private String id;
+        private List<String> ids;
+        /**
+         * 处理结果：wms/common/enumDropDown?type=HandleResult
+         * 描述 success：拦截成功，failure：拦截失败
+         */
+        private String handleResult;
+        /**
+         * 处理结果描述
+         */
+        /**
+         * 处理结果描述
+         */
+        private String resultRemark;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmDTO {
+        /**
+         * 单据id
+         */
+        private String ids;
         /**
          * 处理结果：wms/common/enumDropDown?type=HandleResult
          * 描述 success：拦截成功，failure：拦截失败

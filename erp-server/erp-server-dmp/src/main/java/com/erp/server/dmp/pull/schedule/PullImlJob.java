@@ -1,11 +1,9 @@
 package com.erp.server.dmp.pull.schedule;
 
-import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
-import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,7 @@ public class PullImlJob {
     @XxlJob("pullImlExecute")
     public void execute() {
         threadPoolTaskExecutor.execute(()->{
-            threadPoolTaskExecutor.execute(() -> platformDataThread.executeTask(PlatformDictEnum.IML.getCode()));
+            threadPoolTaskExecutor.execute(() -> platformDataThread.executeTask(PlatformDictEnum.IML.getCode(), true));
         });
     }
 

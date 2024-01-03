@@ -74,8 +74,10 @@ public class TbTaskTypeService {
                     return localTime.isAfter(nextTime.plusHours(timeoutMabangHours))
                             && localTime.isAfter(updateTime.plusHours(timeoutMabangHours));
                 } else {
-                    return localTime.isAfter(nextTime.plusSeconds(timeoutSeconds))
-                            && localTime.isAfter(updateTime.plusSeconds(timeoutSeconds));
+                    // 检查和获取默认时间
+                    Long currentTimeoutSeconds = task.getAndCheckTimeoutSeconds(timeoutSeconds);
+                    return localTime.isAfter(nextTime.plusSeconds(currentTimeoutSeconds))
+                            && localTime.isAfter(updateTime.plusSeconds(currentTimeoutSeconds));
                 }
             }).collect(Collectors.toList());
         // 需要设置超时恢复的任务

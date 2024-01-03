@@ -6,6 +6,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -45,6 +46,14 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     private Integer downloadStatus;
 
     /**
+     * 地址详情下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    @Panno(findType = PannoEnum.EQ,field = "downloadAddressStatus")
+    private Integer downloadAddressStatus;
+
+    /**
      * 订单明细
      */
     private OrderItemList details;
@@ -55,6 +64,19 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         this.setUniqueId(order.getAmazonOrderId());
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
         this.setDownloadStatus(0);
+    }
+
+    public static PlatformAmazonOrderDTO getByAddressDownloadStatus() {
+        PlatformAmazonOrderDTO orderMongoDTO = new PlatformAmazonOrderDTO();
+        orderMongoDTO.setDownloadStatus(1);
+        orderMongoDTO.setDownloadAddressStatus(0);
+        return orderMongoDTO;
+    }
+
+    public static PlatformAmazonOrderDTO getByDownloadStatus(Integer status) {
+        PlatformAmazonOrderDTO orderMongoDTO = new PlatformAmazonOrderDTO();
+        orderMongoDTO.setDownloadStatus(status);
+        return orderMongoDTO;
     }
 
     /**

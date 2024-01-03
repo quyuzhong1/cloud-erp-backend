@@ -237,7 +237,7 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+    public ApiResult<List<BatchResultDTO>> audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
@@ -259,7 +259,8 @@ public class SoOutstockController extends BaseController {
             resultDTOS.add(result);
         }
 
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure();
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
 
     }
 

@@ -90,4 +90,21 @@ public interface RedisCacheConstants {
      * 亚马逊RDT token:店铺ID:订单ID
      */
     String AMAZON_RDT_TOKEN = "amazon-rdt-token:{}:{}";
+
+
+    /**
+     * 平台请求中:平台类型:sellerId:业务类型/接口类型
+     * :请求的端点区域?
+     */
+    String PLATFORM_REQUEST = "platform_request:{}:{}:{}";
+
+    /**
+     * 平台请求频率:平台类型:sellerId:业务类型/接口类型
+     */
+    String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";
+
+    /**
+     * 平台请求频率前缀:groupId
+     */
+    String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
 }

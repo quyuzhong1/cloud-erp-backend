@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
@@ -110,9 +111,28 @@ public class JobTaskDTO {
     private String platformApiId;
 
     /**
+     * 超时时间:单位秒:默认3600
+     */
+    private Long timeoutSeconds;
+
+    /**
+     * 业务分组ID:系统根据此ID开多线程任务
+     * 亚马逊分组ID:平台:平台类型:sellerId:业务类型
+     *
+     */
+    private String groupId;
+
+    /**
      * 平台api接口id
+     * (数据库不存在该字段)
      */
     private List<?> mongoDataList;
+
+    /**
+     * 扩展信息json
+     * (数据库不存在该字段)
+     */
+    private JSONObject extendObj;
 
 
 //    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
@@ -150,5 +170,15 @@ public class JobTaskDTO {
         this.operateType = tbTask.getOperateType();
         this.apiParam = tbTask.getApiParam();
         this.platformCategory = tbTask.getPlatformCategory();
+    }
+
+    public Long getAndCheckTimeoutSeconds(Long timeoutSeconds) {
+        if (null == this.timeoutSeconds){
+            return timeoutSeconds;
+        }
+        if (0 == this.timeoutSeconds){
+            return timeoutSeconds;
+        }
+        return this.timeoutSeconds;
     }
 }

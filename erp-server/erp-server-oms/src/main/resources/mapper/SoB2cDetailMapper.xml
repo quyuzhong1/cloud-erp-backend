@@ -61,7 +61,9 @@
                warehouse_name,label_json,
                warehouse_org_id,
                warehouse_org_name,
-               warehouse_location
+               warehouse_location,
+               currency,
+               exchange_rate
             FROM so_b2c_detail sbd
             WHERE sbd.main_id = #{mainId}
             AND  sbd.is_deleted=false

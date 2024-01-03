@@ -16,15 +16,13 @@ package com.erp.server.dmp.amz;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -183,8 +181,12 @@ public class OrdersV0ApiTest {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         GetOrderResponse response = api.getOrder(orderId);
         System.out.println("根据ID查询订单");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -205,8 +207,12 @@ public class OrdersV0ApiTest {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
 //        api.getApiClient().addDefaultHeader("x-amz-access-token",
 //                "Atz.sprdt|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");
 
@@ -232,8 +238,12 @@ public class OrdersV0ApiTest {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         api.getApiClient().addDefaultHeader("x-amz-access-token",
                 "Atz.sprdt|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");
 
@@ -253,7 +263,11 @@ public class OrdersV0ApiTest {
     public void getOrderItemsTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true, rateLimitConfig);
         GetOrderItemsResponse response = api.getOrderItems(orderId, nextToken);
 
         // TODO: test validations
@@ -268,7 +282,11 @@ public class OrdersV0ApiTest {
     public void getOrderItemsBuyerInfoTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true, rateLimitConfig);
         GetOrderItemsBuyerInfoResponse response = api.getOrderItemsBuyerInfo(orderId, nextToken);
 
         // TODO: test validations
@@ -282,7 +300,11 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderRegulatedInfoTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true, rateLimitConfig);
         GetOrderRegulatedInfoResponse response = api.getOrderRegulatedInfo(orderId);
 
         // TODO: test validations
@@ -317,7 +339,11 @@ public class OrdersV0ApiTest {
         String earliestDeliveryDateAfter = null;
         String latestDeliveryDateBefore = null;
         String latestDeliveryDateAfter = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true, rateLimitConfig);
         GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
 
         // TODO: test validations
@@ -371,7 +397,11 @@ public class OrdersV0ApiTest {
         orderItemList.add(orderItem);
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true, rateLimitConfig);
         String orderId = "902-1106328-1059050";
         api.confirmShipment(body, orderId);
 
@@ -457,7 +487,7 @@ public class OrdersV0ApiTest {
         }
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         String orderId = "701-3274667-0305064";
         ApiResponse<Void> voidApiResponse = api.confirmShipmentWithHttpInfo(body, orderId);
         System.out.println("标记发货响应结果");
