@@ -6,7 +6,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -26,6 +29,12 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -54,6 +63,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
+            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            soOutstockService.generateB2cSoOutstock(entity.getSourceId());
         }
         return this.buildViewDTO(entity);
     }
