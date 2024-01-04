@@ -99,14 +99,14 @@
                 and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id
                 <!-- 平台sku -->
                 <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
-                    and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
+                    and platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
                 </if>
                 <!-- 平台产品id -->
                 <if test="params.platformSpuNo != null and params.platformSpuNo != '' ">
-                    and sb2cd.platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
+                    and platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
                 </if>
                 <if test="params.labelList != null and params.labelList.size > 0 and params.labelList.contains('aliexpressTaxed')">
-                    and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
+                    and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')
                 </if>
                 )
             </if>
