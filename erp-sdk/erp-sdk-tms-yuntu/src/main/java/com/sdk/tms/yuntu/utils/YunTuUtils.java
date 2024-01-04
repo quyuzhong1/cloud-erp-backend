@@ -15,27 +15,27 @@ public class YunTuUtils {
         return SBase64.stringToBase64(customerCode+"&"+apiSecret);
     }
 
-    public static String sendPost(String apiUrl, List<Map<String, Object>> paramsMapList,String customerCode,String apiSecret){
+    public static String sendPost(String host,String apiUrl, List<Map<String, Object>> paramsMapList,String customerCode,String apiSecret){
         Map<String, String> headerMap = headerMap(customerCode,apiSecret);
-        String url = YunTuConstants.BASE_URL + apiUrl;
+        String url = host + apiUrl;
         return OkHttpUtils.doPostJson(url, paramsMapList, headerMap);
     }
 
-    public static String sendPost(String apiUrl, Map<String, Object> paramsMap,String customerCode,String apiSecret){
+    public static String sendPost(String host,String apiUrl, Map<String, Object> paramsMap,String customerCode,String apiSecret){
         Map<String, String> headerMap = headerMap(customerCode,apiSecret);
-        String url = YunTuConstants.BASE_URL + apiUrl;
+        String url = host + apiUrl;
         return OkHttpUtils.doPostJson(url, paramsMap, headerMap);
     }
 
-    public static String sendPostList(String apiUrl, List<String> list,String customerCode,String apiSecret){
+    public static String sendPostList(String host,String apiUrl, List<String> list,String customerCode,String apiSecret){
         Map<String, String> headerMap = headerMap(customerCode,apiSecret);
-        String url = YunTuConstants.BASE_URL + apiUrl;
+        String url = host + apiUrl;
         return OkHttpUtils.doPostList(url, list, headerMap);
     }
 
-    public static String sendGet(String apiUrl, Map<String, Object> paramsMap,String customerCode,String apiSecret){
+    public static String sendGet(String host, String apiUrl, Map<String, Object> paramsMap,String customerCode,String apiSecret){
         Map<String, String> headerMap = headerMap(customerCode,apiSecret);
-        String url = YunTuConstants.BASE_URL + apiUrl;
+        String url = host + apiUrl;
         return OkHttpUtils.doGet(url, paramsMap, headerMap);
     }
 

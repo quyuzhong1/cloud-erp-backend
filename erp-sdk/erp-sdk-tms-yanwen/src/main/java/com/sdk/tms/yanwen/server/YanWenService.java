@@ -30,7 +30,7 @@ public class YanWenService {
      * @return List<YanWenChannel>
      */
     public YanWenResponse<List<YanWenChannel>> getAllChannel(Map<String,String> map){
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_CHANNEL_GETLIST,null,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_CHANNEL_GETLIST,null,map.get("clientId"),map.get("clientSecret"));
         YanWenResponse<List<YanWenChannel>> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<List<YanWenChannel>>>() {}.getType());
@@ -46,7 +46,7 @@ public class YanWenService {
      */
     public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request,Map<String,String> map){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CREATE,paramsMap,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_ORDER_CREATE,paramsMap,map.get("clientId"),map.get("clientSecret"));
         YanWenResponse<YanWenCreateWayBill> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());
@@ -62,7 +62,7 @@ public class YanWenService {
      */
     public YanWenResponse<YanWenGetLabel> getLabel(@Valid YanWenGetLabelRequest request,Map<String,String> map){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_LABEL_GET,paramsMap,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_ORDER_LABEL_GET,paramsMap,map.get("clientId"),map.get("clientSecret"));
         YanWenResponse<YanWenGetLabel> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenGetLabel>>() {}.getType());
@@ -78,7 +78,7 @@ public class YanWenService {
      */
     public YanWenResponse<String> cancelOrder(@Valid YanWenCancelOrderRequest request,Map<String,String> map){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CANCEL,paramsMap,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_ORDER_CANCEL,paramsMap,map.get("clientId"),map.get("clientSecret"));
         YanWenResponse<String> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
@@ -94,7 +94,7 @@ public class YanWenService {
      */
     public YanWenResponse<List<YanWenQueryOrder>> queryOrder(@Valid YanWenQueryOrderRequest request,Map<String,String> map){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_QUERY,paramsMap,map.get("clientId"),map.get("clientSecret"));
+        String response = YanWenUtils.sendPost(map.get("url"),YanWenConstants.METHOD_ORDER_QUERY,paramsMap,map.get("clientId"),map.get("clientSecret"));
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<List<YanWenQueryOrder>>>() {}.getType());
