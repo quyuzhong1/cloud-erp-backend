@@ -7,11 +7,12 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +36,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param
      * @return java.util.List<java.lang.String>
      */
-    List<String> listGroup();
+//    List<String> listGroup();
 
     
     /**
@@ -45,7 +46,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.String
      */
-    String add(CustomerDTO.AddDTO dto);
+    String add(CustomerB2CDTO.AddDTO dto);
 
     
     /**
@@ -62,18 +63,18 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @author yl
      * @date 2023-05-12 17:01
      * @param
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.TabListDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.TabListDTO>
      */
-    List<CustomerDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<CustomerB2CDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
      * 分页信息
      * @author yl
      * @date 2023-05-12 17:21
      * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.CustomerB2CDTO.PagingViewDTO>
      */
-    PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto);
+    PagingVO<CustomerB2CDTO.PagingViewDTO> paging(PagingDTO<CustomerB2CDTO.PagingParamDTO> dto);
 
     
     /**
@@ -83,16 +84,16 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    String addAndSubmit(CustomerDTO.AddDTO dto);
+    String addAndSubmit(CustomerB2CDTO.AddDTO dto);
 
     /**
      * 客户详情
      * @author yl
      * @date 2023-05-15 9:24
      * @param id
-     * @return com.erp.model.oms.dto.CustomerDTO.ViewDTO
+     * @return com.erp.model.oms.dto.CustomerB2CDTO.ViewDTO
      */
-    CustomerDTO.ViewDTO view(String id);
+    CustomerB2CDTO.ViewDTO view(String id);
 
     /**
      * 修改客户信息
@@ -101,7 +102,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.String
      */
-    String updateCustomer(CustomerDTO.UpdateDTO dto);
+    String updateCustomer(CustomerB2CDTO.UpdateDTO dto);
 
     
     /**
@@ -111,7 +112,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateAndSubmit(CustomerDTO.UpdateDTO dto);
+    Boolean updateAndSubmit(CustomerB2CDTO.UpdateDTO dto);
 
     /**
      * 审核
@@ -160,7 +161,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param response
      * @return java.lang.Boolean
      */
-    Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(CustomerB2CDTO.ExportDTO dto, HttpServletResponse response);
 
     
     /**
@@ -168,9 +169,9 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @author yl
      * @date 2023-05-15 15:24
      * @param
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.InfoDTO>
      */
-    List<CustomerDTO.InfoDTO> listCustomer();
+    List<CustomerB2CDTO.InfoDTO> listCustomer();
 
     /**
      * 启用或者停用客户
@@ -197,9 +198,9 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @author yl
      * @date 2023-05-15 16:05
      * @param
-     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2CDTO.InfoDTO>
      */
-    List<CustomerDTO.InfoDTO> listEnable(String permissionSql);
+    List<CustomerB2CDTO.InfoDTO> listEnable(String permissionSql);
 
     
     /**
@@ -207,9 +208,9 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @author yl
      * @date 2023-05-15 16:15
      * @param customerId
-     * @return com.erp.model.oms.dto.CustomerDTO.BaseDTO
+     * @return com.erp.model.oms.dto.CustomerB2CDTO.BaseDTO
      */
-    CustomerDTO.BaseDTO getBase(String customerId);
+    CustomerB2CDTO.BaseDTO getBase(String customerId);
 
 
     /**
@@ -231,7 +232,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param syncOperate
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+//    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 
     
     /**
@@ -256,14 +257,14 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param kingdeeCustomerIds
      * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      */
-    List<CustomerB2cEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds);
+//    List<CustomerB2cEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds);
 
 
     /**
      * 导入客户金蝶信息（系统上线临时使用，后续移除）
      * @param file
      */
-    void importCustomerKingdee(MultipartFile file) throws IOException;
+//    void importCustomerKingdee(MultipartFile file) throws IOException;
     /**
      * @description: 根据国家ids查询客户信息
      * @author Will
@@ -281,7 +282,16 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
 
-    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+    CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity oldCustomerB2cEntity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
 
     CustomerB2cEntity getBySourceId(String mainId);
+
+    /**
+     * 根据条件查询
+     * @param dictPlatform
+     * @param name
+     * @param code
+     * @return
+     */
+    CustomerB2cEntity findByPlatformAndName(String dictPlatform, String name, String sourceType);
 }

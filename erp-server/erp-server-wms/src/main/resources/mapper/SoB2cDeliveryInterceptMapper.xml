@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper">
+
+    <!--获取状态统计-->
+    <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO$TabListDTO">
+        SELECT
+        sbdi.handle_status AS tabFlag,
+        count(*) AS count
+        FROM so_b2c_delivery_intercept sbdi
+        WHERE is_deleted=FALSE
+        GROUP BY sbdi.handle_status
+    </select>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO$ListDTO">
+        SELECT
+            sbdi.id,
+            sbdi.code,
+            sbdi.so_code,
+            sbdi.so_delivery_code,
+            sbdi.so_outstock_code,
+            sbdid.sku_id,
+            sbdid.sku_no,
+            sbdid.delivery_qty,
+            sbdid.warehouse_id,
+            sbdid.warehouse_name,
+            sbdi.logistics_channel_id,
+            sbdi.logistics_channel_name,
+            sbdi.bill_type,
+            sbdi.transport_no,
+            sbdi.cancel_status,
+            sbdi.intercept_status,
+            sbdi.handle_status,
+            sbdi.handle_result,
+            sbdi.remark,
+            sbdi.create_user_name,
+            sbdi.handle_user_name,
+            sbdi.create_time,
+            sbdi.handle_time
+        FROM so_b2c_delivery_intercept_detail sbdid
+        LEFT JOIN so_b2c_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdid.is_deleted = FALSE
+        WHERE sbdi.is_deleted = FALSE
+        <!--tab状态-->
+        <if test="params.tabFlag != null and params.tabFlag != ''">
+            AND sbdi.handle_status = #{params.tabFlag}
+        </if>
+        <!--单号-->
+        <if test="params.code !=null and params.code!=''">
+            AND sbdi.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+        <!--销售单号-->
+        <if test="params.soCode !=null and params.soCode!=''">
+            AND sbdi.so_code ILIKE concat('%',#{params.soCode}::text,'%')
+        </if>
+        <!--发货单号-->
+        <if test="params.soDeliveryCode !=null and params.soDeliveryCode!=''">
+            AND sbdi.so_delivery_code ILIKE concat('%',#{params.soDeliveryCode}::text,'%')
+        </if>
+        <!--销售出库单号-->
+        <if test="params.soOutstockCode !=null and params.soOutstockCode!=''">
+            AND sbdi.so_outstock_code ILIKE concat('%',#{params.soOutstockCode}::text,'%')
+        </if>
+        <!--sku编号-->
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            AND sbdid.sku_no in
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <!--物流渠道-->
+        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
+            AND sbdi.logistics_channel_id in
+            <foreach collection="params.logisticsChannelIdList" item="logisticsChannelId" open="(" separator="," close=")">
+                #{logisticsChannelId}
+            </foreach>
+        </if>
+        <!--销售出库单号-->
+        <if test="params.transportNo !=null and params.transportNo!=''">
+            AND sbdi.transport_no ILIKE concat('%',#{params.transportNo}::text,'%')
+        </if>
+        <!--取消状态-->
+        <if test="params.cancelStatus !=null and params.cancelStatus!=''">
+            AND sbdi.cancel_status = #{params.cancelStatus}
+        </if>
+        <!--拦截状态-->
+        <if test="params.interceptStatus !=null and params.interceptStatus!=''">
+            AND sbdi.intercept_status = #{params.interceptStatus}
+        </if>
+        <!--处理状态-->
+        <if test="params.handleStatus !=null and params.handleStatus!=''">
+            AND sbdi.handle_status = #{params.handleStatus}
+        </if>
+        <!--处理结果-->
+        <if test="params.handleResult !=null and params.handleResult!=''">
+            AND sbdi.handle_result = #{params.handleResult}
+        </if>
+        <!--创建人-->
+        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+            AND sbdi.create_user_id in
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <!--创建时间-->
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            AND sbdi.create_time &gt;= #{params.createTimeList[0]}
+            AND sbdi.create_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
+        </if>
+    </select>
+</mapper>

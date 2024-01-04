@@ -23,8 +23,12 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
     @Override
     public void onMessage(Object obj) {
         String dmpSyncTaskId = "";
+        String platform = "";
+        String uniqueId = "";
         try {
             dmpSyncTaskId = new JSONObject(obj).getStr("dmpSyncTaskId");
+            platform = new JSONObject(obj).getStr("platform");
+            uniqueId = new JSONObject(obj).getStr("uniqueId");
             if (StringUtils.isBlank(dmpSyncTaskId)){
                 log.error("平台数据消费异常:找不到dmpSyncTaskId, object={}", JSONUtil.toJsonStr(obj));
                 return;
@@ -35,14 +39,17 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());
                 //异常预警
                 sendWarnMsg(dmpSyncTaskId, handle.getMsg());
+                updateMongodbData(platform, uniqueId, 0);
                 return;
             }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
+            updateMongodbData(platform, uniqueId, 2);
         }catch (Exception e) {
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
             //异常预警
             sendWarnMsg(dmpSyncTaskId, e.getMessage());
+            updateMongodbData(platform, uniqueId, 0);
         }
     }
 
@@ -52,6 +59,14 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * @param code
      */
     public abstract void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg);
+
+    /**
+     * 更新mongodb状态
+     * @param platform
+     * @param uniqueId
+     * @param isClean
+     */
+    public abstract void updateMongodbData(String platform,String uniqueId, Integer isClean);
 
     /**
      * 预警

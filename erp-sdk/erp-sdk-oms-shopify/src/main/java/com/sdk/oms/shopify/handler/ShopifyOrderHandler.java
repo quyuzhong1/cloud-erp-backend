@@ -104,7 +104,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     @Override
     public PlatformShopifyOrderDTO downloadDetail(PlatformShopifyOrderDTO dto, JSONObject extendObj) {
         // Shopify订单下载
-        String shopId = dto.getShopInfoDTO().getId();
+        String shopId = dto.getShopId();
         ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[Shopify详情订单下载]从缓存中获取shopify token 失败: shopId={}",shopId);
@@ -114,7 +114,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         String accessToken = shopInfoDTO.getAccessToken();
 
         List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
-                .getOrderTransactions(dto.getShopifyOrder().getId());
+                .getOrderTransactions(dto.getUniqueId());
         if (CollectionUtils.isEmpty(transactionList)){
             return dto;
         }

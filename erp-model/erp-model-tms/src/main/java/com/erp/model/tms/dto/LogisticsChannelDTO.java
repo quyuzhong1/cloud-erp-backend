@@ -53,6 +53,8 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsSupplierName;
 
+        private String logisticsSupplierId;
+
         /**
          * 渠道代码
          */
@@ -76,6 +78,33 @@ public class LogisticsChannelDTO implements Serializable {
 
         private Boolean disabled;
 
+        /**
+         * 平台编码
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 平台是否允许打印
+         */
+        private Boolean isPrintPlatform;
+    }
+
+
+    /**
+     * 标记发货所需要的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SignShipDTO{
+
+        private String channelId;
+
+        private String code;
+
+        /**
+         * 渠道供应商名称 logistics_sale_channel
+         */
+        private String saleChannelSupplierName;
 
     }
 

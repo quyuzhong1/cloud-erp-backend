@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class LabelRequest implements Serializable {
     /**
      * 请求单号（支持4PX单号、客户单号和面单号）
      */
-    @NotBlank(message = "请求单号不能为空")
+    @NotNull(message = "请求单号不能为空")
     @JSONField(name = "request_no")
     private List<String> requestNo;
     /**

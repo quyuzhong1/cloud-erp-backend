@@ -203,11 +203,17 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
      * @return
      */
     @Override
-    public List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(Map<String,Object> map) {
-        List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> ruleMatchResultList = new ArrayList<>(10);
+    public RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map) {
         //根据优先级获取规则列表
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) map.get("detailList");
+        mapList= mapList.stream().filter(m->Objects.isNull(m.get("deliveryWarehouseId"))||StringUtils.isBlank(m.get("deliveryWarehouseId").toString())).
+                collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(mapList)){
+            return new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
+        }
+        map.put("detailList",mapList);
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
         for (RuleDeliveryWarehouseEntity item : ruleDeliveryWarehouselList) {
@@ -223,12 +229,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
                 ruleMatchResult.setWarehouseId(item.getWarehouseId());
                 ruleMatchResult.setMap(map);
-                ruleMatchResultList.add(ruleMatchResult);
+                return ruleMatchResult;
+
             }
-
-
         }
-        return ruleMatchResultList;
+        return null;
 
     }
 
@@ -238,7 +243,10 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
      * @return
      */
     private List<RuleDeliveryWarehouseEntity> listOrderByPriority() {
-        return this.lambdaQuery().eq(RuleDeliveryWarehouseEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleDeliveryWarehouseEntity::getPriority).list();
+        return this.lambdaQuery().eq(RuleDeliveryWarehouseEntity::getDisabled, Boolean.FALSE).
+                orderByAsc(RuleDeliveryWarehouseEntity::getPriority).
+                orderByDesc(RuleDeliveryWarehouseEntity::getUpdateTime).
+                list();
     }
 
 

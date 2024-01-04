@@ -38,6 +38,7 @@ public enum LogActionEnum {
     CUSTOM_BATCH_UPDATE("customBatchUpdate", "自定义批量更新",false),
     CUSTOM_BATCH_INSERT("customBatchInsert", "自定义批量插入", false),
     UPLOAD("upload", "上传", false),
+    DOWNLOAD("download", "下载", false),
     // 新接口禁止使用
     UNKNOWN_UPDATE("unknownUpdate", "无法识别的参数更新",false),
     ;

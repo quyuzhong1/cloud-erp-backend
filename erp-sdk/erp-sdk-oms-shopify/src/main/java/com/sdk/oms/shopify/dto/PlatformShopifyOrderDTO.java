@@ -4,6 +4,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,7 +15,6 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +35,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
     /**
      * Shopify SDK 订单信息
      */
-    private ShopifyShopInfoDTO shopInfoDTO;
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
+    private String shopId;
 
     /**
      * 详情或其他数据下载状态
@@ -64,11 +65,11 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
 
     public PlatformShopifyOrderDTO(JobTaskDTO dto, ShopifyOrder shopifyOrder, ShopifyShopInfoDTO shopInfoDTO) {
         this.shopifyOrder = shopifyOrder;
-        this.setIsClean(0);
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
-        this.setUniqueId(shopifyOrder.getId());
+        this.setUniqueId(shopifyOrder.getOrderId());
 //        this.setLastPushTime(dto.getNextTime());
-        this.shopInfoDTO = shopInfoDTO;
+        this.shopId = dto.getShopId();
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.downloadStatus = 0;
@@ -80,8 +81,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformShopifyOrderDTO dto) {
         // 原订单信息
         ShopifyOrder sourceOrder = dto.getShopifyOrder();
-        // 本ERP店铺信息
-        ShopifyShopInfoDTO shopInfoDTO = dto.getShopInfoDTO();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 平台类型
@@ -94,15 +93,15 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单日期
         orderDTO.setBillDate(sourceOrder.getCreatedAt().toLocalDate());
         // 平台订单号
-        orderDTO.setPlatformCode(sourceOrder.getId());
+        orderDTO.setPlatformCode(dto.getUniqueId());
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
         // 店铺ID
-        orderDTO.setShopId(shopInfoDTO.getId());
+        orderDTO.setShopId(dto.getShopId());
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(false);
+        orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType("");
+        orderDTO.setInvalidType(orderDTO.getInvalidStatus() ? "automatic" : "");
         // 作废原因
         orderDTO.setInvalidRemark("");
         // 订单状态
@@ -123,16 +122,31 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         orderDTO.setShippingFee(shippingFee);
+        // 审核状态
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatusStr());
+
         // 付款时间
-        orderDTO.setPayTime(dto.getPayTime());
+        orderDTO.setPayTime("paid".equalsIgnoreCase(orderDTO.getPayStatus())? dto.getPayTime() : null);
         // 付款金额
         orderDTO.setPayAmount(sourceOrder.getSubtotalPrice());
         // 付款方式
         orderDTO.setDictPayMethod(dto.getDictPayMethod());
         // 买家备注
-        orderDTO.setBuyerRemark("");
+        String buyerRemark  = "";
+        if (StringUtils.isBlank(sourceOrder.getNote())){
+            if (null != sourceOrder.getCustomer()){
+                String note = sourceOrder.getCustomer().getNote();
+                if (StringUtils.isNotBlank(note)){
+                    buyerRemark = note;
+                }
+            }
+        } else {
+            buyerRemark = sourceOrder.getNote();
+        }
+
+        orderDTO.setBuyerRemark(buyerRemark);
         // 订单备注
-        orderDTO.setRemark(sourceOrder.getNote());
+        orderDTO.setRemark("");
         // 销售组织id
         orderDTO.setOrgId("");
         // 销售组织名称
@@ -144,7 +158,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 来源类型
         orderDTO.setSourceType("soB2c");
         // 来源id
-        orderDTO.setSourceId(sourceOrder.getId());
+        orderDTO.setSourceId(sourceOrder.getOrderId());
         // 来源编码
         orderDTO.setSourceCode("");
         // 标签json
@@ -153,6 +167,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        // 来源状态
+        orderDTO.setPlatformOrderStatus(sourceOrder.getFinancialStatus());
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
@@ -170,17 +186,18 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             receiverDTO.setReceiverTelNumber(StringUtils.isBlank(customer.getPhone()) ? "" :customer.getPhone());
             receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
+            if (null != shippingAddress){
+                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
+                receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
+                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
 
-            receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
-            receiverDTO.setSecondAddress(
-                    StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2()
-            );
-
-            receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-            receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountry()) ? "" : shippingAddress.getCountry());
-            receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-            receiverDTO.setFullAddress("");
-            receiverDTO.setPostCode(shippingAddress.getZip());
+                receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+//                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+                receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+                receiverDTO.setFullAddress("");
+                receiverDTO.setPostCode(shippingAddress.getZip());
+            }
             orderDTO.setReceiver(receiverDTO);
         }
 
@@ -251,7 +268,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(item.getId());
+        detailDTO.setSourceDetailId(item.getLineItemId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id

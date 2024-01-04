@@ -1,6 +1,8 @@
 package com.common.business.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * @author Lambda
@@ -10,10 +12,12 @@ import com.common.core.constant.EnumMessage;
  * @Created by yl
  */
 public enum BooleanEnum implements EnumMessage {
-    TRUE(Boolean.TRUE,"是"),
-    FALSE(Boolean.FALSE,"否"),
+    TRUE(true,"是"),
+    FALSE(false,"否"),
     ;
 
+    @EnumValue
+    @JsonValue
     private Boolean code;
 
     private String name;

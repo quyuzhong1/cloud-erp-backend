@@ -91,6 +91,16 @@
         WHERE lca.is_deleted=false
           AND lca.address_id=#{addressId}
     </select>
+    <select id="getChannelByName" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        select
+            lc.id,
+            lc.main_id,
+            lc.name,
+            lc.code
+        from logistics_channel lc LEFT JOIN logistics_sale_channel lsc on lc.source_id = lsc.id
+        where lc.is_deleted = false  and lc.name = #{channelName} or lsc.cn_name = #{channelName}
+    </select>
+
 
 
 </mapper>

@@ -7,6 +7,7 @@ import com.erp.server.wms.service.OverseasProviderService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -20,14 +21,20 @@ public class PlatformWarehouseConsumerServiceTest {
     @Resource
     private PlatformWarehouseConsumerService service;
 
+    @Resource
+    private PlatformOutboundConsumerService outboundConsumerService;
+
     @Test
     public void handleTest() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.set("providerErpId","2");
-        jsonObject.set("warehouseCode","code");
-        jsonObject.set("warehouseName","name2");
-        jsonObject.set("countryCode","KE");
+        jsonObject.set("orderStatus","shipped");
+        jsonObject.set("uniqueId","f89cef75e5a0fae06d371599726aaeb2");
+        jsonObject.set("platform","goodcang");
+        jsonObject.set("dmpSyncTaskId","1742012512032788481");
+        jsonObject.set("referenceNo","XSDS23122700025");
+        jsonObject.set("orderCode","G1149-231227-0119");
+        jsonObject.set("provider","goodcang");
         jsonObject.set("warehousePlatformType","overseasWarehouse");
-        service.handle(jsonObject);
+        outboundConsumerService.handle(jsonObject);
     }
 }

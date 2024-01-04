@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
@@ -191,17 +192,47 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         return viewDTO;
     }
 
-    @Override
+    public static void main(String[] args) {
+        String concat = StrUtil.concat(true, null, "", "n");
+        System.out.println(concat);
+    }
+
+
+        @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
         CustomerB2cAddressEntity entity = this.getByMainId(mainEntity.getId());
         if (null == entity){
             CustomerB2cAddressEntity newEntity = new CustomerB2cAddressEntity();
             newEntity.setMainId(mainEntity.getId());
+            String address = StrUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
+            newEntity.setAddress(address);
+
+
+            newEntity.setPerson(receiverEntity.getName());
+            newEntity.setTelNumber(receiverEntity.getTelNumber());
+            newEntity.setIsDefault(true);
+            newEntity.setDisabled(false);
             if (!save(newEntity)){
                 throw new ServiceException("[CustomerB2cAddressEntity] 保存失败");
             }
         } else {
+            if (StringUtils.isBlank(entity.getAddress())){
+                String address = StrUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
+                entity.setAddress(address);
+            }
+            if (StringUtils.isBlank(entity.getPerson())) {
+                entity.setPerson(receiverEntity.getName());
+            }
+            if (StringUtils.isBlank(entity.getTelNumber())) {
+                entity.setTelNumber(receiverEntity.getTelNumber());
+            }
+            if (!entity.getIsDefault()){
+                entity.setIsDefault(true);
+            }
+            if (entity.getDisabled()){
+                entity.setIsDefault(false);
+            }
             entity.setEmail(receiverEntity.getEmail());
             entity.setTelNumber(receiverEntity.getTelNumber());
             if (!updateById(entity)){

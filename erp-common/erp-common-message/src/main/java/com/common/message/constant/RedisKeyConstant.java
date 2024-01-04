@@ -33,4 +33,16 @@ public class RedisKeyConstant {
      * skuNo
      */
     public static String DMP_SKU_COST_CODE = "DMP_SKU_COST:{}_*";
+
+    public static String WMS_PACKING_INSPECTION = "WMS:PACKING_INSPECTION:{}";
+
+    /**
+     * 拉取任务预警redis的key
+     */
+    public static String DMP_PUSH_TASK_WARN = "DMP_PUSH_TASK_WARN:{}";
+
+    /**
+     * 推送任务预警redis的key
+     */
+    public static String DMP_PULL_TASK_WARN = "DMP_PULL_TASK_WARN:{}";
 }

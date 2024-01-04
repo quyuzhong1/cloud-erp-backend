@@ -65,6 +65,12 @@ public class PlatformApiEntity extends BaseEntity<PlatformApiEntity> {
     private Integer intervalTime;
 
     /**
+     * 超时时间:单位秒:默认3600
+     */
+    @TableField(value = "timeout_seconds")
+    private Integer timeoutSeconds;
+
+    /**
      * 同步操作
      */
     @TableField(value = "sync_operate")

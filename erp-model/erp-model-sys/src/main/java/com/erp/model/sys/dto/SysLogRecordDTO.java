@@ -171,6 +171,11 @@ public class SysLogRecordDTO implements Serializable {
          */
         private List<String> recordIdList;
 
+        /**
+         * 单据编号列表
+         */
+        private List<String> recordCodeList;
+
     }
 
     /**

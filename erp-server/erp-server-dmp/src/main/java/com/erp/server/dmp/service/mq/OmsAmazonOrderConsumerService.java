@@ -33,6 +33,11 @@ public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandl
     }
 
     @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+
+    }
+
+    @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
 
     }

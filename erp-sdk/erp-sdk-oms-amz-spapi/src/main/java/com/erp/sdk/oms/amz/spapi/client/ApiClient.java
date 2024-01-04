@@ -58,6 +58,10 @@ import java.util.regex.Pattern;
 @Getter
 public class ApiClient {
 
+    public static final String SIGNED_ACCESS_TOKEN_HEADER_NAME = "x-amz-access-token";
+
+    public static final String X_AMAZON_RATE_LIMIT = "x-amzn-RateLimit-Limit";
+
     //    private String basePath = "https://sellingpartnerapi-na.amazon.com";
     private String basePath;
     private final boolean debugging = false;
@@ -431,7 +435,8 @@ public class ApiClient {
 
             //Add rateLimiter to httpclient interceptor for execute
             RateLimitInterceptor rateLimiterInterceptor = new RateLimitInterceptor(rateLimiter, rateLimitConfiguration);
-            httpClient.interceptors().add(rateLimiterInterceptor);
+            OkHttpClient.Builder builder = httpClient.newBuilder().addInterceptor(rateLimiterInterceptor);
+            httpClient = builder.build();
         }
         return this;
     }
@@ -1184,6 +1189,7 @@ public class ApiClient {
     }
 }
 
+@Slf4j
 class RateLimitInterceptor implements Interceptor {
     RateLimiter rateLimiter;
     RateLimitConfiguration rateLimitConfiguration;
@@ -1199,10 +1205,16 @@ class RateLimitInterceptor implements Interceptor {
             rateLimiter.acquire();
         } else {
             try {
+                // 尝试在指定的超时时间内获取许可
                 if (!rateLimiter.tryAcquire(rateLimitConfiguration.getTimeOut(), TimeUnit.MILLISECONDS)) {
-                    throw new ApiException("Throttled as per the ratelimiter on client");
+                    throw new ApiException("【亚马逊】限流器拦截:超时时间内未能获取到许可", 999999999, new HashMap<>(), "");
                 }
-            } catch (ApiException e) {
+            } catch (Exception e) {
+                if (e instanceof ApiException){
+                    log.warn("【亚马逊】限流器拦截:超时时间内未能获取到许可");
+                } else {
+                    log.error("【亚马逊】限流器拦截异常：msg={}", e.getMessage());
+                }
                 e.printStackTrace();
             }
         }

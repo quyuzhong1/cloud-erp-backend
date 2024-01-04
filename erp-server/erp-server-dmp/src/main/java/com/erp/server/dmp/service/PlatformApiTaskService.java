@@ -79,4 +79,20 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @return
      */
     Boolean createThirdWarehouseTask(ThirdWarehouseTaskDTO.AddDTO dto);
+
+    /**
+     * 分组查询指定平台的groupId
+     *
+     * @param dictPlatform
+     * @return List<String> groupIds
+     */
+    List<String> findGroupIdByPlatform(String dictPlatform);
+
+
+    /**
+     * 查询指定平台和
+     *
+     * @return List<PlatformApiTaskEntity> 任务列表
+     */
+    List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType);
 }

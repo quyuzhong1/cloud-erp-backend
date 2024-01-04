@@ -109,7 +109,7 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      */
     List<ShopSiteVO> getShopCategoryList();
 
-    
+
     /**
      * 根据 shopno 获取对应的店铺信息
      * @author yl

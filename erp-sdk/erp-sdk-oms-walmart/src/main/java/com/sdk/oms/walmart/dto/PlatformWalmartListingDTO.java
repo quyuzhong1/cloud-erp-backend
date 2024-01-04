@@ -24,13 +24,15 @@ import java.util.stream.Collectors;
 public class PlatformWalmartListingDTO extends CleanBaseDTO {
     private ItemResponseBean itemResponseBean;
 
+    private String shopId;
     /**
      * 初始化
      */
     public PlatformWalmartListingDTO(ItemResponseBean itemResponseBean, JobTaskDTO dto) {
         this.itemResponseBean = itemResponseBean;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.WALMART.getCode());
+        this.shopId = dto.getShopId();
+        super.setPlatform(PlatformDictEnum.WALMART.getCode());
         this.setUniqueId(itemResponseBean.getWpid());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
@@ -75,6 +77,8 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
         // 平台产品名称
         resultDto.setPlatformProductName(itemResponseBean.getProductName());
         resultDto.setUniqueId(itemResponseBean.getSku());
+        resultDto.setShopId(dto.getShopId());
+        resultDto.setPlatformUpdateTime(LocalDateTime.now());
         return resultDto;
     }
 }

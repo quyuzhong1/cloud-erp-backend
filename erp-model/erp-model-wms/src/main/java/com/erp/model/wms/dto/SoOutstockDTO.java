@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -101,6 +102,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soCode;
 
+        /**
+         * 是否拦截
+         */
+        private Boolean isIntercept;
 
         /**
          * 来源code
@@ -1423,5 +1428,113 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    /**
+     * 生成销售出库单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateB2cDTO {
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单code
+         */
+        private String soCode;
+
+        /**
+         * 订单类型
+         */
+        private String orderType;
+
+        /**
+         * 库存组织
+         */
+        private String warehouseOrgId;
+
+        /**
+         * 承运商
+         */
+        private String carrierId;
+
+
+
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源code
+         */
+        private String sourceCode;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         *
+         * 物流轨迹号
+         */
+        private String trackNo;
+
+        /**
+         *
+         * 物流运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+
+
+
+
+        /**
+         * 明细
+         */
+        private List<SoOutstockDetailDTO.AddDTO> detailList;
+
     }
 }

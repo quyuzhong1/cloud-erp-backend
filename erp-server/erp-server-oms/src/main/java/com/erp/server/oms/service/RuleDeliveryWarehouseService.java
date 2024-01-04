@@ -70,5 +70,5 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
      * @param map
      * @return
      */
-    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(Map<String,Object> map);
+    RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map);
 }

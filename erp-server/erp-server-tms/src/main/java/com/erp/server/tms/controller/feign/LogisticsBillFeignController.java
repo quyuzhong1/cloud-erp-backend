@@ -2,16 +2,21 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.server.tms.service.LogisticsPrintTypeService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -26,6 +31,8 @@ public class LogisticsBillFeignController {
     private LogisticsBillService logisticsBillService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private LogisticsPrintTypeService logisticsPrintTypeService;
 
     /**
      * 新增物流单
@@ -84,7 +91,7 @@ public class LogisticsBillFeignController {
      * @date 2023-11-23
      */
     @PostMapping("/generateBill")
-    public List<String> generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
+    public LogisticsBillDTO.GenerateBillResultDTO generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         return logisticsBillService.generateBill(dto);
     }
     
@@ -96,10 +103,19 @@ public class LogisticsBillFeignController {
      * @return 
      */
     @PostMapping("/cancelBill")
-    public Boolean cancelBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
+    public ApiResult<CancelResponseVO> cancelBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
         return logisticsBillService.cancelBill(dto);
     }
 
+    /**
+     * 拦截物流单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/interceptBill")
+    public ApiResult<InterceptResponseVO> interceptBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
+        return logisticsBillService.interceptBill(dto);
+    }
 
     /**
      * 获取物流单数据 用于查询轨迹
@@ -127,4 +143,56 @@ public class LogisticsBillFeignController {
         Boolean result = logisticsBillDetailService.updateTrackNo(billDTO);
         return result;
     }
+
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param trackNo
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @GetMapping("/getLogisticsBillByTrackNo")
+    public LogisticsBillDTO.BaseDTO getLogisticsBillByTrackNo(@RequestParam(value = "trackNo") String trackNo) {
+        LogisticsBillDTO.BaseDTO entity = logisticsBillService.getBaseByTrackNo(trackNo);
+        return entity;
+    }
+    /**
+     * 根据物流跟踪单号查询物流单详情
+     * @Author Luo_WG
+     * @Date 2023/12/14 15:45
+     * @param transportNoList
+     * @return com.erp.model.tms.dto.LogisticsBillDTO.BaseDTO
+     **/
+    @PostMapping("/listLogisticsBillByTrackNos")
+    public List<LogisticsBillDTO.BaseDTO> listLogisticsBillByTrackNos(@RequestBody List<String> transportNoList) {
+        List<LogisticsBillDTO.BaseDTO> list = logisticsBillService.listLogisticsBillByTransportNos(transportNoList);
+        return list;
+    }
+
+    /**
+     * 打印物流面单/配货单
+     * @Author Luo_WG
+     * @Date 2023/12/20 14:34
+     * @param list
+     * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
+     **/
+    @PostMapping("/printLogisticsWaybill")
+    public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(@RequestBody List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
+        List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(list);
+        return waybillDTOList;
+    }
+
+    /**
+     * 根据渠道id查询渠道打印类型
+     * @Author Luo_WG
+     * @Date 2023/12/20 17:12
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.entity.LogisticsPrintTypeEntity>
+     **/
+    @PostMapping("/listPrintTypeByChannelIds")
+    public List<LogisticsPrintTypeDTO.ViewDTO> listPrintTypeByChannelIds(@RequestBody List<String> channelIdList) {
+        List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities = logisticsPrintTypeService.listByChannelIds(channelIdList);
+        return logisticsPrintTypeEntities;
+    }
+
 }

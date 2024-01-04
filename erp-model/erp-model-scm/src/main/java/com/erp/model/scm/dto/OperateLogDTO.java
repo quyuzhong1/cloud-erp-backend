@@ -96,6 +96,11 @@ public class OperateLogDTO implements Serializable {
         private String businessId;
 
         /**
+         * 模块
+         */
+        private String moduleType;
+
+        /**
          * 父级id(用于综合数据查询)
          */
         private String pid;

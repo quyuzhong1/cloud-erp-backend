@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -64,6 +65,17 @@ public interface SoOutstockFeign {
      * @return
      */
     @PostMapping("feign/soOutstock/getSoOutstockDetailByDetailId")
-    public List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
+     List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
+
+    /**
+     * 生成b2c 销售出库单
+     * @description
+     * @param b2cSoId 销售订单-b2c
+     * @author Lambda
+     * @return Boolean
+     * @create 2023-12-13 18:18
+     */
+    @PostMapping("feign/soOutstock/generateB2cSoOutstock")
+    Boolean generateB2cSoOutstock(@RequestBody String b2cSoId);
 
 }

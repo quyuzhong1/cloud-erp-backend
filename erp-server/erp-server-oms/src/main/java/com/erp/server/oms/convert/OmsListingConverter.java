@@ -47,4 +47,7 @@ public interface OmsListingConverter {
             @Mapping(target = "type", source = "listingInfoEntity.type"),
     })
     ListingInfoWithSkuMappingDTO listingAndSKuMappingToDTO(ListingInfoEntity listingInfoEntity, SkuMappingEntity skuMappingEntity);
+
+
+    ListingInfoEntity copyListingInfo(ListingInfoEntity entity);
 }

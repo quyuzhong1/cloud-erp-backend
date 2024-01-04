@@ -65,7 +65,7 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,platformEntity,map,type,code,operate);
+            operateInvalid(apiUtils,platformEntity,map,type,operate);
         }
         /**
          * 反审核
@@ -91,27 +91,9 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
     /**
      * 作废
      */
-    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
-        //判断金蝶系统是否已存在该数据
-        JSONObject model;
-        try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        } catch (Exception e) {
-            //更新业务表中的金蝶id
-            kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.NO_NEED_SYNC.getCode(), "");
-            return;
-        }
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //反审核
-            Boolean unAudit = kingdeeCommonService.unAudit(apiUtils, id);
-            if (!unAudit) {
-                return;
-            }
-        }
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String operate) {
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,type,operate);
         return;
     }
 

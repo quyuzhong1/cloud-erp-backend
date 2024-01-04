@@ -15,12 +15,12 @@ public class YanWenUtils {
         return Md5Util.md5(apiToken+ userId+data+ YanWenConstants.FORMAT+method+timestamp+ YanWenConstants.VERSION+ apiToken);
     }
 
-    public static String sendPost(String method,Map<String, Object> paramsMap,String userId,String apiToken){
+    public static String sendPost(String host, String method,Map<String, Object> paramsMap,String userId,String apiToken){
         long timestamp = System.currentTimeMillis();;
         String sign = getSign(JSONObject.toJSONString(paramsMap),method,timestamp,userId,apiToken);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
-        String url = YanWenConstants.BASE_URL +
+        String url = host +
                 YanWenConstants.BASE_URL_SUFFIX +
                 "?user_id=" +
                 userId +

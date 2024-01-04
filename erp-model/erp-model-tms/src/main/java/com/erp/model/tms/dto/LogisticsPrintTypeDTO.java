@@ -46,9 +46,19 @@ public class LogisticsPrintTypeDTO implements Serializable {
         private String printType;
 
         /**
+        * 打印类型名称
+        */
+        private String printTypeName;
+
+        /**
         * 标签类型
         */
         private String labelType;
+
+        /**
+        * 标签类型名称
+        */
+        private String labelTypeName;
 
 
     }

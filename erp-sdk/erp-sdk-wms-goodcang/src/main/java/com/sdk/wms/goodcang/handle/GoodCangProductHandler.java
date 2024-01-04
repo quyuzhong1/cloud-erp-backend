@@ -60,8 +60,8 @@ public class GoodCangProductHandler extends AbstractPullThirdWarehouseHandler<Go
 
         //查询数据
         GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
-        goodCangGetSkuReq.setProductUpdateTimeFrom(lastTime.format(formatter));
-        goodCangGetSkuReq.setProductUpdateTimeTo(nextTime.format(formatter));
+//        goodCangGetSkuReq.setProductUpdateTimeFrom(lastTime.format(formatter));
+//        goodCangGetSkuReq.setProductUpdateTimeTo(nextTime.format(formatter));
         //最大页码100，从第一页开始查询
         goodCangGetSkuReq.setPageSize(100);
 

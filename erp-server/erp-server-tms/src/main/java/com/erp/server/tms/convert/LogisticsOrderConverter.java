@@ -486,52 +486,72 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
             @Mapping(target = "product_id" ,source = "skuId"),
             @Mapping(target = "product_num" ,source = "quantity"),
-            @Mapping(target = "product_weight" ,source = "weight")
+            @Mapping(target = "product_weight" ,source = "weight"),
+            @Mapping(target = "child_order_id" ,source = "childOrderId"),
+            @Mapping(target = "sc_item_code" ,source = "scItemCode"),
+            @Mapping(target = "sc_item_id" ,source = "scItemId"),
+            @Mapping(target = "sc_item_name" ,source = "scItemName"),
+            @Mapping(target = "sku_code" ,source = "skuCode"),
+            @Mapping(target = "sku_value" ,source = "skuName")
     })
     DeclareProduct orderRequestProductByAliExpress(LogisticsProductVO logisticsProductVO);
     List<DeclareProduct> orderRequestProductByAliExpress(List<LogisticsProductVO> logisticsProductVOList);
 
     @Mappings({
             @Mapping(target = "country",source = "senderInfo.country"),
-            @Mapping(target = "member_type",constant = "sender"),
+            @Mapping(target = "memberType",constant = "sender"),
             @Mapping(target = "province",source = "senderInfo.provinceName"),
             @Mapping(target = "city",source = "senderInfo.cityName"),
             @Mapping(target = "county",source = "senderInfo.districtName"),
-            @Mapping(target = "street_address",source = "senderInfo.addressFirst"),
-            @Mapping(target = "post_code",source = "senderInfo.zipCode"),
+            @Mapping(target = "streetAddress",source = "senderInfo.addressFirst"),
+            @Mapping(target = "postCode",source = "senderInfo.zipCode"),
             @Mapping(target = "name",source = "senderInfo.name"),
             @Mapping(target = "phone",source = "senderInfo.telNumber"),
-            @Mapping(target = "address_id",source = "senderInfo.id"),
+            @Mapping(target = "addressId",source = "senderInfo.id"),
             @Mapping(target = "email",source = "senderInfo.email")
     })
     Address orderRequestSendUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 
     @Mappings({
-            @Mapping(target = "country",source = "senderInfo.country"),
-            @Mapping(target = "member_type",constant = "pickup"),
-            @Mapping(target = "province",source = "senderInfo.provinceName"),
-            @Mapping(target = "city",source = "senderInfo.cityName"),
-            @Mapping(target = "county",source = "senderInfo.districtName"),
-            @Mapping(target = "street_address",source = "senderInfo.addressFirst"),
-            @Mapping(target = "post_code",source = "senderInfo.zipCode"),
-            @Mapping(target = "name",source = "senderInfo.name"),
-            @Mapping(target = "phone",source = "senderInfo.telNumber"),
-            @Mapping(target = "address_id",source = "senderInfo.id"),
-            @Mapping(target = "email",source = "senderInfo.email")
+            @Mapping(target = "country",source = "pickUpInfo.country"),
+            @Mapping(target = "memberType",constant = "pickup"),
+            @Mapping(target = "province",source = "pickUpInfo.provinceName"),
+            @Mapping(target = "city",source = "pickUpInfo.cityName"),
+            @Mapping(target = "county",source = "pickUpInfo.districtName"),
+            @Mapping(target = "streetAddress",source = "pickUpInfo.addressFirst"),
+            @Mapping(target = "postCode",source = "pickUpInfo.zipCode"),
+            @Mapping(target = "name",source = "pickUpInfo.name"),
+            @Mapping(target = "phone",source = "pickUpInfo.telNumber"),
+            @Mapping(target = "addressId",source = "pickUpInfo.id"),
+            @Mapping(target = "email",source = "pickUpInfo.email")
     })
     Address orderRequestPickUpUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 
     @Mappings({
             @Mapping(target = "country" ,source = "receiverInfoVO.country"),
-            @Mapping(target = "member_type",constant = "receiver"),
+            @Mapping(target = "memberType",constant = "receiver"),
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
-            @Mapping(target = "county",source = "senderInfo.districtName"),
-            @Mapping(target = "street_address",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "county",source = "receiverInfoVO.district"),
+            @Mapping(target = "streetAddress",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
-            @Mapping(target = "post_code",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "name",source = "receiverInfoVO.name"),
             @Mapping(target = "phone",source = "receiverInfoVO.telNumber")
     })
     Address orderRequestReceiverUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
+    @Mappings({
+            @Mapping(target = "country",source = "returnInfo.country"),
+            @Mapping(target = "memberType",constant = "refund"),
+            @Mapping(target = "province",source = "returnInfo.provinceName"),
+            @Mapping(target = "city",source = "returnInfo.cityName"),
+            @Mapping(target = "county",source = "returnInfo.districtName"),
+            @Mapping(target = "streetAddress",source = "returnInfo.addressFirst"),
+            @Mapping(target = "postCode",source = "returnInfo.zipCode"),
+            @Mapping(target = "name",source = "returnInfo.name"),
+            @Mapping(target = "phone",source = "returnInfo.telNumber"),
+            @Mapping(target = "addressId",source = "returnInfo.id"),
+            @Mapping(target = "email",source = "returnInfo.email")
+    })
+    Address orderRequestRefundUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 }

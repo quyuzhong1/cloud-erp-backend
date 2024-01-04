@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -54,6 +55,33 @@ public  class MQProducerServiceTest {
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
+
+    @Resource
+    private RedisTemplate redisTemplate;
+
+
+    @Test
+    public void redisAddTest(){
+        String groupId = "test:666666:order";
+        List<String> list = Arrays.asList(
+                "{\"apiCode\":\"amazon.test.order.api\",\"apiName\":\"亚马逊订单接口\",\"apiParam\":{},\"billType\":\"order\",\"createTime\":\"2023-12-15T12:10:00.736\",\"dictPlatform\":\"Amazon\",\"id\":\"1735512507616858113\",\"intervalTime\":1800,\"lastTime\":\"2024-01-02T12:30:00\",\"nextTime\":\"2024-01-03T00:30:00\",\"operateType\":\"pull\",\"platformCategory\":\"third_system\",\"retryTimes\":0,\"shopId\":\"1735512178561126404\",\"shopName\":\"欧洲5站土耳其\",\"status\":1}",
+                "{\"apiCode\":\"amazon.test.order.api\",\"apiName\":\"亚马逊订单接口\",\"apiParam\":{},\"billType\":\"order\",\"createTime\":\"2023-12-15T12:10:00.826\",\"dictPlatform\":\"Amazon\",\"id\":\"1735512507994345474\",\"intervalTime\":1800,\"lastTime\":\"2024-01-02T12:30:00\",\"nextTime\":\"2024-01-03T00:30:00\",\"operateType\":\"pull\",\"platformCategory\":\"third_system\",\"retryTimes\":0,\"shopId\":\"1735512178565320709\",\"shopName\":\"欧洲5站西班牙\",\"status\":1}"
+        );
+        for (String s : list) {
+            redisTemplate.boundListOps(groupId).leftPush(s);
+        }
+    }
+
+    @Test
+    public void redisARemoveTest(){
+        String groupId = "test:666666:order";
+        List<String> list = Arrays.asList(
+                "{\"apiCode\":\"amazon.test.order.api\",\"apiName\":\"亚马逊订单接口\",\"apiParam\":{},\"billType\":\"order\",\"createTime\":\"2023-12-15T12:10:00.736\",\"dictPlatform\":\"Amazon\",\"id\":\"1735512507616858113\",\"intervalTime\":1800,\"lastTime\":\"2024-01-02T12:30:00\",\"nextTime\":\"2024-01-03T00:30:00\",\"operateType\":\"pull\",\"platformCategory\":\"third_system\",\"retryTimes\":0,\"shopId\":\"1735512178561126404\",\"shopName\":\"欧洲5站土耳其\",\"status\":1}"
+        );
+        for (String s : list) {
+            redisTemplate.boundListOps(groupId).remove(0, s);
+        }
+    }
 
     @Test
     public void syncSendMsg() {

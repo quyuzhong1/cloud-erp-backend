@@ -4,12 +4,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -20,22 +20,29 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.api.TokensApi;
-import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenRequest;
 import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenResponse;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,12 +59,15 @@ import java.util.stream.Collectors;
 @BusinessType(BusinessTypeEnum.ORDER)
 public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrderDTO, PlatformOrderDTO> {
 
-    private static final String SIGNED_ACCESS_TOKEN_HEADER_NAME = "x-amz-access-token";
+
+
 
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private AmazonSpApiRateLimitUtils amazonSpApiRateLimitUtils;
 
     @Override
     public List<PlatformAmazonOrderDTO> download(JobTaskDTO data) {
@@ -69,19 +79,51 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_LIST;
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, data.getGroupId());
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        String rateLimitStr;
 
         // 亚马逊订单下载
-        OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
-        String createdAfter = null;
+        OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         // 正式环境请求
         // 东八区转UTC时间
         String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
         String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
         try {
+            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             // 发起请求
-            List<Order> orderList = api.getAllOrders(Collections.singletonList(marketPlaceEnum.getMarketplaceId()),
-                    createdAfter, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null,null, null);
+            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                    null, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null, 100,
+                    null, null, null, null, null, null, null, null, null, null, null);
+            List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrdersResponse orders = ordersWithHttpInfo.getData();
+
+            List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
+            String currentNextToken = orders.getPayload().getNextToken();
+            int currentSize = orders.getPayload().getOrders().size();
+            while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
+                // 上一次请求的响应频率设置
+                if (StringUtils.isNotBlank(rateLimitStr)){
+                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
+                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
+                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
+                }
+                GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
+                orderList.addAll(currentResp.getPayload().getOrders());
+                currentNextToken = currentResp.getPayload().getNextToken();
+                currentSize = currentResp.getPayload().getOrders().size();
+                List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+                rateLimitStr = currentLimitArray.get(0);
+            }
+            if (StringUtils.isNotBlank(rateLimitStr)){
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
+
             // 返回下载源数据
             return orderList.stream()
                     .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO.getId()))
@@ -118,18 +160,49 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
+//        if (!CollectionUtils.isEmpty(dto.getDetails())){
+//            // 已有信息不请求
+//            log.info("亚马逊详情已有不请求, UniqueId={}", dto.getUniqueId());
+//            return dto;
+//        }
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
+        // 默认请求速率配置
+        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        String rateLimitStr;
+
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + dto.getShopId());
-        }
+        AmazonShopInfoDTO shopInfoDTO = getAmazonShopInfoDTO(dto);
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+
         // 查询订单详情
-        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         OrderItemList allOrderItems = null;
         try {
-            allOrderItems = ordersVoApi.getAllOrderItems(dto.getUniqueId(), null);
+            ApiResponse<GetOrderItemsResponse> itemResponse = ordersVoApi.getOrderItemsWithHttpInfo(dto.getUniqueId(), null);
+            List<String> limitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrderItemsResponse orderItems = itemResponse.getData();
+
+            String currentNextToken = orderItems.getPayload().getNextToken();
+            OrderItemList resultOrderItemsList = orderItems.getPayload().getOrderItems();
+            while (StringUtils.isNotBlank(currentNextToken)) {
+                ApiResponse<GetOrderItemsResponse> currentOrderItemsResp = ordersVoApi.getOrderItemsWithHttpInfo(dto.getUniqueId(), currentNextToken);
+                GetOrderItemsResponse currentOrderItems = currentOrderItemsResp.getData();
+                List<String> currentLimitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+                rateLimitStr = currentLimitArray.get(0);
+                resultOrderItemsList.addAll(currentOrderItems.getPayload().getOrderItems());
+                currentNextToken = currentOrderItems.getPayload().getNextToken();
+            }
+            allOrderItems = resultOrderItemsList;
+
+            if (StringUtils.isNotBlank(rateLimitStr)){
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
         } catch (Exception e) {
             throw new ServiceException("查询亚马逊订单详情失败："+JSONUtil.toJsonStr(e));
         }
@@ -138,6 +211,13 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
         dto.setDetails(allOrderItems);
         log.info("查询亚马逊订单详情成功, UniqueId={}", dto.getUniqueId());
+        return dto;
+    }
+
+    /**
+     * 请求RDT授权
+     */
+    private String queryAndGetRDT(PlatformAmazonOrderDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 生成RDT权限获取地址信息
         // amazon-rdt-token:店铺ID:订单ID
         String tokenKey = StrUtil.format(RedisCacheConstants.AMAZON_RDT_TOKEN, dto.getShopId(), dto.getUniqueId());
@@ -162,11 +242,45 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (StringUtils.isBlank(rdtToken)){
             throw new ServiceException("亚马逊RDT token异常：空："+JSONUtil.toJsonStr(dto));
         }
+        return rdtToken;
+    }
+
+
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
+    public PlatformAmazonOrderDTO downloadAddress(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
+        if ( null != dto.getOrder().getShippingAddress() &&
+                StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){
+            // 已有信息不请求
+            log.info("亚马逊详情和地址已有不请求, UniqueId={}", dto.getUniqueId());
+            return dto;
+        }
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = getAmazonShopInfoDTO(dto);
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 请求速率配置
+        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+        // 查询订单详情
+        String rateLimitStr;
+
+        // 生成RDT权限获取地址信息
+        // amazon-rdt-token:店铺ID:订单ID
+        String rdtToken = queryAndGetRDT(dto, shopInfoDTO);
 
         // 修改x-amz-access-token的token
-        ordersVoApi.getApiClient().addDefaultHeader(SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
+        ordersVoApi.getApiClient().addDefaultHeader(ApiClient.SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
         try {
-            GetOrderAddressResponse response = ordersVoApi.getOrderAddress(dto.getUniqueId());
+            ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(dto.getUniqueId());
+            List<String> limitArray = orderAddressResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrderAddressResponse response = orderAddressResp.getData();
+            if (StringUtils.isNotBlank(rateLimitStr)){
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
             Address shippingAddress = response.getPayload().getShippingAddress();
             Order order = dto.getOrder();
             order.setShippingAddress(shippingAddress);
@@ -174,6 +288,17 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             throw new ServiceException("查询亚马逊订单地址失败："+JSONUtil.toJsonStr(e));
         }
         return dto;
+    }
+
+    /**
+     * 获取店铺授权信息
+     */
+    private AmazonShopInfoDTO getAmazonShopInfoDTO(PlatformAmazonOrderDTO dto) {
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + dto.getShopId());
+        }
+        return shopInfoDTO;
     }
 
 }

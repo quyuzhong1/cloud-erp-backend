@@ -38,8 +38,8 @@ public class ExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public ExpressLogisticsHandlerImplTest() {
-        String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
+        String CLIENT_CODE = "WJKJVX16Y0N";  //此处替换为您在丰桥平台获取的顾客编码
+        String CHECK_WORD = "BP6oSEoP3dnELDGMtnbYh7Ig5UKlWIBS";//此处替换为您在丰桥平台获取的校验码
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientId", CLIENT_CODE);
         authMap.put("clientSecret", CHECK_WORD);
@@ -111,9 +111,9 @@ public class ExpressLogisticsHandlerImplTest {
         logisticsChannel.setTaxModel("DDU");
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("UBI.CA2US.CAPOST");
+        logisticsSaleChannel.setCode("1");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("1725040739275055105");
+        logisticsSaleChannel.setPlatformChannelId("1");
 
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
@@ -121,7 +121,7 @@ public class ExpressLogisticsHandlerImplTest {
 //                .channelId("1725040739275055105")
                 .orderSource("ERP")
 //                .facility("can")
-                .deliveryNo("wj12345167721")
+                .deliveryNo("wj12345167723")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -158,7 +158,7 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList() {
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
+        logisticsQueryVOList.setDeliveryNo("wj12345167723");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = expressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
@@ -167,7 +167,8 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167721");
+        logisticsQueryVO2.setDeliveryNo("XSDS23122200010");
+        logisticsQueryVO2.setTransportNo("SF7444475423374");
         logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = expressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);

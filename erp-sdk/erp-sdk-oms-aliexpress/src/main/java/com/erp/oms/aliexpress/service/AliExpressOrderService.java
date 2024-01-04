@@ -80,6 +80,7 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
+//        paramMap.put("order_status", "WAIT_SELLER_SEND_GOODS");
         paramMap.put("page_size", pageSize);
         paramMap.put("create_date_start", orderRequest.getStartTime());
         paramMap.put("create_date_end", orderRequest.getEndTime());
@@ -162,7 +163,6 @@ public class AliExpressOrderService {
      * @author yl
      * @date 2023-11-29 12:13
      */
-
     public AliExpressShopInfoDTO getShopInfoByShopId(String shopId) {
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
         // 缓存获取
@@ -189,7 +189,9 @@ public class AliExpressOrderService {
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
+                redisUtil.set(tokenKey, result,shopAuthEntity.getExpiresIn());
             }
+
             return result;
         }
         return null;

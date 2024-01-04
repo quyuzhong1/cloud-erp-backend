@@ -71,4 +71,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return 
      */
     ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode);
+
+    void updateMatchResult(String listingId, Boolean matchResult);
 }

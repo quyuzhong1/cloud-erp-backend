@@ -5,19 +5,18 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformCityDictDTO;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.sys.convert.CityDictConvert;
 import com.erp.server.sys.service.DictCityService;
@@ -54,6 +53,33 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Resource
     private MQProducerService mqProducerService;
+
+
+    @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
+
+    @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+        if (org.apache.commons.lang3.StringUtils.isEmpty(uniqueId) || org.apache.commons.lang3.StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
+    }
+
+    /**
+     * 根据平台组装表名
+     * @param platform
+     * @return
+     */
+    private String getTableName(String platform){
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                platform, BusinessTypeEnum.INBOUND.getCode());
+    }
 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {

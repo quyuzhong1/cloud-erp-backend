@@ -624,6 +624,11 @@ public class LogisticsBillDTO implements Serializable {
         private String shopName;
 
         /**
+         * IOSS 税号
+         */
+        private String iossTaxNo;
+
+        /**
          * 币别
          */
         private String currency;
@@ -666,6 +671,24 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateBillResultDTO{
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private List<String> trackNoList;
+
+
+    }
+
 
     /**
      * 取消物流单
@@ -679,9 +702,23 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "渠道不能为空")
         private String channelId;
 
-        @NotBlank(message = "物流单")
+        /**
+         * 客户参考号
+         */
+        @NotBlank(message = "客户参考号不能为空")
+        private String referenceNumber;
+
+        /**
+         * 运单号（运单号和跟踪单号不能都为空）
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号（运单号和跟踪单号不能都为空）
+         */
         private String trackNo;
 
+        private String reason;
     }
 
     @Data
@@ -850,6 +887,34 @@ public class LogisticsBillDTO implements Serializable {
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
          */
         private String trackStatus;
+
+    }
+
+    /**
+     * 打印物流面单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrintLogisticsWaybillDTO {
+
+        /**
+         * 销售单id
+         */
+        private String b2cSoId;
+
+        @NotBlank(message = "渠道不能为空")
+        private String channelId;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 发货单号
+         */
+        @NotBlank(message = "发货单号不能为空")
+        private String deliveryNo;
 
     }
 

@@ -2,6 +2,7 @@ package com.sdk.tms.express.service;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.express.constants.PathConstants;
 import com.sdk.tms.express.enums.ExpressServiceCodeEnum;
@@ -171,9 +172,13 @@ public class ExpressShipperService {
     public BaseResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
-        validate(partnerId, md5Key);
+        String url = authMap.get("url");
+        validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_CREATE_ORDER; //下订单
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
+        if (StringUtils.isEmpty(orderRequest.getMonthlyCard())) {
+            orderRequest.setMonthlyCard(PathConstants.MONTH_CARD);
+        }
+        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
     }
 
     /**
@@ -191,9 +196,10 @@ public class ExpressShipperService {
     public BaseResult updateOrder(Map<String, String> authMap, OrderUpdateRequest orderUpdateRequest) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
-        validate(partnerId, md5Key);
+        String url = authMap.get("url");
+        validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_UPDATE_ORDER; //订单确认/取消接口
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderUpdateRequest), standardService.getCode());
+        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderUpdateRequest), standardService.getCode());
     }
 
     /**
@@ -207,9 +213,10 @@ public class ExpressShipperService {
     public BaseResult queryOrder(Map<String, String> authMap, OrderQueryRequest orderQueryRequest) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
-        validate(partnerId, md5Key);
+        String url = authMap.get("url");
+        validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_SEARCH_ORDER_RESP; //查询订单结果
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderQueryRequest), standardService.getCode());
+        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderQueryRequest), standardService.getCode());
     }
 
     /**
@@ -223,10 +230,12 @@ public class ExpressShipperService {
     public BaseResult getLabel(Map<String, String> authMap, OrderLabelRequest orderLabelRequest) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
-        validate(partnerId, md5Key);
+        String url = authMap.get("url");
+        validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.COM_RECE_CLOUD_PRINT_WAYBILLS; //面单打印
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
+        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
     }
+
     /**
      * 校验运单号合法性
      *
@@ -235,14 +244,33 @@ public class ExpressShipperService {
      * @return
      * @throws UnsupportedEncodingException
      */
-    public BaseResult validateWaybillNo(Map<String, String> authMap, String waybillNo) throws UnsupportedEncodingException {
+    public BaseResponse validateWaybillNo(Map<String, String> authMap, String waybillNo) throws UnsupportedEncodingException {
         String partnerId = authMap.get("clientId");
         String md5Key = authMap.get("clientSecret");
-        validate(partnerId, md5Key);
+        String url = authMap.get("url");
+        validate(partnerId, md5Key, url);
         JSONObject jsonObject = new JSONObject();
         jsonObject.putOpt("waybillNo", waybillNo);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_VALIDATE_WAYBILLNO; //提供顺丰运单号合法性校验功能。
-        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(jsonObject), standardService.getCode());
+        return doPostValidate(url, partnerId, md5Key, JSONUtil.toJsonStr(jsonObject), standardService.getCode());
+    }
+
+    private static BaseResponse doPostValidate(String host, String partnerId, String md5Key, String msgData, String serviceCode) throws UnsupportedEncodingException {
+        CallExpressServiceTools tools = CallExpressServiceTools.getInstance();
+        Map<String, String> params = new HashMap<String, String>();
+
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        params.put("partnerID", partnerId);  // 顾客编码 ，对应丰桥上获取的clientCode
+        params.put("requestID", UUID.randomUUID().toString().replace("-", ""));
+        params.put("serviceCode", serviceCode);// 接口服务码
+        params.put("timestamp", timeStamp);
+        params.put("msgData", msgData);
+        params.put("msgDigest", tools.getMsgDigest(msgData, timeStamp, md5Key));
+        log.info("====调用实际请求：{}", params);
+        String result = HttpClientUtil.post(host, params);
+        log.info("====返回结果：{}", params);
+        BaseResponse baseResponse = JSONUtil.toBean(result, BaseResponse.class);
+        return baseResponse;
     }
 
     private static BaseResult doPost(String host, String partnerId, String md5Key, String msgData, String serviceCode) throws UnsupportedEncodingException {
@@ -263,8 +291,10 @@ public class ExpressShipperService {
         BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
         return baseResult;
     }
-    private void validate(String partnerId,String md5Key){
-        assert StringUtils.isNotEmpty(partnerId);
-        assert StringUtils.isNotEmpty(md5Key);
+
+    private void validate(String partnerId, String md5Key, String url) {
+        if (StringUtils.isEmpty(partnerId) || StringUtils.isEmpty(md5Key) || StringUtils.isEmpty(url))
+            throw new ServiceException("授权信息不能为空");
+
     }
 }

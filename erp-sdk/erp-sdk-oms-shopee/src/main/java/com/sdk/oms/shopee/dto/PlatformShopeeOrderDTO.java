@@ -1,9 +1,11 @@
 package com.sdk.oms.shopee.dto;
 
 import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.dto.order.response.OrderItemDetail;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
@@ -60,11 +63,16 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         String shopId = dto.getShopId();
 
         Long createTime = orderDetail.getCreateTime();
-        Instant instant = Instant.ofEpochSecond(createTime);
+        Instant instant = null;
+        if(Objects.nonNull(createTime)){
+            instant = Instant.ofEpochSecond(createTime);
+        }
         ZoneId zone = ZoneId.systemDefault();
 
         // 订单日期
-        orderDTO.setBillDate(LocalDateTime.ofInstant(instant, zone).toLocalDate());
+        if (Objects.nonNull(instant)){
+            orderDTO.setBillDate(LocalDateTime.ofInstant(instant, zone).toLocalDate());
+        }
         // 平台订单号
         orderDTO.setPlatformCode(orderDetail.getOrdersn());
         // 销售平台
@@ -85,33 +93,51 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         String orderStatus = orderDetail.getStatus();
         if (OrderStatusEnum.UNPAID.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus) || OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } //已完成之前 全为待发货
-        else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus)) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus) || OrderStatusEnum.TO_CONFIRM_RECEIVE.getCode().equals(orderStatus)) {
+            //已完成之前 全为待发货
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        } else if (OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        } else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        }  else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+            orderDTO.setInvalidRemark("订单取消中");
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
         } else if (OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_INVALID.getCode());
             // 作废状态（false未作废，true已作废）
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(true);
+            orderDTO.setInvalidRemark("订单已取消");
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
         } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        }else if (OrderStatusEnum.TO_RETURN.getCode().equals(orderStatus) || OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
         }
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         Long paytime = orderDetail.getPayTime();
-        if (Objects.isNull(paytime)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-        } else {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        if (Objects.nonNull(paytime)) {
             Instant instant2 = Instant.ofEpochSecond(paytime);
             // 付款时间
             orderDTO.setPayTime(LocalDateTime.ofInstant(instant2, zone));
@@ -163,6 +189,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderDetail));
+        orderDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        orderDTO.setUniqueId(dto.getUniqueId());
         return orderDTO;
     }
 
@@ -187,14 +215,15 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
        return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
-                .name(recipientAddress.getName())
+                .name(orderDetail.getBuyerUsername())
+                .receiverName(orderDetail.getBuyerUsername())
                 .telNumber(recipientAddress.getPhone())
                 .receiverTelNumber(recipientAddress.getPhone())
                 .email("")
                 .country(recipientAddress.getRegion())
                 .provinceName(recipientAddress.getState())
                 .cityName(recipientAddress.getCity())
-                .districtName(recipientAddress.getDistrict())
+                .districtName(recipientAddress.getDistrict() + recipientAddress.getTown())
                 .postCode(recipientAddress.getZipcode())
                 .firstAddress(recipientAddress.getFullAddress())
                 .fullAddress(recipientAddress.getFullAddress())
@@ -214,7 +243,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                     .code(p.getPackageNumber())
                     .name(LogisticsPlatformEnum.SHOPEE.getName())
                     .deliveryTime(LocalDateTime.ofInstant(instant, zone))
-                    .logisticsChannelId(p.getShippingCarrier())
+                    .logisticsChannelName(p.getShippingCarrier())
                     .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
                     .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                     .accessoriesCostCurrency(orderDetail.getCurrency())
@@ -227,10 +256,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
     }
 
     public static PlatformOrderFinanceDTO parseFinances(OrderDetail orderDetail) {
-        if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
-            return null;
-        }
-        List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
                 .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))
@@ -268,7 +293,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 数量
         detailDTO.setQty(item.getModelQuantityPurchased());
         // 单价
-        detailDTO.setPrice(BigDecimal.valueOf(item.getModelOriginalPrice()));
+        detailDTO.setPrice(BigDecimal.valueOf(item.getModelDiscountedPrice()));
         // 金额
         try {
             BigDecimal amount = BigDecimal.valueOf(item.getModelDiscountedPrice()).multiply(BigDecimal.valueOf(item.getModelQuantityPurchased()));

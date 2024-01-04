@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class WeiShiUtils {
 
-    public static String sendPost(String method,String paramsJson,String appToken,String appKey){
+    public static String sendPost(String url,String method,String paramsJson,String appToken,String appKey){
         Map<String, Object> paramsMap = new HashMap<>();
         paramsMap.put("paramsJson",paramsJson);
         paramsMap.put("appToken", appToken);
@@ -17,7 +17,7 @@ public class WeiShiUtils {
         paramsMap.put("appKey", appKey);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
-        return OkHttpUtils.doPostJson(WeiShiConstants.BASE_URL, paramsMap, headerMap);
+        return OkHttpUtils.doPostJson(url, paramsMap, headerMap);
     }
 
 }

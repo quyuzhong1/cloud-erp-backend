@@ -485,10 +485,15 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
      * @date 2023-12-08 18:02
      */
     @Override
-    public List<ShippingCalculationDTO.ChannelCostDTO> listChannelCost(String orderId) {
+    public ShippingCalculationDTO.CostCalculationResultDTO listChannelCost(String orderId) {
+        ShippingCalculationDTO.CostCalculationResultDTO  resultDTO=new ShippingCalculationDTO.CostCalculationResultDTO();
 
         SoB2cDTO.ShippingCalculationDTO params = soB2cFeign.getShippingCalculationByOrderId(orderId);
+        resultDTO.setCountry(params.getToCountry());
+        resultDTO.setCountryName(params.getToCountryName());
+        resultDTO.setWeight(params.getWeight());
         String weightUnit = params.getWeightUnit();
+        resultDTO.setWeightUnit(weightUnit);
         //体积
         BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
@@ -501,11 +506,18 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //其他费用
         List<String> templateIdList = listAll.stream().map(obj -> obj.getTemplateId()).distinct().collect(Collectors.toList());
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
-
+        List<String> currencyList=listAll.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO>  currencyInfoList=  sysUserFeign.listByCurrency(currencyList);
         for (ShippingCalculationDTO.ListDTO item : listAll) {
             ShippingCalculationDTO.ChannelCostDTO channelCost = new ShippingCalculationDTO.ChannelCostDTO();
             channelCost.setLogisticsChannelId(item.getChannelId());
             channelCost.setLogisticsChannelName(item.getChannelName());
+
+            String currency=item.getCurrency();
+            String currencySymbol=currencyInfoList.stream().filter(c->c.getId().equals(currency)).map(CurrencyDTO.ViewDTO::getSymbol).
+                    findFirst().orElse("");
+            channelCost.setCurrency(currency);
+            channelCost.setCurrencySymbol(currencySymbol);
 
             /**
              * 体积重=长*宽*高/材积设置
@@ -558,8 +570,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             channelCost.setShippingCost(shippingCalculationDTO.getTotalTrialShippingCost());
             channelCostList.add(channelCost);
         }
-
-        return channelCostList;
+        resultDTO.setCostList(channelCostList);
+        return resultDTO;
     }
 
     /**

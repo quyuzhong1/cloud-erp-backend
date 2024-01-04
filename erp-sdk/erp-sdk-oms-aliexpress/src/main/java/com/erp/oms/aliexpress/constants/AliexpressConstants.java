@@ -10,6 +10,11 @@ public interface AliexpressConstants {
     
     String TOKEN_CREATE = "/auth/token/create";
 
+    /**
+     * 刷新token
+     */
+    String REFRESH_TOKEN = "/auth/token/refresh";
+
 
     String SUCCESS_CODE="0";
     
@@ -43,5 +48,10 @@ public interface AliexpressConstants {
      *声明发货
      */
     String DECLARE_DELIVER="aliexpress.logistics.sellershipmentfortop";
+
+    /**
+     * 海外仓表示
+     */
+    String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";
 
 }

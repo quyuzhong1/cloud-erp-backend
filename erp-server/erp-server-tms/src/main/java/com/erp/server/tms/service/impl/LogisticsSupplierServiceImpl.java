@@ -1,11 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -168,6 +170,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
         List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id), name);
+
         List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
@@ -315,7 +318,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             if (nonNull) {
                 id = logisticsWarehouse.getId();
             } else {
-                logisticsWarehouse=new LogisticsWarehouseEntity();
+                logisticsWarehouse = new LogisticsWarehouseEntity();
                 id = IdWorker.getIdStr();
                 logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
                 logisticsWarehouse.setMainId(logisticsSupplierId);
@@ -401,7 +404,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         for (BaseChildDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
             List<LogisticsChannelEntity> channelList = allChannelList.stream().
-                    filter(c -> c.getMainId().equals(id)).collect(Collectors.toList());
+                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(LogisticsChannelEntity::getDisabled)).
+                    collect(Collectors.toList());
             List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
@@ -425,6 +429,21 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             String authStatus = item.getAuthStatus();
             String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
+
+            //获取服务商编号
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getId());
+            if (ObjectUtil.isNotEmpty(authEntity)) {
+                String logisticsPlatform = authEntity.getLogisticsPlatform();
+                item.setLogisticsPlatform(logisticsPlatform);
+                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                if ("N".equals(printDelivery)) {
+                    item.setIsPrintPlatform(Boolean.FALSE);
+                } else {
+                    item.setIsPrintPlatform(Boolean.TRUE);
+                }
+            } else {
+                item.setIsPrintPlatform(Boolean.TRUE);
+            }
 
         }
     }

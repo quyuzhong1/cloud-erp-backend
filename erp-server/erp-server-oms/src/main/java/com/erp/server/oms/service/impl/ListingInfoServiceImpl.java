@@ -182,4 +182,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 eq(ListingInfoEntity::getType,typeCode).
                 last("LIMIT 1").one();
     }
+
+    @Override
+    public void updateMatchResult(String listingId, Boolean matchResult) {
+        this.lambdaUpdate().set(ListingInfoEntity::getMatchResult,matchResult).
+                eq(ListingInfoEntity::getId,listingId).update(new ListingInfoEntity());
+    }
 }

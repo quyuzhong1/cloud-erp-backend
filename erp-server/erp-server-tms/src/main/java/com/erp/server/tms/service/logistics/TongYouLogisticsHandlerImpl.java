@@ -88,6 +88,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tongYouCreateOrder));
             return success(LogisticsOrderResponseVO.builder()
                     .transportNo(tongYouCreateOrder.getLogisticsNo())
+                    .trackNo(tongYouCreateOrder.getLogisticsNo())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
                     .build());
         } catch (Exception e) {
@@ -133,7 +134,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 response.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                 //返回格式是base64
                 if (tongYouResponse.getType().equals(0)) {
-                    response.setBase64(tongYouResponse.getBase64());
+                    response.setBase64("data:application/pdf;base64,"+tongYouResponse.getBase64());
                 } else {
                     //返回是url
                     response.setBase64(FileUtil.convertPdfUrlToBase64(tongYouResponse.getUrl()));

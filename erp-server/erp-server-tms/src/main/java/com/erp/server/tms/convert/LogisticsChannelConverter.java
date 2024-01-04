@@ -8,6 +8,10 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
+import com.erp.tms.aliexpress.model.query.response.ServiceResult;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
+import com.sdk.oms.walmart.dto.walmart.WalmartCarriersDTO;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
@@ -198,4 +202,48 @@ public interface LogisticsChannelConverter {
     BaseChildDTO.ListChildTreeDTO convertTree(LogisticsChannelEntity entity);
      List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsChannelEntity> channelList);
 
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "id"),
+            @Mapping(target = "code", source = "id"),
+            @Mapping(target = "cnName", expression = "java(cn.hutool.core.util.StrUtil.format(\"{}【{}】\",logisticsChannel.getName(),logisticsChannel.getId()))"),
+            @Mapping(target = "enName", source = "name"),
+            // 渠道状态0正常1.暂停2.已关闭（默认0）
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "logisticsPlatform", constant = "Shopify"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByShopify(ShopifyFulfillmentServicesItem logisticsChannel);
+
+
+
+    List<LogisticsSaleChannelEntity> channelConvertByShopify(List<ShopifyFulfillmentServicesItem> fulfillmentServices);
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "carrierId"),
+            @Mapping(target = "code", source = "carrierId"),
+            @Mapping(target = "cnName", source = "carrierName"),
+            @Mapping(target = "enName", source = "carrierName"),
+            // 渠道状态0正常1.暂停2.已关闭（默认0）
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "logisticsPlatform", constant = "Walmart"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByWalmart(WalmartCarriersDTO.Carrier logisticsChannel);
+
+    List<LogisticsSaleChannelEntity> channelConvertByWalmart(List<WalmartCarriersDTO.Carrier> carrierList);
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "logisticsServiceId"),
+            @Mapping(target = "code", source = "logisticsServiceId"),
+            @Mapping(target = "cnName", source = "warehouseName"),
+//            @Mapping(target = "enName", source = "displayName"),
+            @Mapping(target = "supplierName", source = "logisticsServiceName"),
+            @Mapping(target = "isTrack", constant = "true"),
+            @Mapping(target = "aging", source = "logisticsTimeliness"),
+            @Mapping(target = "logisticsPlatform", constant = "AliExpress"),
+            @Mapping(target = "channelStatus", constant = "0"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity serviceConvertByAliExpress(ServiceResult serviceResult);
+    List<LogisticsSaleChannelEntity> serviceConvertByAliExpress(List<ServiceResult> serviceResults);
 }

@@ -1,12 +1,11 @@
 package com.common.business.aspect;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DataIdempotent;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -15,7 +14,9 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +26,14 @@ import java.util.concurrent.TimeUnit;
  * @description: 数据幂等实现
  * @date 2023年10月25日
  * @version: 1.0
+ *
+ * 使用示例：
+ *     @DataIdempotent(keyIdName = "userDTO")
+ *     @DataIdempotent(keyIdName = "jsonObject")
+ *     @DataIdempotent(keyIdName = "userDTO.mobile")
+ *     @DataIdempotent(keyIdName = "userDTO.mobile,userDTO.realName")
+ *     @DataIdempotent(keyIdName = "dto.userDTO.mobile,dto.userDTO.realName")
+ *
  */
 @Slf4j
 @Aspect
@@ -44,64 +53,58 @@ public class DataIdempotentAspect {
         Method method = currentMethod(proceedingJoinPoint);
         //获取到方法的注解对象
         DataIdempotent idempotent = method.getAnnotation(DataIdempotent.class);
+        Parameter[] parameters = method.getParameters();
         //单位 秒
         long leaseTime = idempotent.leaseTime();
         long waitTime = idempotent.waitTime();
         String businessType = idempotent.businessType();
+        String keyIdName = idempotent.keyIdName();
         //获取传参
-        Object obj = proceedingJoinPoint.getArgs()[0];
+        Object[] obj1 = proceedingJoinPoint.getArgs();
 
-        List<Object> objList = new ArrayList<>();
-        if (StringUtils.isNotBlank(idempotent.keyIdName())) {
-            if (obj instanceof String || obj instanceof Long || obj instanceof Integer) {
-                objList.add(String.valueOf(obj));
-            } else if (obj instanceof List) {
-                objList = (List<Object>) obj;
-            } else if (obj instanceof String[]) {
-                objList = Arrays.asList((String[]) obj);
-            } else if (Objects.nonNull(obj)) {
-                Map map = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
-                Object object = map.get(idempotent.keyIdName());
-                //单个参数 或 list
-                if (object instanceof String || object instanceof Long || object instanceof Integer) {
-                    objList.add(String.valueOf(object));
-                } else if (object instanceof String[]) {
-                    objList = Arrays.asList((String[]) object);
-                } else if (object instanceof List) {
-                    objList = (List<Object>) object;
-                }
+        StringBuilder sb = new StringBuilder();
+        String[] split = keyIdName.split(",");
+
+        for (String s : split) {
+            String[] fieldNames = s.split("\\.");
+            Integer index = getIndex(parameters, fieldNames[0]);
+            if (Objects.nonNull(index) && fieldNames.length > 1) {
+                Object value = getNestedField(obj1[index], s);
+                sb.append(value);
+            } else if (Objects.nonNull(index)) {
+                //单参时
+                Object value = obj1[index];
+                sb.append(value);
             }
         }
-        if (CollectionUtil.isNotEmpty(objList)) {
+        System.out.println("获取参数：" + sb.toString());
+        if (StringUtils.isNotEmpty(sb)) {
             List<RLock> rLocks = new ArrayList<>();
-            objList.forEach(o -> {
-                try {
-                    String submitKey = "DataIdempotent:" + o + "_" + businessType;
-                    log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
-                    RLock clientLock = redissonClient.getLock(submitKey);
+            String submitKey = "DataIdempotent:" + sb + "_" + businessType;
+            try {
+                log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
+                RLock clientLock = redissonClient.getLock(submitKey);
 
-                    //不设置 lockTime watch dog会 默认 锁定30s 10s重试
-                    boolean locked = clientLock.tryLock(waitTime,leaseTime, TimeUnit.SECONDS);
-                    if (!locked) {
-                        log.error("{}上锁失败", submitKey);
-                        throw new ServiceException(ApiError.ERROR_1026);
-                    }
-//                    clientLock.lock(lockTime, TimeUnit.SECONDS);
-                    rLocks.add(clientLock);
-                    log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, leaseTime);
-                } catch (Exception e) {
-                    //存在不能上锁情况时 释放已上锁对象
-                    if (CollectionUtil.isNotEmpty(rLocks)) {
-                        // 无需判断锁是否存在，直接调用 unlock
-                        rLocks.forEach(rLock -> {
-                            if (rLock.isLocked()) {
-                                rLock.unlock();
-                            }
-                        });
-                    }
+                //不设置 lockTime watch dog会 默认 锁定30s 10s重试
+                boolean locked = clientLock.tryLock(waitTime, leaseTime, TimeUnit.SECONDS);
+                if (!locked) {
+                    log.error("{}上锁失败", submitKey);
                     throw new ServiceException(ApiError.ERROR_1026);
                 }
-            });
+                rLocks.add(clientLock);
+                log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, leaseTime);
+            } catch (Exception e) {
+                //存在不能上锁情况时 释放已上锁对象
+                if (CollectionUtil.isNotEmpty(rLocks)) {
+                    // 无需判断锁是否存在，直接调用 unlock
+                    rLocks.forEach(rLock -> {
+                        if (rLock.isLocked()) {
+                            rLock.unlock();
+                        }
+                    });
+                }
+                throw new ServiceException(ApiError.ERROR_1026);
+            }
             if (CollectionUtil.isNotEmpty(rLocks)) {
                 LOCK_THREAD.set(rLocks);
             }
@@ -162,5 +165,32 @@ public class DataIdempotentAspect {
                 LOCK_THREAD.remove();
             }
         }
+    }
+
+    private Object getNestedField(Object obj, String fieldName) throws Exception {
+        String[] fieldNames = fieldName.split("\\.");
+        try {
+            Object value = "";
+            Field field = obj.getClass().getDeclaredField(fieldNames[1]);
+            field.setAccessible(true);
+            value = field.get(obj);
+            for (int i = 2; i < fieldNames.length; i++) {
+                field = value.getClass().getDeclaredField(fieldNames[i]);
+                field.setAccessible(true);
+                value = field.get(value);
+            }
+            return value;
+        } catch (Exception e) {
+            return "";
+        }
+
+    }
+    private Integer getIndex(Parameter[] parameters, String name) {
+        for (int i = 0; i < parameters.length; i++) {
+            if (name.equals(parameters[i].getName())) {
+                return i;
+            }
+        }
+        return null;
     }
 }

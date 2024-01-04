@@ -31,7 +31,7 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     /**
      * 根据供应商id获取到 对应渠道下 启用禁用的列表
      *@parms supplierId
-     *@return 
+     *@return
      *@author yl
      *@date 2023-11-20
      */
@@ -40,9 +40,18 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     /** 根据地址id获取数据
      *
      *@parms addressId
-     *@return 
+     *@return
      *@author yl
      *@date 2023-11-20
      */
     List<LogisticsChannelEntity> listByAddressId(@Param("addressId") String addressId);
+
+    /**
+     * 根据名称获取渠道列表
+     * @param channelName
+     * @return
+     */
+    List<LogisticsChannelEntity> getChannelByName(@Param("channelName") String channelName);
+
+
 }

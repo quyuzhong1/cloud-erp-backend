@@ -135,6 +135,18 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
     private String syncOperate;
 
     /**
+     * 超时时间:单位秒:默认3600
+     */
+    @TableField(value = "timeout_seconds")
+    private Integer timeoutSeconds;
+
+    /**
+     * 业务分组ID:系统根据此ID开多线程任务
+     */
+    @TableField(value = "group_id")
+    private String groupId;
+
+    /**
      * api参数
      */
 
@@ -155,5 +167,6 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
         this.operateType = item.getOperateType();
         this.platformApiId = item.getId();
         this.syncOperate = item.getSyncOperate();
+        this.timeoutSeconds = item.getTimeoutSeconds();
     }
 }

@@ -23,7 +23,7 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class IdsDTO extends   PermissionsDTO{
+    public static class IdsDTO extends PermissionsDTO {
 
         /**
          * 表 ids

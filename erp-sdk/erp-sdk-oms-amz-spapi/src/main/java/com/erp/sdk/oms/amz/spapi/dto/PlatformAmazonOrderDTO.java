@@ -1,9 +1,13 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,9 +17,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,9 +47,22 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     private Integer downloadStatus;
 
     /**
+     * 地址详情下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    @Panno(findType = PannoEnum.EQ,field = "downloadAddressStatus")
+    private Integer downloadAddressStatus;
+
+    /**
      * 订单明细
      */
     private OrderItemList details;
+
+    /**
+     * redisson执行中key
+     */
+    private String redissonKey;
 
     public PlatformAmazonOrderDTO(Order order, String shopId) {
         this.order = order;
@@ -53,6 +70,15 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         this.setUniqueId(order.getAmazonOrderId());
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
         this.setDownloadStatus(0);
+        this.setDownloadAddressStatus(0);
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
+    }
+
+    public static PlatformAmazonOrderDTO getByAddressDownloadStatus() {
+        PlatformAmazonOrderDTO orderMongoDTO = new PlatformAmazonOrderDTO();
+        orderMongoDTO.setDownloadStatus(1);
+        orderMongoDTO.setDownloadAddressStatus(0);
+        return orderMongoDTO;
     }
 
     /**
@@ -64,8 +90,26 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         BeanUtils.copyProperties(dto, orderDTO);
+
+        // 来源类型
+        orderDTO.setSourceType("soB2c");
+        // 来源id
+        orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
+        // 来源编码
+        orderDTO.setSourceCode("");
+        // 标签json
+        Map<String, String> lableMap = new HashMap<>();
+        if (Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(dto.getOrder().getFulfillmentChannel().getValue())) {
+            lableMap.put("FulfillmentChannel", "AFN");
+        }
+        if (Order.OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(dto.getOrder().getOrderStatus())){
+            lableMap.put("amazonStatus", "Unfulfillable");
+        }
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+
         // 订单日期
-        LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseSystemTime();
+        LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseLocalDateTime();
         orderDTO.setBillDate(purchaseLocalDateTime.toLocalDate());
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getAmazonOrderId());
@@ -73,10 +117,11 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
+
         // 作废状态（false未作废，true已作废）
-        orderDTO.setInvalidStatus(false);
+        orderDTO.setInvalidStatus(sourceOrder.convertCancel());
         // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType("");
+        orderDTO.setInvalidType(orderDTO.getInvalidStatus() ? "automatic" : "");
         // 作废原因
         orderDTO.setInvalidRemark("");
         // 订单状态
@@ -85,17 +130,21 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         orderDTO.setPayStatus(sourceOrder.convertPayStatus());
+        // 审核状态
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatusStr());
+
         // 订单金额
         orderDTO.setAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 币别（原币）
         orderDTO.setCurrency(null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode());
         // 汇率
-        orderDTO.setExchangeRate(BigDecimal.ONE);
-        // TODO 运费收入
+        orderDTO.setExchangeRate(BigDecimal.ZERO);
+        //  运费
         BigDecimal shippingFee = BigDecimal.ZERO;
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
-        orderDTO.setPayTime(purchaseLocalDateTime);
+        // 未付款无付款时间
+        orderDTO.setPayTime("payment".equalsIgnoreCase(orderDTO.getPayStatus()) ? null : purchaseLocalDateTime);
         // 付款金额
         orderDTO.setPayAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 付款方式
@@ -112,14 +161,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderDTO.setIsIntercept(false);
         // 拦截备注
         orderDTO.setInterceptRemark("");
-        // 来源类型
-        orderDTO.setSourceType("soB2c");
-        // 来源id
-        orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
-        // 来源编码
-        orderDTO.setSourceCode("");
-        // 标签json
-        orderDTO.setLabelJson("{}");
+
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
@@ -127,32 +169,37 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 数据下载状态:
         // 0=详情数据需要更新(不发送MQ)
         // 1=详情数据已更新(发送MQ)
-        orderDTO.setDownloadStatus(isSendMq ? 1 : 0);
+        orderDTO.setDownloadStatus(0);
         // 记录详情
-        List<PlatformOrderDetailDTO> detailDTO = dto.getDetails().stream()
-                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
-                .collect(Collectors.toList());
-        orderDTO.setDetails(detailDTO);
+        if (!CollectionUtils.isEmpty(dto.getDetails())){
+            List<PlatformOrderDetailDTO> detailDTO = dto.getDetails().stream()
+                    .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
+                    .collect(Collectors.toList());
+            orderDTO.setDetails(detailDTO);
+            orderDTO.setDownloadStatus(1);
+        }
+
 
         // 订单财务信息
         if (!CollectionUtils.isEmpty(dto.getDetails())) {
             final String[] currency = {""};
-            final BigDecimal[] shippingCost = {BigDecimal.ZERO};
+//            final BigDecimal[] shippingCost = {BigDecimal.ZERO};
             dto.getDetails().forEach(e-> {
                 Money money = e.getShippingPrice();
                 if (null == money){
                     return;
                 }
                 currency[0] = money.getCurrencyCode();
-                shippingCost[0] = shippingCost[0].add(new BigDecimal(money.getAmount()));
+//                shippingCost[0] = shippingCost[0].add(new BigDecimal(money.getAmount()));
             });
             PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
-            financeDTO.setShippingCost(shippingCost[0]);
+            // 亚马逊物流费用不显示
+            financeDTO.setShippingCost(BigDecimal.ZERO);
             financeDTO.setCurrency(currency[0]);
             orderDTO.setFinances(financeDTO);
         }
 
-        // TODO 订单物流信息
+        // 订单物流信息(无)
 
         // 订单买家信息
         BuyerInfo buyerInfo = dto.getOrder().getBuyerInfo();
@@ -163,21 +210,23 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
             if (null != shippingAddress){
                 receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
                 receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
-                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddressLine2()) ? "" : shippingAddress.getAddressLine2());
-                if (StringUtils.isBlank(shippingAddress.getAddressLine3())){
-                    receiverDTO.setSecondAddress(receiverDTO.getSecondAddress() + shippingAddress.getAddressLine3());
-                }
+                String secondAddress = StrUtil.concat(true, shippingAddress.getAddressLine2(), shippingAddress.getAddressLine3());
+                receiverDTO.setSecondAddress(secondAddress);
+
                 receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
                 receiverDTO.setTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
                 receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCounty()) ? "" : shippingAddress.getCounty());
+                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
                 receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                receiverDTO.setFullAddress(
-                        (StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict()) +
-                        (StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion()) +
-                        (StringUtils.isBlank(shippingAddress.getPostalCode()) ? "" : shippingAddress.getPostalCode())
-                );
+                // 区域
+                receiverDTO.setDistrictName(StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict());
+                // 省/州
+                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion());
+
+                String fullAddress = StrUtil.concat(true,  shippingAddress.getMunicipality());
+                receiverDTO.setFullAddress(fullAddress);
                 receiverDTO.setPostCode(shippingAddress.getPostalCode());
+
             }
             orderDTO.setReceiver(receiverDTO);
         }
@@ -209,14 +258,22 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(item.getQuantityOrdered());
-        // 单价
+        // item总价
         Money itemPrice = item.getItemPrice();
-        detailDTO.setPrice(new BigDecimal(itemPrice.getAmount()));
         // 金额
-        BigDecimal amount = detailDTO.getPrice().multiply(BigDecimal.valueOf(item.getQuantityOrdered()));
-        detailDTO.setAmount(amount);
+        detailDTO.setAmount(new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
+
+        // 计算单价
+        BigDecimal price = BigDecimal.ZERO;
+        if (null != item.getQuantityOrdered() && 0 < item.getQuantityOrdered()){
+            price = detailDTO.getAmount().divide(BigDecimal.valueOf(item.getQuantityOrdered()), 2, RoundingMode.DOWN);
+        }
+
+        // 单价
+        detailDTO.setPrice(price);
+
         // 币别（原币）
-        detailDTO.setCurrency(itemPrice.getCurrencyCode());
+        detailDTO.setCurrency(null == itemPrice ? "" : itemPrice.getCurrencyCode());
         // 汇率
         detailDTO.setExchangeRate(BigDecimal.ONE);
         // 建议售价（本位币）

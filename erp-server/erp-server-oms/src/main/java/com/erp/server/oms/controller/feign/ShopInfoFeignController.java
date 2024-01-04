@@ -65,7 +65,7 @@ public class ShopInfoFeignController extends BaseController {
      * 通过ID查询店铺信息
      */
     @GetMapping("/getShopInfoById")
-    public ShopInfoEntity getShopInfoById(@RequestParam String id) {
+    public ShopInfoEntity getShopInfoById(@RequestParam("id") String id) {
         return shopInfoService.getById(id);
     }
 

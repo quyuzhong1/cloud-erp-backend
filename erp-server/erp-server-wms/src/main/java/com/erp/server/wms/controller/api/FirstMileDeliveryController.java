@@ -559,7 +559,7 @@ public class FirstMileDeliveryController extends BaseController {
 
 
     /**
-     * 导入
+     * 导入装箱数据
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
     @PostMapping("/importPacking")
