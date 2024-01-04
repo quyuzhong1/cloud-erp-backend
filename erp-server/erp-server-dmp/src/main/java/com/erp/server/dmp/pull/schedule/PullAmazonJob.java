@@ -171,14 +171,14 @@ public class PullAmazonJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.ORDER.getCode();
 
-//        taskGroupMap.entrySet().parallelStream().forEach(entry -> {
-//                    String key = entry.getKey();
-//                    List<PlatformApiTaskEntity> value = entry.getValue();
-        taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
+        taskGroupMap.entrySet().parallelStream().forEach(entry -> {
+                    String key = entry.getKey();
+                    List<PlatformApiTaskEntity> value = entry.getValue();
+//        taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
             // 处理下载详情
             handlerDetailDownload(key, value, size, platform, category, business);
-        }));
-//        });
+//        }));
+        });
 
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束");
         return ReturnT.SUCCESS;
