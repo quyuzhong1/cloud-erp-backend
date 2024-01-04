@@ -600,6 +600,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             inputStream = httpURLConnection.getInputStream();
         } catch (Exception e) {
             e.printStackTrace();
+            log.info("打印自定义配货单获取Fastdfs模板路径错误，路径：【{}】", fileTemplateEntity.getFastdfsUrl());
             return;
         }
         Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
