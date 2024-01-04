@@ -253,6 +253,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
+        log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
