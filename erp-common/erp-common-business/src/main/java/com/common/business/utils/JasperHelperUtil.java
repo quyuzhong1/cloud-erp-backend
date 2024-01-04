@@ -8,6 +8,7 @@ import com.common.business.enums.FileTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.base.JRBaseReport;
 import net.sf.jasperreports.engine.export.*;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class JasperHelperUtil {
 
 
@@ -230,6 +232,8 @@ public class JasperHelperUtil {
             }
             return JasperExportManager.exportReportToPdf(jasperPrint);
         } catch (Exception e) {
+            log.error("（按照类型导出不同格式文件）方法：exportToPdfStream " + e.getMessage());
+            log.info("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
