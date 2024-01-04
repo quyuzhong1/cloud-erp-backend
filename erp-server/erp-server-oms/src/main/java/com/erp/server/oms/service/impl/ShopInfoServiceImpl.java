@@ -124,9 +124,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private ShopeeAuthService shopeeAuthService;
 
     @Resource
-    private AuthModelService authModelService;
-
-    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
     /**
@@ -586,7 +583,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        return authModelService.shopAuthorize(dto.checkAndSetPlatform());
+        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform());
     }
 
     /**
@@ -636,12 +633,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
-        return authModelService.cancelAuthorize(dto);
+        return AuthSaveHandler.cleanShopAuthorize(dto);
     }
 
     @Override
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        return authModelService.getShopAuthorizeUrl(dto);
+        return AuthSaveHandler.getShopAuthorizeUrl(dto);
     }
 
     @Override
