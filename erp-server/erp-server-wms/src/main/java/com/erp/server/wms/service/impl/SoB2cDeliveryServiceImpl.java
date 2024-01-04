@@ -592,17 +592,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
         getOneDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-
-        InputStream inputStream = null;
-        try {
-            URL url = new URL(fileTemplateEntity.getFastdfsUrl());
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            inputStream = httpURLConnection.getInputStream();
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.info("打印自定义配货单获取Fastdfs模板路径错误，路径：【{}】", fileTemplateEntity.getFastdfsUrl());
-            return;
-        }
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
         Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(printWayBillPdfDTO.getDetailList());
         map.put("detail", detail);
