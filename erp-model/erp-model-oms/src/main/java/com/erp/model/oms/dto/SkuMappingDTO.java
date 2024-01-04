@@ -1063,6 +1063,8 @@ public class SkuMappingDTO implements Serializable {
          */
         private String listingId;
 
+        private Boolean isExpire;
+
 
 
 

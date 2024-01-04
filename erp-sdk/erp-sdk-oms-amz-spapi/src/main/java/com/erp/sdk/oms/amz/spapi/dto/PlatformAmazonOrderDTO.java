@@ -169,13 +169,14 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 数据下载状态:
         // 0=详情数据需要更新(不发送MQ)
         // 1=详情数据已更新(发送MQ)
-        orderDTO.setDownloadStatus(isSendMq ? 1 : 0);
+        orderDTO.setDownloadStatus(0);
         // 记录详情
         if (!CollectionUtils.isEmpty(dto.getDetails())){
             List<PlatformOrderDetailDTO> detailDTO = dto.getDetails().stream()
                     .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
                     .collect(Collectors.toList());
             orderDTO.setDetails(detailDTO);
+            orderDTO.setDownloadStatus(1);
         }
 
 
@@ -225,6 +226,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
                 String fullAddress = StrUtil.concat(true,  shippingAddress.getMunicipality());
                 receiverDTO.setFullAddress(fullAddress);
                 receiverDTO.setPostCode(shippingAddress.getPostalCode());
+
             }
             orderDTO.setReceiver(receiverDTO);
         }

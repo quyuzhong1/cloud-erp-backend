@@ -1,9 +1,13 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.PlatformOrderReceiverDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
@@ -18,6 +22,7 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -79,8 +84,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         // 已有出库详情/不保存订单
-        Boolean hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getPlatform());
+        Boolean hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
         if (hasDeliveryDetail){
+            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
+            return;
+        }
+        // 亚马逊, 跳过MFN时，地址为空的订单
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && this.checkHasMfnOrderAndNoAddress(dto) ) {
+            log.warn("亚马逊卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
             return;
         }
 
@@ -113,6 +124,23 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             log.error("[订单规则处理失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
         }
 
+    }
+
+    /**
+     * 检查亚马逊卖家自发货订单无地址
+     */
+    private Boolean checkHasMfnOrderAndNoAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            //FBA
+            if ("AFN".equalsIgnoreCase(labelJsonDTO.getFulfillmentChannel())){
+                return false;
+            }
+        }
+        if (null == dto.getReceiver()){
+            return true;
+        }
+        return StringUtils.isBlank(dto.getReceiver().getName());
     }
 
     @Override

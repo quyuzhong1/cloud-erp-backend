@@ -948,11 +948,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public Boolean updateSkuMapping(SkuMappingDTO.UpdateSkuMappingDTO dto) {
-
+        LocalDateTime now = LocalDateTime.now();
         return this.lambdaUpdate().eq(SkuMappingEntity::getListingId,dto.getListingId()).
                 set(SkuMappingEntity::getProductSkuId,dto.getProductSkuId()).
                 set(SkuMappingEntity::getProductName,dto.getProductName()).
-                set(SkuMappingEntity::getProductSkuNo,dto.getProductSkuNo()).update();
+                set(SkuMappingEntity::getIsExpire,dto.getIsExpire()).
+                set(SkuMappingEntity::getEffectiveTime,now).
+                set(SkuMappingEntity::getExpireTime,now.plusYears(MathUtil.NUMBER_100)).
+                set(SkuMappingEntity::getProductSkuNo,dto.getProductSkuNo()).
+                update(new SkuMappingEntity());
     }
 
     @Override
