@@ -1,14 +1,10 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -20,11 +16,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -33,7 +26,6 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.server.tms.constant.TmsConstant;
@@ -53,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -63,9 +54,7 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 
 /**
  * 物流单 服务实现类

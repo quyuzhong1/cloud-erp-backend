@@ -3,32 +3,20 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.RequisitionApplicationService;
 import com.erp.server.wms.service.SoOutstockService;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -151,7 +139,7 @@ public class SoB2cDeliveryController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String deliveryType = dto.getType();
         Boolean isManual = DeliverTypeEnum.MANUAL.getCode().equals(deliveryType);
-        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
