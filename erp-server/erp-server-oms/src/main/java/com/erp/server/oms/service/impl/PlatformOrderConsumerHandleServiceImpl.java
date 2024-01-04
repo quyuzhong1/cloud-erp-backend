@@ -91,7 +91,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         try {
             if (Objects.nonNull(mainEntity)) {
                 handleRule(mainEntity);
-                if (isShipped) {
+                //如果是已发货且是平台仓订单 就生成销售出库单
+                if (isShipped&&hasPlatformWarehouse) {
                     soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
                 }
             }
