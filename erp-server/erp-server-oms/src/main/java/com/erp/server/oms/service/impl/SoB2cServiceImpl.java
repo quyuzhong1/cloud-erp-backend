@@ -501,7 +501,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public BatchResultDTO unInvalid(String id, SoB2cInvalidTypeEnum soB2cInvalidTypeEnum) {
         SoB2cEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
         if (InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_INVALID,entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_INVALID, entity.getCode());
         }
         if (!soB2cInvalidTypeEnum.getCode().equals(entity.getInvalidType())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_INVALID, entity.getCode(), soB2cInvalidTypeEnum.getName());
@@ -852,11 +852,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
-        String aliExpress=PlatformDictEnum.ALI_EXPRESS.getCode();
-        String dictPlatform= entity.getDictPlatform();
-        if(aliExpress.equals(dictPlatform)){
+        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
+        String dictPlatform = entity.getDictPlatform();
+        if (aliExpress.equals(dictPlatform)) {
             result.setOrderCode(entity.getPlatformCode());
-        }else{
+        } else {
             result.setOrderCode(entity.getCode());
         }
 
@@ -951,7 +951,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //库存验证
-        checkInventory(entity,list,deliveryWarehouseIdList);
+        checkInventory(entity, list, deliveryWarehouseIdList);
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -969,7 +969,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             generateSoB2cDeliveryBill(entity, list, logisticsEntity);
         }
         this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
-        String submitDelivery= SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+        String submitDelivery = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         //删除异常订单信息
         soB2cErrorService.removeErrorOrder(id, submitDelivery);
 
@@ -979,7 +979,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
     }
 
-    private void checkInventory (SoB2cEntity entity,List<SoB2cDetailEntity> list,List<String> deliveryWarehouseIdList) {
+    private void checkInventory(SoB2cEntity entity, List<SoB2cDetailEntity> list, List<String> deliveryWarehouseIdList) {
         /**
          * 验证是否可用库存
          * 1、销售套装bom则需要判断子件是否存在库存
@@ -1015,7 +1015,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
                             .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(MathUtil.ZERO);
                     if (MathUtil.compareTo(detailEntity.getQty(), useableQty) > MathUtil.ZERO) {
-                        throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(),bomChildrenSkuDTO.getSkuNo(), detailEntity.getWarehouseName());
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), bomChildrenSkuDTO.getSkuNo(), detailEntity.getWarehouseName());
                     }
                 }
                 continue;
@@ -3194,8 +3194,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.nonNull(shopInfo)) {
             String warehouseId = shopInfo.getWarehouseId();
-            if(StringUtils.isNotBlank(warehouseId)){
-              return   soB2cDetailService.updateWarehouseIdByMainId(id,warehouseId,Boolean.TRUE);
+            if (StringUtils.isNotBlank(warehouseId)) {
+                return soB2cDetailService.updateWarehouseIdByMainId(id, warehouseId, Boolean.TRUE);
             }
         }
         return Boolean.FALSE;
@@ -3756,27 +3756,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ProductDetailEntity skuEntity = skuList.get(0);
         //平台sku
         String platformSkuNo = detailEntity.getPlatformSkuNo();
-        //平台产品id
-        String platformSpuNo = detailEntity.getPlatformSpuNo();
+        String typeCode = RuleTypeEnum.PLATFORM.getCode();
+        String salesPlatform = soB2cEntity.getDictPlatform();
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(salesPlatform);
+        paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
+        paramDTO.setType(typeCode);
+        paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
+        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
+        if (CollectionUtils.isEmpty(skuMappingList)) {
+            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
+        }
+        ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
+        String listingId=skuMapping.getListingId();
+        listingInfoService.updateMatchResult(listingId,Boolean.TRUE);
 
         SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
         String skuNo = skuEntity.getSkuNo();
         updateSkuMappingDTO.setProductName(skuEntity.getName());
         updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
         updateSkuMappingDTO.setProductSkuNo(skuNo);
-        String typeCode = RuleTypeEnum.PLATFORM.getCode();
-        String salesPlatform = soB2cEntity.getDictPlatform();
-        ListingInfoEntity listingInfo = listingInfoService.getByPlatformSkuNoAndSpu(platformSkuNo, platformSpuNo, typeCode);
-        if (Objects.isNull(listingInfo)) {
-            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
-        }
-        updateSkuMappingDTO.setListingId(listingInfo.getId());
-
-        detailEntity.setSkuId(skuId);
-        detailEntity.setSkuNo(skuNo);
+        updateSkuMappingDTO.setListingId(skuMapping.getListingId());
+        //更新明细
         soB2cDetailService.updateById(detailEntity);
-        //对应关系
         return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
+
 
     }
 
