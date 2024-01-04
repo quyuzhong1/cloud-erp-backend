@@ -1574,7 +1574,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
                 addDetailDTO.setOperateDetailId(detailEntity.getId());
-                addDetailDTO.setSourceDetailId(null);
                 detailList.add(addDetailDTO);
                 //累加拆分金额
                 splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiply(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
