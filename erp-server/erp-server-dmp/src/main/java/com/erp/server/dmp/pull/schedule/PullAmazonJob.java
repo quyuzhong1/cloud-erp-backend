@@ -171,48 +171,66 @@ public class PullAmazonJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.ORDER.getCode();
 
+//        taskGroupMap.entrySet().parallelStream().forEach(entry -> {
+//                    String key = entry.getKey();
+//                    List<PlatformApiTaskEntity> value = entry.getValue();
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
-            List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
-            // 查询当前分组未下载的mongo订单
-            List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, shopIds, 1, size);
-            if (CollectionUtil.isEmpty(orderEntityList)) {
-                XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
-                return;
-            }
-            for (PlatformAmazonOrderDTO dto : orderEntityList) {
-                AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
-                try {
-                    // 动态请求配置
-                    // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
-                    String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
-                    JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
-                    extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
-                    dto.setRedissonKey(redissonKey);
-                    PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
-
-                    newDto.setDownloadStatus(1);
-                    newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                    newDto.setRedissonKey(null);
-                    List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
-                    businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                    XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
-                } catch (Exception error) {
-                    // 获取锁异常等重试
-                    if (error instanceof InterruptedException) {
-                        XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
-                        throw new ServiceException(ApiError.ERROR_1026);
-                    }
-                    XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
-                            dto.getUniqueId(),
-                            error.getMessage());
-                    // 发送预警
-                    dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
-                }
-            }
+            // 处理下载详情
+            handlerDetailDownload(key, value, size, platform, category, business);
         }));
+//        });
 
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 处理下载详情
+     * @param key
+     * @param value
+     * @param size
+     * @param platform
+     * @param category
+     * @param business
+     */
+    private void handlerDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 查询当前分组未下载的mongo订单
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findDownloadStatusAnShopId(0, shopIds, 1, size);
+        if (CollectionUtil.isEmpty(orderEntityList)) {
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
+            return;
+        }
+        for (PlatformAmazonOrderDTO dto : orderEntityList) {
+            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
+            try {
+                // 动态请求配置
+                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+                String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+                JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+                extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+                dto.setRedissonKey(redissonKey);
+                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, extentJsonObj);
+
+                newDto.setDownloadStatus(1);
+                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                newDto.setRedissonKey(null);
+                List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
+                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
+            } catch (Exception error) {
+                // 获取锁异常等重试
+                if (error instanceof InterruptedException) {
+                    XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
+                    throw new ServiceException(ApiError.ERROR_1026);
+                }
+                XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
+                        dto.getUniqueId(),
+                        error.getMessage());
+                // 发送预警
+                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
+            }
+        }
     }
 
 
@@ -244,57 +262,70 @@ public class PullAmazonJob {
         String business = BusinessTypeEnum.ORDER.getCode();
 
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
-            // 店铺IDS
-            List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
-            // 查出下MFN订单
-            List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(),  shopIds,1, size);
-            if (CollectionUtil.isEmpty(orderEntityList)) {
-                // 查询AFN订单
-                orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), shopIds, 1, size);
-                if (CollectionUtil.isEmpty(orderEntityList)) {
-                    XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
-                    return;
-                }
-            }
-
-            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
-            // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
-            String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_REQUEST_PREFIX, key);
-            for (PlatformAmazonOrderDTO dto : orderEntityList) {
-                try {
-                    // 动态请求配置
-                    // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
-                    String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
-                    JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
-                    extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, limitKey);
-                    dto.setRedissonKey(redissonKey);
-                    // 下载和处理地址
-                    PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadAddress(dto, extentJsonObj);
-                    newDto.setDownloadStatus(1);
-                    newDto.setDownloadAddressStatus(1);
-                    newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                    newDto.setRedissonKey(null);
-                    List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
-                    // 保存和发送mq
-                    businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                    XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, sellerId={}, uniqueId={}", key, dto.getUniqueId());
-                } catch (Exception e) {
-                    // 获取锁异常等重试
-                    if (e instanceof InterruptedException) {
-                        XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", e.getMessage());
-                        throw new ServiceException(ApiError.ERROR_1026);
-                    }
-                    XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载失败，sellerId={},uniqueId={}, error={}",
-                            key,
-                            dto.getUniqueId(),
-                            e.getMessage());
-                    // 发送预警
-                    dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
-                }
-            }
+            handlerAddressDetail(key, value, size, platform, category, business);
         }));
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderAddressDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 处理地址详情下载
+     * @param key
+     * @param value
+     * @param size
+     * @param platform
+     * @param category
+     * @param business
+     */
+    private void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
+        // 店铺IDS
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 查出下MFN订单
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(),  shopIds,1, size);
+        if (CollectionUtil.isEmpty(orderEntityList)) {
+            // 查询AFN订单
+            orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), shopIds, 1, size);
+            if (CollectionUtil.isEmpty(orderEntityList)) {
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                return;
+            }
+        }
+
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
+        // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+        String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_REQUEST_PREFIX, key);
+        for (PlatformAmazonOrderDTO dto : orderEntityList) {
+            try {
+                // 动态请求配置
+                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+                String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+                JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+                extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, limitKey);
+                dto.setRedissonKey(redissonKey);
+                // 下载和处理地址
+                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadAddress(dto, extentJsonObj);
+                newDto.setDownloadStatus(1);
+                newDto.setDownloadAddressStatus(1);
+                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                newDto.setRedissonKey(null);
+                List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
+                // 保存和发送mq
+                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, sellerId={}, uniqueId={}", key, dto.getUniqueId());
+            } catch (Exception e) {
+                // 获取锁异常等重试
+                if (e instanceof InterruptedException) {
+                    XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", e.getMessage());
+                    throw new ServiceException(ApiError.ERROR_1026);
+                }
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载失败，sellerId={},uniqueId={}, error={}",
+                        key,
+                        dto.getUniqueId(),
+                        e.getMessage());
+                // 发送预警
+                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
+            }
+        }
     }
 
     private List<PlatformAmazonOrderDTO> findGroupByFulfillmentChannel(String value,
