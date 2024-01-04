@@ -337,7 +337,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //未付款数据不能编辑
         if (ObjectUtil.isEmpty(old.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(old.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_UPDATE, old.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, old.getCode());
         }
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
@@ -477,6 +477,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_98005);
             }
         }
+        //未付款数据不能作废
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+        }
+
         log.info("作废 开始修改B2C销售订单表状态数据，id：【{}】", id);
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
@@ -539,6 +544,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_REMARK);
         }
+        //未付款数据不能操作
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+        }
 
         this.lambdaUpdate().eq(SoB2cEntity::getId, id).set(SoB2cEntity::getRemark, remark).update(new SoB2cEntity());
         String msg = StrUtil.format("订单备注由{}变更为{}", entity.getRemark(), remark);
@@ -557,6 +566,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_UPDATE_CATEGORY);
+        }
+        //未付款数据不能操作
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
         //原分类
         String oldCategoryName = "";
@@ -1263,6 +1276,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             long count = soB2cRefList.stream().filter(obj -> obj.getSourceId().equals(entity.getId()) || obj.getTargetId().equals(entity.getId())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_Operate_NOT_MERGE);
+            }
+            //未付款数据不能操作
+            if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
             }
 
             //fba订单不支持合并
@@ -2212,7 +2229,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //未付款数据不支持提交
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_SUBMIT, entity.getCode());
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
 
 
@@ -2543,6 +2560,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOPEE_NOT_SPLIT, entity.getCode());
+        }
+        //未付款数据不能操作
+        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
 
         //查询订单是否是合并订单或拆分子订单
