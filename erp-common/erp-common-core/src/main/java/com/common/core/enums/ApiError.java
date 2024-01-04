@@ -965,6 +965,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX(92066,"B2C销售订单【{}】存在多个发货仓库不支持提交发货"),
     ERROR_SO_B2C_NOT_INVENTORY(92067,"B2C销售订单【{}】未找到可用库存"),
     ERROR_SO_B2C_SKU_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】仓库【{}】未找到可用库存"),
+    ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】子级【{}】仓库【{}】未找到可用库存"),
     ERROR_SO_B2C_PLATFORM_CODE_COMPLEX(92069,"合并订单销售平台必须相同"),
     ERROR_SO_B2C_SHOP_COMPLEX(92070,"合并订单店铺必须相同"),
     ERROR_SO_B2C_CURRENCY_COMPLEX(92071,"合并订单币别必须相同"),
