@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: B2C销售订单作废类型枚举
  * @date 2023/12/20 10:27
  */
-public enum SoB2ErrorTypeEnum {
+public enum SoB2cErrorTypeEnum {
 
     SUBMIT_DELIVERY("submitDelivery",  "提交发货异常"),
     SIGN_DELIVERY("signDelivery",  "标记发货异常"),
@@ -29,7 +29,7 @@ public enum SoB2ErrorTypeEnum {
     private String name;
 
 
-    SoB2ErrorTypeEnum(String code, String name) {
+    SoB2cErrorTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,7 +46,7 @@ public enum SoB2ErrorTypeEnum {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (SoB2ErrorTypeEnum typeEnum : SoB2ErrorTypeEnum.values()) {
+        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
             }
