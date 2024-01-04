@@ -70,7 +70,6 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
         return ApiResult.success();
     }
 
-
     /**
      * 清洗订单
      */
