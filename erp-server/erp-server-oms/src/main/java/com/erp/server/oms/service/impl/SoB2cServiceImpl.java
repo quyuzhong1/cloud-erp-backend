@@ -721,8 +721,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> notWarehouseList = soB2cDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).collect(Collectors.toList());
 
         //只有订单的物流渠道和仓库都有值才会更新状态
-        if ((StrUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId()) || StrUtil.isNotBlank(dto.getLogisticsChannelId())
-                && CollectionUtils.isEmpty(notWarehouseList))) {
+        if ((StrUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId()) || StrUtil.isNotBlank(dto.getLogisticsChannelId()))
+                && CollectionUtils.isEmpty(notWarehouseList)) {
             //配货中
             String billStatus = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
 
