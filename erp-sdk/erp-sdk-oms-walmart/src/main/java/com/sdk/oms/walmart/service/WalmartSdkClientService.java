@@ -298,9 +298,11 @@ public class WalmartSdkClientService {
             trackingInfo.setShipDateTime(System.currentTimeMillis());
             //有关包裹承运商的信息
             CarrierNameBean carrierName = new CarrierNameBean();
+            carrierName.setCarrier(dto.getLogisticsPlatformCode());
             trackingInfo.setCarrierName(carrierName);
             //运输方式。可以是以下类型之一：Standard、Express、OneDay、WhiteGlove、Value或Freight
-            trackingInfo.setMethodCode("Standard");
+            trackingInfo.setMethodCode("Value");
+            trackingInfo.setTrackingURL("https://www.walmart.com/tracking?tracking_id="+ dto.getTrackNo() +"");
             //跟踪单号
             trackingInfo.setTrackingNumber(dto.getTrackNo());
             orderLineStatus.get(0).setTrackingInfo(trackingInfo);
