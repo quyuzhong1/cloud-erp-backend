@@ -427,14 +427,10 @@ public class SoB2cController extends BaseController {
     @PostMapping("/submitDelivery")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        String submitDelivery= SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
-
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.submitDelivery(id);
-                //删除异常订单信息
-                soB2cErrorService.removeErrorOrder(id, submitDelivery);
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
