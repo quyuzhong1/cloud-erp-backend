@@ -341,6 +341,10 @@ public enum RocketMqTagEnum {
      * b2c订单同步dmp
      */
     SO_B2C_TO_DMP_TAG(2013, RocketMqTagEnum.SYNC_DMP,"so_b2c_to_dmp_tag"),
+    /**
+     * b2c发货单同步dmp
+     */
+    SO_B2C_DELIVERY_TO_DMP_TAG(2014, RocketMqTagEnum.SYNC_DMP,"so_b2c_delivery_to_dmp_tag"),
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间

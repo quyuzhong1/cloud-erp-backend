@@ -1,10 +1,15 @@
 package com.erp.server.dmp.push.consumer.erp;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -14,6 +19,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.service.DmpOrderInfoService;
 import com.erp.server.dmp.service.DmpOrderItemService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -24,6 +30,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ERP的b2c订单推送到金蝶消费者
@@ -33,18 +40,36 @@ import java.util.List;
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SO_B2C_ORDER_TO_DMP_TOPIC, selectorExpression = "so_b2c_to_dmp_tag",
         consumerGroup = RocketMqConsumerGroup.SYNC_ERP_SO_B2C_TO_DMP,
         consumeMode = ConsumeMode.ORDERLY)
-public class B2cOrderPushDmpOrderConsumer implements RocketMQListener<DmpSyncMqDTO> {
+public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandler<DmpSyncMqDTO> {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpPushTaskService dmpPushTaskService;
 
     @Override
-    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
-        SoB2cDTO.ViewDTO viewDTO = JSONObject.parseObject(dmpSyncMqDTO.getMqData(), SoB2cDTO.ViewDTO.class);
-        this.cleanOrderField(viewDTO);
+    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
     }
+
+    @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId, String msg) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
+    public ApiResult<?> handle(Object ext) {
+        DmpSyncMqDTO dto = JSONUtil.toBean(JSONObject.toJSONString(ext), DmpSyncMqDTO.class);
+        SoB2cDTO.ViewDTO viewDTO = JSONObject.parseObject(dto.getMqData(), SoB2cDTO.ViewDTO.class);
+        this.cleanOrderField(viewDTO);
+        return ApiResult.success();
+    }
+
 
     /**
      * 清洗订单

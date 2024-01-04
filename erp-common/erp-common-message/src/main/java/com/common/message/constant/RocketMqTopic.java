@@ -25,6 +25,7 @@ public class RocketMqTopic {
     public static final String SYNC_SO_OUTSTOCK_ORDER_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_so_outstock_order_to_dmp_topic";
     public static final String SYNC_RETURN_ORDER_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_return_order_to_dmp_topic";
     public static final String SYNC_SO_B2C_ORDER_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_so_b2c_order_to_dmp_topic";
+    public static final String SYNC_SO_B2C_DELIVERY_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_so_b2c_delivery_to_dmp_topic";
     /**
      * 推送数据到金蝶
      */

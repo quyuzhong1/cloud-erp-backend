@@ -245,4 +245,9 @@ public class RocketMqConsumerGroup {
      * ERP B2c订单->DMP
      */
     public static final String SYNC_ERP_SO_B2C_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_to_dmp";
+
+    /**
+     * ERP B2c发货单->DMP
+     */
+    public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
 }
