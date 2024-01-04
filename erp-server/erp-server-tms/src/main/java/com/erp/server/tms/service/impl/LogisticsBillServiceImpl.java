@@ -340,9 +340,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        String deliverType = LogisticsAddressTypeEnum.DELIVER.getCode();
+        LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
-        List<LogisticsAddressEntity> deliverList = logisticsAddressService.listByTypeAndChannelId(deliverType, channelId, dto.getShopId());
+        List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
+        List<LogisticsAddressEntity> deliverList=addressList.stream().filter(a->deliverType.equals(a.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
@@ -352,6 +353,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         BeanMapperUtils.copy(logisticsAddress, senderInfo);
         //地址id
         senderInfo.setId(logisticsAddress.getAddressId());
+
+        LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
+        //退货地址信息
+        SenderInfo returnInfo=new SenderInfo();
+        //退货地址
+        LogisticsAddressEntity returnAddress=addressList.stream().filter(a->refundType.equals(a.getType())).findFirst().orElse(null);
+        if(Objects.nonNull(returnAddress)){
+            BeanMapperUtils.copy(returnAddress, returnInfo);
+            //地址id
+            returnInfo.setId(returnAddress.getAddressId());
+        }
+
+
+
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -400,11 +415,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
                 senderInfo(senderInfo).
+                returnInfo(returnInfo).
                 receiverInfoVO(receiverInfo).
                 parceInfoVO(parceInfo).
                 logisticsProductVOList(logisticsProductList).
                 logisticsChannelEntity(logisticsChannel).
-                logisticsSaleChannel(saleChannel).build();
+                logisticsSaleChannel(saleChannel).
+                build();
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {

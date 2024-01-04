@@ -956,6 +956,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             generateSoB2cDeliveryBill(entity, list, logisticsEntity);
         }
         this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
+        String submitDelivery= SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+        //删除异常订单信息
+        soB2cErrorService.removeErrorOrder(id, submitDelivery);
+
         //操作日志
         String msg = "B2C销售订单【{}】提交发货";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
@@ -2824,8 +2828,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(soB2cEntity)) {
             String signOrderError = soB2cEntity.getSignOrderError();
             if (signOrderError.equals(sign)) {
-                soB2cEntity.setSignOrderError("");
-                this.updateById(soB2cEntity);
+                this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "").
+                        eq(SoB2cEntity::getId, id).update(new SoB2cEntity());
             }
         }
     }
