@@ -198,6 +198,41 @@
 
 
     </select>
+    <select id="listByChannelId" resultType="com.erp.model.tms.entity.LogisticsAddressEntity">
+        SELECT
+            la.id,
+            la.create_user_id,
+            la.create_user_name,
+            la.create_time,
+            la.update_user_id,
+            la.update_user_name,
+            la.update_time,
+            la.version,
+            la.is_deleted,
+            la.name,
+            la.type,
+            la.company_name,
+            la.contact,
+            la.email,
+            la.tel_number,
+            la.country,
+            la.address_first,
+            la.address_second,
+            la.zip_code,
+            la.province_name,
+            la.city_name,
+            la.district_name,
+            la.country_name,
+            la.address_id,
+            lca.shop_id
+        FROM  logistics_channel_address lca
+        LEFT JOIN  logistics_address la
+        ON la.ID = lca.address_id
+        AND la.is_deleted=false
+        WHERE lca.logistics_channel_id=#{channelId}
+        AND lca.is_deleted=false
+        ORDER BY la.create_time DESC
+    </select>
 
 
 </mapper>

@@ -200,6 +200,17 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
     @Override
+    public List<LogisticsAddressEntity> listByChannelIdAndShopId(String channelId, String shopId) {
+        //根据类型和渠道ID查询地址
+        List<LogisticsAddressEntity> list=baseMapper.listByChannelId(channelId);
+        List<LogisticsAddressEntity> shopAddressList=list.stream().filter(a->shopId.equals(a.getShopId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(shopAddressList)){
+            return shopAddressList;
+        }
+        return list.stream().filter(a->"all".equals(a.getShopId())).collect(Collectors.toList());
+    }
+
+    @Override
     public void batchSaveOrUpdateLogisticsAddress(List<LogisticsAddressEntity> list) {
         if (CollectionUtils.isNotEmpty(list)){
             list.forEach(logisticsAddressEntity -> {

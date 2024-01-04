@@ -1,10 +1,12 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
@@ -12,6 +14,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -69,9 +72,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
+        // 已有出库详情/不保存订单
+        Boolean hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getPlatform());
+        if (hasDeliveryDetail){
+            return;
+        }
+
         SoB2cDTO.PullOrderResultDTO resultDTO = this.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单

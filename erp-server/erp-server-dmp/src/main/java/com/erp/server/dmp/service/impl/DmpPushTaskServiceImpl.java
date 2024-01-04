@@ -18,13 +18,16 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -84,6 +87,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -275,8 +280,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return;
         }
         //查询redis,预警8小时发送一次
-
-
+        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+            return;
+        } else {
+            //添加缓存
+            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
+        }
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
