@@ -48,6 +48,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
@@ -63,6 +64,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -215,6 +217,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
+
+    @Resource
+    private LogisticsAuthFeign logisticsAuthFeign;
 
 
     @Override
@@ -3091,6 +3096,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //映射主表字段
             SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
             WalmartShipDTO walmartShipDTO = WalmartShipOrderConverter.INSTANCE.soB2cEntityToWalmartShipDTO(soB2cEntity, logisticsEntity);
+
+            //物流商编号
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
+            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
+            authDTO.setLogisticsPlatform(platformEnum.getCode());
 
             //映射详情字段
             List<SoB2cDetailEntity> detailList = soB2cDetailEntities.stream().filter(req -> soB2cEntity.getId().equals(req.getMainId())).collect(Collectors.toList());

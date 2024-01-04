@@ -6,6 +6,7 @@ import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.WalmartShipOrderDetailDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
@@ -37,12 +38,21 @@ public class WalmartShipOrder implements IPlatformService {
 
     @Override
     public void shipOrder(PlatformShipOrderDTO dto) {
+        //映射发货需要的字段，如果合并的订单拆分返回
         List<WalmartShipDTO> walmartShipOrderParam = soB2cFeign.getWalmartShipOrderParam(dto.getSoB2cId());
 
         //调用sdk发货
         for (WalmartShipDTO walmartShipDTO : walmartShipOrderParam) {
             WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+
+            if (LogisticsPlatformEnum.YAN_WEN.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
+                walmartShipDTO.setLogisticsPlatformCode("Yanwen");
+            } else if (LogisticsPlatformEnum.SF_EXPRESS.getCode().equals(walmartShipDTO.getLogisticsPlatformCode())) {
+                walmartShipDTO.setLogisticsPlatformCode("SF Express");
+            }
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
     }
+
+
 }

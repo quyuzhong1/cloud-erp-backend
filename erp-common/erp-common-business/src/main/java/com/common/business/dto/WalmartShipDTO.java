@@ -34,6 +34,16 @@ public class WalmartShipDTO {
     private LocalDateTime shipDateTime;
 
     /**
+     * 物流渠道id
+     */
+    private String logisticsChannelId;
+
+    /**
+     * 物流商code
+     */
+    private String logisticsPlatformCode;
+
+    /**
      * 明细信息
      */
     private List<WalmartShipOrderDetailDTO> detailList;
