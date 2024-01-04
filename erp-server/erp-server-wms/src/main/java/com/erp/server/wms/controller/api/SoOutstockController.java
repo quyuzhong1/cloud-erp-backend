@@ -12,15 +12,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2ErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -277,7 +275,7 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        String type = SoB2ErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
         //已发货
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());

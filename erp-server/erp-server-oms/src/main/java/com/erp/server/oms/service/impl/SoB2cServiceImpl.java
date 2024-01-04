@@ -80,7 +80,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -787,7 +786,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())
                 || isCodeNotNull) {
             if (isCodeNotNull) {
-                soB2cErrorService.removeErrorOrder(id, SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             }
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
         }
@@ -812,10 +811,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //操作日志
             String msg = "获取物流单号【{}】";
             operateLogService.addModuleOperateLog(StrUtil.format(msg, transportNo), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
-            soB2cErrorService.removeErrorOrder(id, SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
         } catch (Exception e) {
-            String type = SoB2ErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
+            String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             message = e.getMessage();
             //添加异常信息
             soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
@@ -840,7 +839,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
-        result.setOrderCode(entity.getCode());
+        String aliExpress=PlatformDictEnum.ALI_EXPRESS.getCode();
+        String dictPlatform= entity.getDictPlatform();
+        if(aliExpress.equals(dictPlatform)){
+            result.setOrderCode(entity.getPlatformCode());
+        }else{
+            result.setOrderCode(entity.getCode());
+        }
+
         result.setOrderType(OrderTypeEnum.B2C.getCode());
         String shopId = entity.getShopId();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
@@ -1120,15 +1126,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
         ApiResult apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
-        String type = SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+        String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
             soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
             throw new ServiceException(ApiError.Default.code, message);
         }
-        //删除异常订单信息
-        soB2cErrorService.removeErrorOrder(mainId, type);
     }
 
 
@@ -2890,7 +2894,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY, deliveryEntity.getCode());
             }
         }
-        String type = SoB2ErrorTypeEnum.SIGN_DELIVERY.getCode();
+        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         String message = "";
         String paramJson = "";
         String returnJson = "";
@@ -4037,7 +4041,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         //表示已发货
         Boolean isShipped = shipped.equals(billStatus);
-        soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2ErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+        soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
                 set(isShipped, SoB2cEntity::getSignOrderError, "").
                 set(SoB2cEntity::getBillStatus, billStatus).update(new SoB2cEntity());

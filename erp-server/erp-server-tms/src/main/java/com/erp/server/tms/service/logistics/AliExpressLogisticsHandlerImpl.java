@@ -130,9 +130,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         } catch (Exception e) {
             log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
-            return Collections.EMPTY_MAP;
+            return new HashMap<>() ;
         }
-        if (Objects.isNull(cfgAppClient)) return Collections.EMPTY_MAP;
+        if (Objects.isNull(cfgAppClient)) return new HashMap<>();
         Map<String, String> map = new HashMap<>();
         map.put("id", cfgAppClient.getId());
         map.put("logisticsPlatform", getPlatForm().getCode());

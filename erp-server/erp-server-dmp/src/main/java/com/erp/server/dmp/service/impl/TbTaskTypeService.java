@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
@@ -14,6 +15,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,8 @@ public class TbTaskTypeService {
     private PlatformApiTaskService platformApiTaskService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private RedisTemplate redisTemplate;
 
     private Long timeoutSeconds;
 
@@ -82,6 +86,10 @@ public class TbTaskTypeService {
             }).collect(Collectors.toList());
         // 需要设置超时恢复的任务
         if (CollectionUtil.isNotEmpty(timeoutList)){
+            // 移除缓存已有的数据
+            for (JobTaskDTO jobTaskDTO : timeoutList) {
+                redisTemplate.boundListOps(jobTaskDTO.getGroupId()).remove(0, JSONObject.toJSONString(jobTaskDTO));
+            }
             platformApiTaskService.updateTaskTypeState(timeoutList, 1);
         }
         // 设置任务正在执行中

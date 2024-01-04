@@ -293,7 +293,7 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(main_id) = 1)
+            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -349,7 +349,7 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(main_id) = 1)
+            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -429,7 +429,7 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee'
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(main_id) = 1)
+            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">

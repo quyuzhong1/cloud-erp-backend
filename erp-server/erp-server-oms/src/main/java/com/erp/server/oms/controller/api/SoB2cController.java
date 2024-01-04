@@ -1,19 +1,17 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +33,9 @@ public class SoB2cController extends BaseController {
 
     @Autowired
     private SoB2cService soB2cService;
+
+    @Autowired
+    private SoB2cErrorService soB2cErrorService;
 
 
     /**
@@ -426,10 +427,14 @@ public class SoB2cController extends BaseController {
     @PostMapping("/submitDelivery")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String submitDelivery= SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.submitDelivery(id);
+                //删除异常订单信息
+                soB2cErrorService.removeErrorOrder(id, submitDelivery);
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
