@@ -1,4 +1,4 @@
-package com.erp.server.oms.authorize;
+package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
