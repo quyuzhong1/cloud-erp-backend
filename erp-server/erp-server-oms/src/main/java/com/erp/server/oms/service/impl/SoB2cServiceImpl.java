@@ -3778,6 +3778,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
         updateSkuMappingDTO.setProductSkuNo(skuNo);
         updateSkuMappingDTO.setListingId(skuMapping.getListingId());
+        updateSkuMappingDTO.setIsExpire(Boolean.FALSE);
         //更新明细
         soB2cDetailService.updateById(detailEntity);
         return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
