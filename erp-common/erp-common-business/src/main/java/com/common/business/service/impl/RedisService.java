@@ -30,7 +30,7 @@ public class RedisService  {
     public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60;//单位秒
 
 
-    public static long EIGHT_HOURS_CACHE_TIME = 24 * 60 * 60;//单位秒
+    public static long EIGHT_HOURS_CACHE_TIME = 8 * 60 * 60;//单位秒
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
