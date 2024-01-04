@@ -840,7 +840,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
-        result.setOrderCode(entity.getCode());
+        String aliExpress=PlatformDictEnum.ALI_EXPRESS.getCode();
+        String dictPlatform= entity.getDictPlatform();
+        if(aliExpress.equals(dictPlatform)){
+            result.setOrderCode(entity.getPlatformCode());
+        }else{
+            result.setOrderCode(entity.getCode());
+        }
+
         result.setOrderType(OrderTypeEnum.B2C.getCode());
         String shopId = entity.getShopId();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);

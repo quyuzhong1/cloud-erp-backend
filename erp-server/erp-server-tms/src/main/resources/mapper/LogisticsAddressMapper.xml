@@ -184,6 +184,7 @@
               la.city_name,
               la.district_name,
               la.country_name,
+              la.address_id,
               lca.shop_id
          FROM  logistics_channel_address lca
          LEFT JOIN  logistics_address la
