@@ -47,9 +47,9 @@ public class UbiShipperService {
 
     public static void main(String[] args) {
         UbiShipperService ubiShipperService = new UbiShipperService();
-        Map<String,String> authMap = new HashMap<>();
-        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
-        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+        Map<String, String> authMap = new HashMap<>();
+        authMap.put("clientId", "test5AdbzO5OEeOpvgAVXUFE0A");
+        authMap.put("clientSecret", "79db9e5OEeOpvgAVXUFWSD");
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
         List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(authMap);
@@ -73,17 +73,18 @@ public class UbiShipperService {
      * @param ubiOrder
      * @return
      */
-    public List<OrderResponse> createOrder(Map<String, String> authMap,UbiOrder ubiOrder) {
+    public List<OrderResponse> createOrder(Map<String, String> authMap, UbiOrder ubiOrder) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.POST_CREATE_ORDERS_URL;
-        log.info("创建订单url：{}", url);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = url + PathConstants.POST_CREATE_ORDERS_URL;
+        log.info("创建订单url：{}", serviceUrl);
 //        Map<String, Object> params = BeanUtil.beanToMap(ubiOrder);
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, serviceUrl, token, key);
         List<UbiOrder> orders = new ArrayList<>();
         orders.add(ubiOrder);
-        String res = OkHttpUtils.doPostJsonObject(url, orders, headers);
+        String res = OkHttpUtils.doPostJsonObject(serviceUrl, orders, headers);
         log.info("创建订单：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -106,10 +107,11 @@ public class UbiShipperService {
     public List<LabelResponse> getLabels(Map<String, String> authMap, LabelRequest labelRequest) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.POST_LABELS_URL;
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJsonObject(url, labelRequest, headers);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + PathConstants.POST_LABELS_URL;
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doPostJsonObject(serviceUrl, labelRequest, headers);
         log.info("打印标签：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -127,12 +129,13 @@ public class UbiShipperService {
      * @param orderId
      * @param trackingNo
      */
-    public List<Label> getLabelSpecs(Map<String, String> authMap,String referenceNo, String orderId, String trackingNo) {
+    public List<Label> getLabelSpecs(Map<String, String> authMap, String referenceNo, String orderId, String trackingNo) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.POST_LABEL_SPECS_URL;
-        log.info("获取标签url：{}", url);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + PathConstants.POST_LABEL_SPECS_URL;
+        log.info("获取标签url：{}", serviceUrl);
         Map<String, Object> params = new LinkedHashMap<>();
         if (StrUtil.isNotBlank(referenceNo)) {
             params.put("referenceNo", referenceNo);
@@ -143,8 +146,8 @@ public class UbiShipperService {
         } else {
             throw new ServiceException("参数不能为空");
         }
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJson(url, params, headers);
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doPostJson(serviceUrl, params, headers);
         log.info("获取标签：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -165,12 +168,13 @@ public class UbiShipperService {
     public OrderResponse deleteShipperOrder(Map<String, String> authMap, String code) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + StrUtil.format(PathConstants.DELETE_LABEL_SPECS_URL, code);
-        log.info("单件删除 url：{}", url);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + StrUtil.format(PathConstants.DELETE_LABEL_SPECS_URL, code);
+        log.info("单件删除 serviceUrl：{}", serviceUrl);
         Map<String, Object> params = new LinkedHashMap<>();
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.DELETE_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doDelete(url, params, headers);
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.DELETE_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doDelete(serviceUrl, params, headers);
         log.info("单件删除：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -190,12 +194,13 @@ public class UbiShipperService {
     public List<OrderResponse> interceptOrder(Map<String, String> authMap, HoldRequest holdRequest) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.POST_INTERCEPT_ORDER_URL;
-        log.info("单件删除 url：{}", url);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + PathConstants.POST_INTERCEPT_ORDER_URL;
+        log.info("单件删除 serviceUrl：{}", serviceUrl);
 //        java.util.Map<String, Object> params = new LinkedHashMap<>();
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJsonObject(url, holdRequest, headers);
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doPostJsonObject(serviceUrl, holdRequest, headers);
         log.info("单件删除：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -211,12 +216,13 @@ public class UbiShipperService {
     public List<ServiceCataLog> getServiceCatalog(Map<String, String> authMap) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.GET_SERVICE_CATALOG_URL;
-        log.info("获取开通的服务url：{}", url);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + PathConstants.GET_SERVICE_CATALOG_URL;
+        log.info("获取开通的服务url：{}", serviceUrl);
         java.util.Map<String, Object> params = new LinkedHashMap<>();
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.GET_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doGet(url, params, headers);
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.GET_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doGet(serviceUrl, params, headers);
         log.info("获取开通的服务：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -236,10 +242,11 @@ public class UbiShipperService {
     public List<TrackBase> getTrackNumber(Map<String, String> authMap, List<String> numbers) {
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
-        validate(token,key);
-        String url = PathConstants.BASE_URL + PathConstants.POST_TRACK_NUMBER_URL;
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJsonObject(url, numbers, headers);
+        String url = authMap.get("url");
+        validate(token, key, url);
+        String serviceUrl = PathConstants.BASE_URL + PathConstants.POST_TRACK_NUMBER_URL;
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, serviceUrl, token, key);
+        String res = OkHttpUtils.doPostJsonObject(serviceUrl, numbers, headers);
         log.info("获取跟踪号：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -248,7 +255,9 @@ public class UbiShipperService {
             throw new ServiceException(result.getErrors());
         }
     }
-    private void validate(String token,String key){
-        if (StringUtils.isBlank(token) || StringUtils.isBlank(key)) throw new ServiceException("授权信息不能为空");
+
+    private void validate(String token, String key, String url) {
+        if (StringUtils.isEmpty(token) || StringUtils.isEmpty(key) || StringUtils.isEmpty(url))
+            throw new ServiceException("授权信息不能为空");
     }
 }
