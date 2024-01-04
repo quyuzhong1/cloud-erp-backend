@@ -274,6 +274,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             return;
         }
+        //查询redis,预警8小时发送一次
+
+
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
