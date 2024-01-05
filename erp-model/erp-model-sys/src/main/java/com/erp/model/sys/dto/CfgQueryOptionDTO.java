@@ -71,7 +71,10 @@ public class CfgQueryOptionDTO implements Serializable {
         * 下拉框禁用绑定字段
         */
         private String selectDisabled;
-
+        /**
+         * 查询绑定属性
+         */
+        private String searchKeyField;
 
     }
 
@@ -145,7 +148,10 @@ public class CfgQueryOptionDTO implements Serializable {
         * 下拉框禁用绑定字段
         */
         private String selectDisabled;
-
+        /**
+         * 查询绑定属性
+         */
+        private String searchKeyField;
 
     }
 

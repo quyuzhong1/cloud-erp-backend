@@ -15,12 +15,11 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 查询api配置
-
+ * 查询option配置表
  * </p>
  *
  * @author lrp
- * @since 2024-01-04
+ * @since 2024-01-05
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -64,6 +63,11 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     */
     @TableField("select_disabled")
     private String selectDisabled;
+    /**
+    * 查询绑定属性
+    */
+    @TableField("search_key_field")
+    private String searchKeyField;
 
 
     public static final String API_NAME = "api_name";
@@ -79,6 +83,8 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     public static final String SELECT_VALUE = "select_value";
 
     public static final String SELECT_DISABLED = "select_disabled";
+
+    public static final String SEARCH_KEY_FIELD = "search_key_field";
 
     @Override
     public Serializable pkVal() {
