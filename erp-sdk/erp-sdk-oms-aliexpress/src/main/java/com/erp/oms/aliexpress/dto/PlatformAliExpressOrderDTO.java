@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -103,15 +104,33 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
 
         AliExpressOrderDetail detail = sourceOrder.getDetail();
+
+        AmountInfo logisticsAmount =detail.getLogisticsAmount();
+
         //物流成本
-        String logisticsCostStr = detail.getLogisticsAmount().getAmount();
-        //物流成本
-        BigDecimal logisticsCost = new BigDecimal(logisticsCostStr);
+        BigDecimal logisticsCost = BigDecimal.ZERO;
+        if(Objects.nonNull(logisticsAmount)){
+            //物流成本
+            String logisticsCostStr = logisticsAmount.getAmount();
+            if(StringUtils.isNotBlank(logisticsCostStr)){
+                logisticsCost=new BigDecimal(logisticsCostStr);
+            }
+        }
+
+
+
         BigDecimal shippingFee=BigDecimal.ZERO;
         Boolean detailIsNull = Objects.nonNull(detail);
         if (detailIsNull) {
-            String shippingFeeStr = detail.getLogisticsAmount().getAmount();
-            shippingFee = new BigDecimal(shippingFeeStr);
+            AmountInfo shippingAmount=detail.getLogisticsAmount();
+            if(Objects.nonNull(shippingAmount)){
+                String shippingFeeStr = shippingAmount.getAmount();
+                if(StringUtils.isNotBlank(shippingFeeStr)){
+                    shippingFee=new BigDecimal(shippingFeeStr);
+                }
+            }
+
+
         }
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
@@ -153,7 +172,6 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         lableMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
         lableMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
-
         // 标签json
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）

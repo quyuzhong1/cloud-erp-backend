@@ -25,6 +25,13 @@ public class OrderItemDetail implements Serializable {
     private Integer productCount;
 
     /**
+     *物流类型，买家选择的物流方式
+     */
+    @JSONField(name = "logistics_type")
+    private Integer logisticsType;
+
+
+    /**
      *商品ID
      */
     @JSONField(name = "product_id")

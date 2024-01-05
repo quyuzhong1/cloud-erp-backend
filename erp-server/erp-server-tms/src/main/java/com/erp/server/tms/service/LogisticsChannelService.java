@@ -185,4 +185,15 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return
      */
     List<LogisticsChannelEntity> getChannelByName(String channelName);
+
+    
+    /**
+     * 获取渠道 平台信息
+     * @description
+     * @param channelIdList
+     * @author Lambda
+     * @return 
+     * @create 2024-01-05 14:24
+     */
+    List<LogisticsChannelDTO.LogisticsPlatformDTO> listChannelPlatform(List<String> channelIdList);
 }
