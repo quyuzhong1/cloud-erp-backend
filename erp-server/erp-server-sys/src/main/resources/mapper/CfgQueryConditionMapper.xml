@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.CfgQueryConditionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.CfgQueryConditionEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="system" property="system" />
+       <result column="code" property="code" />
+       <result column="value" property="value" />
+       <result column="label" property="label" />
+       <result column="query_option_id" property="queryOptionId" />
+       <result column="controls" property="controls" />
+       <result column="dataType" property="dataType" />
+       <result column="dateType" property="dateType" />
+       <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="cfgQueryConditionResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ViewDTO">
+        <id  property="id" column="id"/>
+        <result property="value" column="value"/>
+        <result property="label" column="label"/>
+        <result property="type" column="controls"/>
+        <result property="dataType" column="data_type"/>
+        <!-- 嵌套 Item 对象 -->
+        <association property="item" javaType="com.erp.model.sys.dto.CfgQueryConditionDTO$Item">
+            <id property="apiUrl" column="api_url"/>
+            <result property="requestType" column="request_method"/>
+            <result property="selectLabel" column="select_label"/>
+            <result property="selectValue" column="select_value"/>
+            <result property="selectDisabled" column="select_disabled"/>
+            <result property="dateType" column="date_type"/>
+            <result property="props" column="props"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="params" column="param"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        </association>
+
+        <!-- 嵌套 Compare 列表 -->
+        <collection property="compareList" ofType="com.erp.model.sys.dto.CfgQueryConditionDTO$Compare">
+            <result property="logic" column="compare_code"/>
+            <result property="logicName" column="compare_name"/>
+        </collection>
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        update_time,
+        update_user_id,
+        version,
+        is_deleted,
+        system, code, value, label, query_option_id, controls, dataType, dateType, props
+    </sql>
+    <select id="getQueryConditionByCode" resultMap="cfgQueryConditionResultMap">
+        select
+            qc.id,
+            qc.code,
+            qc.value,
+            qc.label,
+            qc.controls,
+            qc.data_type,
+            qc.date_type,
+            qc.props,
+            cqc.compare_code,
+            cqc.compare_name,
+            qo.api_url,
+            qo.param,
+            qo.select_value,
+            qo.select_label,
+            qo.select_disabled,
+            qo.request_method
+        from cfg_query_condition qc
+                 left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
+                 left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
+        where  qc.is_deleted = false
+          and qc.code = #{code}
+        order by qc.index
+    </select>
+</mapper>

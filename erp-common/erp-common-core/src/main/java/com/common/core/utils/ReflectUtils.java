@@ -133,7 +133,7 @@ public class ReflectUtils {
      */
     public static Field getAccessibleField(final Object obj, final String fieldName) {
         Validate.notNull(obj, "object can't be null");
-        Validate.notBlank(fieldName, "fieldName can't be blank");
+        Validate.notBlank(fieldName, "field can't be blank");
         for (Class<?> superClass = obj.getClass(); superClass != Object.class; superClass = superClass.getSuperclass()) {
             try {
                 Field field = superClass.getDeclaredField(fieldName);
@@ -346,4 +346,21 @@ public class ReflectUtils {
         }
         return result;
     }
+
+    /**
+     * 获取父类为指定类，没有则返回Null
+     * @param sourceClass
+     * @param targetClass
+     * @return
+     */
+    public static Class<?> getSpecifiedClass(Class<?> sourceClass, Class<?> targetClass) {
+        if(sourceClass.equals(targetClass)){
+            return sourceClass;
+        }
+        if(sourceClass.getSuperclass() == null){
+            return null;
+        }
+        return getSpecifiedClass(sourceClass.getSuperclass(),targetClass);
+    }
+
 }

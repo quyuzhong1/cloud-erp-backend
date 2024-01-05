@@ -95,7 +95,9 @@ public enum ApiError implements Serializable {
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
-
+    QUERY_ILLEGAL_FIELD(1049, "非法的查询字段或查询值"),
+    QUERY_ILLEGAL_COND(1050, "非法的查询连接条件"),
+    QUERY_LIST_TYPE_ERROR(1051, "在...列表或不在...列表查询应传递数组"),
     /**
      * 警告信息 从800 开始
      */

@@ -30,6 +30,7 @@ import javax.validation.constraints.Size;
 </#if>
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
 </#if>
 <#list table.fields as field>
 <#if field.propertyType == 'BigDecimal'>
@@ -84,6 +85,11 @@ public class ${table.dtoName} implements Serializable {
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryList;
 
          /**
          * 搜索类型

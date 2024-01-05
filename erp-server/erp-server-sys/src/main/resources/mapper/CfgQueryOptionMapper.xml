@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.CfgQueryOptionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.CfgQueryOptionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="api_name" property="apiName" />
+       <result column="api_url" property="apiUrl" />
+       <result column="request_method" property="requestMethod" />
+       <result column="param" property="param" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+       <result column="select_label" property="selectLabel" />
+       <result column="select_value" property="selectValue" />
+       <result column="select_disabled" property="selectDisabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        api_name, api_url, request_method, param, select_label, select_value, select_disabled
+    </sql>
+
+
+</mapper>
