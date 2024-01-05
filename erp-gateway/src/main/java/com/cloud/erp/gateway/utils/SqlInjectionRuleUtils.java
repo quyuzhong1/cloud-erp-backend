@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.thymeleaf.util.MapUtils;
 
@@ -40,7 +41,7 @@ public class SqlInjectionRuleUtils {
      * @return
      */
     public static boolean mapRequestSqlKeyWordsCheck(MultiValueMap<String, String> map) {
-        if (map.isEmpty()) {
+        if (CollectionUtils.isEmpty(map)) {
             return false;
         }
         //对post请求参数值进行sql注入检验
@@ -69,6 +70,9 @@ public class SqlInjectionRuleUtils {
         if (JSONUtil.isJsonObj(value)) {
             JSONObject json = JSONUtil.parseObj(value);
             Map<String, Object> map = json;
+            if (CollectionUtils.isEmpty(map)) {
+                return false;
+            }
             //对post请求参数值进行sql注入检验
             return map.entrySet().stream().parallel().anyMatch(entry -> {
                 //这里需要将参数转换为小写来处理
