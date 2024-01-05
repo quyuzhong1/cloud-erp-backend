@@ -121,12 +121,20 @@ public class CfgQueryConditionDTO implements Serializable {
         private String selectDisabled;
 
         /**
+         * 远程搜索绑定搜索字段值
+         */
+        private String searchKeyField;
+
+        /**
          * 日期类型 eg:month,week
          */
         private String dateType;
 
         private List<Option> optionList;
 
+        /**
+         * 前端组件props值
+         */
         private Map<String,Object> props;
     }
 

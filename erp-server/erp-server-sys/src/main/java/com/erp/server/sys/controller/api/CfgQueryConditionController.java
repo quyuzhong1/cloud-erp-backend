@@ -15,7 +15,6 @@ import java.util.List;
 
 /**
  * 查询条件配置表
- *
  * @author lrp
  * @since 2024-01-03
  */
@@ -28,11 +27,17 @@ public class CfgQueryConditionController extends BaseController {
     @Resource
     private CfgQueryConditionService cfgQueryConditionService;
 
+    /**
+     * 新增
+     */
     @PostMapping("/add")
     public ApiResult<Boolean> getQueryCondition(@RequestBody CfgQueryConditionDTO.AddDTO addDTO) {
         return success(cfgQueryConditionService.add(addDTO));
     }
 
+    /**
+     * 获取查询条件配置
+     */
     @GetMapping("/getQueryCondition")
     public ApiResult<List<CfgQueryConditionDTO.ViewDTO>> getQueryCondition(@RequestParam(name = "code") String code) {
         if(StringUtils.isBlank(code)){

@@ -34,6 +34,7 @@
             <result property="selectLabel" column="select_label"/>
             <result property="selectValue" column="select_value"/>
             <result property="selectDisabled" column="select_disabled"/>
+            <result property="searchKeyField" column="search_key_field"/>
             <result property="dateType" column="date_type"/>
             <result property="props" column="props"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="params" column="param"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
@@ -73,7 +74,8 @@
             qo.select_value,
             qo.select_label,
             qo.select_disabled,
-            qo.request_method
+            qo.request_method,
+            qo.search_key_field
         from cfg_query_condition qc
                  left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false

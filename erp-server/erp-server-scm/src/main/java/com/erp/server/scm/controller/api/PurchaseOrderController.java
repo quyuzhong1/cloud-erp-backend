@@ -65,6 +65,9 @@ public class PurchaseOrderController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 测试高级查询功能
+     */
     @PostMapping("/testQuery")
     @WebAdvanceQuery
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
