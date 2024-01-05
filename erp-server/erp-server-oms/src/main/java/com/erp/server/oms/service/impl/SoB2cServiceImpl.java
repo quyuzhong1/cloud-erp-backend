@@ -848,13 +848,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsBillDTO.GenerateBillDTO result = new LogisticsBillDTO.GenerateBillDTO();
         String id = entity.getId();
         result.setCurrency(entity.getCurrency());
-        result.setOrderTime(entity.getBillDate().atStartOfDay());
+        LocalDate billDate = entity.getBillDate();
+        if (Objects.isNull(billDate)) {
+            billDate = LocalDate.now();
+        }
+        result.setOrderTime(billDate.atStartOfDay());
         result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String dictPlatform = entity.getDictPlatform();
-        if (aliExpress.equals(dictPlatform)) {
+        Boolean isAliExpress = aliExpress.equals(dictPlatform);
+        if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
         } else {
             result.setOrderCode(entity.getCode());
@@ -888,6 +893,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
 
         List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
+        //如果是速卖通的话
+        if (isAliExpress) {
+            for (LogisticsBillDTO.SkuDTO item : skuList) {
+                item.setSkuId(item.getPlatformSpuNo());
+            }
+        }
         result.setSkuList(skuList);
         return result;
     }
@@ -3769,8 +3780,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
         }
         ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
-        String listingId=skuMapping.getListingId();
-        listingInfoService.updateMatchResult(listingId,Boolean.TRUE);
+        String listingId = skuMapping.getListingId();
+        listingInfoService.updateMatchResult(listingId, Boolean.TRUE);
 
         SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
         String skuNo = skuEntity.getSkuNo();

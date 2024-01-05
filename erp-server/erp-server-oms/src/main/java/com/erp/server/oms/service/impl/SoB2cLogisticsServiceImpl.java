@@ -283,6 +283,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return this.lambdaQuery().eq(SoB2cLogisticsEntity::getLogisticsChannelId, channelId).list();
     }
 
+    @Override
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
+        return baseMapper.listTrackNoEmptyList();
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());

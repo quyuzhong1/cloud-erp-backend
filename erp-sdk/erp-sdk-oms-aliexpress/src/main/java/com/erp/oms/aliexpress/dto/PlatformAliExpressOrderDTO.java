@@ -101,9 +101,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
 
-        //手续费
-        String escrowFeeStr = sourceOrder.getEscrowFee().getAmount();
-        BigDecimal escrowFee=new BigDecimal(escrowFeeStr);
+
         AliExpressOrderDetail detail = sourceOrder.getDetail();
         //物流成本
         String logisticsCostStr = detail.getLogisticsAmount().getAmount();
@@ -157,7 +155,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         lableMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
 
         // 标签json
-        orderDTO.setLabelJson("{}");
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）

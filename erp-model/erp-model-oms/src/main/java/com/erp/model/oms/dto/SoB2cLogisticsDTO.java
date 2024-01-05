@@ -202,7 +202,9 @@ public class SoB2cLogisticsDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class TrackNoDTO {
-
+        /**
+         * 这个是b2c 物流id
+         */
         private String id;
         //渠道id
         private String logisticsChannelId;
