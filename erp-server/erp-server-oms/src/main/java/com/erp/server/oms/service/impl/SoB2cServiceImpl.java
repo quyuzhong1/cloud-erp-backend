@@ -2123,6 +2123,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 labelDTO.setAliexpressStatus(labelJsonDTO.getAliexpressStatus());
                 labelDTO.setAmazonStatus(labelJsonDTO.getAmazonStatus());
                 labelDTO.setFulfillmentChannel(labelJsonDTO.getFulfillmentChannel());
+                labelDTO.setShipNodeType(labelJsonDTO.getShipNodeType());
             }
             //明细信息
             List<SoB2cDetailEntity> detailList = allDetailList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
