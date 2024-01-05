@@ -16,9 +16,13 @@
        <result column="label" property="label" />
        <result column="query_option_id" property="queryOptionId" />
        <result column="controls" property="controls" />
-       <result column="dataType" property="dataType" />
-       <result column="dateType" property="dateType" />
+       <result column="data_type" property="dataType" />
+       <result column="date_type" property="dateType" />
        <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="PagingMap" extends="BaseResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ListDTO">
+        <result column="api_name" property="optionName" />
     </resultMap>
 
     <resultMap id="cfgQueryConditionResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ViewDTO">
@@ -81,6 +85,28 @@
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         where  qc.is_deleted = false
           and qc.code = #{code}
+        order by qc.index
+    </select>
+
+    <select id="paging" resultMap="PagingMap">
+        select
+            qc.id,
+            qc.system,
+            qc.code,
+            qc.value,
+            qc.label,
+            qc.controls,
+            qc.data_type,
+            qc.date_type,
+            qc.props,
+            qc.index,
+            qo.api_name
+        from cfg_query_condition qc
+                 left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
+        where  qc.is_deleted = false
+        <if test="params.code != null and params.code != ''">
+            and qc.code = #{params.code}
+        </if>
         order by qc.index
     </select>
 </mapper>

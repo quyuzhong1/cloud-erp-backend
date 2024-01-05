@@ -23,6 +23,57 @@ public class CfgQueryOptionDTO implements Serializable {
 
 
 
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 接口名称
+
+         */
+        private String apiName;
+
+        /**
+         * 请求路径
+         */
+        private String apiUrl;
+
+        /**
+         * 请求方法 eg:post,get
+         */
+        private String requestMethod;
+
+        /**
+         * 请求参数
+         */
+        private Map<String,Object> param;
+
+        /**
+         * 下拉框显示值
+         */
+        private String selectLabel;
+
+        /**
+         * 下拉框绑定值
+         */
+        private String selectValue;
+
+        /**
+         * 下拉框禁用绑定字段
+         */
+        private String selectDisabled;
+        /**
+         * 查询绑定属性
+         */
+        private String searchKeyField;
+    }
 
     /**
     * 详情
@@ -76,6 +127,15 @@ public class CfgQueryOptionDTO implements Serializable {
          */
         private String searchKeyField;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO{
+        /**
+         * api名称
+         */
+        private String apiName;
     }
 
     /**

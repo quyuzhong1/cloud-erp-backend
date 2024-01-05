@@ -60,7 +60,7 @@ public class WebAdvanceQueryAspect {
         if(advanceQueryDTOList.size() > 1 || StringUtils.isNotBlank(advanceQueryDTOList.get(0).getField()) ||  StringUtils.isNotBlank(advanceQueryDTOList.get(0).getCompare())){
             stringBuilder.append(" and ");
         }
-        advanceQueryDTOList.get(advanceQueryDTOList.size() - 1).setCompareSymbol("");
+        advanceQueryDTOList .get(advanceQueryDTOList.size() - 1).setCompareSymbol("");
         for (AdvanceQueryDTO dto : advanceQueryDTOList) {
             if (Objects.isNull(dto.getValue()) || Objects.isNull(dto.getCompare())) {
                 continue;
@@ -149,9 +149,9 @@ public class WebAdvanceQueryAspect {
                 startDate = "'"+startDate+"'";
                 endDate = "'"+endDate+"'";
                 if(StringUtils.isNotBlank(interval)){
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" <= (to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1"+ interval+"')  ";
+                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < (to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1"+ interval+"')  ";
                 }else{
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" <= to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
+                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
                 }
             }else{
                 throw new ServiceException("非法日期格式");

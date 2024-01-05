@@ -1,9 +1,14 @@
 package com.erp.model.sys.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,7 +29,76 @@ import javax.validation.constraints.Size;
 public class CfgQueryConditionDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO  {
+        /**
+         * id
+         */
+        private String id;
 
+        /**
+         * 所属系统
+         */
+        private String system;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 字段值
+         */
+        private String value;
+
+        /**
+         * 字段显示值
+         */
+        private String label;
+
+        /**
+         * 选项配置名称
+         */
+        private String optionName;
+
+        /**
+         * 控件类型
+         */
+        private String controls;
+
+        /**
+         * 数据类型
+         */
+        private String dataType;
+
+        /**
+         * 日期类型
+         */
+        private String dateType;
+
+        /**
+         * 前端组件props值
+         */
+        @TableField(typeHandler = JacksonTypeHandler.class)
+        private Map<String,Object> props;
+
+        /**
+         * 排序序号
+         */
+        private Integer index;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 页面code
+         */
+        private String code;
+    }
 
     /**
     * 详情
@@ -154,7 +228,6 @@ public class CfgQueryConditionDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
     }
 
     /**
@@ -175,15 +248,55 @@ public class CfgQueryConditionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
+        /**
+         * 所属系统
+         */
         private String system;
+
+        /**
+         * 页面code
+         */
         private String code;
+
+        /**
+         * 字段值
+         */
         private String value;
+
+        /**
+         * 字段显示值
+         */
         private String label;
+
+        /**
+         * optionCfgId
+         */
         private String queryOptionId;
+
+        /**
+         * 前端控件类型
+         */
         private String controls;
+
+        /**
+         * 数据类型
+         */
         private String dataType;
+
+        /**
+         * 日期格式
+         */
         private String dateType;
+
+        /**
+         * 前端控件Props属性
+         */
         private Map<String,Object> props;
+
+        /**
+         * 字段排序Index
+         */
         private Integer index;
     }
 }

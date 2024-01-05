@@ -2,7 +2,12 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.erp.server.sys.mapper.CfgQueryOptionMapper;
 import com.erp.server.sys.service.CfgQueryOptionService;
@@ -83,6 +88,18 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             log.info("编辑 开始记录查询option配置单日志数据，id：【{}】", cfgQueryOptionEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgQueryOptionEntity.getId(), "查询option配置单");
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void delete(CfgQueryOptionDTO.UpdateDTO dto) {
+        this.removeById(dto.getId());
+    }
+
+    @Override
+    public PagingVO<CfgQueryOptionDTO.ListDTO> paging(PagingDTO<CfgQueryOptionDTO.ParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<CfgQueryOptionDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
 

@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.entity.CfgQueryConditionEntity;
 import com.common.business.service.SuperService;
@@ -19,5 +20,11 @@ public interface CfgQueryConditionService extends SuperService<CfgQueryCondition
 
     Boolean add(CfgQueryConditionDTO.AddDTO dto);
 
+    Boolean update(CfgQueryConditionDTO.UpdateDTO dto);
+
     List<CfgQueryConditionDTO.ViewDTO> getQueryCondition(String code);
+
+    PagingVO<CfgQueryConditionDTO.ListDTO> paging(PagingDTO<CfgQueryConditionDTO.SearchParamDTO> searchParamDTOPagingDTO);
+
+    Boolean delete(CfgQueryConditionDTO.UpdateDTO updateDTO);
 }

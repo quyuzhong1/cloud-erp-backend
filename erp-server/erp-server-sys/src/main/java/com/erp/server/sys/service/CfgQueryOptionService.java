@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -33,4 +34,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     Boolean update(CfgQueryOptionDTO.UpdateDTO dto);
 
 
+    void delete(CfgQueryOptionDTO.UpdateDTO dto);
+
+    PagingVO<CfgQueryOptionDTO.ListDTO> paging(PagingDTO<CfgQueryOptionDTO.ParamDTO> dto);
 }

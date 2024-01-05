@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -28,13 +30,36 @@ public class CfgQueryConditionController extends BaseController {
     private CfgQueryConditionService cfgQueryConditionService;
 
     /**
+     * 分页查询
+     */
+    @PostMapping("/paging")
+    public PagingVO<CfgQueryConditionDTO.ListDTO> paging(@RequestBody PagingDTO<CfgQueryConditionDTO.SearchParamDTO> searchParamDTOPagingDTO) {
+        return cfgQueryConditionService.paging(searchParamDTOPagingDTO);
+    }
+
+    /**
      * 新增
      */
     @PostMapping("/add")
-    public ApiResult<Boolean> getQueryCondition(@RequestBody CfgQueryConditionDTO.AddDTO addDTO) {
+    public ApiResult<Boolean> add(@RequestBody CfgQueryConditionDTO.AddDTO addDTO) {
         return success(cfgQueryConditionService.add(addDTO));
     }
 
+    /**
+     * 更新
+     */
+    @PostMapping("/update")
+    public ApiResult<Boolean> update(@RequestBody CfgQueryConditionDTO.UpdateDTO updateDTO) {
+        return success(cfgQueryConditionService.update(updateDTO));
+    }
+
+    /**
+     * 删除
+     */
+    @PostMapping("/delete")
+    public ApiResult<Boolean> delete(@RequestBody CfgQueryConditionDTO.UpdateDTO updateDTO) {
+        return success(cfgQueryConditionService.delete(updateDTO));
+    }
     /**
      * 获取查询条件配置
      */

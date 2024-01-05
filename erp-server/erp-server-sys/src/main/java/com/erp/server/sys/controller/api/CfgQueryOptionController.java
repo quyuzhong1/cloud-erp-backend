@@ -3,12 +3,15 @@ package com.erp.server.sys.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.server.sys.service.CfgQueryOptionService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,18 @@ public class CfgQueryOptionController extends BaseController {
     private CfgQueryOptionService cfgQueryOptionService;
 
     /**
+     * 分页
+     * @author lrp
+     * @date:  2024-01-04
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/paging")
+    public PagingVO<CfgQueryOptionDTO.ListDTO> paging(@RequestBody @Validated PagingDTO<CfgQueryOptionDTO.ParamDTO> dto) {
+        return cfgQueryOptionService.paging(dto);
+    }
+
+    /**
     * 新增
     * @author lrp
     * @date:  2024-01-04
@@ -57,16 +72,22 @@ public class CfgQueryOptionController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "查询option配置表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:cfgQueryOption:update",
-        serviceClass = CfgQueryOptionService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgQueryOptionDTO.UpdateDTO dto) {
         cfgQueryOptionService.update(dto);
         return success();
     }
 
-
-
+    /**
+     * 删除
+     * @author lrp
+     * @date:  2024-01-04
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "查询option配置表删除")
+    public ApiResult<?> delete(@RequestBody @Validated CfgQueryOptionDTO.UpdateDTO dto) {
+        cfgQueryOptionService.delete(dto);
+        return success();
+    }
 }

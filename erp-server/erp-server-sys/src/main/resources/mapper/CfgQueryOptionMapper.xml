@@ -37,4 +37,22 @@
     </sql>
 
 
+    <select id="paging" resultMap="BaseResultMap">
+        select
+        qo.id,
+        qo.api_name,
+        qo.api_url,
+        qo.request_method,
+        qo.param,
+        qo.select_label,
+        qo.select_value,
+        qo.select_disabled,
+        qo.search_key_field
+        from cfg_query_option qo
+        where  qo.is_deleted = false
+        <if test="params.apiName != null and params.apiName != ''">
+            and qo.api_name = #{params.apiName}
+        </if>
+        order by qo.create_time desc
+    </select>
 </mapper>
