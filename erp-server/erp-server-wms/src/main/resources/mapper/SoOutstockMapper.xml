@@ -352,7 +352,6 @@
 	        count(*)
 	     FROM so_outstock
 	     WHERE is_deleted=FALSE
-         AND source_type!='SAL_OUTSTOCK'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
