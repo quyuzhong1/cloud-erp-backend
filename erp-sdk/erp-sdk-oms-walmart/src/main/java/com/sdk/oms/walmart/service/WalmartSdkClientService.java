@@ -55,8 +55,6 @@ public class WalmartSdkClientService {
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
         //获取令牌
 
-
-
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         System.out.println(walmartTokenDTO);
@@ -67,7 +65,7 @@ public class WalmartSdkClientService {
 
         JobTaskDTO taskDTO = new JobTaskDTO();
 
-        taskDTO.setLastTime(LocalDateTime.parse("2022-12-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        taskDTO.setLastTime(LocalDateTime.parse("2023-12-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         taskDTO.setNextTime(LocalDateTime.parse("2023-12-31 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";
@@ -78,17 +76,16 @@ public class WalmartSdkClientService {
             sb.append(baseUrl);
             if (StringUtil.isBlank(nextCursor)) {
                 sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
-/*                sb.append("&createdStartDate=");
+                sb.append("&createdStartDate=");
                 sb.append(taskDTO.getLastTime());
                 sb.append("&createdEndDate=");
-                sb.append(taskDTO.getNextTime());*/
-                sb.append("&lastModifiedStartDate=");
+                sb.append(taskDTO.getNextTime());
+/*                sb.append("&lastModifiedStartDate=");
                 sb.append(taskDTO.getLastTime());
                 sb.append("&lastModifiedEndDate=");
-                sb.append(taskDTO.getNextTime());
+                sb.append(taskDTO.getNextTime());*/
                 sb.append("&limit=2000");
             } else {
-                sb.append(baseUrl);
                 sb.append(nextCursor);
             }
             //拉取数据

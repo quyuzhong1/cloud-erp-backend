@@ -32,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,12 +91,11 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
                 sb.append("&lastModifiedEndDate=");
                 sb.append(data.getNextTime());*/
                 sb.append("&createdStartDate=");
-                sb.append(data.getLastTime());
+                sb.append(data.getLastTime().minusDays(15));
                 sb.append("&createdEndDate=");
                 sb.append(data.getNextTime());
                 sb.append("&limit=200&productInfo=true");
             } else {
-                sb.append(baseUrl);
                 sb.append(nextCursor);
             }
             //拉取数据
