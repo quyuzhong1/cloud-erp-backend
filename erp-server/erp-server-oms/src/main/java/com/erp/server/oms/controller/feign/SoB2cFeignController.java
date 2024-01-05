@@ -363,6 +363,16 @@ public class SoB2cFeignController extends BaseController {
     public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
         return soB2cLogisticsService.listTrackNoEmptyList();
     }
-
+    /**
+     * 查询订单详情
+     * @Author Luo_WG
+     * @Date 2024/1/5 9:50
+     * @param id
+     * @return com.erp.model.oms.dto.SoB2cDTO.ViewDTO
+     **/
+    @GetMapping("/view")
+    public SoB2cDTO.ViewDTO view(@RequestParam("id") String id) {
+        return soB2cService.view(id);
+    }
 
 }

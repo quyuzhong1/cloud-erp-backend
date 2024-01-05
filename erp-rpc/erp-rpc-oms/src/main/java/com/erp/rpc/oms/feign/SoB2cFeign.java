@@ -252,9 +252,13 @@ public interface SoB2cFeign {
      * 获取跟踪单号为空的
      * @description
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-05 9:54
      */
     @GetMapping("/feign/soB2c/listTrackNoEmptyList")
     List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+
+
+    @GetMapping("/feign/soB2c/view")
+    SoB2cDTO.ViewDTO view(@RequestParam("id") String id);
 }
