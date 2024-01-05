@@ -97,4 +97,14 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @create 2023-12-28 10:37
     */
    List<SoB2cLogisticsEntity> listByChannelId(String channelId);
+
+
+   /**
+    * 获取到跟踪单号为空的列表
+    * @description
+    * @author Lambda
+    * @return 
+    * @create 2024-01-05 9:29
+    */
+   List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
 }

@@ -854,7 +854,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setOrderId(id);
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String dictPlatform = entity.getDictPlatform();
-        if (aliExpress.equals(dictPlatform)) {
+        Boolean isAliExpress=aliExpress.equals(dictPlatform);
+        if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
         } else {
             result.setOrderCode(entity.getCode());
@@ -888,6 +889,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
 
         List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
+        //如果是速卖通的话
+        if(isAliExpress){
+           for (LogisticsBillDTO.SkuDTO item:skuList){
+               item.setSkuId(item.getPlatformSpuNo());
+           }
+        }
         result.setSkuList(skuList);
         return result;
     }

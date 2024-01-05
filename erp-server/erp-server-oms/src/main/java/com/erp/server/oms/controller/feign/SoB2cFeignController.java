@@ -6,6 +6,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -351,6 +352,17 @@ public class SoB2cFeignController extends BaseController {
         return soB2cRefService.listByTargetId(targetId, SoB2cOptionTypeEnum.ENUM_MERGE);
     }
 
+    /**
+     * 获取到b2c 销售订单物流跟踪号为空的
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2024-01-05 9:44
+     */
+    @GetMapping("/listTrackNoEmptyList")
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
+        return soB2cLogisticsService.listTrackNoEmptyList();
+    }
 
 
 }

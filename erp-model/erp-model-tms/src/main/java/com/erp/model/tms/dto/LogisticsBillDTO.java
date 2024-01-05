@@ -831,6 +831,16 @@ public class LogisticsBillDTO implements Serializable {
 
         private Integer qty;
 
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品
+         */
+        private String platformSpuNo;
+
     }
 
 
