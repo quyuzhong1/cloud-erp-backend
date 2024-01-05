@@ -100,9 +100,10 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
             }
             //拉取数据
             String date = walmartSdkClientService.sendWalmartGet(sb.toString(), shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
-
+            log.info(String.format("::::: 发送Get请求到沃尔玛 ::::: clientId => %s, clientSecret => %s, 返回参数 => %s ", shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), date));
             WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
             if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
+                log.info(String.format("::::: 【沃尔玛】获取walmartOrderDTO.getList().getElements().getOrder()::=====>错误！！没有获取到值"));
                 break;
             }
 
