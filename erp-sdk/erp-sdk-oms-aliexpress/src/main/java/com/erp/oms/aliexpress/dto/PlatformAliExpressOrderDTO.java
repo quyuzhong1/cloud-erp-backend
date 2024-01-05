@@ -105,33 +105,33 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
         AliExpressOrderDetail detail = sourceOrder.getDetail();
 
-        AmountInfo logisticsAmount =detail.getLogisticsAmount();
+
+        BigDecimal shippingFee = BigDecimal.ZERO;
+        Boolean detailIsNull = Objects.nonNull(detail);
+        if (detailIsNull) {
+            AmountInfo shippingAmount = detail.getLogisticsAmount();
+            if (Objects.nonNull(shippingAmount)) {
+                String shippingFeeStr = shippingAmount.getAmount();
+                if (StringUtils.isNotBlank(shippingFeeStr)) {
+                    shippingFee = new BigDecimal(shippingFeeStr);
+                }
+            }
+        }
+
+        AmountInfo logisticsAmount = detail.getLogisticsAmount();
 
         //物流成本
         BigDecimal logisticsCost = BigDecimal.ZERO;
-        if(Objects.nonNull(logisticsAmount)){
-            //物流成本
-            String logisticsCostStr = logisticsAmount.getAmount();
-            if(StringUtils.isNotBlank(logisticsCostStr)){
-                logisticsCost=new BigDecimal(logisticsCostStr);
-            }
-        }
-
-
-
-        BigDecimal shippingFee=BigDecimal.ZERO;
-        Boolean detailIsNull = Objects.nonNull(detail);
         if (detailIsNull) {
-            AmountInfo shippingAmount=detail.getLogisticsAmount();
-            if(Objects.nonNull(shippingAmount)){
-                String shippingFeeStr = shippingAmount.getAmount();
-                if(StringUtils.isNotBlank(shippingFeeStr)){
-                    shippingFee=new BigDecimal(shippingFeeStr);
+            if (Objects.nonNull(logisticsAmount)) {
+                //物流成本
+                String logisticsCostStr = logisticsAmount.getAmount();
+                if (StringUtils.isNotBlank(logisticsCostStr)) {
+                    logisticsCost = new BigDecimal(logisticsCostStr);
                 }
             }
-
-
         }
+
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
         orderDTO.setPayTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtPayTime()));
@@ -265,18 +265,18 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseName("");
         // 仓库名称
         detailDTO.setWarehouseId("");
-        Integer qty=item.getProductCount();
+        Integer qty = item.getProductCount();
         // 数量
         detailDTO.setQty(qty);
 
         String priceStr = item.getProductPrice().getAmount();
 
-        BigDecimal price=new BigDecimal(priceStr);
+        BigDecimal price = new BigDecimal(priceStr);
 
         // 单价
         detailDTO.setPrice(price);
         // 金额
-        BigDecimal amount = MathUtil.multiply(price,qty);
+        BigDecimal amount = MathUtil.multiply(price, qty);
         // 金额
         String currency = item.getProductPrice().getCurrencyCode();
 
