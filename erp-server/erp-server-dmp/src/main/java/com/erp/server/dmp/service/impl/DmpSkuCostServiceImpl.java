@@ -13,6 +13,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -26,6 +27,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.dmp.mapper.DmpSkuCostMapper;
+import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
@@ -69,6 +71,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     @Resource
     private MQProducerService<DmpSkuCostEntity> mqProducerService;
 
+    @Resource
+    private DmpSkuCostCustomService dmpSkuCostCustomService;
 
     /**
      * 同步采购单sku成本信息
@@ -291,11 +295,27 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      */
     private void getParentCost (List<DmpSkuCostEntity> childSkuCostList,List<BomSkuPageDTO.ListSkuLevelDTO> childList,String parentSkuId,DmpSkuCostEntity parentSkuCostEntity) {
         List<BomSkuPageDTO.ListSkuLevelDTO> childSkuList = childList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuId)).collect(Collectors.toList());
+        //存在SKU则累加sku信息
         if (CollectionUtils.isNotEmpty(childSkuList)) {
             for (BomSkuPageDTO.ListSkuLevelDTO childSkuLevelDTO :  childSkuList) {
                 DmpSkuCostEntity dmpSkuCostEntity = childSkuCostList.stream().filter(obj -> obj.getSkuId().equals(childSkuLevelDTO.getSkuId())).findFirst().orElse(null);
+                /**
+                 * 当子级SKU的成本不存在时
+                 * 1、如果子级SKU仍然存在下级SKU则继续循环
+                 * 2、如果子级SKU不存在下级SKU则查询SKU自定义成本表获取成本数据
+                 */
                 if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
-                    getParentCost(childSkuCostList,childList,childSkuLevelDTO.getSkuId(),parentSkuCostEntity);
+                    List<BomSkuPageDTO.ListSkuLevelDTO> bomChildSkuList = childList.stream().filter(obj -> obj.getParentSkuId().equals(childSkuLevelDTO.getSkuId())).collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(bomChildSkuList)) {
+                        getParentCost(childSkuCostList,childList,childSkuLevelDTO.getSkuId(),parentSkuCostEntity);
+                    } else {
+                        //取自定义成本数据
+                        DmpSkuCostCustomEntity costCustomEntity = dmpSkuCostCustomService.getBySkuNo(childSkuLevelDTO.getSkuNo());
+                        if (ObjectUtil.isNotEmpty(costCustomEntity)) {
+                            parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                            parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
+                        }
+                    }
                     continue;
                 }
                 parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
