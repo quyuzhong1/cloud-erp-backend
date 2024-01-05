@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -109,6 +110,12 @@ public class SoB2cDetailDTO implements Serializable {
         * 明细标签
         */
        private String label;
+
+        /**
+         * 是否匹配仓库规则
+         */
+        private Boolean isMatchWarehouseRule;
+        
        /**
         * 明细标签对象
         */
@@ -173,9 +180,24 @@ public class SoB2cDetailDTO implements Serializable {
         private String  id;
 
         /**
+        * 主表Id
+        */
+        private String  mainId;
+
+        /**
         * 图片URL
         */
         private String imageUrl;
+
+        /**
+        * 平台sku
+        */
+        private String platformSkuNo;
+
+        /**
+        * 平台产品id
+        */
+        private String platformSpuNo;
 
         /**
         * 产品sku编号
@@ -198,6 +220,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String warehouseName;
 
         /**
+        * 仓位
+        */
+        private String warehouseLocation;
+
+        /**
         * 建议售价（本位币）
         */
         private BigDecimal advicePrice;
@@ -206,6 +233,16 @@ public class SoB2cDetailDTO implements Serializable {
         * 成本（本位币）
         */
         private BigDecimal taxCost;
+
+        /**
+        * 金额
+        */
+        private BigDecimal amount;
+
+        /**
+        * 汇率
+        */
+        private BigDecimal exchangeRate;
 
     }
 
@@ -220,6 +257,10 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private String sourceDetailId;
 
+        /**
+         * 操作明细集合id
+         */
+        private String operateDetailId;
     }
 
     /**
@@ -258,7 +299,6 @@ public class SoB2cDetailDTO implements Serializable {
         /**
         * 仓库id
         */
-        @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
@@ -269,6 +309,60 @@ public class SoB2cDetailDTO implements Serializable {
         @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
         @DecimalMin(value = "0", message = "单价最小值必须大于0")
         private BigDecimal price;
+
+        /**
+         * 来源平台
+         */
+        private String sourcePlatform;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class OutstockDTO{
+
+
+
+        private String soDetailId;
+
+        private String mianId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku編號
+         */
+        private String skuNo;
+
+        private Integer qty;
+
+        private String warehouseLocation;
+
+        private String warehouseId;
+
+        private String warehouseName;
+
+        private String platformSkuNo;
+
+        private String platformSpuNo;
+
+        private String warehouseSkuNo;
+
+        private String warehouseOrgId;
+
+        private String warehouseOrgName;
+
+        private String remark;
+
+        private String sourceDetailId;
+
+        private String currency;
+
+        private BigDecimal exchangeRate;
+
     }
 
 

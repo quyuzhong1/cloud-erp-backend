@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
@@ -47,9 +48,13 @@ public class OverseasWarehouseController extends BaseController {
         return overseasProviderWarehouseService.listByPlatformWarehouseCode(warehouseCodeList,platform);
     }
 
+
     /**
-     * 根据erp仓库id 集合获取到海外仓
-     * @return
+     * @description
+     * @params  根据erp仓库id 集合获取到海外仓
+     * @author Lambda
+     * @return java.util.List<com.erp.model.wms.dto.OverseasProviderWarehouseDTO.ViewDTO>
+     * @create 2023-12-13 17:08
      */
     @PostMapping("/listByWarehouseId")
     public List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseId(@RequestBody List<String> warehouseIdList){

@@ -48,7 +48,7 @@ public class Order {
     /**
      * The current order status.
      */
-    @JsonAdapter(OrderStatusEnum.Adapter.class)
+//    @JsonAdapter(OrderStatusEnum.Adapter.class)
     public enum OrderStatusEnum {
         PENDING("Pending"),
 
@@ -64,7 +64,10 @@ public class Order {
 
         INVOICEUNCONFIRMED("InvoiceUnconfirmed"),
 
-        PENDINGAVAILABILITY("PendingAvailability");
+        PENDINGAVAILABILITY("PendingAvailability"),
+
+        UNKNOW("unknow"),
+        ;
 
         private String value;
 
@@ -81,13 +84,13 @@ public class Order {
             return String.valueOf(value);
         }
 
-        public static OrderStatusEnum fromValue(String text) {
+        public static OrderStatusEnum fromValue(String text, Boolean nullDefault) {
             for (OrderStatusEnum b : OrderStatusEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }
-            return null;
+            return nullDefault ? UNKNOW : null;
         }
 
         public static class Adapter extends TypeAdapter<OrderStatusEnum> {
@@ -99,13 +102,13 @@ public class Order {
             @Override
             public OrderStatusEnum read(final JsonReader jsonReader) throws IOException {
                 String value = jsonReader.nextString();
-                return OrderStatusEnum.fromValue(String.valueOf(value));
+                return OrderStatusEnum.fromValue(String.valueOf(value), true);
             }
         }
     }
 
     @SerializedName("OrderStatus")
-    private OrderStatusEnum orderStatus = null;
+    private String orderStatus = null;
 
     /**
      * Whether the order was fulfilled by Amazon (AFN) or by the seller (MFN).
@@ -502,7 +505,7 @@ public class Order {
         this.lastUpdateDate = lastUpdateDate;
     }
 
-    public Order orderStatus(OrderStatusEnum orderStatus) {
+    public Order orderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
         return this;
     }
@@ -513,11 +516,11 @@ public class Order {
      * @return orderStatus
      **/
 
-    public OrderStatusEnum getOrderStatus() {
+    public String getOrderStatus() {
         return orderStatus;
     }
 
-    public void setOrderStatus(OrderStatusEnum orderStatus) {
+    public void setOrderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
     }
 
@@ -1432,46 +1435,136 @@ public class Order {
     /**
      * 转换订单时间为系统时区
      */
-    public LocalDateTime convertPurchaseSystemTime() {
-        return LocalDateTime.parse(this.purchaseDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                .atZone(ZoneOffset.UTC)
-                .withZoneSameInstant(ZoneId.systemDefault())
-                .toLocalDateTime()
-                ;
+    public LocalDateTime convertPurchaseLocalDateTime() {
+        return LocalDateTime.parse(this.purchaseDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     public String convertBillStatus() {
         // SoB2cBillStatusEnum
-        if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus) || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)) {
+        //  ENUM_WAIT_DISTRIBUTION("waitDistribution",  "待配货"),
+        //    ENUM_IN_DISTRIBUTION("inDistribution",  "配货中"),
+        //    ENUM_WAIT_SHIPPED("waitShipped",  "待发货"),
+        //    ENUM_SHIPPED("shipped",  "已发货"),
+        //    ENUM_FROZEN("frozen",  "冻结中"),
+
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             // 待发货
             return "waitShipped";
         }
-        // 已发货
-        if (OrderStatusEnum.SHIPPED.equals(this.orderStatus)) {
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
             return "shipped";
         }
-
-        // 待发货
-        return "waitDistribution";
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 冻结中
+            return "frozen";
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
+            return "shipped";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 待配货
+            return "waitDistribution";
+        }
+        // 未知
+        return "unknow";
     }
 
     public String convertPayStatus() {
-        if (null == this.orderStatus) {
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
             //待付款
             return "payment";
         }
-        if (OrderStatusEnum.PENDING.equals(this.orderStatus)) {
-            //待付款
-            return "payment";
-        }
-        // 已付款
-        if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus)
-                || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)
-                || OrderStatusEnum.SHIPPED.equals(this.orderStatus)
-        ) {
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
             return "paid";
         }
-        // 未知
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            // 已发货
+            return "paid";
+        }
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            //待付款
+            return "payment";
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "paid";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            //待付款
+            return "payment";
+        }
+        return "unknow";
+    }
+
+
+    public Boolean convertCancel(){
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String convertApproveStatusStr() {
+//                WAIT_SUBMIT("waitSubmit", "待提交"),
+//                APPROVE_ING("approveIng", "审核中"),
+//                REJECT("reject", "审核不通过"),
+//                APPROVE("approve", "已审核");
+        if (OrderStatusEnum.PENDING.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
+        if (OrderStatusEnum.UNSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
+        }
+        if (OrderStatusEnum.PARTIALLYSHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.SHIPPED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.CANCELED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
+        }
+        if (OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(this.orderStatus)) {
+            if (null != this.getFulfillmentChannel() && Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(this.getFulfillmentChannel().getValue())) {
+                return "approve";
+            } else {
+                return "waitSubmit";
+            }
+        }
+        if (OrderStatusEnum.INVOICEUNCONFIRMED.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "approve";
+        }
+        if (OrderStatusEnum.PENDINGAVAILABILITY.getValue().equalsIgnoreCase(this.orderStatus)) {
+            return "waitSubmit";
+        }
         return "unknow";
     }
 

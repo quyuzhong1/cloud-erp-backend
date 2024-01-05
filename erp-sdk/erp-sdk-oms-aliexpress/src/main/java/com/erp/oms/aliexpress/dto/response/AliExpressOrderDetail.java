@@ -76,10 +76,12 @@ public class AliExpressOrderDetail implements Serializable {
 
 
 
+
+
     /**
      * 子订单列表
      */
-    @JSONField(name = "order_amount")
+    @JSONField(name = "child_order_list")
     private List<OrderItemDetail>  childOrderList;
 
 

@@ -118,6 +118,12 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     @TableField("has_mapping_all")
     private Boolean hasMappingAll;
 
+    /**
+     * 匹配规则id
+     */
+    @TableField("rule_id")
+    private String ruleId;
+
 
 
     public SkuMappingEntity(ListingInfoEntity entity, String shopId) {

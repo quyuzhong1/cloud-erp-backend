@@ -128,8 +128,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             pushOperateLog(businessType,result.getCode(),erpBusinessCode);
             return result;
         } catch (Exception e){
-            log.error("调用第三方仓接口异常{}",ExceptionUtil.stacktraceToString(e,2000));
-            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code, ExceptionUtil.stacktraceToString(e,2000));
+            log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
+            ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
+            pushOperateLog(businessType,2000,erpBusinessCode);
+            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
             ThirdWarehouseContext.remove();

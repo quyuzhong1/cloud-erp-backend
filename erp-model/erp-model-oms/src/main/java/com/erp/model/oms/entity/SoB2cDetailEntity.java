@@ -136,6 +136,37 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 是否匹配仓库规则
+     */
+    @TableField("is_match_warehouse_rule")
+    private Boolean isMatchWarehouseRule;
+
+    /**
+     * 平台明细行号
+     */
+    @TableField("platform_line_number")
+    private String platformLineNumber;
+
+    /**
+     * 来源平台 SoB2cSourcePlatformEnum枚举
+     */
+    @TableField("source_platform")
+    private String sourcePlatform;
+
+
+    /**
+     * 当前净重
+     */
+    @TableField(exist = false)
+    private BigDecimal currentNetWeight;
+
+    /**
+     * 操作明细集合id
+     */
+    @TableField(exist = false)
+    private String operateDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 

@@ -98,4 +98,16 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      * @return
      */
     List<ShopAuthEntity> listByClientId(String clientId);
+
+    /**
+     * 刷新token
+     * @author yl
+     * @date 2023-12-12 15:15
+     * @param shopAuthId 授权id
+     * @param accessToken token
+     * @param refreshToken 刷新token
+     * @param expiresIn 过期时间
+     * @return 
+     */
+    void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn);
 }

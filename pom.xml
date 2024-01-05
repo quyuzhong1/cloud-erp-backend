@@ -43,6 +43,7 @@
         <commons-text.version>1.9</commons-text.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <hutool.version>5.8.12</hutool.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
     </properties>
 
     <!--公共依赖组件-->

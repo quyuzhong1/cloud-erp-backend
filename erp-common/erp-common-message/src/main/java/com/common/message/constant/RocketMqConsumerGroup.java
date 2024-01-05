@@ -240,4 +240,14 @@ public class RocketMqConsumerGroup {
      * 添加系统操作日志
      */
     public static final String SYNC_ERP_LOG_TO_SYS = "${spring.cloud.nacos.discovery.namespace}-sync_erp_log_to_sys";
+
+    /**
+     * ERP B2c订单->DMP
+     */
+    public static final String SYNC_ERP_SO_B2C_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_to_dmp";
+
+    /**
+     * ERP B2c发货单->DMP
+     */
+    public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
 }

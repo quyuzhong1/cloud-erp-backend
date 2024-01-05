@@ -32,10 +32,16 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("main_id")
     private String mainId;
     /**
-     * 物流单号
+     * 物流单号 (运单号)
      */
     @TableField("code")
     private String code;
+
+    /**
+     * 物流跟踪号
+     */
+    @TableField("track_no")
+    private String trackNo;
     /**
      * 买家自选物流名称
      */

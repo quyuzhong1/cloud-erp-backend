@@ -18,9 +18,7 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -51,13 +49,13 @@ public class OrdersV0Api {
     /**
      * 初始化Api
      */
-    public static OrdersV0Api initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox) {
+    public static OrdersV0Api initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox, RateLimitConfiguration rateLimitConfig) {
         AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
 
         LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
 
         AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
-        OrdersV0Api ordersV0Api = new OrdersV0Api.Builder()
+        OrdersV0Api ordersV0Api = new Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
                 .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
@@ -66,6 +64,7 @@ public class OrdersV0Api {
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
                 .endpoint(isSandbox ? endpointsEnum.getEndpointsByProfile() : endpointsEnum.getEndpoints())
+                .rateLimitConfigurationOnRequests(rateLimitConfig)
                 .build();
         if (null == ordersV0Api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");

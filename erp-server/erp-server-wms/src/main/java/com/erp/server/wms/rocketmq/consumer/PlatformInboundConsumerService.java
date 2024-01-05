@@ -10,9 +10,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.StringUtils;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * 下载平台入库数据消费服务
@@ -37,6 +40,9 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
 
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
@@ -59,6 +65,29 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+    }
+
+    @Override
+    public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
+        if (org.apache.commons.lang3.StringUtils.isEmpty(uniqueId) || org.apache.commons.lang3.StringUtils.isEmpty(platform) || Objects.isNull(isClean)){
+            return;
+        }
+        MongoDBUpdateDTO dto = MongoDBUpdateDTO.builder()
+                .tableName(getTableName(platform))
+                .uniqueId(uniqueId)
+                .isClean(isClean)
+                .build();
+        dmpMongoDbFeign.updateMongoDbData(dto);
+    }
+
+    /**
+     * 根据平台组装表名
+     * @param platform
+     * @return
+     */
+    private String getTableName(String platform){
+        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+                platform, BusinessTypeEnum.INBOUND.getCode());
     }
 
     @Override

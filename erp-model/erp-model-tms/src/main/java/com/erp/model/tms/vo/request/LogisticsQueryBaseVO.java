@@ -38,12 +38,4 @@ public class LogisticsQueryBaseVO implements Serializable {
      * 授权信息
      */
     Map<String, String> authMap;
-    /**
-     * 订单状态
-     */
-    String orderStatus;
-    /**
-     * 虾皮店铺id
-     */
-    String shopeeId;
 }

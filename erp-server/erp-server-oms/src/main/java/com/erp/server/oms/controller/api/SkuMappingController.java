@@ -1,6 +1,10 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -10,7 +14,12 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,6 +37,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-06-28
  */
+@Slf4j
 @RestController
 @LogSystemModule("sku对照表")
 @RequestMapping("/skuMaping")
@@ -36,7 +47,8 @@ public class SkuMappingController extends BaseController {
     @Resource
     private SkuMappingService skuMappingService;
 
-
+    @Resource
+    private SkuMappingRuleService skuMappingRuleService;
 
 
     /**
@@ -202,4 +214,57 @@ public class SkuMappingController extends BaseController {
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList.getList());
         return success(list);
     }
+
+    /**
+     * 删除
+     * @author Jim
+     * @date:  2023-12-20
+     * @param dto ids
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "SKU映射删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = skuMappingService.delete(id);
+            }catch (Exception e){
+                log.error("SKU映射删除失败:{}", e.getMessage());
+                SkuMappingEntity entity = skuMappingService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "SKU映射不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getProductSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 执行自动匹配规则
+     */
+    @GetMapping("/autoMatch")
+    public ApiResult<?> autoMatch() {
+        skuMappingRuleService.handleSkuMapping();
+        return success();
+    }
+
+
+    /**
+     * 查询操作日志
+     *
+     * @return
+     */
+    @PostMapping("/getLog")
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<OperateLogDTO.ListDTO> pagingVO = skuMappingService.getLog(dto);
+        return success(pagingVO);
+    }
+
 }

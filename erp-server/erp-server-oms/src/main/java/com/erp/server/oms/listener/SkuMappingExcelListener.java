@@ -162,7 +162,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
 
         // 已存在
-        if (CollectionUtils.isNotEmpty(listDto) && isApiPlatform){
+//        if (CollectionUtils.isNotEmpty(listDto) && isApiPlatform){
+        if (CollectionUtils.isNotEmpty(listDto)){
             ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
             if( currentSkuMapping.getMatchResult()){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");
@@ -262,6 +263,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformSkuName(platformProductName);
             addListingInfoEntity.setMatchResult(Boolean.TRUE);
+            addListingInfoEntity.setPlatform(dictPlatform);
             addListingInfoEntityList.add(addListingInfoEntity);
         }
         LocalDateTime now = LocalDateTime.now();

@@ -200,6 +200,7 @@
         </if>
         AND category_id IN
         (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
+        ORDER BY  create_time DESC
     </select>
 
 

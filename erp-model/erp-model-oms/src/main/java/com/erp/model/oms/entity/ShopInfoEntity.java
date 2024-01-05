@@ -148,11 +148,23 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String warehouseName;
 
     /**
+     * 是否有仓库
+     */
+    @TableField("is_have_warehouse")
+    private Boolean isHaveWarehouse;
+
+    /**
      * 平台店铺编码/卖家编码
      * 亚马逊平台=卖家ID
      */
     @TableField("platform_shop_code")
     private String platformShopCode;
+
+    /**
+     * ioss税号
+     */
+    @TableField("ioss_tax_no")
+    private String iossTaxNo;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

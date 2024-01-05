@@ -39,8 +39,11 @@
             <if test="params.pid !=null and params.pid!=''">
                 AND ol.pid = #{params.pid}
             </if>
+            <if test="params.moduleType !=null and params.moduleType!=''">
+                AND ol.module_type = #{params.moduleType}
+            </if>
         </where>
-        group by ol.module_type,ol.business_id,ol.create_time
+        group by ol.module_type,ol.business_id,ol.create_time,ol.field_name
         order by ol.create_time desc
     </select>
 

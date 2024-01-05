@@ -1,11 +1,13 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.druid.sql.visitor.functions.If;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
@@ -17,11 +19,13 @@ import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
+import com.sdk.tms.express.model.base.BaseResponse;
 import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.express.model.order.request.*;
 import com.sdk.tms.express.model.order.response.*;
 import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.common.util.CollectionUtils;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -77,7 +81,8 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         responseVO.setMore(true);
                         List<LogisticsOrderResponseVO> vos = new ArrayList<>(collect.size());
                         collect.forEach(waybillNoInfoList2 -> {
-                            vos.add(LogisticsOrderResponseVO.builder().deliveryNo(orderResponse.getOrderId())
+                            vos.add(LogisticsOrderResponseVO.builder()
+                                    .deliveryNo(orderResponse.getOrderId())
                                     .trackNo(waybillNoInfoList2.getWaybillNo())
                                     .transportNo(waybillNoInfoList2.getWaybillNo()).build());
                         });
@@ -134,10 +139,10 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 //收寄双方信息
                 .contactInfoList(contactInfoList)
                 //顺丰月结卡号 月结支付时传值，现结不需传值；沙箱联调可使用测试月结卡号7551234567（非正式，无须绑定，仅支持联调使用）
-                .monthlyCard("7551234567")
+                .monthlyCard(logisticsOrderVO.getMonthlyCard())
                 .payMethod(1)
                 //快件产品类别
-                .expressTypeId(1)
+                .expressTypeId(Integer.valueOf(logisticsOrderVO.getLogisticsSaleChannel().getCode()))
                 .parcelQty(1)
                 //是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                 .isReturnRoutelabel(1)
@@ -345,7 +350,9 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             LogisticsPrintLabelResponse responseVO = new LogisticsPrintLabelResponse();
             //支持单个取消
             OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
-                    .templateCode("fm_76130_standard_{clientcode}")
+//                    .templateCode("fm_76130_standard_{clientcode}")
+                    .templateCode("fm_100_vips_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
+//                    .templateCode("fm_210_standard_"+ logisticsGetLabelVO.getAuthMap().get("clientId"))
                     .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsGetLabelVO.getTransportNo()).build()))
                     .version("2.0")
                     .fileType("pdf")
@@ -363,26 +370,36 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
                     responseVO.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                     List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses = new ArrayList<>();
-                    files.forEach(printFile -> {
-                        responseVO.setMore(true);
-                        LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
-                        response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
-                        response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
-                        response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
+                    if (1 == files.size()){
                         try {
-                            response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+                            responseVO.setMore(false);
+                            responseVO.setBase64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()));
                         } catch (IOException e) {
                             log.error("获取标签文件异常：{}", e.getMessage());
 //                            throw new RuntimeException(e);
                         }
-                        logisticsPrintLabelResponses.add(response);
-                    });
+                    }else {
+                        files.forEach(printFile -> {
+                            responseVO.setMore(true);
+                            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+                            response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
+                            response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
+                            response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
+                            try {
+                                response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+                            } catch (IOException e) {
+                                log.error("获取标签文件异常：{}", e.getMessage());
+//                            throw new RuntimeException(e);
+                            }
+                            logisticsPrintLabelResponses.add(response);
+                        });
+                    }
                     responseVO.setLogisticsPrintLabelResponses(logisticsPrintLabelResponses);
                     responseVO.success();
                     success = true;
                 } else {
                     isSuccess = false;
-                    responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), baseResult.getErrorMsg());
+                    responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), baseResult.getErrorMessage());
                 }
             } catch (Exception e) {
                 isSuccess = false;
@@ -401,25 +418,51 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return isSuccess ? success(responseVOS) : failure(responseVOS);
     }
+
     /**
      * 授权判断
+     *
      * @param authMap
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult authorization(Map<String, String> authMap) {
         String waybillNo = "SF1040275268927";
         try {
-            BaseResult responseMsg = expressShipperService.validateWaybillNo(authMap,waybillNo);
-            if (Objects.isNull(responseMsg) || !responseMsg.isSuccess()) {
+            BaseResponse baseResponse = expressShipperService.validateWaybillNo(authMap, waybillNo);
+            BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
+            if (Objects.isNull(baseResponse) || StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !baseResult.isSuccess()) {
                 //授权失败
-                return failure("授权失败");
-            }else {
+                return failure("授权失败" + baseResponse.getApiErrorMsg());
+            } else {
                 return success("授权成功");
             }
         } catch (Exception e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
+    }
+
+    /**
+     * 渠道查询
+     *
+     * @param chanelQueryVO
+     * @return
+     */
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
+        List<LogisticsSaleChannelEntity> entityList = new ArrayList<>();
+        entityList.add(new LogisticsSaleChannelEntity().setCode("1").setPlatformChannelId("1").setAging("T4").setCnName("顺丰特快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("2").setPlatformChannelId("2").setAging("T6").setCnName("顺丰标快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("6").setPlatformChannelId("6").setAging("T104").setCnName("顺丰即日").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("10").setPlatformChannelId("10").setAging("T14").setCnName("国际小包").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("23").setPlatformChannelId("23").setAging("T9").setCnName("顺丰国际特惠(文件)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("24").setPlatformChannelId("24").setAging("T9").setCnName("顺丰国际特惠(包裹)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("26").setPlatformChannelId("26").setAging("T7").setCnName("国际大件").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("60").setPlatformChannelId("60").setAging("T4").setCnName("顺丰特快（文件）").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("99").setPlatformChannelId("99").setAging("T4").setCnName("顺丰国际标快(文件)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("100").setPlatformChannelId("100").setAging("T4").setCnName("顺丰国际标快(包裹)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("242").setPlatformChannelId("242").setAging("T77").setCnName("丰网速运").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("247").setPlatformChannelId("247").setAging("T68").setCnName("电商标快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        return success(entityList);
     }
 
     @Override

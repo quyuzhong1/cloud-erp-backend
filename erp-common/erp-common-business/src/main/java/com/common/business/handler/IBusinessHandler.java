@@ -3,6 +3,8 @@ package com.common.business.handler;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 
+import java.util.List;
+
 /**
  * 业务处理器
  * @author Cloud
@@ -14,7 +16,10 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
      * @param data
      */
     PlatformDataDTO<T, R> pullHandle(JobTaskDTO data);
-
+    /**
+     * 拉取数据重新推送mq处理
+     */
+    PlatformDataDTO<T, R> cleanHandle(List<T> sourceDataList);
     /**
      * 获取目标平台
      * @return

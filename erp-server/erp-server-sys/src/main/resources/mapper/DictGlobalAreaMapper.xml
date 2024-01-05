@@ -16,8 +16,8 @@
             dc.id AS countryId
           FROM dict_global_area dga
           INNER JOIN dict_country dc
-          ON dga.id=dc.region_code AND dc.is_deleted=FALSE
-          WHERE  dga.is_deleted=FALSE
+          ON dga.region_code = dc.region_code AND dc.is_deleted = FALSE
+          WHERE  dga.is_deleted = FALSE
           <if test="countryIds!=null and countryIds.size>0">
             AND dc.id IN
             <foreach collection="countryIds" item="countryId"  open="(" separator="," close=")">

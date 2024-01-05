@@ -689,7 +689,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @date 2022-09-27 15:58
      */
     @Override
-    @Cacheable(cacheNames = "cache:sys:getUserList",keyGenerator = "myKeyGenerator")
     public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         //先添加自己
@@ -700,11 +699,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             user.setIsMyState(1);
             user.setUserId(loginUser.getUid());
             user.setUserName(loginUser.getUserName());
+            user.setDisabled(Boolean.FALSE);
             resultList.add(user);
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
-        queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
@@ -714,10 +713,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         queryWrapper.orderByAsc(SysUserInfoEntity::getUserName);
         List<SysUserInfoEntity> list = this.list(queryWrapper);
+        Integer notState=SysConstant.NO_STATE;
         for (SysUserInfoEntity item : list) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            Integer userState=item.getUserState();
+            userDTO.setDisabled(notState.equals(userState));
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }
@@ -732,7 +734,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Override
-    @Cacheable(cacheNames = "cache:sys:getAllUserList",keyGenerator = "myKeyGenerator")
     public List<FindUserDTO> getAllUserList() {
         List<FindUserDTO> resultList = new LinkedList<>();
         List<SysUserInfoEntity> list = this.list();

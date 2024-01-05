@@ -13,12 +13,13 @@ import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +52,9 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId) {
@@ -100,22 +104,27 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList) {
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
-
+        // 当前国家
+        DictCountryEntity dictCountryEntity = countryList.stream()
+                .filter(e-> e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
+                .findFirst()
+                .orElse(null);
         if (null == receiverDTO){
             //获取主表下物流记录
             SoB2cReceiverEntity oldEntity = getByMainId(mainEntity.getId());
-            if( null != oldEntity){
+            if( null == oldEntity){
                 SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
-                //处理买家信息
-                handleSoB2cReceiver(entity, mainEntity.getId());
-                // 无信息新增空表
-                if (!this.save(entity)){
-                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                if (null != dictCountryEntity){
+                    entity.setCountryName(dictCountryEntity.getNameCn());
                 }
+                //处理买家信息
+//                handleSoB2cReceiver(entity, mainEntity.getId());
+                return entity;
+            } else {
+                return oldEntity;
             }
-            return oldEntity;
         }
 
         //获取主表下物流记录
@@ -130,20 +139,20 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 entity.setTelNumber(receiverDTO.getTelNumber());
                 entity.setReceiverTelNumber(receiverDTO.getReceiverTelNumber());
                 //处理买家信息
-                handleSoB2cReceiver(entity, mainEntity.getId());
+//                handleSoB2cReceiver(entity, mainEntity.getId());
+                if (null != dictCountryEntity){
+                    entity.setCountryName(dictCountryEntity.getNameCn());
+                }
                 if (StringUtils.isBlank(receiverDTO.getName())){
                     receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
-                }
-                if (!this.save(entity)){
-                    throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
                 }
                 return entity;
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
                 BeanMapperUtils.copy(receiverDTO, entity2);
-//                if (StringUtils.isBlank(receiverDTO.getName())){
-//                    receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
-//                }
+                if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
+                    entity.setCountryName(dictCountryEntity.getNameCn());
+                }
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)){
                     throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
@@ -170,6 +179,13 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         CustomerB2cEntity customerB2cEntity = customerB2cService.getById(entity.getCustomerId());
         if (ObjectUtils.isNotEmpty(customerB2cEntity)) {
             entity.setName(customerB2cEntity.getName());
+        }
+        String country=entity.getCountry();
+        if(StringUtils.isNotBlank(country)){
+            DictCountryEntity countryEntity=sysUserFeign.getCountryById(country);
+            if(Objects.nonNull(countryEntity)){
+                entity.setCountryName(countryEntity.getNameCn());
+            }
         }
         entity.setMainId(mainId);
     }

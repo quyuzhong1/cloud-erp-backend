@@ -12,9 +12,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库-销售出库单
@@ -42,6 +47,10 @@ public class SoOutstockController extends BaseController {
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+
     /**
      * 获取 tab列表
      *
@@ -52,6 +61,7 @@ public class SoOutstockController extends BaseController {
         List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
     }
+
 
     /**
      * 分页列表
@@ -227,16 +237,16 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+    public ApiResult<List<BatchResultDTO>> audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
-            SoOutstockEntity entity = soOutstockService.getById(id);
             BatchResultDTO result;
             try {
-                 result = soOutstockService.approve(entity,new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
             } catch (Exception e) {
                 log.error("销售出库 审核失败>>>>{}", e);
+                SoOutstockEntity entity = soOutstockService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "销售出库单不存在, 审核失败");
                     resultDTOS.add(result);
@@ -249,8 +259,60 @@ public class SoOutstockController extends BaseController {
             resultDTOS.add(result);
         }
 
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure();
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
+
+    }
+
+    /**
+     * 重新生成销售出库单
+     *
+     * @param
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2023-12-28 19:43
+     */
+    @PostMapping("afreshGenerateB2cOutstock")
+    public ApiResult<Void> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(dto.getIds());
+        for (String id : dto.getIds()) {
+            try {
+                SoB2cEntity soB2c = soB2cList.stream().filter(s ->
+                                s.getId().equals(id)&&
+                                        shipped.equals(s.getBillStatus())&&
+                                        s.hasPlatformWarehouseOrder()
+                        ).findFirst().orElse(null);
+                /**
+                 * 表示有仓库为空且是已发货并且是平台仓订单
+                 * 那么就要去找店铺的仓库 然后匹配上仓库
+                 */
+                if (Objects.nonNull(soB2c)) {
+                    soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
+                }
+                Boolean result = soOutstockService.generateB2cSoOutstock(id);
+                if (result) {
+                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                    deleteDTO.setMainId(id);
+                    deleteDTO.setType(type);
+                    soB2cFeign.deleteError(deleteDTO);
+                }
+            } catch (Exception e) {
+                String message = e.getMessage();
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(id);
+                addError.setMessage(message);
+                addError.setParamJson(id);
+                soB2cFeign.addSoB2cError(addError);
+            }
+
+        }
+        return success();
     }
 
     /**
@@ -344,16 +406,6 @@ public class SoOutstockController extends BaseController {
     }
 
 
-
-   /* @LogAction(value = LogActionEnum.INSERT, desc = "销售订单下推")
-    @PostMapping("/generateSoOutstock")
-    public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
-        Boolean result = soOutstockService.generateSoSave(dto);
-        return result ? success() : failure();
-
-    }*/
-
-
     /**
      * 销售订单关联销售出库单
      *
@@ -390,6 +442,24 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/tempRepairHistoryDb")
     public ApiResult tempRepairHistoryDb() {
         soOutstockService.tempRepairHistoryDb();
+        return success();
+    }
+
+    /**
+     * 修复销售出库单历史数据
+     *
+     * @return
+     */
+    @GetMapping("/test")
+    public ApiResult test(@RequestParam("code") String code) {
+        String soB2cCode = "XSDD24010300005";
+        try {
+            soOutstockService.generateB2cSoOutstockByCode(code);
+        } catch (Exception e) {
+            log.error("销售订单{} 生成销售出库单失败>>>>>>{}", soB2cCode, e.getMessage());
+        }
+
+
         return success();
     }
 }

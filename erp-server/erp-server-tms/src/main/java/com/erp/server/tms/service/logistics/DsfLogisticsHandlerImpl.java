@@ -98,14 +98,15 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //包裹信息封装
         orderRequest.setParcelList(getParcel(logisticsOrderVO));
         ValidatorUtil.validateEntity(orderRequest);
-        boolean success = false;
+        boolean success = true;
         try {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), responseMsg.getMsg());
+                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), JSONObject.toJSONString(responseMsg.getErrors()));
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
+                success = false;
             } else {
                 OrderResponse orderResponse = JSONObject.parseObject(JSONObject.toJSONString(responseMsg.getData()), OrderResponse.class);
                 responseVO = LogisticsOrderResponseVO.builder()
@@ -124,6 +125,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+            success = false;
         }
         return success ? success(responseVO) : failure(responseVO);
     }
@@ -291,6 +293,11 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
                 .labelSize("label_100x150")
+                .isPrintTime("Y")
+                .isPrintDeclarationList(logisticsGetLabelVO.getIsPcd())
+                .isPrintPickInfo(logisticsGetLabelVO.getIsPdn())
+                .createPackageLabel(logisticsGetLabelVO.getIsPdn())
+                .isPrintPickBarcode(logisticsGetLabelVO.getIsPdn())
                 .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
                 .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();
@@ -365,13 +372,15 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+
     /**
      * 授权判断
+     *
      * @param authMap
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult authorization(Map<String, String> authMap) {
         try {
             ChanelRequest chanelRequest = ChanelRequest.builder()
                     .transport_mode("1")
@@ -380,13 +389,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
                 //授权失败
                 return failure("授权失败");
-            }else {
+            } else {
                 return success("授权成功");
             }
         } catch (Exception e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
+
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.DSF;

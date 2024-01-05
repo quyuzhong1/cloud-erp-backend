@@ -18,6 +18,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
@@ -91,11 +92,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private ProductPurchaseService productPurchaseService;
 
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
+
 
     @Resource
     private BasicDictService basicDictService;
+
+
 
 
     @Override
@@ -129,13 +131,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         BigDecimal actualNoTaxCost = BigDecimal.ZERO;
         //含税
         BigDecimal actualTaxCost = BigDecimal.ZERO;
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isNotEmpty(supplierIdList) ? scmTaskFeign.listSupplierSkuPrice(supplierIdList) : Collections.emptyList();
-        if (CollectionUtils.isNotEmpty(supplierSkuPriceList)) {
-            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+        String skuNo=productBaseInfo.getSkuNo();
+        List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(Arrays.asList(skuNo));
 
-            //不含税价=含税价÷（1+税率）
-            actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-            actualTaxCost = supplierSkuPrice.getTaxPrice();
+        if (CollectionUtils.isNotEmpty(skuCostList)) {
+            DmpSkuCostEntity  skuCostEntity = skuCostList.get(0);
+            actualTaxCost=skuCostEntity.getCostPrice();
+            actualNoTaxCost=skuCostEntity.getNotTaxCostPrice();
         } else {
             //含税成本
             String actualTaxCostStr = productBaseInfo.getActualTaxCost();
@@ -148,11 +150,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 actualNoTaxCost = new BigDecimal(actualNoTaxCostStr);
             }
         }
-
-
         productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost.toString()));
         productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost.toString()));
-
         List<String> skuNoList = Arrays.asList(productBaseInfo.getSkuNo());
         List<BomInfoEntity> bomSkuList = bomSkuService.listAllBomByParentSkuNos(skuNoList);
         productBaseInfo.setIsCombination(CollectionUtils.isNotEmpty(bomSkuList));
@@ -176,6 +175,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
             rate = new BigDecimal("7.13");
         }
+        String sourceCountryName = "";
         BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
             //目的国申报价
@@ -184,7 +184,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
                 productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
             }
-
+            //原产国
+            String sourceCountry = productLogistics.getSourceCountry();
+            if (StringUtils.isNotBlank(sourceCountry)) {
+                DictCountryEntity countryEntity = sysUserFeign.getCountryById(sourceCountry);
+                if (Objects.nonNull(countryEntity)) {
+                    sourceCountryName = countryEntity.getNameCn();
+                }
+            }
             BeanMapper.copy(productLogistics, declareInfo);
         }
         //这个是属性id 可能多个逗号分割
@@ -198,7 +205,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         //物流属性
         productBaseInfo.setLogisticsPropertyName(propertyName);
-
+        declareInfo.setSourceCountryName(sourceCountryName);
         result.setDeclareInfo(declareInfo);
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
@@ -358,20 +365,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList);
-        String isElectricFlag= ProductConstant.IS_ELECTRIC;
+        String isElectricFlag = ProductConstant.IS_ELECTRIC;
         //属性
         List<String> propertyIdList = list.stream().map(LogisticsProductDTO.ProductDTO::getProductPropertyId).distinct().collect(Collectors.toList());
         List<BasicDictEntity> dictList = CollectionUtils.isNotEmpty(propertyIdList) ? basicDictService.listByIds(propertyIdList) : Collections.emptyList();
         for (LogisticsProductDTO.ProductDTO item : list) {
             //毛重
             BigDecimal grossWeight = item.getGrossWeight();
-            Integer weight=0;
-            if(Objects.nonNull(grossWeight)){
-                weight=grossWeight.intValue();
+            Integer weight = 0;
+            if (Objects.nonNull(grossWeight)) {
+                weight = grossWeight.intValue();
             }
             item.setWeight(weight);
-            String propertyId=item.getProductPropertyId();
-            String flag=dictList.stream().filter(d->d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
+            String propertyId = item.getProductPropertyId();
+            String flag = dictList.stream().filter(d -> d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
             item.setIsElectric(isElectricFlag.equals(flag));
         }
         return list;
@@ -602,11 +609,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 dictIdList.add(dictId);
             }
         }
-        List<String> skuIdList = list.stream().map(LogisticsProductDTO.ExportInfoDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = list.stream().map(LogisticsProductDTO.ExportInfoDTO::getSkuNo).distinct().collect(Collectors.toList());
 
-        List<ProductPurchaseEntity> productPurchaseList = productPurchaseService.listBySkuIds(skuIdList);
-        List<String> supplierIdList = productPurchaseList.stream().filter(s -> StringUtils.isNotBlank(s.getMainSupplier())).map(ProductPurchaseEntity::getMainSupplier).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isNotEmpty(supplierIdList) ? scmTaskFeign.listSupplierSkuPrice(supplierIdList) : Collections.emptyList();
 
         dictIdList = dictIdList.stream().distinct().collect(Collectors.toList());
         List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
@@ -620,13 +624,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             rate = new BigDecimal("7.13");
         }
 
+        List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(skuNoList);
 
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
             String skuId = item.getSkuId();
+
             //含税成本
             BigDecimal actualTaxCost = item.getActualTaxCost();
             if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {
-                Map<String, BigDecimal> map = getSkuCost(supplierSkuPriceList, skuId);
+                Map<String, BigDecimal> map = getSkuCost(skuCostList, skuId);
                 actualTaxCost = map.get("actualTaxCost");
                 item.setActualTaxCost(actualTaxCost);
                 item.setActualNoTaxCost(map.get("actualNoTaxCost"));
@@ -660,19 +666,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
 
-    public Map<String, BigDecimal> getSkuCost(List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList, String skuId) {
-        PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+    public Map<String, BigDecimal> getSkuCost(List<DmpSkuCostEntity> skuCostList, String skuId) {
+        DmpSkuCostEntity skuCost = skuCostList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
 
         BigDecimal actualNoTaxCost = BigDecimal.ZERO;
         BigDecimal actualTaxCost = BigDecimal.ZERO;
-        if (Objects.nonNull(supplierSkuPrice)) {
+        if (Objects.nonNull(skuCost)) {
             //不含税价=含税价÷（1+税率）
-            actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-            actualTaxCost = supplierSkuPrice.getTaxPrice();
+            actualNoTaxCost = skuCost.getNotTaxCostPrice();
+            actualTaxCost = skuCost.getCostPrice();
         }
         Map<String, BigDecimal> map = new HashMap<>();
         map.put("actualTaxCost", actualTaxCost);
         map.put("actualNoTaxCost", actualNoTaxCost);
         return map;
     }
+
 }

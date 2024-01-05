@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -18,7 +19,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.OmsMongoDTO;
+import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -28,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +50,12 @@ public class BusinessServiceImpl {
     @Resource
     private MongoService mongoService;
     @Resource
+    private CfgSettingService cfgSettingService;
+    @Resource
     private MQProducerService mqProducerService;
     @Resource
     private DmpPullTaskService dmpPullTaskService;
+    private static final int size = 100;
 
     /**
      * 业务处理
@@ -76,6 +83,48 @@ public class BusinessServiceImpl {
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
         }
 
+    }
+
+    /**
+     * 业务处理
+     * @param category 业务类型
+     * @param platform 平台类型
+     * @param business 业务类型
+     * @param <T>      业务类型
+     * @param <R>      业务返回类型
+     * @param <>      业务数据类型
+     */
+//    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public <T extends CleanBaseDTO,R extends UniqueDto> void cleanProcessBusiness(String category, String platform, String business) {
+        IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
+        if (handler != null) {
+            List<T> sourceDataList = getCleanData(category,platform,business);
+            PlatformDataDTO<T, R> platformData = handler.cleanHandle(sourceDataList);
+
+            String targetPlatform = handler.getTargetPlatform();
+            // 保存mongo 并发送mq
+            List<R> toMqList = compareAndSaveMongo(true, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
+        } else {
+            // Handle the case when no handler is found
+            throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
+        }
+
+    }
+
+    private <T extends CleanBaseDTO> List<T> getCleanData(String category, String platform, String business) {
+        String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        Class tClass = CleanDataTableEnum.getByName(tableName).getTClass();
+        List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, tableName, tClass);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return Collections.EMPTY_LIST;
+        }else {
+            return mongoData;
+        }
     }
 
     private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(Boolean isSendMq, String category, String platform, String business,String targetPlatform, PlatformDataDTO<T, R> platformData, String topic) {
@@ -107,7 +156,7 @@ public class BusinessServiceImpl {
                 continue;
             }
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getUniqueId());
+            OmsMongoDTO updateDto = new OmsMongoDTO(mongoDatum.getUniqueId());
             mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
             uniqueIds.add(item.getUniqueId());
         }
@@ -142,6 +191,11 @@ public class BusinessServiceImpl {
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
+            }else {
+                OmsMongoDTO updateDto = new OmsMongoDTO(msg.getUniqueId());
+                MapUtil mapUtil = new MapUtil();
+                mapUtil.put("isClean", 1);
+                mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
             }
         }).collect(Collectors.toList());
 

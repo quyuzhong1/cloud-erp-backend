@@ -19,12 +19,15 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -117,16 +120,29 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private RedisUtil redisUtil;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateSyncInfo(String id, String syncStatus, String responseMsg) {
-        LambdaUpdateWrapper<DmpPullTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(DmpPullTaskEntity::getId, id);
-        updateWrapper.set(DmpPullTaskEntity::getLastSyncTime, LocalDateTime.now());
-        updateWrapper.set(DmpPullTaskEntity::getStatus, syncStatus);
-        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpPullTaskEntity::getReturnMsg, responseMsg);
-        updateWrapper.set(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now());
-        this.update(updateWrapper);
+        DmpPullTaskEntity entity = new DmpPullTaskEntity();
+        entity.setId(id);
+        entity.setLastSyncTime(LocalDateTime.now());
+        entity.setStatus(syncStatus);
+        if (StrUtil.isNotBlank(responseMsg)){
+            entity.setReturnMsg(responseMsg);
+        }
+
+        entity.setUpdateTime(LocalDateTime.now());
+        baseMapper.updateById(entity);
+//        LambdaUpdateWrapper<DmpPullTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+//        updateWrapper.eq(DmpPullTaskEntity::getId, id);
+//        updateWrapper.set(DmpPullTaskEntity::getLastSyncTime, LocalDateTime.now());
+//        updateWrapper.set(DmpPullTaskEntity::getStatus, syncStatus);
+//        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpPullTaskEntity::getReturnMsg, responseMsg);
+//        updateWrapper.set(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now());
+//        this.update(updateWrapper);
     }
 
     @Override
@@ -960,6 +976,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         DmpPullTaskEntity entity = this.getById(syncTaskId);
         if (ObjectUtil.isEmpty(entity)) {
             return;
+        }
+        //查询redis,预警8小时发送一次
+        String existKey = StrUtil.format(RedisKeyConstant.DMP_PULL_TASK_WARN, entity.getId());
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+            return;
+        } else {
+            //添加缓存
+            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
         }
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));

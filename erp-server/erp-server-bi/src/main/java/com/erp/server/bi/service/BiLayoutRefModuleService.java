@@ -27,7 +27,7 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
      */
     void addLayoutRefModule(String  subjectId,String layoutId, String blockNo, List<LayoutRefModuleDTO> moduleIdList);
 
-    
+
     /**
      * 根据布局id 查出 布局与模块关系
      * @author yl
@@ -37,7 +37,7 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
      */
     List<BiLayoutRefModuleEntity> getByLayoutIds(List<String> layoutIdList);
 
-    
+
     /**
      * 根据专题id 删除模块布局关系
      * @author yl

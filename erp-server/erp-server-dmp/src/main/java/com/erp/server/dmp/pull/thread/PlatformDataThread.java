@@ -5,20 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
-import com.common.core.utils.MapUtil;
 import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
-import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
@@ -84,11 +77,23 @@ public class PlatformDataThread {
         }
     }
 
+    @Async("pullErpOpenApi")
+    public void cleanOrder(JobTaskDTO jobTaskDTO) {
+        try {
+            log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
+            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType());
+
+        } catch (Exception e) {
+            log.error(" {}重新推送数据错误:{}", jobTaskDTO.getDictPlatform(), e);
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(jobTaskDTO),e.getMessage(), JSONUtil.toJsonStr(e.getStackTrace()));
+            dmpErrorLogService.save(dmpErrorLogEntity);
+        }
+    }
     /**
      * 执行任务
      * @param taskName
      */
-    public void executeTask(String taskName) {
+    public void executeTask(String taskName, boolean isAsync) {
         // 获取请求任务
         String o = template.opsForList().rightPop(taskName);
         if(ObjectUtils.isEmpty(o) || "null".equals(o)) {
@@ -100,7 +105,13 @@ public class PlatformDataThread {
         }
         String taskKey = StrUtil.format("{}-{}-{}", orderJobTask.getDictPlatform(), orderJobTask.getShopId(), orderJobTask.getApiCode());
         if(ObjectUtils.isEmpty(template.opsForValue().get(taskKey))) {
-            pullOrder(orderJobTask);
+            if (isAsync){
+                // 异步
+                pullOrder(orderJobTask);
+            } else {
+                // 同步
+                pullOrderSync(orderJobTask);
+            }
             template.opsForValue().set(taskKey,"text",10, TimeUnit.SECONDS);
         }else {
             template.opsForList().leftPush(taskName, JSONObject.toJSONString(orderJobTask));
@@ -138,6 +149,31 @@ public class PlatformDataThread {
             mongoService.saveMongoDataMult(insertList, tableName);
         }
     }
+
+    public void pullOrderSync(JobTaskDTO jobTaskDTO) {
+        PlatformApiEnum enumByType = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
+        RequestDTO dto = new RequestDTO();
+        dto.setPlatformApiEnum(enumByType);
+        dto.setJobTaskDTO(jobTaskDTO);
+        try {
+            log.info("发起同步调用平台【{}】店铺【{}】任务【{}】", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getShopName(), dto.getJobTaskDTO().getApiName());
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
+            Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
+            if (!aBoolean) {
+                throw new RuntimeException("修改任务下次执行时间失败！");
+            }
+        } catch (Exception e) {
+            log.error("同步{}拉取数据错误dto={}", jobTaskDTO.getDictPlatform(), JSONUtil.toJsonStr(dto), e);
+            Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 1);
+            String message = e.getMessage();
+            if (!aBoolean) {
+                message = "更新任务状态失败";
+            }
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(dto),message, JSONUtil.toJsonStr(e.getStackTrace()));
+            dmpErrorLogService.save(dmpErrorLogEntity);
+        }
+    }
+
 
     /**
      * 转换mongo的DTO

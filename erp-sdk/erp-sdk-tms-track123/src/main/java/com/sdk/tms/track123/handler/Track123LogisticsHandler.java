@@ -137,6 +137,8 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                     for (TrackDetail trackDetail : accepted.getContent()) {
                         PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
                         acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
+                        acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
+                        acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
                         LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
                         if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
                             List<PlatformTrackDetail> details = new ArrayList<>();

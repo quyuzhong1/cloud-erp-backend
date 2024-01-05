@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.oms.mapper.CustomerB2cMapper">
 
 
-    <select id="paging" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
+    <select id="paging" resultType="com.erp.model.oms.dto.CustomerB2CDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
         seller_name,
@@ -70,7 +70,7 @@
         ORDER BY ci.create_time DESC
     </select>
 
-    <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
+    <select id="listExport" resultType="com.erp.model.oms.dto.CustomerB2CDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
         seller_name,
@@ -148,7 +148,7 @@
         </if>
         ORDER BY ci.create_time DESC
     </select>
-    <select id="listApproveCount" resultType="com.erp.model.oms.dto.CustomerDTO$ApproveCountDTO">
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.CustomerB2CDTO$ApproveCountDTO">
          SELECT
             approve_status,
 	        count(*)

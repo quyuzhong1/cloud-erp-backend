@@ -15,29 +15,27 @@ import java.time.LocalDateTime;
  *
  * @author Will
  * @since 2023-08-18
-*/
+ */
 @Data
 @NoArgsConstructor
 public class SoB2cLogisticsDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends CommonDTO{
+    public static class ViewDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 物流渠道名
-        */
+         * 物流渠道名
+         */
         private String logisticsChannelName;
 
 
@@ -47,14 +45,34 @@ public class SoB2cLogisticsDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
-        * 包装辅料sku编码
-        */
+         * 包装辅料sku编码
+         */
         private String accessoriesSkuNo;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectChannelDTO {
+
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单不能为空")
+        private String id;
+
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "物流渠道不能为空")
+        private String logisticsChannelId;
+
+
+    }
+
+
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -63,15 +81,15 @@ public class SoB2cLogisticsDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -81,13 +99,13 @@ public class SoB2cLogisticsDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        @Size(max = 32,message = "物流单号最大长度不能超过32位")
+        @Size(max = 32, message = "物流单号最大长度不能超过32位")
         private String code;
 
         /**
-        * 买家自选物流名称
-        */
-        @Size(max = 100,message = "买家自选物流名称最大长度不能超过100位")
+         * 买家自选物流名称
+         */
+        @Size(max = 100, message = "买家自选物流名称最大长度不能超过100位")
         private String name;
 
         /**
@@ -96,93 +114,104 @@ public class SoB2cLogisticsDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
-        * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/25999
-        */
-        @Size(max = 32,message = "物流方式最大长度不能超过32位")
+         * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        @Size(max = 32, message = "物流方式最大长度不能超过32位")
         private String logisticsChannelId;
 
         /**
-        * 预估运费
-        */
+         * 预估运费
+         */
         @Digits(integer = 12, fraction = 4, message = "预估运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal estimatedShippingCost;
 
         /**
-        * 预估运费币别
-        */
-        @Size(max = 32,message = "预估运费币别最大长度不能超过32位")
+         * 预估运费币别
+         */
+        @Size(max = 32, message = "预估运费币别最大长度不能超过32位")
         private String estimatedShippingCurrency;
 
         /**
-        * 实际运费
-        */
+         * 实际运费
+         */
         @Digits(integer = 12, fraction = 4, message = "实际运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal actualShippingCost;
 
         /**
-        * 实际运费币别
-        */
-        @Size(max = 32,message = "实际运费币别最大长度不能超过32位")
+         * 实际运费币别
+         */
+        @Size(max = 32, message = "实际运费币别最大长度不能超过32位")
         private String actualShippingCurrency;
 
         /**
-        * 包装重量
-        */
+         * 包装重量
+         */
         @Digits(integer = 12, fraction = 4, message = "包装重量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal weight;
 
         /**
-        * 包装辅料skuId http://172.16.100.11:3002/project/47/interface/api/19600
-        */
-        @Size(max = 19,message = "包装辅料skuId最大长度不能超过19位")
+         * 包装辅料skuId http://172.16.100.11:3002/project/47/interface/api/19600
+         */
+        @Size(max = 19, message = "包装辅料skuId最大长度不能超过19位")
         private String accessoriesSkuId;
 
         /**
-        * 包装辅料数量
-        */
+         * 包装辅料数量
+         */
         private Integer accessoriesQty;
 
         /**
-        * 包装辅料净重
-        */
+         * 包装辅料净重
+         */
         @Digits(integer = 12, fraction = 4, message = "包装辅料净重整数位不能超过12位，小数位不能超过4位")
         private BigDecimal accessoriesNw;
 
         /**
-        * 包装辅料费
-        */
+         * 包装辅料费
+         */
         @Digits(integer = 12, fraction = 4, message = "包装辅料费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal accessoriesCost;
 
         /**
-        * 包装辅料费币别
-        */
-        @Size(max = 32,message = "包装辅料费币别最大长度不能超过32位")
+         * 包装辅料费币别
+         */
+        @Size(max = 32, message = "包装辅料费币别最大长度不能超过32位")
         private String accessoriesCostCurrency;
 
         /**
-        * 长
-        */
+         * 长
+         */
         @Digits(integer = 12, fraction = 4, message = "长整数位不能超过12位，小数位不能超过4位")
         private BigDecimal length;
 
         /**
-        * 宽
-        */
+         * 宽
+         */
         @Digits(integer = 12, fraction = 4, message = "宽整数位不能超过12位，小数位不能超过4位")
         private BigDecimal width;
 
         /**
-        * 高
-        */
+         * 高
+         */
         @Digits(integer = 12, fraction = 4, message = "高整数位不能超过12位，小数位不能超过4位")
         private BigDecimal height;
 
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class TrackNoDTO {
 
+        private String id;
+        //渠道id
+        private String logisticsChannelId;
 
+        //b2c销售订单id
+        private String soB2cId;
+
+        private String transportNo;
+    }
 
 
 }

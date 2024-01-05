@@ -132,7 +132,7 @@ public class ImlServerTest {
                 "                    \"allocated_auto\":\"0\",\n" +
                 "                    \"warehouse_code\":\"RUS2\",\n" +
                 "                    \"shipping_method\":\"AE-HUB-3000566871\",\n" +
-                "                    \"reference_no\":\"wjtest20231116001\",\n" +
+                "                    \"reference_no\":\"5292418095450107\",\n" +
                 "                    \"aliexpress_order_no\":\"8000777788889999\",\n" +
                 "                    \"order_desc\":\"\\u8ba2\\u5355\\u63cf\\u8ff0\",\n" +
                 "                    \"country_code\":\"RU\",\n" +

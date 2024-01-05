@@ -10,7 +10,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerB2cContactEntity;
 import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerB2cContactMapper;
@@ -212,15 +212,35 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity) {
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
         CustomerB2cContactEntity entity = this.getByMainId(mainEntity.getId());
         if (null == entity){
             CustomerB2cContactEntity newEntity = new CustomerB2cContactEntity();
             newEntity.setMainId(mainEntity.getId());
+            newEntity.setPerson(receiverEntity.getName());
+            newEntity.setTelNumber(receiverEntity.getTelNumber());
+            newEntity.setEmail(receiverEntity.getEmail());
+            newEntity.setIsDefault(true);
+            newEntity.setDisabled(false);
             if (!save(newEntity)){
                 throw new ServiceException("[CustomerB2cSellerEntity] 保存失败");
             }
         } else {
+            if (StringUtils.isBlank(entity.getPerson())){
+                entity.setPerson(receiverEntity.getName());
+            }
+            if (StringUtils.isBlank(entity.getTelNumber())){
+                entity.setTelNumber(receiverEntity.getTelNumber());
+            }
+            if (StringUtils.isBlank(entity.getEmail())){
+                entity.setEmail(receiverEntity.getEmail());
+            }
+            if (!entity.getIsDefault()){
+                entity.setIsDefault(true);
+            }
+            if (entity.getDisabled()){
+                entity.setIsDefault(false);
+            }
             if (!updateById(entity)){
                 throw new ServiceException("[CustomerB2cSellerEntity] 更新失败");
             }

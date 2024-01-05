@@ -494,7 +494,7 @@ public enum ApiError implements Serializable {
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
-
+    LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
 
     /**
      * bi 错误
@@ -791,6 +791,8 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
     ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
+    ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_EDIT(99092,"同步物流商的地址不允许修改"),
+    ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_DEL(99092,"同步物流商的地址不允许删除"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
@@ -881,12 +883,15 @@ public enum ApiError implements Serializable {
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
-    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，调用第三方发货标识失败！"),
+    PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
+    STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -958,11 +963,12 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
     ERROR_SO_B2C_HAND_DISTRIBUTION(92063,"只有待配货和配货中数据允许手动配货"),
-    ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】不支持获取物流单号"),
+    ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】渠道为空或者已有运输单号"),
     ERROR_SO_B2C_DETAIL_NOT_EXIST(92065,"未找到B2C销售订单明细信息"),
     ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX(92066,"B2C销售订单【{}】存在多个发货仓库不支持提交发货"),
     ERROR_SO_B2C_NOT_INVENTORY(92067,"B2C销售订单【{}】未找到可用库存"),
     ERROR_SO_B2C_SKU_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】仓库【{}】未找到可用库存"),
+    ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】子级【{}】仓库【{}】未找到可用库存"),
     ERROR_SO_B2C_PLATFORM_CODE_COMPLEX(92069,"合并订单销售平台必须相同"),
     ERROR_SO_B2C_SHOP_COMPLEX(92070,"合并订单店铺必须相同"),
     ERROR_SO_B2C_CURRENCY_COMPLEX(92071,"合并订单币别必须相同"),
@@ -1032,14 +1038,20 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_MERGE_CAINIAO(92121,"B2C销售订单【{}】为菜鸟官方仓订单不支持合并"),
     ERROR_SO_B2C_MERGE_TAX(92122,"B2C销售订单【{}】为速卖通已税订单不支持合并"),
     ERROR_SO_B2C_SHOPEE_NOT_MERGE(92123,"B2C销售订单【{}】为shopee订单不支持合并"),
-    ERROR_SO_B2C_PAYMENT_NOT_UPDATE(92124,"B2C销售订单【{}】未付款不支持编辑"),
-    ERROR_SO_B2C_PAYMENT_NOT_SUBMIT(92125,"B2C销售订单【{}】未付款不支持提交"),
+    ERROR_SO_B2C_PAYMENT_NOT_OPERATE(92125,"B2C销售订单【{}】未付款不支持任何操作"),
     ERROR_SO_B2C_EXCHANGERATE_NOT_SUBMIT(92126,"B2C销售订单【{}】汇率不存在不支持提交"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
+    ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
-
-
+    ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
+    ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
+    NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货、已发货的订单可以发起拦截"),
+    IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
+    CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
+    NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
+    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
 
 
     /**
@@ -1076,6 +1088,7 @@ public enum ApiError implements Serializable {
     ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【{}】渠道,【{}】类型的地址为空"),
     ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【{}】渠道,尚未配置销售渠道"),
     PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
+    ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
 
 
 

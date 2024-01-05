@@ -76,6 +76,9 @@ public class SkuMappingWarehouseImportExcelDTO {
 
 
     public Boolean convertHasMappingAllStr() {
+        if (null == this.getHasMappingAllStr()){
+            return null;
+        }
         if (this.getHasMappingAllStr().equals("是")) {
             return true;
         }

@@ -218,7 +218,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      **/
     Boolean completionRateRankingExportExcel(CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response);
 
-    
+
     /**
      * 毛利额 毛利率 模块
      * @author yl

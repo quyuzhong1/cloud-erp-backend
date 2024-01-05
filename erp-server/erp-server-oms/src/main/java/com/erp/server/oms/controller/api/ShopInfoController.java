@@ -2,10 +2,8 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -18,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,6 +48,9 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private ShopCostService shopCostService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
 
     /**
@@ -75,13 +78,24 @@ public class ShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
     @PostMapping("/add")
     public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
-       List<ShopInfoEntity> list = shopInfoService.add(dto);
+        List<ShopInfoEntity> list = shopInfoService.add(dto);
+        for (ShopInfoEntity shop : list) {
+            //店铺客户信息
+            String id = shopInfoService.autoCreateShopCustomer(shop.getId());
+            if (StringUtils.isNotBlank(id)) {
+                List<String> ids = Arrays.asList(id);
+                //提交
+                Boolean submitResult = customerInfoService.submit(ids);
+                if (submitResult) {
+                    customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(),"",Boolean.FALSE));
+                }
+            }
+        }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 
     /**
      * 添加并授权店铺
-     *
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "添加并授权店铺:name={name}")
     @PostMapping("/addAndAuth")
@@ -153,9 +167,10 @@ public class ShopInfoController extends BaseController {
 
     /**
      * 获取已授权店铺
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
      * @author Will
      * @date: 2023/10/18 10:00
-     * @return ApiResult<List<ShopInfoEntity>>
      */
     @PostMapping("/listAuth")
     public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
@@ -318,9 +333,10 @@ public class ShopInfoController extends BaseController {
 
     /**
      * 查询亚马逊店铺信息
+     *
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
      * @Author Luo_WG
      * @Date 2023/11/1 18:56
-     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
      **/
     @GetMapping("/listShopByAmazon")
     public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {

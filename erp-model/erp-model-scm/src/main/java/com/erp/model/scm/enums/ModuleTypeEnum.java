@@ -59,6 +59,11 @@ public enum ModuleTypeEnum {
     REQUISITION_APPLICATION("55", "要货申请"),
     OVERSEAS_PROVIDER("56", "仓库设置"),
     OVERSEAS_WAREHOUSE_INBOUND("57", "海外仓入库单"),
+    SO_B2C_DELIVERY("58", "b2c发货单"),
+    SO_B2C_DELIVERY_INTERCEPT("59", "b2c发货拦截单"),
+    SKU_MAPPING_RULE("60", "sku自动匹配规则"),
+    SKU_MAPPING("61", "sku映射表"),
+    LISTING_INFO("62", "对应平台sku 表"),
     ;
 
 

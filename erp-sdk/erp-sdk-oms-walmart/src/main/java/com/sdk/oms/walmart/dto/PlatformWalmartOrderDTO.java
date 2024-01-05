@@ -1,8 +1,10 @@
 package com.sdk.oms.walmart.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -21,10 +23,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -44,7 +43,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WALMART.getCode());
-        this.setUniqueId(orderBean.getCustomerOrderId());
+        this.setUniqueId(orderBean.getPurchaseOrderId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -76,9 +75,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
 
-        // 付款状态（待付款、已付款）
-        orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
-
         //付款时间
         Instant instant = Instant.ofEpochMilli(orderBean.getOrderDate());
         ZoneId zone = ZoneId.systemDefault();
@@ -86,8 +82,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
-
-
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -105,7 +99,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceCode("");
 
         // 标签json
-        orderDTO.setLabelJson("{}");
+        Map<String, String> lableMap = new HashMap<>();
+        lableMap.put("shipNodeType", orderBean.getShipNode().getType());
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+        //如果是平台仓，状态审核通过
+        if ("WFSFulfilled".equals(orderBean.getShipNode().getType()) || "3PLFulfilled".equals(orderBean.getShipNode().getType())) {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+        }
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -123,6 +124,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setLogisticsList(parseLogistics(orderBean.getOrderLines().getOrderLine()));
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderBean));
+        orderDTO.setPlatform(PlatformDictEnum.WALMART.getCode());
+        orderDTO.setUniqueId(orderBean.getPurchaseOrderId());
         return orderDTO;
     }
 
@@ -149,6 +152,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // skuNo
         detailDTO.setSkuNo("");
 
+        //平台明细行号
+        detailDTO.setPlatformLineNumber(orderLineBean.getLineNumber());
+
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSku());
 
@@ -165,7 +171,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 单价
         detailDTO.setPrice(BigDecimal.ZERO);
         // 金额
-        BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "PRODUCT".equals(req.getChargeType()))
+        BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
                 .map(req -> req.getChargeAmount().getAmount())
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
@@ -209,28 +215,38 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //沃尔玛：已创建
         List<OrderLineStatusBean> created = statusList.stream().filter(req -> req.getStatus().contains("Created")).collect(Collectors.toList());
         //沃尔玛：已确认
-        List<OrderLineStatusBean> inDistribution = statusList.stream().filter(req -> req.getStatus().contains("Acknowledged")).collect(Collectors.toList());
+        List<OrderLineStatusBean> acknowledged = statusList.stream().filter(req -> req.getStatus().contains("Acknowledged")).collect(Collectors.toList());
         //沃尔玛：已发货
         List<OrderLineStatusBean> shipped = statusList.stream().filter(req -> req.getStatus().contains("Shipped")).collect(Collectors.toList());
         //沃尔玛：已交付
         List<OrderLineStatusBean> delivered = statusList.stream().filter(req -> req.getStatus().contains("Delivered")).collect(Collectors.toList());
         //沃尔玛：已取消
         List<OrderLineStatusBean> cancelled = statusList.stream().filter(req -> req.getStatus().contains("Cancelled")).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(created)) {
-            //沃尔玛：已创建 = OMS：待配货
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        } else if (CollectionUtils.isEmpty(inDistribution)) {
-            //沃尔玛：已确认 = OMS：待发货
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (CollectionUtils.isEmpty(shipped)) {
+        orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        orderDTO.setInvalidStatus(false);
+        if (CollectionUtils.isEmpty(shipped)) {
             //沃尔玛：已发货 = OMS：已发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isEmpty(delivered)) {
             //沃尔玛：已交付 = OMS：已发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (CollectionUtils.isEmpty(acknowledged)) {
+            //沃尔玛：已确认 = OMS：待发货
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_INVALID.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setInvalidStatus(true);
+        } else {
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
 
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
@@ -266,8 +282,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
         return PlatformOrderReceiverDTO.builder()
                 .loginId("")
-                .customerId("")
+                .customerId(orderBean.getCustomerOrderId())
                 .name(orderBean.getShippingInfo().getPostalAddress().getName())
+                .receiverName(orderBean.getShippingInfo().getPostalAddress().getName())
                 .telNumber(orderBean.getShippingInfo().getPhone())
                 .receiverTelNumber(orderBean.getShippingInfo().getPhone())
                 .email(orderBean.getCustomerEmailId())
@@ -304,14 +321,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 if (ObjectUtil.isEmpty(trackingInfo)) {
                     continue;
                 }
-                //chargeAmount中chargeType=SHIPPING时amount的订单行汇总
-                BigDecimal cost = orderLineBean.getCharges().getCharge().stream()
-                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
-                        .map(req -> req.getChargeAmount().getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                String currency = orderLineBean.getCharges().getCharge().stream()
-                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
-                        .map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
 
 
                 Instant instant = Instant.ofEpochSecond(trackingInfo.getShipDateTime());
@@ -322,9 +331,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                         .deliveryTime(LocalDateTime.ofInstant(instant, zone))
                         .logisticsChannelId(trackingInfo.getCarrierName().getCarrier())
                         .estimatedShippingCost(BigDecimal.ZERO)
-                        .actualShippingCost(cost)
+                        .actualShippingCost(BigDecimal.ZERO)
                         .accessoriesCostCurrency("")
-                        .actualShippingCurrency(currency)
+                        .actualShippingCurrency("")
                         .estimatedShippingCurrency("")
                         .build();
                 logisticsDTOS.add(dto);

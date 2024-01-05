@@ -32,6 +32,7 @@ import com.sdk.tms.ubi.model.order.response.OrderResponse;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
 import com.sdk.tms.ubi.service.UbiShipperService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -76,15 +77,15 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         ubiOrder.setOrderItems(orderItems);
         ValidatorUtil.validateEntity(ubiOrder);
         try {
-            OrderResponse order = ubiShipperService.createOrder(logisticsOrderVO.getAuthMap(), ubiOrder);
+            List<OrderResponse> order = ubiShipperService.createOrder(logisticsOrderVO.getAuthMap(), ubiOrder);
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(order));
             //一票多件包裹信息 会有多层嵌套 暂不考虑
             LogisticsOrderResponseVO responseVO = LogisticsOrderResponseVO.builder()
-                    .deliveryNo(order.getReferenceNo())
-                    .transportNo(order.getOrderId())
-                    .trackNo(order.getTrackingNo())
+                    .deliveryNo(order.get(0).getReferenceNo())
+                    .transportNo(order.get(0).getOrderId())
+                    .trackNo(order.get(0).getTrackingNo())
                     .build();
             return success(responseVO);
         } catch (Exception e) {
@@ -221,17 +222,21 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
+        boolean isPrintPacking = false;
+        if (StringUtils.isNotEmpty(logisticsGetLabelVO.getIsPdn()) && "Y".equalsIgnoreCase(logisticsGetLabelVO.getIsPdn())){
+            isPrintPacking = true;
+        }
         LabelRequest labelRequest = LabelRequest.builder()
                 .orderIds(logisticsQueryVO.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()))
                 //TODO 根据传参决定打印单大小
                 .labelType("1")
-                .packinglist(false)
+                .packinglist(isPrintPacking)
                 .merged(true)
-                .labelFormat("JPG")
+                .labelFormat("PDF")
                 .dpi("203")
                 .build();
-        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
-        assert logisticsGetLabelVO != null;
         ValidatorUtil.validateEntity(labelRequest);
         try {
             List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsGetLabelVO.getAuthMap(), labelRequest);

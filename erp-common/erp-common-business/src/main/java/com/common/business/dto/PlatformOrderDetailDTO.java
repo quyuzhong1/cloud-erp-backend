@@ -96,6 +96,10 @@ public class PlatformOrderDetailDTO {
      * 库位
      */
     private String warehouseLocation;
+    /**
+     * 平台明细行号
+     */
+    private String platformLineNumber;
 
 
 }

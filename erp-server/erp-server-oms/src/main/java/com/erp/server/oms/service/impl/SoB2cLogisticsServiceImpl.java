@@ -113,21 +113,24 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
      */
     private void handleLogisticsData(SoB2cLogisticsEntity entity) {
         String accessoriesSkuId = entity.getAccessoriesSkuId();
+        String accessoriesSkuNo = "";
         if (StringUtils.isNotBlank(accessoriesSkuId)) {
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(entity.getAccessoriesSkuId()));
-            if (CollectionUtils.isEmpty(skuList)) {
-                return;
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                accessoriesSkuNo = skuList.get(0).getSkuNo();
             }
-            entity.setAccessoriesSkuNo(skuList.get(0).getSkuNo());
         }
+        entity.setAccessoriesSkuNo(accessoriesSkuNo);
         //渠道id
         String logisticsChannelId = entity.getLogisticsChannelId();
+        String logisticsChannelName = "";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
             if (Objects.nonNull(channelEntity)) {
-                entity.setLogisticsChannelName(channelEntity.getName());
+                logisticsChannelName = channelEntity.getName();
             }
         }
+        entity.setLogisticsChannelName(logisticsChannelName);
         entity.setEstimatedShippingCost(ObjectUtil.isEmpty(entity.getEstimatedShippingCost()) ? BigDecimal.ZERO : entity.getEstimatedShippingCost());
         entity.setAccessoriesCost(ObjectUtil.isEmpty(entity.getAccessoriesCost()) ? BigDecimal.ZERO : entity.getAccessoriesCost());
         entity.setActualShippingCost(ObjectUtil.isEmpty(entity.getActualShippingCost()) ? BigDecimal.ZERO : entity.getActualShippingCost());
@@ -137,6 +140,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         entity.setHeight(ObjectUtil.isEmpty(entity.getHeight()) ? BigDecimal.ZERO : entity.getHeight());
         entity.setWidth(ObjectUtil.isEmpty(entity.getWidth()) ? BigDecimal.ZERO : entity.getWidth());
         entity.setLength(ObjectUtil.isEmpty(entity.getLength()) ? BigDecimal.ZERO : entity.getLength());
+        entity.setAccessoriesSkuId(StrUtil.isBlank(entity.getAccessoriesSkuId()) ? "": entity.getAccessoriesSkuId());
     }
 
     @Override
@@ -162,36 +166,40 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId, String logisticsCode) {
-        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).set(SoB2cLogisticsEntity::getCode, logisticsCode).update(new SoB2cLogisticsEntity());
+    public Boolean updateLogisticsCode(String mainId,  String transportNo, String trackNo) {
+        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
+                set(SoB2cLogisticsEntity::getCode, transportNo).
+                set(SoB2cLogisticsEntity::getTrackNo, trackNo).
+                update(new SoB2cLogisticsEntity());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
-        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
+    public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight) {
+//        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
+        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
-
         if (CollectionUtils.isEmpty(logisticsList)) {
             //获取主表下物流记录
             SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
             if (null == oldEntity) {
-                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId());
+                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight);
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
+                return entity;
             }
-            return;
+            return oldEntity;
         }
         // 暂时使用第一个
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
 
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-        boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPayMethod());
+
 
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
@@ -200,9 +208,16 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
             SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
-                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
+                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight);
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
+                if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
@@ -212,6 +227,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             } else {
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                if (isShopee && StringUtils.isNotEmpty(entity2.getLogisticsChannelName())){
+                    //虾皮存在渠道名称不存在渠道id 特殊处理
+                    List<LogisticsChannelEntity> channelByNames = logisticsFeign.getChannelByName(entity2.getLogisticsChannelName());
+                    if (CollectionUtils.isNotEmpty(channelByNames)){
+                        entity2.setLogisticsChannelId(channelByNames.get(0).getId());
+                    }
+                }
+                entity2.setWeight(allNetWeight);
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
@@ -229,6 +252,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             }
 
         }
+        return entity;
     }
 
     @Override
@@ -248,9 +272,15 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         shippingCalculationDTO.setWidth(entity.getWidth());
         shippingCalculationDTO.setHeight(entity.getHeight());
         shippingCalculationDTO.setToCountry(receiverEntity.getCountry());
+        shippingCalculationDTO.setToCountryName(receiverEntity.getCountryName());
         shippingCalculationDTO.setFromCountry(CountrySiteEnum.CHINA.getSite());
-        shippingCalculationDTO.setWeightUnit(UnitEnum.G.getCode());
+        shippingCalculationDTO.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         return shippingCalculationDTO;
+    }
+
+    @Override
+    public List<SoB2cLogisticsEntity> listByChannelId(String channelId) {
+        return this.lambdaQuery().eq(SoB2cLogisticsEntity::getLogisticsChannelId, channelId).list();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

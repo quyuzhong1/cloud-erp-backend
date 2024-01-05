@@ -30,6 +30,7 @@ import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.server.YanWenService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -109,9 +110,13 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<LogisticsPrintLabelResponse> result = new ArrayList<>();
         boolean isSuccess = true;
         for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
+            Integer printRemark = 0;
+            if(StringUtils.isNotEmpty(logisticsGetLabelVO.getIsPdn()) && "Y".equals(logisticsGetLabelVO.getIsPdn())){
+                printRemark = 1;
+            }
             YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
                     .waybillNumber(logisticsGetLabelVO.getTransportNo())
-                    .printRemark(logisticsGetLabelVO.getPrintRemark())
+                    .printRemark(printRemark)
                     .build();
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             try {
@@ -124,10 +129,10 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),labelResponse.getMessage());
                     isSuccess = false;
                 }else {
-                    response.setBase64(labelResponse.getData().getBase64String());
+                    String prefix = "data:application/pdf;base64,";
+                    response.setBase64(prefix + labelResponse.getData().getBase64String());
                     response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
                     response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
-                    result.add(response);
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));

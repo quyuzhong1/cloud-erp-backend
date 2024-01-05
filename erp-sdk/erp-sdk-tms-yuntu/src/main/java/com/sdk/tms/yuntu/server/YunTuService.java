@@ -1,5 +1,6 @@
 package com.sdk.tms.yuntu.server;
 
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -9,6 +10,7 @@ import com.sdk.tms.yuntu.constants.YunTuConstants;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.utils.YunTuUtils;
+import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,13 +23,18 @@ import java.util.Map;
 @Validated
 public class YunTuService {
 
+    private void validate(String appKey,String appSecret,String url){
+        if (StringUtils.isEmpty(appKey) || StringUtils.isEmpty(appSecret)|| StringUtils.isEmpty(url)) throw new ServiceException("授权信息不能为空");
+    }
     /**
      *  查询全部已开通的渠道
      */
     public YunTuResponse<List<YunTuChannel>> getAllChannel(Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
-        String response = YunTuUtils.sendGet(YunTuConstants.METHOD_CHANNEL_GET,null,appKey,appSecret);
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
+        String response = YunTuUtils.sendGet(url,YunTuConstants.METHOD_CHANNEL_GET,null,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuChannel>>>() {}.getType());
     }
 
@@ -37,8 +44,10 @@ public class YunTuService {
     public YunTuResponse<List<YunTuCreateOrder>> createOrder(@Valid List<YunTuCreateOrderRequest> request,Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
         List<Map<String,Object>> paramsMapList =  BeanMapUtil.beanToMapList(request);
-        String response = YunTuUtils.sendPost(YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
+        String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuCreateOrder>>>() {}.getType());
     }
 
@@ -48,8 +57,10 @@ public class YunTuService {
     public YunTuResponse<List<YunTuTrackingNumber>> getTrackingNumber(@Valid YunTuGetTrackingNumRequest request,Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YunTuUtils.sendGet(YunTuConstants.METHOD_GET_TRACKINGNUMBER,paramsMap,appKey,appSecret);
+        String response = YunTuUtils.sendGet(url,YunTuConstants.METHOD_GET_TRACKINGNUMBER,paramsMap,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuTrackingNumber>>>() {}.getType());
     }
 
@@ -59,7 +70,9 @@ public class YunTuService {
     public YunTuResponse<List<YunTuPrintLabel>> getPrintLabel(@Valid YunTuPrintLabelRequest request,Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
-        String response = YunTuUtils.sendPostList(YunTuConstants.METHOD_PRINT_LABEL,request.getOrderNumbers(),appKey,appSecret);
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
+        String response = YunTuUtils.sendPostList(url,YunTuConstants.METHOD_PRINT_LABEL,request.getOrderNumbers(),appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuPrintLabel>>>() {}.getType());
     }
 
@@ -69,8 +82,10 @@ public class YunTuService {
     public YunTuResponse<YunTuInterceptOrder> interceptOrder(@Valid YunTuInterceptOrderRequest request,Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YunTuUtils.sendPost(YunTuConstants.METHOD_INTERCEPT_ORDER,paramsMap,appKey,appSecret);
+        String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_INTERCEPT_ORDER,paramsMap,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<YunTuInterceptOrder>>() {}.getType());
     }
 
@@ -80,8 +95,10 @@ public class YunTuService {
     public YunTuResponse<YunTuCancelOrder> cancelOrder(@Valid YunTuCancelOrderRequest request,Map<String, String> authMap){
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
+        String url = authMap.get("url");
+        validate(appKey,appSecret,url);
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YunTuUtils.sendPost(YunTuConstants.METHOD_CANCEL_ORDER,paramsMap,appKey,appSecret);
+        String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CANCEL_ORDER,paramsMap,appKey,appSecret);
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<YunTuCancelOrder>>() {}.getType());
     }
 }

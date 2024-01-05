@@ -5,9 +5,11 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
+import com.sdk.wms.goodcang.utils.GoodCangUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -18,7 +20,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=GoodCangService.class)
+@SpringBootTest(classes={GoodCangService.class, GoodCangUtils.class})
+@TestPropertySource(properties = {"warehouse.goodcang.url=https://uat-oms.eminxing.com"})
 public class GoodCangServiceTest {
 
     @Resource
@@ -80,8 +83,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
-                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
+//                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
+//                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
+                .orderCode("G1149-231207-0027")
                 .page(1)
                 .pageSize(20)
                 .build();

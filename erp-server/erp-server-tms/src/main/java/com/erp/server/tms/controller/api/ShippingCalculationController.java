@@ -77,15 +77,15 @@ public class ShippingCalculationController extends BaseController {
     }
 
     /**
-     * 获取所有的物流渠道运输费
+     *  B2C销售订单运费测算
      * orderId 订单id
      *
      * @return
      */
     @GetMapping("/listChannelCost")
-    public ApiResult<List<ShippingCalculationDTO.ChannelCostDTO>> listChannelCost(@RequestParam(value = "orderId") String orderId) {
-        List<ShippingCalculationDTO.ChannelCostDTO> list = shippingCalculationService.listChannelCost(orderId);
-        return success(list);
+    public ApiResult<ShippingCalculationDTO.CostCalculationResultDTO> listChannelCost(@RequestParam(value = "orderId") String orderId) {
+        ShippingCalculationDTO.CostCalculationResultDTO result = shippingCalculationService.listChannelCost(orderId);
+        return success(result);
     }
 
 }

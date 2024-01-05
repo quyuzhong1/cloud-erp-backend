@@ -42,7 +42,23 @@ public class ApiHttpClientUtils extends HttpClientUtils {
         }
         return response;
     }
-
+    public static String apiJsonPostUrl(AffterentParam param, String bodyJsonStr, String urlProfiles) {
+        if (!checkParam(param))
+            return ResponseMsg.fial("参数缺失").toString();
+        StringBuilder urlStr = new StringBuilder(urlProfiles);
+        urlStr.append(EnvironOption.OPEN_API_ROUTER);
+        Long timestamp = new Date().getTime();
+        String sign = SignUtil.getSingByParam(param, bodyJsonStr, timestamp);
+        StringBuilder url = getRequestUrl(param, urlStr, timestamp, sign);
+        String response = null;
+        try {
+            response = post(url.toString(), bodyJsonStr);
+            System.out.println(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
     public static String apiJsonPost(AffterentParam param, String bodyJsonStr, AmbientEnum ambient) {
         if (!checkParam(param))
             return ResponseMsg.fial("参数缺失").toString();

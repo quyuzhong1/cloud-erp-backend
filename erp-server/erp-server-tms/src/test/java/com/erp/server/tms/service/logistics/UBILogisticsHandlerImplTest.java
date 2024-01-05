@@ -36,11 +36,11 @@ public class UBILogisticsHandlerImplTest {
 
     public UBILogisticsHandlerImplTest(){
 //        //测试环境账号
-//        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
-//        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
+        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
         //正式环境账号
-        authMap.put("clientId","pcloTVPCXZCD5G-RRlhBfR");
-        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
+//        authMap.put("clientId","pcloTVPCXZCD5G-RRlhBfR");
+//        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfig("");
@@ -95,7 +95,7 @@ public class UBILogisticsHandlerImplTest {
 //                .channelId("1725040739275055105")
                 .orderSource("ERP")
 //                .facility("can")
-                .deliveryNo("wj12345167721")
+                .deliveryNo("wj12345167728")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -123,6 +123,7 @@ public class UBILogisticsHandlerImplTest {
                 .logisticsProductVOList(Arrays.asList(
                         logisticsProductVO
                 ))
+                .logisticsSaleChannel(logisticsSaleChannel)
                 .logisticsChannelEntity(logisticsChannel)
                 .build();
         ApiResult<LogisticsOrderResponseVO> order = ubiLogisticsHandler.createOrder(logisticsOrderVO);
@@ -140,10 +141,17 @@ public class UBILogisticsHandlerImplTest {
 
     @Test
     public void getLabelList() throws IOException {
+        List<LogisticsGetLabelVO> logisticsQueryVO = new ArrayList<>();
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167721");
+        logisticsQueryVO2.setDeliveryNo("wj12345167726");
         logisticsQueryVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsPrintLabelResponse>> labelList = ubiLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
+        logisticsQueryVO.add(logisticsQueryVO2);
+        LogisticsGetLabelVO logisticsQueryVO3 = new LogisticsGetLabelVO();
+        logisticsQueryVO3.setDeliveryNo("wj12345167728");
+        logisticsQueryVO3.setAuthMap(authMap);
+        logisticsQueryVO.add(logisticsQueryVO3);
+//        ApiResult<List<LogisticsPrintLabelResponse>> labelList = ubiLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
+        ApiResult<List<LogisticsPrintLabelResponse>> labelList = ubiLogisticsHandler.getLabelList(logisticsQueryVO);
         System.out.println(labelList);
     }
 

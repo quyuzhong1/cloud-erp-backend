@@ -15,6 +15,7 @@ public enum SoB2cAbnormalTypeEnum {
     ENUM_APPROVE_REJECT("approveReject",  "订单规则审核不通过"),
     ENUM_DISTRIBUTION_REJECT("distributionReject",  "配货规则匹配失败"),
     ENUM_MANUAL_REJECT("manualReject",  "人工审核不通过"),
+    ENUM_RATE_NOT_EXIST_REJECT("rateNotExistReject",  "汇率配置不存在"),
 
     ;
     /**

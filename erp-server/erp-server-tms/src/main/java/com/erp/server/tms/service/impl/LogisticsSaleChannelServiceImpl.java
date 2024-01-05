@@ -189,6 +189,10 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
 
 
 
+    @Override
+    public LogisticsSaleChannelEntity getByCode(String code) {
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).last("LIMIT 1").one();
+    }
 
 
     /**

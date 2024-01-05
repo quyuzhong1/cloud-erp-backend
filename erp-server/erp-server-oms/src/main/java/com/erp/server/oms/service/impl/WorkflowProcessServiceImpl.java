@@ -124,6 +124,6 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
-        return soB2cService.approveEnd(approveOneDTO,entity);
+        return soB2cService.approveEnd(approveOneDTO,entity,null);
     }
 }

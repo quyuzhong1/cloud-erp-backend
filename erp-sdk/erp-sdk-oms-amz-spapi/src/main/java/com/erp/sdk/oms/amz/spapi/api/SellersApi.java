@@ -11,8 +11,11 @@
  */
 package com.erp.sdk.oms.amz.spapi.api;
 
+import com.common.core.utils.UUID;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.model.sellers.GetMarketplaceParticipationsResponse;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
@@ -41,6 +44,32 @@ public class SellersApi {
 
     public void setApiClient(ApiClient apiClient) {
         this.apiClient = apiClient;
+    }
+
+    /**
+     * 初始化Api
+     */
+    public static SellersApi initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
+
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
+
+        SellersApi sellersApi = new SellersApi.Builder()
+                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+                //北美，https://sellingpartnerapi-na.amazon.com
+                //欧洲，https://sellingpartnerapi-eu.amazon.com
+                //远东，https://sellingpartnerapi-fe.amazon.com
+                .endpoint(isSandbox ? endpointsEnum.getSandboxEndpoints() : endpointsEnum.getEndpoints())
+                .build();
+        if (null == sellersApi) {
+            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+        }
+        return sellersApi;
     }
 
     /**
