@@ -5,9 +5,11 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.MultiValueMap;
+import org.thymeleaf.util.MapUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -38,8 +40,11 @@ public class SqlInjectionRuleUtils {
      * @return
      */
     public static boolean mapRequestSqlKeyWordsCheck(MultiValueMap<String, String> map) {
+        if (map.isEmpty()) {
+            return false;
+        }
         //对post请求参数值进行sql注入检验
-        return map.entrySet().stream().parallel().anyMatch(entry -> {
+        return map.entrySet().stream().parallel().filter(Objects::nonNull).anyMatch(entry -> {
             //这里需要将参数转换为小写来处理
             String lowerValue = Optional.ofNullable(entry.getValue())
                     .map(Object::toString)
