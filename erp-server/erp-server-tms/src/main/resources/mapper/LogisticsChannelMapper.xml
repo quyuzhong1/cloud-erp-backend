@@ -100,7 +100,20 @@
         from logistics_channel lc LEFT JOIN logistics_sale_channel lsc on lc.source_id = lsc.id
         where lc.is_deleted = false  and lc.name = #{channelName} or lsc.cn_name = #{channelName}
     </select>
+    <select id="listChannelPlatform"
+            resultType="com.erp.model.tms.dto.LogisticsChannelDTO$LogisticsPlatformDTO">
 
+        SELECT
+            la.logistics_platform,
+
+        FROM logistics_auth la
+        INNER JOIN logistics_supplier ls
+        ON ls.id=la.main_id and  ls.is_deleted=false
+        INNER logistics_channel lc
+        WHERE ls.id=(SELECT main_id FROM  logistics_channel  WHERE id=#{channelId} and is_deleted=FALSE )
+        AND la.is_deleted=false
+
+    </select>
 
 
 </mapper>
