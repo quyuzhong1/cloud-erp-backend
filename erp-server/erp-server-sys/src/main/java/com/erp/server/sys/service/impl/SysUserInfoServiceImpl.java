@@ -129,6 +129,55 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
         String password = DEFAULT_PASS;
+        boolean needChangePwd = false;
+        //表示自己输入
+        if (createPasswordType == 1) {
+            password = sysUserInfoDTO.getPassword();
+            String confirmPassword = sysUserInfoDTO.getConfirmPassword();
+            if (StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
+                throw new ServiceException(ApiError.ERROR_9015);
+            }
+            if (!password.equals(confirmPassword)) {
+                throw new ServiceException(ApiError.ERROR_1001);
+            }
+        }else {
+            needChangePwd = true;
+        }
+
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+        //复制属性
+        BeanMapperUtils.copy(sysUserInfoDTO, entity);
+        //编号
+        String code = sysCodeService.getSeqNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
+        entity.setCode(code);
+        PassEntity passEntity = PassHandler.buildPassword(password);
+        entity.setPassword(passEntity.getPassword());
+        //账号
+        entity.setUserAccount(mobile);
+        entity.setSalt(passEntity.getSalt());
+        entity.setNeedChangePwd(needChangePwd);
+        if (Objects.isNull(entity.getIsSuper())){
+            entity.setIsSuper(false);
+        }
+        boolean saveResult = this.save(entity);
+        //保存成功 就去更新角色表
+        if (saveResult) {
+            List<String> roleIds = sysUserInfoDTO.getRoleIdList();
+            if (CollectionUtils.isNotEmpty(roleIds)) {
+                sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
+            }
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+    }
+
+    @Override
+    public void addSrmUser(SysUserInfoDTO sysUserInfoDTO) {
+        String mobile = sysUserInfoDTO.getMobile();
+        //验证用户信息
+        checkUserInfo(sysUserInfoDTO);
+        Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
+        String password = DEFAULT_PASS;
         //表示自己输入
         if (createPasswordType == 1) {
             password = sysUserInfoDTO.getPassword();
@@ -153,15 +202,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         entity.setUserAccount(mobile);
         entity.setSalt(passEntity.getSalt());
         boolean saveResult = this.save(entity);
-        //保存成功 就去更新角色表
-        if (saveResult) {
-            List<String> roleIds = sysUserInfoDTO.getRoleIdList();
-            if (CollectionUtils.isNotEmpty(roleIds)) {
-                sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
-            }
-            //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        }
     }
 
     @Override
@@ -192,6 +232,24 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!StrUtil.equals(sysUserInfoDTO.getUserName(),userName)) {
             plmTaskFeign.updateProjectTaskChargeName(sysUserInfoDTO);
         }
+    }
+
+    @Override
+    public void updateSrmUser(SysUserInfoDTO sysUserInfoDTO) {
+        String uid = sysUserInfoDTO.getUid();
+        SysUserInfoEntity entity = this.getById(uid);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        //用户名
+        String userName = entity.getUserName();
+        //验证用户信息
+        checkUserInfo(sysUserInfoDTO);
+        entity.setRealName(sysUserInfoDTO.getRealName());
+        entity.setMobile(sysUserInfoDTO.getMobile());
+        entity.setUserName(sysUserInfoDTO.getUserName());
+        entity.setEmail(sysUserInfoDTO.getEmail());
+        boolean updateResult = this.updateById(entity);
     }
 
     /**
@@ -275,17 +333,17 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Integer sysType = dto.getSysType();
         //角色的
         if (sysType == 1) {
-            return baseMapper.findRoleIfExistList(dto.getSearchKeyWord(), dto.getFlagId());
+            return baseMapper.findRoleIfExistList(dto);
         }
         //岗位的
         if (sysType == 2) {
-            return baseMapper.findPostIfExistList(dto.getSearchKeyWord(), dto.getFlagId());
+            return baseMapper.findPostIfExistList(dto);
         }
         //部门
         if (sysType == 3) {
-            return baseMapper.findDepartmentIfExistList(dto.getSearchKeyWord(), dto.getFlagId());
+            return baseMapper.findDepartmentIfExistList(dto);
         }
-        return baseMapper.findList(dto.getSearchKeyWord(), dto.getFlagId());
+        return baseMapper.findList(dto);
 
     }
 
@@ -299,10 +357,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
 
     @Override
-    public PagingVO paging(PagingDTO<SysUserPagingSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto) {
+        Page<UserManageDTO> query = new Page<UserManageDTO>(dto.getCurrPage(), dto.getPageSize());
         SysUserPagingSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params, params.getRoleIds());
+        IPage<UserManageDTO> pageData = baseMapper.paging(query, params, params.getRoleIds());
         List<UserManageDTO> list = pageData.getRecords();
         List<String> userIds = list.stream().map(UserManageDTO::getUid).collect(Collectors.toList());
         List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
@@ -311,7 +369,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                     .map(SysRoleUserEntity::getRoleId).collect(Collectors.toList());
             vo.setRoleIdList(roleIdList);
         }
-        return new PagingVO(pageData);
+        return new PagingVO<UserManageDTO>(pageData);
     }
 
 
@@ -1075,6 +1133,45 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             }
             redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         }
+        return flag;
+    }
+
+    @Override
+    public Boolean resetPassword(String uid, String pwd) {
+        if (StringUtils.isBlank(uid)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+//        SysUserInfoEntity userInfoEntity = this.getById(uid);
+//        if (StringUtils.isBlank(userInfoEntity.getEmail())) {
+//            throw new ServiceException(ApiError.ERROR_9044);
+//        }
+//        EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
+//        emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
+//        String num = RandomStringUtils.randomNumeric(8);
+        String password = Md5Util.md5(pwd);
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+
+        PassEntity passEntity = PassHandler.buildPassword(password);
+        entity.setPassword(passEntity.getPassword());
+        entity.setSalt(passEntity.getSalt());
+        boolean flag = lambdaUpdate()
+                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
+                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .eq(SysUserInfoEntity::getUid, uid).update();
+//        if (flag) {
+//            boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
+//            if (!emailFlag) {
+//                throw new ServiceException(ApiError.ERROR_1008);
+//            }
+//            LocalDateTime localDate = LocalDateTime.now();
+//            emailVerifyCodeDTO.setVerifyCode(num);
+//            emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
+//            Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
+//            if (!sendResult) {
+//                throw new ServiceException(ApiError.ERROR_1010);
+//            }
+//            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+//        }
         return flag;
     }
 

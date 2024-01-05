@@ -4,9 +4,16 @@ import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -440,5 +447,107 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/listUserByDept")
     public List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName) {
         return sysUserInfoService.listUserByDept(deptName);
+    }
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/page")
+    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto){
+        PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 添加用户
+     */
+    @RequestMapping("/save")
+    public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoService.add(sysUserInfoDTO);
+        return success();
+    }
+
+    /**
+     * 修改用户
+     */
+    @RequestMapping("/update")
+    public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoService.update(sysUserInfoDTO);
+        return success();
+    }
+
+
+    /**
+     * 用户信息
+     */
+    @LogViewService
+    @RequestMapping("/info/{uid}")
+    public ApiResult info(@PathVariable("uid") String uid) {
+        SysUserInfoEntity sysUserInfo = sysUserInfoService.getById(uid);
+        return success(sysUserInfo);
+    }
+
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/remove")
+    public ApiResult delete(@RequestBody List<String> uids) {
+        sysUserInfoService.deleteByIds(uids);
+        sysUserThirdService.deleteByUserIds(uids);
+        return success();
+    }
+
+    /**
+     * 批量启用/禁用
+     * @param stateDTO
+     * @return
+     */
+    @RequestMapping("/updateState")
+    public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
+        sysUserInfoService.updateState(stateDTO);
+        return success();
+    }
+
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:43
+     * @param
+     * @return
+     **/
+    @GetMapping("/resetPassword")
+    public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        Boolean flag = sysUserInfoService.resetPassword(uid,pwd);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 忘记密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:16
+     * @param dto dto
+     * @return
+     **/
+    @PostMapping("/forgotPassword")
+    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
+        Boolean flag = sysUserInfoService.forgotPassword(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 忘记密码-获取验证码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
+     * @param userAccount userAccount
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/forgotPasswordGetCode")
+    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
+        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
+        return success(map);
     }
 }

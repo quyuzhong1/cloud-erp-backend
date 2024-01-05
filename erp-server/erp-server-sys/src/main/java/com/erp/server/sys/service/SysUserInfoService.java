@@ -37,12 +37,23 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void add(SysUserInfoDTO sysUserInfoDTO);
 
     /**
+     * 保存用户
+     *
+     * @param sysUserInfoDTO
+     */
+    void addSrmUser(SysUserInfoDTO sysUserInfoDTO);
+    /**
      * 修改用户
      *
      * @param sysUserInfoDTO
      */
     void update(SysUserInfoDTO sysUserInfoDTO);
-
+    /**
+     * 修改用户
+     *
+     * @param sysUserInfoDTO
+     */
+    void updateSrmUser(SysUserInfoDTO sysUserInfoDTO);
     /**
      * 账号登录
      *
@@ -61,7 +72,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     List<UserDTO> findList(SysSearchUserDTO dto);
 
-    PagingVO paging(PagingDTO<SysUserPagingSearchDTO> dto);
+    PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto);
 
     void bindingThirdParty(SysUserThirdDTO dto);
 
@@ -145,7 +156,14 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.lang.Boolean
      **/
     Boolean resetPassword(String uid);
-
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:46
+     * @param uid 用户id
+     * @return java.lang.Boolean
+     **/
+    Boolean resetPassword(String uid,String pwd);
     /**
      * 忘记密码
      * @Author Luo_WG

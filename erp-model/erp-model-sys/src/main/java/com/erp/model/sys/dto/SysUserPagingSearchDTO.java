@@ -36,4 +36,9 @@ public class SysUserPagingSearchDTO   {
 
     //状态 1 正常  0 不正常
     private Integer state;
+
+    /**
+     * 用户类型 erp srm
+     */
+    private String userType ;
 }

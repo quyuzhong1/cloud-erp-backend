@@ -1,9 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -48,6 +50,7 @@ public class SysUserInfoController extends BaseController {
      */
     @RequestMapping("/list")
     public ApiResult list(@RequestBody SysSearchUserDTO dto) {
+        dto.setUserType(UserTypeEnum.ERP.code);
         List<UserDTO> list = sysUserInfoService.findList(dto);
         return success(list);
     }
@@ -59,7 +62,8 @@ public class SysUserInfoController extends BaseController {
      */
     @RequestMapping("/paging")
     public ApiResult list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
-        PagingVO pagingVO = sysUserInfoService.paging(dto);
+        dto.getParams().setUserType(UserTypeEnum.ERP.code);
+        PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -80,6 +84,7 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加用户")
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.add(sysUserInfoDTO);
         return success();
     }
@@ -90,6 +95,7 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户", keyIdName = "uid")
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.update(sysUserInfoDTO);
         return success();
     }
@@ -125,11 +131,12 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
+    @DataIdempotent(keyIdName = "uid")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid},用户密码={pwd}")
     @GetMapping("/resetPassword")
-    public ApiResult resetPassword(@RequestParam("uid") String uid) {
-        Boolean flag = sysUserInfoService.resetPassword(uid);
-        return flag == true ? success() : failure();
+    public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        Boolean flag = sysUserInfoService.resetPassword(uid,pwd);
+        return flag ? success() : failure();
     }
 
     /**

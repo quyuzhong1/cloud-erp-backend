@@ -6,11 +6,13 @@
         SELECT uid AS userId,user_name,real_name,mobile
         FROM sys_user_info
         WHERE delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
-
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
     </select>
 
     <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">
@@ -42,7 +44,9 @@
         <if test="params.endTime!=null">
             AND last_login_time &lt;=#{params.endTime}
         </if>
-
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
         <if test="roleIds !=null  and  roleIds.size()>0">
             AND uid in
             (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
@@ -59,13 +63,16 @@
     <select id="findRoleIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_role_user sru where
-        sru.user_id=sui.uid AND sru.role_id=#{roleId} limit 1),0) AS
+        sru.user_id=sui.uid AND sru.role_id=#{params.flagId} limit 1),0) AS
         flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 
@@ -73,12 +80,15 @@
     <select id="findPostIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_post_user spu
-        where spu.user_id=sui.uid AND spu.post_id=#{postId} limit 1),0) AS flagState
+        where spu.user_id=sui.uid AND spu.post_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 
@@ -86,12 +96,15 @@
     <select id="findDepartmentIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_department_user sdu
-        where sdu.user_id=sui.uid AND sdu.department_id=#{departmentId} limit 1),0) AS flagState
+        where sdu.user_id=sui.uid AND sdu.department_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 

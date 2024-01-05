@@ -24,15 +24,15 @@ import java.util.List;
 public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
 
-    List<UserDTO> findList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findList(@Param("params") SysSearchUserDTO dto);
 
     IPage<UserManageDTO> paging(Page query, @Param("params") SysUserPagingSearchDTO params, @Param("roleIds") List<String> roleIds);
 
-    List<UserDTO> findRoleIfExistList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findRoleIfExistList(@Param("params") SysSearchUserDTO dto);
 
-    List<UserDTO> findPostIfExistList(@Param("searchKeyword") String q, @Param("postId") String postId);
+    List<UserDTO> findPostIfExistList(@Param("params") SysSearchUserDTO dto);
 
-    List<UserDTO> findDepartmentIfExistList(@Param("searchKeyword") String searchKeyWord, @Param("departmentId") String flagId);
+    List<UserDTO> findDepartmentIfExistList(@Param("params") SysSearchUserDTO dto);
 
     void setLoginIp(@Param("params") SysLoginIpDTO dto);
 

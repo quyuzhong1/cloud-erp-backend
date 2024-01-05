@@ -51,7 +51,14 @@ public class SysUserInfoDTO implements Serializable {
 
    // @NotBlank(message = "确认密码不能为空")
     private String confirmPassword;
-
+    /**
+     * 用户类型 erp srm
+     */
+    private String userType ;
+    /**
+     * 是否超级管理员 false 不是管理员
+     */
+    private Boolean isSuper;
     //角色id 集合
     private List<String> roleIdList;
 
