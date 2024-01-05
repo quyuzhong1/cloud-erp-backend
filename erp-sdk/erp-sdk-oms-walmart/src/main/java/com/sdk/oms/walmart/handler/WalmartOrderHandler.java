@@ -84,15 +84,15 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
             sb.setLength(0);
             sb.append(baseUrl);
             if (StringUtil.isBlank(nextCursor)) {
-                sb.append("?lastModifiedStartDate=");
+                sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
+/*                sb.append("&lastModifiedStartDate=");
                 sb.append(data.getLastTime());
                 sb.append("&lastModifiedEndDate=");
-                sb.append(data.getNextTime());
+                sb.append(data.getNextTime());*/
                 sb.append("&createdStartDate=");
                 sb.append(data.getLastTime());
                 sb.append("&createdEndDate=");
                 sb.append(data.getNextTime());
-                sb.append("&status=Acknowledged,Shipped,Delivered,Cancelled");
                 sb.append("&limit=200&productInfo=true");
             } else {
                 sb.append(baseUrl);

@@ -67,7 +67,7 @@ public class WalmartSdkClientService {
 
         JobTaskDTO taskDTO = new JobTaskDTO();
 
-        taskDTO.setLastTime(LocalDateTime.parse("2022-01-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        taskDTO.setLastTime(LocalDateTime.parse("2022-12-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         taskDTO.setNextTime(LocalDateTime.parse("2023-12-31 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";
@@ -77,12 +77,15 @@ public class WalmartSdkClientService {
             sb.setLength(0);
             sb.append(baseUrl);
             if (StringUtil.isBlank(nextCursor)) {
-                sb.append("?status=Created,Acknowledged,Shipped,Delivered,Cancelled");
+                sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
+/*                sb.append("&createdStartDate=");
+                sb.append(taskDTO.getLastTime());
+                sb.append("&createdEndDate=");
+                sb.append(taskDTO.getNextTime());*/
                 sb.append("&lastModifiedStartDate=");
                 sb.append(taskDTO.getLastTime());
                 sb.append("&lastModifiedEndDate=");
                 sb.append(taskDTO.getNextTime());
-
                 sb.append("&limit=2000");
             } else {
                 sb.append(baseUrl);
