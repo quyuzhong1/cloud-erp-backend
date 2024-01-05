@@ -173,8 +173,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 金额
         BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
                 .map(req -> req.getChargeAmount().getAmount())
-                .reduce(BigDecimal::add)
-                .orElse(BigDecimal.ZERO);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         detailDTO.setAmount(amount);
         // 币别（原币）
         String currency = orderLineBean.getCharges().getCharge().stream().map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
@@ -294,6 +293,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 .districtName(orderBean.getShippingInfo().getPostalAddress().getCountry() + " " + orderBean.getShippingInfo().getPostalAddress().getCity())
                 .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
                 .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
+                .secondAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
                 .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
                 .build();
     }
