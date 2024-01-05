@@ -241,9 +241,10 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
             if (entity.getDisabled()){
                 entity.setIsDefault(false);
             }
-            if (!updateById(entity)){
-                throw new ServiceException("[CustomerB2cSellerEntity] 更新失败");
-            }
+            updateById(entity);
+//            if (!updateById(entity)){
+//                throw new ServiceException("[CustomerB2cSellerEntity] 更新失败");
+//            }
         }
     }
 
