@@ -168,13 +168,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(orderLineBean.getOrderLineQuantity().getAmount());
-        // 单价
-        detailDTO.setPrice(BigDecimal.ZERO);
+
         // 金额
         BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
                 .map(req -> req.getChargeAmount().getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         detailDTO.setAmount(amount);
+        // 单价
+        detailDTO.setPrice(amount);
         // 币别（原币）
         String currency = orderLineBean.getCharges().getCharge().stream().map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
         detailDTO.setCurrency(currency);
@@ -185,7 +186,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId("");
+        detailDTO.setSourceDetailId(orderBean.getCustomerOrderId() + "-" + orderLineBean.getLineNumber());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
