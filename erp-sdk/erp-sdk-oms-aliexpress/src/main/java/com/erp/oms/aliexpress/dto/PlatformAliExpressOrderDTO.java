@@ -192,11 +192,11 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
         if (detailIsNull) {
-            List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList();
+            List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
+                    filter(d->StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(logisticInfoList)) {
                 for (LogisitcsDTO item : logisticInfoList) {
                     PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
-                    logisticsDTO = new PlatformOrderLogisticsDTO();
                     logisticsDTO.setCode(item.getLogisticsNo());
                     logisticsDTO.setName(item.getLogisticsServiceName());
                     orderLogisticList.add(logisticsDTO);
