@@ -308,11 +308,11 @@
                     </foreach>
                 </if>
                 <if test="params.dateList != null and params.dateList.size > 0">
-                    <if test="params.dateType != null and params.dateType != '' and params.dateType = 'approveDate'">
+                    <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
                         and tf.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
                         ) > tf.trade_time
                     </if>
-                    <if test="params.dateType != null and params.dateType != '' and params.dateType = 'billDate'">
+                    <if test="params.dateType != null and params.dateType != '' and params.dateType == 'billDate'">
                         and tf.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
                         ) > tf.bill_date
                     </if>
