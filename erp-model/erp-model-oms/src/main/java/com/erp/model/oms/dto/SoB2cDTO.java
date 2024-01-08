@@ -365,7 +365,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 亚马逊订单
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
         /**
          * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
          */
@@ -391,7 +391,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * FBA（亚马逊订单FulfillmentChannel=AFN-亚马逊配送时）
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
         /**
          * 手工订单（在ERP手动创建的订单）
          */
