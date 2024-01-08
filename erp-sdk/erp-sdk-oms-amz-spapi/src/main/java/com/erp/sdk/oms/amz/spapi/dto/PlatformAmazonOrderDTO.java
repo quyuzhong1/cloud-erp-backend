@@ -100,7 +100,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
         if (Order.FulfillmentChannelEnum.AFN.getValue().equalsIgnoreCase(dto.getOrder().getFulfillmentChannel().getValue())) {
-            lableMap.put("FulfillmentChannel", "AFN");
+            lableMap.put("fulfillmentChannel", "AFN");
         }
         if (Order.OrderStatusEnum.UNFULFILLABLE.getValue().equalsIgnoreCase(dto.getOrder().getOrderStatus())){
             lableMap.put("amazonStatus", "Unfulfillable");

@@ -389,7 +389,7 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isCombination;
         /**
-         * FBA（亚马逊订单FulfillmentChannel=AFN-亚马逊配送时）
+         * FBA（亚马逊订单fulfillmentChannel=AFN-亚马逊配送时）
          */
         private String fulfillmentChannel;
         /**
