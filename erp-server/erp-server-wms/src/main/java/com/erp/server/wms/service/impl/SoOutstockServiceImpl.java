@@ -846,15 +846,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //反审核
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
-            handleDisApproveData(list);
+            List<SoOutstockEntity> haveSoIdList=list.stream().filter(h->StringUtils.isNotBlank(h.getSoId())).collect(Collectors.toList());
+            handleDisApproveData(haveSoIdList);
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
             if (isPushKingDee) {
                 //审核通过发送金蝶
-                list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+                haveSoIdList.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
                 //订单推送dmp
-                list.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+                haveSoIdList.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
         }
         return result;
@@ -940,10 +941,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
             //删除明细
             soOutstockDetailService.removeByMainIdList(ids);
+            List<SoOutstockEntity> haveSoIdList=list.stream().filter(h->StringUtils.isNotBlank(h.getSoId())).collect(Collectors.toList());
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            haveSoIdList.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
             //订单推送dmp
-            list.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            haveSoIdList.forEach(obj -> syncKingdeeSoOutstockService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
         return result;
     }
