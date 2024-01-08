@@ -284,13 +284,13 @@ public class CfgQueryConditionDTO implements Serializable {
         private String controls;
 
         /**
-         * 数据类型
+         * 数据类型 url:{{sys_url}}common/enumDropDown?type=QueryDataType
          */
         @NotBlank(message = "数据类型不能为空")
         private String dataType;
 
         /**
-         * 日期格式
+         * 日期格式 url:{{sys_url}}common/enumDropDown?type=QueryDateType
          */
         private String dateType;
 

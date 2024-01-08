@@ -14,7 +14,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface WebAdvanceQuery {
 
+    /**
+     * 扩展字段数组
+     */
     String[] extendFieldArr() default "";
 
+    /**
+     * 扩展字段处理类
+     */
     Class<? extends IQueryHandler> handler() default IQueryHandler.class;
 }

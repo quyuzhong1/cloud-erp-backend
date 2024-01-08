@@ -1,17 +1,14 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.server.sys.service.CfgQueryOptionService;
 import lombok.extern.slf4j.Slf4j;
