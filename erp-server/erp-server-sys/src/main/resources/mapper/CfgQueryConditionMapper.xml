@@ -19,6 +19,10 @@
        <result column="data_type" property="dataType" />
        <result column="date_type" property="dateType" />
        <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="index" property="index" />
+        <result column="is_extend" property="isExtend" />
+        <result column="group" property="group" />
+        <result column="display_type" property="displayType" />
     </resultMap>
 
     <resultMap id="PagingMap" extends="BaseResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ListDTO">
@@ -53,14 +57,17 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
-        create_time,
         create_user_id,
-        update_time,
+        create_user_name,
+        create_time,
         update_user_id,
+        update_user_name,
+        update_time,
         version,
         is_deleted,
-        system, code, value, label, query_option_id, controls, dataType, dateType, props
+        system, code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group, display_type
     </sql>
+
     <select id="getQueryConditionByCode" resultMap="cfgQueryConditionResultMap">
         select
             qc.id,

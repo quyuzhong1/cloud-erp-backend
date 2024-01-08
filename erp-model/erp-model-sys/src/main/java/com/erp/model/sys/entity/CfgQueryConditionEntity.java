@@ -1,17 +1,15 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Map;
-
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.util.Map;
 
 
 /**
@@ -20,7 +18,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author lrp
- * @since 2024-01-04
+ * @since 2024-01-08
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -70,13 +68,29 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     @TableField("date_type")
     private String dateType;
     /**
-    * 前端props参数 ，json格式
+    * 前端props参数 ，json格式,级联选择器必填
     */
     @TableField(value = "props", typeHandler = JacksonTypeHandler.class)
     private Map<String,Object> props;
 
     @TableField("index")
     private Integer index;
+    /**
+    * 是否扩展字段
+    */
+    @TableField("is_extend")
+    private Boolean isExtend;
+    /**
+    * 分组名称,用于多个sql跨库查询
+    */
+    @TableField("group")
+    private String group;
+    /**
+    * 显示类型
+    */
+    @TableField("display_type")
+    private String displayType;
+
 
     public static final String SYSTEM = "system";
 
@@ -95,6 +109,14 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     public static final String DATE_TYPE = "date_type";
 
     public static final String PROPS = "props";
+
+    public static final String INDEX = "index";
+
+    public static final String IS_EXTEND = "is_extend";
+
+    public static final String GROUP = "group";
+
+    public static final String DISPLAYTYPE = "display_type";
 
     @Override
     public Serializable pkVal() {

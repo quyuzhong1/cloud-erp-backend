@@ -2,19 +2,15 @@ package com.erp.model.sys.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -303,5 +299,20 @@ public class CfgQueryConditionDTO implements Serializable {
          * 字段排序Index
          */
         private Integer index;
+
+        /**
+         * 是否扩展字段
+         */
+        private Boolean isExtend;
+
+        /**
+         * 分组名称,用于多个sql跨库查询
+         */
+        private String group;
+
+        /**
+         * 显示类型
+         */
+        private String displayType;
     }
 }
