@@ -56,7 +56,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
-//        dmpTaskFeign.sendWarnMsg(syncTaskId);
+        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

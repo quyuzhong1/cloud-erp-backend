@@ -485,6 +485,7 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
     ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
+    ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
     ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
 
@@ -812,6 +813,8 @@ public enum ApiError implements Serializable {
     SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
+    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】已下推加工单"),
+
     ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到发货单"),
     IS_DELIVERY_DELETE(99097,"只有未发货的数据支持删除"),
     FBA_SHIPMENT_DETAIL_NOT_EXIST(99098,"货件详情不存在"),
@@ -1013,6 +1016,7 @@ public enum ApiError implements Serializable {
     ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
     ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
     ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
+    ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),

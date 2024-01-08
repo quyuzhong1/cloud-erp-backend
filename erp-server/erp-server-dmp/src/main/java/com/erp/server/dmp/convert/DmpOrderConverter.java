@@ -10,6 +10,8 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.mapstruct.Mapper;
@@ -19,6 +21,7 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -221,6 +224,56 @@ public interface DmpOrderConverter {
     })
     DmpOrderItemEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
     List<DmpOrderItemEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);
+
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "billNo", source = "viewDTO.code"),
+            @Mapping(target = "orderNo", source = "viewDTO.sourceCode"),
+            @Mapping(target = "platformOrderId", source = "viewDTO.sourceId"),
+            @Mapping(target = "logisticsNo", source = "viewDTO.transportNo"),
+            @Mapping(target = "customerName", source = "soB2cView.receiverDTO.name"),
+            @Mapping(target = "platformName", source = "soB2cView.dictPlatform"),
+            @Mapping(target = "shopNo", source = "soB2cView.shopId"),
+            @Mapping(target = "shopName", source = "soB2cView.shopName"),
+            @Mapping(target = "itemTotalCost", source = "soB2cView.financialInfoDTO.itemCost"),
+            @Mapping(target = "orderTotalCost", source = "soB2cView.amount"),
+            @Mapping(target = "countryNameEn", source = "soB2cView.receiverDTO.country"),
+            @Mapping(target = "countryNameCn", source = "soB2cView.receiverDTO.countryName"),
+            @Mapping(target = "city", source = "soB2cView.receiverDTO.cityName"),
+            @Mapping(target = "province", source = "soB2cView.receiverDTO.provinceName"),
+            @Mapping(target = "manStreet", source = "soB2cView.receiverDTO.firstAddress"),
+            @Mapping(target = "secondStreet", source = "soB2cView.receiverDTO.secondAddress"),
+            @Mapping(target = "district", source = "soB2cView.receiverDTO.districtName"),
+            @Mapping(target = "currencyCode", source = "soB2cView.currency"),
+            @Mapping(target = "currencyRate", source = "soB2cView.exchangeRate"),
+            @Mapping(target = "shippingFee", source = "soB2cView.logisticsDTO.actualShippingCost"),
+            @Mapping(target = "subsidyAmount", constant = "0"),
+            @Mapping(target = "status", constant = "1"),
+            @Mapping(target = "platformApproveTime", source = "soB2cView.platformOrderCreateTime"),
+            @Mapping(target = "platformCreateTime", source = "soB2cView.platformOrderCreateTime"),
+            @Mapping(target = "platformUpdateTime", source = "soB2cView.platformOrderCreateTime"),
+            @Mapping(target = "remark", source = "soB2cView.remark"),
+            @Mapping(target = "companyId", source = "soB2cView.orgId"),
+            @Mapping(target = "companyName", source = "soB2cView.orgName"),
+            @Mapping(target = "platformSign", constant = "erp-oms")
+    })
+    DmpDeliveryDetailInfoEntity soB2cDeliveryToDmpDelivery(SoB2cDeliveryDTO.ViewDTO viewDTO, SoB2cDTO.ViewDTO soB2cView);
+
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "deliveryDetailId", source = "detailViewDTO.id"),
+            @Mapping(target = "itemId", source = "detailViewDTO.skuId"),
+            @Mapping(target = "platformSku", source = "detailViewDTO.skuNo"),
+            @Mapping(target = "skuNo", source = "detailViewDTO.skuNo"),
+            @Mapping(target = "itemName", source = "detailViewDTO.productName"),
+            @Mapping(target = "quantity", source = "detailViewDTO.deliveryQty"),
+            @Mapping(target = "saleOrderNo", source = "detailViewDTO.skuNo"),
+
+    })
+    DmpDeliveryDetailItemEntity soB2cDeliveryDetailToDmpDeliveryItem(SoB2cDeliveryDetailDTO.ViewDTO detailViewDTO);
+    List<DmpDeliveryDetailItemEntity> soB2cDeliveryDetailToDmpDeliveryItem(List<SoB2cDeliveryDetailDTO.ViewDTO> detailViewDTO);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {

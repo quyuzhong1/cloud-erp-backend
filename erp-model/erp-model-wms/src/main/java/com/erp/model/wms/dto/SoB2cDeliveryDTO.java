@@ -117,7 +117,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<SoB2cDeliveryDetailDTO.ViewDTO> detailList;
-
     }
 
     /**

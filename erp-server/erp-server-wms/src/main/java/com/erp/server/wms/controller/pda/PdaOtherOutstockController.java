@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -16,7 +13,9 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherOutstockDTO;
+import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.server.wms.service.OtherOutstockService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -35,6 +36,7 @@ import java.util.List;
 @RestController
 @LogSystemModule("PDA其他出库单")
 @RequestMapping("/pdaOtherOutstock")
+@Slf4j
 public class PdaOtherOutstockController extends BaseController {
 
 
@@ -234,7 +236,7 @@ public class PdaOtherOutstockController extends BaseController {
      * 批量审核
      * @author Luo_WG
      * @date: 2023/5/10 20:11
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核其他出库单")
@@ -244,9 +246,27 @@ public class PdaOtherOutstockController extends BaseController {
             menuCode = "wms:pdaOtherOutstock:approve",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        otherOutstockService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            String flagCode = id;
+            try {
+                OtherOutstockEntity entity = otherOutstockService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id,flagCode, "其他出库单不存在");
+                } else {
+                    flagCode = entity.getCode();
+                    resultDTO = otherOutstockService.approve(id,dto.getType(),dto.getComment());
+                }
+            } catch (Exception e) {
+                log.error("其他出库单审核失败>>>>{}", e);
+                resultDTO = BatchResultDTO.fail(id,flagCode, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -264,8 +284,26 @@ public class PdaOtherOutstockController extends BaseController {
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherOutstockService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            String flagCode = id;
+            try {
+                OtherOutstockEntity entity = otherOutstockService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id,flagCode, "其他出库单不存在");
+                } else {
+                    flagCode = entity.getCode();
+                    resultDTO = otherOutstockService.disApprove(id);
+                }
+            } catch (Exception e) {
+                log.error("其他出库单反审核失败>>>>{}", e);
+                resultDTO = BatchResultDTO.fail(id,flagCode, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

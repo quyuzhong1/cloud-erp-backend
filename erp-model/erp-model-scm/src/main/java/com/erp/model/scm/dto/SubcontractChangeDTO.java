@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -225,6 +226,11 @@ public class SubcontractChangeDTO implements Serializable {
         * 审核人名称
         */
         private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
 
         /**
         * 创建时间

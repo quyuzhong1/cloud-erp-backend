@@ -46,6 +46,16 @@
         is_deleted,
         main_id, code, name, logistics_channel_name, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
     </sql>
+    <select id="listTrackNoEmptyList" resultType="com.erp.model.oms.dto.SoB2cLogisticsDTO$TrackNoDTO">
+       SELECT
+            id,
+            main_id AS  soB2cId,
+            code AS  transportNo,
+            logistics_channel_id
+      FROM so_b2c_logistics
+      WHERE is_deleted=FALSE
+      AND track_no='';
+    </select>
 
 
 </mapper>

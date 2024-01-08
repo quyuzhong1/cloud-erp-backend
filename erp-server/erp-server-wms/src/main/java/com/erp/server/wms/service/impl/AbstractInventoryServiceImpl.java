@@ -150,7 +150,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.forEach(txnFlow->{
             // 检测是否允许库存交易=
-            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate());
+            InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getAndCheckByCode(txnFlow.getDictInventoryStatus());
+            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate(), inventoryStatusEnum);
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -223,11 +224,13 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @param skuId               SKU
      * @param dictInventoryStatus 库存状态
      * @param billDate            单据日期
+     * @param inventoryStatusEnum
      */
-    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate) {
+    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum) {
         // 库存关账时间检测
         log.info("closeDate:{}",closeDate);
-        if(null != closeDate){
+        // 存在关账时间并非在途库存
+        if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)){
             if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
                 throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
@@ -300,7 +303,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum);
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -348,7 +351,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum);
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());

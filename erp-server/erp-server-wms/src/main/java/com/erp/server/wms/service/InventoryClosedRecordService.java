@@ -33,4 +33,12 @@ public interface InventoryClosedRecordService extends SuperService<InventoryClos
      * @date: 2023-10-12
      */
     Map<String, LocalDate> mapByOrgId();
+
+    /**
+     * 查询单据日期是否已关账(单据已关账返回关账时间)
+     *
+     * @author Jim
+     * @date: 2024-01-05
+     */
+    LocalDate checkClosed(String inventoryOrgId, LocalDate billDate);
 }

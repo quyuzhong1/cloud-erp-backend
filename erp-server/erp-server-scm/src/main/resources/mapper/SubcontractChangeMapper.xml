@@ -55,6 +55,7 @@
         scd.remark,
         sc.changer_name as changerName,
         sc.approve_user_name as approveUserName,
+        sc.approve_time as approveTime,
         sc.create_time as createTime,
         sc.create_user_name as createUserName
     </sql>

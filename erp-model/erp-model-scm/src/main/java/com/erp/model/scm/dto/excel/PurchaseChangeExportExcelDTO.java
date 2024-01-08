@@ -125,14 +125,20 @@ public class PurchaseChangeExportExcelDTO implements Serializable {
     private String approveUserName;
 
     /**
+     * 审核完成时间
+     */
+    @ExcelProperty(value = "审核完成时间", index = 18)
+    private String approveTime;
+
+    /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 18)
+    @ExcelProperty(value = "创建人", index = 19)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 19)
+    @ExcelProperty(value = "创建时间", index = 20)
     private String createTime;
 }

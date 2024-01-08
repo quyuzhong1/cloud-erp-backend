@@ -133,6 +133,11 @@ public class PurchaseChangeDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 创建时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建人
          */
         private String createUserName;

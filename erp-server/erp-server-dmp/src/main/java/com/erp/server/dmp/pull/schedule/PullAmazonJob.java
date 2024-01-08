@@ -64,6 +64,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -172,14 +174,25 @@ public class PullAmazonJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.ORDER.getCode();
 
+        CountDownLatch latch = new CountDownLatch(taskGroupMap.size());
+
 //        taskGroupMap.entrySet().parallelStream().forEach(entry -> {
 //                    String key = entry.getKey();
 //                    List<PlatformApiTaskEntity> value = entry.getValue();
         taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
             // 处理下载详情
             handlerDetailDownload(key, value, size, platform, category, business);
+            latch.countDown();
+            log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 当前线程执行完毕");
         }));
 //        });
+        // 等待所有任务执行完毕
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 监听任务异常:{}", e.getMessage());
+        }
 
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束");
         return ReturnT.SUCCESS;
@@ -187,6 +200,7 @@ public class PullAmazonJob {
 
     /**
      * 处理下载详情
+     *
      * @param key
      * @param value
      * @param size
@@ -218,6 +232,7 @@ public class PullAmazonJob {
                 newDto.setRedissonKey(null);
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                log.info("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
                 XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载成功，uniqueId={}", dto.getUniqueId());
             } catch (Exception error) {
                 // 获取锁异常等重试
@@ -262,19 +277,25 @@ public class PullAmazonJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.ORDER.getCode();
 
-        taskGroupMap.entrySet().parallelStream().forEach(entry -> {
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
+                .map(entry -> CompletableFuture.runAsync(() -> {
+                    // 异步任务的逻辑
                     String key = entry.getKey();
                     List<PlatformApiTaskEntity> value = entry.getValue();
-//        taskGroupMap.forEach((key, value) -> threadPoolTaskExecutor.execute(() -> {
-            handlerAddressDetail(key, value, size, platform, category, business);
-//        }));
-        });
+                    handlerAddressDetail(key, value, size, platform, category, business);
+                    log.info("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
+                    XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 当前线程执行完毕");
+                })).toArray(CompletableFuture[]::new));
+
+        allOf.thenRun(() -> XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload 所有任务执行完毕")).join();
+
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderAddressDownload 任务结束");
         return ReturnT.SUCCESS;
     }
 
     /**
      * 处理地址详情下载
+     *
      * @param key
      * @param value
      * @param size
@@ -286,7 +307,7 @@ public class PullAmazonJob {
         // 店铺IDS
         List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
         // 查出下MFN订单
-        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(),  shopIds,1, size);
+        List<PlatformAmazonOrderDTO> orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.MFN.getValue(), shopIds, 1, size);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             // 查询AFN订单
             orderEntityList = this.findGroupByFulfillmentChannel(Order.FulfillmentChannelEnum.AFN.getValue(), shopIds, 1, size);
@@ -316,14 +337,15 @@ public class PullAmazonJob {
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Collections.singletonList(newDto));
                 // 保存和发送mq
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, sellerId={}, uniqueId={}", key, dto.getUniqueId());
+                log.info("[拉取亚马逊订单地址任务] 无需要查询的地址,shopId={}", JSONUtil.toJsonStr(shopIds));
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载成功, groupId={}, uniqueId={}", key, dto.getUniqueId());
             } catch (Exception e) {
                 // 获取锁异常等重试
                 if (e instanceof InterruptedException) {
                     XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", e.getMessage());
                     throw new ServiceException(ApiError.ERROR_1026);
                 }
-                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载失败，sellerId={},uniqueId={}, error={}",
+                XxlJobHelper.log("[拉取亚马逊订单地址任务] amazonSalesOrderAddressDownload下载失败，groupId={},uniqueId={}, error={}",
                         key,
                         dto.getUniqueId(),
                         e.getMessage());
@@ -733,10 +755,10 @@ public class PullAmazonJob {
             jobTaskDTO.setDictPlatform(cleanDataTableEnum.getPlatform());
             jobTaskDTO.setBillType(cleanDataTableEnum.getBusiness());
             try {
-                XxlJobHelper.log("亚马逊开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
+                XxlJobHelper.log("亚马逊开始清洗：{}类{}数据", cleanDataTableEnum.getPlatform(), cleanDataTableEnum.getBusiness());
                 platformDataThread.cleanOrder(jobTaskDTO);
-                XxlJobHelper.log("亚马逊清洗完成：{}类{}数据", cleanDataTableEnum.getPlatform(),cleanDataTableEnum.getBusiness());
-            }catch (Exception e){
+                XxlJobHelper.log("亚马逊清洗完成：{}类{}数据", cleanDataTableEnum.getPlatform(), cleanDataTableEnum.getBusiness());
+            } catch (Exception e) {
                 XxlJobHelper.log("亚马逊清洗异常：{}", e);
             }
         });

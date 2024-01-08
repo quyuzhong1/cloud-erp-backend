@@ -169,16 +169,24 @@ public class PurchaseStockExportExcelDTO implements Serializable {
     private String approveUserName;
 
     /**
+     * 审核完成时间
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "审核完成时间", index = 21 ,converter= LocalDateStringConverter.class)
+    private LocalDateTime approveTime;
+
+
+    /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 21)
+    @ExcelProperty(value = "创建人", index = 22)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 22 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 23 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

@@ -13,7 +13,12 @@ public enum ModuleOperateLogFieldTypeEnum {
     TYPE_ENUM(2,"枚举"),
     TYPE_DIST(3,"字典"),
     TYPE_USER(4,"人员"),
-    TYPE_COUNTRY(5,"国家");
+    TYPE_COUNTRY(5,"国家"),
+    TYPE_DEPT(6,"部门"),
+    TYPE_CITY(7,"城市"),
+    TYPE_CUSTOMER(8,"客户"),
+    TYPE_CURRENCY(9,"币别")
+    ;
 
     public Integer code;
     public String name;

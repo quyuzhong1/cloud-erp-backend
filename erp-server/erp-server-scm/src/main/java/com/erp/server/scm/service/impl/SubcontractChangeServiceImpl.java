@@ -661,7 +661,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         // TODO 检查是否有下推单据（如果支持下推的话）
 
         // 更新审核信息
-        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -825,7 +825,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     * @param ids
     * @param approveStatus
     */
-    public void updateForApprove(List<String> ids, String approveStatus) {
+    private void updateForApprove(List<String> ids, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
@@ -837,27 +837,14 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
      }
 
     /**
-    * 反审核更新审核信息
-    * @param ids
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(List<String> ids, String approveStatus) {
-        this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
-            .set(SubcontractChangeEntity::getApproveUserId, "")
-            .set(SubcontractChangeEntity::getApproveUserName, "")
-            .set(SubcontractChangeEntity::getApproveStatus, approveStatus)
-            .set(SubcontractChangeEntity::getApproveTime, null)
-            .update();
-        }
-
-    /**
     * 更新审核状态
     */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateApproveStatus(List<String> ids, String approveStatus) {
+    private void updateApproveStatus(List<String> ids, String approveStatus) {
         lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
         .set(SubcontractChangeEntity::getApproveStatus, approveStatus)
+        .set(SubcontractChangeEntity::getApproveUserId, "")
+        .set(SubcontractChangeEntity::getApproveUserName, "")
+        .set(SubcontractChangeEntity::getApproveTime, null)
         .update();
     }
 
