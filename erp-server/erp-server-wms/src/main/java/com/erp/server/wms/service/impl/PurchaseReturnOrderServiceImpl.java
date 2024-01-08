@@ -513,6 +513,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //更新审核状态
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
+                .set(PurchaseReturnOrderEntity::getApproveUserId, "")
+                .set(PurchaseReturnOrderEntity::getApproveUserName, "")
+                .set(PurchaseReturnOrderEntity::getApproveTime, null)
                 .update();
 
         //操作日志
