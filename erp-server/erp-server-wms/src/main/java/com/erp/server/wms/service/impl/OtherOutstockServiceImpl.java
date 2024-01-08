@@ -196,6 +196,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         return id;
     }
 
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String addAndApprove(OtherOutstockDTO.AddDTO dto) {
@@ -211,7 +212,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
         baseApproveParamDTO.setComment("");
-        this.approve(baseApproveParamDTO);
+        this.approve(id,baseApproveParamDTO.getType(),baseApproveParamDTO.getComment());
         return id;
     }
 

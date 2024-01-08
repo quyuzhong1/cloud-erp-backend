@@ -700,6 +700,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         return list;
     }
 
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String addAndApprove(OtherInstockDTO.AddDTO dto) {
@@ -715,7 +716,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
         baseApproveParamDTO.setComment("");
-        this.approve(baseApproveParamDTO);
+        this.approve(id,baseApproveParamDTO.getType(),baseApproveParamDTO.getComment());
         return id;
     }
 
