@@ -74,7 +74,11 @@ public class AliExpressOrderDetail implements Serializable {
     private AmountInfo  logisticsAmount;
 
 
-
+    /**
+     * 物流信息
+     */
+    @JSONField(name = "logistic_info_list")
+    private List<LogisitcsDTO> logisticInfoList;
 
 
 

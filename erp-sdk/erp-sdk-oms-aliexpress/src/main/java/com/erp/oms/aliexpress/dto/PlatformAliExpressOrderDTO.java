@@ -86,13 +86,6 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setInvalidType("");
         // 作废原因
         orderDTO.setInvalidRemark("");
-        // 订单状态
-        // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(sourceOrder.convertBillStatus());
-
-        // 付款状态（待付款、已付款）
-        // （soB2cPayStatus字典类型）
-        orderDTO.setPayStatus(sourceOrder.convertPayStatus());
         String amountStr = sourceOrder.getPayAmount().getAmount();
         String amountCurrency = sourceOrder.getPayAmount().getCurrencyCode();
         // 订单金额
@@ -117,21 +110,20 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 }
             }
         }
-
-        AmountInfo logisticsAmount = detail.getLogisticsAmount();
-
         //物流成本
         BigDecimal logisticsCost = BigDecimal.ZERO;
         if (detailIsNull) {
-            if (Objects.nonNull(logisticsAmount)) {
-                //物流成本
-                String logisticsCostStr = logisticsAmount.getAmount();
-                if (StringUtils.isNotBlank(logisticsCostStr)) {
-                    logisticsCost = new BigDecimal(logisticsCostStr);
+            AmountInfo logisticsAmount = detail.getLogisticsAmount();
+            if (detailIsNull) {
+                if (Objects.nonNull(logisticsAmount)) {
+                    //物流成本
+                    String logisticsCostStr = logisticsAmount.getAmount();
+                    if (StringUtils.isNotBlank(logisticsCostStr)) {
+                        logisticsCost = new BigDecimal(logisticsCostStr);
+                    }
                 }
             }
         }
-
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
         orderDTO.setPayTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtPayTime()));
@@ -161,7 +153,6 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 标签json
         Map<String, Object> lableMap = new HashMap<>();
         lableMap.put("aliexpressStatus", sourceOrder.getOrderStatus());
-
         //订单明细
         List<OrderItemDetail> orderItemDetailList = sourceOrder.getDetail().getChildOrderList();
         Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
@@ -172,12 +163,47 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         lableMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
         lableMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+        String orderStatus = sourceOrder.getOrderStatus();
+        if ("RISK_CONTROL".equals(orderStatus)
+                || "IN_CANCEL".equals(orderStatus)
+                || "IN_FROZEN".equals(orderStatus)
+        ) {
+            lableMap.put("aliexpressStatus", orderStatus);
+        }
+
         // 标签json
         orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+        // 订单状态
+        // （soB2cBillStatus字典类型）
+        orderDTO.setBillStatus(sourceOrder.convertBillStatus());
+
+        // 审核状态状态
+        // （ApproveStatus字典类型）
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+
+        // 付款状态（待付款、已付款）
+        // （soB2cPayStatus字典类型）
+        orderDTO.setPayStatus(sourceOrder.convertPayStatus());
+
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
+        if (detailIsNull) {
+            List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList();
+            if (CollectionUtils.isNotEmpty(logisticInfoList)) {
+                for (LogisitcsDTO item : logisticInfoList) {
+                    PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
+                    logisticsDTO = new PlatformOrderLogisticsDTO();
+                    logisticsDTO.setCode(item.getLogisticsNo());
+                    logisticsDTO.setName(item.getLogisticsServiceName());
+                    orderLogisticList.add(logisticsDTO);
+                }
+            }
+        }
+        orderDTO.setLogisticsList(orderLogisticList);
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailList(detailIsNull ? detail.getChildOrderList() : Collections.emptyList());
         orderDTO.setDetails(details);

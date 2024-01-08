@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import lombok.Data;
@@ -19,13 +20,13 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor
-public class AliExpressOrder  implements Serializable {
+public class AliExpressOrder implements Serializable {
 
     /**
      * 订单创建时间
      */
     @JSONField(name = "gmt_create")
-    private String  gmtCreate;
+    private String gmtCreate;
 
     /**
      * 冻结状态。(NO_FROZEN:未冻结；IN_FROZEN:处于冻结状态)
@@ -108,7 +109,7 @@ public class AliExpressOrder  implements Serializable {
     private String gmtUpdate;
 
     /**
-     *支付类型：mig：信用卡支付采用人民币通道；
+     * 支付类型：mig：信用卡支付采用人民币通道；
      * migs：102万事达卡支付走人民币通道；
      * migs101：Visa Pay，走人民币通道；
      * pp101：贝宝；mb：MoneyBooker 频道；
@@ -125,20 +126,20 @@ public class AliExpressOrder  implements Serializable {
 
 
     /**
-     *是否申请贷款
+     * 是否申请贷款
      */
     @JSONField(name = "has_request_loan")
     private Boolean hasRequestLoan;
 
     /**
-     *卖家操作员登录id
+     * 卖家操作员登录id
      */
     @JSONField(name = "seller_operator_login_id")
     private String sellerOperatorLoginId;
 
 
     /**
-     *电话
+     * 电话
      */
     @JSONField(name = "phone")
     private String phone;
@@ -156,14 +157,14 @@ public class AliExpressOrder  implements Serializable {
     private String orderId;
 
     /**
-     *卖家全名
+     * 卖家全名
      */
     @JSONField(name = "seller_signer_fullname")
     private String sellerSignerFullname;
 
 
     /**
-     *支付金額
+     * 支付金額
      */
     @JSONField(name = "pay_amount")
     private AmountInfo payAmount;
@@ -177,39 +178,92 @@ public class AliExpressOrder  implements Serializable {
 
     /**
      * 转单据状态
+     *
      * @author yl
      * @date 2023-11-29 16:10
      */
     public String convertBillStatus() {
-        if (null == this.orderStatus || StringUtils.isBlank(this.orderStatus)){
-            // 配货中
-            return SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+        String orderStatus = this.getOrderStatus();
+        if (StringUtils.isBlank(orderStatus)) {
+            return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
         }
-        // 已发货
-        if ("WAIT_BUYER_ACCEPT_GOODS".equalsIgnoreCase(this.orderStatus)){
+        //待配货
+        if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
+                || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
+                ||"RISK_CONTROL".equals(orderStatus)
+                ||"IN_CANCEL".equals(orderStatus)
+                ||"PAYMENT_PROCESSING".equals(orderStatus)
+                ||"IN_FROZEN".equals(orderStatus)) {
+            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        }
+        //待发货
+        if ("SELLER_PART_SEND_GOODS".equals(orderStatus)) {
+            return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        }
+
+        //已发货
+        if ("WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
+                ||"FUND_PROCESSING".equals(orderStatus)
+                ||"IN_ISSUE".equals(orderStatus)
+                ||"WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
-        // 待发货
-        return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+
+
+        // 待配货
+        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
     }
+
     /**
      * 转付款状态
+     *
      * @author yl
      * @date 2023-11-29 16:10
      */
     public String convertPayStatus() {
-        String code = this.fundStatus;
-        if(StringUtils.isBlank(code)){
+        String orderStatus = this.getOrderStatus();
+        if (StringUtils.isBlank(orderStatus)
+                ||"PLACE_ORDER_SUCCESS".equals(orderStatus)
+                ||"PAYMENT_PROCESSING".equals(orderStatus)
+                ) {
             return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
-        }
-        if("NOT_PAY".equals(code) ){
-            return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
-        }
-        if("PAY_SUCCESS".equals(code)||"WAIT_SELLER_CHECK".equals(code)){
+        }else{
             return SoB2cPayStatusEnum.ENUM_PAID.getCode();
         }
-        return "unknow";
+
     }
 
 
+    public String convertApproveStatus(Boolean isPlatformWarehouseOrder) {
+        String orderStatus = this.getOrderStatus();
+        if(StringUtils.isBlank(orderStatus)){
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        }
+        if(isPlatformWarehouseOrder){
+            if ("PLACE_ORDER_SUCCESS".equals(orderStatus)) {
+                return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+            }
+            return ApproveStatusEnum.APPROVE.getCode();
+        }else{
+            //自发货
+            if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
+                    ||"WAIT_SELLER_SEND_GOODS".equals(orderStatus)
+                    ||"PAYMENT_PROCESSING".equals(orderStatus)
+                    ||"RISK_CONTROL".equals(orderStatus)
+                    ||"IN_FROZEN".equals(orderStatus)
+                    ) {
+                return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+            }
+            if("SELLER_PART_SEND_GOODS".equals(orderStatus)
+            ||"WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
+            ||"FUND_PROCESSING".equals(orderStatus)
+            ||"IN_ISSUE".equals(orderStatus)
+            ||"WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)){
+                return ApproveStatusEnum.APPROVE.getCode();
+
+            }
+
+        }
+           return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+    }
 }

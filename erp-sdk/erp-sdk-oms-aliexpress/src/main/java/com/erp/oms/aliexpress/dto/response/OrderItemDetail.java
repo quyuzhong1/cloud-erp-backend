@@ -28,7 +28,7 @@ public class OrderItemDetail implements Serializable {
      *物流类型，买家选择的物流方式
      */
     @JSONField(name = "logistics_type")
-    private Integer logisticsType;
+    private String logisticsType;
 
 
     /**
@@ -62,7 +62,7 @@ public class OrderItemDetail implements Serializable {
      *商品主图Url
      */
     @JSONField(name = "product_img_url")
-    private String ProductImgUrl;
+    private String productImgUrl;
 
 
     /**
@@ -99,4 +99,6 @@ public class OrderItemDetail implements Serializable {
      */
     @JSONField(name = "already_taxed")
     private String alreadyTaxed;
+
+
 }
