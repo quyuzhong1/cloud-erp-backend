@@ -362,11 +362,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(entity)) {
             throw new ServiceException("未找到盘盈盘亏单");
         }
-        // 校验关账时间(已关账返回关账时间)
-        LocalDate closeDate = inventoryClosedRecordService.checkClosed(entity.getInventoryOrgId(), entity.getBillDate());
-        if (null != closeDate){
-            throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
-        }
 
         // 审核中的数据允许审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING, entity.getApproveStatus())) {
@@ -555,11 +550,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         entity.setId(id);
         if (Objects.isNull(entity.getBillDate())) {
             entity.setBillDate(LocalDate.now());
-        }
-        // 校验关账时间(已关账返回关账时间)
-        LocalDate closeDate = inventoryClosedRecordService.checkClosed(entity.getInventoryOrgId(), entity.getBillDate());
-        if (null != closeDate){
-            throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
         }
         BillTypeEnum billType = dto.getBillType();
         BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.STOCKTAKING_PROFIT;
