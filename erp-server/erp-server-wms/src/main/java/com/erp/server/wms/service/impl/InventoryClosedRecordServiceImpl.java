@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,21 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
                 .list()
                 .stream()
                 .collect(Collectors.toMap(InventoryClosedRecordEntity::getInventoryOrgId, InventoryClosedRecordEntity::getClosedDate));
+    }
+
+    @Override
+    public LocalDate checkClosed(String inventoryOrgId, LocalDate billDate) {
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = this.mapByOrgId();
+        LocalDate closeDate = closedDateMap.get(inventoryOrgId);
+        if(null == closeDate) {
+            return null;
+        }
+        if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
+            // 单据已关账返回关账时间
+            return closeDate;
+        }
+        return null;
     }
 
     @Override

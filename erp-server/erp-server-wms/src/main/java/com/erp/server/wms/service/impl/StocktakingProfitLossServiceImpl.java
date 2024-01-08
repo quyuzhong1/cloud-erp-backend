@@ -56,6 +56,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -111,6 +112,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private InventoryClosedRecordService inventoryClosedRecordService;
 
 
     /**
@@ -358,6 +362,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(entity)) {
             throw new ServiceException("未找到盘盈盘亏单");
         }
+
         // 审核中的数据允许审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
