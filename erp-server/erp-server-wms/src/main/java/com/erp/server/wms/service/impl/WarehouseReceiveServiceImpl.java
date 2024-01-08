@@ -451,6 +451,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //更新审核状态
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(WarehouseReceiveEntity::getId, ids)
+                .set(WarehouseReceiveEntity::getApproveUserId, "")
+                .set(WarehouseReceiveEntity::getApproveUserName, "")
+                .set(WarehouseReceiveEntity::getApproveTime, null)
                 .update();
         return Boolean.TRUE;
     }
@@ -516,10 +519,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
+        LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
             //审核通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -538,6 +540,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
+                    .set(WarehouseReceiveEntity::getApproveUserName, userInfo.getUserName())
+                    .set(WarehouseReceiveEntity::getApproveTime, LocalDateTime.now())
                     .in(WarehouseReceiveEntity::getId, ids)
                     .update();
         }
@@ -745,6 +750,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(WarehouseReceiveEntity::getApproveUserId, "")
+                .set(WarehouseReceiveEntity::getApproveUserName, "")
+                .set(WarehouseReceiveEntity::getApproveTime, null)
                 .in(WarehouseReceiveEntity::getId, ids)
                 .update();
 
