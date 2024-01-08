@@ -3,11 +3,13 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgQueryConditionEntity;
+import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.erp.server.sys.mapper.CfgQueryConditionMapper;
 import com.erp.server.sys.service.CfgQueryConditionService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -43,6 +45,15 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
 
     @Override
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
+
+        LambdaQueryWrapper<CfgQueryConditionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CfgQueryConditionEntity::getCode, dto.getCode());
+        queryWrapper.eq(CfgQueryConditionEntity::getValue,dto.getValue());
+        queryWrapper.last("LIMIT 1");
+        CfgQueryConditionEntity dbEntity = this.getOne(queryWrapper);
+        if(Objects.nonNull(dbEntity)){
+            throw new ServiceException("已存在配置字段,无法重复新增");
+        }
         CfgQueryConditionEntity entity = new CfgQueryConditionEntity();
         BeanUtil.copyProperties(dto,entity);
         return this.save(entity);

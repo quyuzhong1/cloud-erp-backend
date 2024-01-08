@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.query.impl.PurchaseOrderQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -69,7 +70,7 @@ public class PurchaseOrderController extends BaseController {
      * 测试高级查询功能
      */
     @PostMapping("/testQuery")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(extendFieldArr = {"so.code"},handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.testQuery(dto);
         return success(pagingVO);

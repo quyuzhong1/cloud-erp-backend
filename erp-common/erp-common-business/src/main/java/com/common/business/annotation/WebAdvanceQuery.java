@@ -1,5 +1,7 @@
 package com.common.business.annotation;
 
+import com.common.business.query.IQueryHandler;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -11,4 +13,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface WebAdvanceQuery {
+
+    String[] extendFieldArr() default "";
+
+    Class<? extends IQueryHandler> handler() default IQueryHandler.class;
 }

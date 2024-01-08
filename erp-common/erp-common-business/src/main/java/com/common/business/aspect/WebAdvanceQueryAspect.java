@@ -1,10 +1,10 @@
-package com.erp.rpc.sys.feign.aspect;
+package com.common.business.aspect;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
-import com.common.business.enums.QueryDateTypeEnum;
+import com.common.business.query.IQueryHandler;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -17,20 +17,19 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,6 +38,9 @@ import java.util.Objects;
 public class WebAdvanceQueryAspect {
 
     public static final String ADVANCE_QUERY_FIELD_NAME = "advanceQueryList";
+
+    @Resource
+    private ApplicationContext context;
 
     // 配置织入点
     @Pointcut("@annotation(com.common.business.annotation.WebAdvanceQuery)")
@@ -52,6 +54,11 @@ public class WebAdvanceQueryAspect {
         if (controllerDataScope == null) {
             return;
         }
+        //扩展处理类和扩展字段
+        IQueryHandler queryHandler = context.getBean(controllerDataScope.handler());
+        String[] extendFieldArr = controllerDataScope.extendFieldArr();
+        List<String> extendFieldList = Arrays.asList(extendFieldArr);
+
         //获取查询对象(如果为空会初始化一个长度为1的集合）
         List<AdvanceQueryDTO> advanceQueryDTOList = this.getQueryDTOList(point);
 
@@ -72,30 +79,56 @@ public class WebAdvanceQueryAspect {
             if (!QueryConditionEnum.CODE_MAPS.containsKey(dto.getCompare())) {
                 throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
             }
-            stringBuilder.append(this.splicingSQL(dto));
+            stringBuilder.append(this.splicingSQL(dto,queryHandler,extendFieldList.contains(dto.getField())));
         }
         advanceQueryDTOList.get(0).setQuerySql(stringBuilder.toString());
     }
 
     /**
      * 拼接字符串 顺序: 左括号+字段+比较符+属性值+ 连接符+右括号
+     *
      * @param dto
+     * @param
      * @return
      */
-    private String splicingSQL(AdvanceQueryDTO dto){
+    private String splicingSQL(AdvanceQueryDTO dto,IQueryHandler queryHandler,boolean isExtend){
         QueryConditionEnum condEnum = QueryConditionEnum.CODE_MAPS.get(dto.getCompare());
         StringBuilder sql = new StringBuilder();
         for(int i = 0; i<dto.getLeftBracketCount();i++){
             sql.append("(");
         }
-        //为空处理为  (TRIM(both ' ' FROM 字段) = ''or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
-        if(QueryConditionEnum.IS_NULL.equals(condEnum)){
-            sql.append("(TRIM(both ' ' FROM " + dto.getField() +") = ''or "+dto.getField()+" is null)").append(" ");
-        } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
-            sql.append("TRIM(both ' ' FROM "+ dto.getField() +") != ''").append(" ");
-        } else{
-            sql.append(dto.getField()).append(" ");
+        String contentSql;
+        if(isExtend){
+            String val = this.handleVal(dto.getValue(),dto.getDataType(),condEnum);
+            String compareValueSQL = this.splicingCompareValueSQL(condEnum,dto);
+            contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),val,compareValueSQL);
+            if(StringUtils.isBlank(contentSql)){
+                throw new ServiceException("扩展字段没有配置查询脚本");
+            }
+        }else{
+
+            //为空处理为  (TRIM(both ' ' FROM 字段) = ''or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
+            if(QueryConditionEnum.IS_NULL.equals(condEnum)){
+                sql.append("(TRIM(both ' ' FROM " + dto.getField() +") = ''or "+dto.getField()+" is null)").append(" ");
+            } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
+                sql.append("TRIM(both ' ' FROM "+ dto.getField() +") != ''").append(" ");
+            } else{
+                sql.append(dto.getField()).append(" ");
+            }
+            contentSql = this.splicingCompareValueSQL(condEnum,dto);
         }
+        sql.append(contentSql).append(" ");
+
+        sql.append(dto.getCompareSymbol()).append(" ");
+
+        for(int i = 0; i<dto.getRightBracketCount();i++){
+            sql.append(")");
+        }
+        return sql.toString();
+    }
+
+    private String splicingCompareValueSQL(QueryConditionEnum condEnum,AdvanceQueryDTO dto){
+        StringBuilder sql = new StringBuilder();
         //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
         if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
             sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
@@ -157,14 +190,7 @@ public class WebAdvanceQueryAspect {
                 throw new ServiceException("非法日期格式");
             }
         }
-
-        sql.append(val).append(" ");
-
-        sql.append(dto.getCompareSymbol()).append(" ");
-
-        for(int i = 0; i<dto.getRightBracketCount();i++){
-            sql.append(")");
-        }
+        sql.append(val);
         return sql.toString();
     }
 

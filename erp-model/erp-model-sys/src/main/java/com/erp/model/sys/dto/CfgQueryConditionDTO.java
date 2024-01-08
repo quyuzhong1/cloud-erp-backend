@@ -252,21 +252,25 @@ public class CfgQueryConditionDTO implements Serializable {
         /**
          * 所属系统
          */
+        @NotBlank(message = "所属系统不能为空")
         private String system;
 
         /**
          * 页面code
          */
+        @NotBlank(message = "页面code不能为空")
         private String code;
 
         /**
          * 字段值
          */
+        @NotBlank(message = "字段值不能为空")
         private String value;
 
         /**
          * 字段显示值
          */
+        @NotBlank(message = "字段显示值不能为空")
         private String label;
 
         /**
@@ -282,6 +286,7 @@ public class CfgQueryConditionDTO implements Serializable {
         /**
          * 数据类型
          */
+        @NotBlank(message = "数据类型不能为空")
         private String dataType;
 
         /**

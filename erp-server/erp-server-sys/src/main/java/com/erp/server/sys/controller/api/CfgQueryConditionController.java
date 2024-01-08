@@ -10,6 +10,7 @@ import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.server.sys.service.CfgQueryConditionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -41,7 +42,7 @@ public class CfgQueryConditionController extends BaseController {
      * 新增
      */
     @PostMapping("/add")
-    public ApiResult<Boolean> add(@RequestBody CfgQueryConditionDTO.AddDTO addDTO) {
+    public ApiResult<Boolean> add(@RequestBody @Validated CfgQueryConditionDTO.AddDTO addDTO) {
         return success(cfgQueryConditionService.add(addDTO));
     }
 
@@ -49,7 +50,7 @@ public class CfgQueryConditionController extends BaseController {
      * 更新
      */
     @PostMapping("/update")
-    public ApiResult<Boolean> update(@RequestBody CfgQueryConditionDTO.UpdateDTO updateDTO) {
+    public ApiResult<Boolean> update(@RequestBody @Validated CfgQueryConditionDTO.UpdateDTO updateDTO) {
         return success(cfgQueryConditionService.update(updateDTO));
     }
 
@@ -57,7 +58,7 @@ public class CfgQueryConditionController extends BaseController {
      * 删除
      */
     @PostMapping("/delete")
-    public ApiResult<Boolean> delete(@RequestBody CfgQueryConditionDTO.UpdateDTO updateDTO) {
+    public ApiResult<Boolean> delete(@RequestBody @Validated CfgQueryConditionDTO.UpdateDTO updateDTO) {
         return success(cfgQueryConditionService.delete(updateDTO));
     }
     /**
