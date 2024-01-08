@@ -1606,7 +1606,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
         result.setSecondSignDate(customer.getCreateTime().toLocalDate());
 
-        result.setCompany(company);
+        result.setCompany(customer.getSalesOrgName());
         result.setCompanyTaxpayerId(companyTaxpayerId);
         result.setCompanyAddress(companyAddress);
         result.setSellerName(customer.getSellerName());
@@ -2353,7 +2353,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
         result.setSecondSignDate(customer.getCreateTime().toLocalDate());
 
-        result.setCompany(company);
+        result.setCompany(customer.getSalesOrgName());
         result.setCompanyTaxpayerId(companyTaxpayerId);
         result.setCompanyAddress(companyAddress);
         result.setSellerName(customer.getSellerName());
