@@ -4,11 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
@@ -20,6 +22,10 @@ import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
+import com.common.message.constant.RocketMqConsumerGroup;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -44,6 +50,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -76,6 +83,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -116,6 +125,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Autowired
     private LogisticsAuthFeign logisticsAuthFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -236,6 +247,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 操作日志
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
+
+        //推送到DMP
+        this.syncDeliveryToDmp(entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
 
 
@@ -944,5 +958,25 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cDeliveryEntity.getSoCode());
             }
         }
+    }
+
+
+    /**
+     * 同步发货单到DMP
+     */
+    private void syncDeliveryToDmp(String id) {
+        SoB2cDeliveryDTO.ViewDTO view = this.view(id);
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(view.getId());
+        taskFeignDTO.setSourceCode(view.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_SO_B2C_DELIVERY_TO_DMP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.SO_B2C_DELIVERY_TO_DMP_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(view));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
+        taskFeignDTO.setSyncOperate(view.getStatus());
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 }
