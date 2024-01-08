@@ -34,6 +34,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.mapstruct.Mapping;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -324,7 +325,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //调出仓库和调入仓库不一致的单据
-        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> map = list.stream().filter(req -> !req.getRequisitionWarehouseId().equals(req.getPickingWarehouseId())).collect(Collectors.groupingBy(req -> req.getRequisitionWarehouseId().concat(",").concat(req.getPickingWarehouseId())));
+        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> map = list.stream().filter(req -> !req.getToWarehouseId().equals(req.getRequisitionWarehouseId())).collect(Collectors.groupingBy(req -> req.getRequisitionWarehouseId().concat(",").concat(req.getPickingWarehouseId())));
         for (Map.Entry<String, List<RequisitionApplicationDTO.FinishListDTO>> dto : map.entrySet()) {
             List<RequisitionApplicationDTO.FinishListDTO> value = dto.getValue();
 
