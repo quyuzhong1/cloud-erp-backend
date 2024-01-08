@@ -2774,7 +2774,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(soInfoEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        String codes = soInfoEntityList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
+        String codes = soInfoEntityList.stream().filter(obj -> !BillApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_SO_PUSH_APPROVE_STATUS,codes);
         }

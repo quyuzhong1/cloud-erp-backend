@@ -19,6 +19,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -554,7 +555,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             startParams.setDateType(paramDTO.getDateType());
             startParams.setWarehouseIdList(Arrays.asList(data.getWarehouseId()));
             startParams.setSkuNoList(Arrays.asList(data.getSkuNo()));
-            startParams.setDate(paramDTO.getDateList().get(0));
+            startParams.setDate(paramDTO.getDateList().get(0).minusDays(1L));
             List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventory(startParams);
             Integer initQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(startList)) {
