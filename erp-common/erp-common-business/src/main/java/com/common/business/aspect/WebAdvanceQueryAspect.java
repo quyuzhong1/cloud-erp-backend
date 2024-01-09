@@ -3,13 +3,11 @@ package com.common.business.aspect;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.IQueryHandler;
-import com.common.core.constant.EnumMessage;
+import com.common.business.utils.QueryUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.SqlUtils;
-import com.common.core.utils.date.DateUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
@@ -23,11 +21,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.time.LocalDate;
-import java.time.Year;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -114,9 +107,9 @@ public class WebAdvanceQueryAspect {
         }
         String contentSql;
         if(isExtend){
-            String val = this.handleVal(dto.getValue(),dto.getDataType(),condEnum);
-            String compareValueSQL = this.splicingCompareValueSQL(condEnum,dto);
-            contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),val,compareValueSQL);
+//            String val = this.handleVal(dto.getValue(),dto.getDataType(),condEnum);
+            String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,dto);
+            contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),dto.getValue(),compareValueSQL);
             if(StringUtils.isBlank(contentSql)){
                 throw new ServiceException("扩展字段没有配置查询脚本");
             }
@@ -130,7 +123,7 @@ public class WebAdvanceQueryAspect {
             } else{
                 sql.append(dto.getField()).append(" ");
             }
-            contentSql = this.splicingCompareValueSQL(condEnum,dto);
+            contentSql = QueryUtils.splicingCompareValueSQL(condEnum,dto);
         }
         sql.append(contentSql).append(" ");
 
@@ -141,95 +134,6 @@ public class WebAdvanceQueryAspect {
         }
         return sql.toString();
     }
-
-    private String splicingCompareValueSQL(QueryConditionEnum condEnum,AdvanceQueryDTO dto){
-        StringBuilder sql = new StringBuilder();
-        //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
-        if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
-            sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
-        } else if (!QueryConditionEnum.IS_NULL.equals(condEnum) && !QueryConditionEnum.NOT_NULL.equals(condEnum) &&  !QueryConditionEnum.BETWEEN.equals(condEnum)){
-            sql.append(condEnum.getCode()).append(" ");
-        }
-        String val = "";
-        //大于小于等于这种直接拼接值
-        if(QueryConditionEnum.SET_DIRECT_VAL.contains(condEnum)){
-            val = this.handleVal(dto.getValue(),dto.getDataType(),condEnum);
-        }
-        //in 查询拼接成(val1,val2)格式
-        if(QueryConditionEnum.SET_IN.contains(condEnum)){
-            if(dto.getValue().getClass() != ArrayList.class){
-                throw new ServiceException(ApiError.QUERY_LIST_TYPE_ERROR);
-            }
-            ArrayList<Object> list = (ArrayList<Object>) dto.getValue();
-            val = "(" + val;
-            for(Object obj : list){
-                val = val + this.handleVal(obj,dto.getDataType(),condEnum) + ",";
-            }
-            //去掉最后一个,
-            val = val.substring(0, val.length() - 1);
-            val = val+")";
-        }
-
-        //like查询拼接成 concat('%',#{val},'%') 或concat(#{val},'%') 或concat('%',#{val})
-        if(QueryConditionEnum.SET_LIKE.contains(condEnum)){
-            if(QueryConditionEnum.STARTS_WITH.equals(condEnum)){
-                val = "'" + dto.getValue() + "%'";
-            }else if(QueryConditionEnum.ENDS_WITH.equals(condEnum)){
-                val = "'%" + dto.getValue() + "'";
-            }else{
-                val = "'%" + dto.getValue() + "%'";
-            }
-        }
-
-        //between 拆成   >=  和 <=  传参是数组
-        if(QueryConditionEnum.BETWEEN.equals(condEnum)){
-            if(dto.getValue().getClass() != ArrayList.class){
-                throw new ServiceException(ApiError.QUERY_LIST_TYPE_ERROR);
-            }
-            ArrayList<Object> list = (ArrayList<Object>) dto.getValue();
-            if(list.size() < 2){
-                throw new ServiceException("介于条件需要填起始时间和开始时间");
-            }
-            String startDate = list.get(0).toString();
-            String endDate = list.get(1).toString();
-            if(DateUtil.isDateOrTimeValid(list.get(0).toString()) && DateUtil.isDateOrTimeValid(list.get(1).toString())){
-                String interval = this.getDateStr(endDate);
-                startDate = "'"+startDate+"'";
-                endDate = "'"+endDate+"'";
-                if(StringUtils.isNotBlank(interval)){
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < (to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1"+ interval+"')  ";
-                }else{
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
-                }
-            }else{
-                throw new ServiceException("非法日期格式");
-            }
-        }
-        sql.append(val);
-        return sql.toString();
-    }
-
-    private String handleVal(Object fieldVal,String dataType,QueryConditionEnum condEnum) {
-        String result = fieldVal.toString();
-        QueryDataTypeEnum queryDataTypeEnum = EnumMessage.getByCode(QueryDataTypeEnum.class,dataType);
-        if(queryDataTypeEnum.equals(QueryDataTypeEnum.STRING)){
-            result = "'"+ fieldVal + "'";
-        }else if (queryDataTypeEnum.equals(QueryDataTypeEnum.DATE)){
-            if(DateUtil.isDateOrTimeValid(fieldVal.toString())){
-                String interval = this.getDateStr(result);
-                result = "'"+ fieldVal + "'";
-                if(condEnum.equals(QueryConditionEnum.LE) && StringUtils.isNotBlank(interval)){
-                    result = "to_timestamp("+ result + ",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1 "+interval+"' ";
-                }else{
-                    result = "to_timestamp(" + result + ",'yyyy-MM-DD HH24:MI:SS')";
-                }
-            }else{
-                throw new ServiceException("非法日期格式");
-            }
-        }
-        return result;
-    }
-
 
     private Map<String,String> getSqlMap(final JoinPoint point) throws IllegalAccessException {
         Object[] args = point.getArgs();
@@ -334,26 +238,4 @@ public class WebAdvanceQueryAspect {
         return null;
     }
 
-    private String getDateStr(String input) {
-        String[] patterns = {"yyyy", "yyyy-MM", "yyyy-MM-dd"};
-
-        for (String pattern : patterns) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-
-            try {
-                if (pattern.equals("yyyy")) {
-                    Year year = Year.parse(input, formatter);
-                    return "YEAR";
-                } else if (pattern.equals("yyyy-MM")) {
-                    YearMonth yearMonth = YearMonth.parse(input, formatter);
-                    return "MONTH";
-                } else {
-                    LocalDate date = LocalDate.parse(input, formatter);
-                    return "DAY";
-                }
-            } catch (DateTimeParseException ignored) {
-            }
-        }
-        return null;
-    }
 }

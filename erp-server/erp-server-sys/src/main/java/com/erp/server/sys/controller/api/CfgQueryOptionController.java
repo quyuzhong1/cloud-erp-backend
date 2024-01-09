@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -83,7 +84,7 @@ public class CfgQueryOptionController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "查询option配置表删除")
-    public ApiResult<?> delete(@RequestBody @Validated CfgQueryOptionDTO.UpdateDTO dto) {
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         cfgQueryOptionService.delete(dto);
         return success();
     }

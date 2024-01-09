@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgQueryConditionEntity;
@@ -80,7 +81,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     }
 
     @Override
-    public Boolean delete(CfgQueryConditionDTO.UpdateDTO updateDTO) {
-        return this.removeById(updateDTO.getId());
+    public Boolean delete(BaseIdsDTO.IdsDTO idsDTO) {
+        return this.removeByIds(idsDTO.getIds());
     }
 }

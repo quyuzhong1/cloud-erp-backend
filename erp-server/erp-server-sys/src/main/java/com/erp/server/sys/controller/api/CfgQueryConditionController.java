@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -58,8 +60,8 @@ public class CfgQueryConditionController extends BaseController {
      * 删除
      */
     @PostMapping("/delete")
-    public ApiResult<Boolean> delete(@RequestBody @Validated CfgQueryConditionDTO.UpdateDTO updateDTO) {
-        return success(cfgQueryConditionService.delete(updateDTO));
+    public ApiResult<Boolean> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(cfgQueryConditionService.delete(dto));
     }
     /**
      * 获取查询条件配置

@@ -26,5 +26,5 @@ public interface CfgQueryConditionService extends SuperService<CfgQueryCondition
 
     PagingVO<CfgQueryConditionDTO.ListDTO> paging(PagingDTO<CfgQueryConditionDTO.SearchParamDTO> searchParamDTOPagingDTO);
 
-    Boolean delete(CfgQueryConditionDTO.UpdateDTO updateDTO);
+    Boolean delete(BaseIdsDTO.IdsDTO idsDTO);
 }

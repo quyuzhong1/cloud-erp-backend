@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -93,8 +94,8 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
-    public void delete(CfgQueryOptionDTO.UpdateDTO dto) {
-        this.removeById(dto.getId());
+    public void delete(BaseIdsDTO.IdsDTO dto) {
+        this.removeByIds(dto.getIds());
     }
 
     @Override

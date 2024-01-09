@@ -34,7 +34,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     Boolean update(CfgQueryOptionDTO.UpdateDTO dto);
 
 
-    void delete(CfgQueryOptionDTO.UpdateDTO dto);
+    void delete(BaseIdsDTO.IdsDTO dto);
 
     PagingVO<CfgQueryOptionDTO.ListDTO> paging(PagingDTO<CfgQueryOptionDTO.ParamDTO> dto);
 }

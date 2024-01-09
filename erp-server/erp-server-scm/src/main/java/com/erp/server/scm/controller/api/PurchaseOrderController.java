@@ -70,8 +70,9 @@ public class PurchaseOrderController extends BaseController {
      * 测试高级查询功能
      */
     @PostMapping("/testQuery")
-    @WebAdvanceQuery(extendFieldArr = {"so.code",""},handler = PurchaseOrderQueryHandler.class)
-    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+    @WebAdvanceQuery(extendFieldArr = {"so.code","so.tab"},handler = PurchaseOrderQueryHandler.class)
+    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @
+            Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.testQuery(dto);
         return success(pagingVO);
     }

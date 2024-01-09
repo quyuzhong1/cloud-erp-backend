@@ -1,5 +1,9 @@
 package com.common.business.dto;
 
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +13,8 @@ import lombok.NoArgsConstructor;
  **/
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AdvanceQueryDTO {
 
     // 前端字段名,也是数据库查询名
@@ -35,4 +41,13 @@ public class AdvanceQueryDTO {
     //右括号数量(保留值，默认0)
     private int rightBracketCount;
 
+    public static AdvanceQueryDTO buildSplicingSQL(String field, QueryConditionEnum queryConditionEnum, Object value, QueryDataTypeEnum dataTypeEnum){
+        return AdvanceQueryDTO.builder()
+                .field(field)
+                .compare(queryConditionEnum.getCompareCode())
+                .value(value)
+                .dataType(dataTypeEnum.getCode())
+                .compareSymbol("and")
+                .build();
+    }
 }

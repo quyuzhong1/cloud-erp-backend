@@ -5,5 +5,9 @@ package com.common.business.query;
  */
 public interface  IQueryHandler {
 
-    String splicingSQL(String field, String compareCode, String value, String compareCodeSplicingValueSql);
+    String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql);
+
+    default String getQueryEmptySql(){
+        return " 1 = 2 ";
+    }
 }
