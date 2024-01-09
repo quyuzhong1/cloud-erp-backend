@@ -28,16 +28,16 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Aspect
 @Component
 public class WebAdvanceQueryAspect {
 
     public static final String ADVANCE_QUERY_FIELD_NAME = "advanceQueryList";
+
+    public static final String SQL_MAP_FIELD_NAME = "sqlMap";
 
     @Resource
     private ApplicationContext context;
@@ -62,26 +62,41 @@ public class WebAdvanceQueryAspect {
         //获取查询对象(如果为空会初始化一个长度为1的集合）
         List<AdvanceQueryDTO> advanceQueryDTOList = this.getQueryDTOList(point);
 
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("1 = 1 ");
-        if(advanceQueryDTOList.size() > 1 || StringUtils.isNotBlank(advanceQueryDTOList.get(0).getField()) ||  StringUtils.isNotBlank(advanceQueryDTOList.get(0).getCompare())){
-            stringBuilder.append(" and ");
-        }
-        advanceQueryDTOList .get(advanceQueryDTOList.size() - 1).setCompareSymbol("");
-        for (AdvanceQueryDTO dto : advanceQueryDTOList) {
-            if (Objects.isNull(dto.getValue()) || Objects.isNull(dto.getCompare())) {
-                continue;
+        //group 为空默认为default
+        advanceQueryDTOList.replaceAll(v -> {
+            v.setGroup(StringUtils.defaultIfBlank(v.getGroup(), "default"));
+            return v;
+        });
+        Map<String, List<AdvanceQueryDTO>> advanceQueryDTOMap = advanceQueryDTOList.stream().collect(Collectors.groupingBy(AdvanceQueryDTO::getGroup));
+        advanceQueryDTOMap.forEach((key,val)->{
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("1 = 1 ");
+            if(val.size() > 1 || StringUtils.isNotBlank(val.get(0).getField()) ||  StringUtils.isNotBlank(val.get(0).getCompare())){
+                stringBuilder.append(" and ");
             }
-            //校验字段跟连接符合法性，防SQL注入
-            if (!SqlUtils.verifySqlLegality(dto.getField()) || (Objects.nonNull(dto.getValue()) && !SqlUtils.verifySqlLegality(dto.getValue().toString()))) {
-                throw new ServiceException(ApiError.QUERY_ILLEGAL_FIELD);
+            val .get(val.size() - 1).setCompareSymbol("");
+            for (AdvanceQueryDTO dto : val) {
+                if (Objects.isNull(dto.getValue()) || Objects.isNull(dto.getCompare())) {
+                    continue;
+                }
+                //校验字段跟连接符合法性，防SQL注入
+                if (!SqlUtils.verifySqlLegality(dto.getField()) || (Objects.nonNull(dto.getValue()) && !SqlUtils.verifySqlLegality(dto.getValue().toString()))) {
+                    throw new ServiceException(ApiError.QUERY_ILLEGAL_FIELD);
+                }
+                if (!QueryConditionEnum.CODE_MAPS.containsKey(dto.getCompare())) {
+                    throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
+                }
+                stringBuilder.append(this.splicingSQL(dto,queryHandler,extendFieldList.contains(dto.getField())));
             }
-            if (!QueryConditionEnum.CODE_MAPS.containsKey(dto.getCompare())) {
-                throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
+            //将sql设置到sqlMap中
+            Map<String,String> sqlMap;
+            try {
+                sqlMap = this.getSqlMap(point);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
-            stringBuilder.append(this.splicingSQL(dto,queryHandler,extendFieldList.contains(dto.getField())));
-        }
-        advanceQueryDTOList.get(0).setQuerySql(stringBuilder.toString());
+            sqlMap.put(key,stringBuilder.toString());
+        });
     }
 
     /**
@@ -215,6 +230,33 @@ public class WebAdvanceQueryAspect {
         return result;
     }
 
+
+    private Map<String,String> getSqlMap(final JoinPoint point) throws IllegalAccessException {
+        Object[] args = point.getArgs();
+        for (Object arg : args) {
+            Class<?> resultClz = arg.getClass();
+            //如果是导出的话，会在这里返回
+            Map<String,String> map = this.getMapWithFieldName(resultClz,arg);
+            if(Objects.nonNull(map)){
+                return map;
+            }
+            Field[] fieldInfo = resultClz.getDeclaredFields();
+            for (Field field : fieldInfo) {
+                field.setAccessible(true);
+                Object fieldValue = field.get(arg);
+                if(fieldValue == null){
+                    continue;
+                }
+                map = this.getMapWithFieldName(fieldValue.getClass(),fieldValue);
+                if(Objects.nonNull(map)){
+                    return map;
+                }
+            }
+        }
+        return null;
+    }
+
+
     private List<AdvanceQueryDTO> getQueryDTOList(final JoinPoint point) throws IllegalAccessException {
         Object[] args = point.getArgs();
         for (Object arg : args) {
@@ -240,6 +282,24 @@ public class WebAdvanceQueryAspect {
         return null;
     }
 
+    private Map<String,String> getMapWithFieldName(Class<?> resultClz, Object arg) throws IllegalAccessException {
+        Field[] fieldInfo = resultClz.getDeclaredFields();
+        for (Field field : fieldInfo) {
+            if (!SQL_MAP_FIELD_NAME.equals(field.getName())) {
+                continue;
+            }
+            field.setAccessible(true);
+            Object fieldValue = field.get(arg);
+            if (fieldValue == null) {
+                Map<String,String> newValue = new HashMap<>();
+                field.set(arg, newValue);
+                return (Map<String,String>) field.get(arg);
+            }
+            return ( Map<String,String>) fieldValue;
+        }
+        return null;
+    }
+
     private List<AdvanceQueryDTO> getListWithFieldName(Class<?> resultClz, Object arg) throws IllegalAccessException {
         Field[] fieldInfo = resultClz.getDeclaredFields();
         for (Field field : fieldInfo) {
@@ -251,6 +311,7 @@ public class WebAdvanceQueryAspect {
             if (fieldValue == null || ((List<?>) fieldValue).isEmpty()) {
                 List<AdvanceQueryDTO> newValue = new ArrayList<>();
                 AdvanceQueryDTO advanceQueryDTO = new AdvanceQueryDTO();
+                advanceQueryDTO.setGroup("defalut");
                 newValue.add(advanceQueryDTO);
                 field.set(arg, newValue);
                 return (List<AdvanceQueryDTO>) field.get(arg);

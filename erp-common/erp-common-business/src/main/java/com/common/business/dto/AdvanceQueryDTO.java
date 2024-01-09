@@ -20,11 +20,11 @@ public class AdvanceQueryDTO {
     //目标值
     private Object value;
 
-    //数据库查询SQL
-    private String querySql;
-
     //数据类型
     private String dataType;
+
+    //分组
+    private String group;
 
     //连接符，and,or（保留值，默认and）
     private String compareSymbol = "and";

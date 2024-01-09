@@ -206,7 +206,7 @@
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         left join subcontract_order so on so.id = po.source_id and so.is_deleted = false
         where
-        ${params.advanceQueryList[0].querySql}
+        ${params.sqlMap.default}
         and  po.is_deleted = false
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

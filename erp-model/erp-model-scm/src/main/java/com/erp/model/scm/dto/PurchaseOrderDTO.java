@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -277,6 +278,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
         /**
          * 搜索类型
