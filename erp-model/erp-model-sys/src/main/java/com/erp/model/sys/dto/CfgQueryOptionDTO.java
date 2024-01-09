@@ -136,6 +136,10 @@ public class CfgQueryOptionDTO implements Serializable {
          * api名称
          */
         private String apiName;
+        /**
+         * api路径
+         */
+        private String apiUrl;
     }
 
     /**

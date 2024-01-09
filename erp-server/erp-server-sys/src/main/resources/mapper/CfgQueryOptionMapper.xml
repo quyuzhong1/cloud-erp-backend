@@ -51,7 +51,10 @@
         from cfg_query_option qo
         where  qo.is_deleted = false
         <if test="params.apiName != null and params.apiName != ''">
-            and qo.api_name = #{params.apiName}
+            and qo.api_name ilike concat('%',#{params.apiName}::text,'%')
+        </if>
+        <if test="params.apiUrl != null and params.apiUrl != ''">
+            and qo.api_url ilike concat('%',#{params.apiUrl}::text,'%')
         </if>
         order by qo.create_time desc
     </select>
