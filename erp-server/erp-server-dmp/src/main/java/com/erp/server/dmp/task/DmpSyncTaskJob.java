@@ -139,15 +139,20 @@ public class DmpSyncTaskJob {
                     updateList.add(recordEntity);
                     continue;
                 }
-                String mqData = recordEntity.getMqData();
-                JSONObject jsonObject = JSONUtil.parseObj(mqData);
-                jsonObject.set("dmpSyncTaskId",recordEntity.getId());
-                SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                        JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
-                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                if (SyncStatusEnum.TO_BE_SYNC.getCode().equals(recordEntity.getStatus())) {
+                    //待推送的走查询推送
+                    dmpPushTaskService.batchFindDataSync(Arrays.asList(recordEntity.getId()));
+                } else {
+                    String mqData = recordEntity.getMqData();
+                    JSONObject jsonObject = JSONUtil.parseObj(mqData);
+                    jsonObject.set("dmpSyncTaskId", recordEntity.getId());
+                    SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
+                            JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
+                    if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                        throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                    }
                 }
-            }catch (Exception e){
+            } catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
                 XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
