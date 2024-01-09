@@ -374,6 +374,14 @@ public class PullAmazonJob {
     }
 
 
+    /**
+     * 根据条件查询mongo亚马逊订单
+     * @param downloadStatus
+     * @param shopIds
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
     private List<PlatformAmazonOrderDTO> findDownloadStatusAnShopId(Integer downloadStatus, List<String> shopIds, int currentPage, Integer pageSize) {
         Query query = new Query();
         query.addCriteria(Criteria.where("downloadStatus").is(downloadStatus)
@@ -383,6 +391,25 @@ public class PullAmazonJob {
             query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
         }
         return mongoTemplate.find(query, PlatformAmazonOrderDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER);
+    }
+
+    /**
+     * 根据条件查询mongo亚马逊商品
+     * @param downloadStatus
+     * @param shopIds
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
+    private List<PlatformAmazonListingDTO> findProductDownloadStatusAnShopId(Integer downloadStatus, List<String> shopIds, int currentPage, Integer pageSize) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("downloadStatus").is(downloadStatus)
+                .and("shopId").in(shopIds));
+
+        if (currentPage > 0 && pageSize > 0) {
+            query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
+        }
+        return mongoTemplate.find(query, PlatformAmazonListingDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT);
     }
 
 
@@ -410,33 +437,66 @@ public class PullAmazonJob {
      */
     @XxlJob("amazonProductDetailDownload")
     public ReturnT<String> amazonProductDetail() {
-        Integer size = 100;
+        Integer size;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
+        } else {
+            size = 100;
         }
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
-        PlatformAmazonListingDTO mongoDTO = PlatformAmazonListingDTO.getByDownloadStatus();
-        List<PlatformAmazonListingDTO> list = mongoService.findMongoData(mongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
-        if (CollectionUtil.isEmpty(list)) {
-            XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,无需要更新的信息");
+        // 查询所有任务列表
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.AMAZON.getCode(), AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getBusinessTypeName());
+        if (CollectionUtils.isEmpty(taskList)) {
+            XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 根据groupId分组店铺id
+        Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
+
+        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 开始,预计分组线程数量={}", taskGroupMap.size());
+        String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+        String platform = PlatformDictEnum.AMAZON.getCode();
+        String business = BusinessTypeEnum.PRODUCT.getCode();
+
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
+                .map(entry -> CompletableFuture.runAsync(() -> {
+                    // 异步任务的逻辑
+                    String key = entry.getKey();
+                    List<PlatformApiTaskEntity> value = entry.getValue();
+                    handlerProductDetail(key, value, size, platform, category, business);
+                    log.info("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
+                    XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
+                })).toArray(CompletableFuture[]::new));
+
+        allOf.thenRun(() -> XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 所有任务执行完毕")).join();
+        return ReturnT.SUCCESS;
+    }
+
+    private void handlerProductDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business) {
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 查询当前分组未下载的mongo订单
+        List<PlatformAmazonListingDTO> listingEntityList = this.findProductDownloadStatusAnShopId(0, shopIds, 1, size);
+        if (CollectionUtil.isEmpty(listingEntityList)) {
+            XxlJobHelper.log("[拉取亚马逊商品详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
+            return;
+        }
         // 查询关联的FNSKU
-        List<String> sellerSkuList = list.stream()
+        List<String> sellerSkuList = listingEntityList.stream()
                 .map(PlatformAmazonListingDTO::getSellerSku)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
         List<FbaInventoryEntity> fbaInventoryEntityList = wmsFbaInventoryFeign.findList(sellerSkuList);
-        // TODO msku绑定的fnSku是否唯一?
+        // msku绑定的fnSku是否唯一?
         Map<String, List<FbaInventoryEntity>> fnSkuRelationMap = fbaInventoryEntityList
                 .stream()
                 .collect(Collectors.groupingBy(FbaInventoryEntity::getMsku));
 
-        list.forEach(dto -> {
+        for (PlatformAmazonListingDTO dto : listingEntityList) {
+            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.LISTING_ITEMS;
             try {
                 // 关联FNSKU信息
                 FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(dto.getSellerSku(), Collections.emptyList())
@@ -444,26 +504,34 @@ public class PullAmazonJob {
                         .findFirst()
                         .orElse(null);
 
-                // 下载和处理详情
-                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, new JSONObject());
-                String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
-                String platform = PlatformDictEnum.AMAZON.getCode();
-                String business = BusinessTypeEnum.PRODUCT.getCode();
-                List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
+                // 动态请求配置
+                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+                String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+                JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+                extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+                dto.setRedissonKey(redissonKey);
+                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, extentJsonObj);
                 newDto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
                 newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                newDto.setRedissonKey(null);
+                List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-            } catch (Exception e) {
-                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail，uniqueId={}, error={}",
+                log.info("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", dto.getUniqueId());
+                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", dto.getUniqueId());
+            } catch (Exception error) {
+                // 获取锁异常等重试
+                if (error instanceof InterruptedException) {
+                    XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
+                    throw new ServiceException(ApiError.ERROR_1026);
+                }
+                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
-                        e.getMessage());
+                        ExceptionUtil.stacktraceToString(error, 2000));
                 // 发送预警
                 dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
-        });
-        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束");
-        return ReturnT.SUCCESS;
+        }
     }
 
 
@@ -690,7 +758,6 @@ public class PullAmazonJob {
         }
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务开始 size={}", size);
-        // TODO 记录请求
         // 根据状态查询未请求的数据
         List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.lambdaQuery()
                 // 已订阅

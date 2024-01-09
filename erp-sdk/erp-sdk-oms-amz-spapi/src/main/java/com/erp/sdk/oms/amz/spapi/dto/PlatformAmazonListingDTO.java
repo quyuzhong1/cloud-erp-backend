@@ -29,8 +29,10 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
     private String itemDescription;
 
+    @Panno(findType = PannoEnum.EQ,field = "listingId")
     private String listingId;
 
+    @Panno(findType = PannoEnum.EQ,field = "sellerSku")
     private String sellerSku;
 
     private String price;
@@ -120,6 +122,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 亚马逊关联的库存SKU
      */
     private String platformFnSku;
+
+    /**
+     * redisson执行中key
+     */
+    private String redissonKey;
 
     /**
      * 转换目标实体:PlatformProductDTO
