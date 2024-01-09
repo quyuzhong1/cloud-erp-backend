@@ -2184,7 +2184,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
                 //标签处理
                 SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
-                String detailLabel = detailDTO.getLabel();
+                String detailLabel = detailDTO.getLabelJson();
                 if (StringUtils.isNotBlank(detailLabel)) {
                     SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabel, SoB2cDetailDTO.LabelJsonDTO.class);
                     detailLabelDTO.setAlreadyTaxed(labelJsonDTO.getAlreadyTaxed());
