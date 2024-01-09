@@ -226,22 +226,22 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         orderDTO.setInvalidStatus(false);
 
-        if (CollectionUtils.isEmpty(shipped)) {
+        if (CollectionUtils.isNotEmpty(shipped)) {
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(delivered)) {
+        } else if (CollectionUtils.isNotEmpty(delivered)) {
             //沃尔玛：已交付 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(acknowledged)) {
+        } else if (CollectionUtils.isNotEmpty(acknowledged)) {
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(cancelled)) {
+        } else if (CollectionUtils.isNotEmpty(cancelled)) {
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
