@@ -413,6 +413,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
+        //TODO 获取srm 供应商订单规则
 
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();

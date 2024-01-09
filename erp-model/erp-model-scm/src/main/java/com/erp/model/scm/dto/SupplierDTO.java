@@ -604,7 +604,12 @@ public class SupplierDTO implements Serializable {
          */
         private Boolean disabled;
 
-
+        /**
+         * SRM协同 状态
+         * true  禁用
+         * false 启用
+         */
+        private Boolean srmDisabled;
         /**
          * 结算付款方式
          */

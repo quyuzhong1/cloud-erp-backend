@@ -1,11 +1,8 @@
-package com.erp.server.scm.controller.api;
+package com.erp.server.srm.controller.api;
 
 
-import cn.hutool.core.lang.Assert;
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,13 +10,11 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.UserPagingSearchDTO;
-import com.erp.model.sys.vo.SupplierUserInfoVO;
-import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.server.scm.service.SupplierRefUserService;
-import com.erp.server.scm.service.SupplierUserService;
+import com.erp.model.sys.dto.UserPagingSearchDTO;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
+import com.erp.rpc.wms.feign.SupplierUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,10 +36,10 @@ import java.util.Map;
 @RestController
 @LogSystemModule("供应商协同用户")
 @RequestMapping("/supplierUser")
-public class SupplierUserController extends BaseController {
+public class UserController extends BaseController {
 
     @Resource
-    private SupplierUserService supplierUserService;
+    private SupplierUserFeign supplierUserFeign;
 
 
     /**
@@ -54,9 +49,8 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
-        dto.getParams().setIsSuper(true);
-        PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
-        return success(pagingVO);
+        dto.getParams().setIsSuper(false);
+        return supplierUserFeign.page(dto);
     }
 
 
@@ -66,8 +60,8 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/save")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        sysUserInfoDTO.setIsSuper(true);
-        supplierUserService.add(sysUserInfoDTO);
+        sysUserInfoDTO.setIsSuper(false);
+        supplierUserFeign.save(sysUserInfoDTO);
         return success();
     }
 
@@ -77,9 +71,8 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
         sysUserInfoDTO.setIsSuper(true);
-        supplierUserService.update(sysUserInfoDTO);
+        supplierUserFeign.update(sysUserInfoDTO);
         return success();
     }
 
@@ -90,8 +83,8 @@ public class SupplierUserController extends BaseController {
     @LogViewService
     @GetMapping("/info/{uid}")
     public ApiResult info(@PathVariable("uid") String uid) {
-        SupplierUserInfoVO supplierUserInfoVO = supplierUserService.getById(uid);
-        return success(supplierUserInfoVO);
+        SupplierUserInfoVO info = supplierUserFeign.info(uid);
+        return success(info);
     }
 
 
@@ -100,7 +93,7 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/remove")
     public ApiResult delete(@RequestBody String uid) {
-        return supplierUserService.deleteById(uid);
+        return supplierUserFeign.delete(uid);
     }
 
     /**
@@ -110,8 +103,7 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
-        supplierUserService.updateState(stateDTO);
-        return success();
+        return supplierUserFeign.updateState(stateDTO);
     }
 
     /**
@@ -122,7 +114,7 @@ public class SupplierUserController extends BaseController {
      */
     @GetMapping("/resetPassword")
     public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
-        return supplierUserService.resetPassword(uid,pwd);
+        return supplierUserFeign.resetPassword(uid,pwd);
     }
 
     /**
@@ -132,7 +124,7 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/forgotPassword")
     public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        return supplierUserService.forgotPassword(dto);
+        return supplierUserFeign.forgotPassword(dto);
     }
 
     /**
@@ -142,7 +134,7 @@ public class SupplierUserController extends BaseController {
      */
     @GetMapping("/forgotPasswordGetCode")
     public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        return supplierUserService.forgotPasswordGetCode(userAccount);
+        return supplierUserFeign.forgotPasswordGetCode(userAccount);
     }
 
 
@@ -152,8 +144,7 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商协作用户")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierUserService.importFile(excelFile, response, true);
-        return result == true ? success() : failure();
+        return supplierUserFeign.importExcel(excelFile, response);
     }
 
     /**
@@ -162,9 +153,8 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
     @PostMapping("/exportSupplier")
     public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
-        dto.setIsSuper(true);
-        supplierUserService.exportSupplierUser(dto, response);
-        return success();
+        dto.setIsSuper(false);
+        return supplierUserFeign.exportSupplier(dto, response);
     }
 
     /**
@@ -175,7 +165,6 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载供应商协作用户模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        supplierUserService.downloadTemplate(response);
-        return success();
+        return supplierUserFeign.downloadTemplate(response);
     }
 }

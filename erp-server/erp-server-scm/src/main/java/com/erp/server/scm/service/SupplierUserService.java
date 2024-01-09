@@ -62,7 +62,7 @@ public interface SupplierUserService {
      *
      * @param uids
      */
-    ApiResult deleteByIds(List<String> uids);
+    ApiResult deleteById(String uid);
 
     /**
      * 批量启用 停用
@@ -108,9 +108,10 @@ public interface SupplierUserService {
      *
      * @param excelFile
      * @param response
+     * @param isSuper 是否是管理员
      * @return
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response,Boolean isSuper);
 
     /**
      * 导出供应商协作用户列表

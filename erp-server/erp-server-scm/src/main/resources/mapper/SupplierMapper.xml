@@ -16,6 +16,7 @@
         grade_id AS gradeId,
         category_id AS categoryId ,
         disabled AS disabled,
+        srm_disabled AS srmDisabled,
         pay_method_id AS payMethodId,
         payment_condition as paymentCondition,
         purchase_user_id AS purchaseUserId,

@@ -41,6 +41,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -91,7 +93,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
         if (Objects.nonNull(dto.getParams()) && CollectionUtils.isNotEmpty(dto.getParams().getSupplierIds())) {
             //选择了供应商则先进行供应商查询，获取用户ids
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getParams().getSupplierIds(), true);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getParams().getSupplierIds(), dto.getParams().getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 dto.getParams().setUserIds(supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList()));
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
@@ -100,12 +102,11 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 dto.getParams().setUserIds(Collections.singletonList("-1"));
             }
         } else {
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, true);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getParams().getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
         }
-        dto.getParams().setIsSuper(true);
         PagingVO<SupplierUserVO> page = userInfoFeign.page(dto);
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
         dataProcessSupplierInfo(list, supplierMap);
@@ -132,11 +133,12 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         addDTO.setUid(uid);
         addDTO.setSupplierId(sysUserInfoDTO.getSupplierId());
         addDTO.setDisabled(false);
-        addDTO.setIsSuper(true);
+        addDTO.setIsSuper(sysUserInfoDTO.getIsSuper());
         supplierRefUserService.add(addDTO);
     }
 
     @Override
+    @CacheEvict(cacheNames = "cache:scm:supplierUser", key = "#sysUserInfoDTO.uid")
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
@@ -145,7 +147,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         Assert.notEmpty(sysUserInfoDTO.getSupplierId(), "供应商ID不能为空");
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
         if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
-        Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
         //1.更新用户基础信息
         userInfoFeign.update(sysUserInfoDTO);
         //2.更新供应商关系
@@ -156,7 +157,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         refUserEntity.setUid(sysUserInfoDTO.getUid());
         refUserEntity.setSupplierId(sysUserInfoDTO.getSupplierId());
-        refUserEntity.setIsSuper(true);
+        refUserEntity.setIsSuper(sysUserInfoDTO.getIsSuper());
         refUserEntity.setDisabled(false);
         supplierRefUserService.saveOrUpdate(refUserEntity);
         // 记录主单操作日志
@@ -166,6 +167,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:scm:supplierUser",key = "#uid")
     public SupplierUserInfoVO getById(String uid) {
         SupplierUserInfoVO vo = new SupplierUserInfoVO();
         SysUserInfoEntity userInfoEntity = userInfoFeign.info(uid);
@@ -188,12 +190,13 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "cache:scm:supplierUser", key = "#uid")
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public ApiResult deleteByIds(List<String> uids) {
-        userInfoFeign.delete(uids);
+    public ApiResult deleteById(String uid) {
+        userInfoFeign.delete(Collections.singletonList(uid));
         //删除用户和供应商绑定记录
-        supplierRefUserService.deleteRefByUids(uids);
+        supplierRefUserService.deleteRefByUids(Collections.singletonList(uid));
         return ApiResult.success();
     }
 
@@ -240,7 +243,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response, Boolean isSuper) {
         SupplierUserExcelListener excelListenerUtil = new SupplierUserExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), SupplierUserImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -259,7 +262,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
         List<SupplierUserImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         //处理验证成功数据
-        handleImportSuccessList(successList, errorList);
+        handleImportSuccessList(successList, errorList, isSuper);
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
@@ -283,7 +286,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
         if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getSupplierIds())) {
             //选择了供应商则先进行供应商查询，获取用户ids
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getSupplierIds(), true);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getSupplierIds(), dto.getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 dto.setUserIds(supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList()));
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
@@ -292,7 +295,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 dto.setUserIds(Collections.singletonList("-1"));
             }
         } else {
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, true);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
@@ -314,13 +317,13 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         return Boolean.TRUE;
     }
 
-    private void handleImportSuccessList(List<SupplierUserImportExcelDTO> successList, List<SupplierUserImportExcelDTO> errorList) {
+    private void handleImportSuccessList(List<SupplierUserImportExcelDTO> successList, List<SupplierUserImportExcelDTO> errorList, Boolean isSuper) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
         for (SupplierUserImportExcelDTO excelDTO :successList) {
             SupplierRefUserEntity refUserEntity = new SupplierRefUserEntity();
-            List<String> errorMsgList = checkImportData(excelDTO,refUserEntity);
+            List<String> errorMsgList = checkImportData(excelDTO,refUserEntity,isSuper);
             if (CollectionUtils.isNotEmpty(errorMsgList)){
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
@@ -337,7 +340,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             sysUserInfoDTO.setNeedChangePwd(true);
             sysUserInfoDTO.setCreatePasswordType(0);
             //scm新增用户都为管理员
-            sysUserInfoDTO.setIsSuper(true);
+            sysUserInfoDTO.setIsSuper(isSuper);
             try {
                 String uid = userInfoFeign.save(sysUserInfoDTO);
                 refUserEntity.setUid(uid);
@@ -356,7 +359,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
     }
 
-    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
+    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity, Boolean isSuper) {
         List<String> errorMsgList = new ArrayList<>();
         //供应商是否存在
         List<SupplierEntity> supplierEntityList = supplierService.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));
@@ -364,7 +367,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             refUserEntity.setSupplierId(supplierEntity.getId());
             refUserEntity.setDisabled(false);
-            refUserEntity.setIsSuper(true);
+            refUserEntity.setIsSuper(isSuper);
         }else {
             errorMsgList.add("供应商不存在");
         }

@@ -1,26 +1,21 @@
-package com.erp.server.scm.controller.api;
-
+package com.erp.server.scm.controller.feign;
 
 import cn.hutool.core.lang.Assert;
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.sys.dto.SysUserInfoDTO;
+import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
-import com.erp.model.sys.dto.SysUserInfoDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.server.scm.service.SupplierRefUserService;
 import com.erp.server.scm.service.SupplierUserService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,20 +27,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 供应商协同用户
- *
  * @author zdy
- * @since 2024-01-05
+ * @ClassName SupplierUserFeignController
+ * @description: TODO
+ * @date 2024年01月09日
+ * @version: 1.0
  */
-@Slf4j
+@AllArgsConstructor
 @RestController
-@LogSystemModule("供应商协同用户")
-@RequestMapping("/supplierUser")
-public class SupplierUserController extends BaseController {
-
+@RequestMapping(value = "/feign/supplierUser")
+public class SupplierUserFeignController extends BaseController {
     @Resource
     private SupplierUserService supplierUserService;
-
 
     /**
      * 分页查询
@@ -54,7 +47,6 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
-        dto.getParams().setIsSuper(true);
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
     }
@@ -66,7 +58,6 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/save")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        sysUserInfoDTO.setIsSuper(true);
         supplierUserService.add(sysUserInfoDTO);
         return success();
     }
@@ -78,7 +69,6 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
-        sysUserInfoDTO.setIsSuper(true);
         supplierUserService.update(sysUserInfoDTO);
         return success();
     }
@@ -89,9 +79,8 @@ public class SupplierUserController extends BaseController {
      */
     @LogViewService
     @GetMapping("/info/{uid}")
-    public ApiResult info(@PathVariable("uid") String uid) {
-        SupplierUserInfoVO supplierUserInfoVO = supplierUserService.getById(uid);
-        return success(supplierUserInfoVO);
+    public SupplierUserInfoVO info(@PathVariable("uid") String uid) {
+        return supplierUserService.getById(uid);
     }
 
 
@@ -152,7 +141,7 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商协作用户")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierUserService.importFile(excelFile, response, true);
+        Boolean result = supplierUserService.importFile(excelFile, response, false);
         return result == true ? success() : failure();
     }
 
@@ -160,9 +149,8 @@ public class SupplierUserController extends BaseController {
      * 供应商协作用户导出
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
-    @PostMapping("/exportSupplier")
+    @PostMapping("/export")
     public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
-        dto.setIsSuper(true);
         supplierUserService.exportSupplierUser(dto, response);
         return success();
     }
@@ -172,7 +160,7 @@ public class SupplierUserController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载供应商协作用户模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板供应商")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         supplierUserService.downloadTemplate(response);
