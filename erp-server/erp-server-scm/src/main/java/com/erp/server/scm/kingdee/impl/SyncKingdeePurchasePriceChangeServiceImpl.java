@@ -117,12 +117,6 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             resultMap.put("purchaseOrgCode", orgCode);
         }
 
-        //查询供应商
-        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            return;
-        }
-
         //调价明细
         List<PurchasePriceChangeDetailEntity> details = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
@@ -136,6 +130,12 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
+        //查询供应商
+        List<String> supplierIds = details.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+        if (CollectionUtils.isNotEmpty(supplierEntities)) {
+            return;
+        }
 
 
         List<JSONObject> list = new ArrayList<>();
@@ -152,6 +152,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             //采购价目明细金蝶id
             jsonObject.set("kingdeeDetailId",purchasePriceDetailEntity.getKingdeeDetailId());
             //供应商编号
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> detailEntity.getSupplierId().equals(req.getId())).findFirst().orElse(null);
             jsonObject.set("supplierCode",supplierEntity.getCode());
             //从
             jsonObject.set("minQty",detailEntity.getMinQty());
