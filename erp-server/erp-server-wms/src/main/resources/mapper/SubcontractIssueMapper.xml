@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SubcontractIssueMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SubcontractIssueEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="type" property="type" />
+       <result column="date" property="date" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        si.id as id,
+        sid.id as detailId,
+        si.code,
+        si.source_code as sourceCode,
+        si.approve_status as approveStatus,
+        si.invalid_status as invalidStatus,
+        si.type,
+        si.date,
+        sid.sku_id as skuId,
+        sid.sku_no as skuNo,
+        sid.issue_qty as issueQty,
+        sid.receive_qty as receiveQty,
+        sid.warehouse_id as warehouseId,
+        sid.warehouse_name as warehouseName,
+        sid.warehouse_location as warehouseLocation,
+        sid.remark,
+        si.create_user_name as createUserName,
+        si.create_time as createTime,
+        si.approve_time as approveTime
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from subcontract_issue si
+        inner join subcontract_issue_detail sid on si.id = sid.main_id and sid.is_deleted = false
+        <where>
+            si.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            si.id desc
+        </where>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from subcontract_issue where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from subcontract_issue si
+        inner join subcontract_issue_detail sid on si.id = sid.main_id and sid.is_deleted = false
+        <where>
+            si.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            si.id desc
+        </where>
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  subcontract_issue
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
