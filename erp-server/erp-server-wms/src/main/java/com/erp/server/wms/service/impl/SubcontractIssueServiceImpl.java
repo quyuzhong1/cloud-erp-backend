@@ -1,8 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.dto.base.BaseResultDTO;
 
@@ -11,6 +10,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.wms.mapper.SubcontractIssueMapper;
+import com.erp.server.wms.service.SubcontractIssueDetailService;
 import com.erp.server.wms.service.SubcontractIssueService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -34,9 +34,7 @@ import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -62,14 +60,21 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIssueMapper, SubcontractIssueEntity> implements SubcontractIssueService {
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private SubcontractIssueDetailService subcontractIssueDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -83,19 +88,18 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         log.info("开始新增委外发料单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FLD);
         subcontractIssueEntity.setCode(code);
         boolean save = super.save(subcontractIssueEntity);
         if(!save) {
             throw new ServiceException("委外发料单保存失败");
         }
+        //新增明细
+        subcontractIssueDetailService.add(addDTO.getDetailList(),subcontractIssueEntity.getId());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(subcontractIssueEntity.getId(), code);
     }
 
@@ -120,13 +124,13 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if(!save) {
             throw new ServiceException("委外发料单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //修改明细
+        subcontractIssueDetailService.update(updateDTO.getDetailList(),subcontractIssueEntity.getId());
 
         // 记录主单操作日志
-            log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", subcontractIssueEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), subcontractIssueEntity.getCode(), "委外发料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, subcontractIssueEntity, null, subcontractIssueEntity.getId(), msg);
+        log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", subcontractIssueEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), subcontractIssueEntity.getCode(), "委外发料单");
+        operateLogService.addModuleOperateLogByObj(old, subcontractIssueEntity, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -197,14 +201,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动委外发料单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -226,8 +228,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -241,8 +242,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -273,8 +273,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -303,7 +302,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 删除日志数据
         log.info("删除 开始删除委外发料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除委外发料单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getCode(), "删除委外发料单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -325,8 +324,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -351,12 +349,10 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -370,7 +366,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        // 审核完成自动发料
 
         return Boolean.TRUE;
     }
@@ -401,8 +397,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(commonService.getUserInfo().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -465,6 +460,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        List<String> skuIdList = list.stream().map(SubcontractIssueDTO.ListDTO::getSkuId).collect(Collectors.toList());
 
         // 属性赋值
         for(SubcontractIssueDTO.ListDTO data : list) {

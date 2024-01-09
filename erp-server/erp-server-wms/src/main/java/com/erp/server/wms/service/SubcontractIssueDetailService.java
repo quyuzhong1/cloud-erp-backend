@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,19 +21,28 @@ public interface SubcontractIssueDetailService extends SuperService<SubcontractI
     * 新增
     * @author will
     * @date: 2024-01-08
-    * @param dto
+    * @param details
+    * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(SubcontractIssueDetailDTO.AddDTO dto);
+    void add(List<SubcontractIssueDetailDTO.AddDTO> details, String mainId);;
 
     /**
     * 修改
     * @author will
     * @date: 2024-01-08
-    * @param dto
+    * @param details
+    * @param mainId
     * @return
     */
-    Boolean update(SubcontractIssueDetailDTO.UpdateDTO dto);
+    Boolean update(List<SubcontractIssueDetailDTO.UpdateDTO> details, String mainId);
 
-
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2024/1/9 14:43
+     * @param mainIdList
+     * @return List<SubcontractIssueDetailEntity>
+     */
+    List<SubcontractIssueDetailEntity> listByMainIds(List<String> mainIdList);
 }
