@@ -34,8 +34,8 @@ public class CfgQueryConditionController extends BaseController {
      * 分页查询
      */
     @PostMapping("/paging")
-    public PagingVO<CfgQueryConditionDTO.ListDTO> paging(@RequestBody PagingDTO<CfgQueryConditionDTO.SearchParamDTO> searchParamDTOPagingDTO) {
-        return cfgQueryConditionService.paging(searchParamDTOPagingDTO);
+    public ApiResult<PagingVO<CfgQueryConditionDTO.ListDTO>> paging(@RequestBody PagingDTO<CfgQueryConditionDTO.SearchParamDTO> searchParamDTOPagingDTO) {
+        return success(cfgQueryConditionService.paging(searchParamDTOPagingDTO));
     }
 
     /**

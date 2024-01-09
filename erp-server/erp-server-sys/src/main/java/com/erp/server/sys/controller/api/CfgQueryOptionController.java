@@ -43,8 +43,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/paging")
-    public PagingVO<CfgQueryOptionDTO.ListDTO> paging(@RequestBody @Validated PagingDTO<CfgQueryOptionDTO.ParamDTO> dto) {
-        return cfgQueryOptionService.paging(dto);
+    public ApiResult<PagingVO<CfgQueryOptionDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgQueryOptionDTO.ParamDTO> dto) {
+        return success(cfgQueryOptionService.paging(dto));
     }
 
     /**
