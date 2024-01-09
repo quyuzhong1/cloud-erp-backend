@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,6 +99,26 @@ public class CfgQueryConditionDTO implements Serializable {
          * 显示类型
          */
         private String displayType;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Data

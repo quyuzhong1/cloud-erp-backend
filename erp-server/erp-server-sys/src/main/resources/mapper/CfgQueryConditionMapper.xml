@@ -6,8 +6,10 @@
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
        <result column="update_time" property="updateTime" />
        <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="system" property="system" />
@@ -114,7 +116,11 @@
             qo.api_name,
             qc.is_extend,
             qc.group_name,
-            qc.display_type
+            qc.display_type,
+            qc.create_user_name,
+            qc.create_time,
+            qc.update_time,
+            qc.update_user_name
         from cfg_query_condition qc
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         where  qc.is_deleted = false
