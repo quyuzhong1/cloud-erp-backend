@@ -311,7 +311,7 @@ public class WebAdvanceQueryAspect {
             if (fieldValue == null || ((List<?>) fieldValue).isEmpty()) {
                 List<AdvanceQueryDTO> newValue = new ArrayList<>();
                 AdvanceQueryDTO advanceQueryDTO = new AdvanceQueryDTO();
-                advanceQueryDTO.setGroup("defalut");
+                advanceQueryDTO.setGroup("default");
                 newValue.add(advanceQueryDTO);
                 field.set(arg, newValue);
                 return (List<AdvanceQueryDTO>) field.get(arg);

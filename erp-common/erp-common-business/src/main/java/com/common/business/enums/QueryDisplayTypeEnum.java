@@ -8,7 +8,7 @@ import lombok.ToString;
 @ToString
 public enum QueryDisplayTypeEnum implements EnumMessage {
 
-    QUERY("query","查询"),
+    QUERY("query","查询条件"),
     TAB("tab","选项卡"),
     DIMENSION("dimension","维度"),
     ;
