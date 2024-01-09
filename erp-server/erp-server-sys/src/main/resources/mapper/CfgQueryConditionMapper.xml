@@ -21,7 +21,7 @@
        <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
         <result column="index" property="index" />
         <result column="is_extend" property="isExtend" />
-        <result column="group" property="group" />
+        <result column="group_name" property="groupName" />
         <result column="display_type" property="displayType" />
     </resultMap>
 
@@ -35,6 +35,8 @@
         <result property="label" column="label"/>
         <result property="type" column="controls"/>
         <result property="dataType" column="data_type"/>
+        <result property="groupName" column="group_name"/>
+        <result property="displayType" column="display_type"/>
         <!-- 嵌套 Item 对象 -->
         <association property="item" javaType="com.erp.model.sys.dto.CfgQueryConditionDTO$Item">
             <id property="apiUrl" column="api_url"/>
@@ -65,7 +67,7 @@
         update_time,
         version,
         is_deleted,
-        system, code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group, display_type
+        system, code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group_name, display_type
     </sql>
 
     <select id="getQueryConditionByCode" resultMap="cfgQueryConditionResultMap">
@@ -86,7 +88,9 @@
             qo.select_label,
             qo.select_disabled,
             qo.request_method,
-            qo.search_key_field
+            qo.search_key_field,
+            qc.display_type,
+            qc.group_name
         from cfg_query_condition qc
                  left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
@@ -109,7 +113,7 @@
             qc.index,
             qo.api_name,
             qc.is_extend,
-            qc.group,
+            qc.group_name,
             qc.display_type
         from cfg_query_condition qc
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false

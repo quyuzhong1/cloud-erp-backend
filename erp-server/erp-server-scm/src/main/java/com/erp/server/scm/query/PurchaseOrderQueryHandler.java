@@ -1,4 +1,4 @@
-package com.common.business.query.impl;
+package com.erp.server.scm.query;
 
 import com.common.business.query.IQueryHandler;
 import org.springframework.stereotype.Component;

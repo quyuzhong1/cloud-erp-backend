@@ -149,6 +149,16 @@ public class CfgQueryConditionDTO implements Serializable {
 
         private List<Compare> compareList;
 
+        /**
+         * 分组名
+         */
+        private String groupName;
+
+        /**
+         * 显示类型
+         */
+        private String displayType;
+
     }
 
     @Data
@@ -322,7 +332,7 @@ public class CfgQueryConditionDTO implements Serializable {
         /**
          * 分组名称,用于多个sql跨库查询
          */
-        private String group;
+        private String groupName;
 
         /**
          * 显示类型{{sys_url}}common/enumDropDown?type=QueryDisplayType

@@ -83,8 +83,8 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     /**
     * 分组名称,用于多个sql跨库查询
     */
-    @TableField("group")
-    private String group;
+    @TableField("group_name")
+    private String groupName;
     /**
     * 显示类型
     */
@@ -113,10 +113,6 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     public static final String INDEX = "index";
 
     public static final String IS_EXTEND = "is_extend";
-
-    public static final String GROUP = "group";
-
-    public static final String DISPLAYTYPE = "display_type";
 
     @Override
     public Serializable pkVal() {
