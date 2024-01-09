@@ -104,9 +104,7 @@ public class AliExpressOrderService {
         for (AliExpressOrder item : orderInfoList) {
             //订单id
             String orderId = item.getOrderId();
-
             AliExpressOrderDetail orderDetail = this.getOrderDetail(orderId, orderRequest);
-            log.info("拉取订单详情>>>>>>>{}>>>>>值---{}",orderId,JSONObject.toJSONString(orderDetail));
             if (Objects.nonNull(orderDetail)) {
                 item.setDetail(orderDetail);
             }

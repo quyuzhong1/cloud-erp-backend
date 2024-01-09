@@ -1,11 +1,4 @@
-package com.erp.oms.aliexpress.handler;/**
- * @author Lambda
- * @Classname AliExpressOrderHandler
- * @Description TODO
- * @Date 2023-11-29 10:11
- * @Created by yl
- */
-
+package com.erp.oms.aliexpress.handler;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
