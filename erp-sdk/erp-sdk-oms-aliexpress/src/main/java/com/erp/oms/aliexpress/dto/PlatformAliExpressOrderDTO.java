@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.dto;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -60,6 +61,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformAliExpressOrderDTO dto) {
         // 原订单信息
         AliExpressOrder sourceOrder = dto.getAliExpressOrder();
+        System.out.println("我转化前的订单信息：>>>>>>"+ JSONObject.toJSONString(sourceOrder));
         // 本ERP店铺信息
         AliExpressShopInfoDTO shopInfoDTO = dto.getAliExpressShopInfoDTO();
 
@@ -154,7 +156,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         Map<String, Object> lableMap = new HashMap<>();
         lableMap.put("aliexpressStatus", sourceOrder.getOrderStatus());
         //订单明细
-        List<OrderItemDetail> orderItemDetailList = sourceOrder.getDetail().getChildOrderList();
+        List<OrderItemDetail> orderItemDetailList = detailIsNull?sourceOrder.getDetail().getChildOrderList():Collections.emptyList();
         Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
         if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
             long count = orderItemDetailList.stream().
