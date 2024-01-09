@@ -81,7 +81,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setPayTime(LocalDateTime.ofInstant(instant, zone));
 
         // 订单状态，详情金额汇总
-        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
+        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -207,7 +207,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @param orderDTO 设置的字段类型
      * @return java.lang.String
      **/
-    private static void fieldHandler(List<OrderLineBean> orderLineList, PlatformOrderDTO orderDTO) {
+    private static void fieldHandler(List<OrderLineBean> orderLineList, PlatformOrderDTO orderDTO, String shipNodeType) {
+
         //沃尔玛订单行的状态。有效状态为：Created（已创建）、Acknowledged（已确认）、Shipped（已发货）、Delivered（已交付）和 Cancelled(已取消)。
         //Status of purchase order line. Valid statuses are: Created, Acknowledged, Shipped, Delivered and Cancelled.
         //设置状态
@@ -224,6 +225,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         List<OrderLineStatusBean> cancelled = statusList.stream().filter(req -> req.getStatus().contains("Cancelled")).collect(Collectors.toList());
         orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         orderDTO.setInvalidStatus(false);
+
         if (CollectionUtils.isEmpty(shipped)) {
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
@@ -295,7 +297,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
                 .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
                 .secondAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
-                .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
+                .fullAddress("")
                 .build();
     }
 
