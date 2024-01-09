@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -35,6 +36,17 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id能为空")
+        private String supplierId;
+
+        /**
+         * 价目表编码
+         */
+        private String priceCode;
 
         /**
          * 采购价目详情表id
@@ -112,6 +124,18 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 价目表编码
+         */
+        private String priceCode;
 
         /**
          * sku id
@@ -194,12 +218,21 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
 
         private String id;
 
+        /**
+         * 价目表Code
+         */
+        private String priceCode;
 
         /**
          * 供应商表id
          */
-        @NotBlank(message = "供应商不能为空")
         private String supplierId;
+
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * sku id
@@ -292,10 +325,6 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private Boolean disabled=false;
 
-        /**
-         * 价目表Code
-         */
-        private String priceCode;
     }
 
 }

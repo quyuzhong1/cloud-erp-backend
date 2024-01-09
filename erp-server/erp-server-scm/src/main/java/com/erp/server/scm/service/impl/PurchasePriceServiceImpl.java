@@ -30,10 +30,7 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -117,6 +114,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
+
+
+    @Resource
+    private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
     /**
      * 添加采购价目表
@@ -935,15 +936,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<PurchasePriceChangeEntity> priceChangeList = purchasePriceChangeService.listByPurchasePriceIds(ids);
-        if (CollectionUtils.isNotEmpty(priceChangeList)) {
-            List<String> priceIdList = priceChangeList.stream().map(PurchasePriceChangeEntity::getPurchasePriceId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(priceIdList)) {
-                String code = list.stream().filter(p -> priceIdList.contains(p.getId())).
-                        map(PurchasePriceEntity::getCode).collect(Collectors.joining(","));
-               if(StringUtils.isNotBlank(code)){
-                    throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE,code);
-               }
+
+
+        for (PurchasePriceEntity purchasePriceEntity : list) {
+            List<PurchasePriceDetailEntity> purchasePriceDetailEntities = priceDetailService.listDetailByMainId(purchasePriceEntity.getId());
+            List<String> priceDetailIds = purchasePriceDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByPurchasePriceDetailIds(priceDetailIds);
+            if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailEntities)) {
+                throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE, purchasePriceEntity.getCode());
             }
         }
 

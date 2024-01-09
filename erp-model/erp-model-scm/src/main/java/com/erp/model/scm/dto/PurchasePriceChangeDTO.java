@@ -406,6 +406,10 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 采购价目表编码
+         */
+        private String priceCode;
 
         /**
          * 主键 id 集合

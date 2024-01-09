@@ -37,9 +37,27 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
 
+    /**
+     * 根据供应商id 获取到对应明细
+     * @Author Luo_WG
+     * @Date 2024/1/9 14:16
+     * @param supplierIds
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     **/
+    List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(@Param("supplierIds") List<String> supplierIds,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
+
     List<PurchasePriceDetailEntity> getBySupplierAndStatus(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList);
     /**
      * 批量修改
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto);
+
+    /**
+     * 根据主标查询明细
+     * @Author Luo_WG
+     * @Date 2024/1/9 16:41
+     * @param purchasePriceIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceDetailEntity>
+     **/
+    List<PurchasePriceDetailEntity> listGetListByPurchasePriceIds(@Param("purchasePriceIds") List<String> purchasePriceIds);
 }

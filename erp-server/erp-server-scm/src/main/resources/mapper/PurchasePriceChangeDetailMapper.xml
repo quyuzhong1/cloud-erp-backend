@@ -52,4 +52,31 @@
         </where>
 
     </select>
+
+    <select id="listByPurchasePriceDetailIds" resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">
+        SELECT
+        ppcd.sku_id,
+        ppcd.sku_no,
+        ppcd.delivery_day,
+        ppcd.min_qty,
+        ppcd.max_qty,
+        ppcd.currency,
+        ppcd.tax_price,
+        ppcd.tax_rate,
+        ppcd.disabled,
+        ppcd.effective_date,
+        ppcd.expire_date,
+        ppc.code as code,
+        ppcd.purchase_price_detail_id,
+        ppcd.purchase_price_change_id
+        FROM  purchase_price_change_detail ppcd
+        LEFT JOIN purchase_price_change ppc ON ppcd.purchase_price_change_id = ppc.id AND ppcd.is_deleted = FALSE
+        WHERE ppc.is_deleted = FALSE
+        <if test="purchasePriceDetailIds!=null and purchasePriceDetailIds.size>0">
+            AND ppcd.purchase_price_detail_id IN
+            <foreach collection="purchasePriceDetailIds" item="purchasePriceDetailId" open="(" separator="," close=")">
+                #{purchasePriceDetailId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

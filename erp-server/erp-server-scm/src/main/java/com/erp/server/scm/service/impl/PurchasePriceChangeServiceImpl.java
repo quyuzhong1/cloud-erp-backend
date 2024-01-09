@@ -101,6 +101,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SupplierService supplierService;
+
     /**
      * 添加采购价目变更
      *
@@ -113,18 +116,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String add(PurchasePriceChangeDTO.AddDTO dto) {
-        //采购价目表的id
-        String priceId = dto.getPurchasePriceId();
-        PurchasePriceEntity purchasePrice = purchasePriceService.getById(priceId);
-        if (Objects.isNull(purchasePrice)) {
-            throw new ServiceException(ApiError.ERROR_98024);
-        }
-        String approveStatus = purchasePrice.getApproveStatus().getStatus();
-        if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98029);
-        }
-        String supplierId = purchasePrice.getSupplierId();
         List<String> detailIds = new ArrayList<>();
+
         /**
          * 报价明细
          */
@@ -132,14 +125,22 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
-        List<String> skuIdList = dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds, skuIdList);
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(), skuIdList);
 
-        //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList, historyList);
+        //根据供应商分组
+        Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSupplierId));
+        for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
+            List<String> skuIdList = item.getValue().stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+
+            //根据供应商 获取到 对应 已有的区间
+            List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
+            //历史报价
+            List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(item.getKey(), skuIdList);
+
+            //检查区间报价是否重叠
+            purchasePriceChangeDetailService.checkSkuInterval(item.getValue(), supplierPriceDetailList, historyList);
+        }
+
+
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -293,10 +294,33 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceDetailList = purchasePriceChangeDetailService.getByPriceChangeId(id);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        purchasePriceDetailList.forEach(req -> {
-            SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
-            req.setProductName(skuVO.getSkuName());
-        });
+
+        //获取供应商
+        List<String> supplierIds = purchasePriceDetailList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+
+        //查询采购价目表
+        List<String> purchasePriceDetailId = purchasePriceDetailList.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
+        List<PurchasePriceDetailDTO.ViewDTO> priceDetailView = purchasePriceDetailService.listByPurchasePriceDetailIds(purchasePriceDetailId);
+        List<String> purchasePriceIds = priceDetailView.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.toList());
+        List<PurchasePriceEntity> purchasePriceEntities = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(purchasePriceIds)) {
+            purchasePriceEntities = purchasePriceService.listByIds(purchasePriceIds);
+        }
+
+
+
+
+        for (PurchasePriceChangeDetailDTO.ViewDTO dto : purchasePriceDetailList) {
+            SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
+            dto.setProductName(skuVO.getSkuName());
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> dto.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
+            dto.setSupplierName(supplierEntity.getName());
+        }
+
+
+
+
         viewDTO.setPurchasePriceChangeDetailList(purchasePriceDetailList);
         return viewDTO;
     }
@@ -342,21 +366,22 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
-        List<String> skuIdList = dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds, skuIdList);
-        //检查区间报价是否重叠
-        List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
+        //根据供应商分组
+        Map<String, List<PurchasePriceChangeDetailDTO.UpdateDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.UpdateDTO::getSupplierId));
+        for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.UpdateDTO>> item : map.entrySet()) {
+            List<String> skuIdList = item.getValue().stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
 
-        //判断是否能通过
-//        Boolean isPass = getIsPass(priceChangeDetailList);
-//        if (isPass) {
-//            priceChangeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
-//        }
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
+            //根据供应商 获取到 对应 已有的区间
+            List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
+            //检查区间报价是否重叠
+            List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(item.getValue(), PurchasePriceChangeDetailDTO.AddDTO.class);
+            //历史报价
+            List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(item.getKey(), skuIdList);
 
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList, historyList);
+            //检查区间报价是否重叠
+            purchasePriceChangeDetailService.checkSkuInterval(priceChangeDetailList, supplierPriceDetailList, historyList);
+        }
+
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);
@@ -706,7 +731,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId) {
-        return purchasePriceDetailService.getPriceChangeDetail(purchasePriceId);
+        return purchasePriceDetailService.listPriceChangeDetail(Arrays.asList(purchasePriceId));
     }
 
     @Override
@@ -948,13 +973,5 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(updateList)) {
             purchasePriceHistoryService.updateBatchById(updateList);
         }
-    }
-
-    @Override
-    public List<PurchasePriceChangeEntity> listByPurchasePriceIds(List<String> purchasePriceIds) {
-        if (CollectionUtils.isEmpty(purchasePriceIds)) {
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(PurchasePriceChangeEntity::getPurchasePriceId, purchasePriceIds).list();
     }
 }

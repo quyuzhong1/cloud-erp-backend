@@ -127,6 +127,12 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     @TableField(exist = false)
     private String approveStatus;
 
+    /**
+     * 供应商id
+     */
+    @TableField(exist = false)
+    private String supplierId;
+
     @Override
     public Serializable pkVal() {
         return null;

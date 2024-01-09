@@ -67,6 +67,52 @@
         </if>
 
     </select>
+
+    <select id="listBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$AddDTO">
+        SELECT
+        sku_id,
+        delivery_day,
+        min_qty,
+        max_qty,
+        currency,
+        tax_price,
+        tax_rate,
+        disabled,
+        supplier_id
+        FROM purchase_price_detail WHERE
+        is_deleted=FALSE AND
+        purchase_price_id IN (
+        SELECT id FROM purchase_price
+        WHERE is_deleted=FALSE
+        <if test="supplierIds!=null and supplierIds.size>0">
+            AND supplier_id IN
+            <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+                #{supplierId}
+            </foreach>
+        </if>
+
+        <if test="statusList!=null and statusList.size>0">
+            AND approve_status IN
+            <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        )
+        <if test="detailIds!=null and detailIds.size>0">
+            AND id NOT IN
+            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="skuIdList!=null and skuIdList.size>0">
+            AND sku_id  IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+
+    </select>
+
     <select id="getBySupplierAndStatus" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
 
         SELECT
@@ -131,5 +177,45 @@
             </foreach>
         </if>
         </where>
+    </select>
+
+    <select id="listGetListByPurchasePriceIds" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
+
+        SELECT
+        ppd.id,
+        ppd.create_user_id,
+        ppd.create_user_name,
+        ppd.create_time,
+        ppd.update_user_id,
+        ppd.update_user_name,
+        ppd.update_time,
+        ppd.version,
+        ppd.is_deleted,
+        ppd.sku_id,
+        ppd.purchase_price_id,
+        ppd.sku_no,
+        ppd.product_name,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        ppd.tax_price,
+        ppd.expire_date,
+        ppd.tax_rate,
+        ppd.delivery_day,
+        ppd.effective_date,
+        ppd.disabled,
+        ppd.kingdee_detail_id,
+        ppd.remark,
+        ppd.supplier_id
+        FROM purchase_price_detail ppd
+        inner join purchase_price pp on pp.id = ppd.purchase_price_id
+        WHERE
+        ppd.is_deleted=FALSE AND pp.is_deleted=FALSE
+        <if test="purchasePriceIds!=null and purchasePriceIds.size>0">
+            AND pp.id IN
+            <foreach collection="purchasePriceIds" item="purchasePriceId" open="(" separator="," close=")">
+                #{purchasePriceId}
+            </foreach>
+        </if>
     </select>
 </mapper>
