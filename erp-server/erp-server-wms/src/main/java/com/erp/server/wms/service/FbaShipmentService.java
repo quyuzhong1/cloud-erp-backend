@@ -213,5 +213,5 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Author Jim
      * @Date 2023/12/04
      */
-    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList);
+    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark);
 }

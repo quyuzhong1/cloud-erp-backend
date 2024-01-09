@@ -16,7 +16,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -48,19 +48,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
 
     @Resource
-    private OverseasWarehouseInboundDetailService overseasWarehouseInboundDetailService;
-
-    @Resource
-    private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
-
-    @Resource
-    private TransferInfoService transferInfoService;
-
-    @Resource
     private MQProducerService mqProducerService;
-
-    @Resource
-    private OtherInstockService otherInstockService;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {

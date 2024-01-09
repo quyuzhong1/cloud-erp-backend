@@ -964,7 +964,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional
-    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark) {
+    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark,Boolean isToOnwayWarehouse) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
         //目的仓
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()
@@ -975,8 +975,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
 
+        WarehouseEntity destWarehouseEntity = warehouseService.getById(destWarehouse.getId());
         //查询在途仓
         WarehouseEntity onWayWarehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
+        WarehouseEntity toWarehouseEntity = isToOnwayWarehouse?onWayWarehouseEntity:destWarehouseEntity;
+        WarehouseEntity fromWarehouseEntity = isToOnwayWarehouse?destWarehouseEntity:onWayWarehouseEntity;
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：海外仓入库单
@@ -986,11 +990,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(destWarehouse.getOrgId());
+        addDTO.setInOrgId(toWarehouseEntity.getOrgId());
         //调出组织
-        addDTO.setOutOrgId(onWayWarehouseEntity.getOrgId());
+        addDTO.setOutOrgId(fromWarehouseEntity.getOrgId());
         //调拨类型
-        if (onWayWarehouseEntity.getOrgId().equals(destWarehouse.getOrgId())) {
+        if (destWarehouseEntity.getOrgId().equals(onWayWarehouseEntity.getOrgId())) {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -1009,10 +1013,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //映射产品信息
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
-            detailAddDto.setQty(receivedEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(onWayWarehouseEntity.getId());
+            detailAddDto.setQty(Math.abs(receivedEntity.getReceiveQty()));
+            detailAddDto.setOutWarehouseId(fromWarehouseEntity.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(destWarehouse.getId());
+            detailAddDto.setInWarehouseId(toWarehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(receivedEntity.getId());
             detailAddDtoList.add(detailAddDto);
