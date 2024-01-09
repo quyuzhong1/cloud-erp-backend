@@ -6,8 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Classname 日期工具类
@@ -441,6 +446,41 @@ public class DateUtil {
     }
 
     /**
+     * 东八区时间转UTC时间
+     * @param localDateTime 东八区时间
+     * @return java.time.OffsetDateTime UTC时间
+     */
+    public static OffsetDateTime plus8SameUtcOffset(LocalDateTime localDateTime){
+        return localDateTime
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .withOffsetSameInstant(ZoneOffset.UTC);
+    }
+
+    /**
+     * UTC时间转东八区时间
+     * @param localDateTime UTC时间
+     * @return java.time.LocalDateTime 东八区时间
+     */
+    public static LocalDateTime utcSamePlus8(LocalDateTime localDateTime) {
+        return localDateTime
+                .atZone(ZoneOffset.UTC)
+                .withZoneSameInstant(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    /**
+     * UTC时间转东八区时间
+     * @param localDateTime 东八区时间
+     * @return java.time.LocalDateTime UTC时间
+     */
+    public static LocalDateTime plus8SameUtc(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault())
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
+    }
+
+    /**
      * 获取某年的全部日子
      * @param year
      * @return
@@ -454,5 +494,17 @@ public class DateUtil {
             startDate = startDate.plusDays(1);
         }
         return dates;
+    }
+
+    /**
+     * 判断字符串是否是合法的日期或时间 yyyy或yyyy-MM或yyyy-MM-DD 或yyyy-MM-DD HH:MI:SS
+     * @param input
+     * @return
+     */
+    public static boolean isDateOrTimeValid(String input) {
+        String regex = "^(\\d{4}|\\d{4}-\\d{2}|\\d{4}-\\d{2}-\\d{2}|\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+        return matcher.matches();
     }
 }
