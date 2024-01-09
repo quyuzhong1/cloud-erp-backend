@@ -19,6 +19,6 @@ import org.springframework.stereotype.Component;
 public interface SysUserConvert {
     SysUserConvert INSTANCE = Mappers.getMapper(SysUserConvert.class);
 
-    @Mapping(target = "isSuper", source = "super")
+    @Mapping(target = "isSuper", source = "isSuper")
     SysUserInfoEntity copyDTOtoSysUser(SysUserInfoDTO sysUserInfoDTO);
 }

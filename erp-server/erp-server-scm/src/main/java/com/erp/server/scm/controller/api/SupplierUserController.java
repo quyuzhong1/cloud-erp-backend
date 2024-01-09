@@ -15,6 +15,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierRefUserDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
@@ -92,8 +93,8 @@ public class SupplierUserController extends BaseController {
     @LogViewService
     @GetMapping("/info/{uid}")
     public ApiResult info(@PathVariable("uid") String uid) {
-        SysUserInfoEntity sysUserInfo = supplierUserService.getById(uid);
-        return success(sysUserInfo);
+        SupplierUserInfoVO supplierUserInfoVO = supplierUserService.getById(uid);
+        return success(supplierUserInfoVO);
     }
 
 

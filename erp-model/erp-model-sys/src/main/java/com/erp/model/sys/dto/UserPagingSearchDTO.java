@@ -40,5 +40,10 @@ public class UserPagingSearchDTO {
 
     private String searchType;
 
+    /**
+     * 是否超级管理员 false 不是管理员
+     */
+    private Boolean isSuper;
+
     private String searchKeyword;
 }

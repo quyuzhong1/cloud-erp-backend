@@ -13,11 +13,15 @@ import java.util.Date;
  * @version: 1.0
  */
 @Data
-public class SupplierUserVO implements Serializable {
+public class SupplierUserInfoVO implements Serializable {
     /**
      * 用户id
      */
     private String uid;
+    /**
+     * 关系id
+     */
+    private String refId;
     /**
      * 用户名
      */
@@ -39,14 +43,17 @@ public class SupplierUserVO implements Serializable {
      */
     private Boolean isSuper;
     /**
-     * true : 超级管理员
-     * false : 业务员
+     * 关联供应商id
      */
-    private String isSuperStr;
+    private String supplierId;
     /**
      * 关联供应商
      */
     private String supplierName;
+    /**
+     *采购员id
+     */
+    private String purchaseUserId;
     /**
      *采购员
      */
@@ -56,22 +63,13 @@ public class SupplierUserVO implements Serializable {
      */
     private Boolean userState;
     /**
-     * 是否禁用 正常 true 禁用 false  //o 禁用 1 正常
-     */
-    private String userStateStr;
-    /**
      * 微信绑定  没有绑定则显示【未绑定】，绑定显示【已绑定】
      */
     private Boolean isBindWechat;
     /**
-     * 微信绑定 没有绑定则显示【未绑定】，绑定显示【已绑定】
-     */
-    private String isBindWechatStr;
-    /**
      *最近登录时间
      */
     private Date lastLoginTime;
-    private String lastLoginTimeStr;
     /**
      *创建人
      */
@@ -80,5 +78,4 @@ public class SupplierUserVO implements Serializable {
      *创建时间
      */
     private Date createTime;
-    private String createTimeStr;
 }

@@ -9,6 +9,7 @@ import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,7 +55,7 @@ public interface SupplierUserService {
      * @param uid
      * @return
      */
-    SysUserInfoEntity getById(String uid);
+    SupplierUserInfoVO getById(String uid);
 
     /**
      * 删除供应商协同用户
