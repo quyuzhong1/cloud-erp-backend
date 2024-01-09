@@ -512,6 +512,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             PassEntity passEntity = PassHandler.buildPassword(newPassword);
             infoEntity.setPassword(passEntity.getPassword());
             infoEntity.setSalt(passEntity.getSalt());
+            infoEntity.setNeedChangePwd(false);
             //更改密码
             this.updateById(infoEntity);
             //退出登录 清除token

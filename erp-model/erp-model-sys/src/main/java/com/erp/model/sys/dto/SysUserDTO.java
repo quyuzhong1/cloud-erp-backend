@@ -34,7 +34,10 @@ public class SysUserDTO implements Serializable {
     private String mobile;
 
     private Integer userState;
-
+    /**
+     * 是否需要修改密码
+     */
+    private Boolean needChangePwd;
 
     /**
      * 账号
