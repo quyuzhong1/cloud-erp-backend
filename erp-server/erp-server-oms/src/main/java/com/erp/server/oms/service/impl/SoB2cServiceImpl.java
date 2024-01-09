@@ -3213,6 +3213,75 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
+     * 撤销流程
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id) {
+        SoB2cEntity entity=this.getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
+        // 审核中的数据允许撤销
+        if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        String userId = commonService.getUserInfo().getUid();
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(id);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
+        revokeDTO.setUserId(userId);
+        workflowFeign.revokeProcess(revokeDTO);
+        ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
+        this.updateApproveStatus(id,waitSubmit.getStatus());
+        String msg = "销售订单【{}】撤销流程";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "撤销流程");
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "撤销流程");
+    }
+
+
+    /**
+     * 反审核
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO disApprove(String id) {
+        SoB2cEntity entity=this.getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        // 已审核的数据才可以反审核
+        if (!Objects.equals(approveStatus, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        String billStatus=entity.getBillStatus();
+        //待配货
+        String waitDistribution=SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        //配货中
+        String inDistribution=SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+
+        List<String> billStatusList=Arrays.asList(waitDistribution,inDistribution);
+        if(!billStatusList.contains(billStatus)){
+            throw new ServiceException(ApiError.B2C_NOT_DISAPPROVE);
+        }
+
+        ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
+        this.updateApproveStatus(id,waitSubmit.getStatus());
+        String msg = "销售订单【{}】反审核流程";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核流程");
+    }
+
+    /**
      * @param id
      * @param approveStatusEnum
      * @param soB2cAbnormalTypeEnum

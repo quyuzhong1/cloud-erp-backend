@@ -4,8 +4,10 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -161,7 +163,7 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),null,"");
+                approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), null, "");
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
@@ -280,6 +282,71 @@ public class SoB2cController extends BaseController {
     public ApiResult<SoB2cDTO.FinancialInfoDTO> getFinancialInfo(@RequestBody @Validated SoB2cDTO.FinancialParamDTO dto) {
         return success(soB2cService.getFinancialInfoById(dto));
     }
+
+    /**
+     * 撤销流程
+     * @param dto
+     * @return
+     * @description
+     * @author Lambda
+     * @create 2024-01-09 11:47
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO=soB2cService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("B2C销售订单撤销失败>>>>>{}",e.getMessage());
+                SoB2cEntity entity=soB2cService.getById(id);
+                if(Objects.isNull(entity)){
+                    resultDTO=BatchResultDTO.fail(id, id, "B2c销售订单不存在, 撤销流程失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 反审核销售订单
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2024-01-09 14:09
+     */
+    @PostMapping("/disApprove")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核B2C销售订单")
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO=soB2cService.disApprove(id);
+            }catch (Exception e){
+                log.error("B2C销售订单反审核失败>>>>>{}",e.getMessage());
+                SoB2cEntity entity=soB2cService.getById(id);
+                if(Objects.isNull(entity)){
+                    resultDTO=BatchResultDTO.fail(id, id, "B2c销售订单不存在, 反审核失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
 
     /**
