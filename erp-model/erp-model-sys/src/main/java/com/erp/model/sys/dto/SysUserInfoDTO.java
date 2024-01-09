@@ -56,9 +56,21 @@ public class SysUserInfoDTO implements Serializable {
      */
     private String userType ;
     /**
+     *是否强制登录 修改密码
+     */
+    private boolean needChangePwd;
+    /**
      * 是否超级管理员 false 不是管理员
      */
-    private Boolean isSuper;
+    private boolean isSuper;
+    /**
+     * 供应商id
+     */
+    private String supplierId;
+    /**
+     * 供应商用户关系id
+     */
+    private String refId;
     //角色id 集合
     private List<String> roleIdList;
 

@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
@@ -241,19 +242,30 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getUserByUserName")
-    public FindUserDTO getUserByUserName(@RequestBody String userName) {
-        FindUserDTO dto = sysUserInfoService.getUserByUserName(userName);
+    public FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType) {
+        FindUserDTO dto = sysUserInfoService.getUserByUserName(userName,userType);
         return dto;
     }
 
+    /**
+     * 根据手机号和用户类型获取用户信息
+     * @param mobile
+     * @param userType
+     * @return
+     */
+    @GetMapping("/getUserByMobile")
+    FindUserDTO getUserByMobile(@RequestParam("mobile") String mobile,@RequestParam("userType") String userType){
+        FindUserDTO dto = sysUserInfoService.getUserByMobile(mobile,userType);
+        return dto;
+    }
     /**
      * 根据用户名称获取用户
      *
      * @return
      */
     @PostMapping("/listUserByUserNames")
-    public List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames) {
-        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames);
+    public List<FindUserDTO> listUserByUserNames(@RequestParam("userNames") List<String> userNames,@RequestParam("userType") String userType) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames,userType);
         return list;
     }
 
@@ -455,46 +467,49 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/page")
-    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto){
-        PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
-        return success(pagingVO);
+    public PagingVO<SupplierUserVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
+        return sysUserInfoService.feignPaging(dto);
     }
-
+    /**
+     * 查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list")
+    public List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto){
+        return sysUserInfoService.feignList(dto);
+    }
 
     /**
      * 添加用户
      */
-    @RequestMapping("/save")
-    public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        sysUserInfoService.add(sysUserInfoDTO);
-        return success();
+    @PostMapping("/save")
+    public String save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        return sysUserInfoService.addSrmUser(sysUserInfoDTO);
     }
 
     /**
      * 修改用户
      */
-    @RequestMapping("/update")
-    public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        sysUserInfoService.update(sysUserInfoDTO);
-        return success();
+    @PostMapping("/update")
+    public Boolean update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        return sysUserInfoService.updateSrmUser(sysUserInfoDTO);
     }
 
 
     /**
      * 用户信息
      */
-    @LogViewService
-    @RequestMapping("/info/{uid}")
-    public ApiResult info(@PathVariable("uid") String uid) {
-        SysUserInfoEntity sysUserInfo = sysUserInfoService.getById(uid);
-        return success(sysUserInfo);
+    @GetMapping("/info/{uid}")
+    public SysUserInfoEntity info(@PathVariable("uid") String uid) {
+        return sysUserInfoService.getById(uid);
     }
 
 
     /**
      * 删除
      */
-    @RequestMapping("/remove")
+    @PostMapping("/remove")
     public ApiResult delete(@RequestBody List<String> uids) {
         sysUserInfoService.deleteByIds(uids);
         sysUserThirdService.deleteByUserIds(uids);
@@ -506,7 +521,7 @@ public class SysUserFeignController extends BaseController {
      * @param stateDTO
      * @return
      */
-    @RequestMapping("/updateState")
+    @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
         return success();

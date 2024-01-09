@@ -37,6 +37,7 @@ import com.erp.model.sys.entity.password.PassEntity;
 import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
+import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -44,6 +45,7 @@ import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
+import com.erp.server.sys.convert.SysUserConvert;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
@@ -128,8 +130,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
-        String password = DEFAULT_PASS;
-        boolean needChangePwd = false;
+        String password = DEFAULT_PASS;//admin12345
+        boolean needChangePwd = sysUserInfoDTO.isNeedChangePwd();
         //表示自己输入
         if (createPasswordType == 1) {
             password = sysUserInfoDTO.getPassword();
@@ -140,7 +142,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (!password.equals(confirmPassword)) {
                 throw new ServiceException(ApiError.ERROR_1001);
             }
+            needChangePwd = false;
         }else {
+            //自动创建密码 强制登录修改密码
             needChangePwd = true;
         }
 
@@ -160,6 +164,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             entity.setIsSuper(false);
         }
         boolean saveResult = this.save(entity);
+        if (needChangePwd){
+            sendPwdEmail(entity.getUserName(),entity.getEmail(),"admin12345");
+        }
         //保存成功 就去更新角色表
         if (saveResult) {
             List<String> roleIds = sysUserInfoDTO.getRoleIdList();
@@ -170,14 +177,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
-
     @Override
-    public void addSrmUser(SysUserInfoDTO sysUserInfoDTO) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public String addSrmUser(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
         String password = DEFAULT_PASS;
+        boolean needChangePwd = sysUserInfoDTO.isNeedChangePwd();
         //表示自己输入
         if (createPasswordType == 1) {
             password = sysUserInfoDTO.getPassword();
@@ -188,11 +197,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (!password.equals(confirmPassword)) {
                 throw new ServiceException(ApiError.ERROR_1001);
             }
+            needChangePwd = false;
+        }else {
+            //自动创建密码 强制登录修改密码
+            needChangePwd = true;
         }
-
         SysUserInfoEntity entity = new SysUserInfoEntity();
         //复制属性
-        BeanMapperUtils.copy(sysUserInfoDTO, entity);
+//        BeanMapperUtils.copy(sysUserInfoDTO, entity);
+        entity = SysUserConvert.INSTANCE.copyDTOtoSysUser(sysUserInfoDTO);
         //编号
         String code = sysCodeService.getSeqNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
         entity.setCode(code);
@@ -201,9 +214,26 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //账号
         entity.setUserAccount(mobile);
         entity.setSalt(passEntity.getSalt());
-        boolean saveResult = this.save(entity);
+        entity.setNeedChangePwd(needChangePwd);
+        if (Objects.isNull(entity.getIsSuper())){
+            entity.setIsSuper(false);
+        }
+        this.save(entity);
+        //发送email
+        if (needChangePwd){
+            sendPwdEmail(entity.getUserName(),entity.getEmail(),"admin12345");
+        }
+        return entity.getUid();
     }
 
+    private void sendPwdEmail(String userName,String email,String pwd){
+        StringBuilder sb = new StringBuilder();
+        sb.append("你好：");
+        sb.append("\n");
+        sb.append("您的账号【").append(userName).append("】");
+        sb.append("初始密码为：【").append(pwd).append("】");
+        mailService.sendSimpleMail(email,"用户账号创建",sb.toString(),null);
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -235,7 +265,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public void updateSrmUser(SysUserInfoDTO sysUserInfoDTO) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean updateSrmUser(SysUserInfoDTO sysUserInfoDTO) {
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
@@ -249,7 +281,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         entity.setMobile(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
         entity.setEmail(sysUserInfoDTO.getEmail());
-        boolean updateResult = this.updateById(entity);
+        entity.setIsSuper(sysUserInfoDTO.isSuper());
+        return this.updateById(entity);
     }
 
     /**
@@ -812,6 +845,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
+        if (StringUtils.isNotEmpty(sysUserInfoDTO.getUserType())){
+            mobileQueryWrapper.eq(SysUserInfoEntity::getUserType, sysUserInfoDTO.getUserType());
+        }
         int mobileCount = this.count(mobileQueryWrapper);
         if (mobileCount > 0) {
             throw new ServiceException(ApiError.ERROR_9010);
@@ -821,6 +857,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
+        }
+        if (StringUtils.isNotEmpty(sysUserInfoDTO.getUserType())){
+            userNameQueryWrapper.eq(SysUserInfoEntity::getUserType, sysUserInfoDTO.getUserType());
         }
         int userNameCount = this.count(userNameQueryWrapper);
         if (userNameCount > 0) {
@@ -937,12 +976,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public FindUserDTO getUserByUserName(String userName) {
-        if (StringUtils.isBlank(userName)) {
+    public FindUserDTO getUserByUserName(String userName,String userType) {
+        if (StringUtils.isBlank(userName)|| StringUtils.isEmpty(userType)) {
             return new FindUserDTO();
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserName, userName);
+        queryWrapper.eq(SysUserInfoEntity::getUserType, userType);
         queryWrapper.last("limit 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
@@ -956,11 +996,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public List<FindUserDTO> listUserByUserNames(List<String> userNames) {
-        if (CollectionUtils.isEmpty(userNames)) {
+    public List<FindUserDTO> listUserByUserNames(List<String> userNames, String userType) {
+        if (CollectionUtils.isEmpty(userNames) || StringUtils.isEmpty(userType)) {
             return Collections.EMPTY_LIST;
         }
-        List<SysUserInfoEntity> list = lambdaQuery().in(SysUserInfoEntity::getUserName, userNames).list();
+        List<SysUserInfoEntity> list = lambdaQuery()
+                .eq(SysUserInfoEntity::getUserType,userType)
+                .in(SysUserInfoEntity::getUserName, userNames).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
@@ -1437,6 +1479,38 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         lambdaUpdate().in(SysUserInfoEntity::getUid,userIdList)
                 .update(new SysUserInfoEntity());
+    }
+
+    @Override
+    public PagingVO<SupplierUserVO> feignPaging(PagingDTO<UserPagingSearchDTO> dto) {
+        Page<SupplierUserVO> page = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SupplierUserVO> userVOIPage = baseMapper.feignPaging(page, dto.getParams());
+        return new PagingVO<>(userVOIPage);
+    }
+
+    @Override
+    public FindUserDTO getUserByMobile(String mobile, String userType) {
+        if (StringUtils.isEmpty(mobile) || StringUtils.isEmpty(userType)) {
+            return null;
+        }
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserInfoEntity::getMobile, mobile);
+        queryWrapper.eq(SysUserInfoEntity::getUserType, userType);
+        queryWrapper.last("limit 1");
+        SysUserInfoEntity entity = this.getOne(queryWrapper);
+        if (!Objects.isNull(entity)) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(entity.getUid());
+            userDTO.setUserName(entity.getUserName());
+            userDTO.setIsMyState(0);
+            return userDTO;
+        }
+        return new FindUserDTO();
+    }
+
+    @Override
+    public List<SupplierUserVO> feignList(UserPagingSearchDTO dto) {
+        return baseMapper.feignList(dto);
     }
 
     /**

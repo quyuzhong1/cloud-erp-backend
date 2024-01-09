@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -78,5 +80,18 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      */
     IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params,@Param("userIdList") List<String> userIdList);
 
+    /**
+     * 分页查询
+     * @param page
+     * @param params
+     * @return
+     */
+    IPage<SupplierUserVO> feignPaging(@Param("page") Page<SupplierUserVO> page, @Param("params")UserPagingSearchDTO params);
 
+    /**
+     * 查询用户列表
+     * @param dto
+     * @return
+     */
+    List<SupplierUserVO> feignList(@Param("params") UserPagingSearchDTO dto);
 }

@@ -64,7 +64,8 @@ public enum ModuleTypeEnum {
     SKU_MAPPING_RULE("60", "sku自动匹配规则"),
     SKU_MAPPING("61", "sku映射表"),
     LISTING_INFO("62", "对应平台sku 表"),
-    SUBCONTRACT_ISSUE("63", "委外发料单"),
+    SUPPLIER_REF_USER("63", "供应商用户关系"),
+    SUBCONTRACT_ISSUE("64", "委外发料单"),
     ;
 
 
