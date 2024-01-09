@@ -650,7 +650,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             List<OverseasWarehouseInboundDetailEntity> lossDetailList = detailEntityList.stream().filter(v->v.getDiffQty()<0).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(lossDetailList)){
                 updateDetailEntityList.addAll(lossDetailList);
-                otherOutstockService.generateByOverseasInbound(entity,lossDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()));
+                otherOutstockService.generateByOverseasInbound(entity,lossDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
             }
             //签收数大于发货数情况下自动完结再签收再手动完结生成其他入库单（报溢）在途仓
             List<OverseasWarehouseInboundDetailEntity> profitDetailList = detailEntityList.stream().filter(v->v.getDiffQty()>0).collect(Collectors.toList());
@@ -1132,20 +1132,36 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         if (changeFlag) {
             mainEntity.setReceiveTime(dto.getDownloadTime());
-            //自动完结再签收完结状态变成已签收
-            if (OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())) {
-                mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
-                transferInfoService.generateFromOverseasInbound(mainEntity, updateList, insertReceiveEntityList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
-            } else if (OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())) {
+            if(OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
                 //设置差异数为本次签收数
                 updateList.forEach(v -> v.setDiffQty(thisSignQtyMap.get(v.getId())));
+                List<OverseasWarehouseInboundDetailEntity> greaterThanZeroReceiveList = updateList.stream().filter(v->v.getDiffQty()>0).collect(Collectors.toList());
+                List<OverseasWarehouseInboundDetailEntity> lessThanZeroReceiveList = updateList.stream().filter(v->v.getDiffQty()<0).collect(Collectors.toList());
                 //手动完结再签收，不变更入库状态，生成其他入库单（报溢）目的仓，不生成调拨单
-                otherInstockService.generateByOverseasInbound(mainEntity, updateList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()), false);
-            } else {
-                //差异数量为0时 自动完结
-                boolean isAllDiffZero = detailList.stream().allMatch(v -> v.getDiffQty().equals(0));
-                mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(), isAllDiffZero));
-                transferInfoService.generateFromOverseasInbound(mainEntity, updateList, insertReceiveEntityList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
+                if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
+                    otherInstockService.generateByOverseasInbound(mainEntity, greaterThanZeroReceiveList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()), false);
+                }
+                //手动完结时，海外仓入库单同步负数签收数据时，生成其他出库单，目的仓报损
+                if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
+                    otherOutstockService.generateByOverseasInbound(mainEntity, lessThanZeroReceiveList, String.format("【%s】签收数量减少后出库反冲", mainEntity.getCode()), false);
+                }
+            }else{
+                //生成直接调拨单（根据数量是否为负数判断）
+                List<OverseasWarehouseInboundReceivedEntity> greaterThanZeroReceiveList = insertReceiveEntityList.stream().filter(v->v.getReceiveQty() > 0).collect(Collectors.toList());
+                List<OverseasWarehouseInboundReceivedEntity> lessThanZeroReceiveList = insertReceiveEntityList.stream().filter(v->v.getReceiveQty() < 0).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
+                    transferInfoService.generateFromOverseasInbound(mainEntity, updateList, greaterThanZeroReceiveList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()),false);
+                }
+                if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
+                    transferInfoService.generateFromOverseasInbound(mainEntity, updateList, lessThanZeroReceiveList, String.format("【%s】签收数量减少后反向调拨", mainEntity.getCode()),true);
+                }
+                if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
+                    mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
+                }else{
+                    //差异数量为0时 自动完结
+                    boolean isAllDiffZero = detailList.stream().allMatch(v -> v.getDiffQty().equals(0));
+                    mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(), isAllDiffZero));
+                }
             }
             //更新主表
             boolean mainResult = this.updateById(mainEntity);
