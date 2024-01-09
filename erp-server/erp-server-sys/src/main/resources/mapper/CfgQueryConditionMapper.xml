@@ -39,6 +39,7 @@
         <result property="dataType" column="data_type"/>
         <result property="groupName" column="group_name"/>
         <result property="displayType" column="display_type"/>
+        <result property="isExtend" column="is_extend"/>
         <!-- 嵌套 Item 对象 -->
         <association property="item" javaType="com.erp.model.sys.dto.CfgQueryConditionDTO$Item">
             <id property="apiUrl" column="api_url"/>
@@ -92,13 +93,14 @@
             qo.request_method,
             qo.search_key_field,
             qc.display_type,
-            qc.group_name
+            qc.group_name,
+            qc.is_extend
         from cfg_query_condition qc
                  left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         where  qc.is_deleted = false
           and qc.code = #{code}
-        order by qc.index
+        order by qc.index,cqc.index
     </select>
 
     <select id="paging" resultMap="PagingMap">

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgQueryConditionEntity;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
@@ -69,8 +70,13 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
 
     @Override
     public List<CfgQueryConditionDTO.ViewDTO> getQueryCondition(String code) {
-        List<CfgQueryConditionDTO.ViewDTO> viewDTO = baseMapper.getQueryConditionByCode(code);
-        return viewDTO;
+        List<CfgQueryConditionDTO.ViewDTO> viewList = baseMapper.getQueryConditionByCode(code);
+        viewList.forEach(v->{
+            if(v.getIsExtend()){
+                v.getCompareList().removeIf(item -> item.getLogic().equals(QueryConditionEnum.IS_NULL.getCompareCode()) || item.getLogic().equals(QueryConditionEnum.NOT_NULL.getCompareCode()));
+            }
+        });
+        return viewList;
     }
 
     @Override

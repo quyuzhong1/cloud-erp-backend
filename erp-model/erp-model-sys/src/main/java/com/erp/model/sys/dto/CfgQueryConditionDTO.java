@@ -180,6 +180,11 @@ public class CfgQueryConditionDTO implements Serializable {
          */
         private String displayType;
 
+        /**
+         * 是否扩展字段
+         */
+        private Boolean isExtend;
+
     }
 
     @Data
