@@ -118,6 +118,7 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     /**
      * 备注
      */
+    @TableField("remark")
     private String remark;
 
     /**

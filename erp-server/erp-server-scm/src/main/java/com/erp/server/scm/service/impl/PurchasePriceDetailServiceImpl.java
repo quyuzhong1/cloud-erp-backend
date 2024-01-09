@@ -605,7 +605,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
             //采购价目信息
-            PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(item.getId())).findFirst().orElse(null);
+            PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchasePriceEntity)) {
                 throw new ServiceException(ApiError.ERROR_98024);
             }
