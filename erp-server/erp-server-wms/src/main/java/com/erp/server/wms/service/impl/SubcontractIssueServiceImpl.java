@@ -1,20 +1,29 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.dto.base.BaseResultDTO;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueMapper;
-import com.erp.server.wms.service.SubcontractIssueDetailService;
-import com.erp.server.wms.service.SubcontractIssueService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -75,6 +84,22 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Autowired
     private SubcontractIssueDetailService subcontractIssueDetailService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private InventoryService inventoryService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -175,7 +200,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         // 数据处理
         fillList(list);
-
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/subcontractIssue.xlsx";
@@ -196,7 +220,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到委外发料单数据");
         }
-        validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -264,12 +287,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     public BatchResultDTO disApprove(String id) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单单数据"));
-        // 反审核条件判断
-        validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
@@ -277,14 +297,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
-    private Boolean validateDisApprove(SubcontractIssueEntity entity) {
-        // 已审核支持反审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
-        }
-        // TODO 下游盘点计划单反审核
-        return true;
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -294,11 +306,13 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
         log.info("删除 开始删除委外发料单主单数据，id：【{}】", id);
         super.removeById(id);
+
+        //删除明细
+        subcontractIssueDetailService.deleteByMainId(id);
+
         // 删除日志数据
         log.info("删除 开始删除委外发料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
@@ -340,8 +354,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改委外发料单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -406,9 +418,66 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException(result.getMsg());
         }
     }
+
+    /**
+     * @description: 查询详情数据处理
+     * @author Will
+     * @date: 2024/1/9 17:11
+     * @param data
+     */
     private void fillOne(SubcontractIssueDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        //状态名称
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+
+        //发料类型
+        List<DictBasicDTO.ListDTO> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
+        String typeName = issueTypeList.stream().filter(obj -> obj.getValue().equals(data.getType())).map(DictBasicDTO.ListDTO::getName)
+                .findFirst().orElse("");
+        data.setTypeName(typeName);
+
+        //委外发料明细
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(data.getId()));
+        if (CollectionUtil.isEmpty(subcontractIssueDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
+        }
+        //产品信息
+        List<String> skuIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = subcontractIssueDetailList.stream()
+                .map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //即时库存
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(subcontractIssueDetailList);
+
+        //已审核发料数量
+        List<String> sourceDetailIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySourceDetailIdList(sourceDetailIdList);
+
+        List<SubcontractIssueDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SubcontractIssueDetailDTO.ViewDTO.class, subcontractIssueDetailList);
+        for (SubcontractIssueDetailDTO.ViewDTO viewDTO : detailList) {
+            //仓位名称
+            String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setWarehouseLocationName(warehouseLocationName);
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            viewDTO.setProductName(skuVO.getSkuName());
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId()) && s.getWarehouseId().equals(viewDTO.getWarehouseId())).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
+            viewDTO.setCurInventoryQty(curInventoryQty);
+            //已发料数量
+            Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus())).map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewDTO.setHasIssueQty(hasIssueQty);
         }
     }
 
@@ -429,27 +498,15 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
      }
 
     /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(SubcontractIssueEntity::getId, id)
-            .set(SubcontractIssueEntity::getApproveUserId, "")
-            .set(SubcontractIssueEntity::getApproveUserName, "")
-            .set(SubcontractIssueEntity::getApproveStatus, approveStatus)
-            .set(SubcontractIssueEntity::getApproveTime, null)
-            .update(new SubcontractIssueEntity());
-        }
-
-    /**
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SubcontractIssueEntity::getId, id)
         .set(SubcontractIssueEntity::getApproveStatus, approveStatus)
+        .set(SubcontractIssueEntity::getApproveUserId, "")
+        .set(SubcontractIssueEntity::getApproveUserName, "")
+        .set(SubcontractIssueEntity::getApproveTime, null)
         .update(new SubcontractIssueEntity());
     }
 
@@ -460,30 +517,71 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //产品信息
         List<String> skuIdList = list.stream().map(SubcontractIssueDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //发料类型
+        List<DictBasicDTO.ListDTO> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
 
         // 属性赋值
         for(SubcontractIssueDTO.ListDTO data : list) {
+            //状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            //仓位信息
+            String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(data.getWarehouseId()) && obj.getCode().equals(data.getWarehouseLocation())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setWarehouseLocationName(warehouseLocationName);
+            //产品信息
+            String productName = skuVOList.stream().filter(obj -> obj.getSkuId().equals(data.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            data.setProductName(productName);
+            //发料类型名称
+            String issueTypeName = issueTypeList.stream().filter(obj -> obj.getValue().equals(data.getType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setTypeName(issueTypeName);
         }
-    }
-    /**
-    * 分页查询、导出 数据处理
-    */
-    private void validateSubmit(SubcontractIssueEntity entity) {
-        // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
-        return;
     }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(SubcontractIssueEntity subcontractIssueEntity) {
-    // TODO 验证数据 & 数据赋值
+        //暂时先默认来源类型
+        subcontractIssueEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
+        //来源单号
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(subcontractIssueEntity.getSourceId()));
+        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+        subcontractIssueEntity.setSourceCode(subcontractOrderList.get(0).getCode());
+    }
+
+
+    /**
+     * @description: 获取即时库存
+     * @author Will
+     * @date: 2024/1/9 16:46
+     * @param subcontractIssueDetailList
+     * @return List<SkuInventoryTotalDTO>
+     */
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<SubcontractIssueDetailEntity> subcontractIssueDetailList) {
+        //skuId集合
+        List<String> skuIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //仓库Id集合
+        List<String> warehouseIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        //仓位集合
+        List<String> warehouseLocationList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getWarehouseLocation).distinct().collect(Collectors.toList());
+
+        InventoryQtyDTO.SkuInventoryParamDTO paramDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setWarehouseLocationIdList(warehouseLocationList);
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
+        return skuInventoryTotalList;
     }
 }

@@ -313,6 +313,12 @@ public interface ScmTaskFeign {
     List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
 
     /**
+     * 根据ids查询委外订单
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractOrderByIds")
+    List<SubcontractOrderEntity> listSubcontractOrderByIds(@RequestBody List<String> sourceIdList);
+
+    /**
      * 根据供应商Ids查询最新的sku价格信息
      * @param ids ids
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>

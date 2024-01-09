@@ -74,6 +74,8 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException(ApiError.ERROR_1041, SourceTypeEnum.SUBCONTRACT_ISSUE.getName());
         }
         List<SubcontractIssueDetailEntity> list = BeanMapperUtils.copyList(SubcontractIssueDetailEntity.class, details);
+        //数据验证
+        checkData(list);
         // 数据处理
         handleData(list,mainId);
 
@@ -86,6 +88,25 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "委外发料明细单" , mainId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), mainId, "新增操作");
+    }
+
+    /**
+     * @description: 验证信息
+     * @author Will
+     * @date: 2024/1/9 17:14
+     * @param list
+     */
+    private void checkData (List<SubcontractIssueDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //委外明细信息
+        List<String> sourceDetailIdList = list.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIdList);
+
+        for (SubcontractIssueDetailEntity entity : list) {
+            subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId()));
+        }
     }
 
     /**
@@ -132,6 +153,19 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
        return lambdaQuery().in(SubcontractIssueDetailEntity::getMainId,mainIdList).list();
     }
 
+    @Override
+    public void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(SubcontractIssueDetailEntity::getMainId,mainId).remove();
+    }
+
+    @Override
+    public List<SubcontractIssueDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
+    }
+
     /**
      * 查询需要删除的数据
      */
@@ -167,18 +201,21 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         for (SubcontractIssueDetailEntity detailEntity : list) {
             //委外子SKU明细信息
-            SubcontractOrderDetailEntity childDetailEntity = childDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SubcontractOrderDetailEntity childDetailEntity = childDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
+                    .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(childDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
 
             //委外父级SKU明细信息
-            SubcontractOrderDetailEntity parentDetailEntity = parentDetailList.stream().filter(obj -> obj.getId().equals(childDetailEntity.getParentId())).findFirst().orElse(null);
+            SubcontractOrderDetailEntity parentDetailEntity = parentDetailList.stream().filter(obj -> obj.getId().equals(childDetailEntity.getParentId()))
+                    .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(parentDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98071);
             }
             //bom信息
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId())).findFirst().orElse(null);
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
+                    .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 throw new ServiceException(ApiError.ERROR_95163);
             }
@@ -193,7 +230,8 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setWarehouseLocation(detailEntity.getWarehouseLocation());
 
             //仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).map(WarehouseEntity::getName)
+                    .findFirst().orElse("");
             detailEntity.setWarehouseName(warehouseName);
 
             //操作日志

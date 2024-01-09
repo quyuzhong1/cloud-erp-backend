@@ -232,6 +232,16 @@ public class SubcontractIssueDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
         * 发料类型
         */
         private String type;

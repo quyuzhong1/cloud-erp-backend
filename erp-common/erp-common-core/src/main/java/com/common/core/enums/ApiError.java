@@ -891,7 +891,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
-
+    ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
+    ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号

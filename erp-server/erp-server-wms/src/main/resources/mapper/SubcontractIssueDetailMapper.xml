@@ -29,17 +29,46 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        parent_sku_id, parent_sku_no, sku_id, sku_no, bom_version, quantity, receive_qty, issue_qty, warehouse_id, warehouse_name, remark, source_detail_id, warehouse_location
+        sid.id,
+        sid.create_user_id,
+        sid.create_user_name,
+        sid.create_time,
+        sid.update_user_id,
+        sid.update_user_name,
+        sid.update_time,
+        sid.version,
+        sid.is_deleted,
+        sid.parent_sku_id,
+        sid.parent_sku_no,
+        sid.sku_id,
+        sid.sku_no,
+        sid.bom_version,
+        sid.quantity,
+        sid.receive_qty,
+        sid.issue_qty,
+        sid.warehouse_id,
+        sid.warehouse_name,
+        sid.remark,
+        sid.source_detail_id,
+        sid.warehouse_location,
+        si.approve_status
     </sql>
+
+    <select id="listBySourceDetailIdList" resultType="com.erp.model.wms.entity.SubcontractIssueDetailEntity">
+        select
+               <include refid="Base_Column_List" />
+        from subcontract_issue_detail sid
+        inner join subcontract_issue si on si.is_deleted = false and si.id = sid.main_id
+        <where>
+            sid.is_deleted = false and si.invalid_status = false
+            <if test="sourceDetailIdList != null and sourceDetailIdList.size > 0">
+                and sid.source_detail_id in
+                <foreach collection="sourceDetailIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 
 
 </mapper>

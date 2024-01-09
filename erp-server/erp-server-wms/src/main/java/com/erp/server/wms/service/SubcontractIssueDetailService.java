@@ -45,4 +45,21 @@ public interface SubcontractIssueDetailService extends SuperService<SubcontractI
      * @return List<SubcontractIssueDetailEntity>
      */
     List<SubcontractIssueDetailEntity> listByMainIds(List<String> mainIdList);
+
+    /**
+     * @description: 根据mainId删除
+     * @author Will
+     * @date: 2024/1/9 15:46
+     * @param mainId
+     */
+    void deleteByMainId(String mainId);
+
+    /**
+     * @description: 根据来源明细id集合查询
+     * @author Will
+     * @date: 2024/1/9 16:56
+     * @param sourceDetailIdList
+     * @return List<SubcontractIssueDetailEntity>
+     */
+    List<SubcontractIssueDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList);
 }
