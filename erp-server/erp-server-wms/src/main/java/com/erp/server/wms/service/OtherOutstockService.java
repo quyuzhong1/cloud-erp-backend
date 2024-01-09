@@ -180,7 +180,7 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @param detailEntityList
      * @param remark
      */
-    String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark);
+    String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,Boolean isOnwayWarehouse);
 
 
     /**
@@ -188,5 +188,5 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @param warehouse 目的仓
      * @return OtherOutstockDTO.AddDTO
      */
-    OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse);
+    OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse);
 }

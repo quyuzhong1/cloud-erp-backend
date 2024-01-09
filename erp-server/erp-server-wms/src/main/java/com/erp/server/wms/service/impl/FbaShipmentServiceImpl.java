@@ -423,7 +423,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             //新增其他出库单
             if (CollectionUtils.isNotEmpty(outstockDetailList)) {
-                this.generateOtherOutstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), outstockDetailList);
+                this.generateOtherOutstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), outstockDetailList,true);
             }
         }
 
@@ -1063,6 +1063,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //其他入库单明细信息
         List<OtherInstockDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+
+        //其他出库单明细信息
+        List<OtherOutstockDetailDTO.AddDTO> outstockDetailList = new ArrayList<>();
+
         // 当前店铺
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
         //根据用户id查询用户详情信息
@@ -1073,35 +1077,50 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                 //查询原签收数量，比较新获取的签收数量，多的新增其他入库
                 for (FbaShipmentReceiveEntity detailEntity : saveReceiveList) {
-                    OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
-                    addDTO.setSkuId(detailEntity.getSkuId());
-                    addDTO.setSkuNo(detailEntity.getSkuNo());
-                    addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getReceiveQty());
-                    addDTO.setRemark(StrUtil.format("FBA货件【{}】超收，自动生成其他入库报溢", entity.getCode()));
-                    detailAddList.add(addDTO);
+                    if(detailEntity.getReceiveQty() > 0){
+                        OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
+                        addDTO.setSkuId(detailEntity.getSkuId());
+                        addDTO.setSkuNo(detailEntity.getSkuNo());
+                        addDTO.setWarehouseLocation("");
+                        addDTO.setActualQty(detailEntity.getReceiveQty());
+                        addDTO.setRemark(StrUtil.format("FBA货件【{}】超收，自动生成其他入库报溢", entity.getCode()));
+                        detailAddList.add(addDTO);
+                    }else{
+                        // 如果签收数小于发货数量，其他出库单报损
+                        OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
+                        addDTO.setSkuId(detailEntity.getSkuId());
+                        addDTO.setSkuNo(detailEntity.getSkuNo());
+                        addDTO.setWarehouseLocation("");
+                        addDTO.setActualQty(Math.abs(detailEntity.getReceiveQty()));
+                        addDTO.setRemark(StrUtil.format("【{}】签收数量减少后出库反冲", entity.getCode()));
+                        outstockDetailList.add(addDTO);
+                    }
                 }
                 if (CollectionUtils.isNotEmpty(detailAddList)){
                     FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
                     String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
                     this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
                 }
+                //如果是负数生成其他出库单，目的仓报损
+                if (CollectionUtils.isNotEmpty(outstockDetailList)) {
+                    FindUserDTO userByUserId = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
+                    this.generateOtherOutstock(shopInfoEntity.getWarehouseId(), userByUserId.getDepartmentId(), outstockDetailList,false);
+                }
                 return;
             }
 
-            //新增直接调拨单:在途仓-目的仓
-            String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
-            if (StringUtils.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Arrays.asList(transferOutId));
-                //审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                baseApproveParamDTO.setType(ApproveType.PASS);
-                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-            } else {
-                throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+            //新增直接调拨单
+            List<FbaShipmentReceiveEntity> greaterThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()>0).collect(Collectors.toList());
+            List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
+            //正数签收生成在途仓-目的仓
+            if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()));
             }
+            //负数签收生成目的仓-在途仓
+            if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()));
+            }
+
 
             // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
             if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
@@ -1149,18 +1168,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             // 找不到发货单 直接生成其他入库到目的仓的可用
             this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
 */
-            //新增直接调拨单:在途仓-目的仓
-            String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
-            if (StringUtils.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Arrays.asList(transferOutId));
-                //审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                baseApproveParamDTO.setType(ApproveType.PASS);
-                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-            } else {
-                throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+            //新增直接调拨单
+            List<FbaShipmentReceiveEntity> greaterThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()>0).collect(Collectors.toList());
+            List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
+            //正数签收生成在途仓-目的仓
+            if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()));
+            }
+            //负数签收生成目的仓-在途仓
+            if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()));
             }
         }
     }
@@ -1212,7 +1229,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @param detailAddList 出库单明细信息
      * @return void
      **/
-    private void generateOtherOutstock(String warehouseId, String deptId, List<OtherOutstockDetailDTO.AddDTO> detailAddList) {
+    private void generateOtherOutstock(String warehouseId, String deptId, List<OtherOutstockDetailDTO.AddDTO> detailAddList,Boolean isOnwayWarehouse) {
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1224,7 +1241,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //库存方向：普通
         addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         //发货仓库id
-        addDTO.setWarehouseId(warehouseEntity.getOnwayWarehouseId());
+        addDTO.setWarehouseId(isOnwayWarehouse?warehouseEntity.getOnwayWarehouseId():warehouseEntity.getId());
         //入库类型：报损
         addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
         //领料部门
@@ -1447,7 +1464,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList) {
+    public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark) {
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(shopEntity.getWarehouseId()));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1457,6 +1474,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //查询在途仓
         WarehouseEntity onwayWarehouse = warehouseService.getById(warehouseEntity.getOnwayWarehouseId());
 
+        WarehouseEntity outWarehouse = isToOnwayWarehouse?warehouseEntity:onwayWarehouse;
+
+        WarehouseEntity inWarehouse = isToOnwayWarehouse?onwayWarehouse:warehouseEntity;
+
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
         addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
@@ -1465,9 +1486,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        addDTO.setInOrgId(inWarehouse.getOrgId());
         //调出组织
-        addDTO.setOutOrgId(onwayWarehouse.getOrgId());
+        addDTO.setOutOrgId(outWarehouse.getOrgId());
         //调拨类型
         if (warehouseEntity.getOrgId().equals(onwayWarehouse.getOrgId()))  {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
@@ -1477,7 +1498,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         addDTO.setSourceId(shipmentEntity.getId());
         addDTO.setSourceCode(shipmentEntity.getCode());
-        addDTO.setRemark(String.format("FBA货件【%s】签收自动创建", shipmentEntity.getCode()));
+        addDTO.setRemark(remark);
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
@@ -1486,10 +1507,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
-            detailAddDto.setQty(detailEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(onwayWarehouse.getId());
+            detailAddDto.setQty(Math.abs(detailEntity.getReceiveQty()));
+            detailAddDto.setOutWarehouseId(outWarehouse.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(warehouseEntity.getId());
+            detailAddDto.setInWarehouseId(inWarehouse.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             detailAddDtoList.add(detailAddDto);
@@ -1564,6 +1585,22 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (StringUtils.isBlank(warehouseEntity.getOnwayWarehouseId())) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void generateTransfer(ShopInfoEntity shopInfoEntity ,FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList ,Boolean isToOnwayWarehouse,String remark){
+        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark);
+        if (StringUtils.isNotBlank(transferOutId)) {
+            //提交
+            transferInfoService.submit(Arrays.asList(transferOutId));
+            //审核
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+            baseApproveParamDTO.setType(ApproveType.PASS);
+            transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+        } else {
+            throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
         }
     }
 }
