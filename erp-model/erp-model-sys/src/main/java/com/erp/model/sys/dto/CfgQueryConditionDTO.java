@@ -84,6 +84,20 @@ public class CfgQueryConditionDTO implements Serializable {
          */
         private Integer index;
 
+        /**
+         * 是否扩展字段
+         */
+        private Boolean isExtend;
+
+        /**
+         * 分组名称,用于多个sql跨库查询
+         */
+        private String group;
+
+        /**
+         * 显示类型
+         */
+        private String displayType;
     }
 
     @Data

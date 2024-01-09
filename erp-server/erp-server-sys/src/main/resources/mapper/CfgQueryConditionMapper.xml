@@ -107,7 +107,10 @@
             qc.date_type,
             qc.props,
             qc.index,
-            qo.api_name
+            qo.api_name,
+            qc.is_extend,
+            qc.group,
+            qc.display_type
         from cfg_query_condition qc
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         where  qc.is_deleted = false
