@@ -2,6 +2,9 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,20 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@LogisticsPlatformType(LogisticsPlatformEnum.TONG_YOU)
+@LogisticsPlatformType(LogisticsPlatformEnum.BT)
 public class BtLogisticsHandlerImpl extends AbstractLogisticsHandler {
+
+    /**
+     * 下物流单
+     * @param logisticsOrderVO
+     * @return
+     */
+    @Override
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
+
+        return null;
+
+    }
+
 }
