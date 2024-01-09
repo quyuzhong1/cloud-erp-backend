@@ -171,11 +171,6 @@ public class PurchasePriceChangeDTO implements Serializable {
 
         private String code;
 
-        /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
 
         /**
          * 采购价目表id

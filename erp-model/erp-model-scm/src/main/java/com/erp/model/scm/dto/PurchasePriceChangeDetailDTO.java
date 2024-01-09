@@ -194,6 +194,13 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
 
         private String id;
 
+
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
         /**
          * sku id
          */
@@ -210,7 +217,9 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private String skuNo;
 
-
+        /**
+         * 价目表详情id
+         */
         private String purchasePriceDetailId;
 
         /**
@@ -227,7 +236,6 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 最大数量
          */
         private Integer maxQty;
-
 
         /**
          * 币种
@@ -283,6 +291,11 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled=false;
+
+        /**
+         * 价目表Code
+         */
+        private String priceCode;
     }
 
 }

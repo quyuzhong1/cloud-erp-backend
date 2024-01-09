@@ -572,18 +572,17 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(viewList)) {
             throw new ServiceException(ApiError.ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL);
         }
-        long count = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getPurchasePriceId).distinct().count();
-        if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_ID_REPEAT);
+        //查询价目信息
+        List<String> purchasePriceIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getPurchasePriceId).collect(Collectors.toList());
+        List<PurchasePriceEntity> purchasePriceEntities = priceService.listByIds(purchasePriceIds);
+
+        //只有相同的采购组织可以批量变更报价
+        long purchaseOrgCount = purchasePriceEntities.stream().map(req -> req.getPurchaseOrgId()).distinct().count();
+        if (purchaseOrgCount > 1) {
+            throw new ServiceException(ApiError.PURCHASE_ORG_NOT_REPEAT);
         }
 
-        PurchasePriceEntity priceEntity = priceService.getById(viewList.get(0).getPurchasePriceId());
-        if (Objects.isNull(priceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
-        }
-        viewDTO.setPurchasePriceId(viewList.get(0).getPurchasePriceId());
-        viewDTO.setSupplierId(priceEntity.getSupplierId());
-        viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+        viewDTO.setPurchaseOrgId(purchasePriceEntities.get(0).getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
@@ -605,6 +604,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setProductName(skuVO.getSkuName());
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
+            //采购价目信息
+            PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(item.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+                throw new ServiceException(ApiError.ERROR_98024);
+            }
+            result.setSupplierId(purchasePriceEntity.getSupplierId());
+            result.setPriceCode(purchasePriceEntity.getCode());
             resultList.add(result);
         }
         viewDTO.setPurchasePriceChangeDetailList(resultList);
