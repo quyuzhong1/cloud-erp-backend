@@ -104,7 +104,9 @@ public class AliExpressOrderService {
         for (AliExpressOrder item : orderInfoList) {
             //订单id
             String orderId = item.getOrderId();
+
             AliExpressOrderDetail orderDetail = this.getOrderDetail(orderId, orderRequest);
+            log.warn("拉取订单详情>>>>>>>{}>>>>>值---{}",orderId,JSONObject.toJSONString(orderDetail));
             if (Objects.nonNull(orderDetail)) {
                 item.setDetail(orderDetail);
             }
@@ -143,6 +145,8 @@ public class AliExpressOrderService {
         request.addApiParameter("param1", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+
+        log.error("相应体》》》》》{}",jsonObject);
         //成功
         if (jsonObject.containsKey("target")) {
             JSONObject json = jsonObject.getJSONObject("target");
