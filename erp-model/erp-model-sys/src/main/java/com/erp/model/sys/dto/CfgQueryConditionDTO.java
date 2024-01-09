@@ -311,7 +311,7 @@ public class CfgQueryConditionDTO implements Serializable {
         private String group;
 
         /**
-         * 显示类型
+         * 显示类型{{sys_url}}common/enumDropDown?type=QueryDisplayType
          */
         private String displayType;
     }
