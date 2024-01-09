@@ -3743,6 +3743,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            //沃尔玛
+            if(PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                if("Cancelled".equals(platformOrderStatus)
+                        ||"Refund".equals(platformOrderStatus)){
+                    dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
+            }
+
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {

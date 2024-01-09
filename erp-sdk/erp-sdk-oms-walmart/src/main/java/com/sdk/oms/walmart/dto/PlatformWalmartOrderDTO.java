@@ -227,26 +227,31 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setInvalidStatus(false);
 
         if (CollectionUtils.isNotEmpty(shipped)) {
+            orderDTO.setPlatformOrderStatus("Shipped");
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isNotEmpty(delivered)) {
+            orderDTO.setPlatformOrderStatus("Delivered");
             //沃尔玛：已交付 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isNotEmpty(acknowledged)) {
+            orderDTO.setPlatformOrderStatus("Acknowledged");
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (CollectionUtils.isNotEmpty(cancelled)) {
+            orderDTO.setPlatformOrderStatus("Cancelled");
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(true);
         } else {
+            orderDTO.setPlatformOrderStatus("Refund");
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
