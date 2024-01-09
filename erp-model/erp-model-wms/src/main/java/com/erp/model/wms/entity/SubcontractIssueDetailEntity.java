@@ -96,6 +96,11 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 审核状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
 
     public static final String PARENT_SKU_ID = "parent_sku_id";
 
