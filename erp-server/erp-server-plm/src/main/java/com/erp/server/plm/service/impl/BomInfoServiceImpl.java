@@ -1360,7 +1360,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<String> childrenSkuIds = item.getChildren().stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
             childrenSkuIdList.addAll(childrenSkuIds);
         }
-        //checkChildrenIsParent(parentSkuNoList, childrenSkuIdList);
+        checkChildrenIsParent(parentSkuNoList, childrenSkuIdList);
         List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
         for (BomSkuDTO bomSkuDTO : skuList) {
