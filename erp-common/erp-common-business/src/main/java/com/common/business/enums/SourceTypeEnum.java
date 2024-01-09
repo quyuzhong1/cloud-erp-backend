@@ -55,7 +55,7 @@ public enum SourceTypeEnum {
     OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "海外发货计划","overseas_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
-
+    SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
 
 
     //OMS
