@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.core.util.StrUtil;
@@ -26,6 +27,7 @@ import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.dto.UserManageDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
@@ -50,6 +52,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -102,6 +105,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
         }
+        dto.getParams().setIsSuper(true);
         PagingVO<SupplierUserVO> page = userInfoFeign.page(dto);
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
         dataProcessSupplierInfo(list, supplierMap);
@@ -128,7 +132,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         addDTO.setUid(uid);
         addDTO.setSupplierId(sysUserInfoDTO.getSupplierId());
         addDTO.setDisabled(false);
-        addDTO.setIsSuper(sysUserInfoDTO.isSuper());
+        addDTO.setIsSuper(true);
         supplierRefUserService.add(addDTO);
     }
 
@@ -152,36 +156,45 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         refUserEntity.setUid(sysUserInfoDTO.getUid());
         refUserEntity.setSupplierId(sysUserInfoDTO.getSupplierId());
-        refUserEntity.setIsSuper(sysUserInfoDTO.isSuper());
-        refUserEntity.setSupplierId(sysUserInfoDTO.getSupplierId());
+        refUserEntity.setIsSuper(true);
         refUserEntity.setDisabled(false);
         supplierRefUserService.saveOrUpdate(refUserEntity);
-
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，id：【{}】", sysUserInfoDTO.getRefId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), refUserEntity.getId(), "");
-        moduleOperateLogService.addModuleOperateLogByObj(refUserEntity, refUserEntity, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), refUserEntity.getId(), "", msg);
+        moduleOperateLogService.addModuleOperateLogByObj(old, refUserEntity, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), refUserEntity.getId(), "", msg);
     }
 
     @Override
-    public SysUserInfoEntity getById(String uid) {
+    public SupplierUserInfoVO getById(String uid) {
+        SupplierUserInfoVO vo = new SupplierUserInfoVO();
         SysUserInfoEntity userInfoEntity = userInfoFeign.info(uid);
-//        if (Objects.nonNull(userInfoEntity)){
-//
-//        }
-//        SupplierRefUserEntity supplierRelUserByUid = supplierRefUserService.getSupplierRelUserByUid(uid);
-//        if (Objects.nonNull(supplierRelUserByUid)){
-//            SupplierEntity supplierEntity = supplierService.getById(supplierRelUserByUid.getSupplierId());
-//            if (Objects.nonNull(supplierEntity)){
-//
-//            }
-//        }
-        return userInfoEntity;
+        if (Objects.nonNull(userInfoEntity)){
+            BeanUtil.copyProperties(userInfoEntity, vo);
+        }
+        SupplierRefUserEntity supplierRelUserByUid = supplierRefUserService.getSupplierRelUserByUid(uid);
+        if (Objects.nonNull(supplierRelUserByUid)){
+            vo.setRefId(supplierRelUserByUid.getId());
+            vo.setSupplierId(supplierRelUserByUid.getSupplierId());
+            vo.setUid(supplierRelUserByUid.getUid());
+            SupplierEntity supplierEntity = supplierService.getById(supplierRelUserByUid.getSupplierId());
+            if (Objects.nonNull(supplierEntity)){
+                vo.setSupplierName(supplierEntity.getName());
+                vo.setPurchaseUserId(supplierEntity.getPurchaseUserId());
+                vo.setPurchaseUserName(supplierEntity.getPurchaseUserName());
+            }
+        }
+        return vo;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult deleteByIds(List<String> uids) {
-        return userInfoFeign.delete(uids);
+        userInfoFeign.delete(uids);
+        //删除用户和供应商绑定记录
+        supplierRefUserService.deleteRefByUids(uids);
+        return ApiResult.success();
     }
 
     @Override
@@ -324,7 +337,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             sysUserInfoDTO.setNeedChangePwd(true);
             sysUserInfoDTO.setCreatePasswordType(0);
             //scm新增用户都为管理员
-            sysUserInfoDTO.setSuper(true);
+            sysUserInfoDTO.setIsSuper(true);
             try {
                 String uid = userInfoFeign.save(sysUserInfoDTO);
                 refUserEntity.setUid(uid);
@@ -365,6 +378,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     private void dataProcessSupplierInfo(List<SupplierUserVO> list, Map<String, SupplierRefUserVO> supplierMap) {
         if (CollectionUtils.isNotEmpty(list)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             list.forEach(supplierUserVO -> {
                 SupplierRefUserVO supplierRefUserVO = supplierMap.get(supplierUserVO.getUid());
                 if (Objects.nonNull(supplierRefUserVO)) {
@@ -385,6 +399,18 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                     supplierUserVO.setIsSuperStr("超级管理员");
                 }else {
                     supplierUserVO.setIsSuperStr("业务员");
+                }
+                if (Objects.nonNull(supplierUserVO.getLastLoginTime())){
+
+                    supplierUserVO.setLastLoginTimeStr(sdf.format(supplierUserVO.getLastLoginTime()));
+                }else {
+                    supplierUserVO.setLastLoginTimeStr("");
+                }
+                if (Objects.nonNull(supplierUserVO.getCreateTime())){
+
+                    supplierUserVO.setCreateTimeStr(sdf.format(supplierUserVO.getCreateTime()));
+                }else {
+                    supplierUserVO.setCreateTimeStr("");
                 }
             });
         }

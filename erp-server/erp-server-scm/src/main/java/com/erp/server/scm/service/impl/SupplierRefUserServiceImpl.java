@@ -106,6 +106,15 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
         }
     }
 
+    @Override
+    public void deleteRefByUids(List<String> uids) {
+        if (CollectionUtils.isNotEmpty(uids)){
+            lambdaUpdate().in(SupplierRefUserEntity::getUid,uids)
+                    .set(SupplierRefUserEntity::getIsDeleted,true)
+                    .update();
+        }
+    }
+
 
     /**
      * 新增修改处理数据

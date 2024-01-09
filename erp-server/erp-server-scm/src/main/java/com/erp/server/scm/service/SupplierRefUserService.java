@@ -49,4 +49,10 @@ public interface SupplierRefUserService extends SuperService<SupplierRefUserEnti
      * @return
      */
     SupplierRefUserEntity getSupplierRelUserByUid(String uid);
+
+    /**
+     * 根据用户id删除关联记录
+     * @param uids
+     */
+    void deleteRefByUids(List<String> uids);
 }

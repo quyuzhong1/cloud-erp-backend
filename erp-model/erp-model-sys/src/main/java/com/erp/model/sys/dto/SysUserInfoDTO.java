@@ -58,11 +58,11 @@ public class SysUserInfoDTO implements Serializable {
     /**
      *是否强制登录 修改密码
      */
-    private boolean needChangePwd;
+    private Boolean needChangePwd;
     /**
      * 是否超级管理员 false 不是管理员
      */
-    private boolean isSuper;
+    private Boolean isSuper;
     /**
      * 供应商id
      */
