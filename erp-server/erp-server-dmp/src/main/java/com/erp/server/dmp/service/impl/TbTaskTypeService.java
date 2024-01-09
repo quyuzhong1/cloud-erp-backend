@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
@@ -61,6 +62,8 @@ public class TbTaskTypeService {
         LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
         List<JobTaskDTO> jobTaskDTOList = platformApiTaskService.listApiTask(localTime, "pull");
+        //
+        jobTaskDTOList = jobTaskDTOList.stream().filter(e-> e.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())).collect(Collectors.toList());
         // 任务量等于0，任务重新开始,分页设置成0
         if (CollectionUtil.isEmpty(jobTaskDTOList)) {
             return jobTaskDTOList;
