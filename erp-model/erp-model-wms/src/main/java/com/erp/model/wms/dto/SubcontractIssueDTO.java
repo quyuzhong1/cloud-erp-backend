@@ -156,6 +156,16 @@ public class SubcontractIssueDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 仓位【可排序】
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 备注【可排序】
          */
         private String remark;
@@ -164,11 +174,6 @@ public class SubcontractIssueDTO implements Serializable {
         * 最新审核人名称
         */
         private String approveUserName;
-
-        /**
-        * 最新审核人id
-        */
-        private String approveUserId;
 
         /**
          * 创建人名称

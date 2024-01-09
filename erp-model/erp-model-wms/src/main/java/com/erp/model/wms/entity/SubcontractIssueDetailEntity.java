@@ -25,6 +25,12 @@ import com.common.business.enums.ApproveStatusEnum;
 public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDetailEntity> {
 
     /**
+     * 主表id
+     */
+    @TableField("main_id")
+    private String mainId;
+
+    /**
     * 父级skuId
     */
     @TableField("parent_sku_id")
