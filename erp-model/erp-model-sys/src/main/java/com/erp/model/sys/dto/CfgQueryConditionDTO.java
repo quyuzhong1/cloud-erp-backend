@@ -92,7 +92,7 @@ public class CfgQueryConditionDTO implements Serializable {
         /**
          * 分组名称,用于多个sql跨库查询
          */
-        private String group;
+        private String groupName;
 
         /**
          * 显示类型
