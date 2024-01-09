@@ -11,6 +11,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -113,13 +114,18 @@ public interface SysUserFeign {
      * 根据用户名称查询用户
      */
     @GetMapping("feign/user/getUserByUserName")
-    FindUserDTO getUserByUserName(@RequestBody String userName);
+    FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType);
+    /**
+     * 根据用户名称查询用户
+     */
+    @GetMapping("feign/user/getUserByMobile")
+    FindUserDTO getUserByMobile(@RequestParam("mobile") String mobile,@RequestParam("userType") String userType);
 
     /**
      * 根据用户名称集合查询用户
      */
     @GetMapping("feign/user/listUserByUserNames")
-    List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames);
+    List<FindUserDTO> listUserByUserNames(@RequestParam("userNames") List<String> userNames,@RequestParam("userType") String userType);
 
     /**
      * 根据userIds查询用户集合

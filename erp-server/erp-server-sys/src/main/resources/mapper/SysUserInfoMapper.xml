@@ -47,6 +47,12 @@
         <if test="params.userType != null and params.userType != ''">
             AND sui.user_type = #{params.userType}
         </if>
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
         <if test="roleIds !=null  and  roleIds.size()>0">
             AND uid in
             (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
@@ -275,6 +281,84 @@
                 and sui.update_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sui.update_time
             </if>
         </where>
+    </select>
+    <select id="feignPaging" resultType="com.erp.model.sys.vo.SupplierUserVO">
+        SELECT
+        sui.uid,
+        sui.user_name,
+        sui.real_name,
+        sui.mobile,
+        sui.email,
+        sui.is_super AS isSuper,
+        sui.user_state AS userState,
+        CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
+        sui.last_login_time,
+        sui.create_user_name,
+        sui.create_time
+        FROM sys_user_info sui
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        WHERE delete_state=1 AND user_account not in ('admin')
+        <if test="params.state !=null">
+            AND sui.user_state=#{params.state}
+        </if>
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.startTime!=null">
+            AND sui.last_login_time &gt;=#{params.startTime}
+        </if>
+        <if test="params.endTime!=null">
+            AND sui.last_login_time &lt;=#{params.endTime}
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+        ORDER BY sui.update_time DESC
+    </select>
+    <select id="feignList" resultType="com.erp.model.sys.vo.SupplierUserVO">
+        SELECT
+        uid,
+        user_name,
+        real_name,
+        mobile,
+        email,
+        is_super,
+        user_state AS disabled,
+        CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
+        last_login_time,
+        create_user_name,
+        create_time
+        FROM sys_user_info sui
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        WHERE delete_state=1 AND user_account not in ('admin')
+        <if test="params.state !=null">
+            AND sui.user_state=#{params.state}
+        </if>
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.startTime!=null">
+            AND last_login_time &gt;=#{params.startTime}
+        </if>
+        <if test="params.endTime!=null">
+            AND last_login_time &lt;=#{params.endTime}
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+        ORDER BY update_time DESC
     </select>
 
 

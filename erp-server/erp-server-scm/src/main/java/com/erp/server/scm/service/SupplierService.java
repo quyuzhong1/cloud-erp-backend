@@ -110,12 +110,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
-     * @description: 结束审核
-     * @author Will
-     * @date: 2023/7/11 12:02
      * @param dto
      * @param list
      * @return Boolean
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/11 12:02
      */
     Boolean approveEnd(BaseApproveParamDTO dto, List<SupplierEntity> list);
 
@@ -276,6 +276,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return List<SupplierEntity>
      */
     List<SupplierEntity> listByCodes(List<String> supplierCodes);
+
+    /**
+     * 根据供应商id获取列表
+     *
+     * @param ids
+     * @return
+     */
+    List<SupplierEntity> listByIds(List<String> ids);
 
     /**
      * 根据名称获取供应商

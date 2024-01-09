@@ -1139,6 +1139,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 .list();
     }
 
+    @Override
+    public List<SupplierEntity> listByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery()
+                .in(SupplierEntity::getId, ids)
+                .list();
+    }
+
 
     /**
      * 根据名称获取供应商

@@ -134,7 +134,8 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("payment_condition")
     private String paymentCondition;
 
-
+    @TableField("srm_disabled")
+    private Boolean srmDisabled;
     @Override
     public Serializable pkVal() {
         return null;

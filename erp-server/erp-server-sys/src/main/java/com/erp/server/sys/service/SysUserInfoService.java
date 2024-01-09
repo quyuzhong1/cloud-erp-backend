@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -37,11 +38,11 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void add(SysUserInfoDTO sysUserInfoDTO);
 
     /**
-     * 保存用户
+     * 保存SRM用户
      *
      * @param sysUserInfoDTO
      */
-    void addSrmUser(SysUserInfoDTO sysUserInfoDTO);
+    String addSrmUser(SysUserInfoDTO sysUserInfoDTO);
     /**
      * 修改用户
      *
@@ -53,7 +54,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      *
      * @param sysUserInfoDTO
      */
-    void updateSrmUser(SysUserInfoDTO sysUserInfoDTO);
+    Boolean updateSrmUser(SysUserInfoDTO sysUserInfoDTO);
     /**
      * 账号登录
      *
@@ -106,9 +107,9 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     FindUserDTO getUserByUserId(String userId);
 
-    FindUserDTO getUserByUserName(String userName);
+    FindUserDTO getUserByUserName(String userName,String userType);
 
-    List<FindUserDTO> listUserByUserNames(List<String> userNames);
+    List<FindUserDTO> listUserByUserNames(List<String> userNames,String userType);
 
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
@@ -251,5 +252,27 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param userIdList
      */
     void updateSysUserTime(List<String> userIdList);
+
+    /**
+     *  供应商协同用户查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SupplierUserVO> feignPaging(PagingDTO<UserPagingSearchDTO> dto);
+
+    /**
+     * 根据用户类型和手机号获取用户信息
+     * @param mobile
+     * @param userType
+     * @return
+     */
+    FindUserDTO getUserByMobile(String mobile, String userType);
+
+    /**
+     * 列表查询
+     * @param dto
+     * @return
+     */
+    List<SupplierUserVO> feignList(UserPagingSearchDTO dto);
 }
 

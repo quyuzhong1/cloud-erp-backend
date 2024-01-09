@@ -6,11 +6,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.dto.SysUserInfoDTO;
-import com.erp.model.sys.dto.SysUserPagingSearchDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.model.sys.dto.UserManageDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -64,27 +62,34 @@ public interface UserInfoFeign {
      * @return
      */
     @PostMapping("feign/user/page")
-    ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto);
+    PagingVO<SupplierUserVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
 
-
+    /**
+     * 查询
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/user/list")
+    List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto);
     /**
      * 添加用户
      */
     @RequestMapping("feign/user/save")
-    ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    String save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
     /**
      * 修改用户
      */
     @RequestMapping("feign/user/update")
-    ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    Boolean update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
 
     /**
      * 用户信息
      */
     @RequestMapping("feign/user/info/{uid}")
-    ApiResult info(@PathVariable("uid") String uid);
+    SysUserInfoEntity info(@PathVariable("uid") String uid);
 
 
     /**

@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
@@ -90,7 +91,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             errorMsgList.addAll(msgList);
         }
         if (StringUtils.isNotBlank(productPlanExcelDTO.getChargeName())) {
-            FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName());
+            FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName(), UserTypeEnum.ERP.code);
             if (ObjectUtils.isEmpty(charge) || StringUtils.isBlank(charge.getUserId())) {
                 errorMsgList.add("产品经理在系统中未找到");
             }
