@@ -19,16 +19,20 @@ import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
+import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
 import com.erp.oms.aliexpress.dto.response.AliExpressProduct;
+import com.erp.oms.aliexpress.dto.response.BuyerTradeAddress;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.context.Theme;
 
@@ -143,8 +147,6 @@ public class AliExpressOrderService {
         request.addApiParameter("param1", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         JSONObject jsonObject = JSONObject.parseObject(response.getBody());
-
-        log.info("相应体》》》》》{}",jsonObject);
         //成功
         if (jsonObject.containsKey("target")) {
             JSONObject json = jsonObject.getJSONObject("target");
@@ -190,7 +192,7 @@ public class AliExpressOrderService {
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
-                redisUtil.set(tokenKey, result,shopAuthEntity.getExpiresIn());
+                redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
             }
 
             return result;
@@ -239,6 +241,38 @@ public class AliExpressOrderService {
             throw new ServiceException(ApiError.Default, msg);
         }
 
+    }
+
+
+    /**
+     * 下载地址信息 因地址信息加密了
+     *
+     * @return
+     */
+    public BuyerTradeAddress getBuyerTradeAddress(AddressRequest addressRequest) throws ApiException {
+        String appKey = addressRequest.getClientId();
+        String appSecret = addressRequest.getClientSecret();
+        String baseUrl = addressRequest.getBaseUrl();
+        String token = addressRequest.getToken();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        String apiName = AliexpressConstants.ADDRESS;
+        request.setApiName(apiName);
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("orderId", addressRequest.getOrderId());
+        request.addApiParameter("oaid", addressRequest.getOaid());
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        String code = jsonObject.getOrDefault("code", "").toString();
+        //成功
+        if ("0".equals(code)) {
+            if (jsonObject.containsKey("result_obj")) {
+                JSONObject json = jsonObject.getJSONObject("target");
+                BuyerTradeAddress address = JSONObject.parseObject(json.toJSONString(), BuyerTradeAddress.class);
+                return address;
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) throws ApiException {

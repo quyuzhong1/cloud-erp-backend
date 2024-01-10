@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
@@ -39,14 +41,28 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
     private AliExpressShopInfoDTO aliExpressShopInfoDTO;
 
+    /**
+     * 地址详情下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    @Panno(findType = PannoEnum.EQ,field = "downloadAddressStatus")
+    private Integer downloadAddressStatus;
+
+
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
+    private String shopId;
+
 
     public PlatformAliExpressOrderDTO(JobTaskDTO dto, AliExpressOrder aliExpressOrder, AliExpressShopInfoDTO aliExpressShopInfoDTO) {
         this.aliExpressOrder = aliExpressOrder;
         this.aliExpressShopInfoDTO = aliExpressShopInfoDTO;
         this.setIsClean(0);
+        this.shopId=aliExpressShopInfoDTO.getId();
         this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         this.setUniqueId(aliExpressOrder.getOrderId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+        this.setDownloadAddressStatus(0);
         this.setLastPushTime(dto.getNextTime().toString());
     }
 

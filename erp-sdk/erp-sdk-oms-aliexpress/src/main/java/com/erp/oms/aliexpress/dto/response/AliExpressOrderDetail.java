@@ -27,6 +27,14 @@ public class AliExpressOrderDetail implements Serializable {
     @JSONField(name = "memo")
     private String  memo;
 
+
+    /**
+     * 加密oaid
+     */
+    @JSONField(name = "oaid")
+    private String oaid;
+
+
     /**
      * 收货地址信息
      */

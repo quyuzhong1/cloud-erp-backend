@@ -3707,6 +3707,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
                 handleData(oldEntity, false, false);
             }
+            ApproveStatusEnum oldApproveStatus=oldEntity.getApproveStatus();
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
@@ -3724,7 +3725,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String platformOrderStatus=dto.getPlatformOrderStatus();
             // 亚马逊作废保留以前状态
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
-                dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                oldEntity.setApproveStatus(oldApproveStatus);
                 dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
@@ -3732,7 +3733,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // Shopify作废保留以前状态
             if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getDictPlatform()) &&
                     ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
-                dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                oldEntity.setApproveStatus(oldApproveStatus);
                 dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
@@ -3742,7 +3743,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if("IN_CANCEL".equals(platformOrderStatus)
                         ||"IN_FROZEN".equals(platformOrderStatus)
                         ||"RISK_CONTROL".equals(platformOrderStatus)){
-                    dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                    oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
@@ -3751,7 +3752,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())){
                 if("Cancelled".equals(platformOrderStatus)
                         ||"Refund".equals(platformOrderStatus)){
-                    dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                    oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
