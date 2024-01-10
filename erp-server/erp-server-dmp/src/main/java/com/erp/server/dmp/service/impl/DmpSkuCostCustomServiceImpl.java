@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.server.dmp.mapper.DmpSkuCostCustomMapper;
@@ -75,6 +76,14 @@ public class DmpSkuCostCustomServiceImpl extends SuperServiceImpl<DmpSkuCostCust
         return  lambdaQuery()
                 .eq(DmpSkuCostCustomEntity::getSkuNo,skuNo)
                 .one();
+    }
+
+    @Override
+    public List<DmpSkuCostCustomEntity> listDmpSkuCostCustomBySkuNoList(List<String> redisSkuNoList) {
+        if (CollectionUtil.isEmpty(redisSkuNoList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(DmpSkuCostCustomEntity::getSkuNo,redisSkuNoList).list();
     }
 
 

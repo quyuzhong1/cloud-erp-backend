@@ -41,4 +41,12 @@ public interface DmpSkuCostCustomService extends SuperService<DmpSkuCostCustomEn
      * @return DmpSkuCostCustomEntity
      */
     DmpSkuCostCustomEntity getBySkuNo(String skuNo);
+    /**
+     * @description: 根据sku编码集合查询
+     * @author Will
+     * @date: 2024/1/10 19:51
+     * @param redisSkuNoList
+     * @return List<DmpSkuCostCustomEntity>
+     */
+    List<DmpSkuCostCustomEntity> listDmpSkuCostCustomBySkuNoList(List<String> redisSkuNoList);
 }
