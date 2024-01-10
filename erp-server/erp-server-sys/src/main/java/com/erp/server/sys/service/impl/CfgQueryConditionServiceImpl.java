@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDisplayTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgQueryConditionEntity;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
@@ -47,14 +48,12 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
 
     @Override
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
-
-        LambdaQueryWrapper<CfgQueryConditionEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CfgQueryConditionEntity::getCode, dto.getCode());
-        queryWrapper.eq(CfgQueryConditionEntity::getValue,dto.getValue());
-        queryWrapper.last("LIMIT 1");
-        CfgQueryConditionEntity dbEntity = this.getOne(queryWrapper);
-        if(Objects.nonNull(dbEntity)){
+        List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
+        if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()))){
             throw new ServiceException("已存在配置字段,无法重复新增");
+        }
+        if(QueryDisplayTypeEnum.TAB.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.TAB.getCode()))){
+            throw new ServiceException("tabFlag类型字段只能配置一个");
         }
         CfgQueryConditionEntity entity = new CfgQueryConditionEntity();
         BeanUtil.copyProperties(dto,entity);
@@ -89,5 +88,21 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     @Override
     public Boolean delete(BaseIdsDTO.IdsDTO idsDTO) {
         return this.removeByIds(idsDTO.getIds());
+    }
+
+    @Override
+    public CfgQueryConditionEntity getByCodeAndField(String code, String field) {
+        LambdaQueryWrapper<CfgQueryConditionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CfgQueryConditionEntity::getCode, code);
+        queryWrapper.eq(CfgQueryConditionEntity::getValue,field);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<CfgQueryConditionEntity> listByCode(String code) {
+        LambdaQueryWrapper<CfgQueryConditionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CfgQueryConditionEntity::getCode, code);
+        return this.list(queryWrapper);
     }
 }
