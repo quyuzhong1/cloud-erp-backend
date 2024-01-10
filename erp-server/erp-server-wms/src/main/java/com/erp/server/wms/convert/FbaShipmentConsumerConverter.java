@@ -69,6 +69,7 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "msku", source = "receiveDTO.sellerSku", defaultValue = ""),
+            @Mapping(target = "detailId", source = "detailId"),
             @Mapping(target = "fnSku", source = "receiveDTO.fnSku", defaultValue = ""),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
             @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
