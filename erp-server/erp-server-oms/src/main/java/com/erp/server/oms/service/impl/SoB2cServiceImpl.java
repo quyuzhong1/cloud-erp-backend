@@ -2184,7 +2184,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
                 //标签处理
                 SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
-                String detailLabel = detailDTO.getLabel();
+                String detailLabel = detailDTO.getLabelJson();
                 if (StringUtils.isNotBlank(detailLabel)) {
                     SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabel, SoB2cDetailDTO.LabelJsonDTO.class);
                     detailLabelDTO.setAlreadyTaxed(labelJsonDTO.getAlreadyTaxed());
@@ -3746,6 +3746,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            //沃尔玛
+            if(PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                if("Cancelled".equals(platformOrderStatus)
+                        ||"Refund".equals(platformOrderStatus)){
+                    dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
+            }
+
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
