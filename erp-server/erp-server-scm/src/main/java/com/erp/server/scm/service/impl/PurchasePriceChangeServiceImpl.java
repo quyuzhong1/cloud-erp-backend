@@ -724,14 +724,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 根据采购价目表id  获取对应产品信息
      *
-     * @param purchasePriceId
+     * @param purchasePriceIds
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
      * @author yl
      * @date 2023-03-31 16:07
      */
     @Override
-    public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId) {
-        return purchasePriceDetailService.listPriceChangeDetail(Arrays.asList(purchasePriceId));
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(List<String> purchasePriceIds) {
+        return purchasePriceDetailService.listPriceChangeDetail(purchasePriceIds);
     }
 
     @Override

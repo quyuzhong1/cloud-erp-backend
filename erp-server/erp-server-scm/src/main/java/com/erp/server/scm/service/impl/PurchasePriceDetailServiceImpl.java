@@ -628,8 +628,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         viewDTO.setPurchaseOrgId(purchasePriceEntities.get(0).getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //查询产品信息
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //查询供应商
+        List<String> supplierIds = viewList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
@@ -651,7 +657,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (ObjectUtils.isEmpty(purchasePriceEntity)) {
                 throw new ServiceException(ApiError.ERROR_98024);
             }
+
+            //供应商名称
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> item.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
             result.setSupplierId(purchasePriceEntity.getSupplierId());
+            result.setSupplierName(supplierEntity.getName());
+
             result.setPriceCode(purchasePriceEntity.getCode());
             resultList.add(result);
         }
