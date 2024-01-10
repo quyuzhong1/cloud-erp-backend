@@ -843,7 +843,7 @@ public enum ApiError implements Serializable {
     IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
-    WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
+    WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理，处理中，已处理的单据允许撤销"),
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
@@ -892,6 +892,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
+    TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
+    JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
 
     /**
      * OMS 错误

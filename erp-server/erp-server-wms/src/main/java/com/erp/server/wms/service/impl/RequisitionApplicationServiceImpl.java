@@ -428,20 +428,24 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public BatchResultDTO cancelProcess(String id) {
         RequisitionApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
-        // 只有待处理的单据允许撤销
+/*        // 只有待处理的单据允许撤销
         if (!Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
-        }
+        }*/
         //待处理撤销
-/*        if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
+        if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
             //处理中撤销
-            transferInfoService.getBySourceCode(entity.getCode(), entity.getRequisitionWarehouseId(), entity.get);
+            transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+            updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             //已处理
-
-        }*/
+            transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode());
+            updateApproveStatus(id, RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
+        } else {
+            throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
+        }
 
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -714,7 +718,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
 
         //默认来源类型：海外发货计划
-        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
@@ -801,7 +805,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
 
         //默认来源类型：要货申请
-        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
