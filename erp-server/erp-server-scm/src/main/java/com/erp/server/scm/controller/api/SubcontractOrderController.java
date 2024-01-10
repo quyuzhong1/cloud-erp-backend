@@ -382,4 +382,16 @@ public class SubcontractOrderController extends BaseController {
         return success(viewDTO);
     }
 
+    /**
+     * 委外订单下拉
+     * @author Will
+     * @date: 2024/1/10 19:16
+     * @return ApiResult<List<ListSelectDTO>>
+     */
+    @GetMapping("/list")
+    public ApiResult<List<SubcontractOrderDTO.ListSelectDTO>> list() {
+        List<SubcontractOrderDTO.ListSelectDTO> list = subcontractOrderService.listSubcontractOrder();
+        return success(list);
+    }
+
 }

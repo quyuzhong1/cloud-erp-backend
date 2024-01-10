@@ -413,7 +413,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
 
         //委外子级SKU明细
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId())).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98082);
         }

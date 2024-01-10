@@ -172,7 +172,6 @@ public class SubcontractIssueDetailDTO implements Serializable {
         /**
         * 仓位
         */
-        @NotBlank(message = "仓位不能为空")
         @Size(max = 32,message = "仓位最大长度不能超过32位")
         private String warehouseLocation;
 

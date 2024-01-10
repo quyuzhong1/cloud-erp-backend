@@ -1122,6 +1122,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         return baseMapper.listByBomSku(bomSkuId);
     }
 
+    @Override
+    public List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder() {
+        List<SubcontractOrderEntity> list = lambdaQuery().eq(SubcontractOrderEntity::getInvalidStatus, Boolean.FALSE)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SubcontractOrderDTO.ListSelectDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.ListSelectDTO.class, list);
+        return resultList;
+    }
+
     /**
      * @description: 启动流程
      * @author Will

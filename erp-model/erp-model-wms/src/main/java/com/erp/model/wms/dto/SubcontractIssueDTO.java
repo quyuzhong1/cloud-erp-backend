@@ -319,6 +319,7 @@ public class SubcontractIssueDTO implements Serializable {
 
         /**
         * 发料类型
+        * /wms/dict/drop/down?type=issueType
         */
         @NotBlank(message = "发料类型不能为空")
         @Size(max = 32,message = "发料类型最大长度不能超过32位")
