@@ -139,6 +139,12 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     @TableField(exist = false)
     private String priceCode;
 
+    /**
+     * 采购组织
+     */
+    @TableField(exist = false)
+    private String purchaseOrgName;
+
     @Override
     public Serializable pkVal() {
         return null;

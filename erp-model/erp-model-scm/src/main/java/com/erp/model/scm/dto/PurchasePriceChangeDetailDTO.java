@@ -326,6 +326,10 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private Boolean disabled=false;
 
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
     }
 
     /**

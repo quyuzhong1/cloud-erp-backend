@@ -207,7 +207,8 @@
         ppd.kingdee_detail_id,
         ppd.remark,
         pp.supplier_id,
-        pp.code AS priceCode
+        pp.code AS priceCode,
+        pp.purchase_org_name
         FROM purchase_price_detail ppd
         inner join purchase_price pp on pp.id = ppd.purchase_price_id
         WHERE

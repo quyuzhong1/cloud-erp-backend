@@ -359,6 +359,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 价目表编码
          */
         private String priceCode;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
     }
 
 
