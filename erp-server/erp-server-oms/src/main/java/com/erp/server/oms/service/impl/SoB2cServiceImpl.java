@@ -3740,10 +3740,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //速卖通
             if(PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())){
                 if("IN_CANCEL".equals(platformOrderStatus)
-                        ||"IN_FROZEN".equals(platformOrderStatus)){
+                        ||"IN_FROZEN".equals(platformOrderStatus)
+                        ||"RISK_CONTROL".equals(platformOrderStatus)){
                     dto.setApproveStatusStr(oldEntity.getApproveStatus().getStatus());
                     dto.setPayStatus(oldEntity.getPayStatus());
-                    dto.setBillStatus(oldEntity.getBillStatus());
+                    dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
             }
             //沃尔玛

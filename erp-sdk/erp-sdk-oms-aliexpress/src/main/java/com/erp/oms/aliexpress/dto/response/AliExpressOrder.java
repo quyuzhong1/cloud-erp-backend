@@ -182,19 +182,43 @@ public class AliExpressOrder implements Serializable {
      * @author yl
      * @date 2023-11-29 16:10
      */
-    public String convertBillStatus() {
+    public String convertBillStatus(Boolean isPlatformWarehouseOrder) {
         String orderStatus = this.getOrderStatus();
         if (StringUtils.isBlank(orderStatus)) {
             return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
         }
+        //冻结
+        if (isPlatformWarehouseOrder) {
+            if ("IN_CANCEL".equals(orderStatus)
+                    || "RISK_CONTROL".equals(orderStatus)) {
+
+                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+            }
+        }else{
+            if("IN_CANCEL".equals(orderStatus)
+                    || "RISK_CONTROL".equals(orderStatus)
+                    ||"IN_FROZEN".equals(orderStatus)){
+
+                return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+            }
+
+        }
+
         //待配货
-        if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
-                || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
-                ||"RISK_CONTROL".equals(orderStatus)
-                ||"IN_CANCEL".equals(orderStatus)
-                ||"PAYMENT_PROCESSING".equals(orderStatus)
-                ||"IN_FROZEN".equals(orderStatus)) {
-            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        if(isPlatformWarehouseOrder){
+            if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
+                    || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
+                    || "PAYMENT_PROCESSING".equals(orderStatus)
+                    || "IN_FROZEN".equals(orderStatus)) {
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            }
+        }else{
+            if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
+                    || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
+                    || "PAYMENT_PROCESSING".equals(orderStatus)
+                   ) {
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            }
         }
         //待发货
         if ("SELLER_PART_SEND_GOODS".equals(orderStatus)) {
@@ -203,9 +227,9 @@ public class AliExpressOrder implements Serializable {
 
         //已发货
         if ("WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
-                ||"FUND_PROCESSING".equals(orderStatus)
-                ||"IN_ISSUE".equals(orderStatus)
-                ||"WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
+                || "FUND_PROCESSING".equals(orderStatus)
+                || "IN_ISSUE".equals(orderStatus)
+                || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
 
@@ -223,11 +247,11 @@ public class AliExpressOrder implements Serializable {
     public String convertPayStatus() {
         String orderStatus = this.getOrderStatus();
         if (StringUtils.isBlank(orderStatus)
-                ||"PLACE_ORDER_SUCCESS".equals(orderStatus)
-                ||"PAYMENT_PROCESSING".equals(orderStatus)
-                ) {
+                || "PLACE_ORDER_SUCCESS".equals(orderStatus)
+                || "PAYMENT_PROCESSING".equals(orderStatus)
+        ) {
             return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
-        }else{
+        } else {
             return SoB2cPayStatusEnum.ENUM_PAID.getCode();
         }
 
@@ -236,34 +260,34 @@ public class AliExpressOrder implements Serializable {
 
     public String convertApproveStatus(Boolean isPlatformWarehouseOrder) {
         String orderStatus = this.getOrderStatus();
-        if(StringUtils.isBlank(orderStatus)){
+        if (StringUtils.isBlank(orderStatus)) {
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
-        if(isPlatformWarehouseOrder){
+        if (isPlatformWarehouseOrder) {
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)) {
                 return ApproveStatusEnum.WAIT_SUBMIT.getCode();
             }
             return ApproveStatusEnum.APPROVE.getCode();
-        }else{
+        } else {
             //自发货
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
-                    ||"WAIT_SELLER_SEND_GOODS".equals(orderStatus)
-                    ||"PAYMENT_PROCESSING".equals(orderStatus)
-                    ||"RISK_CONTROL".equals(orderStatus)
-                    ||"IN_FROZEN".equals(orderStatus)
-                    ) {
+                    || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
+                    || "PAYMENT_PROCESSING".equals(orderStatus)
+                    || "RISK_CONTROL".equals(orderStatus)
+                    || "IN_FROZEN".equals(orderStatus)
+            ) {
                 return ApproveStatusEnum.WAIT_SUBMIT.getCode();
             }
-            if("SELLER_PART_SEND_GOODS".equals(orderStatus)
-            ||"WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
-            ||"FUND_PROCESSING".equals(orderStatus)
-            ||"IN_ISSUE".equals(orderStatus)
-            ||"WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)){
+            if ("SELLER_PART_SEND_GOODS".equals(orderStatus)
+                    || "WAIT_BUYER_ACCEPT_GOODS".equals(orderStatus)
+                    || "FUND_PROCESSING".equals(orderStatus)
+                    || "IN_ISSUE".equals(orderStatus)
+                    || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)) {
                 return ApproveStatusEnum.APPROVE.getCode();
 
             }
 
         }
-           return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        return ApproveStatusEnum.WAIT_SUBMIT.getCode();
     }
 }

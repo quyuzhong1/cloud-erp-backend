@@ -61,10 +61,8 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformAliExpressOrderDTO dto) {
         // 原订单信息
         AliExpressOrder sourceOrder = dto.getAliExpressOrder();
-        System.out.println("我转化前的订单信息：>>>>>>"+ JSONObject.toJSONString(sourceOrder));
         // 本ERP店铺信息
         AliExpressShopInfoDTO shopInfoDTO = dto.getAliExpressShopInfoDTO();
-
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 平台类型
@@ -102,11 +100,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
 
         BigDecimal shippingFee = BigDecimal.ZERO;
-        Boolean detailIsNull = Objects.nonNull(detail);
-        if (detailIsNull) {
+        String shippingCountry="";
+        Boolean detailNotNull = Objects.nonNull(detail);
+        if (detailNotNull) {
             AmountInfo shippingAmount = detail.getLogisticsAmount();
             if (Objects.nonNull(shippingAmount)) {
                 String shippingFeeStr = shippingAmount.getAmount();
+                shippingCountry=shippingAmount.getCurrencyCode();
                 if (StringUtils.isNotBlank(shippingFeeStr)) {
                     shippingFee = new BigDecimal(shippingFeeStr);
                 }
@@ -114,17 +114,16 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         //物流成本
         BigDecimal logisticsCost = BigDecimal.ZERO;
-        if (detailIsNull) {
+        if (detailNotNull) {
             AmountInfo logisticsAmount = detail.getLogisticsAmount();
-            if (detailIsNull) {
-                if (Objects.nonNull(logisticsAmount)) {
-                    //物流成本
-                    String logisticsCostStr = logisticsAmount.getAmount();
-                    if (StringUtils.isNotBlank(logisticsCostStr)) {
-                        logisticsCost = new BigDecimal(logisticsCostStr);
-                    }
+            if (Objects.nonNull(logisticsAmount)) {
+                //物流成本
+                String logisticsCostStr = logisticsAmount.getAmount();
+                if (StringUtils.isNotBlank(logisticsCostStr)) {
+                    logisticsCost = new BigDecimal(logisticsCostStr);
                 }
             }
+
         }
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
@@ -156,7 +155,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         Map<String, Object> lableMap = new HashMap<>();
         lableMap.put("aliexpressStatus", sourceOrder.getOrderStatus());
         //订单明细
-        List<OrderItemDetail> orderItemDetailList = detailIsNull?sourceOrder.getDetail().getChildOrderList():Collections.emptyList();
+        List<OrderItemDetail> orderItemDetailList = detailNotNull ? sourceOrder.getDetail().getChildOrderList() : Collections.emptyList();
         Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
         if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
             long count = orderItemDetailList.stream().
@@ -178,7 +177,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(sourceOrder.convertBillStatus());
+        orderDTO.setBillStatus(sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 
         // 审核状态状态
         // （ApproveStatus字典类型）
@@ -193,25 +192,32 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
-        if (detailIsNull) {
+        if (detailNotNull) {
             List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
-                    filter(d->StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
+                    filter(d -> StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(logisticInfoList)) {
                 for (LogisitcsDTO item : logisticInfoList) {
                     PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
                     logisticsDTO.setCode(item.getLogisticsNo());
                     logisticsDTO.setName(item.getLogisticsServiceName());
+                    String sendTime = item.getGmtSend();
+
+                    LocalDateTime deliveryTime = LocalDateUtil.strToLocalDateTime(sendTime);
+                    //发货时间
+                    logisticsDTO.setDeliveryTime(deliveryTime);
+                    logisticsDTO.setActualShippingCost(shippingFee);
+                    logisticsDTO.setActualShippingCurrency(shippingCountry);
                     orderLogisticList.add(logisticsDTO);
                 }
             }
         }
         orderDTO.setLogisticsList(orderLogisticList);
         // 订单明细
-        List<PlatformOrderDetailDTO> details = parseDetailList(detailIsNull ? detail.getChildOrderList() : Collections.emptyList());
+        List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList());
         orderDTO.setDetails(details);
 
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
-        if (detailIsNull) {
+        if (detailNotNull) {
             //收货信息
             ReceiptInfo receiptInfo = detail.getReceiptInfo();
             BuyerInfo buyerInfo = detail.getBuyerInfo();

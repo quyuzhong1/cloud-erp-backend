@@ -81,6 +81,4 @@ public class LogisitcsDTO implements Serializable {
 
 
 
-
-
 }
