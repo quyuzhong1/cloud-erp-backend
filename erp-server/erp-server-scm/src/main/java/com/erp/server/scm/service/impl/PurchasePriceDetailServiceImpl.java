@@ -335,7 +335,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
         List<PurchasePriceDetailEntity> list = this.listGetListByPurchasePriceId(dto);
 
-
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
         //处理采购价目明细信息
         handlePurchasePriceDetail(viewList);
@@ -701,6 +700,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setProductName(skuVO.getSkuName());
             result.setPurchasePriceDetailId(item.getId());
             result.setSupplierId(item.getSupplierId());
+            result.setSupplierName(item.getSupplierName());
+            result.setPriceCode(item.getPriceCode());
             resultList.add(result);
         }
         return resultList;

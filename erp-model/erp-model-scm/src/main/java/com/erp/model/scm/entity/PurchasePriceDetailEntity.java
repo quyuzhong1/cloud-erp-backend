@@ -133,6 +133,12 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     @TableField(exist = false)
     private String supplierId;
 
+    /**
+     * 价目表编码
+     */
+    @TableField(exist = false)
+    private String priceCode;
+
     @Override
     public Serializable pkVal() {
         return null;
