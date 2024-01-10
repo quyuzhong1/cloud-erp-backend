@@ -47,12 +47,6 @@
         <if test="params.userType != null and params.userType != ''">
             AND sui.user_type = #{params.userType}
         </if>
-        <if test="params.userIds != null and params.userIds.size()>0">
-            AND sui.uid in
-            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
-                #{uid}
-            </foreach>
-        </if>
         <if test="roleIds !=null  and  roleIds.size()>0">
             AND uid in
             (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
