@@ -3,29 +3,31 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueDetailMapper;
-import com.erp.server.wms.service.SubcontractIssueDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -66,6 +68,10 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
+    @Autowired
+    private SubcontractIssueService subcontractIssueService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -75,7 +81,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         List<SubcontractIssueDetailEntity> list = BeanMapperUtils.copyList(SubcontractIssueDetailEntity.class, details);
         //数据验证
-        checkData(list);
+        checkData(list,mainId);
         // 数据处理
         handleData(list,mainId);
 
@@ -84,7 +90,6 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         if(!save) {
             throw new ServiceException("委外发料明细单保存失败");
         }
-
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "委外发料明细单" , mainId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), mainId, "新增操作");
@@ -96,16 +101,33 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @date: 2024/1/9 17:14
      * @param list
      */
-    private void checkData (List<SubcontractIssueDetailEntity> list) {
+    private void checkData (List<SubcontractIssueDetailEntity> list,String mainId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
+        }
+        //委外发料主表信息
+        SubcontractIssueEntity subcontractIssueEntity = subcontractIssueService.getById(mainId);
+        if (ObjectUtil.isEmpty(subcontractIssueEntity)) {
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
         //委外明细信息
         List<String> sourceDetailIdList = list.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIdList);
 
+        //委外明细已关联的委外发料
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySourceDetailIdList(sourceDetailIdList);
+
         for (SubcontractIssueDetailEntity entity : list) {
-            subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId()));
+            SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98072);
+            }
+            //正常领料需要验证发料数量
+            if (SubcontractIssueTypeEnum.NORMAL.getCode().equals(subcontractIssueEntity.getType())) {
+                //已下推发料数量
+                Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getSourceDetailId()) && !obj.getId().equals(entity.getId()))
+                        .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
         }
     }
 

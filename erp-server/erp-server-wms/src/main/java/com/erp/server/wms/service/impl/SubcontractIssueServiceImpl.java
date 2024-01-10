@@ -385,6 +385,13 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     public List<SubcontractIssueDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractIssueDTO.DetailPagingParamDTO dto) {
+        //委外订单id
+        String sourceId = dto.getSourceId();
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+
+        }
+
         return null;
     }
 
@@ -394,7 +401,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueDTO.ViewDTO data = BeanMapperUtils.map(SubcontractIssueDTO.ViewDTO.class, subcontractIssueEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -479,6 +485,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus())).map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDTO.setHasIssueQty(hasIssueQty);
         }
+        data.setDetailList(detailList);
     }
 
     /**
