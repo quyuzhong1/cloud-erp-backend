@@ -127,10 +127,10 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * 根据采购价目表id  获取对应产品信息
      * @author yl
      * @date 2023-03-31 16:07
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
      */
-    List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(List<String> purchasePriceIds);
+    List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
     /**
      * 更新金蝶同步状态
      */

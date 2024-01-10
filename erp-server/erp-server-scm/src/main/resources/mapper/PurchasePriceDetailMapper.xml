@@ -211,11 +211,14 @@
         inner join purchase_price pp on pp.id = ppd.purchase_price_id
         WHERE
         ppd.is_deleted=FALSE AND pp.is_deleted=FALSE
-        <if test="purchasePriceIds!=null and purchasePriceIds.size>0">
+        <if test="params.purchasePriceIds!=null and params.purchasePriceIds.size>0">
             AND pp.id IN
-            <foreach collection="purchasePriceIds" item="purchasePriceId" open="(" separator="," close=")">
+            <foreach collection="params.purchasePriceIds" item="purchasePriceId" open="(" separator="," close=")">
                 #{purchasePriceId}
             </foreach>
+        </if>
+        <if test="params.priceCode != null and params.priceCode != ''">
+            and pp.code ILIKE concat('%',#{params.priceCode}::text,'%')
         </if>
     </select>
 </mapper>

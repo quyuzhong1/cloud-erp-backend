@@ -75,10 +75,10 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 根据价目表id 获取产品明细信息
      * @author yl
      * @date 2023-03-27 9:48
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(List<String> purchasePriceIds);
+    List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
 
     /**
      * @description: 根据价目表明细ids获取产品明细信息
@@ -173,10 +173,10 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 根据采购价目表id 获取到采购价目变更的明细
      * @author yl
      * @date 2023-04-06 18:54
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
      */
-    List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(List<String> purchasePriceIds);
+    List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
     /**
      * @description: 更新明细金蝶id
      * @author Will

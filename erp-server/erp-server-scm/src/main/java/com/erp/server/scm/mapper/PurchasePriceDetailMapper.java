@@ -1,6 +1,7 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -56,8 +57,8 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * 根据主标查询明细
      * @Author Luo_WG
      * @Date 2024/1/9 16:41
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.entity.PurchasePriceDetailEntity>
      **/
-    List<PurchasePriceDetailEntity> listGetListByPurchasePriceIds(@Param("purchasePriceIds") List<String> purchasePriceIds);
+    List<PurchasePriceDetailEntity> listGetListByPurchasePriceIds(@Param("params") PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
 }

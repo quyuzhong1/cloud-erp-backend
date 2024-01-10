@@ -677,6 +677,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
                 }
             }
+
+            List<String> supplierIdList = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+            List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIdList);
+
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
@@ -694,6 +698,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                     item.setApproveUserName(curApprove);
                 }
+
+                //供应商
+                SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> item.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
+                item.setSupplierName(supplierEntity.getName());
             }
         }
 
@@ -724,14 +732,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 根据采购价目表id  获取对应产品信息
      *
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
      * @author yl
      * @date 2023-03-31 16:07
      */
     @Override
-    public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(List<String> purchasePriceIds) {
-        return purchasePriceDetailService.listPriceChangeDetail(purchasePriceIds);
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        return purchasePriceDetailService.listPriceChangeDetail(dto);
     }
 
     @Override

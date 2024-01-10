@@ -332,8 +332,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(List<String> purchasePriceIds) {
-        List<PurchasePriceDetailEntity> list = this.listGetListByPurchasePriceId(purchasePriceIds);
+    public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        List<PurchasePriceDetailEntity> list = this.listGetListByPurchasePriceId(dto);
 
 
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
@@ -674,15 +674,15 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 根据采购价目表id 获取到采购价目变更的明细
      *
-     * @param purchasePriceIds
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
      * @author yl
      * @date 2023-04-06 18:54
      */
     @Override
-    public List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(List<String> purchasePriceIds) {
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
 
-        List<PurchasePriceDetailDTO.ViewDTO> list = this.listByPurchasePriceIds(purchasePriceIds);
+        List<PurchasePriceDetailDTO.ViewDTO> list = this.listByPurchasePriceIds(dto);
 
         List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -796,11 +796,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
 
-    private List<PurchasePriceDetailEntity> listGetListByPurchasePriceId(List<String> purchasePriceIds) {
-        if (CollectionUtils.isEmpty(purchasePriceIds)) {
+    private List<PurchasePriceDetailEntity> listGetListByPurchasePriceId(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getPurchasePriceIds())) {
             return Collections.emptyList();
         }
-        List<PurchasePriceDetailEntity> detail = baseMapper.listGetListByPurchasePriceIds(purchasePriceIds);
+        List<PurchasePriceDetailEntity> detail = baseMapper.listGetListByPurchasePriceIds(dto);
         return detail;
     }
 

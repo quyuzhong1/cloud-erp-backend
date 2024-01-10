@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -327,4 +328,19 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuChangeParamDTO {
+        /**
+         * id
+         */
+        private List<String> purchasePriceIds;
+        /**
+         * 价目表编号
+         */
+        private String priceCode;
+    }
 }

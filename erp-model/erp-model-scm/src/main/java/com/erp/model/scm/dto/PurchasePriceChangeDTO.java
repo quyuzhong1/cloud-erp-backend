@@ -42,12 +42,6 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String supplierId;
 
         /**
-         * 采购价目表id
-         */
-        @NotBlank(message = "采购价目表id 不能为空")
-        private String purchasePriceId;
-
-        /**
          * 调价日期
          */
         @NotNull(message = "调价日期不能为空")
@@ -110,12 +104,6 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
-
-        /**
-         * 采购价目表id
-         */
-        @NotBlank(message = "采购价目表id 不能为空")
-        private String purchasePriceId;
 
         /**
          * 调价日期

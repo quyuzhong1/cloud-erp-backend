@@ -101,10 +101,12 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/getSkuChangeList")
-    public ApiResult<List<PurchasePriceChangeDetailDTO.ViewDTO>> getSkuChangeList(@RequestBody ValidList<String> dto) {
-        List<PurchasePriceChangeDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(dto.getList());
+    public ApiResult<List<PurchasePriceChangeDetailDTO.ViewDTO>> getSkuChangeList(@RequestBody PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        List<PurchasePriceChangeDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(dto);
         return success(list);
     }
+
+
 
     /**
      * 提交并审核
