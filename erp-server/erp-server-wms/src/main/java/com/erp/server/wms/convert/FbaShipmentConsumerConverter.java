@@ -75,7 +75,7 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
             @Mapping(target = "receiveQty", source = "receiveDTO.receiveQty"),
-            @Mapping(target = "receiveDate", source = "receiveDTO.receiveDate"),
+            @Mapping(target = "receiveDate",  expression = "java(null == receiveDTO.getReceiveDate() ? java.time.LocalDateTime.now() :receiveDTO.getReceiveDate())"),
     })
     FbaShipmentReceiveEntity fbaShipmentToReceiveEntity(
             String detailId,
