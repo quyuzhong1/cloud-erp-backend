@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -54,7 +55,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
-    private QcInfoService qcInfoService;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private PoInstockService poInstockService;
@@ -236,6 +237,13 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查询退货明细
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
+        //查询仓库
+        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
+        if (ObjectUtils.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //仓位必填验证
+        checkWarehouseLocation(warehouseEntity,list);
 
         for (PoInstockDetailEntity detailEntity : list) {
 
@@ -275,6 +283,27 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         }
     }
 
+    /**
+     * @description: 仓位必填验证
+     * @author Will
+     * @date: 2023/12/19 15:19
+     * @param warehouseEntity
+     * @param list
+     */
+    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoInstockDetailEntity> list) {
+        //仓库配置
+        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
+        List<String> warehouseIdList = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
+            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
+            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
+        }
+        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        //判断仓位是否需要必填
+        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+        }
+    }
 
     @Override
     public void updateKingdeeDetailId(JSONArray list) {
