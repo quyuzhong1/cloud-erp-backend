@@ -1000,7 +1000,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 记录签收详情和更新判断
         List<FbaShipmentReceiveEntity> newReceiveEntityList = receiveDTOList
                 .stream()
-                .filter(e-> e.getReceiveQty() > 0)
+//                .filter(e-> e.getReceiveQty() > 0)
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToReceiveEntity(
                         detailIdMap.get(StrUtil.format("{}_{}", e.getFnSku() + e.getSellerSku())),
                         e,
