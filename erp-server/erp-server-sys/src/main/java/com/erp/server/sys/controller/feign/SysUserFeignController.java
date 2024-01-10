@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -534,6 +535,7 @@ public class SysUserFeignController extends BaseController {
      * @param
      * @return
      **/
+    @DataIdempotent(keyIdName = "uid")
     @GetMapping("/resetPassword")
     public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.resetPassword(uid,pwd);

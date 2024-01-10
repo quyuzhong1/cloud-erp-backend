@@ -3,6 +3,7 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -294,6 +295,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public SysUserDTO accountLogin(AccountLoginDTO dto) {
+        log.info("accountLogin：{}", JSONObject.toJSONString(dto));
         SysUserInfoEntity entity = findByAccount(dto.getAccount(),dto.getUserType());
         if (Objects.isNull(entity)) {
             return null;
@@ -1189,6 +1191,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public Boolean resetPassword(String uid, String pwd) {
+        log.info("resetPassword：uid：{}，pwd：{}",uid,pwd);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
