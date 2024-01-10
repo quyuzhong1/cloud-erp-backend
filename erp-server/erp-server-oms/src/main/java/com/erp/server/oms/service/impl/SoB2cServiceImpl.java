@@ -3747,6 +3747,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
+                if("FINISH".equals(platformOrderStatus)){
+                    oldEntity.setApproveStatus(oldApproveStatus);
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
             }
             //沃尔玛
             if(PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())){
