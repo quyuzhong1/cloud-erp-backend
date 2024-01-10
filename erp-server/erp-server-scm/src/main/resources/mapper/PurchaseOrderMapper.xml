@@ -53,6 +53,7 @@
             pod.remark,
             po.subcontract_type as subcontractType,
             po.approve_user_name as approveUserName,
+            po.approve_time as approveTime,
             po.purchase_user_name as purchaseUserName,
             po.create_user_name as createUserName,
             po.create_time as createTime,
@@ -74,6 +75,17 @@
             </if>
             <if test="params.subContractCode != null and params.subContractCode != ''">
                 and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != '' ">
+                and
+                case when subString(#{params.sourceCode},1,2) != 'PL' then
+                    po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
+                     else
+                    EXISTS (
+                    select pa.id from purchase_application pa
+                    left join purchase_application_ref_po parp on parp.is_deleted = false and pa.id = parp.purchase_application_id
+                    where parp.purchase_order_id = po.id and pa.code ILIKE concat('%',#{params.sourceCode}::text,'%')
+                    ) end
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -177,6 +189,9 @@
             <if test="params.subContractCode != null and params.subContractCode != ''">
                 and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
             </if>
+            <if test="params.sourceCode != null and params.sourceCode != ''">
+                and po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
+            </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
             </if>
@@ -276,6 +291,7 @@
             pod.purchase_amount as purchaseAmount,
             pod.remark,
             po.approve_user_name as approveUserName,
+            po.approve_time as approveTime,
             po.purchase_user_name as purchaseUserName,
             po.create_user_name as createUserName,
             po.create_time as createTime,
@@ -303,6 +319,9 @@
                 </if>
                 <if test="params.subContractCode != null and params.subContractCode != ''">
                     and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
+                </if>
+                <if test="params.sourceCode != null and params.sourceCode != ''">
+                    and po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and pod.is_urgent = #{params.isUrgent}

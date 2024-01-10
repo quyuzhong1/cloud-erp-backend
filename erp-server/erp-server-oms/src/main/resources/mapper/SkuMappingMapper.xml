@@ -224,7 +224,7 @@
                     </foreach>
                 </if>
                 <if test="params.platformList !=null and params.platformList.size>0">
-                    AND sm.platform_dict IN
+                    AND sm.dict_platform IN
                     <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
                         #{platform}
                     </foreach>

@@ -513,6 +513,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //更新审核状态
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
+                .set(PurchaseReturnOrderEntity::getApproveUserId, "")
+                .set(PurchaseReturnOrderEntity::getApproveUserName, "")
+                .set(PurchaseReturnOrderEntity::getApproveTime, null)
                 .update();
 
         //操作日志
@@ -590,9 +593,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
 
+        LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
             //审核通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(PurchaseReturnOrderEntity::getApproveUserId, userInfo.getUid())
@@ -636,6 +639,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(PurchaseReturnOrderEntity::getApproveUserId, userInfo.getUid())
+                    .set(PurchaseReturnOrderEntity::getApproveUserName, userInfo.getUserName())
+                    .set(PurchaseReturnOrderEntity::getApproveTime, LocalDateTime.now())
                     .in(PurchaseReturnOrderEntity::getId, ids)
                     .update();
         }
@@ -679,6 +685,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //TODO 待加审核流程
         //修改状态为待提交
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(PurchaseReturnOrderEntity::getApproveUserId, "")
+                .set(PurchaseReturnOrderEntity::getApproveUserName, "")
+                .set(PurchaseReturnOrderEntity::getApproveTime, null)
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();

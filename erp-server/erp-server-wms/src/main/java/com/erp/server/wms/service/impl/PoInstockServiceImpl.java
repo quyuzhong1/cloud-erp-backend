@@ -664,7 +664,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 回滚库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_STOCK_IN, ids);
@@ -698,7 +698,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("采购入库单【%s】取消流程", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "取消流程操作");
@@ -918,25 +918,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     }
 
     /**
-     * 反审核后更新审核状态、审核人、审核时间
-     */
-    private void updateApproveStatusForDisApprove(List<String> ids, String approveStatus) {
-
-        this.lambdaUpdate().in(PoInstockEntity::getId, ids)
-                .set(PoInstockEntity::getApproveStatus, approveStatus)
-                .set(PoInstockEntity::getApproveUserId, "")
-                .set(PoInstockEntity::getApproveUserName, "")
-                .set(PoInstockEntity::getApproveTime, null)
-                .update();
-    }
-
-    /**
      * 更新审核状态
      */
     private void updateApproveStatus(List<String> ids, String approveStatus) {
         //更新审核状态
         lambdaUpdate().in(PoInstockEntity::getId, ids)
                 .set(PoInstockEntity::getApproveStatus, approveStatus)
+                .set(PoInstockEntity::getApproveUserId, "")
+                .set(PoInstockEntity::getApproveUserName, "")
+                .set(PoInstockEntity::getApproveTime, null)
                 .update();
     }
 
@@ -1019,7 +1009,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98025);
         }
         entity.setSubcontractType(getOneDTO.getSubcontractType());
-
+        //采购订单类型
+        entity.setPurchaseType(getOneDTO.getType());
     }
 
     /**

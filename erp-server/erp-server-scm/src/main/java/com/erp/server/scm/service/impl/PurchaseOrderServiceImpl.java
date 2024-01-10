@@ -503,7 +503,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 反审核更新库存数据（采购订单生成的入库预报）
         inventoryFeign.purchaseOrderUnApproveBatch(ids);
@@ -543,7 +543,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         });
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购订单【%s】取消流程", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "取消流程操作");
@@ -1660,6 +1660,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             entity.setPurchaseDeptName(purchaseUser.getDepartmentName());
         }
 
+        //委外订单来源
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+            if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            entity.setSourceCode(subcontractOrderEntity.getCode());
+        }
+        //采购退货订单来源
+        if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
+            List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(Arrays.asList(entity.getSourceId()));
+            if (CollectionUtils.isEmpty(purchaseReturnOrderList)) {
+                throw new ServiceException(ApiError.ERROR_99008);
+            }
+            entity.setSourceCode(purchaseReturnOrderList.get(0).getCode());
+        }
+
         //仓库信息
         if (ObjectUtils.isNotEmpty(entity.getDeliveryWarehouseId())) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
@@ -1703,16 +1720,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private void updateApproveStatus(List<String> ids, String approveStatus) {
         //更新审核状态
         lambdaUpdate().in(PurchaseOrderEntity::getId, ids)
-                .set(PurchaseOrderEntity::getApproveStatus, approveStatus)
-                .update();
-    }
-
-    /**
-     * 反审核后更新审核状态、审核人、审核时间
-     */
-    private void updateApproveStatusForDisApprove(List<String> ids, String approveStatus) {
-
-        this.lambdaUpdate().in(PurchaseOrderEntity::getId, ids)
                 .set(PurchaseOrderEntity::getApproveStatus, approveStatus)
                 .set(PurchaseOrderEntity::getApproveUserId, "")
                 .set(PurchaseOrderEntity::getApproveUserName, "")

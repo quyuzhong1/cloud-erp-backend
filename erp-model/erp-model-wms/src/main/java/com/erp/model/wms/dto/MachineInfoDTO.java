@@ -117,6 +117,11 @@ public class MachineInfoDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建人名称
          */
         private String createUserName;

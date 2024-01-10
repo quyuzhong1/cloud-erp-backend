@@ -41,11 +41,14 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -57,14 +60,15 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.MachineTypeEnum;
+import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -200,6 +204,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Autowired
     private CustomerInvoiceService customerInvoiceService;
+
+    @Autowired
+    private MachineInfoFeign machineInfoFeign;
 
     /**
      * 添加销售订单
@@ -641,6 +648,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         for (SoInfoDTO.PagingViewDTO item : list) {
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String userName = StringUtils.join(curApproveName, ",");
@@ -781,6 +791,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价(本位币)
             item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
 
+            //是否是组合SKU
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
+                if (count > 0) {
+                    item.setIsConstitute(Boolean.TRUE);
+                }
+            }
 
             if (ignoreInventorySkuIds.contains(skuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
@@ -1245,6 +1262,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (scmCount > 0) {
             throw new ServiceException(ApiError.ERROR_92040);
         }
+        List<MachineRefSoEntity> machineRefSoList = machineInfoFeign.listBySoIdList(soIds);
+        if (CollectionUtils.isNotEmpty(machineRefSoList)) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
     }
 
     private void checkRemove(List<String> soIds) {
@@ -1492,9 +1513,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
         String customerName = "";
         String countryId = "";
+        String mailAddress = "";
         if (customerInfo != null) {
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
+            mailAddress = customerInfo.getMailAddress();
         }
 
 
@@ -1516,6 +1539,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         customer.setReceiveAddress(receiverAddressName);
         customer.setCustomerName(customerName);
+        customer.setMailAddress(mailAddress);
         String deliveryMode = customer.getDeliveryMode();
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
         customer.setDeliveryModeName(deliveryModeName);
@@ -1577,13 +1601,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTaxpayerId(customer.getTaxRegisterCode());
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
-        result.setContactAddress(customer.getReceiveAddress());
+        result.setContactAddress(customer.getMailAddress());
 
         result.setCurrency(customer.getCurrency());
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
         result.setSecondSignDate(customer.getCreateTime().toLocalDate());
 
-        result.setCompany(company);
+        result.setCompany(customer.getSalesOrgName());
         result.setCompanyTaxpayerId(companyTaxpayerId);
         result.setCompanyAddress(companyAddress);
         result.setSellerName(customer.getSellerName());
@@ -2324,13 +2348,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTaxpayerId(customer.getTaxRegisterCode());
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
-        result.setContactAddress(customer.getReceiveAddress());
+        result.setContactAddress(customer.getMailAddress());
 
         result.setCurrency(customer.getCurrency());
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
         result.setSecondSignDate(customer.getCreateTime().toLocalDate());
 
-        result.setCompany(company);
+        result.setCompany(customer.getSalesOrgName());
         result.setCompanyTaxpayerId(companyTaxpayerId);
         result.setCompanyAddress(companyAddress);
         result.setSellerName(customer.getSellerName());
@@ -2734,6 +2758,99 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean generateMachineInfo(List<String> ids) {
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(soDetailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+
+        //主表信息
+        List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(soInfoEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        String codes = soInfoEntityList.stream().filter(obj -> !BillApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_SO_PUSH_APPROVE_STATUS,codes);
+        }
+
+        //非组合品不能下推加工单
+        List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        LoginUser userInfo = commonService.getUserInfo();
+        Boolean isHasAdd = Boolean.FALSE;
+        //根据仓库分组生成加工单
+        Map<String, List<SoInfoEntity>> map = soInfoEntityList.stream().collect(Collectors.groupingBy(SoInfoEntity::getWarehouseId));
+        for (Map.Entry<String, List<SoInfoEntity>> entry : map.entrySet()) {
+            List<SoInfoEntity> value = entry.getValue();
+
+            MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
+            addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
+            addDTO.setBillDate(LocalDate.now());
+
+            addDTO.setReceiverId(userInfo.getUid());
+            addDTO.setWarehouseKeeperId(userInfo.getUid());
+            addDTO.setWarehouseId(value.get(0).getWarehouseId());
+            addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
+            addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+
+            List<String> mainIdList = value.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+            //仓库下明细信息
+            List<SoDetailEntity> soDetailList = soDetailEntityList.stream().filter(obj -> mainIdList.contains(obj.getMainId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soDetailList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            }
+            List<MachineDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (SoDetailEntity soDetailEntity : soDetailList) {
+                MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
+                addDetailDTO.setSkuId(soDetailEntity.getSkuId());
+                addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
+                addDetailDTO.setQty(soDetailEntity.getQty());
+                addDetailDTO.setWarehouseLocation(soDetailEntity.getWarehouseLocation());
+                List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(bomList)) {
+                    continue;
+                }
+
+                SoInfoEntity soInfoEntity = value.stream().filter(obj -> obj.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(soInfoEntity)) {
+                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                }
+                addDetailDTO.setReferenceVersion(bomList.get(0).getBomVersion());
+                addDetailDTO.setRefCode(soInfoEntity.getCode());
+                addDetailDTO.setRefId(soInfoEntity.getId());
+                addDetailDTO.setRefDetailId(soDetailEntity.getId());
+                List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
+                    MachineSubComponentsDTO.AddDTO subComponentsDTO = new MachineSubComponentsDTO.AddDTO();
+                    subComponentsDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    subComponentsDTO.setWarehouseId(value.get(0).getWarehouseId());
+                    subComponentsDTO.setQty(soDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
+                    subComponentsList.add(subComponentsDTO);
+                }
+                addDetailDTO.setSubComponentsList(subComponentsList);
+                detailList.add(addDetailDTO);
+            }
+            //如果没有明细则跳过无需新增
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
+            addDTO.setDetailList(detailList);
+            machineInfoFeign.addMachineInfo(addDTO);
+            isHasAdd = Boolean.TRUE;
+        }
+        if (!isHasAdd) {
+            throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
+        }
+        return Boolean.TRUE;
     }
 
     /**

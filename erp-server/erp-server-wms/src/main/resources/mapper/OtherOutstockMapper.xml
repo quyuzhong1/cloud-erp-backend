@@ -50,6 +50,7 @@
             ood.warehouse_location as warehouseLocation,
             oo.process_apply_code as processApplyCode,
             oo.approve_user_name as approveUserName,
+            oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
             oo.create_time as createTime
         from other_outstock oo
@@ -158,6 +159,7 @@
             ood.warehouse_location as warehouseLocation,
             oo.process_apply_code as processApplyCode,
             oo.approve_user_name as approveUserName,
+            oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
             oo.create_time as createTime
         from other_outstock oo

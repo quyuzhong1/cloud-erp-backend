@@ -37,7 +37,6 @@
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE
         AND sri.is_deleted = FALSE
-        AND sri.source_type NOT IN ('SAL_RETURNSTOCK')
         <if test="params.ids != null and params.ids.size != ''">
             and sri.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
@@ -122,7 +121,7 @@
         count(distinct sri.id)
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
-        WHERE srid.is_deleted = FALSE AND sri.source_type &lt;&gt; 'SAL_RETURNSTOCK'
+        WHERE srid.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and sri.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
@@ -264,7 +263,6 @@
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
-        AND sri.source_type NOT IN ('SAL_RETURNSTOCK')
         AND sri.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and sri.approve_status in

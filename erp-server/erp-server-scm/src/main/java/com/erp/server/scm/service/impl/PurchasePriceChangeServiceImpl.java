@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -797,6 +798,20 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //获取到对应的价目明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        viewList.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
+
         for (PurchasePriceChangeDTO.PagingViewDTO item : viewList) {
             PurchasePriceChangeExportExcelDTO excelDTO = new PurchasePriceChangeExportExcelDTO();
             BeanMapper.copy(item, excelDTO);
@@ -825,6 +840,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             Integer minQty = item.getMinQty();
             Integer maxQty = item.getMaxQty();
             excelDTO.setQtySection(minQty + "-" + maxQty);
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                excelDTO.setApproveUserName(curApprove);
+            }
+            excelDTO.setApproveTime(item.getApproveTime());
             resultList.add(excelDTO);
         }
         String fileName = "采购调价数据";
@@ -845,8 +866,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:50
      */
     private Boolean updateApproveStatus(List<PurchasePriceChangeEntity> list, ApproveStatusEnum statusEnum) {
+        LoginUser userInfo = commonService.getUserInfo();
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
+                    obj.setApproveTime(LocalDateTime.now());
+                    obj.setApproveUserId(userInfo.getUid());
+                    obj.setApproveUserName(userInfo.getUserName());
+                } else {
+                    obj.setApproveTime(null);
+                    obj.setApproveUserId("");
+                    obj.setApproveUserName("");
+                }
                 obj.setApproveStatus(statusEnum);
             });
             return this.updateBatchById(list);

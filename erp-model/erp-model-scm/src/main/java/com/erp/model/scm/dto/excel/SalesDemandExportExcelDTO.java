@@ -86,26 +86,32 @@ public class SalesDemandExportExcelDTO implements Serializable {
     private String approveUserName;
 
     /**
+     * 审核完成时间
+     */
+    @ExcelProperty(value = "审核完成时间", index = 11)
+    private String approveTime;
+
+    /**
      * 单据状态
      */
-    @ExcelProperty(value = "单据状态", index = 11)
+    @ExcelProperty(value = "单据状态", index = 12)
     private String  approveStatusName;
 
     /**
      * 作废状态
      */
-    @ExcelProperty(value = "作废状态", index = 12)
+    @ExcelProperty(value = "作废状态", index = 13)
     private String  invalidStatusName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 13)
+    @ExcelProperty(value = "创建人", index = 14)
     private String  createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 14)
+    @ExcelProperty(value = "创建时间", index = 15)
     private String  createTime;
 }

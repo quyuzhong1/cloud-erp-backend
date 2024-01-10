@@ -24,7 +24,8 @@
           pp.purchase_org_id AS purchaseOrgId,
           pp.purchase_org_name AS purchaseOrgName,
           ppd.disabled,
-          ppd.remark as detailRemark
+          ppd.remark as detailRemark,
+          pp.approve_time
         FROM purchase_price_change_detail ppd
         INNER JOIN purchase_price_change pp
         ON ppd.purchase_price_change_id=PP.id
@@ -130,7 +131,8 @@
             pp.purchase_org_id,
             pp.purchase_org_name,
             ppd.disabled,
-            ppd.remark as detailRemark
+            ppd.remark as detailRemark,
+            pp.approve_time
         FROM purchase_price_change_detail ppd
         INNER JOIN purchase_price_change pp ON ppd.purchase_price_change_id = pp.id
         WHERE pp.is_deleted = false AND ppd.is_deleted = false

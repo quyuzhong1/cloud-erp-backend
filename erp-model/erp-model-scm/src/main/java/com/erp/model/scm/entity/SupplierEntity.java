@@ -1,5 +1,6 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -133,6 +135,24 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("payment_condition")
     private String paymentCondition;
+
+    /**
+     * 审核时间
+     */
+    @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)
+    private LocalDateTime approveTime;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
 
 
     @Override
