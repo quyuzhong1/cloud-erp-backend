@@ -57,10 +57,10 @@ public class WebAdvanceQueryAspect {
 
         //group 为空默认为default
         advanceQueryDTOList.replaceAll(v -> {
-            v.setGroup(StringUtils.defaultIfBlank(v.getGroup(), "default"));
+            v.setGroupName(StringUtils.defaultIfBlank(v.getGroupName(), "default"));
             return v;
         });
-        Map<String, List<AdvanceQueryDTO>> advanceQueryDTOMap = advanceQueryDTOList.stream().collect(Collectors.groupingBy(AdvanceQueryDTO::getGroup));
+        Map<String, List<AdvanceQueryDTO>> advanceQueryDTOMap = advanceQueryDTOList.stream().collect(Collectors.groupingBy(AdvanceQueryDTO::getGroupName));
         advanceQueryDTOMap.forEach((key,val)->{
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("1 = 1 ");
@@ -107,15 +107,14 @@ public class WebAdvanceQueryAspect {
         }
         String contentSql;
         if(isExtend){
-//            String val = this.handleVal(dto.getValue(),dto.getDataType(),condEnum);
             String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,dto);
             contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),dto.getValue(),compareValueSQL);
             if(StringUtils.isBlank(contentSql)){
-                throw new ServiceException("扩展字段没有配置查询脚本");
+                throw new ServiceException(ApiError.QUERY_NOT_EXTEND_METHOD);
             }
         }else{
 
-            //为空处理为  (TRIM(both ' ' FROM 字段) = ''or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
+            //为空处理为  (TRIM(both ' ' FROM 字段) = '' or 字段 is null)，不为空处理为  TRIM(both ' ' FROM 字段) != '' 其他直接拼接
             if(QueryConditionEnum.IS_NULL.equals(condEnum)){
                 sql.append("(TRIM(both ' ' FROM " + dto.getField() +") = ''or "+dto.getField()+" is null)").append(" ");
             } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
@@ -215,7 +214,7 @@ public class WebAdvanceQueryAspect {
             if (fieldValue == null || ((List<?>) fieldValue).isEmpty()) {
                 List<AdvanceQueryDTO> newValue = new ArrayList<>();
                 AdvanceQueryDTO advanceQueryDTO = new AdvanceQueryDTO();
-                advanceQueryDTO.setGroup("default");
+                advanceQueryDTO.setGroupName("default");
                 newValue.add(advanceQueryDTO);
                 field.set(arg, newValue);
                 return (List<AdvanceQueryDTO>) field.get(arg);

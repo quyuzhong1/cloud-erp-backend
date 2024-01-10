@@ -118,7 +118,7 @@ public class QueryUtils {
             }
             ArrayList<Object> list = (ArrayList<Object>) dto.getValue();
             if(list.size() < 2){
-                throw new ServiceException("介于条件需要填起始时间和开始时间");
+                throw new ServiceException(ApiError.QUERY_BETWEEN_ERROR);
             }
             String startDate = list.get(0).toString();
             String endDate = list.get(1).toString();
@@ -132,7 +132,7 @@ public class QueryUtils {
                     val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
                 }
             }else{
-                throw new ServiceException("非法日期格式");
+                throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
             }
         }
         sql.append(val);
@@ -154,7 +154,7 @@ public class QueryUtils {
                     result = "to_timestamp(" + result + ",'yyyy-MM-DD HH24:MI:SS')";
                 }
             }else{
-                throw new ServiceException("非法日期格式");
+                throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
             }
         }
         return result;

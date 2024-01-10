@@ -30,7 +30,7 @@ public class AdvanceQueryDTO {
     private String dataType;
 
     //分组
-    private String group;
+    private String groupName;
 
     //连接符，and,or（保留值，默认and）
     private String compareSymbol = "and";
@@ -41,7 +41,7 @@ public class AdvanceQueryDTO {
     //右括号数量(保留值，默认0)
     private int rightBracketCount;
 
-    public static AdvanceQueryDTO buildSplicingSQL(String field, QueryConditionEnum queryConditionEnum, Object value, QueryDataTypeEnum dataTypeEnum){
+    public static AdvanceQueryDTO buildSplicingSQLDTO(String field, QueryConditionEnum queryConditionEnum, Object value, QueryDataTypeEnum dataTypeEnum){
         return AdvanceQueryDTO.builder()
                 .field(field)
                 .compare(queryConditionEnum.getCompareCode())
