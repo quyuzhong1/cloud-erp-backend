@@ -36,12 +36,6 @@ public class PurchasePriceChangeDTO implements Serializable {
     public static class AddDTO extends PermissionsDTO {
 
         /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
-
-        /**
          * 调价日期
          */
         @NotNull(message = "调价日期不能为空")
@@ -97,13 +91,6 @@ public class PurchasePriceChangeDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
-
-
-        /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
 
         /**
          * 调价日期
