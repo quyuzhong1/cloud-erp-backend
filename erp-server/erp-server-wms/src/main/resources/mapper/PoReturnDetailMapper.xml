@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper">
+<mapper namespace="com.erp.server.wms.mapper.PoReturnDetailMapper">
 
-    <select id="listBySourceDetailIds" resultType="com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity">
+    <select id="listBySourceDetailIds" resultType="com.erp.model.wms.entity.PoReturnDetailEntity">
         select
             pro.approve_status,
             prod.main_id,
@@ -31,7 +31,7 @@
         </where>
     </select>
 
-    <select id="listReturnOrderDetailByPodIds" resultType="com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity">
+    <select id="listReturnOrderDetailByPodIds" resultType="com.erp.model.wms.entity.PoReturnDetailEntity">
         select
         prod.id,
         pro.approve_status,

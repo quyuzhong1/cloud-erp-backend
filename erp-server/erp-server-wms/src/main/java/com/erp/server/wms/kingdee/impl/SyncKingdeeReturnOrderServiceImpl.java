@@ -8,14 +8,11 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -25,8 +22,8 @@ import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -36,7 +33,7 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
+import com.erp.server.wms.service.PoReturnDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +63,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private PoReturnDetailService poReturnDetailService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -88,7 +85,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
+    public void syncDataToKingdee(PoReturnEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("returnType", ReturnOrderSourceEnum.QC.getKingdeeCode());
@@ -192,24 +189,24 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
 
         //退货单明细
-        List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
+        List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
 
         //获取sku的id集合
-        List<String> skuIdList = detailList.stream().map(PurchaseReturnOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(PoReturnDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
         //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = detailList.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> orderDetailIds = detailList.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
         List<JSONObject> list = new ArrayList<>();
-        for (PurchaseReturnOrderDetailEntity detail : detailList) {
+        for (PoReturnDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
@@ -264,7 +261,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PurchaseReturnOrderEntity entity, String operate, Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (PoReturnEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());

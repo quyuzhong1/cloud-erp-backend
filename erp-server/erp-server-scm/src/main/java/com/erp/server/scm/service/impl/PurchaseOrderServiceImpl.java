@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -42,7 +41,6 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.enums.SysDictBasicEnum;
-import com.erp.model.wms.dto.FirstMassInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -892,7 +890,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
         //退货数量
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIdList);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIdList);
 
         //获取签收数量
         List<WarehouseReceiveDetailEntity> receiveQtyList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(detailIdList);
@@ -906,7 +904,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             //补货数量
-            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
 
             viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() + replenishQty - receiveQty);
             viewGenerateReceiveDTO.setExceedQty(0);
@@ -994,7 +992,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
         //退货信息
-        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         for (PurchaseOrderDetailEntity detailEntity : list) {
             PurchaseOrderDTO.ViewGenerateStockInDTO viewGenerateStockInDTO = new PurchaseOrderDTO.ViewGenerateStockInDTO();
@@ -1032,7 +1030,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已退货补货数量
             Integer hasReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //未入库数量
@@ -1225,7 +1223,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
 
         //退货数量
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         //根据SKU查询BOM判断是否是组合SKU
         List<String> skuIds = records.stream().map(PurchaseOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
@@ -1261,14 +1259,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //来源于采购退货的采购订单
         List<String> poReturnIdList = records.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())).map(PurchaseOrderDTO.ListDTO::getSourceId).collect(Collectors.toList());
-        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(poReturnIdList);
+        List<PoReturnEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(poReturnIdList);
 
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
         for (PurchaseOrderDTO.ListDTO obj : records) {
 
             //退货补货数量
-            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
@@ -1295,7 +1293,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setDeliveryQty(deliveryQty);
 
 
-            Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
             obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
@@ -1873,7 +1871,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         // 采购入库（无收货单）信息（采购入库会扣减在途库存）
         List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         //退货数量
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         List<InstockForcastDTO.FinishDeliveryDTO> inventoryList = Lists.newArrayList();
 
@@ -1916,7 +1914,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
                             && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
                             && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
-                            .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                            .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}", member.getId(), po.getCode(), member.getPurchaseQty());
                 log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应收货单收货数量:{}", member.getId(), po.getCode(), receiveQty);
@@ -2011,13 +2009,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         //获取未全部到货的采购详情id
         List<String> purchaseOrderDetailIds = new ArrayList<>();
-        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
             PurchaseOrderDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(detailEntity)) {
                 //退货补货数量
-                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receiveQty < detailEntity.getPurchaseQty() + returnQty) {
                     purchaseOrderDetailIds.add(m.get(MathUtil.ZERO).getPurchaseOrderDetailId());
                 }
@@ -2124,7 +2122,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<String> podIds = entityDetails.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         List<PurchaseOrderDetailDTO.PdaViewDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.PdaViewDTO.class, entityDetails);
 
         List<String> skuNos = entityDetails.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
@@ -2139,7 +2137,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
             Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setReceiveQty(receiveQty);
-            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setUnReceiveQty(detail.getPurchaseQty() + returnQty - receiveQty);
             //已入库数量
             Integer hasStockInQty = MathUtil.ZERO;

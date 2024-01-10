@@ -1,9 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-04-07
  */
-public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseReturnOrderDetailEntity> {
+public interface PoReturnDetailService extends SuperService<PoReturnDetailEntity> {
     /**
      * @description: 根据来源明细ids查询退货明细
      * @author Will
@@ -23,7 +22,7 @@ public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseR
      * @param sourceDetailIds
      * @return List<PurchaseReturnOrderDetailEntity>
      */
-    List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+    List<PoReturnDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 
     /**
      * 新增
@@ -60,14 +59,14 @@ public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseR
      * @param mainId mainId
      * @return java.lang.Boolean
      **/
-    List<PurchaseReturnOrderDetailEntity> getDetailByMainId(String mainId);
+    List<PoReturnDetailEntity> getDetailByMainId(String mainId);
 
-    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds);
+    List<PoReturnDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds);
 
     /**
      * 根据主单查询明细信息（批量）
      * @param mainIds
      * @return
      */
-    List<PurchaseReturnOrderDetailEntity> listByMainIds(List<String> mainIds);
+    List<PoReturnDetailEntity> listByMainIds(List<String> mainIds);
 }
