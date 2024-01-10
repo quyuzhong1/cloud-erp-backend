@@ -400,17 +400,17 @@ public class SubcontractIssueDTO implements Serializable {
         /**
          * sku状态
          */
-        private String status;
+        private String statusName;
 
         /**
          * 产品分类
          */
-        private String category;
+        private String categoryName;
 
         /**
          * 品牌
          */
-        private String brand;
+        private String brandName;
 
         /**
          * 委外订单明细

@@ -102,6 +102,12 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
     @TableField(exist = false)
     private String approveStatus;
 
+    /**
+     * 发料类型
+     */
+    @TableField(exist = false)
+    private String type;
+
     public static final String PARENT_SKU_ID = "parent_sku_id";
 
     public static final String PARENT_SKU_NO = "parent_sku_no";

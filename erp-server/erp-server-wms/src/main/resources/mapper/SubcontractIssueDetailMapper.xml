@@ -51,7 +51,8 @@
         sid.remark,
         sid.source_detail_id,
         sid.warehouse_location,
-        si.approve_status
+        si.approve_status,
+        si.type
     </sql>
 
     <select id="listBySourceDetailIdList" resultType="com.erp.model.wms.entity.SubcontractIssueDetailEntity">
