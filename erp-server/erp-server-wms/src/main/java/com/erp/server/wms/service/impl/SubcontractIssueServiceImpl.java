@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseResultDTO;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -385,6 +386,18 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     public List<SubcontractIssueDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractIssueDTO.DetailPagingParamDTO dto) {
+        //委外订单id
+        String sourceId = dto.getSourceId();
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderDetailList)) {
+            throw  new ServiceException(ApiError.ERROR_98070);
+        }
+
+
         return null;
     }
 
@@ -394,7 +407,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueDTO.ViewDTO data = BeanMapperUtils.map(SubcontractIssueDTO.ViewDTO.class, subcontractIssueEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -479,6 +491,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus())).map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDTO.setHasIssueQty(hasIssueQty);
         }
+        data.setDetailList(detailList);
     }
 
     /**

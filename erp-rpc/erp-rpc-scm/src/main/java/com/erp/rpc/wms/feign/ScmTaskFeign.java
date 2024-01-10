@@ -313,6 +313,12 @@ public interface ScmTaskFeign {
     List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
 
     /**
+     * 根据主表id集合查询委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractDetailByMainIds")
+    List<SubcontractOrderDetailEntity> listSubcontractDetailByMainIds(@RequestBody List<String> mainIdList);
+
+    /**
      * 根据ids查询委外订单
      */
     @PostMapping("feign/subcontractOrder/listSubcontractOrderByIds")
@@ -419,4 +425,5 @@ public interface ScmTaskFeign {
      */
     @PostMapping("/feign/scmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
 }
