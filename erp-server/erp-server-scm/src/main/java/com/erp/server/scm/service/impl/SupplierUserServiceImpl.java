@@ -243,7 +243,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response, Boolean isSuper) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         SupplierUserExcelListener excelListenerUtil = new SupplierUserExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), SupplierUserImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -257,12 +257,14 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         List<SupplierUserImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
+        }else if (excelDateList.size() > 5000){
+            throw new ServiceException(ApiError.ERROR_95123);
         }
         List<SupplierUserImportExcelDTO > errorList = excelListenerUtil.getErrorList();
 
         List<SupplierUserImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         //处理验证成功数据
-        handleImportSuccessList(successList, errorList, isSuper);
+        handleImportSuccessList(successList, errorList);
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
@@ -283,6 +285,24 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     public Boolean exportSupplierUser(UserPagingSearchDTO dto, HttpServletResponse response) {
+        List<SupplierUserVO> list = getSupplierUserList(dto);
+        String name = "供应商协同用户列表";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/sysUserExport.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("供应商协同用户列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto) {
         Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
         if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getSupplierIds())) {
             //选择了供应商则先进行供应商查询，获取用户ids
@@ -302,28 +322,16 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         List<SupplierUserVO> list = userInfoFeign.list(dto);
         dataProcessSupplierInfo(list, supplierMap);
-        String name = "供应商协同用户列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/sysUserExport.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("供应商协同用户列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
+        return list;
     }
 
-    private void handleImportSuccessList(List<SupplierUserImportExcelDTO> successList, List<SupplierUserImportExcelDTO> errorList, Boolean isSuper) {
+    private void handleImportSuccessList(List<SupplierUserImportExcelDTO> successList, List<SupplierUserImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
         for (SupplierUserImportExcelDTO excelDTO :successList) {
             SupplierRefUserEntity refUserEntity = new SupplierRefUserEntity();
-            List<String> errorMsgList = checkImportData(excelDTO,refUserEntity,isSuper);
+            List<String> errorMsgList = checkImportData(excelDTO,refUserEntity);
             if (CollectionUtils.isNotEmpty(errorMsgList)){
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
@@ -340,7 +348,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             sysUserInfoDTO.setNeedChangePwd(true);
             sysUserInfoDTO.setCreatePasswordType(0);
             //scm新增用户都为管理员
-            sysUserInfoDTO.setIsSuper(isSuper);
+            sysUserInfoDTO.setIsSuper(true);
             try {
                 String uid = userInfoFeign.save(sysUserInfoDTO);
                 refUserEntity.setUid(uid);
@@ -359,7 +367,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
     }
 
-    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity, Boolean isSuper) {
+    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
         List<String> errorMsgList = new ArrayList<>();
         //供应商是否存在
         List<SupplierEntity> supplierEntityList = supplierService.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));
@@ -367,14 +375,14 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             refUserEntity.setSupplierId(supplierEntity.getId());
             refUserEntity.setDisabled(false);
-            refUserEntity.setIsSuper(isSuper);
+            refUserEntity.setIsSuper(true);
         }else {
-            errorMsgList.add("供应商不存在");
+            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)){
-            errorMsgList.add("手机号已注册");
+            errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
         }
         return errorMsgList;
     }

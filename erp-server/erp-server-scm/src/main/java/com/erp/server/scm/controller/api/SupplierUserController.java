@@ -2,10 +2,8 @@ package com.erp.server.scm.controller.api;
 
 
 import cn.hutool.core.lang.Assert;
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -18,7 +16,6 @@ import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.server.scm.service.SupplierRefUserService;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -28,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -152,7 +148,7 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商协作用户")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierUserService.importFile(excelFile, response, true);
+        Boolean result = supplierUserService.importFile(excelFile, response);
         return result == true ? success() : failure();
     }
 

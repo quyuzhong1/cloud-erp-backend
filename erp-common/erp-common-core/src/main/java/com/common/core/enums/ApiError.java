@@ -153,6 +153,7 @@ public enum ApiError implements Serializable {
     ERROR_SERIAL_NUMBER_EXCEED(9049, "流水号已经超出999"),
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
+    MOBILE_IS_EXIST(9054,"手机号已注册"),
 
 
     /**
@@ -1093,7 +1094,11 @@ public enum ApiError implements Serializable {
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
 
 
-
+    /**
+     * SRM 错误
+     * 从96000 开始
+     */
+    ERROR_96000(96000,"供应商配置信息已存在"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),

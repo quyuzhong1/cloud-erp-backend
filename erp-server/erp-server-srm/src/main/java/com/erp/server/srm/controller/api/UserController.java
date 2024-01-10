@@ -15,6 +15,7 @@ import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
+import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +42,8 @@ public class UserController extends BaseController {
 
     @Resource
     private SupplierUserFeign supplierUserFeign;
-
+    @Resource
+    private UserService userService;
 
     /**
      * 分页查询
@@ -137,24 +140,27 @@ public class UserController extends BaseController {
         return supplierUserFeign.forgotPasswordGetCode(userAccount);
     }
 
+    /**
+     * 供应商协作用户导出
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM用户")
+    @PostMapping("/export")
+    public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
+        dto.setIsSuper(false);
+        dto.setSupplierIds(Collections.singletonList(userService.getSupplierId()));
+        userService.exportSupplier(dto, response);
+        return success();
+    }
+
 
     /**
      * 供应商协作用户导入
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商协作用户")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入SRM用户")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return supplierUserFeign.importExcel(excelFile, response);
-    }
-
-    /**
-     * 供应商协作用户导出
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
-    @PostMapping("/exportSupplier")
-    public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
-        dto.setIsSuper(false);
-        return supplierUserFeign.exportSupplier(dto, response);
+        Boolean result = userService.importFile(excelFile, response);
+        return result ? success() : failure();
     }
 
     /**
@@ -162,9 +168,10 @@ public class UserController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载供应商协作用户模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载SRM用户模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        return supplierUserFeign.downloadTemplate(response);
+        userService.downloadTemplate(response);
+        return success();
     }
 }

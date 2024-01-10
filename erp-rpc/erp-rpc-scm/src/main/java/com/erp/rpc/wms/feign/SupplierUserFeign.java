@@ -4,10 +4,13 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +38,14 @@ public interface SupplierUserFeign {
     @PostMapping("/feign/supplierUser/paging")
     ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
 
+    /**
+     * 查询供应商列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/supplierUser/list")
+    List<SupplierUserVO> list(UserPagingSearchDTO dto);
 
     /**
      * 添加用户
@@ -99,24 +110,12 @@ public interface SupplierUserFeign {
     @GetMapping("/feign/supplierUser/forgotPasswordGetCode")
     ApiResult<Map<String, Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount);
 
-
     /**
-     * 供应商协作用户导入
-     */
-    @PostMapping("/feign/supplierUser/import")
-    ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response);
-
-    /**
-     * 供应商协作用户导出
-     */
-    @PostMapping("/feign/supplierUser/export")
-    ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response);
-
-    /**
-     * 下载协作用户模板
+     * 保存用户关系
      *
+     * @param refUserEntity
      * @return
      */
-    @GetMapping("/feign/supplierUser/downloadTemplate")
-    ApiResult downloadTemplate(HttpServletResponse response);
+    @PostMapping("/feign/supplierUser/saveRef")
+    Boolean saveRef(@RequestBody @Validated SupplierRefUserEntity refUserEntity);
 }

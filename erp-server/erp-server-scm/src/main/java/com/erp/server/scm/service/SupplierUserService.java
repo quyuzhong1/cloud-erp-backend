@@ -111,7 +111,7 @@ public interface SupplierUserService {
      * @param isSuper 是否是管理员
      * @return
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response,Boolean isSuper);
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 导出供应商协作用户列表
@@ -119,4 +119,11 @@ public interface SupplierUserService {
      * @param response
      */
     Boolean exportSupplierUser(UserPagingSearchDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据条件获取供应商用户列表
+     * @param dto
+     * @return
+     */
+    List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto);
 }

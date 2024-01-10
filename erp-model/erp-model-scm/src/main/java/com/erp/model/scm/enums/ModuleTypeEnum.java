@@ -66,6 +66,7 @@ public enum ModuleTypeEnum {
     LISTING_INFO("62", "对应平台sku 表"),
     SUPPLIER_REF_USER("63", "供应商用户关系"),
     SUBCONTRACT_ISSUE("64", "委外发料单"),
+    SRM_USER("65", "SRM用户"),
     ;
 
 

@@ -9,11 +9,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.server.scm.service.SupplierRefUserService;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -39,18 +41,31 @@ import java.util.Map;
 public class SupplierUserFeignController extends BaseController {
     @Resource
     private SupplierUserService supplierUserService;
+    @Resource
+    private SupplierRefUserService supplierRefUserService;
 
     /**
      * 分页查询
+     *
      * @param dto
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
+    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto) {
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
     }
 
+    /**
+     * 查询列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list")
+    public List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto) {
+        return supplierUserService.getSupplierUserList(dto);
+    }
 
     /**
      * 添加用户
@@ -61,7 +76,14 @@ public class SupplierUserFeignController extends BaseController {
         supplierUserService.add(sysUserInfoDTO);
         return success();
     }
-
+    /**
+     * 添加用户
+     */
+    @PostMapping("/saveRef")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户关系")
+    public Boolean saveRef(@RequestBody @Validated SupplierRefUserEntity refUserEntity) {
+        return supplierRefUserService.save(refUserEntity);
+    }
     /**
      * 修改用户
      */
@@ -94,6 +116,7 @@ public class SupplierUserFeignController extends BaseController {
 
     /**
      * 批量启用/禁用
+     *
      * @param stateDTO
      * @return
      */
@@ -105,17 +128,19 @@ public class SupplierUserFeignController extends BaseController {
 
     /**
      * 重置密码
+     *
      * @param uid
      * @param pwd
      * @return
      */
     @GetMapping("/resetPassword")
-    public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
-        return supplierUserService.resetPassword(uid,pwd);
+    public ApiResult resetPassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd) {
+        return supplierUserService.resetPassword(uid, pwd);
     }
 
     /**
      * 忘记密码
+     *
      * @param dto
      * @return
      */
@@ -126,44 +151,12 @@ public class SupplierUserFeignController extends BaseController {
 
     /**
      * 忘记密码-获取验证码
+     *
      * @param userAccount
      * @return
      */
     @GetMapping("/forgotPasswordGetCode")
-    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
+    public ApiResult<Map<String, Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
         return supplierUserService.forgotPasswordGetCode(userAccount);
-    }
-
-
-    /**
-     * 供应商协作用户导入
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商协作用户")
-    @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierUserService.importFile(excelFile, response, false);
-        return result == true ? success() : failure();
-    }
-
-    /**
-     * 供应商协作用户导出
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
-    @PostMapping("/export")
-    public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
-        supplierUserService.exportSupplierUser(dto, response);
-        return success();
-    }
-
-    /**
-     * 下载协作用户模板
-     *
-     * @return
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板供应商")
-    @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
-        supplierUserService.downloadTemplate(response);
-        return success();
     }
 }

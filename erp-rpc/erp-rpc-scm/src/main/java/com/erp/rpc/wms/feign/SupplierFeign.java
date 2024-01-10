@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,4 +38,12 @@ public interface SupplierFeign {
      **/
     @PostMapping("/feign/supplier/supplierApprove")
     Boolean supplierApprove(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 获取供应商列表
+     * @param singletonList
+     * @return
+     */
+    @PostMapping("/feign/supplier/listBySupplierByNames")
+    List<SupplierEntity> listBySupplierByNames(List<String> singletonList);
 }
