@@ -17,6 +17,7 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
@@ -293,7 +294,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public SysUserDTO accountLogin(AccountLoginDTO dto) {
-        SysUserInfoEntity entity = findByAccount(dto.getAccount());
+        SysUserInfoEntity entity = findByAccount(dto.getAccount(),dto.getUserType());
         if (Objects.isNull(entity)) {
             return null;
         }
@@ -822,10 +823,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
     }
 
-    public SysUserInfoEntity findByAccount(String account) {
+    public SysUserInfoEntity findByAccount(String account, String userType) {
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysUserInfoEntity::getUserAccount, account).
-                eq(SysUserInfoEntity::getDeleteState, 1);
+        queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
+                .eq(SysUserInfoEntity::getUserType, userType)
+                .eq(SysUserInfoEntity::getDeleteState, 1);
         queryWrapper.last("LIMIT 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         return entity;
@@ -1180,6 +1182,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return flag;
     }
 
+    public static void main(String[] args) {
+        String admin12345 = Md5Util.md5("admin12345");
+        System.out.println(admin12345);
+    }
+
     @Override
     public Boolean resetPassword(String uid, String pwd) {
         if (StringUtils.isBlank(uid)) {
@@ -1192,10 +1199,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 //        EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
 //        emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
 //        String num = RandomStringUtils.randomNumeric(8);
-        String password = Md5Util.md5(pwd);
+//        String password = Md5Util.md5(pwd);
         SysUserInfoEntity entity = new SysUserInfoEntity();
 
-        PassEntity passEntity = PassHandler.buildPassword(password);
+        PassEntity passEntity = PassHandler.buildPassword(pwd);
         entity.setPassword(passEntity.getPassword());
         entity.setSalt(passEntity.getSalt());
         boolean flag = lambdaUpdate()

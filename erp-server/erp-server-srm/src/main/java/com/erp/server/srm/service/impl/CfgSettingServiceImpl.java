@@ -59,6 +59,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         BeanMapperUtils.copy(addDTO, cfgSettingEntity);
         // 数据处理
         handleData(cfgSettingEntity);
+        cfgSettingEntity.setDataJson(getDataJson(addDTO.getDuration(),addDTO.getUnit(),addDTO.getSelectState()));
         log.info("开始新增系统配置管理");
         boolean save = super.save(cfgSettingEntity);
         if(!save) {
@@ -68,6 +69,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "系统配置管理" , cfgSettingEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(cfgSettingEntity.getId(), cfgSettingEntity.getId());
+    }
+
+    private String getDataJson(String duration, String unit, int selectState) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("duration",duration);
+        jsonObject.put("unit",unit);
+        jsonObject.put("selectState",selectState);
+        return jsonObject.toJSONString();
     }
 
     /**
@@ -81,6 +90,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         CfgSettingEntity cfgSettingEntity =  BeanMapperUtils.map(CfgSettingEntity.class, updateDTO);
         // 数据处理
         handleData(cfgSettingEntity);
+        cfgSettingEntity.setDataJson(getDataJson(updateDTO.getDuration(),updateDTO.getUnit(),updateDTO.getSelectState()));
         log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgSettingEntity);
         if(!save) {

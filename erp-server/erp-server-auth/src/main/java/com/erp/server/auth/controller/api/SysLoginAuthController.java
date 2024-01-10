@@ -2,6 +2,7 @@ package com.erp.server.auth.controller.api;
 
 
 import com.common.business.constant.TokenConstants;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -54,6 +55,9 @@ public class SysLoginAuthController extends BaseController {
    // @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号登录:账号={account}")
     @RequestMapping("/accountLogin")
     public ApiResult accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
+        if (StringUtils.isEmpty(loginDTO.getUserType())){
+            loginDTO.setUserType(UserTypeEnum.ERP.code);
+        }
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {

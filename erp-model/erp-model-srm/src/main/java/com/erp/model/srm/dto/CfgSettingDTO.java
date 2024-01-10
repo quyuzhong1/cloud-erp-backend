@@ -100,6 +100,18 @@ public class CfgSettingDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 时长
+         */
+        private String duration;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 选中状态 0 没有  1 有
+         */
+        private int selectState;
 
     }
 
