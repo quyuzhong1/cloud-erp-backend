@@ -446,10 +446,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         } else {
             throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
         }
-
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
         log.info("撤销 开始修改要货申请状态，id：【{}】", id);
 
 
