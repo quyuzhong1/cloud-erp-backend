@@ -10,4 +10,8 @@ public interface  IQueryHandler {
     default String getQueryEmptySql(){
         return " 1 = 2 ";
     }
+
+    default String getQueryAllSql(){
+        return " 1 = 1 ";
+    }
 }

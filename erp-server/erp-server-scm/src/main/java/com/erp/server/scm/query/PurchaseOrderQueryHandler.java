@@ -77,6 +77,9 @@ public class PurchaseOrderQueryHandler implements IQueryHandler {
                 AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("po.approve_status", QueryConditionEnum.IN_LIST, Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()), QueryDataTypeEnum.STRING);
                 dtoList.add(approveQueryDTO);
             }
+            if(CollectionUtils.isEmpty(dtoList)){
+                return getQueryAllSql();
+            }
             return QueryUtils.splicingSQL(dtoList);
         }
         return null;
