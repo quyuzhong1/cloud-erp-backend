@@ -60,7 +60,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     private PoInstockService poInstockService;
 
     @Resource
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private PoReturnDetailService poReturnDetailService;
 
 
 
@@ -234,7 +234,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //查询退货明细
-        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
 
         for (PoInstockDetailEntity detailEntity : list) {
@@ -255,7 +255,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             //退货单补货数量
             Integer returnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
 

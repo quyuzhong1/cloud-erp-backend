@@ -1,6 +1,5 @@
 package com.erp.server.wms.kingdee;
 
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 
 public interface SyncKingdeePoReceiveService {

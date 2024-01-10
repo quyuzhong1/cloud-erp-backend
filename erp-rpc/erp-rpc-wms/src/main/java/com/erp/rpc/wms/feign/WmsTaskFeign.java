@@ -2,7 +2,6 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
@@ -49,7 +48,7 @@ public interface WmsTaskFeign {
      * 根据来源明细ids查询退货明细
      */
     @PostMapping("feign/purchaseReturnOrder/listDetailBySourceDetailIds")
-    List<PurchaseReturnOrderDetailEntity> listPurchaseReturnOrderDetailBySourceDetailIds(List<String> sourceDetailIds);
+    List<PoReturnDetailEntity> listPurchaseReturnOrderDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     /**
      * 根据来源明细ids查询入库明细
@@ -91,7 +90,7 @@ public interface WmsTaskFeign {
      * 获取退货数量
      **/
     @PostMapping("feign/purchaseReturnOrder/listReturnOrderDetailByPodIds")
-    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> ids);
+    List<PoReturnDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> ids);
 
     /**
      * 根据入参查询单据数量
@@ -237,7 +236,7 @@ public interface WmsTaskFeign {
      * @return List<PurchaseReturnOrderEntity>
      */
     @PostMapping("feign/purchaseReturnOrder/listPoReturnByIdList")
-    List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList);
+    List<PoReturnEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList);
 
     @PostMapping("feign/machineInfo/listBySku")
     List<MachineInfoDTO.ListDTO> listBySku(@RequestBody MachineInfoDTO.FindInfoBySkuDTO dto);

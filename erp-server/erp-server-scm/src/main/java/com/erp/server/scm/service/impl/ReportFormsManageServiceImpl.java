@@ -14,7 +14,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.ReportFormsManageMapper;
@@ -62,7 +62,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         //查询采购入库信息
         List<PoInstockDetailEntity> poInstockDetailEntities = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
         //查询退货信息
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
         //查询采购明细
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByIds(podIdList);
         Map<String, PurchaseBusinessGatherTableDTO.PagingViewDTO> map = new HashMap();
@@ -104,7 +104,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         //查询采购入库信息
         List<PoInstockDetailEntity> poInstockDetailEntities = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
         //查询退货信息
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
         //查询采购明细
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByIds(podIdList);
         Map<String, PurchaseBusinessGatherTableDTO.PagingViewDTO> map = new HashMap();
@@ -235,20 +235,20 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
      **/
     private void computeReturn(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity,
                                PurchaseBusinessGatherTableDTO.PagingViewDTO record,
-                               List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities,
+                               List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities,
                                PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
         //退货
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntityList = purchaseReturnOrderDetailEntities.stream().filter(req ->
+        List<PoReturnDetailEntity> poReturnDetailEntityList = purchaseReturnOrderDetailEntities.stream().filter(req ->
                 record.getId().contains(req.getPurchaseOrderDetailId())
                         && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
                         && ((req.getBillDate().isAfter(dto.getBillDateList().get(0)) && dto.getBillDateList().get(1).isAfter(req.getBillDate()))
                         || (req.getBillDate().isEqual(dto.getBillDateList().get(0)) || dto.getBillDateList().get(1).isEqual(req.getBillDate()))
                 )
         ).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntityList)) {
-            Integer deductAmountQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getDeductAmountQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (CollectionUtils.isNotEmpty(poReturnDetailEntityList)) {
+            Integer deductAmountQty = poReturnDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getDeductAmountQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setRefundQty(mapEntity.getRefundQty() + deductAmountQty);
-            Integer replenishQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer replenishQty = poReturnDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setReplenishQty(mapEntity.getReplenishQty() + replenishQty);
             mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(record.getAvgPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
         }

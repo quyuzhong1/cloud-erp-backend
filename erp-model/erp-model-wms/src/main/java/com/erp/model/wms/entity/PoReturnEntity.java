@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @Setter
 @Accessors(chain = true)
 @TableName("po_return")
-public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEntity> {
+public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
 
     /**
      * 审核状态 waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核
