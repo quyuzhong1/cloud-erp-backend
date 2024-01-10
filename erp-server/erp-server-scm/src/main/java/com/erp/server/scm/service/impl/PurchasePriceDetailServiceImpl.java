@@ -661,7 +661,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> item.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
             result.setSupplierId(purchasePriceEntity.getSupplierId());
             result.setSupplierName(supplierEntity.getName());
-
             result.setPriceCode(purchasePriceEntity.getCode());
             resultList.add(result);
         }
