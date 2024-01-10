@@ -705,7 +705,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setPriceCode(item.getPriceCode());
             result.setEffectiveDate(item.getEffectiveDate());
             result.setDisabled(item.getDisabled());
-            result.setor(item.getDisabled());
+            result.setPurchaseOrgName(item.getPurchaseOrgName());
             resultList.add(result);
         }
         return resultList;
