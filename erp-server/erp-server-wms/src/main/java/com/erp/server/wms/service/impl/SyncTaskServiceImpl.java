@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.wms.kingdee.*;
@@ -50,7 +49,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private SyncKingdeePoReceiveService syncKingdeePoReceiveService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
     private SyncKingdeeReturnOrderService syncKingdeeReturnOrderService;
@@ -241,13 +240,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      */
     private void syncPoReturn(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
-        List<PurchaseReturnOrderEntity> list = purchaseReturnOrderService.listByIds(sourceIdList);
+        List<PoReturnEntity> list = poReturnService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReturn >>>> 未找到数据！");
             return;
         }
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
-            PurchaseReturnOrderEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            PoReturnEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }

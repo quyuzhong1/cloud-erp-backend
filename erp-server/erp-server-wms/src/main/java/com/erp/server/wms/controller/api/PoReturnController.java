@@ -16,7 +16,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
+import com.erp.server.wms.service.PoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
@@ -34,9 +34,9 @@ import java.util.List;
 @RestController
 @LogSystemModule("采购退货单")
 @RequestMapping("/purchaseReturnOrder")
-public class PurchaseReturnOrderController extends BaseController {
+public class PoReturnController extends BaseController {
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     /**
      * 列表查询
@@ -52,7 +52,7 @@ public class PurchaseReturnOrderController extends BaseController {
             tableAlias = "pro"
     )
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = purchaseReturnOrderService.paging(dto);
+        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.paging(dto);
         return success(pagingVO);
     }
 
@@ -69,7 +69,7 @@ public class PurchaseReturnOrderController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro")
     public ApiResult<List<PurchaseReturnOrderDTO.ReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> warehouseReceiveCountDTOS = purchaseReturnOrderService.listCount(dto);
+        List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> warehouseReceiveCountDTOS = poReturnService.listCount(dto);
         return success(warehouseReceiveCountDTOS);
     }
 
@@ -83,7 +83,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增采购退货单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        String id = purchaseReturnOrderService.add(dto);
+        String id = poReturnService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -99,10 +99,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:update",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = purchaseReturnOrderService.update(dto);
+        Boolean flag = poReturnService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -118,10 +118,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "return_user_id",
             menuCode = "wms:purchaseReturnOrder:view",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "id")
     public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {
-        PurchaseReturnOrderDTO.ViewDTO dto = purchaseReturnOrderService.view(id);
+        PurchaseReturnOrderDTO.ViewDTO dto = poReturnService.view(id);
         return success(dto);
     }
 
@@ -137,10 +137,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:submit",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseReturnOrderService.submit(dto.getIds());
+        Boolean flag = poReturnService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -156,10 +156,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:add",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        Boolean flag = purchaseReturnOrderService.addAndSubmit(dto);
+        Boolean flag = poReturnService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -175,10 +175,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:update",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = purchaseReturnOrderService.updateAndSubmit(dto);
+        Boolean flag = poReturnService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -194,10 +194,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:approve",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = purchaseReturnOrderService.approve(baseApproveParamDTO);
+        Boolean flag = poReturnService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
@@ -213,10 +213,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:disApprove",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseReturnOrderService.disApprove(dto.getIds());
+        Boolean flag = poReturnService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -232,10 +232,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:cancelProcess",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseReturnOrderService.cancelProcess(dto.getIds());
+        Boolean flag = poReturnService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -251,10 +251,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:invalid",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
-        Boolean flag = purchaseReturnOrderService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
+        Boolean flag = poReturnService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -270,10 +270,10 @@ public class PurchaseReturnOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
             menuCode = "wms:purchaseReturnOrder:delete",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = purchaseReturnOrderService.delete(idsDTO.getIds());
+        Boolean flag = poReturnService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -286,7 +286,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping(value = "/purchaseOrderRefReturn")
     public ApiResult<List<PurchaseReturnOrderDTO.OrderRefReceiveDTO>> purchaseOrderRefReturn(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
-        List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = purchaseReturnOrderService.purchaseOrderRefReturn(purchaseOrderId);
+        List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = poReturnService.purchaseOrderRefReturn(purchaseOrderId);
         return success(orderRefReceiveDTOS);
     }
 
@@ -305,7 +305,7 @@ public class PurchaseReturnOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = purchaseReturnOrderService.exportExcel(dto, response);
+        Boolean flag = poReturnService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 
@@ -320,7 +320,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "采购订单下推退货单")
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        Boolean  flag = purchaseReturnOrderService.generatePurchaseReturnOrder(dto);
+        Boolean  flag = poReturnService.generatePurchaseReturnOrder(dto);
         return flag?success():failure();
     }
 
@@ -331,7 +331,7 @@ public class PurchaseReturnOrderController extends BaseController {
      */
     @PostMapping("/checkSkuInventory")
     public ApiResult<String> checkSkuInventory(@RequestBody @Validated() PurchaseReturnOrderDTO.AddDTO dto) {
-        String msg = purchaseReturnOrderService.checkSkuInventory(dto, dto.getPurchasePriceDetailList());
+        String msg = poReturnService.checkSkuInventory(dto, dto.getPurchasePriceDetailList());
         return success( "", msg);
     }
 
@@ -345,7 +345,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "下推自动生成采购订单")
     @PostMapping("/autoGeneratePurchaseOrder")
     public ApiResult autoGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseReturnOrderService.autoGeneratePurchaseOrder(dto);
+        Boolean flag = poReturnService.autoGeneratePurchaseOrder(dto);
         return flag?success():failure();
     }
 
@@ -357,7 +357,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @GetMapping("/dataRepairTemp")
     public ApiResult dataRepairTemp() {
-        Boolean flag = purchaseReturnOrderService.dataRepairTemp();
+        Boolean flag = poReturnService.dataRepairTemp();
         return flag?success():failure();
     }
 

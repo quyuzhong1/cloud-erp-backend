@@ -139,7 +139,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
 
     @Resource
@@ -1225,7 +1225,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
 
         //退货单
-        List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderService.listBySourceIds(ids);
+        List<PoReturnEntity> returnList = poReturnService.listBySourceIds(ids);
         long returnCount = returnList.stream().filter(s -> !s.getInvalidStatus()).count();
         if (returnCount > 0) {
             throw new ServiceException(ApiError.ERROR_99028);
@@ -1551,7 +1551,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addList.add(addDTO);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
-            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
+            addList.forEach(obj -> poReturnService.add(obj));
         }
         return Boolean.TRUE;
     }

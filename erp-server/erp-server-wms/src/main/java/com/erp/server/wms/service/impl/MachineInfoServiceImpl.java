@@ -114,7 +114,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private TransferInfoService transferInfoService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
 
     @Override
@@ -540,7 +540,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_TRANSFER_INFO,codes);
         }
         //已存在采购退货单
-        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
+        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
             List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_PURCHASE_RETURN,codes);

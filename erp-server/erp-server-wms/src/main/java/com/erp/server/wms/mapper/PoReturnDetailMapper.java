@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * @since 2023-04-07
  */
 @Mapper
-public interface PurchaseReturnOrderDetailMapper extends BaseMapper<PurchaseReturnOrderDetailEntity> {
+public interface PoReturnDetailMapper extends BaseMapper<PoReturnDetailEntity> {
     /**
      * @description: 根据来源ids查询
      * @author Will
@@ -24,7 +24,7 @@ public interface PurchaseReturnOrderDetailMapper extends BaseMapper<PurchaseRetu
      * @param sourceDetailIds
      * @return List<PurchaseReturnOrderDetailEntity>
      */
-    List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+    List<PoReturnDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 
     /**
      * 根据采购详情id查询退货明细
@@ -33,5 +33,5 @@ public interface PurchaseReturnOrderDetailMapper extends BaseMapper<PurchaseRetu
      * @param podIds podIds
      * @return java.util.List<com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity>
      **/
-    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@Param("podIds") List<String> podIds);
+    List<PoReturnDetailEntity> listReturnOrderDetailByPodIds(@Param("podIds") List<String> podIds);
 }
