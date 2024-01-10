@@ -31,6 +31,7 @@ import javax.validation.constraints.Size;
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
 </#if>
 <#list table.fields as field>
 <#if field.propertyType == 'BigDecimal'>
@@ -90,6 +91,11 @@ public class ${table.dtoName} implements Serializable {
          * 页面高级查询
          */
          private List<AdvanceQueryDTO> advanceQueryList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
 
          /**
          * 搜索类型
@@ -219,8 +225,8 @@ public class ${table.dtoName} implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-<#-- ----------  BEGIN 字段循环遍历  ---------->
-<#list table.fields as field>
+    <#-- ----------  BEGIN 字段循环遍历  ---------->
+    <#list table.fields as field>
     <#if field.keyFlag>
         <#assign keyPropertyName="${field.propertyName}"/>
     </#if>
