@@ -46,6 +46,7 @@ import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -792,7 +793,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
-                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId())).count();
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(item.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
                 if (count > 0) {
                     item.setIsConstitute(Boolean.TRUE);
                 }
@@ -2784,7 +2785,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         LoginUser userInfo = commonService.getUserInfo();
-
+        Boolean isHasAdd = Boolean.FALSE;
         //根据仓库分组生成加工单
         Map<String, List<SoInfoEntity>> map = soInfoEntityList.stream().collect(Collectors.groupingBy(SoInfoEntity::getWarehouseId));
         for (Map.Entry<String, List<SoInfoEntity>> entry : map.entrySet()) {
@@ -2813,9 +2814,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
                 addDetailDTO.setQty(soDetailEntity.getQty());
                 addDetailDTO.setWarehouseLocation(soDetailEntity.getWarehouseLocation());
-                List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDetailEntity.getSkuId())).collect(Collectors.toList());
+                List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(bomList)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_BOM_COMBINATION_PUSH_DOWN,soDetailEntity.getSkuNo());
+                    continue;
                 }
 
                 SoInfoEntity soInfoEntity = value.stream().filter(obj -> obj.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
@@ -2838,8 +2839,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 addDetailDTO.setSubComponentsList(subComponentsList);
                 detailList.add(addDetailDTO);
             }
+            //如果没有明细则跳过无需新增
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
             addDTO.setDetailList(detailList);
             machineInfoFeign.addMachineInfo(addDTO);
+            isHasAdd = Boolean.TRUE;
+        }
+        if (!isHasAdd) {
+            throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
         }
         return Boolean.TRUE;
     }
