@@ -309,9 +309,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             purchasePriceEntities = purchasePriceService.listByIds(purchasePriceIds);
         }
 
-
-
-
         for (PurchasePriceChangeDetailDTO.ViewDTO dto : purchasePriceDetailList) {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
             dto.setProductName(skuVO.getSkuName());
@@ -319,7 +316,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             dto.setSupplierName(supplierEntity.getName());
         }
 
-
+        //查询价目表主标Id
+        List<String> purchasePriceDetailIds = purchasePriceDetailList.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
+        List<PurchasePriceDetailEntity> purchasePriceDetailEntities = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
+        List<String> purchasePriceIdList = purchasePriceDetailEntities.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.toList());
+        viewDTO.setPurchasePriceIdList(purchasePriceIdList);
 
 
         viewDTO.setPurchasePriceChangeDetailList(purchasePriceDetailList);

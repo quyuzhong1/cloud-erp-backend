@@ -154,6 +154,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String purchasePriceId;
 
         /**
+         * 价目表id
+         */
+        private List<String> purchasePriceIdList;
+
+        /**
          * 调价日期
          */
         @NotNull(message = "调价日期不能为空")
@@ -217,6 +222,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 详情id
          */
         private String changeDetailId;
+
+        /**
+         * 价目表id
+         */
+        private String purchasePriceId;
 
         /**
          * 价目明细id

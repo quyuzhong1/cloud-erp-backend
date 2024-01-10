@@ -685,6 +685,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
+
+
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
         for (PurchasePriceDetailDTO.ViewDTO item : list) {
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
@@ -701,6 +703,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setSupplierId(item.getSupplierId());
             result.setSupplierName(item.getSupplierName());
             result.setPriceCode(item.getPriceCode());
+            result.setEffectiveDate(item.getEffectiveDate());
+            result.setDisabled(item.getDisabled());
+            result.setor(item.getDisabled());
             resultList.add(result);
         }
         return resultList;
