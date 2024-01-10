@@ -21,6 +21,8 @@ public interface AliexpressConstants {
     
     String LIST_ORDER="aliexpress.trade.seller.orderlist.get";
 
+    String ADDRESS ="aliexpress.trade.seller.order.decrypt";
+
     /**
      * 订单详情
      */
