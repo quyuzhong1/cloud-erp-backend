@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RefreshScope
-public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PoReturnMapper, PoReturnEntity> implements PoReturnService {
+public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoReturnEntity> implements PoReturnService {
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
