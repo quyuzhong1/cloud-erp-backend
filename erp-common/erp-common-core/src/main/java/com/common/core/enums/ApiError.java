@@ -813,7 +813,7 @@ public enum ApiError implements Serializable {
     SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
-    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】已下推加工单"),
+    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】SKU【{}】已下推加工单"),
 
     ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到发货单"),
     IS_DELIVERY_DELETE(99097,"只有未发货的数据支持删除"),
@@ -1056,7 +1056,7 @@ public enum ApiError implements Serializable {
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
     INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
-
+    ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
 
     /**
      * TMS 错误

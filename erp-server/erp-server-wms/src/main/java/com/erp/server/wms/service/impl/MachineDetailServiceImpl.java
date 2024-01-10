@@ -295,8 +295,13 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
         List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
         if (CollectionUtils.isNotEmpty(oldRefList)) {
+            //存在下推的销售订单明细id集合
+            List<String> soDetailIdList = oldRefList.stream().map(MachineRefSoEntity::getSoDetailId).collect(Collectors.toList());
+            //销售订单号
             String soCodes = oldRefList.stream().map(MachineRefSoEntity::getSoCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SO_PUSH_MACHINE,soCodes);
+            //SKU编号
+            String skuNoList = list.stream().filter(obj -> soDetailIdList.contains(obj.getRefDetailId())).map(MachineDetailEntity::getSkuNo).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_PUSH_MACHINE,soCodes,skuNoList);
         }
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {
