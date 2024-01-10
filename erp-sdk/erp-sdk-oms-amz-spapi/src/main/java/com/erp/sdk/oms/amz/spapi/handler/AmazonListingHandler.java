@@ -125,7 +125,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         // 默认请求速率配置
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.LISTING_ITEMS;
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
 
 
