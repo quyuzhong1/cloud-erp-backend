@@ -1192,6 +1192,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        if(StringUtils.isEmpty(pwd)){
+            throw new ServiceException(ApiError.ERROR_9015);
+        }
 //        SysUserInfoEntity userInfoEntity = this.getById(uid);
 //        if (StringUtils.isBlank(userInfoEntity.getEmail())) {
 //            throw new ServiceException(ApiError.ERROR_9044);
