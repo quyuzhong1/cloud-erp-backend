@@ -44,6 +44,18 @@ public class SubcontractOrderFeignController {
     }
 
     /**
+     * 根据主表ids查询委外订单明细
+     * @author Will
+     * @date: 2024/1/10 10:58
+     * @param mainIdList 
+     * @return List<SubcontractOrderDetailEntity> 
+     */
+    @PostMapping("/listSubcontractDetailByMainIds")
+    public List<SubcontractOrderDetailEntity> listSubcontractDetailByMainIds(@RequestBody List<String> mainIdList) {
+        return subcontractOrderDetailService.listByMainIds(mainIdList);
+    }
+
+    /**
      * 根据ids查询委外订单
      * @author Will
      * @date: 2024/1/9 15:40

@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseResultDTO;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -389,8 +390,13 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         String sourceId = dto.getSourceId();
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
         if (CollectionUtil.isEmpty(subcontractOrderList)) {
-
+            throw new ServiceException(ApiError.ERROR_98073);
         }
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderDetailList)) {
+            throw  new ServiceException(ApiError.ERROR_98070);
+        }
+
 
         return null;
     }
