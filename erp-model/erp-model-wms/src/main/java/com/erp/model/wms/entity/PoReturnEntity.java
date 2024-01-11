@@ -193,6 +193,41 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 退货确认状态
+     */
+    @TableField("confirm_status")
+    private String confirmStatus;
+
+    /**
+     * 异常分类
+     */
+    @TableField("unusual_type")
+    private String unusualType;
+
+    /**
+     * 异常反馈描述
+     */
+    @TableField("unusual_remark")
+    private String unusualRemark;
+
+    /**
+     * 异常处理人id
+     */
+    @TableField("unusual_handle_user_id")
+    private String unusualHandleUserId;
+
+    /**
+     * 异常处理人名称
+     */
+    @TableField("unusual_handle_user_name")
+    private String unusualHandleUserName;
+
+    /**
+     * 退货确认日期
+     */
+    @TableField("confirm_date")
+    private LocalDate confirmDate;
 
     public static final String APPROVE_STATUS = "approve_status";
 

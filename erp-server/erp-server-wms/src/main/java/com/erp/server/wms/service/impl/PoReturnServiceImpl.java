@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -30,6 +31,8 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
+import com.erp.model.wms.enums.PoReturnUnusualTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.*;
@@ -125,6 +128,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Autowired
     private MachineInfoService machineInfoService;
+
+    @Autowired
+    private WmsAttachmentService wmsAttachmentService;
 
     @Value("${companyCode}")
     private String companyCode;
@@ -1943,7 +1949,96 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
-    public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
-        return null;
+    public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData = this.baseMapper.supplierPaging(query, pagingParamDTO.getParams());
+        //明细数据
+        List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> records = pageData.getRecords();
+        //根据ids查询sku信息
+        List<String> skuIdList = records.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseReturnOrderDTO.SupplierPagingViewDTO record : records) {
+            //退货来源名称
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+            record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+
+            //订单确认状态名称
+            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+
+            //异常分类名称
+            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            record.setProductName(productDetailEntity.getName());
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PermissionsDTO param) {
+        PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam = new PurchaseReturnOrderDTO.SupplierPagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<PurchaseReturnOrderDTO.SupplierTabListDTO> list = baseMapper.supplierTabList(searchParam);
+        // 获取状态列表
+        List<String> statusList = PoReturnConfirmStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(PurchaseReturnOrderDTO.SupplierTabListDTO::getTabFlag).collect(Collectors.toList());
+        statusList.parallelStream().forEach(status -> {
+            if(!existStatusList.contains(status)) {
+                list.add(new PurchaseReturnOrderDTO.SupplierTabListDTO(status, 0));
+            }
+        });
+        list.add(new PurchaseReturnOrderDTO.SupplierTabListDTO("all", list.stream().mapToInt(PurchaseReturnOrderDTO.SupplierTabListDTO::getCount).sum()));
+        // 计算合计数量
+        return list;
+    }
+
+    @Override
+    public BatchResultDTO returnConfirm(String id) {
+        PoReturnEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到退货单数据");
+        }
+
+        //仅退货状态为待确认可操作
+        if (!PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getConfirmStatus())) {
+            throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
+        }
+
+        //更新确认状态
+        lambdaUpdate()
+                .set(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.CONFIRM.getStatus())
+                .eq(PoReturnEntity::getId, id)
+                .update();;
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "退货确认");
+    }
+
+    @Override
+    public Boolean unusualFeedback(PurchaseReturnOrderDTO.UnusualFeedbackParamDTO dto) {
+        //上传附件
+        if (!CollectionUtils.isEmpty(dto.getAttachUrlList())) {
+            //限制最多上传5个附件
+            if (dto.getAttachUrlList().size() > 5) {
+                throw new ServiceException(ApiError.ATTACH_QTY_MAX_FIVE);
+            }
+            //保存附件
+            Class<PoReturnEntity> aClass = PoReturnEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            wmsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, dto.getId());
+        }
+
+        //修改
+        return lambdaUpdate()
+                .set(PoReturnEntity::getUnusualType, dto.getUnusualType())
+                .set(PoReturnEntity::getUnusualRemark, dto.getUnusualRemark())
+                .eq(PoReturnEntity::getId, dto.getId())
+                .update();
     }
 }
