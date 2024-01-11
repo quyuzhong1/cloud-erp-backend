@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -15,5 +17,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CfgSettingMapper extends BaseMapper<CfgSettingEntity> {
-
+    /**
+     * @description: 查询所有配置
+     * @author Will
+     * @date: 2024/1/11 16:58
+     * @return List<CfgSettingEntity>
+     */
+    List<CfgSettingEntity> listCfgSetting();
 }

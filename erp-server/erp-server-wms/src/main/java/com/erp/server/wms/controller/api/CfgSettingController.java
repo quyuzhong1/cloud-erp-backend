@@ -49,24 +49,17 @@ public class CfgSettingController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author will
-    * @date:  2024-01-08
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
+     * 查询配置
+     * @author will
+     * @date:  2024-01-08
+     * @return ApiResult
+     */
+    @GetMapping("/view")
     @LogAction(value = LogActionEnum.UPDATE, desc = "系统配置管理修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:cfgSetting:update",
-        serviceClass = CfgSettingService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgSettingDTO.UpdateDTO dto) {
-        cfgSettingService.update(dto);
-        return success();
+    public ApiResult<CfgSettingDTO.ViewDTO> view() {
+        CfgSettingDTO.ViewDTO view = cfgSettingService.view();
+        return success(view);
     }
-
 
 
 }

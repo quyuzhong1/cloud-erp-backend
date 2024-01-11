@@ -225,6 +225,11 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到委外发料单数据");
         }
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
         // 更新单据审核状态
         log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -433,6 +438,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             detailListDTO.setSkuId(parentDetailEntity.getSkuId());
             detailListDTO.setSkuNo(parentDetailEntity.getSkuNo());
             detailListDTO.setSourceId(subcontractOrderList.get(0).getId());
+            detailListDTO.setParentSourceDetailId(parentDetailEntity.getId());
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(parentDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(skuVO)) {
@@ -451,6 +457,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 SubcontractIssueDetailDTO.ListSourceDetailDTO detailDTO = new SubcontractIssueDetailDTO.ListSourceDetailDTO();
                 detailDTO.setSourceId(subcontractOrderList.get(0).getId());
                 detailDTO.setSourceDetailId(childDetailEntity.getId());
+                detailDTO.setParentSourceDetailId(parentDetailEntity.getId());
                 detailDTO.setParentSkuId(parentDetailEntity.getSkuId());
                 detailDTO.setParentSkuNo(parentDetailEntity.getSkuNo());
                 detailDTO.setSkuId(childDetailEntity.getSkuId());

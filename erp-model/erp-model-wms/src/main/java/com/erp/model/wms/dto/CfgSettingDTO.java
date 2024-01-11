@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -28,37 +29,7 @@ public class CfgSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
-
-        /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * Key值
-        */
-        private String key;
-
-        /**
-        * json数据
-        */
-        private String dataJson;
-
-        /**
-        * 是否禁用
-        */
-        private Boolean disabled;
-
-        /**
-        * 排序字段
-        */
-        private Integer index;
-
-        /**
-        * 备注
-        */
-        private String remark;
+    public static class ViewDTO extends CommonDTO {
 
 
     }
@@ -80,12 +51,6 @@ public class CfgSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
     }
 
     @Data
@@ -93,38 +58,22 @@ public class CfgSettingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * Key值
-        */
-        @NotBlank(message = "Key值不能为空")
-        @Size(max = 64,message = "Key值最大长度不能超过64位")
-        private String key;
+         * 委外发料单设置
+         */
+        @Valid
+        private CfgSettingValueDTO.SubcontractIssueSettingDTO subcontractIssueSettingDTO;
 
         /**
-        * json数据
-        */
-        @NotBlank(message = "json数据不能为空")
-        private String dataJson;
+         * 采购退货单设置
+         */
+        @Valid
+        private CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO;
 
         /**
-        * 是否禁用
-        */
-        @NotNull(message = "是否禁用不能为空")
-        private Boolean disabled;
-
-        /**
-        * 排序字段
-        */
-        @NotNull(message = "排序字段不能为空")
-        private Integer index;
-
-        /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
-        private String remark;
-
-
+         * 采购对账单设置
+         */
+        @Valid
+        private CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO;
     }
 
 

@@ -3,20 +3,20 @@
 <mapper namespace="com.erp.server.wms.mapper.CfgSettingMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.CfgSettingEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="key" property="key" />
-       <result column="data_json" property="dataJson" />
-       <result column="disabled" property="disabled" />
-       <result column="index" property="index" />
-       <result column="remark" property="remark" />
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="key" property="key" />
+        <result column="data_json" jdbcType="OTHER" property="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
+        <result column="disabled" property="disabled" />
+        <result column="index" property="index" />
+        <result column="remark" property="remark" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,6 +32,14 @@
         is_deleted,
         key, data_json, disabled, index, remark
     </sql>
+
+    <!-- 查询所有非禁用的配置 -->
+    <select id="listCfgSetting" resultMap="BaseResultMap">
+        select
+               <include refid="Base_Column_List" />
+        from cfg_setting
+        where is_deleted = false and  disabled = false order by index asc
+    </select>
 
 
 </mapper>

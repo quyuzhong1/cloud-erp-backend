@@ -24,13 +24,10 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     BaseResultDTO.AddDTO add(CfgSettingDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-01-08
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgSettingDTO.UpdateDTO dto);
-
-
+     * 查询详情
+     * @author Will
+     * @date: 2024/1/11 14:35
+     * @return ViewDTO
+     */
+    CfgSettingDTO.ViewDTO view();
 }

@@ -201,7 +201,7 @@ public class SubcontractIssueDTO implements Serializable {
         /**
         * 勾选的id集合
         */
-        private List<String> ids;
+        private List<String> detailIdList;
     }
 
     /**
@@ -258,6 +258,7 @@ public class SubcontractIssueDTO implements Serializable {
 
         /**
         * 来源id
+        *  /scm/subcontractOrder/list,get请求
         */
         private String sourceId;
 
@@ -333,6 +334,7 @@ public class SubcontractIssueDTO implements Serializable {
 
         /**
         * 来源id
+        * /scm/subcontractOrder/list,get请求
         */
         @NotBlank(message = "来源id不能为空")
         @Size(max = 19,message = "来源id最大长度不能超过19位")
@@ -372,6 +374,11 @@ public class SubcontractIssueDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+
+        /**
+         * 父级来源明细id
+         */
+        private String parentSourceDetailId;
 
         /**
          * skuId
