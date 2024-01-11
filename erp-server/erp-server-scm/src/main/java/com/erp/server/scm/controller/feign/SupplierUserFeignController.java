@@ -9,6 +9,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
@@ -18,6 +19,7 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.server.scm.service.SupplierRefUserService;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -90,7 +92,7 @@ public class SupplierUserFeignController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
+        if(StringUtils.isEmpty(sysUserInfoDTO.getUid())) throw new ServiceException("用户ID不能为空");
         supplierUserService.update(sysUserInfoDTO);
         return success();
     }

@@ -477,7 +477,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             syncKingdeeSysUserInfoService.syncDataToKingdee(entity, operate);
         }
     }
-
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateStateSrm(UpdateUserStateDTO stateDTO) {
+        LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
+        updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
+        this.update(updateWrapper);
+    }
     /**
      * 设置登录ip
      *

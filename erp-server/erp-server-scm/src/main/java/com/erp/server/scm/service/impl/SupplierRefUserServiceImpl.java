@@ -120,9 +120,9 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
      * 新增修改处理数据
      */
     private void handleData(SupplierRefUserEntity supplierRefUserEntity) {
-        Assert.notNull(supplierRefUserEntity, "供应商关系不能为空");
-        Assert.notEmpty(supplierRefUserEntity.getSupplierId(), "供应商ID不能为空");
-        Assert.notEmpty(supplierRefUserEntity.getUid(), "用户ID不能为空");
+        if(Objects.isNull(supplierRefUserEntity)) throw new ServiceException("供应商关系不能为空");
+        if(StringUtils.isEmpty(supplierRefUserEntity.getUid())) throw new ServiceException("用户ID不能为空");
+        if(StringUtils.isEmpty(supplierRefUserEntity.getSupplierId())) throw new ServiceException("供应商ID不能为空");
         //一个用户只能存在一个供应商授权
         int count = lambdaQuery()
                 .eq(SupplierRefUserEntity::getSupplierId, supplierRefUserEntity.getSupplierId())

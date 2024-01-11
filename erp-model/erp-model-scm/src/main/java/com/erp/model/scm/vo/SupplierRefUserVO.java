@@ -14,6 +14,10 @@ import java.io.Serializable;
 @Data
 public class SupplierRefUserVO implements Serializable {
     /**
+     * 关系id
+     */
+    private String refId;
+    /**
      * 用户id
      */
     private String uid;

@@ -33,6 +33,7 @@
     <!-- 根据供应商获取用户id -->
     <select id="getUserIdsBySupplierIds" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
         SELECT
+            sru.id as refId,
             sru.uid,
             sru.supplier_id,
             s.purchase_user_name AS purchaseUserName,

@@ -279,5 +279,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return
      */
     List<SupplierUserVO> feignList(UserPagingSearchDTO dto);
+
+    void updateStateSrm(UpdateUserStateDTO stateDTO);
 }
 

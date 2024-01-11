@@ -9,6 +9,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.vo.ConfigVO;
+import com.erp.model.srm.vo.SupplierConfigVO;
+import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
 import com.erp.server.srm.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -54,21 +56,28 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgSettingDTO.AddDTO addDTO) {
-        CfgSettingEntity cfgSettingEntity = new CfgSettingEntity();
-        BeanMapperUtils.copy(addDTO, cfgSettingEntity);
-        // 数据处理
-        handleData(cfgSettingEntity);
-        cfgSettingEntity.setDataJson(getDataJson(addDTO.getDuration(),addDTO.getUnit(),addDTO.getSelectState()));
-        log.info("开始新增系统配置管理");
-        boolean save = super.save(cfgSettingEntity);
-        if(!save) {
-            throw new ServiceException("系统配置管理保存失败");
+    public void add(CfgSettingDTO.AddDTO addDTO) {
+        List<CfgSettingEntity> cfgSettingEntities = new ArrayList<>();
+        if (Objects.nonNull(addDTO.getOrderAcceptDTO())){
+            cfgSettingEntities.add(CfgSettingConfigConverter.INSTANCE.ConfigToOrderAcceptEntity(addDTO.getOrderAcceptDTO()));
         }
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "系统配置管理" , cfgSettingEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(cfgSettingEntity.getId(), cfgSettingEntity.getId());
+        if (Objects.nonNull(addDTO.getReturnConfirmDTO())){
+            cfgSettingEntities.add(CfgSettingConfigConverter.INSTANCE.ConfigToReturnConfigEntity(addDTO.getReturnConfirmDTO()));
+        }
+        if (CollectionUtils.isNotEmpty(cfgSettingEntities)){
+            for (CfgSettingEntity cfgSettingEntity:cfgSettingEntities) {
+                // 数据处理
+                handleData(cfgSettingEntity);
+                log.info("开始新增系统配置管理");
+                boolean save = super.save(cfgSettingEntity);
+                if(!save) {
+                    throw new ServiceException("系统配置管理保存失败");
+                }
+                // 操作日志
+                String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "系统配置管理" , cfgSettingEntity.getId());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
+            }
+        }
     }
 
     private String getDataJson(String duration, String unit, int selectState) {
@@ -118,6 +127,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(),null));
         }
         return configVOList;
+    }
+
+    @Override
+    public List<SupplierConfigVO> getConfigList() {
+        return null;
     }
 
     /**

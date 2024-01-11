@@ -1,0 +1,51 @@
+package com.erp.model.srm.vo;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+/**
+ * @author zdy
+ * @ClassName ConfigVO
+ * @description: TODO
+ * @date 2024年01月10日
+ * @version: 1.0
+ */
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class SupplierConfigVO implements Serializable {
+
+    /**
+     * 编码
+     */
+    private String key;
+    /**
+     * 供应商id
+     */
+    private String supplierId;
+    /**
+     * 时长
+     */
+    private String duration;
+    /**
+     * 单位
+     */
+    private String unit;
+    /**
+     * 选中状态 0 没有  1 有
+     */
+    private int selectState;
+    /**
+     *订单接受规则
+     */
+    private String orderAcceptRule;
+    /**
+     *退货确认规则
+     */
+    private String returnConfirmRule;
+}
