@@ -172,10 +172,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @return List<CfgSettingEntity>
      */
     private List<CfgSettingEntity> listCfgSetting () {
-        List<CfgSettingEntity> list = this.lambdaQuery()
-                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
-                .orderByAsc(CfgSettingEntity::getIndex)
-                .list();
+        List<CfgSettingEntity> list = baseMapper.listCfgSetting();
         return list;
     }
 }

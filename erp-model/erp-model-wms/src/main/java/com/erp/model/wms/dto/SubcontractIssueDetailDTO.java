@@ -194,6 +194,11 @@ public class SubcontractIssueDetailDTO implements Serializable {
         private String sourceId;
 
         /**
+         * 父级来源明细id
+         */
+        private String parentSourceDetailId;
+
+        /**
          * 来源明细id
          */
         private String sourceDetailId;

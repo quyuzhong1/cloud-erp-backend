@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -77,7 +78,7 @@ public class CfgSettingValueDTO implements Serializable {
         /**
          * 截止日期
          */
-        private LocalDate endDate;
+        private String endDate;
     }
 
 

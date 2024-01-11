@@ -56,14 +56,9 @@ public class CfgSettingController extends BaseController {
      */
     @GetMapping("/view")
     @LogAction(value = LogActionEnum.UPDATE, desc = "系统配置管理修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:cfgSetting:view",
-            serviceClass = CfgSettingService.class,
-            keyIdName = "id")
-    public ApiResult<?> view() {
-        cfgSettingService.view();
-        return success();
+    public ApiResult<CfgSettingDTO.ViewDTO> view() {
+        CfgSettingDTO.ViewDTO view = cfgSettingService.view();
+        return success(view);
     }
 
 

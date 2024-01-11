@@ -457,6 +457,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 SubcontractIssueDetailDTO.ListSourceDetailDTO detailDTO = new SubcontractIssueDetailDTO.ListSourceDetailDTO();
                 detailDTO.setSourceId(subcontractOrderList.get(0).getId());
                 detailDTO.setSourceDetailId(childDetailEntity.getId());
+                detailDTO.setParentSourceDetailId(parentDetailEntity.getId());
                 detailDTO.setParentSkuId(parentDetailEntity.getSkuId());
                 detailDTO.setParentSkuNo(parentDetailEntity.getSkuNo());
                 detailDTO.setSkuId(childDetailEntity.getSkuId());
