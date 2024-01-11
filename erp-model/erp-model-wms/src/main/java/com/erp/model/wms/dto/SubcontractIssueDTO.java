@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -88,10 +90,10 @@ public class SubcontractIssueDTO implements Serializable {
         /**
         * 单据状态【可排序】
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
-         * 单据状态名称【可排序】
+         * 单据状态名称
          */
         private String approveStatusName;
 

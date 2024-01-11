@@ -639,7 +639,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 属性赋值
         for(SubcontractIssueDTO.ListDTO data : list) {
             //状态名称
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setApproveStatusName(data.getApproveStatus().getName());
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             //仓位信息
             String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(data.getWarehouseId()) && obj.getCode().equals(data.getWarehouseLocation()))
