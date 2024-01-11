@@ -13,13 +13,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -237,13 +239,9 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查询退货明细
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
-        //查询仓库
-        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        //仓位必填验证
-        checkWarehouseLocation(warehouseEntity,list);
 
         for (PoInstockDetailEntity detailEntity : list) {
 
@@ -280,28 +278,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                     throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
                 }
             }
-        }
-    }
-
-    /**
-     * @description: 仓位必填验证
-     * @author Will
-     * @date: 2023/12/19 15:19
-     * @param warehouseEntity
-     * @param list
-     */
-    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoInstockDetailEntity> list) {
-        //仓库配置
-        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
-        List<String> warehouseIdList = new ArrayList<>();
-        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
-            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
-            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
-        }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
-        //判断仓位是否需要必填
-        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
     }
 
