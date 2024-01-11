@@ -541,30 +541,4 @@ public class SysUserFeignController extends BaseController {
         Boolean flag = sysUserInfoService.resetPassword(uid,pwd);
         return flag == true ? success() : failure();
     }
-
-    /**
-     * 忘记密码
-     * @Author Luo_WG
-     * @Date 2023/4/20 11:16
-     * @param dto dto
-     * @return
-     **/
-    @PostMapping("/forgotPassword")
-    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        Boolean flag = sysUserInfoService.forgotPassword(dto);
-        return flag == true ? success() : failure();
-    }
-
-    /**
-     * 忘记密码-获取验证码
-     * @Author Luo_WG
-     * @Date 2023/4/20 11:45
-     * @param userAccount userAccount
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/forgotPasswordGetCode")
-    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
-        return success(map);
-    }
 }

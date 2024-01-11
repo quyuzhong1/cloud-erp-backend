@@ -119,27 +119,6 @@ public class UserController extends BaseController {
     public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         return supplierUserFeign.resetPassword(uid,pwd);
     }
-
-    /**
-     * 忘记密码
-     * @param dto
-     * @return
-     */
-    @PostMapping("/forgotPassword")
-    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        return supplierUserFeign.forgotPassword(dto);
-    }
-
-    /**
-     * 忘记密码-获取验证码
-     * @param userAccount
-     * @return
-     */
-    @GetMapping("/forgotPasswordGetCode")
-    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        return supplierUserFeign.forgotPasswordGetCode(userAccount);
-    }
-
     /**
      * 供应商协作用户导出
      */
