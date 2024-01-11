@@ -181,7 +181,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param userAccount userAccount
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Map<String,Object> forgotPasswordGetCode(String userAccount);
+    Map<String,Object> forgotPasswordGetCode(String userAccount,String userType);
+
+    /**
+     * 通过手机号和用户类型获取验证码
+     **/
+    Map<String,Object> getCodeByAccountAndType(String phone,String userType);
 
     /**
      * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
