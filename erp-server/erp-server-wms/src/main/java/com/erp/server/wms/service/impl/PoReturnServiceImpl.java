@@ -1941,4 +1941,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
+        return null;
+    }
 }
