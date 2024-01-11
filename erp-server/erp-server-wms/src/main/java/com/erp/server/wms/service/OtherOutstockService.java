@@ -189,5 +189,5 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @param warehouse 目的仓
      * @return OtherOutstockDTO.AddDTO
      */
-    OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse);
+    OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse,String userId);
 }

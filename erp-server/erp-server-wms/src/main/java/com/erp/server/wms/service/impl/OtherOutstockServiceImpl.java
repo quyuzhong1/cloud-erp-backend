@@ -757,7 +757,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
-        OtherOutstockDTO.AddDTO addDTO = this.buildLossMainDto(destWarehouse,isOnwayWarehouse);
+        OtherOutstockDTO.AddDTO addDTO = this.buildLossMainDto(destWarehouse,isOnwayWarehouse,entity.getCreateUserId());
         List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
             OtherOutstockDetailDTO.AddDTO detailAddDTO = new OtherOutstockDetailDTO.AddDTO();
@@ -775,7 +775,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
      * 封装报损出库单主记录
      */
     @Override
-    public OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse){
+    public OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse,Boolean isOnwayWarehouse,String userId){
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (org.apache.commons.lang3.StringUtils.isBlank(warehouse.getOnwayWarehouseId())) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
@@ -788,8 +788,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //发货仓库id
         addDTO.setWarehouseId(isOnwayWarehouse?warehouse.getOnwayWarehouseId():warehouse.getId());
         //部门
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO =  sysUserFeign.getDeptByUserId(loginUser.getUid());
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO =  sysUserFeign.getDeptByUserId(userId);
         addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
         //出库类型：报损
         addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
