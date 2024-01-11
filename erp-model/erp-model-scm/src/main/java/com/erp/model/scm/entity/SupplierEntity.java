@@ -133,7 +133,9 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("payment_condition")
     private String paymentCondition;
-
+    /**
+     * SRM协同
+     */
     @TableField("srm_disabled")
     private Boolean srmDisabled;
     @Override

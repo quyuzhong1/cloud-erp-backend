@@ -1003,6 +1003,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 supplier.setId(supplierId);
                 String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
                 supplier.setCode(code);
+                supplier.setSrmDisabled(true);
                 addSupplierList.add(supplier);
                 //账户
                 List<SupplierAccountDTO.ImportAddDTO> accountList = item.getBankAccountList();
