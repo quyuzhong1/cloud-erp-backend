@@ -368,4 +368,100 @@
         </if>
         ORDER BY pro.create_time desc
     </select>
+
+    <!--供应商退货分页查询-->
+    <select id="supplierPaging" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierPagingViewDTO">
+        SELECT
+            pro.id,
+            prod.id AS detailId,
+            pro.confirm_date AS confirmDate,
+            pro.code AS code,
+            pro.purchase_order_code AS purchaseOrderCode,
+            pro.confirm_status AS confirmStatus,
+            prod.sku_id AS skuId,
+            prod.sku_no AS skuNo,
+            prod.return_qty AS returnQty,
+            pro.return_remark AS returnRemark,
+            prod.remark AS remark,
+            pro.return_user_name AS returnUserName,
+            pro.unusual_type AS unusualType,
+            pro.unusual_remark AS unusualRemark,
+            pro.bill_date AS billDate,
+            pro.source_type AS sourceType
+        FROM po_return_detail prod
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        AND pro.approve_status = 'approve'
+        <!--单号-->
+        <if test="params.code != null and params.code != ''">
+            and pro.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+        <!--sku-->
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and prod.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--确认状态-->
+        <if test="params.confirmStatus != null and params.confirmStatus != ''">
+            and pro.confirm_status = #{params.confirmStatus}
+        </if>
+        <!--退货日期-->
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and pro.bill_date >= #{params.billDateList[0]} and (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
+        </if>
+        <!--退货原因-->
+        <if test="params.returnRemark != null and params.returnRemark != ''">
+            and pro.return_remark ILIKE concat('%',#{params.returnRemark}::text,'%')
+        </if>
+        <!--退货单来源类型-->
+        <if test="params.returnOrderSource != null and params.returnOrderSource != ''">
+            <choose>
+                <when test="params.returnOrderSource =='other' ">
+                    and pro.source_type != 'qcInfo'
+                </when>
+                <otherwise>
+                    and pro.source_type = 'qcInfo'
+                </otherwise>
+            </choose>
+        </if>
+        <!--异常类型-->
+        <if test="params.unusualType != null and params.unusualType != ''">
+            and pro.unusual_type = #{params.unusualType}
+        </if>
+        <!--退货原因-->
+        <if test="params.returnRemark != null and params.returnRemark != ''">
+            and pro.return_remark ILIKE concat('%',#{params.returnRemark}::text,'%')
+        </if>
+        <!--异常说明-->
+        <if test="params.unusualRemark != null and params.unusualRemark != ''">
+            and pro.unusual_remark ILIKE concat('%',#{params.unusualRemark}::text,'%')
+        </if>
+        <!--备注-->
+        <if test="params.remark != null and params.remark != ''">
+            and prod.remark ILIKE concat('%',#{params.remark}::text,'%')
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pro.create_time desc,pro.id
+    </select>
+
+    <!--SRM供应商退货列表tab页-->
+    <select id="supplierTabList" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierTabListDTO">
+        SELECT
+        confirm_status AS tabFlag,
+        count(*)  AS count
+        FROM po_return
+        WHERE is_deleted=FALSE
+        GROUP BY confirm_status
+    </select>
 </mapper>

@@ -49,4 +49,19 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
      **/
     IPage<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(Page query, @Param("params") PurchaseReturnOrderDTO.PdaPagingParamDTO params);
+
+    /**
+     * 供应商退货分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(Page query, @Param("params") PurchaseReturnOrderDTO.SupplierPagingParamDTO params);
+
+    /**
+     * SRM供应商退货列表tab页
+     * @param searchParam
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam);
 }
