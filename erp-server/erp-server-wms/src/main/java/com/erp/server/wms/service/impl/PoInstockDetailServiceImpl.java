@@ -239,10 +239,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查询退货明细
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
-        if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-
         for (PoInstockDetailEntity detailEntity : list) {
 
             //采购订单数量
