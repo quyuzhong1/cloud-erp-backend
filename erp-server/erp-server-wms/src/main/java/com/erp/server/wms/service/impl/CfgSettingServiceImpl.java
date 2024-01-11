@@ -1,15 +1,25 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.server.wms.mapper.CfgSettingMapper;
 import com.erp.server.wms.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.annotations.Case;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,68 +40,142 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
+
     @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
+    private DictBasicService dictBasicService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgSettingDTO.AddDTO addDTO) {
-        CfgSettingEntity cfgSettingEntity = new CfgSettingEntity();
-        BeanMapperUtils.copy(addDTO, cfgSettingEntity);
-
         // 数据处理
-        handleData(cfgSettingEntity);
+        List<CfgSettingEntity> cfgSettingList = handleData(addDTO);
 
         log.info("开始新增系统配置管理");
-        boolean save = super.save(cfgSettingEntity);
+        boolean save = super.saveOrUpdateBatch(cfgSettingList);
         if(!save) {
             throw new ServiceException("系统配置管理保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "系统配置管理" , cfgSettingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgSettingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgSettingEntity.getId(), cfgSettingEntity.getId());
+        return new BaseResultDTO.AddDTO("", "");
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
-    public Boolean update(CfgSettingDTO.UpdateDTO updateDTO) {
-        CfgSettingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "系统配置管理"));
-        CfgSettingEntity cfgSettingEntity =  BeanMapperUtils.map(CfgSettingEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(cfgSettingEntity);
-        log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgSettingEntity);
-        if(!save) {
-            throw new ServiceException("系统配置管理保存失败");
+    public CfgSettingDTO.ViewDTO view() {
+        CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getKey());
+        if (CollectionUtils.isEmpty(dictList)) {
+            return viewDTO;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, null, cfgSettingEntity.getId(), msg);
-        return Boolean.TRUE;
+        //查询已有配置信息
+        List<CfgSettingEntity> list = listCfgSetting();
+        if (CollectionUtils.isEmpty(list)) {
+            return viewDTO;
+        }
+        for (CfgSettingEntity cfgSetting : list) {
+            handleViewEnum(cfgSetting,viewDTO);
+        }
+        return viewDTO;
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgSettingEntity cfgSettingEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<CfgSettingEntity> handleData(CfgSettingDTO.AddDTO addDTO) {
+        List<CfgSettingEntity> list = new ArrayList<>();
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getKey());
+        if (CollectionUtils.isEmpty(dictList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //查询已有配置信息
+        List<CfgSettingEntity> cfgSettingList = listCfgSetting();
+
+       for (DictBasicDTO.ListDTO listDTO : dictList) {
+           //添加数据
+           CfgSettingEntity entity = handleAddEnum(listDTO, addDTO,cfgSettingList);
+           list.add(entity);
+       }
+       return  list;
+    }
+
+
+    /**
+     * @description: 格式化枚举信息
+     * @author Will
+     * @date: 2024/1/11 15:15
+     * @param listDTO
+     * @param addDTO
+     */
+    private CfgSettingEntity handleAddEnum (DictBasicDTO.ListDTO listDTO,CfgSettingDTO.AddDTO addDTO,List<CfgSettingEntity> cfgSettingList) {
+        CfgSettingEntity entity = new CfgSettingEntity();
+        //系统配置json
+        JSONObject jsonObject = new JSONObject();
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(listDTO.getValue());
+        switch (cfgSettingEnum) {
+            case SUBCONTRACT_ISSUE:
+                 jsonObject = JSONUtil.parseObj(addDTO.getSubcontractIssueSettingDTO());
+                break;
+            case PO_RETURN:
+                jsonObject = JSONUtil.parseObj(addDTO.getPoReturnSettingDTO());
+                break;
+            case PO_RECONCILIATION:
+                jsonObject = JSONUtil.parseObj(addDTO.getPoReconciliationSettingDTO());
+                break;
+            default:
+                break;
+        }
+        //查询是否是修改
+        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        entity.setId(id);
+        entity.setIndex(listDTO.getSort());
+        entity.setKey(listDTO.getValue());
+        entity.setDataJson(jsonObject);
+        return entity;
+    }
+
+
+    /**
+     * @description: 格式化枚举信息
+     * @author Will
+     * @date: 2024/1/11 15:15
+     * @param cfgSetting
+     * @param viewDTO
+     */
+    private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingDTO.ViewDTO viewDTO) {
+
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
+        switch (cfgSettingEnum) {
+            case SUBCONTRACT_ISSUE:
+                CfgSettingValueDTO.SubcontractIssueSettingDTO subcontractIssueSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
+                viewDTO.setSubcontractIssueSettingDTO(subcontractIssueSettingDTO);
+                break;
+            case PO_RETURN:
+                CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
+                viewDTO.setPoReturnSettingDTO(poReturnSettingDTO);
+                break;
+            case PO_RECONCILIATION:
+                CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
+                viewDTO.setPoReconciliationSettingDTO(poReconciliationSettingDTO);
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    /**
+     * @description: 查询未禁用配置
+     * @author Will
+     * @date: 2024/1/11 15:57
+     * @return List<CfgSettingEntity>
+     */
+    private List<CfgSettingEntity> listCfgSetting () {
+        List<CfgSettingEntity> list = this.lambdaQuery()
+                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
+                .orderByAsc(CfgSettingEntity::getIndex)
+                .list();
+        return list;
     }
 }

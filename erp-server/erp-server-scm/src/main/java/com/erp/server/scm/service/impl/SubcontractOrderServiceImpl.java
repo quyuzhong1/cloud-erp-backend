@@ -444,6 +444,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 String codes = subcontractChangeList.stream().map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.ERROR_SUB_PUSH_CHANGE,entity.getCode(),codes);
             }
+            //判断是否下推委外发料单 TODO
         }
 
 
