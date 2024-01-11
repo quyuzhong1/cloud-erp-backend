@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.lang.Assert;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -11,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.sys.dto.DeleteUserDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
@@ -51,30 +53,37 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/paging")
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(true);
+        dto.getParams().setUserType(UserTypeEnum.SRM.code);
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
     }
 
 
     /**
-     * 添加用户
+     * 新增供应商协同用户
+     * @param sysUserInfoDTO
+     * @return
      */
     @PostMapping("/save")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(true);
+        sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         supplierUserService.add(sysUserInfoDTO);
         return success();
     }
 
     /**
-     * 修改用户
+     * 修改供应商协同用户
+     * @param sysUserInfoDTO
+     * @return
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
         sysUserInfoDTO.setIsSuper(true);
+        sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         supplierUserService.update(sysUserInfoDTO);
         return success();
     }
@@ -82,6 +91,8 @@ public class SupplierUserController extends BaseController {
 
     /**
      * 用户信息
+     * @param uid
+     * @return
      */
     @LogViewService
     @GetMapping("/info/{uid}")
@@ -92,11 +103,13 @@ public class SupplierUserController extends BaseController {
 
 
     /**
-     * 删除
+     * 删除用户
+     * @param dto
+     * @return
      */
     @PostMapping("/remove")
-    public ApiResult delete(@RequestBody String uid) {
-        return supplierUserService.deleteById(uid);
+    public ApiResult delete(@RequestBody DeleteUserDTO dto) {
+        return supplierUserService.deleteById(dto.getUid());
     }
 
     /**

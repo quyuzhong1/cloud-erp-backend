@@ -584,7 +584,18 @@ public class SupplierDTO implements Serializable {
          * 分类名
          */
         private String categoryName;
-
+        /**
+         * SRM协同 true 是 false 开启
+         */
+        private Boolean srmDisabled;
+        /**
+         *订单接受规则
+         */
+        private String orderAcceptRule;
+        /**
+         *退货确认规则
+         */
+        private String returnConfirmRule;
 
         /**
          * 等级id
@@ -604,12 +615,6 @@ public class SupplierDTO implements Serializable {
          */
         private Boolean disabled;
 
-        /**
-         * SRM协同 状态
-         * true  禁用
-         * false 启用
-         */
-        private Boolean srmDisabled;
         /**
          * 结算付款方式
          */

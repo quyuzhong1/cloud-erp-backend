@@ -111,11 +111,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (CollectionUtils.isNotEmpty(cfgSettingEntities)){
             Map<String, CfgSettingEntity> collect = cfgSettingEntities.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, Function.identity()));
             configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode(),collect.get(ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode())));
-            configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.RETURN_AUTO_ACCEPT.getCode(),collect.get(ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode())));
+            configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(),collect.get(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode())));
         }else {
             //获取默认配置
             configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode(),null));
-            configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.RETURN_AUTO_ACCEPT.getCode(),null));
+            configVOList.add(getSupplierConfig(supplierId,ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(),null));
         }
         return configVOList;
     }

@@ -80,9 +80,19 @@ public class CfgSettingController extends BaseController {
      * @return
      */
     @GetMapping("/getConfig")
-    public ApiResult getConfig() {
+    public ApiResult<List<ConfigVO>> getConfig() {
         List<ConfigVO> configVOList =cfgSettingService.getConfig();
         return success(configVOList);
     }
 
+    /**
+     * 获取供应商订单配置信息
+     *
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult list() {
+        List<ConfigVO> configVOList =cfgSettingService.getConfig();
+        return success(configVOList);
+    }
 }
