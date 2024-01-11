@@ -194,32 +194,9 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         } else {
             notProductOrderAdd(dto, id, listDetail);
         }
-        //仓位必填验证
-        checkWarehouseLocation(warehouse,listDetail);
+
         //保存详情信息
         return this.saveBatch(listDetail);
-    }
-
-    /**
-     * @description: 仓位必填验证
-     * @author Will
-     * @date: 2023/12/19 15:20
-     * @param warehouseEntity
-     * @param list
-     */
-    private void checkWarehouseLocation (WarehouseEntity warehouseEntity,List<PoReturnDetailEntity> list) {
-        //仓库配置
-        CfgApiAuthEntity cfgApiAuthEntity = dmpTaskFeign.getByKey(new CfgApiAuthDTO.FeignDTO(CfgApiAuthContant.WAREHOUSE_LOCATION_VALIDATE));
-        List<String> warehouseIdList = new ArrayList<>();
-        if (ObjectUtils.isNotEmpty(cfgApiAuthEntity)) {
-            CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
-            warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
-        }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
-        //判断仓位是否需要必填
-        if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
-        }
     }
 
     /**
@@ -367,8 +344,6 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         } else {
             notProductOrderUpdate(dto, id, listDetail);
         }
-        //仓位必填验证
-        checkWarehouseLocation(warehouse,listDetail);
 
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志
