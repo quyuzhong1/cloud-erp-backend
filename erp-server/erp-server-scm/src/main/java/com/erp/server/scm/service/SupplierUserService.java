@@ -81,22 +81,6 @@ public interface SupplierUserService {
     ApiResult resetPassword(String uid, String pwd);
 
     /**
-     * 忘记密码
-     *
-     * @param dto
-     * @return
-     */
-    ApiResult forgotPassword(ForgotPasswordDTO dto);
-
-    /**
-     * 忘记密码-获取验证码
-     *
-     * @param userAccount
-     * @return
-     */
-    ApiResult forgotPasswordGetCode(String userAccount);
-
-    /**
      * 下载导出协作用户模板
      *
      * @param response

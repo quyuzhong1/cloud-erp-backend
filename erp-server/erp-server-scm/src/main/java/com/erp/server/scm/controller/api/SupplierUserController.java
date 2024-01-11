@@ -49,7 +49,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
+    public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(true);
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
@@ -85,7 +85,7 @@ public class SupplierUserController extends BaseController {
      */
     @LogViewService
     @GetMapping("/info/{uid}")
-    public ApiResult info(@PathVariable("uid") String uid) {
+    public ApiResult<SupplierUserInfoVO> info(@PathVariable("uid") String uid) {
         SupplierUserInfoVO supplierUserInfoVO = supplierUserService.getById(uid);
         return success(supplierUserInfoVO);
     }
@@ -119,26 +119,6 @@ public class SupplierUserController extends BaseController {
     @GetMapping("/resetPassword")
     public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         return supplierUserService.resetPassword(uid,pwd);
-    }
-
-    /**
-     * 忘记密码
-     * @param dto
-     * @return
-     */
-    @PostMapping("/forgotPassword")
-    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        return supplierUserService.forgotPassword(dto);
-    }
-
-    /**
-     * 忘记密码-获取验证码
-     * @param userAccount
-     * @return
-     */
-    @GetMapping("/forgotPasswordGetCode")
-    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        return supplierUserService.forgotPasswordGetCode(userAccount);
     }
 
 

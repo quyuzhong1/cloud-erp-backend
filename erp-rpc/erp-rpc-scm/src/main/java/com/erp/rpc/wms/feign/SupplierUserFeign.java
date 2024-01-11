@@ -93,24 +93,6 @@ public interface SupplierUserFeign {
     ApiResult resetPassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
 
     /**
-     * 忘记密码
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/feign/supplierUser/forgotPassword")
-    ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto);
-
-    /**
-     * 忘记密码-获取验证码
-     *
-     * @param userAccount
-     * @return
-     */
-    @GetMapping("/feign/supplierUser/forgotPasswordGetCode")
-    ApiResult<Map<String, Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount);
-
-    /**
      * 保存用户关系
      *
      * @param refUserEntity

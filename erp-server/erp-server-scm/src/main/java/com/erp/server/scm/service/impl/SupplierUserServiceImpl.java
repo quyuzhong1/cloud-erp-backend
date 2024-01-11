@@ -207,16 +207,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    public ApiResult forgotPassword(ForgotPasswordDTO dto) {
-        return userInfoFeign.forgotPassword(dto);
-    }
-
-    @Override
-    public ApiResult forgotPasswordGetCode(String userAccount) {
-        return userInfoFeign.forgotPasswordGetCode(userAccount);
-    }
-
-    @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "classpath:excel/sysUserImportTemplate.xlsx";
         String excelName = "template.xlsx";
