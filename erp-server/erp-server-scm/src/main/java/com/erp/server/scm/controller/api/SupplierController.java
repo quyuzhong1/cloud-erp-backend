@@ -202,6 +202,18 @@ public class SupplierController extends BaseController {
     }
 
     /**
+     * 启用SRM协同
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用SRM协同:id={id},状态值={state}(true=禁用,false=启用)")
+    @PostMapping("/updateSrmStatus")
+    public ApiResult updateSrmStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = supplierService.updateStatus(dto);
+        return result == true ? success() : failure();
+    }
+    /**
      * 审核
      *
      * @param dto

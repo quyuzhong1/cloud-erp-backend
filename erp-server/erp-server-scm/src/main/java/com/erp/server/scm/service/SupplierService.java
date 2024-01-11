@@ -131,6 +131,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     Boolean updateStatus(UpdateStateDTO dto);
 
     /**
+     * 更新SRM协同状态
+     * @param dto
+     * @return
+     */
+    Boolean updateSrmStatus(UpdateStateDTO dto);
+    /**
      * 获取供应商
      * 获取 审核通过且开启的供应商
      *

@@ -686,6 +686,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return this.updateById(supplier);
     }
 
+    @Override
+    public Boolean updateSrmStatus(UpdateStateDTO dto) {
+        String supplierId = dto.getId();
+        SupplierEntity supplier = this.getById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        Boolean state = dto.getState();
+        supplier.setSrmDisabled(state);
+        //添加日志
+        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
+        return this.updateById(supplier);
+    }
+
 
     /**
      * 获取供应商
