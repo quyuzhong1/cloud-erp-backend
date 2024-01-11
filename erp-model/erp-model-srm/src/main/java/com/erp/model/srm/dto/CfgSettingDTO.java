@@ -75,17 +75,14 @@ public class CfgSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
         /**
-         * 时长
+         * 订单接受配置
          */
-        private String duration;
+        private OrderAcceptDTO orderAcceptDTO;
+
         /**
-         * 单位
+         * 退货确认配置
          */
-        private String unit;
-        /**
-         * 选中状态 0 没有  1 有
-         */
-        private int selectState;
+        private ReturnConfirmDTO returnConfirmDTO;
     }
 
     /**

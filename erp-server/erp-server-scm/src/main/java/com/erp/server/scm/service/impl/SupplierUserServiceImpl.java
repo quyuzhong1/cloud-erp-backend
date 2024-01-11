@@ -114,7 +114,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         //判断是否存在供应商
-        Assert.notEmpty(sysUserInfoDTO.getSupplierId(), "供应商ID不能为空");
+        if(StringUtils.isEmpty(sysUserInfoDTO.getSupplierId())) throw new ServiceException("供应商ID不能为空");
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
         if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         if (StringUtils.isEmpty(sysUserInfoDTO.getUserType())) {
@@ -139,8 +139,8 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
         //判断是否存在供应商
-        Assert.notEmpty(sysUserInfoDTO.getRefId(), "供应商用户关系ID不能为空");
-        Assert.notEmpty(sysUserInfoDTO.getSupplierId(), "供应商ID不能为空");
+        if(StringUtils.isEmpty(sysUserInfoDTO.getRefId())) throw new ServiceException("供应商用户关系ID不能为空");
+        if(StringUtils.isEmpty(sysUserInfoDTO.getSupplierId())) throw new ServiceException("供应商ID不能为空");
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
         if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         //1.更新用户基础信息
@@ -190,7 +190,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult deleteById(String uid) {
-        userInfoFeign.delete(Collections.singletonList(uid));
+        userInfoFeign.deleteSrmUser(Collections.singletonList(uid));
         //删除用户和供应商绑定记录
         supplierRefUserService.deleteRefByUids(Collections.singletonList(uid));
         return ApiResult.success();
@@ -198,7 +198,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     public ApiResult updateState(UpdateUserStateDTO stateDTO) {
-        return userInfoFeign.updateState(stateDTO);
+        return userInfoFeign.updateStateSrm(stateDTO);
     }
 
     @Override
@@ -379,6 +379,8 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             list.forEach(supplierUserVO -> {
                 SupplierRefUserVO supplierRefUserVO = supplierMap.get(supplierUserVO.getUid());
                 if (Objects.nonNull(supplierRefUserVO)) {
+                    supplierUserVO.setRefId(supplierRefUserVO.getRefId());
+                    supplierUserVO.setSupplierId(supplierRefUserVO.getSupplierId());
                     supplierUserVO.setSupplierName(supplierRefUserVO.getSupplierName());
                     supplierUserVO.setPurchaseUserName(supplierRefUserVO.getPurchaseUserName());
                 }
@@ -387,7 +389,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 }else {
                     supplierUserVO.setIsBindWechatStr("未绑定");
                 }
-                if (Objects.nonNull(supplierUserVO.getUserState()) && supplierUserVO.getUserState()){
+                if (Objects.nonNull(supplierUserVO.getUserState()) && 1 == supplierUserVO.getUserState()){
                     supplierUserVO.setUserStateStr("已启用");
                 }else {
                     supplierUserVO.setUserStateStr("已禁用");

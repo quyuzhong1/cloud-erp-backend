@@ -307,6 +307,9 @@
         <if test="params.userType != null and params.userType != ''">
             AND sui.user_type = #{params.userType}
         </if>
+        <if test="params.isSuper != null">
+            AND sui.is_super = #{params.isSuper}
+        </if>
         <if test="params.userIds != null and params.userIds.size()>0">
             AND sui.uid in
             <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
@@ -317,17 +320,17 @@
     </select>
     <select id="feignList" resultType="com.erp.model.sys.vo.SupplierUserVO">
         SELECT
-        uid,
-        user_name,
-        real_name,
-        mobile,
-        email,
-        is_super,
-        user_state AS disabled,
+        sui.uid,
+        sui.user_name,
+        sui.real_name,
+        sui.mobile,
+        sui.email,
+        sui.is_super,
+        sui.user_state AS disabled,
         CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
-        last_login_time,
-        create_user_name,
-        create_time
+        sui.last_login_time,
+        sui.create_user_name,
+        sui.create_time
         FROM sys_user_info sui
         LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
         WHERE delete_state=1 AND user_account not in ('admin')
@@ -345,6 +348,9 @@
         </if>
         <if test="params.userType != null and params.userType != ''">
             AND sui.user_type = #{params.userType}
+        </if>
+        <if test="params.isSuper != null">
+            AND sui.is_super = #{params.isSuper}
         </if>
         <if test="params.userIds != null and params.userIds.size()>0">
             AND sui.uid in

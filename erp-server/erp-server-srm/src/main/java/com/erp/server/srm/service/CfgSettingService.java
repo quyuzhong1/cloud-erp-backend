@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.vo.ConfigVO;
+import com.erp.model.srm.vo.SupplierConfigVO;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgSettingDTO.AddDTO dto);
+    void add(CfgSettingDTO.AddDTO dto);
 
     /**
     * 修改
@@ -40,4 +41,10 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     List<ConfigVO> getConfig();
+
+    /**
+     *
+     * @return
+     */
+    List<SupplierConfigVO> getConfigList();
 }

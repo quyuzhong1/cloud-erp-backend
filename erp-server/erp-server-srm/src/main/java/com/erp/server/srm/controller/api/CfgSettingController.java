@@ -2,6 +2,7 @@ package com.erp.server.srm.controller.api;
 
 
 import com.erp.model.srm.vo.ConfigVO;
+import com.erp.model.srm.vo.SupplierConfigVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -51,7 +52,8 @@ public class CfgSettingController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "系统配置管理新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgSettingDTO.AddDTO dto) {
-        return success(cfgSettingService.add(dto));
+        cfgSettingService.add(dto);
+        return success();
     }
 
     /**
@@ -91,8 +93,8 @@ public class CfgSettingController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult list() {
-        List<ConfigVO> configVOList =cfgSettingService.getConfig();
+    public ApiResult<List<SupplierConfigVO>> list() {
+        List<SupplierConfigVO> configVOList =cfgSettingService.getConfigList();
         return success(configVOList);
     }
 }

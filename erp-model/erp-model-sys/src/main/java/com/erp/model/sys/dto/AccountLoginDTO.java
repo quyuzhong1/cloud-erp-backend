@@ -23,6 +23,6 @@ public class AccountLoginDTO implements Serializable {
     @NotBlank(message = "密码不能为空")
     private String password;
 
-    @JsonIgnore
+//    @JsonIgnore
     private String userType;
 }

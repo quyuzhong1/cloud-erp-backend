@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.DeleteUserDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
@@ -20,6 +21,7 @@ import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,7 +83,7 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        Assert.notEmpty(sysUserInfoDTO.getUid(), "用户ID不能为空");
+        if (StringUtils.isEmpty(sysUserInfoDTO.getUid())) throw new ServiceException("用户ID不能为空");
         sysUserInfoDTO.setIsSuper(true);
         sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         supplierUserService.update(sysUserInfoDTO);
@@ -150,8 +152,9 @@ public class SupplierUserController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
     @PostMapping("/exportSupplier")
-    public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
         dto.setIsSuper(true);
+        dto.setUserType(UserTypeEnum.SRM.code);
         supplierUserService.exportSupplierUser(dto, response);
         return success();
     }

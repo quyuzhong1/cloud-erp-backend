@@ -44,6 +44,14 @@ public class SupplierUserVO implements Serializable {
      */
     private String isSuperStr;
     /**
+     * 关系id
+     */
+    private String refId;
+    /**
+     * 关联供应商ID
+     */
+    private String supplierId;
+    /**
      * 关联供应商
      */
     private String supplierName;
@@ -54,7 +62,7 @@ public class SupplierUserVO implements Serializable {
     /**
      *启用状态  正常 true 禁用 false  //o 禁用 1 正常
      */
-    private Boolean userState;
+    private Integer userState;
     /**
      * 是否禁用 正常 true 禁用 false  //o 禁用 1 正常
      */

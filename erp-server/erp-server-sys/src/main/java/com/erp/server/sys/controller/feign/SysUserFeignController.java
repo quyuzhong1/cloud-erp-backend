@@ -510,10 +510,9 @@ public class SysUserFeignController extends BaseController {
     /**
      * 删除
      */
-    @PostMapping("/remove")
-    public ApiResult delete(@RequestBody List<String> uids) {
-        sysUserInfoService.deleteByIds(uids);
-        sysUserThirdService.deleteByUserIds(uids);
+    @PostMapping("/deleteSrmUser")
+    public ApiResult deleteSrmUser(@RequestBody List<String> uids) {
+        sysUserInfoService.removeByIds(uids);
         return success();
     }
 
@@ -522,9 +521,9 @@ public class SysUserFeignController extends BaseController {
      * @param stateDTO
      * @return
      */
-    @PostMapping("/updateState")
-    public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
-        sysUserInfoService.updateState(stateDTO);
+    @PostMapping("/updateStateSrm")
+    public ApiResult updateStateSrm(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
+        sysUserInfoService.updateStateSrm(stateDTO);
         return success();
     }
 

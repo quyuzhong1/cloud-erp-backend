@@ -93,10 +93,10 @@ public interface UserInfoFeign {
 
 
     /**
-     * 删除
+     * 删除SRM用户
      */
-    @RequestMapping("feign/user/remove")
-    ApiResult delete(@RequestBody List<String> uids);
+    @RequestMapping("feign/user/deleteSrmUser")
+    ApiResult deleteSrmUser(@RequestBody List<String> uids);
 
     /**
      * 批量启用/禁用
@@ -104,8 +104,8 @@ public interface UserInfoFeign {
      * @param stateDTO
      * @return
      */
-    @RequestMapping("feign/user/updateState")
-    ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO);
+    @RequestMapping("feign/user/updateStateSrm")
+    ApiResult updateStateSrm(@RequestBody @Validated UpdateUserStateDTO stateDTO);
 
     /**
      * 重置密码
