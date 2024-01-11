@@ -2119,6 +2119,16 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal allAmountLocalCurrency;
 
+        /**
+         * 发货数量
+         */
+        private Integer totalDeliveryQty;
+
+        /**
+         * 待发货数量
+         */
+        private Integer totalWaitQty;
+
 
     }
 
