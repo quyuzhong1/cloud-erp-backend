@@ -3,6 +3,7 @@ package com.erp.oms.aliexpress.dto.response;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -24,68 +25,68 @@ public class AliExpressOrderDetail implements Serializable {
     /**
      * 买家备注（订单级别）
      */
-    @JSONField(name = "memo")
-    private String  memo;
+    @SerializedName("memo")
+    private String memo;
 
 
     /**
      * 加密oaid
      */
-    @JSONField(name = "oaid")
+    @SerializedName("oaid")
     private String oaid;
 
 
     /**
      * 收货地址信息
      */
-    @JSONField(name = "receipt_address")
-    private ReceiptInfo  receiptInfo;
+    @SerializedName("receipt_address")
+    private ReceiptInfo receiptAddress;
 
 
     /**
      * 买家信息
      */
-    @JSONField(name = "buyer_info")
+    @SerializedName("buyer_info")
     private BuyerInfo  buyerInfo;
 
     /**
      * 买家全名
      */
-    @JSONField(name = "buyer_signer_fullname")
+    @SerializedName("buyer_signer_fullname")
     private String buyerSignerFullname;
 
 
     /**
      * 买家登录id
      */
-    @JSONField(name = "buyerloginid")
-    private String buyerLoginId;
+    @SerializedName("buyerloginid")
+    private String buyerloginid;
 
 
     /**
      * 卖家名称
      */
-    @JSONField(name = "seller_signer_fullname")
+    @SerializedName("seller_signer_fullname")
     private String sellerSignerFullname;
 
     /**
      * 订单金额
      */
-    @JSONField(name = "order_amount")
+    @SerializedName("order_amount")
     private AmountInfo  orderAmount;
 
 
     /**
      * 物流费用
      */
-    @JSONField(name = "logistics_amount")
+    @SerializedName("logistics_amount")
     private AmountInfo  logisticsAmount;
 
 
     /**
      * 物流信息
      */
-    @JSONField(name = "logistic_info_list")
+    @SerializedName("logistic_info_list")
     private List<LogisitcsDTO> logisticInfoList;
 
 
@@ -93,7 +94,7 @@ public class AliExpressOrderDetail implements Serializable {
     /**
      * 子订单列表
      */
-    @JSONField(name = "child_order_list")
+    @SerializedName("child_order_list")
     private List<OrderItemDetail>  childOrderList;
 
 

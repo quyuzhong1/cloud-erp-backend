@@ -156,10 +156,10 @@ public class PullAliExpressJob {
                 PlatformAliExpressOrderDTO newDto = aliExpressOrderHandler.downloadAddress(item);
                 newDto.setDownloadAddressStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-
+                newDto.setIsClean(2);
                 List<PlatformOrderDTO> convertDto = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
                 // 保存和发送mq
-           //     businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
             }catch (Exception e){
                 // 发送预警
                 dmpPushTaskService.sendWarnMsg(item.getDmpSyncTaskId());
@@ -180,6 +180,7 @@ public class PullAliExpressJob {
     private List<PlatformAliExpressOrderDTO> listPlatformOrder( List<String> shopIds, int currentPage,int pageSize) {
         Query query = new Query();
         query.addCriteria(Criteria.where("isClean").is(2)
+                        .and("uniqueId").is("8183096253048561")
                 .and("shopId").in(shopIds)
                 .and("downloadAddressStatus").is(0));
 

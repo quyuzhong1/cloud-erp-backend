@@ -20,10 +20,7 @@ import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
-import com.erp.oms.aliexpress.dto.response.BuyerTradeAddress;
-import com.erp.oms.aliexpress.dto.response.ReceiptInfo;
+import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -126,7 +123,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         if (Objects.isNull(orderDetail)) {
             return dto;
         }
-        String shopId=dto.getAliExpressShopInfoDTO().getId();
+        String shopId=dto.getShopId();
         AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[速卖通地址下载]  获取 token 失败: shopId={}", shopId);
@@ -150,13 +147,16 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             if(Objects.nonNull(address)){
                 order.setBuyerSignerFullname(address.getBuyerSignerFullname());
                 orderDetail.setBuyerSignerFullname(address.getBuyerSignerFullname());
-                ReceiptInfo receiptInfo=orderDetail.getReceiptInfo();
+                ReceiptInfo receiptInfo=orderDetail.getReceiptAddress();
                 receiptInfo.setAddress2(address.getAddress2());
                 receiptInfo.setContactPerson(address.getContactPerson());
                 receiptInfo.setDetailAddress(address.getDetailAddress());
                 receiptInfo.setPhoneNumber(address.getPhoneNumber());
                 receiptInfo.setMobileNo(address.getMobileNo());
-                orderDetail.setReceiptInfo(receiptInfo);
+                orderDetail.setReceiptAddress(receiptInfo);
+                BuyerInfo buyerInfo= orderDetail.getBuyerInfo();
+                buyerInfo.setFirstName(address.getFirstName());
+                orderDetail.setBuyerInfo(buyerInfo);
                 order.setDetail(orderDetail);
             }
             dto.setAliExpressOrder(order);

@@ -41,6 +41,10 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
     private AliExpressShopInfoDTO aliExpressShopInfoDTO;
 
+
+
+    private String platformOrderStatus;
+
     /**
      * 地址详情下载状态
      * 0 详情数据需要更新
@@ -77,8 +81,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformAliExpressOrderDTO dto) {
         // 原订单信息
         AliExpressOrder sourceOrder = dto.getAliExpressOrder();
-        // 本ERP店铺信息
-        AliExpressShopInfoDTO shopInfoDTO = dto.getAliExpressShopInfoDTO();
+
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 平台类型
@@ -95,7 +98,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         // 店铺ID
-        orderDTO.setShopId(shopInfoDTO.getId());
+        orderDTO.setShopId(dto.getShopId());
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(false);
         // 作废类型（manual手动作废，automatic自动作废）
@@ -110,7 +113,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setCurrency(amountCurrency);
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
-
+        orderDTO.setPlatformOrderStatus(sourceOrder.getOrderStatus());
 
         AliExpressOrderDetail detail = sourceOrder.getDetail();
 
@@ -235,7 +238,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailNotNull) {
             //收货信息
-            ReceiptInfo receiptInfo = detail.getReceiptInfo();
+            ReceiptInfo receiptInfo = detail.getReceiptAddress();
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());
             receiverDTO.setCountry(receiptInfo.getCountry());

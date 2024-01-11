@@ -4,6 +4,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -23,87 +24,87 @@ public class AliExpressOrder implements Serializable {
     /**
      * 订单创建时间
      */
-    @JSONField(name = "gmt_create")
+    @SerializedName("gmt_create")
     private String gmtCreate;
 
     /**
      * 冻结状态。(NO_FROZEN:未冻结；IN_FROZEN:处于冻结状态)
      */
-    @JSONField(name = "frozen_status")
+    @SerializedName("frozen_status")
     private String frozenStatus;
 
     /**
      * 订单状态
      */
-    @JSONField(name = "order_status")
+    @SerializedName("order_status")
     private String orderStatus;
 
     /**
      * 当前状态的剩余时间（负数表示超时时间）
      */
-    @JSONField(name = "timeout_left_time")
+    @SerializedName("timeout_left_time")
     private Long timeoutLeftTime;
 
     /**
      * 买家登录id
      */
-    @JSONField(name = "buyer_login_id")
+    @SerializedName("buyer_login_id")
     private String buyerLoginId;
 
     /**
      * 卖家登录id
      */
-    @JSONField(name = "seller_login_id")
+    @SerializedName("seller_login_id")
     private String sellerLoginId;
 
 
     /**
      * 订单完成原因
      */
-    @JSONField(name = "end_reason")
+    @SerializedName("end_reason")
     private String endReason;
 
 
     /**
      * 支付时间
      */
-    @JSONField(name = "gmt_pay_time")
+    @SerializedName("gmt_pay_time")
     private String gmtPayTime;
 
     /**
      * 资金状态 status (NOT_PAY; PAY_SUCCESS; WAIT_SELLER_CHECK)
      */
-    @JSONField(name = "fund_status")
+    @SerializedName("fund_status")
     private String fundStatus;
 
     /**
      * 订单类型。（AE_COMMON:普通类型,AE_TRIAL:试用类型;AE_RECHARGE:充值订单
      */
-    @JSONField(name = "biz_type")
+    @SerializedName("biz_type")
     private String bizType;
 
     /**
      * 问题状态  (NO_ISSUE; IN_ISSUE; END_ISSUE)
      */
-    @JSONField(name = "issue_status")
+    @SerializedName("issue_status")
     private String issueStatus;
 
     /**
      * 买方全名
      */
-    @JSONField(name = "buyer_signer_fullname")
+    @SerializedName("buyer_signer_fullname")
     private String buyerSignerFullname;
 
     /**
      * 手续费
      */
-    @JSONField(name = "escrow_fee")
+    @SerializedName("escrow_fee")
     private AmountInfo escrowFee;
 
     /**
      * 上次订单更新时间
      */
-    @JSONField(name = "gmt_update")
+    @SerializedName("gmt_update")
     private String gmtUpdate;
 
     /**
@@ -119,52 +120,52 @@ public class AliExpressOrder implements Serializable {
      * wm101：WebMoney支付；
      * ebanx101：巴西Beloto支付；
      */
-    @JSONField(name = "payment_type")
+    @SerializedName("payment_type")
     private String paymentType;
 
 
     /**
      * 是否申请贷款
      */
-    @JSONField(name = "has_request_loan")
+    @SerializedName("has_request_loan")
     private Boolean hasRequestLoan;
 
     /**
      * 卖家操作员登录id
      */
-    @JSONField(name = "seller_operator_login_id")
+    @SerializedName("seller_operator_login_id")
     private String sellerOperatorLoginId;
 
 
     /**
      * 电话
      */
-    @JSONField(name = "phone")
+    @SerializedName("phone")
     private String phone;
 
     /**
      * 物流托管费率
      */
-    @JSONField(name = "logisitcs_escrow_fee_rate")
+    @SerializedName("logisitcs_escrow_fee_rate")
     private String logisitcsEscrowFeeRate;
 
     /**
      * 订单id
      */
-    @JSONField(name = "order_id")
+    @SerializedName("order_id")
     private String orderId;
 
     /**
      * 卖家全名
      */
-    @JSONField(name = "seller_signer_fullname")
+    @SerializedName("seller_signer_fullname")
     private String sellerSignerFullname;
 
 
     /**
      * 支付金額
      */
-    @JSONField(name = "pay_amount")
+    @SerializedName("pay_amount")
     private AmountInfo payAmount;
 
 

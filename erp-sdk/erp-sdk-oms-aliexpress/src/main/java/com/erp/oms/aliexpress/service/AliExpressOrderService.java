@@ -1,12 +1,11 @@
 package com.erp.oms.aliexpress.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -19,25 +18,26 @@ import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
 import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
-import com.erp.oms.aliexpress.dto.response.AliExpressProduct;
 import com.erp.oms.aliexpress.dto.response.BuyerTradeAddress;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.ui.context.Theme;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
@@ -88,23 +88,22 @@ public class AliExpressOrderService {
         paramMap.put("create_date_start", orderRequest.getStartTime());
         paramMap.put("create_date_end", orderRequest.getEndTime());
         request.addApiParameter("simplify", "true");
-        request.addApiParameter("param_aeop_order_query", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-        Boolean success = resultJsONObject.getBooleanValue("success");
+        Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {
             log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
             return;
         }
-        JSONArray jsonArray = (JSONArray) resultJsONObject.get("target_list");
-        if (Objects.isNull(jsonArray)) {
+        //目录列表
+        List<AliExpressOrder> orderInfoList = resultJsONObject.getBeanList("target_list", AliExpressOrder.class);
+        if (CollectionUtils.isEmpty(orderInfoList)) {
             return;
         }
-        //目录列表
-        List<AliExpressOrder> orderInfoList = JSONObject.parseArray(jsonArray.toJSONString(), AliExpressOrder.class);
         for (AliExpressOrder item : orderInfoList) {
             //订单id
             String orderId = item.getOrderId();
@@ -115,7 +114,7 @@ public class AliExpressOrderService {
         }
         orderList.addAll(orderInfoList);
         //总页数
-        Integer totalPage = resultJsONObject.getInteger("total_page");
+        Integer totalPage = resultJsONObject.getInt("total_page", 0);
         //表示还有
         if (Objects.nonNull(totalPage) && !totalPage.equals(currentPage)) {
             orderRequest.setCurrentPage(currentPage + 1);
@@ -144,13 +143,12 @@ public class AliExpressOrderService {
         request.addApiParameter("simplify", "true");
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("order_id", orderId);
-        request.addApiParameter("param1", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("param1", JSONUtil.toJsonStr(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         //成功
         if (jsonObject.containsKey("target")) {
-            JSONObject json = jsonObject.getJSONObject("target");
-            AliExpressOrderDetail detail = JSONObject.parseObject(json.toJSONString(), AliExpressOrderDetail.class);
+            AliExpressOrderDetail detail = jsonObject.get("target", AliExpressOrderDetail.class);
             return detail;
         }
 
@@ -234,8 +232,8 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         IopResponse response = client.execute(request, token, Protocol.TOP);
         String body = response.getBody();
-        JSONObject jsonObject = JSONObject.parseObject(body);
-        Boolean success = jsonObject.getBooleanValue("result_success");
+        JSONObject jsonObject = JSONUtil.parseObj(body);
+        Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
         if (!success) {
             String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
             throw new ServiceException(ApiError.Default, msg);
@@ -262,15 +260,12 @@ public class AliExpressOrderService {
         request.addApiParameter("orderId", addressRequest.getOrderId());
         request.addApiParameter("oaid", addressRequest.getOaid());
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         String code = jsonObject.getOrDefault("code", "").toString();
         //成功
-        if ("0".equals(code)) {
-            if (jsonObject.containsKey("result_obj")) {
-                JSONObject json = jsonObject.getJSONObject("target");
-                BuyerTradeAddress address = JSONObject.parseObject(json.toJSONString(), BuyerTradeAddress.class);
-                return address;
-            }
+        if (jsonObject.containsKey("result_obj")) {
+            BuyerTradeAddress address = jsonObject.get("result_obj", BuyerTradeAddress.class);
+            return address;
         }
         return null;
     }

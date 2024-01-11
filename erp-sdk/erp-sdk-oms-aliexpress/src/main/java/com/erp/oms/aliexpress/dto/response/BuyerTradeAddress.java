@@ -1,6 +1,6 @@
 package com.erp.oms.aliexpress.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -24,43 +24,43 @@ public class BuyerTradeAddress implements Serializable {
     /**
      * 妥买家全名
      */
-    @JSONField(name = "buyer_signer_fullname")
+    @SerializedName("buyer_signer_fullname")
     private String  buyerSignerFullname;
 
     /**
      * 电话号码
      */
-    @JSONField(name = "phone_number")
+    @SerializedName("phone_number")
     private String  phoneNumber;
 
 
     /**
      * address2
      */
-    @JSONField(name = "address2")
+    @SerializedName("address2")
     private String  address2;
 
     /**
      * 收件人
      */
-    @JSONField(name = "contact_person")
+    @SerializedName("contact_person")
     private String  contactPerson;
 
     /**
      * 收件详细地址
      */
-    @JSONField(name = "detail_address")
+    @SerializedName("detail_address")
     private String  detailAddress;
 
     /**
      * 收件详细地址
      */
-    @JSONField(name = "mobile_no")
+    @SerializedName("mobile_no")
     private String  mobileNo;
 
     /**
      * 买家 first_name
      */
-    @JSONField(name = "first_name")
+    @SerializedName("first_name")
     private String  firstName;
 }
