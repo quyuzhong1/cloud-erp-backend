@@ -1323,13 +1323,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> dataList = new ArrayList<>(10);
         for (BasicCategoryDTO item : categoryList) {
             List<BasicCategoryDTO> childrenList = item.getChildrenList();
-            List<String> categoryIdList = childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
-            BigDecimal totalSales = list.stream().filter(
-                            s -> categoryIdList.contains(s.getFlagNo()) && s.getSales() != null
-                    ).map(SalesBaseVO::getSales).
-                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            if(CollectionUtils.isNotEmpty(childrenList)){
+                List<String> categoryIdList = childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
+                BigDecimal totalSales = list.stream().filter(
+                                s -> categoryIdList.contains(s.getFlagNo()) && s.getSales() != null
+                        ).map(SalesBaseVO::getSales).
+                        reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            dataList.add(totalSales);
+                dataList.add(totalSales);
+            }else {
+                dataList.add(BigDecimal.ZERO);
+            }
+
         }
         series.setData(dataList);
         seriesList.add(series);
