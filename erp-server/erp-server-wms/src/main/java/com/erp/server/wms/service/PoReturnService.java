@@ -308,6 +308,6 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param pagingParamDTO pagingParamDTO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>
      **/
-    PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO);
+    PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO);
 
 }
