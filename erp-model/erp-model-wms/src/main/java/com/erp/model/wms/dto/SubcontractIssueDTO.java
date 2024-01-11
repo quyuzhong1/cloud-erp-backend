@@ -201,7 +201,7 @@ public class SubcontractIssueDTO implements Serializable {
         /**
         * 勾选的id集合
         */
-        private List<String> ids;
+        private List<String> detailIdList;
     }
 
     /**
