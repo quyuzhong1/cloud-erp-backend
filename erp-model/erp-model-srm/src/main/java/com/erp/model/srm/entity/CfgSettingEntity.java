@@ -1,6 +1,8 @@
 package com.erp.model.srm.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -32,8 +34,8 @@ public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
     /**
     * json数据
     */
-    @TableField("data_json")
-    private String dataJson;
+    @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
+    private JSONObject dataJson;
     /**
     * 是否禁用
     */

@@ -39,11 +39,6 @@ public class OrderAcceptDTO implements Serializable {
     private String key;
 
     /**
-     * json数据
-     */
-    private String dataJson;
-
-    /**
      * 是否禁用
      */
     private Boolean disabled;

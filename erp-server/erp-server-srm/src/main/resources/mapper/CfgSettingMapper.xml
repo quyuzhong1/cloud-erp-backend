@@ -13,8 +13,8 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="key" property="key" />
-       <result column="data_json" property="dataJson" />
-       <result column="disabled" property="disabled" />
+        <result column="data_json" jdbcType="OTHER" property="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
+        <result column="disabled" property="disabled" />
        <result column="index" property="index" />
        <result column="remark" property="remark" />
        <result column="supplier_id" property="supplierId" />

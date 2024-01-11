@@ -46,5 +46,5 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      *
      * @return
      */
-    List<SupplierConfigVO> getConfigList();
+    List<SupplierConfigVO> getConfigList(List<String> supplierIds);
 }

@@ -33,12 +33,14 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -124,6 +126,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Autowired
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private SrmCfgSettingFeign srmCfgSettingFeign;
 
     /**
      * 保存供应商信息
@@ -414,7 +419,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
         }
         //TODO 获取srm 供应商订单规则
-
+        List<SupplierConfigVO> configs = srmCfgSettingFeign.list(supplierIdList);
+        Map<String, SupplierConfigVO> configVOMap = configs.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();
             //等级id
@@ -454,6 +460,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(curApprove);
+            }
+            SupplierConfigVO configVO = configVOMap.get(item.getId());
+            if (Objects.nonNull(configVO)){
+                item.setOrderAcceptRule(configVO.getOrderAcceptRule());
+                item.setReturnConfirmRule(configVO.getReturnConfirmRule());
             }
         }
 

@@ -86,15 +86,4 @@ public class CfgSettingController extends BaseController {
         List<ConfigVO> configVOList =cfgSettingService.getConfig();
         return success(configVOList);
     }
-
-    /**
-     * 获取供应商订单配置信息
-     *
-     * @return
-     */
-    @GetMapping("/list")
-    public ApiResult<List<SupplierConfigVO>> list() {
-        List<SupplierConfigVO> configVOList =cfgSettingService.getConfigList();
-        return success(configVOList);
-    }
 }

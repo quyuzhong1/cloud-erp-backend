@@ -38,10 +38,6 @@ public class ReturnConfirmDTO implements Serializable {
      */
     private String key;
 
-    /**
-     * json数据
-     */
-    private String dataJson;
 
     /**
      * 是否禁用

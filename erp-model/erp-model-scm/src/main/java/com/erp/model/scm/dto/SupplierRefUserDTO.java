@@ -96,7 +96,6 @@ public class SupplierRefUserDTO implements Serializable {
         * 供应商id
         */
         @NotBlank(message = "供应商id不能为空")
-        @Size(max = 1,message = "供应商id最大长度不能超过1位")
         private String supplierId;
 
         /**
