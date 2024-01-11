@@ -123,7 +123,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         AliExpressOrder order = dto.getAliExpressOrder();
         String orderId = order.getOrderId();
         AliExpressOrderDetail orderDetail = dto.getAliExpressOrder().getDetail();
-        if (Objects.nonNull(orderDetail)) {
+        if (Objects.isNull(orderDetail)) {
             return dto;
         }
         String shopId=dto.getAliExpressShopInfoDTO().getId();

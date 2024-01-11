@@ -18,8 +18,6 @@ import java.util.List;
  * @Date 2023-11-29 10:27
  */
 @Data
-@Accessors(chain = true)
-@NoArgsConstructor
 public class AliExpressOrder implements Serializable {
 
     /**

@@ -159,11 +159,11 @@ public class PullAliExpressJob {
 
                 List<PlatformOrderDTO> convertDto = aliExpressOrderHandler.convert(Collections.singletonList(newDto));
                 // 保存和发送mq
-                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+           //     businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
             }catch (Exception e){
                 // 发送预警
                 dmpPushTaskService.sendWarnMsg(item.getDmpSyncTaskId());
-                log.error("下载地址处理失败, 订单号:{}",item.getUniqueId(),e.getMessage());
+                log.error("下载地址处理失败, 订单号:{}，异常信息:{}",item.getUniqueId(),e.getMessage());
             }
 
         }
@@ -179,7 +179,7 @@ public class PullAliExpressJob {
      */
     private List<PlatformAliExpressOrderDTO> listPlatformOrder( List<String> shopIds, int currentPage,int pageSize) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("downloadStatus").is(1)
+        query.addCriteria(Criteria.where("isClean").is(2)
                 .and("shopId").in(shopIds)
                 .and("downloadAddressStatus").is(0));
 
