@@ -299,4 +299,15 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return java.lang.Boolean
      **/
     Boolean dataRepairTemp();
+
+
+    /**
+     * SRM供应商退货单
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
+     * @param pagingParamDTO pagingParamDTO
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>
+     **/
+    PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO);
+
 }

@@ -1137,4 +1137,214 @@ public class PurchaseReturnOrderDTO {
          */
         private Integer count;
     }
+
+
+
+    /**
+     * SRM供应商分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierPagingViewDTO {
+
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 退货确认日期
+         */
+        private LocalDate confirmDate;
+
+        /**
+         * 退货单号
+         */
+        private String code;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 退货确认状态编码
+         */
+        private String confirmStatus;
+
+        /**
+         * 退货确认状态中文
+         */
+        private String confirmStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 退货原因
+         */
+        private String returnRemark;
+
+        /**
+         * 退货备注
+         */
+        private String remark;
+
+        /**
+         * 退货来源
+         * 参考枚举ReturnOrderSourceEnum
+         */
+        private String returnOrderSource;
+
+        /**
+         * 退货来源名称
+         */
+        private String returnOrderSourceName;
+
+        /**
+         * 退货人
+         */
+        private String returnUserName;
+
+
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+
+        /**
+         * 退货日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 退货仓库Id
+         */
+        private String returnWarehouseId;
+
+        /**
+         * 退货仓库
+         */
+        private String returnWarehouseName;
+
+
+
+        /**
+         * 退款单价
+         */
+        private BigDecimal returnPrice;
+
+        /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+
+        /**
+         * 退款金额
+         */
+        private BigDecimal deductAmountAmount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+
+        /**
+         * 退货方式
+         */
+        private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 单据来源
+         */
+        private String sourceType;
+
+
+        /**
+         * 采购订单详情表id
+         */
+        private String purchaseOrderDetailId;
+
+    }
 }
