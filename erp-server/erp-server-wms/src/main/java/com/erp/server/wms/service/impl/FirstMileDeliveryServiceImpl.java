@@ -1586,8 +1586,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && req.getWarehouseId().equals(viewDTO.getToWarehouseId()))
                     .distinct()
                     .findFirst().orElse(new SkuMappingDTO.ListSkuDTO());
-            dto.setPlatformSkuNo(view.getWarehouseSkuNo());
-            dto.setPlatformProductName(view.getWarehouseProductName());
+            dto.setPlatformSkuNo(view.getPlatformSkuNo());
+            dto.setPlatformProductName(view.getPlatformProductName());
         }
 
         viewDTO.setDetailList(detailViewList);
