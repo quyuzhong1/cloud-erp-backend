@@ -153,11 +153,118 @@
 
     <select id="pagingTotal" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingTotalDTO">
         SELECT
+
             COALESCE(sum(sod.qty),0) as totalQty,
             COALESCE(sum(sod.amount),0) as totalAmount,
             COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,
             COALESCE(sum(sod.amount_local_currency),0) as amountLocalCurrency,
             COALESCE(sum(sod.all_amount_local_currency),0) as allAmountLocalCurrency
+        FROM so_info si
+        LEFT JOIN so_detail sod
+        ON sod.main_id =si.id AND si.is_deleted=false
+        left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        WHERE sod.is_deleted=false
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sod.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="soIdList !=null and soIdList.size>0">
+            AND si.id IN
+            <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                #{soId}
+            </foreach>
+        </if>
+        <if test="params.code !=null and params.code!=''">
+            AND si.code ILIKE concat('%', #{params.code}::text ,'%')
+        </if>
+        <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
+        </if>
+        <if test="params.orderType !=null and params.orderType!=''">
+            AND si.order_type=#{params.orderType}
+        </if>
+        <if test="params.isDeclare !=null ">
+            AND si.is_declare = #{params.isDeclare}
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND si.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.customerIdList !=null and params.customerIdList.size>0">
+            AND si.customer_id IN
+            <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                #{customerId}
+            </foreach>
+        </if>
+        <if test="params.countryIdList !=null and params.countryIdList.size>0">
+            AND ci.country_id IN
+            <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+            AND si.seller_id IN
+            <foreach collection="params.sellerIdList" item="sellerId" open="(" separator="," close=")">
+                #{sellerId}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus !=null ">
+            AND si.invalid_status=#{params.invalidStatus}
+        </if>
+        <if test="params.deliveryStatus !=null and params.deliveryStatus!=''">
+            AND sod.delivery_status=#{params.deliveryStatus}
+        </if>
+
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND si.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+            AND si.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > si.approve_time
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND si.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > si.create_time
+        </if>
+        <if test="params.requireDateList !=null and params.requireDateList.size>0">
+            AND si.require_date >= #{params.requireDateList[0]} and (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL
+            '1
+            DAY' ) > si.require_date
+        </if>
+        <if test="detailIdList!=null and detailIdList.size>0">
+            AND si.id IN
+            <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
+                #{detailId}
+            </foreach>
+        </if>
+        <if test="params.remark !=null and params.remark!=''">
+            AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
+        </if>
+        <if test="params.salesOrgId != null and params.salesOrgId != '' ">
+            AND si.sales_org_id = #{params.salesOrgId}
+        </if>
+        <if test="params.salesDeptId != null and params.salesDeptId != '' ">
+            AND si.sales_dept_id = #{params.salesDeptId}
+        </if>
+        <if test="params.platformType != null and params.platformType != '' ">
+            AND ci.platform_type = #{params.platformType}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="pagingTotalGetDetailIds" resultType="java.lang.String">
+        SELECT
+            sod.id
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false

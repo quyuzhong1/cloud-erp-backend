@@ -807,7 +807,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
             soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soIdList)) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, MathUtil.ZERO, MathUtil.ZERO);
                 return pagingTotalDTO;
             }
         }
@@ -816,11 +816,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramDetailIds = Collections.emptyList();
         } else {
             if (paramDetailIds.size() == 0) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, MathUtil.ZERO, MathUtil.ZERO);
                 return pagingTotalDTO;
             }
         }
         SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds, soIdList);
+
+        //出库
+        List<String> detailIds = baseMapper.pagingTotalGetDetailIds(dto, paramDetailIds, soIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
+
+        //发货数量
+        Integer deliveryQty = soOutstockDetailList.stream().map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+        pagingTotalDTO.setTotalDeliveryQty(deliveryQty);
+
+        //待发货数量
+        Integer waitQty = pagingTotalDTO.getTotalQty() > deliveryQty ? pagingTotalDTO.getTotalQty() - deliveryQty : 0;
+        pagingTotalDTO.setTotalWaitQty(waitQty);
         return pagingTotalDTO;
     }
 
