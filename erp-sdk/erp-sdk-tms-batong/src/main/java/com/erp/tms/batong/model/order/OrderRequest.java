@@ -1,4 +1,4 @@
-package com.erp.tms.bt.model.order;
+package com.erp.tms.batong.model.order;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
