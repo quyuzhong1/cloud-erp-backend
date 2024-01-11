@@ -45,8 +45,8 @@ public class SupplierPoReturnController extends BaseController {
             menuCode = "wms:supplierPoReturn:paging",
             tableAlias = "pro"
     )
-    public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.supplierPaging(dto);
+    public ApiResult<PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
+        PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pagingVO = poReturnService.supplierPaging(dto);
         return success(pagingVO);
     }
 
