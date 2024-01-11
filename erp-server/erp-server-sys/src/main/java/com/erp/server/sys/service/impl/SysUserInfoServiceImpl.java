@@ -1242,7 +1242,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).eq(SysUserInfoEntity::getUserType,forgotPasswordDTO.getUserType()).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }
@@ -1278,8 +1278,26 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Date 2023/4/20 11:45
      **/
     @Override
-    public Map<String, Object> forgotPasswordGetCode(String userAccount) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).one();
+    public Map<String, Object> forgotPasswordGetCode(String userAccount,String userType) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).eq(SysUserInfoEntity::getUserType,userType).one();
+        if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+
+        if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+        EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
+        dto.setEmail(sysUserInfoEntity.getEmail());
+        sendEmail(dto);
+        Map<String, Object> map = new HashMap<>();
+        map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
+        return map;
+    }
+
+    @Override
+    public Map<String, Object> getCodeByAccountAndType(String phone,String userType) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, phone).eq(SysUserInfoEntity::getUserType,userType).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }

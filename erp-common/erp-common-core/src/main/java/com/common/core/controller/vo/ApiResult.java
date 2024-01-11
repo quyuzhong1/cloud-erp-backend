@@ -109,7 +109,7 @@ public class ApiResult<T>  implements Serializable {
     /**
      * 成功时候的调用
      */
-    public ApiResult success(T data) {
-        return new ApiResult(200, "操作成功", data);
+    public static <T> ApiResult<T> success(T data) {
+        return new ApiResult<>(200, "操作成功", data);
     }
 }
