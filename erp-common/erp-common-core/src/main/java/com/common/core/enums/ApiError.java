@@ -898,6 +898,7 @@ public enum ApiError implements Serializable {
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
     NOT_WAIT_CONFIRM_STATUS(92127,"仅退货确认状态为待确认可操作"),
     ATTACH_QTY_MAX_FIVE(92127,"附件上传数量不可超过5个文件"),
+    UNUSUAL_TYPE_NOT_EXISTS(92128,"异常分类错误"),
 
 
 

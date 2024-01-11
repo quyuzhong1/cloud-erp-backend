@@ -30,4 +30,13 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return ViewDTO
      */
     CfgSettingDTO.ViewDTO view();
+
+    /**
+     * 根据key查询配置
+     * @Author Luo_WG
+     * @Date 2024/1/11 19:34
+     * @param key
+     * @return com.erp.model.wms.entity.CfgSettingEntity
+     **/
+    CfgSettingEntity getByKey(String key);
 }

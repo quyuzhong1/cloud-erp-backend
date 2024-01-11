@@ -79,6 +79,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return viewDTO;
     }
 
+    @Override
+    public CfgSettingEntity getByKey(String key) {
+        return lambdaQuery().eq(CfgSettingEntity::getKey, key).one();
+    }
 
     /**
     * 新增修改处理数据

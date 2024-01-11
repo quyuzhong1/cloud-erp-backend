@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -27,16 +29,15 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
-import com.erp.model.wms.enums.PoReturnUnusualTypeEnum;
-import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -131,6 +132,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
+
+    @Autowired
+    private CfgSettingService cfgSettingService;
+
+    @Autowired
+    private SysPostFeign sysPostFeign;
 
     @Value("${companyCode}")
     private String companyCode;
@@ -2009,9 +2016,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
         }
 
+        LoginUser userInfo = commonService.getUserInfo();
+
         //更新确认状态
         lambdaUpdate()
                 .set(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.CONFIRM.getStatus())
+                .set(PoReturnEntity::getSupplierContactId, userInfo.getUid())
+                .set(PoReturnEntity::getSupplierContactName, userInfo.getUserName())
+                .set(PoReturnEntity::getConfirmDate, LocalDate.now())
                 .eq(PoReturnEntity::getId, id)
                 .update();;
 
@@ -2020,6 +2032,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean unusualFeedback(PurchaseReturnOrderDTO.UnusualFeedbackParamDTO dto) {
+        PoReturnEntity entity = this.getById(dto.getId());
+        //仅退货状态为待确认可操作
+        if (!PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getConfirmStatus())) {
+            throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
+        }
+
         //上传附件
         if (!CollectionUtils.isEmpty(dto.getAttachUrlList())) {
             //限制最多上传5个附件
@@ -2034,10 +2052,30 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             wmsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, dto.getId());
         }
 
+        //查询退货配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.PO_RETURN.getCode());
+        CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
+
+        String unusualHandleUserId = "";
+        if (PoReturnUnusualTypeEnum.QUANTITY_ISSUE.getCode().equals(dto.getUnusualType())) {
+            //数量问题取值
+            unusualHandleUserId = poReturnSettingDTO.getQtyHandlePostId();
+
+        } else if (PoReturnUnusualTypeEnum.OTHER_ISSUES.getCode().equals(dto.getUnusualType())) {
+            //其他问题取值
+            unusualHandleUserId = poReturnSettingDTO.getOtherHandlePostId();
+        } else {
+            throw new ServiceException(ApiError.UNUSUAL_TYPE_NOT_EXISTS);
+        }
+        //查询岗位名称
+        SysPostEntity sysPostEntity = sysPostFeign.getById(unusualHandleUserId);
+
         //修改
         return lambdaUpdate()
                 .set(PoReturnEntity::getUnusualType, dto.getUnusualType())
                 .set(PoReturnEntity::getUnusualRemark, dto.getUnusualRemark())
+                .set(PoReturnEntity::getUnusualHandleUserId, unusualHandleUserId)
+                .set(StringUtils.isNotBlank(sysPostEntity.getPostName()), PoReturnEntity::getUnusualHandleUserName, sysPostEntity.getPostName())
                 .eq(PoReturnEntity::getId, dto.getId())
                 .update();
     }
