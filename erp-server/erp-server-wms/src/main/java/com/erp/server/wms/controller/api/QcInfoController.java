@@ -105,7 +105,7 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:add",
             serviceClass = QcInfoService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
+    public ApiResult add(@RequestBody @Validated({AddGroup.class,UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.add(dto);
         return result ? success() : failure();
     }

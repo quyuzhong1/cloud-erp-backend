@@ -1047,6 +1047,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementEntity> list = lambdaQuery()
                 .eq(ProcessManagementEntity::getBusinessKey, businessKey)
                 .eq(ProcessManagementEntity::getBusinessId, businessId)
+                // 暂停或进行中
+                .in(ProcessManagementEntity::getProcessStatus, Arrays.asList(ProcessStatusEnum.PAUSE, ProcessStatusEnum.RUNNING))
                 .last("limit 1")
                 .list();
         return list;

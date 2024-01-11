@@ -1210,8 +1210,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
+        //查询库存sku
+        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        for (FirstMileDeliveryDTO.ListDTO detailEntity : list) {
+            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
+            paramDTO.setSkuNo(detailEntity.getSkuNo());
+            paramDTO.setWarehouseId(detailEntity.getDeliveryWarehouseId());
+            skuParamDTOList.add(paramDTO);
+        }
+        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
 
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
@@ -1221,12 +1228,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
             //库存sku
-            String stockSku = ListStockSkuNoByProductSkuIdViews.stream()
+            String stockSku = listSkuDTOS.stream()
                     .filter(req -> req.getProductSkuId().equals(data.getSkuId())
                             && req.getWarehouseId().equals(data.getDeliveryWarehouseId()))
-                    .distinct()
-                    .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getStockSku())).orElse("");
+                    .distinct().findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             data.setStockSku(stockSku);
 
             //审核状态名称
@@ -1549,13 +1555,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(id));
         List<String> skuIdList = firstMileDeliveryDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailViewList = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundDetailView(firstMileDeliveryDetailEntities);
 
         //查询已装箱信息
         List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = firstMileDeliveryDetailService.listPackDate(entity.getId());
+
+        //查询库存sku
+        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        for (OverseasWarehouseInboundDetailDTO.ViewDTO detailEntity : detailViewList) {
+            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
+            paramDTO.setSkuNo(detailEntity.getSkuNo());
+            paramDTO.setWarehouseId(viewDTO.getToWarehouseId());
+            skuParamDTOList.add(paramDTO);
+        }
+        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
@@ -1568,13 +1581,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             dto.setImagesUrl(skuVO.getSkuImagesUrl());
 
             //库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = ListStockSkuNoByProductSkuIdViews.stream()
+            SkuMappingDTO.ListSkuDTO view = listSkuDTOS.stream()
                     .filter(req -> req.getProductSkuId().equals(dto.getSkuId())
                             && req.getWarehouseId().equals(viewDTO.getToWarehouseId()))
                     .distinct()
-                    .findFirst().orElse(new SkuMappingDTO.ListStockSkuNoByProductSkuIdView());
-            dto.setPlatformSkuNo(view.getStockSku());
-            dto.setPlatformProductName(view.getStockSkuName());
+                    .findFirst().orElse(new SkuMappingDTO.ListSkuDTO());
+            dto.setPlatformSkuNo(view.getPlatformSkuNo());
+            dto.setPlatformProductName(view.getPlatformProductName());
         }
 
         viewDTO.setDetailList(detailViewList);

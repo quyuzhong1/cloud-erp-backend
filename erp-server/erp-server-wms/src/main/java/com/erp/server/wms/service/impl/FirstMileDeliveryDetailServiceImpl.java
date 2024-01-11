@@ -9,8 +9,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
 import com.erp.server.wms.service.FirstMileCartonDetailService;
@@ -53,6 +55,8 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     private FirstMileCartonService firstMileCartonService;
     @Autowired
     private FirstMileCartonDetailService firstMileCartonDetailService;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -190,8 +194,16 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         }
         List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
 
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
+        //查询库存sku
+        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        for (FirstMileDeliveryDetailEntity detailEntity : list) {
+            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
+            paramDTO.setSkuNo(detailEntity.getSkuNo());
+            paramDTO.setWarehouseId(deliveryWarehouseId);
+            skuParamDTOList.add(paramDTO);
+        }
+        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
+
 
         for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
@@ -200,12 +212,11 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
             firstMileDeliveryDetailEntity.setWarehouseLocation(firstMileDeliveryDetailEntity.getWarehouseLocation());
 
             //库存sku
-            String stockSku = ListStockSkuNoByProductSkuIdViews.stream()
+            String stockSku = listSkuDTOS.stream()
                     .filter(req -> req.getProductSkuId().equals(firstMileDeliveryDetailEntity.getSkuId())
                             && req.getWarehouseId().equals(deliveryWarehouseId))
-                    .distinct()
-                    .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getStockSku())).orElse("");
+                    .distinct().findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseId())).orElse("");
             firstMileDeliveryDetailEntity.setStockSku(stockSku);
 
             //校验是否是修改，如果是就新增修改日志

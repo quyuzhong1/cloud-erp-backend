@@ -19,7 +19,7 @@ import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
@@ -96,7 +96,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Autowired
     private RequisitionApplicationService requisitionApplicationService;
     @Autowired
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private SkuMappingFeign skuMappingFeign;
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
@@ -462,14 +462,20 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<String> skuIdList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
-
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
 
         //明细信息
         List<OverseasDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, OverseasDeliveryPlanDetailDTO.ViewDTO.class);
+        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        for (OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
+            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
+            paramDTO.setSkuNo(viewDTO.getSkuNo());
+            paramDTO.setWarehouseId(data.getToWarehouseId());
+            skuParamDTOList.add(paramDTO);
+        }
+        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
+
         for (OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
 
             //设置产品编号
@@ -480,15 +486,15 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             }
 
             //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
+            SkuMappingDTO.ListSkuDTO listSkuDTO = listSkuDTOS.stream()
                     .filter(req -> req.getProductSkuId().equals(viewDTO.getSkuId())
                         && req.getWarehouseId().equals(data.getToWarehouseId())
                     ).distinct()
                     .findFirst().orElse(null);
 
-            if (ObjectUtil.isNotEmpty(listStockSkuNoByProductSkuIdView)) {
-                viewDTO.setStockSku(listStockSkuNoByProductSkuIdView.getStockSku());
-                viewDTO.setStockSkuName(listStockSkuNoByProductSkuIdView.getStockSkuName());
+            if (ObjectUtil.isNotEmpty(listSkuDTO)) {
+                viewDTO.setStockSku(listSkuDTO.getWarehouseSkuNo());
+                viewDTO.setStockSkuName(listSkuDTO.getWarehouseProductName());
             }
 
         }
