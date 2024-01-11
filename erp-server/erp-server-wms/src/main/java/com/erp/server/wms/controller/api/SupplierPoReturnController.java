@@ -39,16 +39,16 @@ public class SupplierPoReturnController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>>
      **/
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "return_user_id",
-            menuCode = "wms:supplierPoReturn:paging",
-            tableAlias = "pro"
-    )
-    public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.supplierPaging(dto);
-        return success(pagingVO);
-    }
+//    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "return_user_id",
+//            menuCode = "wms:supplierPoReturn:paging",
+//            tableAlias = "pro"
+//    )
+//    public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
+//        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.supplierPaging(dto);
+//        return success(pagingVO);
+//    }
 
     /**
      * 列表状态数量统计

@@ -137,26 +137,4 @@ public class SupplierUserFeignController extends BaseController {
     public ApiResult resetPassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd) {
         return supplierUserService.resetPassword(uid, pwd);
     }
-
-    /**
-     * 忘记密码
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/forgotPassword")
-    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        return supplierUserService.forgotPassword(dto);
-    }
-
-    /**
-     * 忘记密码-获取验证码
-     *
-     * @param userAccount
-     * @return
-     */
-    @GetMapping("/forgotPasswordGetCode")
-    public ApiResult<Map<String, Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        return supplierUserService.forgotPasswordGetCode(userAccount);
-    }
 }
