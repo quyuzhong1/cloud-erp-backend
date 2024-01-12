@@ -80,7 +80,7 @@ public class SupplierExportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "SRM协同", index = 7)
     @ColumnWidth(10)
-    private String SrmDisabled;
+    private String srmDisabled;
 
     /**
      * 供应商分类

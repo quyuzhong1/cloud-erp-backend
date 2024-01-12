@@ -410,7 +410,7 @@ public class SupplierDTO implements Serializable {
         /**
          * SRM协同
          */
-        private Boolean SrmDisabled;
+        private Boolean srmDisabled;
 
         /**
          * 付款条件
@@ -511,7 +511,7 @@ public class SupplierDTO implements Serializable {
         /**
          * SRM协同
          */
-        private Boolean SrmDisabled;
+        private Boolean srmDisabled;
         /**
          * 创建人id集合
          */

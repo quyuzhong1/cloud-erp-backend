@@ -5,20 +5,19 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.dto.DictBasicDTO;
 import com.erp.model.srm.dto.OrderAcceptDTO;
 import com.erp.model.srm.dto.ReturnConfirmDTO;
 import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.srm.enums.DictBasicEnum;
 import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
-import com.erp.server.srm.service.CfgSettingService;
+import com.erp.server.srm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.CommonService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.srm.service.UserService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Named;
@@ -55,6 +54,8 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private CommonService commonService;
     @Resource
     private UserService userService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -79,21 +80,13 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (Objects.nonNull(orderAcceptDTO)) {
             CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToOrderAcceptEntity(orderAcceptDTO);
             handleData(cfgSettingEntity);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("duration",orderAcceptDTO.getDuration());
-            jsonObject.putOpt("unit",orderAcceptDTO.getUnit());
-            jsonObject.putOpt("selectState",orderAcceptDTO.getSelectState());
-            cfgSettingEntity.setDataJson(jsonObject);
+            cfgSettingEntity.setDataJson(JSONUtil.parseObj(orderAcceptDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);
         }
         if (Objects.nonNull(returnConfirmDTO)) {
             CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToReturnConfigEntity(returnConfirmDTO);
             handleData(cfgSettingEntity);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("duration",returnConfirmDTO.getDuration());
-            jsonObject.putOpt("unit",returnConfirmDTO.getUnit());
-            jsonObject.putOpt("selectState",returnConfirmDTO.getSelectState());
-            cfgSettingEntity.setDataJson(jsonObject);
+            cfgSettingEntity.setDataJson(JSONUtil.parseObj(returnConfirmDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);
         }
         return cfgSettingEntities;
@@ -129,15 +122,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     public List<ConfigVO> getConfig() {
         List<ConfigVO> configVOList = new ArrayList<>();
         String supplierId = userService.getSupplierId();
+        List<DictBasicDTO.ViewDTO> dicts = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         List<CfgSettingEntity> cfgSettingEntities = getListBySupplierId(supplierId);
         if (CollectionUtils.isNotEmpty(cfgSettingEntities)) {
             Map<String, CfgSettingEntity> collect = cfgSettingEntities.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, Function.identity()));
-            configVOList.add(getSupplierConfig(supplierId, ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode(), collect.get(ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode())));
-            configVOList.add(getSupplierConfig(supplierId, ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(), collect.get(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode())));
-        } else {
-            //获取默认配置
-            configVOList.add(getSupplierConfig(supplierId, ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode(), null));
-            configVOList.add(getSupplierConfig(supplierId, ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(), null));
+            if (CollectionUtils.isNotEmpty(dicts)){
+                dicts.forEach(viewDTO -> {
+                    ConfigVO supplierConfig = getSupplierConfig(supplierId, viewDTO.getCode(), collect.get(viewDTO.getCode()));
+                    if (Objects.nonNull(supplierConfig)){
+                        configVOList.add(supplierConfig);
+                    }
+
+                });
+            }
         }
         return configVOList;
     }
@@ -181,11 +178,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (Objects.isNull(returnCfgSettingEntity)){
             stringBuffer.append("手工接受");
         }else {
-            JSONObject jsonObject = returnCfgSettingEntity.getDataJson();
-            Integer selectState = (Integer) jsonObject.getOrDefault("selectState",0);
-            String duration = (String) jsonObject.getOrDefault("duration","48");
-            String unit = (String) jsonObject.getOrDefault("unit","H");
-            if (1 == selectState){
+            ReturnConfirmDTO returnConfirmDTO = JSONUtil.toBean(returnCfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
+            Boolean enable = returnConfirmDTO.getEnable();
+            Integer duration = returnConfirmDTO.getDuration();
+            String unit = returnConfirmDTO.getUnit();
+            if (Objects.nonNull(enable) && enable){
                 //启用
                 stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
                 return "["+duration+unit+"]自动接受";
@@ -201,11 +198,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (Objects.isNull(orderCfgSettingEntity)){
             stringBuffer.append("手工确认");
         }else {
-            JSONObject jsonObject = orderCfgSettingEntity.getDataJson();
-            Integer selectState = (Integer) jsonObject.getOrDefault("selectState",0);
-            String duration = (String) jsonObject.getOrDefault("duration","48");
-            String unit = (String) jsonObject.getOrDefault("unit","H");
-            if (1 == selectState){
+            OrderAcceptDTO orderAcceptDTO = JSONUtil.toBean(orderCfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
+            Boolean enable = orderAcceptDTO.getEnable();
+            Integer duration = orderAcceptDTO.getDuration();
+            String unit = orderAcceptDTO.getUnit();
+            if (Objects.nonNull(enable) && enable){
                 //启用
                 stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
                 return "["+duration+unit+"]自动确认";
@@ -230,13 +227,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             configVO.setKey(code);
             return configVO;
         } else {
-            return ConfigVO.builder()
-                    .selectState(0)
-                    .supplierId(supplierId)
-                    .key(code)
-                    .duration("48")
-                    .unit("H")
-                    .build();
+            return null;
         }
     }
 

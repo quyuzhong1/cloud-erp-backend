@@ -23,15 +23,15 @@ public class OrderAcceptDTO implements Serializable {
     /**
      * 时长
      */
-    private String duration;
+    private Integer duration;
     /**
      * 单位
      */
     private String unit;
     /**
-     * 选中状态 0 没有  1 有
+     * 选中状态 true 启用 false 停用
      */
-    private int selectState;
+    private Boolean enable;
 
     /**
      * Key值
