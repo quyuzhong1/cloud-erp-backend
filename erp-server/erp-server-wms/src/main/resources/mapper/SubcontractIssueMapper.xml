@@ -81,6 +81,7 @@
         from subcontract_issue si
         inner join subcontract_issue_detail sid on si.id = sid.main_id and sid.is_deleted = false
         <where>
+            si.is_deleted = false
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -94,6 +95,8 @@
             si.id desc
         </where>
     </select>
+
+
     <select id="tabList" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
