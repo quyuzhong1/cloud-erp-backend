@@ -150,7 +150,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     private void handlePoReconciliationSetting (CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO) {
         //设置时间为空
-        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
+        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
             poReconciliationSettingDTO.setEndDate(null);
         }
     }
