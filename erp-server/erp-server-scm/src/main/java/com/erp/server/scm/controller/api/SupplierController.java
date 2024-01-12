@@ -209,6 +209,12 @@ public class SupplierController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用SRM协同:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateSrmStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateSrmStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = supplierService.updateStatus(dto);
         return result == true ? success() : failure();
