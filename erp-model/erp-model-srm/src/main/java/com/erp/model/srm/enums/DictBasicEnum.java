@@ -8,8 +8,8 @@ public enum DictBasicEnum {
     private String type;
     private String name;
 
-    DictBasicEnum(String code, String name) {
-        this.type = code;
+    DictBasicEnum(String type, String name) {
+        this.type = type;
         this.name = name;
     }
 
@@ -21,17 +21,17 @@ public enum DictBasicEnum {
         this.name = name;
     }
 
-    public String getCode() {
+    public String getType() {
         return type;
     }
-    public String getType() {
+    public String getName() {
         return name;
     }
 
-    public static String getNameByCode(String code) {
+    public static String getNameByCode(String type) {
         DictBasicEnum[] stateEnums = values();
         for (DictBasicEnum stateEnum : stateEnums) {
-            if (stateEnum.getCode().equals(code) ) {
+            if (stateEnum.getType().equals(type) ) {
                 return stateEnum.getType();
             }
         }

@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
 
 
 /**
@@ -34,7 +35,7 @@ public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
     /**
     * json数据
     */
-    @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "data_json", jdbcType = JdbcType.OTHER)
     private JSONObject dataJson;
     /**
     * 是否禁用

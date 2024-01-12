@@ -3,6 +3,9 @@ import com.erp.model.srm.entity.CfgSettingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CfgSettingMapper extends BaseMapper<CfgSettingEntity> {
 
+    boolean saveCfgConfig(@Param("entity") CfgSettingEntity cfgSettingEntity);
+
+    List<CfgSettingEntity> getListBySupplierId(@Param("supplierId") String supplierId);
 }

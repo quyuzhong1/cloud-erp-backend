@@ -20,6 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ConfigVO implements Serializable {
 
+    private String id;
     /**
      * 编码
      */

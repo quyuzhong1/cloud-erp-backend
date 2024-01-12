@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -287,6 +288,11 @@ public class SupplierDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
+
+        /**
+         * SRM协同
+         */
+        private Boolean srmDisabled;
 
         /**
          * 付款条件
