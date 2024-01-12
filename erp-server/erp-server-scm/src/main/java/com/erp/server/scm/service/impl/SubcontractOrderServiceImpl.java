@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -35,16 +36,19 @@ import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SubcontractIssueFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
@@ -126,6 +130,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
+    @Autowired
+    private SubcontractIssueFeign subcontractIssueFeign;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -413,15 +419,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
-    }
-
-    private void autoGenerateSubcontractIssue (List<String> ids) {
-
-        SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
-        for (String id : ids) {
-
-        }
-
     }
 
 
@@ -1449,6 +1446,42 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //委外组织名称
         String subcontractOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setSubcontractOrgName(subcontractOrgName);
+    }
+
+    /**
+     * @description: 自动生成委外发料单
+     * @author Will
+     * @date: 2024/1/12 12:27
+     * @param ids
+     */
+    private void autoGenerateSubcontractIssue (List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        //委外明细信息
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainIds(ids);
+        for (String id : ids) {
+            SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
+            addDTO.setSourceId(id);
+            addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
+            addDTO.setDate(LocalDate.now());
+            List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
+            //委外子级sku信息
+            List<SubcontractOrderDetailEntity> childDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(id, obj.getMainId()) && StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childDetailList)) {
+                throw new ServiceException(ApiError.ERROR_98072);
+            }
+            for (SubcontractOrderDetailEntity detailEntity : childDetailList) {
+                SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
+                addDetailDTO.setSourceDetailId(detailEntity.getId());
+                addDetailDTO.setIssueQty(detailEntity.getDeliveryQty());
+                addDetailDTO.setWarehouseId(detailEntity.getWarehouseId());
+                addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                detailList.add(addDetailDTO);
+            }
+            addDTO.setDetailList(detailList);
+            subcontractIssueFeign.add(addDTO);
+        }
     }
 
 }
