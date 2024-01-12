@@ -34,6 +34,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -116,6 +117,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * tab list
@@ -576,6 +579,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             addDetailList.add(detail);
         }
         if (this.save(entity) && stocktakingProfitLossDetailService.saveBatch(addDetailList)) {
+
+            //标记SKU
+            List<String> skuIds = addDetailList.stream().map(StocktakingProfitLossDetailEntity::getSkuId).collect(Collectors.toList());
+            plmTaskFeign.updateOccupyStatus(skuIds);
 
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个【%s】单号【%s】",entity.getBillType().getName() ,code), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "新增操作");

@@ -117,6 +117,14 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date: 2023/11/17 11:53
      */
     void sendWarnMsg(String syncTaskId);
+    /**
+     * @description: 判断
+     * @author Will
+     * @date: 2023/11/21 10:21
+     * @param entity
+     * @return Boolean
+     */
+    Boolean isSendParentBillTask (DmpPushTaskEntity entity);
 
     /**
      * 保存更新推送记录

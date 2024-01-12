@@ -99,25 +99,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
-            /*DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
-            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subContractOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subContractOrderTask.getStatus())) {
-                log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
-                return;
-            }*/
             //委外订单明细
             subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
-
-            //委外变更单
-            List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
-            if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
-                List<String> subContractChangeIdList = subcontractChangeList.stream().map(SubcontractChangeEntity::getId).collect(Collectors.toList());
-                List<DmpPushTaskEntity> subContractChangeList = dmpMqFeign.listByParam(new DmpSyncTaskDTO.ListDTO(SourceTypeEnum.SUBCONTRACT_CHANGE.getCode(), subContractChangeIdList, PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
-                String changeCodes = subContractChangeList.stream().filter(obj -> !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getSourceCode).collect(Collectors.joining(","));
-                if (StringUtils.isNotBlank(changeCodes)) {
-                    log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
-                    return;
-                }
-            }
         }
 
         //业务id
@@ -272,6 +255,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
+            taskFeignDTO.setParentId(entity.getSourceId());
+        }
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 }
