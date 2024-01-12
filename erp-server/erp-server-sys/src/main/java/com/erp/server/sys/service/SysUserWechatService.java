@@ -12,6 +12,5 @@ import com.erp.model.sys.entity.SysUserWechatEntity;
  * @since 2024-01-12
  */
 public interface SysUserWechatService extends SuperService<SysUserWechatEntity> {
-
-
+    SysUserWechatEntity getWxInfo(String uid);
 }

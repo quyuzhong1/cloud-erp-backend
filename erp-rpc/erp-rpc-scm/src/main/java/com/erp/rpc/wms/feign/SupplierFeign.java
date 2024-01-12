@@ -4,8 +4,10 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -46,4 +48,7 @@ public interface SupplierFeign {
      */
     @PostMapping("/feign/supplier/listBySupplierByNames")
     List<SupplierEntity> listBySupplierByNames(List<String> singletonList);
+
+    @GetMapping("/feign/supplierUser/getSupplierByUid")
+    SupplierEntity getSupplierByUid(@RequestParam("uid") String uid);
 }

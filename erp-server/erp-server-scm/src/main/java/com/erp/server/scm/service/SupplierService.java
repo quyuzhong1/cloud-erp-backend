@@ -299,4 +299,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.util.List<com.erp.model.scm.entity.SupplierEntity>
      */
     List<SupplierEntity> listBySupplierByNames(List<String> supplierNames);
+
+    SupplierEntity getSupplierByUid(String uid);
 }

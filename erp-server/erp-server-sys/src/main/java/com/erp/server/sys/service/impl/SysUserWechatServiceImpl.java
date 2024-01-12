@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.server.sys.mapper.SysUserWechatMapper;
@@ -24,4 +25,10 @@ public class SysUserWechatServiceImpl extends SuperServiceImpl<SysUserWechatMapp
     @Autowired
     private CommonService commonService;
 
+    @Override
+    public SysUserWechatEntity getWxInfo(String uid) {
+        LambdaQueryWrapper<SysUserWechatEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserWechatEntity::getUid,uid);
+        return this.getOne(queryWrapper);
+    }
 }

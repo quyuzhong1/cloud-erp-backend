@@ -8,6 +8,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -139,4 +140,11 @@ public interface UserInfoFeign {
      **/
     @GetMapping("feign/user/forgotPasswordGetCode")
     ApiResult<Map<String, Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount);
+
+
+    /**
+     * 获取用户微信信息
+     **/
+    @GetMapping("feign/user/getWxInfo")
+    SysUserWechatEntity getWxInfo(@RequestParam("uid") String uid);
 }
