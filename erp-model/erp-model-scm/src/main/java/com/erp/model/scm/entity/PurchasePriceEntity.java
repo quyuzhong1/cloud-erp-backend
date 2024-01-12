@@ -86,6 +86,11 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
     /**
      * 明细ids
