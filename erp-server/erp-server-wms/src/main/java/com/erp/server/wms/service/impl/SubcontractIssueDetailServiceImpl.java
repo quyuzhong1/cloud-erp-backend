@@ -95,44 +95,6 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), mainId, "新增操作");
     }
 
-    /**
-     * @description: 验证信息
-     * @author Will
-     * @date: 2024/1/9 17:14
-     * @param list
-     */
-    private void checkData (List<SubcontractIssueDetailEntity> list,String mainId) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        //委外发料主表信息
-        SubcontractIssueEntity subcontractIssueEntity = subcontractIssueService.getById(mainId);
-        if (ObjectUtil.isEmpty(subcontractIssueEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
-        }
-        //委外明细信息
-        List<String> sourceDetailIdList = list.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIdList);
-
-        //委外明细已关联的委外发料
-        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySourceDetailIdList(sourceDetailIdList);
-
-        for (SubcontractIssueDetailEntity entity : list) {
-            SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_98072);
-            }
-            //正常领料需要验证发料数量
-            if (SubcontractIssueTypeEnum.NORMAL.getCode().equals(subcontractIssueEntity.getType())) {
-                //已下推发料数量
-                Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getSourceDetailId()) && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
-                        .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.add(totalIssueQty,entity.getIssueQty()) > detailEntity.getDeliveryQty()) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty);
-                }
-            }
-        }
-    }
 
     /**
     * 修改
@@ -156,6 +118,8 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
+        //数据验证
+        checkData(list,mainId);
 
         // 数据处理
         handleData(list,mainId);
@@ -274,6 +238,45 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (CollectionUtils.isNotEmpty(addList) && addList.size() != list.size()) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * @description: 验证信息
+     * @author Will
+     * @date: 2024/1/9 17:14
+     * @param list
+     */
+    private void checkData (List<SubcontractIssueDetailEntity> list,String mainId) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //委外发料主表信息
+        SubcontractIssueEntity subcontractIssueEntity = subcontractIssueService.getById(mainId);
+        if (ObjectUtil.isEmpty(subcontractIssueEntity)) {
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
+        }
+        //委外明细信息
+        List<String> sourceDetailIdList = list.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIdList);
+
+        //委外明细已关联的委外发料
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySourceDetailIdList(sourceDetailIdList);
+
+        for (SubcontractIssueDetailEntity entity : list) {
+            SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98072);
+            }
+            //正常领料需要验证发料数量
+            if (SubcontractIssueTypeEnum.NORMAL.getCode().equals(subcontractIssueEntity.getType())) {
+                //已下推发料数量
+                Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getSourceDetailId()) && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
+                        .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (MathUtil.add(totalIssueQty,entity.getIssueQty()) > detailEntity.getDeliveryQty()) {
+                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty);
+                }
+            }
         }
     }
 }

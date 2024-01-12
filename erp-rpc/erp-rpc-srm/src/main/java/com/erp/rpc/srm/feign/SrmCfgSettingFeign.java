@@ -31,5 +31,5 @@ public interface SrmCfgSettingFeign {
      * @return java.util.List<com.erp.model.srm.entity.CfgSettingEntity>
      **/
     @PostMapping("/feign/cfgSetting/listByKeyAndSupplier")
-    List<CfgSettingEntity> listByKeyAndSupplier(@RequestParam("key") String key, @RequestParam("supplierIds") List<String> supplierIds)
+    List<CfgSettingEntity> listByKeyAndSupplier(@RequestParam("key") String key, @RequestParam("supplierIds") List<String> supplierIds);
 }
