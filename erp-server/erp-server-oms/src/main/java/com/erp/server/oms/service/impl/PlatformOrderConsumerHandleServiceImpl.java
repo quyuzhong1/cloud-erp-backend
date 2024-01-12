@@ -179,7 +179,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
                 .distinct().collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId());
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId());
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
@@ -191,6 +191,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIds);
 
         List<String> skuIds = listingInfoWithSkuMappingDTOMap.values().stream()
+                .flatMap(List::stream)
                 .map(ListingInfoWithSkuMappingDTO::getProductSkuId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
