@@ -352,4 +352,14 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackParamDTO
      **/
     PurchaseReturnOrderDTO.UnusualFeedbackView unusualFeedbackView(String id);
+
+    /**
+     * 查询审核通过待确认的单据
+     * @Author Luo_WG
+     * @Date 2024/1/12 14:54
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackView
+     **/
+    List<PoReturnEntity> listByApproceAndWaitConfirm();
+
+
 }

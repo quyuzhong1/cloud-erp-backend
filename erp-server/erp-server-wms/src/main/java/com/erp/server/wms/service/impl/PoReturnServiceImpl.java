@@ -2178,4 +2178,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         result.setAttachNameList(attachmentNameList);
         return result;
     }
+
+    @Override
+    public List<PoReturnEntity> listByApproceAndWaitConfirm() {
+        return lambdaQuery().eq(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode()).list();
+    }
 }
