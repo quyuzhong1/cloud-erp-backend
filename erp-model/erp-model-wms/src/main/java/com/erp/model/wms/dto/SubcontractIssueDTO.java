@@ -183,7 +183,7 @@ public class SubcontractIssueDTO implements Serializable {
         private String createUserName;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
 

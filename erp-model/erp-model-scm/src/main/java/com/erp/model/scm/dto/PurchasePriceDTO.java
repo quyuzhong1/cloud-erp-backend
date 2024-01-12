@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -117,22 +118,14 @@ public class PurchasePriceDTO implements Serializable {
         private LocalDate quotedDate;
 
         /**
-         * 币种
-         */
-        private String currency;
-
-        /**
          * 审核状态
          */
         private String approveStatus;
-
-
 
         /**
          * 报价人id
          */
         private String pricingUserId;
-
 
         /**
          * 采购组织id
@@ -149,6 +142,30 @@ public class PurchasePriceDTO implements Serializable {
          */
         private List<String> attachmentNameList;
 
+        /**
+         * 供应商联系人名称,/api/scm/supplier/getSupplierInfo?supplierId=
+         */
+        private String supplierContactName;
+
+        /**
+         * 供应商联系人电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 结算币种
+         */
+        private String currency;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 报价明细
@@ -335,6 +352,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         private LocalDate effectiveDate;
 
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
 
         /**
          * 采购组织
