@@ -168,6 +168,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return configVOList;
     }
 
+    @Override
+    public List<CfgSettingEntity> listByKeyAndSupplier(String key, List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(CfgSettingEntity::getKey, key).in(CfgSettingEntity::getSupplierId, supplierIds).list();
+    }
+
     private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {
         StringBuffer stringBuffer = new StringBuffer();
         if (Objects.isNull(returnCfgSettingEntity)){

@@ -3,6 +3,7 @@ import com.erp.model.srm.entity.CfgSettingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
 
@@ -47,4 +48,14 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     List<SupplierConfigVO> getConfigList(List<String> supplierIds);
+
+    /**
+     * 根据key和供应商id查询配置
+     * @Author Luo_WG
+     * @Date 2024/1/12 14:16
+     * @param supplierIds
+     * @param key
+     * @return java.util.List<com.erp.model.srm.entity.CfgSettingEntity>
+     **/
+    List<CfgSettingEntity> listByKeyAndSupplier(String key, List<String> supplierIds);
 }
