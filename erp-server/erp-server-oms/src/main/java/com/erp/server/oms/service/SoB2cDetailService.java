@@ -93,7 +93,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList);
+    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList);
 
     /**
      * 通过platformSkuNo查询关联关系
@@ -101,7 +101,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-28
      **/
-    Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
 
     /**
      * 消费处理明细
