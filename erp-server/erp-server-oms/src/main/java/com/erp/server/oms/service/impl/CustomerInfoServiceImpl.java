@@ -454,14 +454,16 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String payCode = customer.getPayCode();
         view.setPayCodeList(StringUtils.isNotBlank(payCode) ? Arrays.asList(payCode.split(",")) : Collections.emptyList());
         String areaName = "";
+        String subregionName = "";
         if (StringUtils.isNotBlank(areaId)) {
             DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
             if (Objects.nonNull(globalArea)) {
-//                areaName = globalArea.getRegionName();
-                areaName = globalArea.getSubregionName();
+                areaName = globalArea.getRegionName();
+                subregionName = globalArea.getSubregionName();
             }
         }
         view.setAreaName(areaName);
+        view.setSubregionName(subregionName);
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
