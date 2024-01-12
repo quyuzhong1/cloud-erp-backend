@@ -899,6 +899,7 @@ public enum ApiError implements Serializable {
     NOT_WAIT_CONFIRM_STATUS(92127,"仅退货确认状态为待确认可操作"),
     ATTACH_QTY_MAX_FIVE(92127,"附件上传数量不可超过5个文件"),
     UNUSUAL_TYPE_NOT_EXISTS(92128,"异常分类错误"),
+    PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
 
 
 

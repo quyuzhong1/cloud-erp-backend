@@ -2151,4 +2151,31 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         return resultList;
     }
+
+    @Override
+    public PurchaseReturnOrderDTO.UnusualFeedbackView unusualFeedbackView(String id) {
+        PoReturnEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PO_RETURN_NOT_EXISTS);
+        }
+        PurchaseReturnOrderDTO.UnusualFeedbackView result = new PurchaseReturnOrderDTO.UnusualFeedbackView();
+        result.setId(id);
+        result.setUnusualType(entity.getUnusualType());
+        result.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(entity.getUnusualType()));
+        result.setUnusualRemark(entity.getUnusualRemark());
+
+        //获取到附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(entity.getId()));
+        //附件地址
+        List<String> attachmentUrlList = attachmentList.stream()
+                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                .collect(Collectors.toList());
+        //附件名称
+        List<String> attachmentNameList = attachmentList.stream()
+                .map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                        collect(Collectors.toList());
+        result.setAttachUrlList(attachmentUrlList);
+        result.setAttachNameList(attachmentNameList);
+        return result;
+    }
 }

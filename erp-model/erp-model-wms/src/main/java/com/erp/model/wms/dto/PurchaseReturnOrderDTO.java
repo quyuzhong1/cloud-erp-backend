@@ -1457,4 +1457,44 @@ public class PurchaseReturnOrderDTO {
         private String name;
     }
 
+    /**
+     * 异常反馈详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnusualFeedbackView {
+        /**
+         * 单据id
+         */
+        private String id;
+
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+
+        /**
+         * 异常分类中文
+         */
+        private String unusualTypeName;
+
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+    }
+
 }

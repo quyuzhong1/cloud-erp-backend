@@ -343,4 +343,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>>
      **/
     List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO> unusualHandleUserOption();
+
+    /**
+     * 异常反馈详情页
+     * @Author Luo_WG
+     * @Date 2024/1/12 12:35
+     * @param id
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackParamDTO
+     **/
+    PurchaseReturnOrderDTO.UnusualFeedbackView unusualFeedbackView(String id);
 }

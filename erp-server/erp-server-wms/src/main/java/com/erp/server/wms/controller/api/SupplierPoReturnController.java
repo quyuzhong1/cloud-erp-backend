@@ -17,10 +17,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.service.PoReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -106,6 +103,19 @@ public class SupplierPoReturnController extends BaseController {
     public ApiResult unusualFeedback(@RequestBody @Validated PurchaseReturnOrderDTO.UnusualFeedbackParamDTO dto) {
         Boolean flag = poReturnService.unusualFeedback(dto);
         return flag ? success() : failure();
+    }
+
+    /**
+     * 异常反馈详情页
+     * @Author Luo_WG
+     * @Date 2024/1/12 12:35
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackParamDTO>
+     **/
+    @GetMapping("/unusualFeedbackView")
+    public ApiResult<PurchaseReturnOrderDTO.UnusualFeedbackView> unusualFeedbackView(@RequestParam("id") String id) {
+        PurchaseReturnOrderDTO.UnusualFeedbackView result = poReturnService.unusualFeedbackView(id);
+        return success(result);
     }
 
 }
