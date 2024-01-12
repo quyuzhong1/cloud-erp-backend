@@ -128,7 +128,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
                 Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getSourceDetailId()) && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (MathUtil.add(totalIssueQty,entity.getIssueQty()) > detailEntity.getDeliveryQty()) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,entity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty);
+                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty);
                 }
             }
         }

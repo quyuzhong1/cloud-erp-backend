@@ -52,12 +52,12 @@ public class CfgSettingValueDTO implements Serializable {
         private Boolean isReturnConfirm;
 
         /**
-         * 数量处理岗位id,/sys/post/list
+         * 数量处理岗位id,/sys/post/list,get请求
          */
         private String qtyHandlePostId;
 
         /**
-         * 其他处理岗位id,/sys/post/list
+         * 其他处理岗位id,/sys/post/list,get请求
          */
         private String otherHandlePostId;
     }
