@@ -226,7 +226,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException("未找到委外发料单数据");
         }
         // 待提交或审核不通过并且未作废允许提交
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
@@ -534,7 +534,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             return;
         }
         //状态名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
         //发料类型

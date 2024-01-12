@@ -226,7 +226,7 @@ public class SubcontractIssueDTO implements Serializable {
         /**
         * 单据审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
          * 单据审核状态
