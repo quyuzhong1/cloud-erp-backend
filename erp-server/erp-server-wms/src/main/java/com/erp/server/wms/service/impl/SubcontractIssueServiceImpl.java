@@ -534,7 +534,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             return;
         }
         //状态名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
         //发料类型
