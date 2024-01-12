@@ -13,6 +13,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -136,6 +137,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             log.warn("金蝶销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
+        //判断是否需要推送MQ
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
+        if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
+            pushToMqList = pushToMqList.stream().filter(e -> CommonConstants.B2BXSDD.equals(e.getFBillTypeCode())).collect(Collectors.toList());
+        }
         // 构造订单结构
         List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
@@ -202,11 +208,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
-        //判断是否需要推送MQ
-        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
-        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
-            return Collections.emptyList();
-        }
 //            queryFilters.add(StrUtil.format("FBillNo ='{}'", "XSD-20230105-33831"));
         // 移除 订单类型过滤
 //            queryFilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
@@ -229,7 +230,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         Integer pageSize = 10000;
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-//            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             log.info("获取金蝶销售订单数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize) {

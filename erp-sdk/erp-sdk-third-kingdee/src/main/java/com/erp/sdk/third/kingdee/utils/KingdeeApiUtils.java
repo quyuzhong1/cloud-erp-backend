@@ -615,7 +615,7 @@ public class KingdeeApiUtils {
      * @param lastTime
      * @return
      */
-    public boolean needPushMQ(LocalDateTime lastTime) {
+    public boolean notNeedPushMQ(LocalDateTime lastTime) {
         if (Objects.nonNull(SWITCH_TIME)) {
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME, df);
