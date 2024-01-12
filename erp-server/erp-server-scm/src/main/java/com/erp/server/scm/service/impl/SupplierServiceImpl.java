@@ -130,6 +130,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SrmCfgSettingFeign srmCfgSettingFeign;
 
+    @Resource
+    private SupplierRefUserService supplierRefUserService;
+
     /**
      * 保存供应商信息
      *
@@ -1203,6 +1206,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(SupplierEntity::getName, supplierNames).list();
+    }
+
+    @Override
+    public SupplierEntity getSupplierByUid(String uid) {
+        SupplierRefUserEntity supplier = supplierRefUserService.getSupplierRelUserByUid(uid);
+        if(Objects.isNull(supplier)){
+            return null;
+        }
+        return this.getById(supplier.getSupplierId());
     }
 
     /**

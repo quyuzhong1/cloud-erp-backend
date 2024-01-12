@@ -6,10 +6,7 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SupplierService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -61,6 +58,11 @@ public class SupplierFeignController extends BaseController {
         return supplierService.listBySupplierByNames(supplierNames);
     }
 
-
-
+    /**
+     * 根据用户id获取供应商
+     */
+    @GetMapping("/getSupplierByUid")
+    public SupplierEntity getSupplierByUid(@RequestParam("uid") String uid) {
+        return supplierService.getSupplierByUid(uid);
+    }
 }

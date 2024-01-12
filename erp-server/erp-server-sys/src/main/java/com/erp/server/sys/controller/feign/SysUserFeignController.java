@@ -18,6 +18,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +68,8 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private UserKingdeePostService userKingdeePostService;
 
-
+    @Resource
+    private SysUserWechatService wechatService;
 
 
     @PostMapping("/accountLogin")
@@ -539,5 +542,13 @@ public class SysUserFeignController extends BaseController {
     public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.resetPassword(uid,pwd);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 获取用户微信信息
+     **/
+    @GetMapping("/getWxInfo")
+    public SysUserWechatEntity getWxInfo(@RequestParam("uid") String uid) {
+        return wechatService.getWxInfo(uid);
     }
 }
