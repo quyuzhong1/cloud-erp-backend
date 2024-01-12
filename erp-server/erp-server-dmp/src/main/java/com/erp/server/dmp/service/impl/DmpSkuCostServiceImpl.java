@@ -311,7 +311,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                  */
                 if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
                     List<BomSkuPageDTO.ListSkuLevelDTO> bomChildSkuList = childList.stream().filter(obj -> obj.getParentSkuId().equals(childSkuLevelDTO.getSkuId())).collect(Collectors.toList());
-                    if (CollectionUtils.isEmpty(bomChildSkuList)) {
+                    if (CollectionUtils.isNotEmpty(bomChildSkuList)) {
                         getParentCost(childSkuCostList,childList,childSkuLevelDTO.getSkuId(),parentSkuCostEntity);
                     } else {
                         //取自定义成本数据
