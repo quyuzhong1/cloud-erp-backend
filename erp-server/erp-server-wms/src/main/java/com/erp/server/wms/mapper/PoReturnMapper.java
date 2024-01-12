@@ -28,7 +28,7 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
 
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
 
-    List<ReturnOrderExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+    List<PurchaseReturnOrderDTO.PagingViewDTO> listExport(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 

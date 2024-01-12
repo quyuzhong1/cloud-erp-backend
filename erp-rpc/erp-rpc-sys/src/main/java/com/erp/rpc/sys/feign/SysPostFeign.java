@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.sys.entity.SysPostUserEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,4 +33,14 @@ public interface SysPostFeign {
      **/
     @GetMapping("/feign/post/getById")
     SysPostEntity getById(@RequestParam("id") String id);
+
+    /**
+     * 根据用户id查询用户岗位
+     * @Author Luo_WG
+     * @Date 2024/1/12 10:57
+     * @param userId
+     * @return java.util.List<com.erp.model.sys.entity.SysPostUserEntity>
+     **/
+    @GetMapping("/feign/post/getPostUserByUserId")
+    List<SysPostUserEntity> getPostUserByUserId(@RequestParam("userId") String userId);
 }

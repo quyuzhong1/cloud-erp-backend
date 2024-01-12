@@ -411,6 +411,16 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime createTime;
 
         /**
+         * 签收人
+         */
+        private String receiveUserName;
+
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
+
+        /**
          * 报价明细
          */
         @Valid
@@ -602,6 +612,45 @@ public class PurchaseReturnOrderDTO {
          */
         private String purchaseOrderDetailId;
 
+        /**
+         * 退货确认
+         */
+        private String confirmStatus;
+
+        /**
+         * 退货确认中文
+         */
+        private String confirmStatusName;
+
+        /**
+         * 异常分类
+         */
+        private String unusualType;
+
+        /**
+         * 异常分类中文
+         */
+        private String unusualTypeName;
+
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+
+        /**
+         * 异常处理人Id
+         */
+        private String unusualHandleUserId;
+
+        /**
+         * 异常处理人名称
+         */
+        private String unusualHandleUserName;
+
+        /**
+         * 退货确认日期
+         */
+        private LocalDate confirmDate;
     }
 
     /**
@@ -641,7 +690,9 @@ public class PurchaseReturnOrderDTO {
         private List<String> purchaseUserIdList;
 
         /**
-         * 单据审核状态集合
+         * 状态(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核，waitForMeHandle 待我处理)
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnStatus
          */
         private List<String> approveStatusList;
 
@@ -686,6 +737,27 @@ public class PurchaseReturnOrderDTO {
          */
         private String detailRemark;
 
+        /**
+         * 退货确认状态
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnConfirmStatus
+         */
+        private String confirmStatus;
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+        /**
+         * 异常处理人
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/27679
+         */
+        private List<String> unusualHandleUserIdList;
     }
 
     /**
@@ -815,7 +887,9 @@ public class PurchaseReturnOrderDTO {
     public static class ReturnOrderCountDTO {
 
         /**
-         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         * 状态(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核，waitForMeHandle 待我处理)
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnStatus
          */
         private String type;
         /**
@@ -1169,12 +1243,12 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderCode;
 
         /**
-         * 订单确认状态
+         * 退货确认状态
          */
         private String confirmStatus;
 
         /**
-         * 订单确认状态中文
+         * 退货确认状态中文
          */
         private String confirmStatusName;
 
@@ -1268,7 +1342,7 @@ public class PurchaseReturnOrderDTO {
         private List<String> skuNoList;
 
         /**
-         * 订单确认状态
+         * 退货确认状态
          * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
          * 入参：key=poReturnConfirmStatus
          */
@@ -1365,4 +1439,22 @@ public class PurchaseReturnOrderDTO {
          */
         private List<String> attachUrlList;
     }
+
+    /**
+     * 查询异常处理人下拉
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnusualHandleUserOptionDTO {
+        /**
+         * 编号
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+    }
+
 }

@@ -349,6 +349,7 @@ public class PoReturnController extends BaseController {
         return flag?success():failure();
     }
 
+
     /**
      * 修复退货来源错误数据
      * @Author Luo_WG
@@ -360,5 +361,18 @@ public class PoReturnController extends BaseController {
         Boolean flag = poReturnService.dataRepairTemp();
         return flag?success():failure();
     }
+
+    /**
+     * 异常处理人下拉接口
+     * @Author Luo_WG
+     * @Date 2024/1/12 11:17
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>>
+     **/
+    @GetMapping("/unusualHandleUserOption")
+    public ApiResult<List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>> unusualHandleUserOption() {
+        List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO> unusualHandleUserOption = poReturnService.unusualHandleUserOption();
+        return success(unusualHandleUserOption);
+    }
+
 
 }

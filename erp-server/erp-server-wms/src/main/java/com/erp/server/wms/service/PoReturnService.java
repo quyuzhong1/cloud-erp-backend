@@ -139,7 +139,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
 
 
     /**
@@ -335,4 +335,12 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return java.lang.Boolean
      **/
     Boolean unusualFeedback(PurchaseReturnOrderDTO.UnusualFeedbackParamDTO dto);
+
+    /**
+     * 异常处理人下拉接口
+     * @Author Luo_WG
+     * @Date 2024/1/12 11:17
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>>
+     **/
+    List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO> unusualHandleUserOption();
 }
