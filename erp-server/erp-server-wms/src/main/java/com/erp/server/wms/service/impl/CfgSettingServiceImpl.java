@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.wms.mapper.CfgSettingMapper;
 import com.erp.server.wms.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -125,6 +126,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReturnSettingDTO());
                 break;
             case PO_RECONCILIATION:
+                handlePoReconciliationSetting(addDTO.getPoReconciliationSettingDTO());
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReconciliationSettingDTO());
                 break;
             default:
@@ -139,6 +141,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return entity;
     }
 
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/1/12 11:52
+     * @param poReconciliationSettingDTO
+     */
+    private void handlePoReconciliationSetting (CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO) {
+        //设置时间为空
+        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
+            poReconciliationSettingDTO.setEndDate(null);
+        }
+    }
 
     /**
      * @description: 格式化枚举信息

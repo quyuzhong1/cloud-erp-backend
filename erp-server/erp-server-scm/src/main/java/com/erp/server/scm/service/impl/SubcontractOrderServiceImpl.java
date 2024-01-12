@@ -34,6 +34,7 @@ import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -406,12 +407,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
             autoGeneratePo(ids);
+            //自动生成委外发料单
+            autoGenerateSubcontractIssue(ids);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }
 
+    private void autoGenerateSubcontractIssue (List<String> ids) {
+
+        SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
+        for (String id : ids) {
+
+        }
+
+    }
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
