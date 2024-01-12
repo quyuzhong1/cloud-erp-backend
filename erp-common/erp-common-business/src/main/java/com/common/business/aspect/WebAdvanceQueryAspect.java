@@ -104,7 +104,7 @@ public class WebAdvanceQueryAspect {
             sql.append("(");
         }
         String contentSql;
-        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend()){
+        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend() || dto.getField().equals("so.tab")){
             String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,dto);
             contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),dto.getValue(),compareValueSQL);
             if(StringUtils.isBlank(contentSql)){
