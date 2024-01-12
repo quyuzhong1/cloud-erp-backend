@@ -49,8 +49,6 @@ public class WebAdvanceQueryAspect {
         }
         //扩展处理类和扩展字段
         IQueryHandler queryHandler = context.getBean(controllerDataScope.handler());
-        String[] extendFieldArr = controllerDataScope.extendFieldArr();
-        List<String> extendFieldList = Arrays.asList(extendFieldArr);
 
         //获取查询对象(如果为空会初始化一个长度为1的集合）
         List<AdvanceQueryDTO> advanceQueryDTOList = this.getQueryDTOList(point);
@@ -79,7 +77,7 @@ public class WebAdvanceQueryAspect {
                 if (!QueryConditionEnum.CODE_MAPS.containsKey(dto.getCompare())) {
                     throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
                 }
-                stringBuilder.append(this.splicingSQL(dto,queryHandler,extendFieldList.contains(dto.getField())));
+                stringBuilder.append(this.splicingSQL(dto,queryHandler));
             }
             //将sql设置到sqlMap中
             Map<String,String> sqlMap;
@@ -99,14 +97,14 @@ public class WebAdvanceQueryAspect {
      * @param
      * @return
      */
-    private String splicingSQL(AdvanceQueryDTO dto,IQueryHandler queryHandler,boolean isExtend){
+    private String splicingSQL(AdvanceQueryDTO dto,IQueryHandler queryHandler){
         QueryConditionEnum condEnum = QueryConditionEnum.CODE_MAPS.get(dto.getCompare());
         StringBuilder sql = new StringBuilder();
         for(int i = 0; i<dto.getLeftBracketCount();i++){
             sql.append("(");
         }
         String contentSql;
-        if(isExtend){
+        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend()){
             String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,dto);
             contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),dto.getValue(),compareValueSQL);
             if(StringUtils.isBlank(contentSql)){

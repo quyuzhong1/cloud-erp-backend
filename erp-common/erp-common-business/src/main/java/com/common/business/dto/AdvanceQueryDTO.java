@@ -29,6 +29,9 @@ public class AdvanceQueryDTO {
     //数据类型
     private String dataType;
 
+    //是否扩展字段
+    private Boolean isExtend;
+
     //分组
     private String groupName;
 
@@ -47,6 +50,16 @@ public class AdvanceQueryDTO {
                 .compare(queryConditionEnum.getCompareCode())
                 .value(value)
                 .dataType(dataTypeEnum.getCode())
+                .compareSymbol("and")
+                .build();
+    }
+
+    public static AdvanceQueryDTO buildDefaultSplicingSQLDTO(String field, Object value){
+        return AdvanceQueryDTO.builder()
+                .field(field)
+                .compare(QueryConditionEnum.IN_LIST.toString())
+                .value(value)
+                .dataType(QueryDataTypeEnum.STRING.getCode())
                 .compareSymbol("and")
                 .build();
     }

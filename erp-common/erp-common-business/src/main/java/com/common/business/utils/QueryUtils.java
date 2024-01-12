@@ -95,7 +95,9 @@ public class QueryUtils {
                 //去掉最后一个,
                 val = val.substring(0, val.length() - 1);
                 val = val+")";
-            } else {
+            } else if(dto.getValue() instanceof String){
+                val = " ( '" + dto.getValue() +"' )";
+            }else {
                 throw new ServiceException(ApiError.QUERY_LIST_TYPE_ERROR);
             }
         }
