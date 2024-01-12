@@ -28,6 +28,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
@@ -36,10 +37,13 @@ import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -114,9 +118,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
-
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
+
 
     /**
      * 添加采购价目表
@@ -239,6 +246,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
 
+        //供应商信息
+        SupplierDTO.ViewDTO supplierDTO = supplierService.getBySupplierId(purchasePrice.getSupplierId());
+        viewDTO.setSupplierContactName(supplierDTO.getPerson());
+        viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
+
+        //付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(supplierDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        viewDTO.setPaymentConditionName(paymentConditionName);
         return viewDTO;
     }
 
