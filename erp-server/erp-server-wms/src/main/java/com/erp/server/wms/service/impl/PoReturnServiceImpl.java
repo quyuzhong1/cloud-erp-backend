@@ -211,10 +211,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             //订单确认状态名称
-            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+            obj.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(obj.getConfirmStatus()));
 
             //异常分类名称
-            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+            obj.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(obj.getUnusualType()));
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             obj.setProductName(productDetailEntity.getName());
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
