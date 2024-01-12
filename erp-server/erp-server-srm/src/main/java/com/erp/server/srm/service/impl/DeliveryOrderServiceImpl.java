@@ -2,8 +2,10 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
+import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -96,6 +98,25 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public Integer countByPrint(String supplierId, boolean isPrint) {
+        LambdaQueryWrapper<DeliveryOrderEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DeliveryOrderEntity::getSupplierId,supplierId);
+        queryWrapper.eq(DeliveryOrderEntity::getIsPrint,isPrint);
+        return this.count(queryWrapper);
+    }
+
+    @Override
+    public Integer countByReceiveStatus(String supplierId, String status) {
+        LambdaQueryWrapper<DeliveryOrderEntity> queryWrapper = this.getDefaultWrapper(supplierId);
+        queryWrapper.eq(DeliveryOrderEntity::getReceiptStatus,status);
+        return this.count(queryWrapper);
+    }
+
+    private LambdaQueryWrapper<DeliveryOrderEntity> getDefaultWrapper(String supplierId) {
+        return new LambdaQueryWrapper<DeliveryOrderEntity>()
+                .eq(DeliveryOrderEntity::getSupplierId, supplierId);
+    }
 
     /**
     * 新增修改处理数据

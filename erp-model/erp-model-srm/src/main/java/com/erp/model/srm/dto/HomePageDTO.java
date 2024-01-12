@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -74,11 +76,121 @@ public class HomePageDTO implements Serializable {
         /**
          * 待确认送货单数
          */
-        private Integer waitConfirmRefundCount;
+        private Integer waitConfirmDeliveryCount;
 
         /**
          * 待确认对账单数
          */
         private Integer waitConfirmReconciliationCount;
     }
+
+
+    /**
+     * 统计数据
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Statistical {
+        /**
+         * 统计信息
+         */
+        private TotalInfo totalInfo;
+
+        /**
+         * 订单趋势list
+         */
+        private List<OrderTrend> orderTrendList;
+
+        /**
+         * 退货趋势list
+         */
+        private List<RefundTrend> refundTrendList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TotalInfo {
+        /**
+         * 订单量
+         */
+        private Integer orderCount;
+
+        /**
+         * 订单SKU量
+         */
+        private Integer orderSkuCount;
+
+        /**
+         * 订单额
+         */
+        private BigDecimal orderMoney;
+
+        /**
+         * 退货量
+         */
+        private Integer refundCount;
+
+        /**
+         * sku质检推货量
+         */
+        private Integer skuQcRefundCount;
+
+        /**
+         * sku质检推货率
+         */
+        private BigDecimal skuQcRefundRate;
+
+        /**
+         * 退货总额
+         */
+        private BigDecimal refundMoney;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OrderTrend {
+        /**
+         * 月份
+         */
+        private String month;
+
+        /**
+         * 订单SKU量
+         */
+        private Integer orderSkuCount;
+
+        /**
+         * 订单额
+         */
+        private BigDecimal orderAmount;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class RefundTrend {
+        /**
+         * 月份
+         */
+        private String month;
+
+        /**
+         * 退货总量
+         */
+        private Integer refundCount;
+
+        /**
+         * 质检退货量
+         */
+        private Integer qcRefundCount;
+    }
+
 }

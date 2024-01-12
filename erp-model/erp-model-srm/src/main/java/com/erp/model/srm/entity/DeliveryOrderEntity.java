@@ -115,6 +115,16 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     */
     @TableField("source_type")
     private String sourceType;
+    /**
+    * 收货状态
+    */
+    @TableField("receipt_status")
+    private String receiptStatus;
+    /**
+    * 是否打印
+    */
+    @TableField("is_print")
+    private Boolean isPrint;
 
 
     public static final String CODE = "code";
@@ -152,6 +162,10 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     public static final String RECEIVE_ADDRESS = "receive_address";
 
     public static final String SOURCE_TYPE = "source_type";
+
+    public static final String RECEIPT_STATUS = "receipt_status";
+
+    public static final String IS_PRINT = "is_print";
 
     @Override
     public Serializable pkVal() {

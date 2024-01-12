@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 首页
@@ -51,7 +52,6 @@ public class HomePageController extends BaseController {
         return success(homePageService.getAccountInfo());
     }
 
-
     /**
      * 查询待办信息
      * @return
@@ -59,5 +59,14 @@ public class HomePageController extends BaseController {
     @GetMapping("/getToDoItems")
     public ApiResult<HomePageDTO.ToDoItems> getToDoItems(){
         return success(homePageService.getToDoItems());
+    }
+
+    /**
+     * 查询统计数据
+     * @return
+     */
+    @GetMapping("/getStatistical")
+    public ApiResult<HomePageDTO.Statistical> getStatistical(@RequestParam(value = "year") String year){
+        return success(homePageService.getStatistical(year));
     }
 }

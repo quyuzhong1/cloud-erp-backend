@@ -32,5 +32,7 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     */
     Boolean update(DeliveryOrderDTO.UpdateDTO dto);
 
+    Integer countByPrint(String supplierId, boolean isPrint);
 
+    Integer countByReceiveStatus(String supplierId, String code);
 }
