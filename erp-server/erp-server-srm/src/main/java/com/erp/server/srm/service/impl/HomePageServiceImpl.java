@@ -77,4 +77,9 @@ public class HomePageServiceImpl implements HomePageService {
                 .waitConfirmDeliveryCount(deliveryOrderService.countByReceiveStatus(supplier.getId(), DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode()))
                 .build();
     }
+
+    @Override
+    public HomePageDTO.Statistical getStatistical(String year) {
+        return null;
+    }
 }

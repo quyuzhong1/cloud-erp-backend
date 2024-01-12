@@ -14,4 +14,6 @@ public interface HomePageService  {
     HomePageDTO.AccountInfoDTO getAccountInfo();
 
     HomePageDTO.ToDoItems getToDoItems();
+
+    HomePageDTO.Statistical getStatistical(String year);
 }
