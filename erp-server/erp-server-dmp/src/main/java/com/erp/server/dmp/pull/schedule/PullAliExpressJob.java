@@ -180,7 +180,6 @@ public class PullAliExpressJob {
     private List<PlatformAliExpressOrderDTO> listPlatformOrder( List<String> shopIds, int currentPage,int pageSize) {
         Query query = new Query();
         query.addCriteria(Criteria.where("isClean").is(2)
-                        .and("uniqueId").is("8183096253048561")
                 .and("shopId").in(shopIds)
                 .and("downloadAddressStatus").is(0));
 
