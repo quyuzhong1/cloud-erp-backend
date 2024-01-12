@@ -25,6 +25,25 @@ import java.util.Objects;
 @NoArgsConstructor
 public class CfgQueryConditionDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class MenuDTO  {
+
+        /**
+         * 系统菜单
+         */
+        private String system;
+
+        /**
+         * menuCode
+         */
+        private String menuCode;
+
+        /**
+         * 菜单名
+         */
+        private String menuName;
+    }
 
     @Data
     @NoArgsConstructor
@@ -38,6 +57,11 @@ public class CfgQueryConditionDTO implements Serializable {
          * 所属系统
          */
         private String system;
+
+        /**
+         * 名称
+         */
+        private String name;
 
         /**
          * 编码
@@ -75,7 +99,7 @@ public class CfgQueryConditionDTO implements Serializable {
         private String dateType;
 
         /**
-         * 前端组件props值
+         * 属性绑定的props
          */
         @TableField(typeHandler = JacksonTypeHandler.class)
         private Map<String,Object> props;
@@ -119,11 +143,32 @@ public class CfgQueryConditionDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
     }
 
     @Data
     @NoArgsConstructor
-    public static class SearchParamDTO extends SortDTO {
+    public static class SearchParamDTO {
+
+        /**
+         * 页面code
+         */
+        private String code;
+
+        /**
+         * 系统目录名
+         */
+        private String system;
+
+        /**
+         * 菜单名
+         */
+        private String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class MenuSearchParamDTO {
 
         /**
          * 页面code
@@ -256,6 +301,11 @@ public class CfgQueryConditionDTO implements Serializable {
          * 前端组件props值
          */
         private Map<String,Object> props;
+
+        /**
+         * 属性绑定的props
+         */
+        private Map<String,Object> fieldProps;
     }
 
     @Data
@@ -294,12 +344,6 @@ public class CfgQueryConditionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-         * 所属系统
-         */
-        @NotBlank(message = "所属系统不能为空")
-        private String system;
 
         /**
          * 页面code

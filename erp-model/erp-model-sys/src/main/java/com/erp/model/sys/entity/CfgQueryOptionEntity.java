@@ -69,6 +69,11 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("search_key_field")
     private String searchKeyField;
 
+    /**
+     * 前端props参数 ，json格式,级联选择器必填
+     */
+    @TableField(value = "props", typeHandler = JacksonTypeHandler.class)
+    private Map<String,Object> props;
 
     public static final String API_NAME = "api_name";
 

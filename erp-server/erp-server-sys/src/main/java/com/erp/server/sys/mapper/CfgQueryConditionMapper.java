@@ -24,4 +24,6 @@ public interface CfgQueryConditionMapper extends BaseMapper<CfgQueryConditionEnt
     List<CfgQueryConditionDTO.ViewDTO> getQueryConditionByCode(@Param("code") String code);
 
     IPage<CfgQueryConditionDTO.ListDTO> paging(Page query,@Param("params")  CfgQueryConditionDTO.SearchParamDTO params);
+
+    IPage<CfgQueryConditionDTO.MenuDTO> menuPaging(Page query,@Param("params") CfgQueryConditionDTO.MenuSearchParamDTO params);
 }

@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -73,6 +74,33 @@ public class CfgQueryOptionDTO implements Serializable {
          * 查询绑定属性
          */
         private String searchKeyField;
+
+
+        /**
+         * 请求参数
+         */
+        private Map<String,Object> props;
+
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -106,7 +134,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
         * 请求参数
         */
-        private String param;
+        private Map<String,Object> param;
 
         /**
         * 下拉框显示值
@@ -127,6 +155,11 @@ public class CfgQueryOptionDTO implements Serializable {
          */
         private String searchKeyField;
 
+
+        /**
+         * 组件props参数
+         */
+        private Map<String,Object> props;
     }
 
     @Data
@@ -216,6 +249,11 @@ public class CfgQueryOptionDTO implements Serializable {
          * 查询绑定属性
          */
         private String searchKeyField;
+
+        /**
+         * 组件props参数
+         */
+        private Map<String,Object> props;
 
     }
 

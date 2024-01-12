@@ -27,12 +27,6 @@ import java.util.Map;
 public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity> {
 
     /**
-    * 接口名称
-所属系统 eg:scm,oms
-    */
-    @TableField("system")
-    private String system;
-    /**
     * 页面code
     */
     @TableField("code")
@@ -90,9 +84,6 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     */
     @TableField("display_type")
     private String displayType;
-
-
-    public static final String SYSTEM = "system";
 
     public static final String CODE = "code";
 

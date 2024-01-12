@@ -86,6 +86,13 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     }
 
     @Override
+    public PagingVO<CfgQueryConditionDTO.MenuDTO> menuPaging(PagingDTO<CfgQueryConditionDTO.MenuSearchParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<CfgQueryConditionDTO.MenuDTO> pageData = this.baseMapper.menuPaging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public Boolean delete(BaseIdsDTO.IdsDTO idsDTO) {
         return this.removeByIds(idsDTO.getIds());
     }

@@ -64,7 +64,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         log.info("开始新增查询option配置单");
         boolean save = super.save(cfgQueryOptionEntity);
         if(!save) {
-            throw new ServiceException("查询option配置单保存失败");
+            throw new ServiceException("option配置单保存失败");
         }
         return new BaseResultDTO.AddDTO(cfgQueryOptionEntity.getId(), cfgQueryOptionEntity.getId());
     }
@@ -84,12 +84,8 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         log.info("编辑 开始修改查询option配置单数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgQueryOptionEntity);
         if(!save) {
-            throw new ServiceException("查询option配置单保存失败");
+            throw new ServiceException("option配置单保存失败");
         }
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录查询option配置单日志数据，id：【{}】", cfgQueryOptionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgQueryOptionEntity.getId(), "查询option配置单");
         return Boolean.TRUE;
     }
 

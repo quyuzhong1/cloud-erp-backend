@@ -20,6 +20,7 @@
        <result column="select_value" property="selectValue" />
        <result column="select_disabled" property="selectDisabled" />
        <result column="search_key_field" property="searchKeyField" />
+        <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -33,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        api_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field
+        api_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field,props
     </sql>
 
 
@@ -47,7 +48,12 @@
         qo.select_label,
         qo.select_value,
         qo.select_disabled,
-        qo.search_key_field
+        qo.search_key_field,
+        qo.create_user_name,
+        qo.create_time,
+        qo.update_time,
+        qo.update_user_name,
+        qo.props
         from cfg_query_option qo
         where  qo.is_deleted = false
         <if test="params.apiName != null and params.apiName != ''">
