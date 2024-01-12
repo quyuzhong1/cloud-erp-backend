@@ -42,9 +42,6 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     private AliExpressShopInfoDTO aliExpressShopInfoDTO;
 
 
-
-    private String platformOrderStatus;
-
     /**
      * 地址详情下载状态
      * 0 详情数据需要更新
