@@ -29,8 +29,8 @@ public class SrmCfgSettingFeignController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/list")
-    public List<SupplierConfigVO> list(@RequestBody List<String> supplierIds) {
+    @PostMapping("/getConfigList")
+    public List<SupplierConfigVO> getConfigList(@RequestBody List<String> supplierIds) {
         return cfgSettingService.getConfigList(supplierIds);
     }
 }

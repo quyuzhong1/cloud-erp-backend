@@ -144,7 +144,68 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public List<SupplierConfigVO> getConfigList(List<String> supplierIds ) {
-        return null;
+        if (CollectionUtils.isEmpty(supplierIds)) return Collections.emptyList();
+        List<CfgSettingEntity> list = lambdaQuery().in(CfgSettingEntity::getSupplierId, supplierIds).eq(CfgSettingEntity::getIsDeleted, false).list();
+        List<SupplierConfigVO> configVOList = new ArrayList<>(supplierIds.size());
+        Map<String, CfgSettingEntity> settingEntityMap = null;
+        if (CollectionUtils.isNotEmpty(list)){
+            settingEntityMap = list.stream().collect(Collectors.toMap(e -> e.getSupplierId() + "_" + e.getKey(), Function.identity()));
+        }
+        for (String supplierId:supplierIds) {
+            CfgSettingEntity orderCfgSettingEntity = null;
+            CfgSettingEntity returnCfgSettingEntity = null;
+            if (Objects.nonNull(settingEntityMap)){
+                orderCfgSettingEntity = settingEntityMap.get(supplierId + "_" + ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode());
+                returnCfgSettingEntity = settingEntityMap.get(supplierId + "_" + ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode());
+            }
+            SupplierConfigVO supplierConfigVO = SupplierConfigVO.builder()
+                    .supplierId(supplierId)
+                    .orderAcceptRule(getConfigOrderDesc(orderCfgSettingEntity))
+                    .returnConfirmRule(getConfigReturnDesc(returnCfgSettingEntity))
+                    .build();
+            configVOList.add(supplierConfigVO);
+        }
+        return configVOList;
+    }
+
+    private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {
+        StringBuffer stringBuffer = new StringBuffer();
+        if (Objects.isNull(returnCfgSettingEntity)){
+            stringBuffer.append("手工接受");
+        }else {
+            JSONObject jsonObject = returnCfgSettingEntity.getDataJson();
+            Integer selectState = (Integer) jsonObject.getOrDefault("selectState",0);
+            String duration = (String) jsonObject.getOrDefault("duration","48");
+            String unit = (String) jsonObject.getOrDefault("unit","H");
+            if (1 == selectState){
+                //启用
+                stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
+                return "["+duration+unit+"]自动接受";
+            }else {
+                stringBuffer.append("手工接受");
+            }
+        }
+        return stringBuffer.toString();
+    }
+
+    private String getConfigOrderDesc(CfgSettingEntity orderCfgSettingEntity) {
+        StringBuffer stringBuffer = new StringBuffer();
+        if (Objects.isNull(orderCfgSettingEntity)){
+            stringBuffer.append("手工确认");
+        }else {
+            JSONObject jsonObject = orderCfgSettingEntity.getDataJson();
+            Integer selectState = (Integer) jsonObject.getOrDefault("selectState",0);
+            String duration = (String) jsonObject.getOrDefault("duration","48");
+            String unit = (String) jsonObject.getOrDefault("unit","H");
+            if (1 == selectState){
+                //启用
+                stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
+                return "["+duration+unit+"]自动确认";
+            }else {
+                stringBuffer.append("手工确认");
+            }
+        }
+        return stringBuffer.toString();
     }
 
     /**

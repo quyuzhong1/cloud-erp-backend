@@ -17,6 +17,6 @@ import java.util.List;
 @FeignClient(name = "erp-srm", contextId = "cfgSetting")
 public interface SrmCfgSettingFeign {
 
-    @PostMapping("/feign/cfgSetting/list")
-    List<SupplierConfigVO> list(@RequestBody List<String> supplierIds);
+    @PostMapping("/feign/cfgSetting/getConfigList")
+    List<SupplierConfigVO> getConfigList(@RequestBody List<String> supplierIds);
 }

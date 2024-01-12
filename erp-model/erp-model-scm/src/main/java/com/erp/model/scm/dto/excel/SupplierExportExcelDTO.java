@@ -76,21 +76,42 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
+     * 供应商分类
+     */
+    @ExcelProperty(value = "SRM协同", index = 7)
+    @ColumnWidth(10)
+    private String SrmDisabled;
+
+    /**
+     * 供应商分类
+     */
+    @ExcelProperty(value = "订单接受规则", index = 8)
+    @ColumnWidth(10)
+    private String orderAcceptRule;
+
+    /**
+     * 供应商分类
+     */
+    @ExcelProperty(value = "退货确认规则", index = 9)
+    @ColumnWidth(10)
+    private String returnConfirmRule;
+
+    /**
      * 结算付款方式
      */
-    @ExcelProperty(value = "结算方式", index = 7)
+    @ExcelProperty(value = "结算方式", index = 10)
     @ColumnWidth(20)
     private String payMethodName;
 
     /**
      * 付款条件
      */
-    @ExcelProperty(value = "付款条件", index = 8)
+    @ExcelProperty(value = "付款条件", index = 11)
     @ColumnWidth(20)
     private String paymentConditionName;
 
 
-    @ExcelProperty(value = "采购员", index = 9)
+    @ExcelProperty(value = "采购员", index = 12)
     @ColumnWidth(10)
     private String purchaseUserName;
 
@@ -98,7 +119,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 联系人名
      */
-    @ExcelProperty(value = "联系人", index = 10)
+    @ExcelProperty(value = "联系人", index = 13)
     @ColumnWidth(10)
     private String contactPerson="";
 
@@ -106,7 +127,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 联系人名
      */
-    @ExcelProperty(value = "联系人电话", index = 11)
+    @ExcelProperty(value = "联系人电话", index = 14)
     @ColumnWidth(20)
     private String contactTelNumber="";
 
@@ -114,28 +135,28 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 采购次数
      */
-    @ExcelProperty(value = "采购次数", index = 12)
+    @ExcelProperty(value = "采购次数", index = 15)
     @ColumnWidth(10)
     private Integer purchasesCount=0;
 
     /**
      * 退货率
      */
-    @ExcelProperty(value = "退货率", index = 13)
+    @ExcelProperty(value = "退货率", index = 16)
     @ColumnWidth(10)
     private BigDecimal rejectRate;
 
     /**
      * 延期率
      */
-    @ExcelProperty(value = "延期率", index = 14)
+    @ExcelProperty(value = "延期率", index = 17)
     @ColumnWidth(10)
     private BigDecimal delayRate;
 
     /**
      * 次品率
      */
-    @ExcelProperty(value = "次品率", index = 15)
+    @ExcelProperty(value = "次品率", index = 18)
     @ColumnWidth(10)
     private BigDecimal defectiveRate;
 
@@ -143,7 +164,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 16)
+    @ExcelProperty(value = "创建时间", index = 19)
     @ColumnWidth(20)
     private LocalDateTime createTime;
 
@@ -151,7 +172,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 17)
+    @ExcelProperty(value = "创建人", index = 20)
     @ColumnWidth(10)
     private String createUserName;
 

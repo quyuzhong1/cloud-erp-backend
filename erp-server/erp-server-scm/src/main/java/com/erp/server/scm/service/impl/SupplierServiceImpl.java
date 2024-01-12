@@ -419,7 +419,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
         }
         //TODO 获取srm 供应商订单规则
-        List<SupplierConfigVO> configs = srmCfgSettingFeign.list(supplierIdList);
+        List<SupplierConfigVO> configs = srmCfgSettingFeign.getConfigList(supplierIdList);
         Map<String, SupplierConfigVO> configVOMap = configs.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();
@@ -844,6 +844,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
+
+            //获取供应商配置
+            List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
+            Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
             for (SupplierDTO.PagingViewDTO item : list) {
                 String id = item.getId();
                 SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
@@ -851,7 +855,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 exportExcel.setCode(item.getCode());
                 //禁用状态 true 禁用
                 boolean disabled = item.getDisabled();
-                exportExcel.setEnableStatus(disabled == true ? "停用" : "启用");
+                exportExcel.setEnableStatus(disabled ? "停用" : "启用");
+                boolean srmDisabled = item.getSrmDisabled();
+                exportExcel.setSrmDisabled(srmDisabled ? "停用" : "启用");
+                SupplierConfigVO supplierConfigVO = configVOMap.get(id);
+                if (Objects.nonNull(supplierConfigVO)){
+                    exportExcel.setOrderAcceptRule(supplierConfigVO.getOrderAcceptRule());
+                    exportExcel.setReturnConfirmRule(supplierConfigVO.getReturnConfirmRule());
+                }
                 ApproveStatusEnum approveStatus = item.getApproveStatus();
                 exportExcel.setApproveStatusName(approveStatus.getName());
                 //阶段

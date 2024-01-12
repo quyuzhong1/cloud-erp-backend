@@ -19,27 +19,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SupplierConfigVO implements Serializable {
-
-    /**
-     * 编码
-     */
-    private String key;
     /**
      * 供应商id
      */
     private String supplierId;
-    /**
-     * 时长
-     */
-    private String duration;
-    /**
-     * 单位
-     */
-    private String unit;
-    /**
-     * 选中状态 0 没有  1 有
-     */
-    private int selectState;
     /**
      *订单接受规则
      */
