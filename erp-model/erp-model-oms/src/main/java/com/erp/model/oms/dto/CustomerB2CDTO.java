@@ -441,6 +441,11 @@ public class CustomerB2CDTO implements Serializable {
         private String areaName;
 
         /**
+         * 子区域名
+         */
+        private String subregionName;
+
+        /**
          * 省id
          */
         private String provinceId;
