@@ -1315,13 +1315,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         statistical.setName("销售品类排行");
         ChartVO chart = new ChartVO();
-        List<String> xAxisList = categoryList.stream().map(BasicCategoryDTO::getName).collect(Collectors.toList());
+//        List<String> xAxisList = categoryList.stream().map(BasicCategoryDTO::getName).collect(Collectors.toList());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         //只有一个柱子
         SeriesVO<Object> series = new SeriesVO();
         series.setName("品类销售额");
-        List<Object> dataList = new ArrayList<>(10);
+//        List<Object> dataList = new ArrayList<>(10);
+        List<BasicDTO> dtos = new ArrayList<>(10);
         for (BasicCategoryDTO item : categoryList) {
+            BasicDTO basicDTO = new BasicDTO();
+            basicDTO.setName(item.getName());
             List<BasicCategoryDTO> childrenList = item.getChildrenList();
             if(CollectionUtils.isNotEmpty(childrenList)){
                 List<String> categoryIdList = childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
@@ -1329,16 +1332,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                                 s -> categoryIdList.contains(s.getFlagNo()) && s.getSales() != null
                         ).map(SalesBaseVO::getSales).
                         reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                dataList.add(totalSales);
+                basicDTO.setSales(totalSales);
+//                dataList.add(totalSales);
             }else {
-                dataList.add(BigDecimal.ZERO);
+                basicDTO.setSales(BigDecimal.ZERO);
+//                dataList.add(BigDecimal.ZERO);
             }
-
+            dtos.add(basicDTO);
         }
-        series.setData(dataList);
+        dtos.sort(Comparator.comparing(BasicDTO::getSales).reversed());
+        series.setData(dtos.stream().map(BasicDTO::getSales).collect(Collectors.toList()));
         seriesList.add(series);
-        chart.setXAxis(xAxisList);
+        chart.setXAxis(dtos.stream().map(BasicDTO::getName).collect(Collectors.toList()));
         chart.setSeries(seriesList);
         statistical.setData(chart);
         return statistical;
@@ -2751,17 +2756,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String groupName = "";
         //类别查询
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
-            groupName = "category_id";
+            groupName = "category_name";
         }
 
         //部门查询
         if (CollectionUtils.isNotEmpty(dto.getDepartment())) {
-            groupName = "dept_id";
+            groupName = "dept_name";
         }
 
         //用户查询
         if (CollectionUtils.isNotEmpty(dto.getUserId())) {
-            groupName = "charge_id";
+            groupName = "charge_name";
         }
 
         //店铺查询

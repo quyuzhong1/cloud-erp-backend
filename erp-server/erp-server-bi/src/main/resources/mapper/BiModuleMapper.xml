@@ -8,7 +8,7 @@
         bm1.state, bm1.view_code,bs.name AS sysModuleName
         FROM bi_module AS bm1
         INNER JOIN bi_sys_module bs ON  bs.id=bm1.sys_module_id
-        WHERE bm1.is_deleted
+        WHERE bm1.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND (bm1.name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR bs.name ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
