@@ -74,7 +74,7 @@ public class HomePageDTO implements Serializable {
         /**
          * 待确认送货单数
          */
-        private Integer waitConfirmRefundCount;
+        private Integer waitConfirmDeliveryCount;
 
         /**
          * 待确认对账单数

@@ -51,7 +51,6 @@ public class HomePageController extends BaseController {
         return success(homePageService.getAccountInfo());
     }
 
-
     /**
      * 查询待办信息
      * @return
@@ -60,4 +59,5 @@ public class HomePageController extends BaseController {
     public ApiResult<HomePageDTO.ToDoItems> getToDoItems(){
         return success(homePageService.getToDoItems());
     }
+
 }

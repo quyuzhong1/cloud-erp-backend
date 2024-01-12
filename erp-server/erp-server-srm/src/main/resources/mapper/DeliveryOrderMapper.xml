@@ -30,6 +30,8 @@
        <result column="receive_phone" property="receivePhone" />
        <result column="receive_address" property="receiveAddress" />
        <result column="source_type" property="sourceType" />
+       <result column="receipt_status" property="receiptStatus" />
+       <result column="is_print" property="isPrint" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -43,7 +45,7 @@
         update_time,
         version,
         is_deleted,
-        code, supplier_id, source_id, expected_date, receive_code, source_code, customer_name, contact_id, contact_name, to_warehouse_id, to_warehouse_name, print_date, confirm_receive_date, receive_user_id, receive_user_name, receive_phone, receive_address, source_type
+        code, supplier_id, source_id, expected_date, receive_code, source_code, customer_name, contact_id, contact_name, to_warehouse_id, to_warehouse_name, print_date, confirm_receive_date, receive_user_id, receive_user_name, receive_phone, receive_address, source_type, receipt_status, is_print
     </sql>
 
 

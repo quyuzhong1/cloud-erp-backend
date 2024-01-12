@@ -126,6 +126,16 @@ public class DeliveryOrderDTO implements Serializable {
         */
         private String sourceType;
 
+        /**
+        * 收货状态
+        */
+        private String receiptStatus;
+
+        /**
+        * 是否打印
+        */
+        private Boolean isPrint;
+
 
     }
 
@@ -185,6 +195,8 @@ public class DeliveryOrderDTO implements Serializable {
         /**
         * 来源订单号
         */
+        @NotBlank(message = "来源订单号不能为空")
+        @Size(max = 50,message = "来源订单号最大长度不能超过50位")
         private String sourceCode;
 
         /**
@@ -205,11 +217,15 @@ public class DeliveryOrderDTO implements Serializable {
         /**
         * 目的仓id
         */
+        @NotBlank(message = "目的仓id不能为空")
+        @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String toWarehouseId;
 
         /**
         * 目的仓名称
         */
+        @NotBlank(message = "目的仓名称不能为空")
+        @Size(max = 50,message = "目的仓名称最大长度不能超过50位")
         private String toWarehouseName;
 
         /**
@@ -248,6 +264,19 @@ public class DeliveryOrderDTO implements Serializable {
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 20,message = "来源类型最大长度不能超过20位")
         private String sourceType;
+
+        /**
+        * 收货状态
+        */
+        @NotBlank(message = "收货状态不能为空")
+        @Size(max = 50,message = "收货状态最大长度不能超过50位")
+        private String receiptStatus;
+
+        /**
+        * 是否打印
+        */
+        @NotNull(message = "是否打印不能为空")
+        private Boolean isPrint;
 
 
     }

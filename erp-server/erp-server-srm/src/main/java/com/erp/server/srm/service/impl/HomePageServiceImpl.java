@@ -5,10 +5,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.dto.HomePageDTO;
+import com.erp.model.srm.enums.DeliveryOrderConfirmStatusEnum;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.service.CommonService;
+import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.HomePageService;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,9 @@ public class HomePageServiceImpl implements HomePageService {
 
     @Resource
     private SupplierFeign supplierFeign;
+
+    @Resource
+    private DeliveryOrderService deliveryOrderService;
 
     @Override
     public HomePageDTO.AccountInfoDTO getAccountInfo() {
@@ -62,7 +67,14 @@ public class HomePageServiceImpl implements HomePageService {
         }
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if(Objects.isNull(supplier)){
+            throw new ServiceException(ApiError.ERROR_96001);
+        }
 
-        return null;
+        //TODO:还有两个数量
+        return HomePageDTO.ToDoItems.builder()
+                .waitPrintDeliveryCount(deliveryOrderService.countByPrint(supplier.getId(),false))
+                .waitConfirmDeliveryCount(deliveryOrderService.countByReceiveStatus(supplier.getId(), DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode()))
+                .build();
     }
 }
