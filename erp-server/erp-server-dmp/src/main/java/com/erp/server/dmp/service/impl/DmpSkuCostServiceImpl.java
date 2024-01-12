@@ -184,12 +184,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         List<DmpSkuCostEntity> dmpSkuCostList = this.listDmpSkuCostBySkuNo(redisSkuNoList);
         if (CollectionUtils.isEmpty(dmpSkuCostList)) {
-            //ERP未找到成本则查询自定义成本数据
-            List<DmpSkuCostCustomEntity> dmpSkuCostCustomList = dmpSkuCostCustomService.listDmpSkuCostCustomBySkuNoList(redisSkuNoList);
-            if (CollectionUtils.isEmpty(dmpSkuCostCustomList)) {
-                return resultList;
-            }
-            dmpSkuCostList = BeanMapperUtils.copyList(DmpSkuCostEntity.class,dmpSkuCostCustomList);
+            return resultList;
         }
         for (DmpSkuCostEntity dmpSkuCostEntity : dmpSkuCostList) {
             //添加缓存

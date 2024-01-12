@@ -32,6 +32,7 @@
         prod.warehouse_location AS warehouseLocation,
         pro.source_type AS sourceType,
         prod.purchase_order_detail_id AS purchaseOrderDetailId,
+        pro.confirm_status AS confirmStatus,
         pro.unusual_type,
         pro.unusual_remark,
         pro.unusual_handle_user_id,
@@ -116,6 +117,25 @@
                     and pro.source_type = 'qcInfo'
                 </otherwise>
             </choose>
+        </if>
+        <!--确认状态-->
+        <if test="params.confirmStatus != null and params.confirmStatus != ''">
+            and pro.confirm_status = #{params.confirmStatus}
+        </if>
+        <!--异常类型-->
+        <if test="params.unusualType != null and params.unusualType != ''">
+            and pro.unusual_type = #{params.unusualType}
+        </if>
+        <!--异常说明-->
+        <if test="params.unusualRemark != null and params.unusualRemark != ''">
+            and pro.unusual_remark ILIKE concat('%',#{params.unusualRemark}::text,'%')
+        </if>
+        <!--异常处理人-->
+        <if test="params.unusualHandleUserIdList != null and params.unusualHandleUserIdList.size > 0">
+            and pro.unusual_handle_user_id in
+            <foreach collection="params.unusualHandleUserIdList" item="unusualHandleUserId" open="(" close=")" separator=",">
+                #{unusualHandleUserId}
+            </foreach>
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -206,6 +226,7 @@
         prod.warehouse_location AS warehouseLocation,
         pro.source_type AS sourceType,
         prod.purchase_order_detail_id AS purchaseOrderDetailId,
+        pro.confirm_status AS confirmStatus,
         pro.unusual_type,
         pro.unusual_remark,
         pro.unusual_handle_user_id,
@@ -298,6 +319,25 @@
                             and pro.source_type = 'qcInfo'
                         </otherwise>
                     </choose>
+                </if>
+                <!--确认状态-->
+                <if test="params.confirmStatus != null and params.confirmStatus != ''">
+                    and pro.confirm_status = #{params.confirmStatus}
+                </if>
+                <!--异常类型-->
+                <if test="params.unusualType != null and params.unusualType != ''">
+                    and pro.unusual_type = #{params.unusualType}
+                </if>
+                <!--异常说明-->
+                <if test="params.unusualRemark != null and params.unusualRemark != ''">
+                    and pro.unusual_remark ILIKE concat('%',#{params.unusualRemark}::text,'%')
+                </if>
+                <!--异常处理人-->
+                <if test="params.unusualHandleUserIdList != null and params.unusualHandleUserIdList.size > 0">
+                    and pro.unusual_handle_user_id in
+                    <foreach collection="params.unusualHandleUserIdList" item="unusualHandleUserId" open="(" close=")" separator=",">
+                        #{unusualHandleUserId}
+                    </foreach>
                 </if>
             </otherwise>
         </choose>

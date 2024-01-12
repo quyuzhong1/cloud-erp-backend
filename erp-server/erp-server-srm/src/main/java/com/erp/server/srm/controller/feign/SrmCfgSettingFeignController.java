@@ -2,12 +2,10 @@ package com.erp.server.srm.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.server.srm.service.CfgSettingService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -32,5 +30,18 @@ public class SrmCfgSettingFeignController extends BaseController {
     @PostMapping("/getConfigList")
     public List<SupplierConfigVO> getConfigList(@RequestBody List<String> supplierIds) {
         return cfgSettingService.getConfigList(supplierIds);
+    }
+
+    /**
+     * 根据key和供应商id查询配置
+     * @Author Luo_WG
+     * @Date 2024/1/12 14:16
+     * @param supplierIds
+     * @param key
+     * @return java.util.List<com.erp.model.srm.entity.CfgSettingEntity>
+     **/
+    @PostMapping("/listByKeyAndSupplier")
+    public List<CfgSettingEntity> listByKeyAndSupplier(@RequestParam("key") String key, @RequestParam("supplierIds") List<String> supplierIds) {
+        return cfgSettingService.listByKeyAndSupplier(key, supplierIds);
     }
 }
