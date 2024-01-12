@@ -144,8 +144,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
         }
-        String b2b = OrderTypeEnum.B2B.getCode();
-        if (b2b.equals(orderType)) {
+        String b2C = OrderTypeEnum.B2C.getCode();
+        if (!b2C.equals(orderType)) {
             //处理明细数据
             handleDetailData(addList);
         } else {
