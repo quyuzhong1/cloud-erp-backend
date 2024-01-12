@@ -115,7 +115,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             if (Objects.nonNull(mainEntity)) {
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
-                if (isShipped&&hasPlatformWarehouse) {
+                if (isShipped && hasPlatformWarehouse) {
                     soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
                 }
             }
@@ -158,7 +158,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //已付款
         String paid = SoB2cPayStatusEnum.ENUM_PAID.getCode();
         //自动匹配订单规则 待配貨和已付款 就要订单规则
-        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus) && paid.equalsIgnoreCase(payStatus)) {
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)
+                && paid.equalsIgnoreCase(payStatus)
+                && !mainEntity.getInvalidStatus()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
             if (isPlatformWarehouseOrder) {
