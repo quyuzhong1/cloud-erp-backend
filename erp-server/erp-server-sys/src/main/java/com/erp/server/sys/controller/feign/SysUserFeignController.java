@@ -470,33 +470,33 @@ public class SysUserFeignController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/page")
+    @PostMapping("/srmPaging")
     public PagingVO<SupplierUserVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
-        return sysUserInfoService.feignPaging(dto);
+        return sysUserInfoService.srmPaging(dto);
     }
     /**
      * 查询
      * @param dto
      * @return
      */
-    @PostMapping("/list")
-    public List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto){
-        return sysUserInfoService.feignList(dto);
+    @PostMapping("/srmList")
+    public List<SupplierUserVO> srmList(@RequestBody @Validated UserPagingSearchDTO dto){
+        return sysUserInfoService.srmList(dto);
     }
 
     /**
      * 添加用户
      */
-    @PostMapping("/save")
-    public String save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+    @PostMapping("/addSrmUser")
+    public String addSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         return sysUserInfoService.addSrmUser(sysUserInfoDTO);
     }
 
     /**
      * 修改用户
      */
-    @PostMapping("/update")
-    public Boolean update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+    @PostMapping("/updateSrmUser")
+    public Boolean updateSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         return sysUserInfoService.updateSrmUser(sysUserInfoDTO);
     }
 

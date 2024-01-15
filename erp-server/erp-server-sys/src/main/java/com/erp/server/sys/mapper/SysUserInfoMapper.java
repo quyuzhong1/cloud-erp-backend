@@ -86,12 +86,12 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @param params
      * @return
      */
-    IPage<SupplierUserVO> feignPaging(@Param("page") Page<SupplierUserVO> page, @Param("params")UserPagingSearchDTO params);
+    IPage<SupplierUserVO> srmPaging(@Param("page") Page<SupplierUserVO> page, @Param("params")UserPagingSearchDTO params);
 
     /**
      * 查询用户列表
      * @param dto
      * @return
      */
-    List<SupplierUserVO> feignList(@Param("params") UserPagingSearchDTO dto);
+    List<SupplierUserVO> srmList(@Param("params") UserPagingSearchDTO dto);
 }

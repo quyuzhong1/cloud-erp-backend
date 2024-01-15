@@ -3,6 +3,7 @@ package com.erp.server.srm.controller.api;
 
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -53,6 +54,7 @@ public class UserController extends BaseController {
     @PostMapping("/paging")
     public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(false);
+        dto.getParams().setUserType(UserTypeEnum.SRM.code);
         return supplierUserFeign.page(dto);
     }
 
@@ -64,6 +66,7 @@ public class UserController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(false);
+        sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         supplierUserFeign.save(sysUserInfoDTO);
         return success();
     }
@@ -126,6 +129,7 @@ public class UserController extends BaseController {
     @PostMapping("/export")
     public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
         dto.setIsSuper(false);
+        dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierIds(Collections.singletonList(userService.getSupplierId()));
         userService.exportSupplier(dto, response);
         return success();

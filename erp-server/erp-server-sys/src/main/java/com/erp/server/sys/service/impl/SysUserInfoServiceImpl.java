@@ -167,7 +167,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         boolean saveResult = this.save(entity);
         if (needChangePwd){
-            sendPwdEmail(entity.getUserName(),entity.getEmail(),"admin12345");
+            sendPwdEmail(entity,"admin12345");
         }
         //保存成功 就去更新角色表
         if (saveResult) {
@@ -223,18 +223,23 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         this.save(entity);
         //发送email
         if (needChangePwd){
-            sendPwdEmail(entity.getUserName(),entity.getEmail(),"admin12345");
+            sendPwdEmail(entity,"admin12345");
         }
         return entity.getUid();
     }
 
-    private void sendPwdEmail(String userName,String email,String pwd){
+    private void sendPwdEmail(SysUserInfoEntity entity,String pwd){
         StringBuilder sb = new StringBuilder();
-        sb.append("你好：");
+        sb.append("您好：");
         sb.append("\n");
-        sb.append("您的账号【").append(userName).append("】");
+        sb.append("您的用户名【").append(entity.getUserName()).append("】");
+        sb.append("\n");
+        sb.append("您的账号【").append(entity.getUserAccount()).append("】");
+        sb.append("\n");
         sb.append("初始密码为：【").append(pwd).append("】");
-        mailService.sendSimpleMail(email,"用户账号创建",sb.toString(),null);
+        sb.append("\n");
+        sb.append("请登录后及时修改密码！");
+        mailService.sendSimpleMail(entity.getEmail(),"用户账号创建",sb.toString(),null);
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1522,9 +1527,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public PagingVO<SupplierUserVO> feignPaging(PagingDTO<UserPagingSearchDTO> dto) {
+    public PagingVO<SupplierUserVO> srmPaging(PagingDTO<UserPagingSearchDTO> dto) {
         Page<SupplierUserVO> page = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<SupplierUserVO> userVOIPage = baseMapper.feignPaging(page, dto.getParams());
+        IPage<SupplierUserVO> userVOIPage = baseMapper.srmPaging(page, dto.getParams());
         return new PagingVO<>(userVOIPage);
     }
 
@@ -1549,8 +1554,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public List<SupplierUserVO> feignList(UserPagingSearchDTO dto) {
-        return baseMapper.feignList(dto);
+    public List<SupplierUserVO> srmList(UserPagingSearchDTO dto) {
+        return baseMapper.srmList(dto);
     }
 
     /**

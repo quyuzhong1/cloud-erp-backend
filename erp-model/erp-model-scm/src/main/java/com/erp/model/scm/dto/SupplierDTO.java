@@ -475,8 +475,9 @@ public class SupplierDTO implements Serializable {
          * 2已审核
          * 3不通过
          */
+        @NotNull(message = "任务类型不能为空")
         @StateEnumValue(intValues = {0,1,2,3}, message = "任务类型有误")
-        private Integer taskFlag;
+        private Integer tabFlag;
         /**
          * 记录id
          */

@@ -192,11 +192,12 @@ public class UserServiceImpl implements UserService {
             String supplierId = this.getSupplierId();
             if (!supplierId.equalsIgnoreCase(supplierEntity.getId())){
                 //只能导入当前供应商用户
-
+                errorMsgList.add(ApiError.ERROR_USER_NOT_REL_OTHER_SUPPLIER.msg);
+            }else {
+                refUserEntity.setSupplierId(supplierId);
+                refUserEntity.setDisabled(false);
+                refUserEntity.setIsSuper(false);
             }
-            refUserEntity.setSupplierId(supplierId);
-            refUserEntity.setDisabled(false);
-            refUserEntity.setIsSuper(false);
         }else {
             errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
         }
