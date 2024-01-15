@@ -160,8 +160,8 @@
         left join sys_menu sm3 on sm2.parent_id = sm3.menu_id
         left join sys_menu sm4 on sm3.parent_id = sm4.menu_id
         where  sm.disabled = false and sm.type in (3,4)
-        <if test="params.code != null and params.code != ''">
-            and sm.menu_code ILIKE concat('%',#{params.code}::text,'%')
+        <if test="params.menuCode != null and params.menuCode != ''">
+            and sm.menu_code ILIKE concat('%',#{params.menuCode}::text,'%')
         </if>
     </select>
 </mapper>
