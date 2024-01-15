@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import cn.hutool.json.JSONArray;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -208,5 +209,20 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      */
     void updateDetailRemark(List<String> ids, String remark);
 
-
+    /**
+     * 禁用
+     * @author Will
+     * @date: 2024/1/15 15:01
+     * @param dto
+     * @return Boolean
+     */
+    Boolean disabled(BaseIdsDTO.IdsDTO dto);
+    /**
+     * 启用
+     * @author Will
+     * @date: 2024/1/15 15:02
+     * @param dto
+     * @return Boolean
+     */
+    Boolean enable(BaseIdsDTO.IdsDTO dto);
 }

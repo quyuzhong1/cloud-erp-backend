@@ -511,7 +511,10 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         private Boolean disabled;
 
-
+        /**
+         * 定价员id
+         */
+        private String pricingUserId;
     }
 
 
