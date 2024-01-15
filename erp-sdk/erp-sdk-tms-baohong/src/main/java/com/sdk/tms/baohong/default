@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <title>惠关通|保宏股份</title>
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<script type="text/javascript">
+if (self != top) {
+    top.location = self.location;
+}
+</script>
+<style>
+html, body {
+    margin: 0 0;
+    padding: 0 0;
+}
+
+body {
+    font-family: "Microsoft YaHei", "微软雅黑", tahoma, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #0150b2 url(/images/hgt-background.png) center top no-repeat;
+    padding-bottom: 86px;
+}
+
+* {
+    outline: none;
+}
+
+.header {
+    width: 1200px;
+    height: 60px;
+    margin: 50px auto 100px auto;
+    background: url(/images/hgt-logo.png) left center no-repeat;
+}
+
+.container {
+    position: relative;
+    width: 1200px;
+    height: 450px;
+    margin: 0 auto;
+}
+
+.left-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 710px;
+    height: 400px;
+    background: url(/images/hgt-slogan.png) left center no-repeat;
+}
+
+.right-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 40px 40px;
+    background: #ffffff;
+    border-radius: 4px;
+}
+
+.input-title {
+    width: 100%;
+    color: #333333;
+    text-align: left;
+    padding-bottom: 5px;
+}
+
+.input-container {
+    width: 100%;
+    position: relative;
+}
+
+.input-container input {
+    width: 280px;
+    height: 20px;
+    line-height: 20px;
+    font-family: "Microsoft YaHei", "微软雅黑", tahoma, sans-serif;
+    font-size: 14px;
+    border: 1px solid #cccccc;
+    border-radius: 2px;
+    padding: 10px 10px 10px 40px;
+}
+
+.input-container .icon {
+    border: 0;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}
+
+#verifyImg {
+    height: 42px;
+    position: absolute;
+    left: 135px;
+    top: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+#verifyImgNote {
+    font-size: 12px;
+    color: #858585;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    cursor: pointer;
+}
+
+#loginForm button {
+    background: #008bec;
+    border: 0;
+    border-radius: 2px;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 10px 0;
+    width: 100%;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+#loginForm button:hover {
+    opacity: 0.9;
+}
+
+.form-footer {
+    width: 100%;
+    text-align: right;
+    margin: 0 0;
+    padding: 0 0;
+}
+
+.form-footer a {
+    color: #008bec;
+    text-decoration: none;
+}
+
+.footer {
+    width: 100%;
+    height: 86px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #1c63ba;
+}
+
+.copyright {
+    width: 1200px;
+    margin: 18px auto 0 auto;
+    color: #ffffff;
+    text-align: center;
+}
+
+.copyright a {
+    color: #ffffff;
+    text-decoration: none;
+    line-height: 1.8;
+}
+
+.attachment {
+    display: none;
+    position: absolute;
+    top: 35px;
+    right: 50px;
+    margin: 0 0;
+    padding: 0 0;
+}
+
+.attachment li {
+    display: inline-block;
+}
+
+.attachment li a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.attachment li img {
+    border: 0;
+    display: inline-block;
+    height: 16px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.kf {
+    display: block;
+    width: 68px;
+    height: 72px;
+    border: 0;
+    position: fixed;
+    right: 0;
+    top: calc(50% - 36px);
+    cursor: pointer;
+    background: url(/images/hgt-kf.png) center center no-repeat;
+    text-decoration: none;
+}
+</style>
+    </head>
+
+    <body>
+        <div class="header"></div>
+
+        <div class="container">
+            <div class="left-container"></div>
+            <div class="right-container">
+                <form id="loginForm" method="post" action="/login/check" onsubmit="return false;">
+                    <div class="input-title">手机号/邮箱</div>
+                    <div class="input-container">
+                        <input type="text" name="username" value="" placeholder="请输入注册手机号/邮箱" autocomplete="off" />
+                        <img class="icon" src="/images/hgt-email.png" style="top:14px;" />
+                    </div>
+
+                    <div class="input-title" style="padding-top:10px;">密码</div>
+                    <div class="input-container">
+                        <input type="password" name="password" value="" placeholder="请输入注册密码" autocomplete="off" />
+                        <img class="icon" src="/images/hgt-password.png" />
+                    </div>
+
+                    <div class="input-title" style="padding-top:10px;">验证码</div>
+                    <div class="input-container">
+                        <input type="text" name="verify" value="" placeholder="请输入验证码" autocomplete="off" style="width:110px;padding:10px 10px;" />
+                        <img id="verifyImg" title="点击更新验证码" src="/login/verify-code" />
+                        <span id="verifyImgNote">看不清换一张</span>
+                    </div>
+
+                    <button type="submit">登录</button>
+
+                    <div class="form-footer">
+                        <a href="/register" style="margin-right:20px;">注册</a>
+                        <a href="/forget-password/select" style="margin-right:20px;">忘记密码</a>
+                        <a href="/default/index/faq" target="_blank">常见问题</a>
+                    </div>
+
+                    <div id="errorMessage" style="padding-top:10px;text-align:left;color:#bf0000;display:none;"></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="copyright">
+                承建单位：
+                <a href="http://www.cmbl.com.cn/" target="_blank">招商局保税物流有限公司</a>
+                <a href="http://www.globex.cn/" target="_blank" style="margin-left:20px;">深圳保宏科技股份有限公司</a>
+                <br />
+                Copyright &copy; 2013 - 2024 Globex All Rights Reserved
+                <a href="https://beian.miit.gov.cn/" target="_blank" style="margin-left:20px;">粤ICP备15005741号</a>
+            </div>
+
+            <ul class="attachment">
+                <li style="margin-right:40px;"><a href="/upload/跨境e项目简介20131205.pdf" target="_blank"><img src="/images/hgt-project.png" />项目简介</a></li>
+                <li><a href="/upload/跨境e项目合作流程.pdf" target="_blank"><img src="/images/hgt-readme.png" />客户须知</a></li>
+            </ul>
+        </div>
+
+        <a class="kf" target="_blank" href="https://wpa1.qq.com/5CCypcnY?_type=wpa&qidian=true"></a>
+
+        <script src="/dwz/js/jquery-1.7.2.js" type="text/javascript"></script>
+<script type="text/javascript">
+jQuery(document).ready(function ($) {
+    $('#verifyImg, #verifyImgNote').on('click', function (e) {
+        $('#verifyImg').attr('src', '/login/verify-code?' + Math.random());
+    });
+
+    $('#loginForm').on('submit', function () {
+        var username = $.trim($('[name="username"]').val());
+        var password = $.trim($('[name="password"]').val());
+        var verifyCode = $.trim($('[name="verify"]').val());
+        var errorMessage = $('#errorMessage');
+
+        if ('' == username || '' == password || '' == verifyCode) {
+            errorMessage.html('邮箱、密码或验证码不能为空').show();
+        } else {
+            errorMessage.html('').hide();
+
+            $.ajax({
+                url: '/login/check',
+                data: $('#loginForm').serialize(),
+                type: 'POST',
+                dataType: 'json',
+                success: function(json) {
+                    if (1 == json.ask){
+                        window.location.href = '/merchant';
+                    } else if (-1 == json.ask) {
+                        window.location.href = '/register/step?current=' + json.current;
+                    } else {
+                        $('input[name=verify]').val('');
+                        $('#verifyImg').trigger('click');
+                        errorMessage.html(json.errorMsg).show();
+                    }
+                }
+            });
+        }
+
+        return false;
+    });
+});
+</script>
+    </body>
+</html>
