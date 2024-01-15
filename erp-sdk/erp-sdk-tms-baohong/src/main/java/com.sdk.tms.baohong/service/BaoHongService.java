@@ -7,6 +7,9 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
+import com.sdk.tms.baohong.org.example.webservice.agency.GetShippingMethodList;
+import com.sdk.tms.baohong.org.example.webservice.agency.HeaderRequest;
+import com.sdk.tms.baohong.org.example.webservice.agency.ObjectFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,26 +27,23 @@ import java.util.Map;
 
 @Slf4j
 public class BaoHongService {
+
+
     public static void main(String[] args) {
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("test1", "1");
-        paramMap.put("name", "张三");
-        paramMap.put("age", "18");
-        String path = "http://exoms.globex.cn/default/order-soap/";
-        String method = "getShippingMethodList";
-        String customerCode = "E0207";
-        String appToken = "630ACC115898BB5B";
-        String appKey = "dd7c2bf37aec54d597c850e0b0f0d19d";
-/*
-        Map<String, Object> objectMap = convertReqUtil(paramMap, path, method, customerCode, appToken, appKey);
+        GetShippingMethodList methodList = new GetShippingMethodList();
+        HeaderRequest headerRequest = new HeaderRequest();
+        headerRequest.setAppKey("dd7c2bf37aec54d597c850e0b0f0d19d");
+        headerRequest.setAppToken("630ACC115898BB5B");
+        headerRequest.setCustomerCode("E0207");
+        methodList.setHeaderRequest(headerRequest);
+        methodList.setPage(1);
+        methodList.setPageSize(100);
+        methodList.setHeaderRequest(headerRequest);
+        System.out.println(methodList);
 
-        Map body = MapUtil.get(objectMap, "SOAP-ENV:Body", Map.class);
-        Map messageServiceResponse = MapUtil.get(body, "HIPMessageServiceResponse", Map.class);
-        String messageServiceResult = MapUtil.get(messageServiceResponse, "HIPMessageServiceResult", String.class);
-*/
-
-
-        test();
+        ObjectFactory factory = new ObjectFactory();
+        GetShippingMethodList getShippingMethodList = factory.createGetShippingMethodList();
+        System.out.println(getShippingMethodList);
     }
 
 
