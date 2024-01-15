@@ -7,31 +7,31 @@ package com.erp.model.scm.enums;
  * @date 2023/1/30 16:01
  */
 public enum SupplierTabEnum {
-    ALL_TASK(0, "全部"),
-    TO_ME_CHECK_TASK(1, "待我审核"),
-    APPROVE(2, "已审核"),
-    REJECT(3, "不通过"),
+    ALL_TASK("all", "全部"),
+    TO_ME_CHECK_TASK("waitMe", "待我审核"),
+    APPROVE("approve", "已审核"),
+    REJECT("reject", "不通过"),
     ;
 
-    private Integer code;
+    private String code;
     private String name;
 
-    SupplierTabEnum(Integer code, String name) {
+    SupplierTabEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
     public String getName() {
         return name;
     }
 
-    public static String getNameByCode(Integer code) {
+    public static String getNameByCode(String code) {
         SupplierTabEnum[] enums = values();
         for (SupplierTabEnum productTaskCategoryEnum : enums) {
-            if (productTaskCategoryEnum.getCode() == code) {
+            if (productTaskCategoryEnum.getCode().equals(code)) {
                 return productTaskCategoryEnum.getName();
             }
         }
@@ -48,7 +48,7 @@ public enum SupplierTabEnum {
         return null;
     }
 
-    public static Integer getCodeByName(String name) {
+    public static String getCodeByName(String name) {
         SupplierTabEnum[] enums = values();
         for (SupplierTabEnum productTaskCategoryEnum : enums) {
             if (productTaskCategoryEnum.getName().equals(name)) {

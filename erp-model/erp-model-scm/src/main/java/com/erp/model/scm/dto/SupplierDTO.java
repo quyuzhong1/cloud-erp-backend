@@ -470,14 +470,14 @@ public class SupplierDTO implements Serializable {
 
         /**
          * 任务类型
-         * 0全部
-         * 1待我审核
-         * 2已审核
-         * 3不通过
+         * all 全部
+         * waitMe 待我审核
+         * approve 已审核
+         * reject 不通过
          */
         @NotNull(message = "任务类型不能为空")
-        @StateEnumValue(intValues = {0,1,2,3}, message = "任务类型有误")
-        private Integer tabFlag;
+        @StateEnumValue(strValues = {"all", "waitMe", "approve","reject"}, message = "搜索类型有误")
+        private String tabFlag;
         /**
          * 记录id
          */
