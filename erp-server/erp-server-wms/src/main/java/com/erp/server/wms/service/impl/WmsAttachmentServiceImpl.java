@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
@@ -49,6 +50,24 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             this.saveBatch(addList);
         }
 
+    }
+
+    @Override
+    public void batchSave(List<AttachDTO> attachmentList, String type, String businessId) {
+        //先删除
+        this.delete(type, businessId);
+        if (CollectionUtils.isNotEmpty(attachmentList)) {
+            List<WmsAttachmentEntity> addList = new ArrayList<>(attachmentList.size());
+            for (int i = 0; i < attachmentList.size(); i++) {
+                WmsAttachmentEntity entity = new WmsAttachmentEntity();
+                entity.setAttachUrl(attachmentList.get(i).getUrl());
+                entity.setAttachName(attachmentList.get(i).getName());
+                entity.setType(type);
+                entity.setBusinessId(businessId);
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
     }
 
     @Override
