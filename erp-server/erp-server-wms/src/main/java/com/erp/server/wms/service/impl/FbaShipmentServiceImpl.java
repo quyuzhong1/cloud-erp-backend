@@ -18,13 +18,11 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -34,7 +32,6 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -44,8 +41,6 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
@@ -61,7 +56,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -966,7 +960,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
                 if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
                     e.setDiffQty(e.getReceiveQty() - detailEntity.getDeliveryQty());
-                    e.setReceiveDate(LocalDateTime.now(ZoneId.systemDefault()));
                 }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
@@ -1114,11 +1107,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()));
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate);
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()));
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate);
             }
 
 
@@ -1173,11 +1166,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()));
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate);
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()));
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate);
             }
         }
     }
@@ -1628,8 +1621,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void generateTransfer(ShopInfoEntity shopInfoEntity ,FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList ,Boolean isToOnwayWarehouse,String remark){
-        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark);
+    public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate){
+        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate);
         if (StringUtils.isNotBlank(transferOutId)) {
             //提交
             transferInfoService.submit(Arrays.asList(transferOutId));
