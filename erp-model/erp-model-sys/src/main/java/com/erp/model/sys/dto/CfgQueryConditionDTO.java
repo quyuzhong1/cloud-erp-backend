@@ -84,6 +84,11 @@ public class CfgQueryConditionDTO implements Serializable {
         private String optionName;
 
         /**
+         * option配置id
+         */
+        private String queryOptionId;
+
+        /**
          * 控件类型
          */
         private String controls;

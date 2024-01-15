@@ -30,6 +30,7 @@
         <result column="api_name" property="optionName" />
         <result column="menu_name" property="name" />
         <result column="system" property="system" />
+        <result column="queryOptionId" property="queryOptionId" />
     </resultMap>
 
     <resultMap id="cfgQueryConditionResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ViewDTO">
@@ -133,7 +134,8 @@
         qc.create_user_name,
         qc.create_time,
         qc.update_time,
-        qc.update_user_name
+        qc.update_user_name,
+        qo.id as queryOptionId
         from cfg_query_condition qc
         left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         left join menu me on me.menu_code = qc.code
