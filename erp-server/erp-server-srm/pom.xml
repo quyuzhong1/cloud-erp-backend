@@ -76,12 +76,6 @@
             <version>${mapstruct.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.xuxueli</groupId>
-            <artifactId>xxl-job-core</artifactId>
-            <version>2.3.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-scm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
