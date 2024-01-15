@@ -5,6 +5,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -467,7 +468,19 @@ public class SupplierDTO implements Serializable {
          */
         private String code;
 
-
+        /**
+         * 任务类型
+         * 0全部
+         * 1待我审核
+         * 2已审核
+         * 3不通过
+         */
+        @StateEnumValue(intValues = {0,1,2,3}, message = "任务类型有误")
+        private Integer taskFlag;
+        /**
+         * 记录id
+         */
+        private List<String> businessIds;
         /**
          * 分类id集合
          */

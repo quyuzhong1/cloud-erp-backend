@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -301,4 +302,10 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     List<SupplierEntity> listBySupplierByNames(List<String> supplierNames);
 
     SupplierEntity getSupplierByUid(String uid);
+
+    /**
+     * 统计状态数量
+     * @return
+     */
+    List<SupplierTabCountDTO> getTabCount();
 }

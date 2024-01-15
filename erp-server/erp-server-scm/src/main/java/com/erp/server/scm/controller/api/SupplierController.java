@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +62,16 @@ public class SupplierController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 获取供应商列表统计
+     *
+     * @return
+     */
+    @GetMapping("/getTabCount")
+    public ApiResult<List<SupplierTabCountDTO>> getTabCount(){
+        List<SupplierTabCountDTO> dtos = supplierService.getTabCount();
+        return success(dtos);
+    }
 
     /**
      * 添加供应商

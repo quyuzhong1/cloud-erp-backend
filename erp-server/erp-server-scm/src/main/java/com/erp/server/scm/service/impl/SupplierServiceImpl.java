@@ -23,16 +23,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.scm.dto.SupplierAccountDTO;
-import com.erp.model.scm.dto.SupplierContactDTO;
-import com.erp.model.scm.dto.SupplierCredentialDTO;
-import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.scm.enums.SupplierTabEnum;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -40,6 +38,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -383,6 +382,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public PagingVO<SupplierDTO.PagingViewDTO> paging(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         SupplierDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        if (1== params.getTaskFlag()){
+            params.setBusinessIds(commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode()));
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<SupplierDTO.PagingViewDTO> list = pageData.getRecords();
@@ -1215,6 +1217,48 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return null;
         }
         return this.getById(supplier.getSupplierId());
+    }
+
+    @Override
+    public List<SupplierTabCountDTO> getTabCount() {
+        List<SupplierTabCountDTO> dtos = new ArrayList<>();
+        //全部
+        getTotalCount(dtos);
+        //待我审核
+        getWaitMeApprove(dtos);
+        //已审核
+        getApproveCount(dtos);
+        //不通过
+        getRejectCount(dtos);
+        return dtos;
+    }
+
+    private void getRejectCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.REJECT.getStatus())
+                .count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.REJECT.getCode()).name(SupplierTabEnum.REJECT.getName()).count(count).build());
+    }
+
+    private void getApproveCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                .count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.APPROVE.getCode()).name(SupplierTabEnum.APPROVE.getName()).count(count).build());
+    }
+
+    private void getWaitMeApprove(List<SupplierTabCountDTO> dtos) {
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode());
+        if (CollectionUtils.isNotEmpty(businessIds)){
+            dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.TO_ME_CHECK_TASK.getCode()).name(SupplierTabEnum.TO_ME_CHECK_TASK.getName()).count(businessIds.size()).build());
+        }else {
+            dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.TO_ME_CHECK_TASK.getCode()).name(SupplierTabEnum.TO_ME_CHECK_TASK.getName()).count(0).build());
+        }
+    }
+
+    private void getTotalCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false).count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.ALL_TASK.getCode()).name(SupplierTabEnum.ALL_TASK.getName()).count(count).build());
     }
 
     /**

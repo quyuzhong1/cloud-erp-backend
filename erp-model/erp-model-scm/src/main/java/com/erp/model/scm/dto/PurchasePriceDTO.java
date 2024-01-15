@@ -18,15 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * @author Lambda
- * @Classname PurchasePriceDTO
 
- * @Date 2023-03-16 14:54
- * @Created by yl
- */
-@Data
-@NoArgsConstructor
 public class PurchasePriceDTO implements Serializable {
 
 
