@@ -62,8 +62,8 @@ public interface UserInfoFeign {
      * @param dto
      * @return
      */
-    @PostMapping("feign/user/page")
-    PagingVO<SupplierUserVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
+    @PostMapping("feign/user/srmPaging")
+    PagingVO<SupplierUserVO> srmPaging(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
 
     /**
      * 查询
@@ -71,18 +71,18 @@ public interface UserInfoFeign {
      * @param dto
      * @return
      */
-    @PostMapping("feign/user/list")
-    List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto);
+    @PostMapping("feign/user/srmList")
+    List<SupplierUserVO> srmList(@RequestBody @Validated UserPagingSearchDTO dto);
     /**
      * 添加用户
      */
-    @RequestMapping("feign/user/save")
+    @RequestMapping("feign/user/addSrmUser")
     String save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
     /**
      * 修改用户
      */
-    @RequestMapping("feign/user/update")
+    @RequestMapping("feign/user/updateSrmUser")
     Boolean update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
 

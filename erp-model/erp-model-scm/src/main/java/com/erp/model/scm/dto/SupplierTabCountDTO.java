@@ -18,9 +18,9 @@ import lombok.NoArgsConstructor;
 public class SupplierTabCountDTO {
 
     /**
-     * 任务类型（0全部，1待我审核,2已审核,3不通过），枚举
+     * 任务类型（all全部，waitMe待我审核,approve已审核,reject不通过），枚举
      */
-    private Integer type;
+    private String type;
     /**
      * 任务名称
      */

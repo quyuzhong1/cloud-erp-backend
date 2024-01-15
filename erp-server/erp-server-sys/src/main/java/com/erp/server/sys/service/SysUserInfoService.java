@@ -263,7 +263,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param dto
      * @return
      */
-    PagingVO<SupplierUserVO> feignPaging(PagingDTO<UserPagingSearchDTO> dto);
+    PagingVO<SupplierUserVO> srmPaging(PagingDTO<UserPagingSearchDTO> dto);
 
     /**
      * 根据用户类型和手机号获取用户信息
@@ -278,7 +278,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param dto
      * @return
      */
-    List<SupplierUserVO> feignList(UserPagingSearchDTO dto);
+    List<SupplierUserVO> srmList(UserPagingSearchDTO dto);
 
     void updateStateSrm(UpdateUserStateDTO stateDTO);
 }

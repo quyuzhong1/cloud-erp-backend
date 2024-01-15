@@ -276,7 +276,7 @@
             </if>
         </where>
     </select>
-    <select id="feignPaging" resultType="com.erp.model.sys.vo.SupplierUserVO">
+    <select id="srmPaging" resultType="com.erp.model.sys.vo.SupplierUserVO">
         SELECT
         sui.uid,
         sui.user_name,
@@ -318,7 +318,7 @@
         </if>
         ORDER BY sui.update_time DESC
     </select>
-    <select id="feignList" resultType="com.erp.model.sys.vo.SupplierUserVO">
+    <select id="srmList" resultType="com.erp.model.sys.vo.SupplierUserVO">
         SELECT
         sui.uid,
         sui.user_name,

@@ -103,7 +103,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
         }
-        PagingVO<SupplierUserVO> page = userInfoFeign.page(dto);
+        PagingVO<SupplierUserVO> page = userInfoFeign.srmPaging(dto);
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
         dataProcessSupplierInfo(list, supplierMap);
         return page;
@@ -306,7 +306,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
         }
-        List<SupplierUserVO> list = userInfoFeign.list(dto);
+        List<SupplierUserVO> list = userInfoFeign.srmList(dto);
         dataProcessSupplierInfo(list, supplierMap);
         return list;
     }
