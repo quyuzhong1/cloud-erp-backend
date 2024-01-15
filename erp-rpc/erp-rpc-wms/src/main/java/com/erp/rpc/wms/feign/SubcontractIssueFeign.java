@@ -22,7 +22,7 @@ public interface SubcontractIssueFeign {
     /**
      * 新增委外发料单
      */
-    @PostMapping("feign/subcontractIssue/add")
+    @PostMapping("add")
     String add(@RequestBody @Validated SubcontractIssueDTO.AddDTO dto);
 }
 
