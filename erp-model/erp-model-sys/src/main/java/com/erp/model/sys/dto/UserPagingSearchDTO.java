@@ -46,4 +46,8 @@ public class UserPagingSearchDTO {
     private Boolean isSuper;
 
     private String searchKeyword;
+    /**
+     * 用来控制供应商数据
+     */
+    private String supplierId;
 }

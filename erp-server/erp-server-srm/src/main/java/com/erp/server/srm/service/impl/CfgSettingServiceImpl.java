@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -13,6 +14,8 @@ import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DictBasicEnum;
 import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
 import com.erp.server.srm.service.*;
@@ -174,6 +177,47 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return Collections.emptyList();
         }
         return lambdaQuery().eq(CfgSettingEntity::getKey, key).in(CfgSettingEntity::getSupplierId, supplierIds).list();
+    }
+
+    @Override
+    public CfgSettingDTO.ViewDTO view() {
+        CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
+        if (CollectionUtils.isEmpty(dictList)) {
+            return viewDTO;
+        }
+        //查询已有配置信息
+        List<CfgSettingEntity> list = getListBySupplierId(userService.getSupplierId());
+        if (CollectionUtils.isEmpty(list)) {
+            return viewDTO;
+        }
+        for (CfgSettingEntity cfgSetting : list) {
+            handleViewEnum(cfgSetting,viewDTO);
+        }
+        return viewDTO;
+    }
+
+    private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {
+
+        ConfigKeyEnum configKeyEnum = ConfigKeyEnum.getEnum(cfgSetting.getKey());
+        switch (configKeyEnum) {
+            case ORDER_AUTO_ACCEPT:
+                OrderAcceptDTO orderAcceptDTO = BeanUtil.toBean(cfgSetting.getDataJson(), OrderAcceptDTO.class);
+                orderAcceptDTO.setId(cfgSetting.getId());
+                orderAcceptDTO.setKey(cfgSetting.getKey());
+                orderAcceptDTO.setSupplierId(cfgSetting.getSupplierId());
+                viewDTO.setOrderAcceptDTO(orderAcceptDTO);
+                break;
+            case RETURN_AUTO_CONFIRM:
+                ReturnConfirmDTO returnConfirmDTO = BeanUtil.toBean(cfgSetting.getDataJson(), ReturnConfirmDTO.class);
+                returnConfirmDTO.setId(cfgSetting.getId());
+                returnConfirmDTO.setKey(cfgSetting.getKey());
+                returnConfirmDTO.setSupplierId(cfgSetting.getSupplierId());
+                viewDTO.setReturnConfirmDTO(returnConfirmDTO);
+                break;
+            default:
+                break;
+        }
     }
 
     private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {

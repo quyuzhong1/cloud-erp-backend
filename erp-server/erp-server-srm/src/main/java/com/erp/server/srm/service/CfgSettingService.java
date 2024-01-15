@@ -58,4 +58,10 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return java.util.List<com.erp.model.srm.entity.CfgSettingEntity>
      **/
     List<CfgSettingEntity> listByKeyAndSupplier(String key, List<String> supplierIds);
+
+    /**
+     * 获取供应商配置信息
+     * @return
+     */
+    CfgSettingDTO.ViewDTO view();
 }

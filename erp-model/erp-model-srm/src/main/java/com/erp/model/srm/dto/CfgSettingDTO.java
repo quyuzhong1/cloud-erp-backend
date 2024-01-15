@@ -28,44 +28,7 @@ public class CfgSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
-
-        /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * Key值
-        */
-        private String key;
-
-        /**
-        * json数据
-        */
-        private String dataJson;
-
-        /**
-        * 是否禁用
-        */
-        private Boolean disabled;
-
-        /**
-        * 排序字段
-        */
-        private Integer index;
-
-        /**
-        * 备注
-        */
-        private String remark;
-
-        /**
-        * 供应商id
-        */
-        private String supplierId;
-
-
+    public static class ViewDTO extends CommonDTO{
     }
 
     /**
