@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseStatisticsDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -360,5 +360,14 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listPurchaseOrderCost")
     public List<SkuCostDTO> listPurchaseOrderCost(@RequestBody SkuCostDTO.ParamDTO paramDTO) {
         return purchaseOrderService.listPurchaseOrderCost(paramDTO);
+    }
+
+
+    /**
+     * 统计采购订单
+     */
+    @PostMapping("/statisticsBySupplier")
+    public PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        return purchaseOrderService.statisticsBySupplier(requestDTO);
     }
 }

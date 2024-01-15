@@ -132,15 +132,15 @@ public class HomePageDTO implements Serializable {
         /**
          * 退货量
          */
-        private Integer refundCount;
+        private Integer refundSkuCount;
 
         /**
-         * sku质检推货量
+         * sku质检退货量
          */
         private Integer skuQcRefundCount;
 
         /**
-         * sku质检推货率
+         * sku质检退货率
          */
         private BigDecimal skuQcRefundRate;
 
@@ -185,12 +185,12 @@ public class HomePageDTO implements Serializable {
         /**
          * 退货总量
          */
-        private Integer refundCount;
+        private Integer refundSkuCount;
 
         /**
          * 质检退货量
          */
-        private Integer qcRefundCount;
+        private Integer qcRefundSkuCount;
     }
 
 }

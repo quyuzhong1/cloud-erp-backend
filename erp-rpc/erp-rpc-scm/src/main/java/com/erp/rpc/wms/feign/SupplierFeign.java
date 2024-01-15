@@ -49,6 +49,6 @@ public interface SupplierFeign {
     @PostMapping("/feign/supplier/listBySupplierByNames")
     List<SupplierEntity> listBySupplierByNames(List<String> singletonList);
 
-    @GetMapping("/feign/supplierUser/getSupplierByUid")
+    @GetMapping("/feign/supplier/getSupplierByUid")
     SupplierEntity getSupplierByUid(@RequestParam("uid") String uid);
 }

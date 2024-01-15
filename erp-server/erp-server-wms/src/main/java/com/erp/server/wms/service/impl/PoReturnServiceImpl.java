@@ -2184,4 +2184,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         return lambdaQuery().eq(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                 .eq(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode()).list();
     }
+
+    @Override
+    public PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO) {
+        PurchaseReturnStatisticsDTO.ResponseDTO responseDTO = new PurchaseReturnStatisticsDTO.ResponseDTO();
+        responseDTO.setStatisticsMonthDTOList(baseMapper.statisticsBySupplier(returnRequestDTO));
+        return responseDTO;
+    }
 }

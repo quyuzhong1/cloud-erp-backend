@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,11 +20,26 @@ import java.util.List;
 @FeignClient(name = "erp-wms", contextId = "subcontractIssue", path = "/feign/subcontractIssue")
 public interface SubcontractIssueFeign {
 
-    /**
-     * 新增委外发料单
-     */
-    @PostMapping("feign/subcontractIssue/add")
+   /**
+    * @description: 新增委外发料单
+    * @author Will
+    * @date: 2024/1/15 10:45
+    * @param dto
+    * @return String
+    */
+    @PostMapping("add")
     String add(@RequestBody @Validated SubcontractIssueDTO.AddDTO dto);
+
+
+   /**
+    * @description: 根据来源id查询委外发料单
+    * @author Will
+    * @date: 2024/1/15 10:45
+    * @param sourceIdList
+    * @return String
+    */
+    @PostMapping("listBySourceIdList")
+    List<SubcontractIssueEntity> listBySourceIdList(@RequestBody List<String> sourceIdList);
 }
 
 

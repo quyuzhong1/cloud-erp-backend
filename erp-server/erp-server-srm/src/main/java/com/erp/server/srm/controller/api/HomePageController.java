@@ -1,32 +1,18 @@
 package com.erp.server.srm.controller.api;
 
 
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.HomePageDTO;
-import com.erp.model.sys.dto.SysUserInfoDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.model.sys.dto.UserPagingSearchDTO;
-import com.erp.model.sys.vo.SupplierUserInfoVO;
-import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.service.HomePageService;
-import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * 首页
@@ -36,9 +22,6 @@ import java.util.List;
 @LogSystemModule("首页")
 @RequestMapping("/homePage")
 public class HomePageController extends BaseController {
-
-    @Resource
-    private SupplierUserFeign supplierUserFeign;
 
     @Resource
     private HomePageService homePageService;

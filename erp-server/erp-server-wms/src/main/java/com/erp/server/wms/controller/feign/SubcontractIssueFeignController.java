@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.SubcontractIssueService;
 import com.erp.server.wms.service.WarehouseService;
@@ -25,9 +26,29 @@ public class SubcontractIssueFeignController {
     @Resource
     private SubcontractIssueService subcontractIssueService;
 
+    /**
+     * 新增
+     * @author Will
+     * @date: 2024/1/15 10:46
+     * @param dto
+     * @return String
+     */
     @PostMapping("/add")
     public String add(@RequestBody @Validated SubcontractIssueDTO.AddDTO dto) {
         BaseResultDTO.AddDTO add = subcontractIssueService.add(dto);
         return  add.getId();
+    }
+
+    /**
+     * 根据来源id查询委外发料单
+     * @author Will
+     * @date: 2024/1/15 10:51
+     * @param sourceIdList
+     * @return List<SubcontractIssueEntity>
+     */
+    @PostMapping("/listBySourceIdList")
+    public List<SubcontractIssueEntity> listBySourceIdList(@RequestBody  List<String> sourceIdList) {
+        List<SubcontractIssueEntity> list = subcontractIssueService.listBySourceIdList(sourceIdList);
+        return list;
     }
 }

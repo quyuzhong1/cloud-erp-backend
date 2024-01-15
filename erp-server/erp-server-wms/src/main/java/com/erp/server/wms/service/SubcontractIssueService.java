@@ -143,4 +143,12 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @return List<SubcontractDetailListDTO>
      */
     List<SubcontractIssueDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractIssueDTO.DetailPagingParamDTO dto);
+    /**
+     * @description: 根据来源id查询
+     * @author Will
+     * @date: 2024/1/15 10:49
+     * @param sourceIdList
+     * @return List<SubcontractIssueEntity>
+     */
+    List<SubcontractIssueEntity> listBySourceIdList(List<String> sourceIdList);
 }
