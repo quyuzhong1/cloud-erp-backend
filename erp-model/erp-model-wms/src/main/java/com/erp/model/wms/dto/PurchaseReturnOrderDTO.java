@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -1430,15 +1431,11 @@ public class PurchaseReturnOrderDTO {
         private String unusualRemark;
 
         /**
-         * 附件名集合
+         * 附件集合
          */
-        private List<String> attachNameList;
-
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
+        private List<AttachDTO> attachList;
     }
+
 
     /**
      * 查询异常处理人下拉
@@ -1487,14 +1484,9 @@ public class PurchaseReturnOrderDTO {
         private String unusualRemark;
 
         /**
-         * 附件名集合
+         * 附件集合
          */
-        private List<String> attachNameList;
-
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
+        private List<AttachDTO> attachList;
     }
 
 }

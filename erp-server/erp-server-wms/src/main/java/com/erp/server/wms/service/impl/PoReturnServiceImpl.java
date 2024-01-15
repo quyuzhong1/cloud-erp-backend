@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +21,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -2086,9 +2089,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
 
         //上传附件
-        if (!CollectionUtils.isEmpty(dto.getAttachUrlList())) {
+        if (!CollectionUtils.isEmpty(dto.getAttachList())) {
             //限制最多上传5个附件
-            if (dto.getAttachUrlList().size() > 5) {
+            if (dto.getAttachList().size() > 5) {
                 throw new ServiceException(ApiError.ATTACH_QTY_MAX_FIVE);
             }
             //保存附件
@@ -2096,7 +2099,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-            wmsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, dto.getId());
+            wmsAttachmentService.batchSave(dto.getAttachList(), type, dto.getId());
         }
 
         //查询退货配置
@@ -2169,16 +2172,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //获取到附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(entity.getId()));
-        //附件地址
-        List<String> attachmentUrlList = attachmentList.stream()
-                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
-                .collect(Collectors.toList());
-        //附件名称
-        List<String> attachmentNameList = attachmentList.stream()
-                .map(WmsAttachmentDTO.UpdateDTO::getAttachName).
-                        collect(Collectors.toList());
-        result.setAttachUrlList(attachmentUrlList);
-        result.setAttachNameList(attachmentNameList);
+        List<AttachDTO> attachDTOList = BeanMapper.copyList(attachmentList, AttachDTO.class);
+        result.setAttachList(attachDTOList);
         return result;
     }
 
