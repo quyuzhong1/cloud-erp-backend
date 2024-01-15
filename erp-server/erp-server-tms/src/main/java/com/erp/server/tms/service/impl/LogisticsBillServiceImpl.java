@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -340,32 +341,35 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
+        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
+        String salesPlatform = dto.getSalesPlatform();
+        Boolean isAliExpress = aliExpress.equals(salesPlatform);
+
+
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
         List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
-        List<LogisticsAddressEntity> deliverList=addressList.stream().filter(a->deliverType.equals(a.getType())).collect(Collectors.toList());
+        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> deliverType.equals(a.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
         //发货人信息
         SenderInfo senderInfo = new SenderInfo();
-        LogisticsAddressEntity logisticsAddress=deliverList.get(0);
+        LogisticsAddressEntity logisticsAddress = deliverList.get(0);
         BeanMapperUtils.copy(logisticsAddress, senderInfo);
         //地址id
         senderInfo.setId(logisticsAddress.getAddressId());
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
-        SenderInfo returnInfo=new SenderInfo();
+        SenderInfo returnInfo = new SenderInfo();
         //退货地址
-        LogisticsAddressEntity returnAddress=addressList.stream().filter(a->refundType.equals(a.getType())).findFirst().orElse(null);
-        if(Objects.nonNull(returnAddress)){
+        LogisticsAddressEntity returnAddress = addressList.stream().filter(a -> refundType.equals(a.getType())).findFirst().orElse(null);
+        if (Objects.nonNull(returnAddress)) {
             BeanMapperUtils.copy(returnAddress, returnInfo);
             //地址id
             returnInfo.setId(returnAddress.getAddressId());
         }
-
-
 
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
@@ -381,12 +385,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
         for (LogisticsProductDTO.ProductDTO item : skuInfoList) {
+            String skuId = item.getSkuId();
             Integer qty = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).map(LogisticsBillDTO.SkuDTO::getQty).
                     findFirst().orElse(0);
             BigDecimal price = item.getDeclarePrice();
             item.setPrice(price);
             item.setQuantity(qty);
             item.setAmount(MathUtil.multiply(price, qty));
+
+            //如果是速卖通的话
+            if (isAliExpress) {
+                String platformSpuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).map(LogisticsBillDTO.SkuDTO::getPlatformSpuNo).findFirst()
+                        .orElse("");
+                item.setSkuId(platformSpuNo);
+            }
+
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
@@ -422,10 +435,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).
                 build();
+        log.info("创建订单参数：{}", JSONUtil.toJsonStr(logisticsOrderVO));
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {
-            LogisticsBillDTO.GenerateBillResultDTO resultDTO  = handleBill(orderResult.getData(), dto);
+            LogisticsBillDTO.GenerateBillResultDTO resultDTO = handleBill(orderResult.getData(), dto);
             return resultDTO;
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();
@@ -442,7 +456,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
     @Transactional(rollbackFor = Exception.class)
-    public  LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
+    public LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
         LogisticsBillDTO.GenerateBillResultDTO resultDTO = new LogisticsBillDTO.GenerateBillResultDTO();
         List<String> trackNoList = new ArrayList<>(2);
         LogisticsBillEntity billEntity = new LogisticsBillEntity();
@@ -455,11 +469,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         billEntity.setSourceCode(dto.getOrderCode());
         billEntity.setOrderTime(dto.getOrderTime());
         billEntity.setOrderType(dto.getOrderType());
-        String transportNo=responseVO.getTransportNo();
+        String transportNo = responseVO.getTransportNo();
         billEntity.setTransportNo(transportNo);
         //跟踪单号
         String trackNo = responseVO.getTrackNo();
-        if(StringUtils.isNotBlank(trackNo)&&!"null".equals(trackNo)){
+        if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
             trackNoList.add(trackNo);
         }
         List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>(2);
@@ -696,8 +710,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             addDTO.setChannelId(logisticsBillEntity.getChannelId());
             addDTO.setLogisticsBillId(logisticsBillEntity.getId());
             logisticsBillCostService.add(addDTO);
-        }catch (Exception e){
-           log.error("生成物流费用出错>>>>>{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("生成物流费用出错>>>>>{}", e.getMessage());
         }
 
     }
