@@ -60,8 +60,8 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             List<WmsAttachmentEntity> addList = new ArrayList<>(attachmentList.size());
             for (int i = 0; i < attachmentList.size(); i++) {
                 WmsAttachmentEntity entity = new WmsAttachmentEntity();
-                entity.setAttachUrl(attachmentList.get(i).getUrl());
-                entity.setAttachName(attachmentList.get(i).getName());
+                entity.setAttachUrl(attachmentList.get(i).getAttachUrl());
+                entity.setAttachName(attachmentList.get(i).getAttachName());
                 entity.setType(type);
                 entity.setBusinessId(businessId);
                 addList.add(entity);
