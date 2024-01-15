@@ -681,8 +681,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
     ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE(98110,"采购订单已下推采购变更单"),
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
-
-
+    ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
 
 
 

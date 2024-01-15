@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -17,6 +19,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -282,12 +285,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailEntity> addList = BeanMapper.copyList(purchasePriceDetailList, PurchasePriceDetailEntity.class);
         List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        LocalDate localDate = LocalDate.now();
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        //验证时间
+        checkPurchasePriceDetail(purchasePriceEntity,addList);
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -296,8 +300,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 item.setProductName(skuVO.getSkuName());
             }
             item.setPurchasePriceId(purchasePriceId);
-            //失效时间
-            item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
@@ -309,6 +311,51 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         this.saveBatch(addList);
     }
 
+    /**
+     * @description: 验证采购价目明细
+     * @author Will
+     * @date: 2024/1/15 9:35
+     * @param list
+     */
+    private void checkPurchasePriceDetail (PurchasePriceEntity purchasePriceEntity,List<PurchasePriceDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //查询供应商信息
+        List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
+        List<PurchasePriceDetailDTO.AddDTO> purchaseDetailList = getBySupplierId(purchasePriceEntity.getSupplierId(), null, skuIdList);
+
+
+        for (int i = 0;i < list.size();i++) {
+            PurchasePriceDetailEntity entity = list.get(i);
+            //检验失效时间需要大于生效时间
+            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getExpireDate())) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
+            }
+
+            //校验录入数据是否存在时间重叠
+            for (int j = 0;j < list.size();j++) {
+                PurchasePriceDetailEntity detailEntity = list.get(j);
+                if (i == j || !StrUtil.equals(entity.getSkuId(),detailEntity.getSkuId())) {
+                    continue;
+                }
+                boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+                if (overlap) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                }
+            }
+
+            List<PurchasePriceDetailDTO.AddDTO> oldList = purchaseDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId()) && StrUtil.equals(obj.getSkuId(),entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(oldList)) {
+                continue;
+            }
+            //检验和已存在数据的时间是否重叠
+            long count = oldList.stream().filter(obj -> LocalDateUtil.isOverlap(entity.getEffectiveDate(),entity.getExpireDate(),obj.getEffectiveDate(),obj.getExpireDate())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+            }
+        }
+    }
 
     /**
      * 根据价目表id 获取产品明细信息
@@ -397,8 +444,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 entity.setProductName(skuVO.getSpuName());
             }
             entity.setPurchasePriceId(purchasePriceId);
-            //失效时间
-            entity.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
