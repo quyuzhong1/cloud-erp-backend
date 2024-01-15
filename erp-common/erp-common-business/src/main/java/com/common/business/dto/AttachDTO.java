@@ -15,5 +15,5 @@ public class AttachDTO {
     /**
      * 地址
      */
-    private String attachurl;
+    private String attachUrl;
 }
