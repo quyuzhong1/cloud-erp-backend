@@ -687,7 +687,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //销售订单详情id
             List<String> soDetailIdList = terminateDetailList.stream().map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
             //已经存在的
-            List<SoChangeDetailEntity> dbChangeDetailList = this.listBySoDetailIdList(soDetailIdList);
+            List<SoChangeDetailEntity> dbChangeDetailList = this.listBySoDetailIdList(soDetailIdList,terminate);
             List<SoChangeDetailEntity>  needCheckList= dbChangeDetailList.stream().filter(d->!idList.contains(d.getId())).collect(Collectors.toList());
             long existCount= needCheckList.stream().filter(c->soDetailIdList.contains(c.getSoDetailId())).count();
             if(existCount>0){
@@ -699,11 +699,12 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     }
 
 
-    private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList) {
+    private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList,SoChangeTypeEnum typeEnum) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SoChangeDetailEntity::getSoDetailId,soDetailIdList).list();
+        return this.lambdaQuery().in(SoChangeDetailEntity::getSoDetailId,soDetailIdList)
+                .eq(SoChangeDetailEntity::getChangeType,typeEnum).list();
     }
 
 
