@@ -7,11 +7,4 @@ public interface  IQueryHandler {
 
     String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql);
 
-    default String getQueryEmptySql(){
-        return " 1 = 2 ";
-    }
-
-    default String getQueryAllSql(){
-        return " 1 = 1 ";
-    }
 }

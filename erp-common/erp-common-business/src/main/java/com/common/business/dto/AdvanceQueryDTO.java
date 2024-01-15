@@ -57,7 +57,7 @@ public class AdvanceQueryDTO {
     public static AdvanceQueryDTO buildDefaultSplicingSQLDTO(String field, Object value){
         return AdvanceQueryDTO.builder()
                 .field(field)
-                .compare(QueryConditionEnum.IN_LIST.toString())
+                .compare(QueryConditionEnum.IN_LIST.getCompareCode())
                 .value(value)
                 .dataType(QueryDataTypeEnum.STRING.getCode())
                 .compareSymbol("and")

@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.query.AbstractQueryHandler;
 import com.common.business.query.IQueryHandler;
 import com.common.business.utils.QueryUtils;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
@@ -24,13 +25,13 @@ import java.util.List;
  * @date 2024年01月08日 9:54
  */
 @Component
-public class PurchaseOrderQueryHandler implements IQueryHandler {
+public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private CommonService commonService;
 
     @Override
-    public String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql) {
+    protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("so.code".equals(field)){
             value = "'"+value+"'";
             return "case when  subString ( " + value + ",1,2) != 'PL' then po.source_code "+ compareCodeSplicingValueSql +
@@ -39,15 +40,12 @@ public class PurchaseOrderQueryHandler implements IQueryHandler {
         }
         if("so.tab".equals(field)){
             //待我审核
-            List<AdvanceQueryDTO> dtoList = new ArrayList<>();
             if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
-                AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                dtoList.add(approveQueryDTO);
+                super.buildDefaultDTO("po.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 //需要审核的业务ids
                 List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
                 if (CollectionUtils.isNotEmpty(businessIds)) {
-                    AdvanceQueryDTO queryIdDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.id", businessIds);
-                    dtoList.add(queryIdDTO);
+                    super.buildDefaultDTO("po.id", businessIds);
                 }else{
                     //返回空结果
                     return this.getQueryEmptySql();
@@ -55,32 +53,22 @@ public class PurchaseOrderQueryHandler implements IQueryHandler {
             }
             // 待提交
             if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
-                AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
-                dtoList.add(approveQueryDTO);
+                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
             }
             //待到货
             if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(value)) {
-                AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                dtoList.add(approveQueryDTO);
-                AdvanceQueryDTO arrivalStatusDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-                dtoList.add(arrivalStatusDTO);
+                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+                super.buildDefaultDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
             }
             //已到货
             if (PurchaseListTypeEnum.CREATED.getCode().equals(value)) {
-                AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                dtoList.add(approveQueryDTO);
-                AdvanceQueryDTO arrivalStatusDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-                dtoList.add(arrivalStatusDTO);
+                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+                super.buildDefaultDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
             }
             //不通过
             if (PurchaseListTypeEnum.REJECT.getCode().equals(value)) {
-                AdvanceQueryDTO approveQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
-                dtoList.add(approveQueryDTO);
+                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
             }
-            if(CollectionUtils.isEmpty(dtoList)){
-                return getQueryAllSql();
-            }
-            return QueryUtils.splicingSQL(dtoList);
         }
         return null;
     }
