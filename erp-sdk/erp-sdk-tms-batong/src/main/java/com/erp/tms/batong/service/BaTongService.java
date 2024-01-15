@@ -1,17 +1,20 @@
 package com.erp.tms.batong.service;
 
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.tms.batong.constants.BaTongConstants;
-import com.erp.tms.batong.model.BaseResult;
+import com.erp.tms.batong.model.label.base.BaseResult;
+import com.erp.tms.batong.model.label.request.LabelRequest;
+import com.erp.tms.batong.model.label.request.ListOrder;
+import com.erp.tms.batong.model.label.response.LabelResponse;
 import com.erp.tms.batong.model.order.request.OrderRequest;
 import com.erp.tms.batong.model.order.response.OrderResponse;
+import com.erp.tms.batong.model.order.response.TrackBase;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -27,6 +30,11 @@ import java.util.Map;
 @Slf4j
 @Component
 public class BaTongService {
+
+
+
+
+
 
 
     /**
@@ -83,6 +91,55 @@ public class BaTongService {
         }
     }
 
+    /** 
+     * @description 获取标签信息
+     * @author Lambda
+     * @return 
+     * @create 2024-01-15 11:42
+     */
+    public LabelResponse getLabel(Map<String, String> authMap, LabelRequest labelRequest){
+        String baseUrl = BaTongConstants.BASE_URL;
+        String serviceMethod = BaTongConstants.LABEL_URL;
+        log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
+        String paramsJson = JSONUtil.toJsonStr(labelRequest);
+        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+        paramsMap.put("paramsJson", paramsJson);
+        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+        log.info("获取巴通标签返回结果：{}", resBody);
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        Integer success = result.getSuccess();
+        //表示成功
+        if (BaTongConstants.SUCCESS.equals(success)) {
+            return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
+        } else {
+            throw new ServiceException(result.getCnmessage());
+        }
+    }
+
+    /**
+     * 获取跟踪单号
+     * @param authMap
+     * @param order
+     * @return
+     */
+    public TrackBase getTrack(Map<String, String> authMap, ListOrder order ){
+        String baseUrl = BaTongConstants.BASE_URL;
+        String serviceMethod = BaTongConstants.GET_TRACK_URL;
+        log.info("获取跟踪单号url：{}", baseUrl + serviceMethod);
+        String paramsJson = JSONUtil.toJsonStr(order);
+        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+        paramsMap.put("paramsJson", paramsJson);
+        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+        log.info("获取巴通标签返回结果：{}", resBody);
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        Integer success = result.getSuccess();
+        //表示成功
+        if (BaTongConstants.SUCCESS.equals(success)) {
+            return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), TrackBase.class);
+        } else {
+            throw new ServiceException(result.getCnmessage());
+        }
+    }
 
     /**
      * 获取到基础的map
@@ -95,10 +152,20 @@ public class BaTongService {
         String appToken = authMap.get("clientId");
         //API密码
         String appKey = authMap.get("clientSecret");
+        validate(appToken, appKey,serviceMethod);
         paramsMap.put("appToken", appToken);
         paramsMap.put("appKey", appKey);
         paramsMap.put("serviceMethod", serviceMethod);
         return paramsMap;
+    }
+
+
+
+
+    private void validate(String token, String key, String url) {
+        if (StringUtils.isEmpty(token) || StringUtils.isEmpty(key) || StringUtils.isEmpty(url)) {
+            throw new ServiceException("授权信息不能为空");
+        }
     }
 
     public static void main(String[] args) {

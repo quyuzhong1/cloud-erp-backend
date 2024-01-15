@@ -1,4 +1,4 @@
-package com.erp.tms.batong.model;
+package com.erp.tms.batong.model.label.base;
 
 import lombok.Data;
 

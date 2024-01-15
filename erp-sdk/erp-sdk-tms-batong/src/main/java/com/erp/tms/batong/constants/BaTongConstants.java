@@ -34,4 +34,19 @@ public class BaTongConstants {
      * 删除订单
      */
     public static final String DELETE_ORDER_URL="removeorder";
+
+    /**
+     * 获取标签
+     */
+    public static final String LABEL_URL="getnewlabel";
+
+    /**
+     * 获取标签
+     */
+    public static final String GET_TRACK_URL="gettrackingnumber";
+
+    /**
+     * 获取运输方式
+     */
+    public static final String GET_SHIPPING_METHOD="getshippingmethod";
 }
