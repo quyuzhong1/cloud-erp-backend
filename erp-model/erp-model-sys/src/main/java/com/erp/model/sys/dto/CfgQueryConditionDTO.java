@@ -42,7 +42,7 @@ public class CfgQueryConditionDTO implements Serializable {
         /**
          * 菜单名
          */
-        private String menuName;
+        private String name;
     }
 
     @Data

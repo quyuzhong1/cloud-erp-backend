@@ -11,10 +11,13 @@ import com.common.core.utils.SqlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +34,8 @@ public class WebAdvanceQueryAspect {
     public static final String ADVANCE_QUERY_FIELD_NAME = "advanceQueryList";
 
     public static final String SQL_MAP_FIELD_NAME = "sqlMap";
+
+    private static Logger logger = LoggerFactory.getLogger(WebAdvanceQueryAspect.class);
 
     @Resource
     private ApplicationContext context;
@@ -67,15 +72,20 @@ public class WebAdvanceQueryAspect {
             }
             val .get(val.size() - 1).setCompareSymbol("");
             for (AdvanceQueryDTO dto : val) {
-                if (Objects.isNull(dto.getValue()) || Objects.isNull(dto.getCompare())) {
+                if (Objects.isNull(dto.getField()) || Objects.isNull(dto.getCompare())) {
                     continue;
                 }
+                QueryConditionEnum condEnum = QueryConditionEnum.CODE_MAPS.get(dto.getCompare());
                 //校验字段跟连接符合法性，防SQL注入
                 if (!SqlUtils.verifySqlLegality(dto.getField()) || (Objects.nonNull(dto.getValue()) && !SqlUtils.verifySqlLegality(dto.getValue().toString()))) {
                     throw new ServiceException(ApiError.QUERY_ILLEGAL_FIELD);
                 }
-                if (!QueryConditionEnum.CODE_MAPS.containsKey(dto.getCompare())) {
+                if (condEnum == null) {
                     throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
+                }
+                if(StringUtils.isEmpty(dto.getValue().toString()) && !QueryConditionEnum.SET_NO_VAL.contains(condEnum)){
+                    stringBuilder.append(" 1 = 1 ").append(dto.getCompareSymbol()).append(" ");
+                    continue;
                 }
                 stringBuilder.append(this.splicingSQL(dto,queryHandler));
             }
@@ -88,6 +98,17 @@ public class WebAdvanceQueryAspect {
             }
             sqlMap.put(key,stringBuilder.toString());
         });
+    }
+
+    @AfterThrowing(pointcut = ("pointCut()"), throwing = "exception")
+    public void logExceptionAndParameters(JoinPoint point, Exception exception) throws IllegalAccessException {
+        // 获取方法参数
+        WebAdvanceQuery controllerDataScope = this.getAnnotationLog(point);
+        if (controllerDataScope == null) {
+            return;
+        }
+        Map<String,String> sqlMap = this.getSqlMap(point);
+        logger.error("方法：{}异常，sqlMap:{}",point.getSignature(),sqlMap);
     }
 
     /**

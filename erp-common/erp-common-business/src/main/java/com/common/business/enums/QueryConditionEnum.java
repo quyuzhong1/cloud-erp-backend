@@ -42,6 +42,8 @@ public enum QueryConditionEnum {
     //需要处理成LIKE查询的比较符
     public static final Set<QueryConditionEnum> SET_LIKE = new HashSet<>();
 
+    public static final Set<QueryConditionEnum> SET_NO_VAL = new HashSet<>();
+
     static {
         CODE_MAPS = Arrays.stream(QueryConditionEnum.values()).collect(Collectors.toMap(QueryConditionEnum ::getCompareCode,Function.identity()));
         SET_DIRECT_VAL.add(GT);
@@ -56,6 +58,8 @@ public enum QueryConditionEnum {
         SET_LIKE.add(ENDS_WITH);
         SET_LIKE.add(CONTAINS);
         SET_LIKE.add(NOT_CONTAINS);
+        SET_NO_VAL.add(IS_NULL);
+        SET_NO_VAL.add(NOT_NULL);
     }
 
     private final String code;

@@ -155,7 +155,7 @@
 
     <select id="menuPaging" resultType="com.erp.model.sys.dto.CfgQueryConditionDTO$MenuDTO">
         select sm.menu_code,
-               sm2.menu_name,
+               sm2.menu_name as name,
                CASE WHEN sm3.type = 1 THEN sm3.menu_name ELSE sm4.menu_name END as system
         from sys_menu sm
         left join sys_menu sm2 on sm.parent_id = sm2.menu_id
