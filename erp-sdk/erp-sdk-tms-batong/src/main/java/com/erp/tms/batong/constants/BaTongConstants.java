@@ -1,0 +1,37 @@
+package com.erp.tms.batong.constants;
+
+/**
+ * @author Lambda
+ * @Classname BaTongConstant
+ * @Description TODO
+ * @Date 2024-01-12 18:33
+ * @Created by yl
+ */
+public class BaTongConstants {
+
+
+    /**
+     * 成功
+     */
+    public static final Integer SUCCESS=1;
+
+    /**
+     *  失败
+     */
+    public static final Integer FAIL=0;
+
+    /**
+     * 基础url
+     */
+    public static final String BASE_URL="http://btgyl.rtb56.com/webservice/PublicService.asmx/ServiceInterfaceUTF8";
+
+    /**
+     * 创建订单
+     */
+    public static final String POST_CREATE_ORDER_URL="createorder";
+
+    /**
+     * 删除订单
+     */
+    public static final String DELETE_ORDER_URL="removeorder";
+}
