@@ -11,10 +11,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.ConfirmResponseVO;
-import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -259,6 +256,62 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return isSuccess ? success(responseVOS) : failure(responseVOS);
     }
+
+
+    /**
+     * 取消订单
+     *
+     * @param logisticsQueryVOS
+     * @return
+     */
+    @Override
+    public ApiResult<List<InterceptResponseVO>> interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVOS) {
+        List<InterceptResponseVO> responseVOS = new ArrayList<>(logisticsQueryVOS.size());
+        boolean isSuccess = true;
+        for (LogisticsInterceptOrderVO logisticsQueryVO : logisticsQueryVOS) {
+            InterceptResponseVO responseVO = new InterceptResponseVO();
+            boolean success = false;
+            BaseResult baseResult = null;
+            //支持单个取消
+            OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
+                    .orderId(logisticsQueryVO.getDeliveryNo())
+                    .dealType(2)
+                    .build();
+            try {
+                ValidatorUtil.validateEntity(orderUpdateRequest);
+                baseResult = expressShipperService.updateOrder(logisticsQueryVO.getAuthMap(), orderUpdateRequest);
+                //转换实体
+                if (baseResult.isSuccess()) {
+                    OrderUpdateResponse orderUpdateResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderUpdateResponse.class);
+                    if (2 == orderUpdateResponse.getResStatus()) {
+                        success = true;
+                        responseVO.success();
+                    } else {
+                        isSuccess = false;
+                        responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
+                    }
+                } else {
+                    isSuccess = false;
+                    responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
+                }
+            } catch (Exception e) {
+                isSuccess = false;
+                responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
+            }
+            if (success) {
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
+            } else {
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
+            }
+            responseVOS.add(responseVO);
+        }
+        return isSuccess ? success(responseVOS) : failure(responseVOS);
+    }
+
 
     /**
      * 查询订单(批量)
