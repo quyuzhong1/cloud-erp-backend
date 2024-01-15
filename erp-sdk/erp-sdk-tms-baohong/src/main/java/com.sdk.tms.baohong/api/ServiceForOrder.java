@@ -1,5 +1,5 @@
 
-package com.sdk.tms.baohong.org.example.webservice.agency;
+package com.sdk.tms.baohong.api;
 
 import java.util.List;
 import javax.jws.WebMethod;
@@ -22,30 +22,6 @@ import javax.xml.ws.ResponseWrapper;
     ObjectFactory.class
 })
 public interface ServiceForOrder {
-
-
-    /**
-     * 
-     * @param headerRequest
-     * @param data
-     * @param ask
-     * @param error
-     * @param sbCode
-     */
-    @WebMethod(action = "http://www.example.org/ServiceForOrder/getOrderProductBySbCode")
-    @RequestWrapper(localName = "getOrderProductBySbCode", targetNamespace = "http://www.example.org/ServiceForOrder/", className = "org.example.webservice.agency.GetOrderProductBySbCode")
-    @ResponseWrapper(localName = "getOrderProductBySbCodeResponse", targetNamespace = "http://www.example.org/ServiceForOrder/", className = "org.example.webservice.agency.GetOrderProductBySbCodeResponse")
-    public void getOrderProductBySbCode(
-        @WebParam(name = "HeaderRequest", targetNamespace = "")
-        HeaderRequest headerRequest,
-        @WebParam(name = "sbCode", targetNamespace = "")
-        String sbCode,
-        @WebParam(name = "ask", targetNamespace = "", mode = WebParam.Mode.OUT)
-        Holder<String> ask,
-        @WebParam(name = "Data", targetNamespace = "", mode = WebParam.Mode.OUT)
-        Holder<List<OrderData>> data,
-        @WebParam(name = "error", targetNamespace = "", mode = WebParam.Mode.OUT)
-        Holder<List<ErrorType>> error);
 
     /**
      * 

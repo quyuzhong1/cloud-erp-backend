@@ -1,5 +1,5 @@
 
-package com.sdk.tms.baohong.org.example.webservice.agency;
+package com.sdk.tms.baohong.api;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlElementDecl;
@@ -23,8 +23,6 @@ import javax.xml.namespace.QName;
  */
 @XmlRegistry
 public class ObjectFactory {
-
-    private final static QName _GetOrderProductBySbCode_QNAME = new QName("http://www.example.org/ServiceForOrder/", "getOrderProductBySbCode");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.example.webservice.agency
@@ -298,11 +296,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link java.lang.Error }
+     * Create an instance of {@link Error }
      * 
      */
-    public java.lang.Error createError() {
-        return new java.lang.Error();
+    public Error createError() {
+        return new Error();
     }
 
     /**
@@ -343,15 +341,6 @@ public class ObjectFactory {
      */
     public SborderDetailType createSborderDetailType() {
         return new SborderDetailType();
-    }
-
-    /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link GetOrderProductBySbCode }{@code >}}
-     * 
-     */
-    @XmlElementDecl(namespace = "http://www.example.org/ServiceForOrder/", name = "getOrderProductBySbCode")
-    public JAXBElement<GetOrderProductBySbCode> createGetOrderProductBySbCode(GetOrderProductBySbCode value) {
-        return new JAXBElement<GetOrderProductBySbCode>(_GetOrderProductBySbCode_QNAME, GetOrderProductBySbCode.class, null, value);
     }
 
 }

@@ -1,5 +1,5 @@
 
-package com.sdk.tms.baohong.org.example.webservice.agency;
+package com.sdk.tms.baohong.api;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

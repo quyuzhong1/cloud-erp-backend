@@ -1,5 +1,5 @@
 
-package com.sdk.tms.baohong.org.example.webservice.agency;
+package com.sdk.tms.baohong.api;
 
 import java.net.MalformedURLException;
 import java.net.URL;
