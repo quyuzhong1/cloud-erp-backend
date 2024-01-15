@@ -496,7 +496,7 @@ public class PullAmazonJob {
                 .collect(Collectors.groupingBy(FbaInventoryEntity::getMsku));
 
         for (PlatformAmazonListingDTO dto : listingEntityList) {
-            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.LISTING_ITEMS;
+            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
             try {
                 // 关联FNSKU信息
                 FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(dto.getSellerSku(), Collections.emptyList())
