@@ -701,4 +701,23 @@
                 AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         WHERE S.is_deleted = false and S.type = 'CGDD01_SYS' and S.invalid_status = false and S.approve_status = 'approve'
     </select>
+
+    <select id="statisticsBySupplier" resultType="com.erp.model.scm.dto.PurchaseStatisticsDTO$StatisticsMonthDTO">
+        select EXTRACT(MONTH FROM po.purchase_date) as month,
+               count(distinct po.id) as orderCount,
+               sum(pod.purchase_qty) as orderSkuCount,
+               sum(pod.purchase_amount) as orderMoney
+        from purchase_order po
+                 inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+                 left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        where pos.supplier_id = #{params.surpplierId}
+        <if test="params.startTime != null">
+            and po.purchase_date >= #{params.startTime}
+        </if>
+        <if test="params.endTime != null">
+            and po.purchase_date <![CDATA[ <= ]]> #{params.endTime}
+        </if>
+          and po.is_deleted = false
+        group by EXTRACT(MONTH FROM po.purchase_date)
+    </select>
 </mapper>

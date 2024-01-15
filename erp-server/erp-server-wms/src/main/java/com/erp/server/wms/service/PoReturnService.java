@@ -7,6 +7,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
+import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -362,4 +363,5 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     List<PoReturnEntity> listByApproceAndWaitConfirm();
 
 
+    PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }

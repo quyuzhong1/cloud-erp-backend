@@ -476,6 +476,13 @@ public class LocalDateUtil {
         return null;
     }
 
+    public static LocalDateTime getStartDateTimeOfYear(int year) {
+        return LocalDateTime.of(year, Month.JANUARY, 1, 0, 0, 0);
+    }
 
+    public static LocalDateTime getEndDateTimeOfYear(int year) {
+        LocalDateTime endDateTime = LocalDateTime.of(year, Month.DECEMBER, 31, 23, 59, 59);
+        return endDateTime.withNano(999_999_999); // Adjust nanoseconds to the maximum value
+    }
 }
 

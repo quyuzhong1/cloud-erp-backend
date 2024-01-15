@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -64,4 +65,6 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return
      */
     List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam);
+
+    List<PurchaseReturnStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }

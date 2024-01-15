@@ -2196,4 +2196,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return baseMapper.listPurchaseOrderCost(paramDTO);
     }
 
+    @Override
+    public PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        PurchaseStatisticsDTO.ResponseDTO responseDTO = new PurchaseStatisticsDTO.ResponseDTO();
+        responseDTO.setStatisticsMonthDTOList(baseMapper.statisticsBySupplier(requestDTO));
+        return responseDTO;
+    }
+
 }

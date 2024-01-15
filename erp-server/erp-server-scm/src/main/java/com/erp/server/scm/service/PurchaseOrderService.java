@@ -381,4 +381,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<SkuCostDTO>
      */
     List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO);
+
+    PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseStatisticsDTO.RequestDTO requestDTO);
 }
