@@ -348,6 +348,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private LocalDate effectiveDate;
 
+        /**
+         * 升降比例（带百分比）【不能排序】
+         */
+        private String offsetRate;
+
 
         /**
          * 采购组织

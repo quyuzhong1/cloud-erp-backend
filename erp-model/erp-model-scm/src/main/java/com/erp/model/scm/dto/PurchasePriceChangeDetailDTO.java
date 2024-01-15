@@ -83,6 +83,12 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private LocalDate effectiveDate;
 
         /**
+         * 失效时间
+         */
+        @NotNull(message = "失效日期不能为空")
+        private LocalDate expireDate;
+
+        /**
          * 税率
          */
         @NotNull(message = "税率不能为空")
@@ -161,6 +167,12 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @NotNull(message = "生效日期不能为空")
         private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        @NotNull(message = "失效日期不能为空")
+        private LocalDate expireDate;
 
         /**
          * 税率
@@ -257,9 +269,19 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private BigDecimal oldTaxPrice;
 
         /**
+         * 原生效时间
+         */
+        private LocalDate oldEffectiveDate;
+
+        /**
          * 生效时间
          */
         private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
 
         /**
          * 调后税率
@@ -283,6 +305,11 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled=false;
+
+        /**
+         * 升降比例（带百分比）
+         */
+        private String offsetRate;
     }
 
 }

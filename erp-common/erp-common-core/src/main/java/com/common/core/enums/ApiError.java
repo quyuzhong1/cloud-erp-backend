@@ -684,7 +684,7 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
-
+    ERROR_PURCHASE_PRICE_CHANGE_DATE(98112,"采购调价表SKU【{}】失效时间不可小于生效时间"),
 
 
 

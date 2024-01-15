@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
@@ -7,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -265,16 +267,24 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             if (historyEntity != null) {
                 item.setOldCurrency(historyEntity.getCurrency());
                 item.setOldTaxPrice(historyEntity.getTaxPrice());
+                item.setOldEffectiveDate(historyEntity.getEffectiveDate());
                 if (historyEntity.getTaxRate() != null) {
                     item.setOldTaxRate(historyEntity.getTaxRate().multiply(hundred));
                 }
+                //升降比例
+                BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), item.getOldTaxPrice()), item.getOldTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                item.setOffsetRate(StrUtil.format("{}%",offsetRate));
             } else {
                 if (priceDetailEntity != null) {
                     item.setOldCurrency(priceDetailEntity.getCurrency());
                     item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
+                    item.setOldEffectiveDate(priceDetailEntity.getEffectiveDate());
                     if (priceDetailEntity.getTaxRate() != null) {
                         item.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(hundred));
                     }
+                    //升降比例
+                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), item.getOldTaxPrice()), item.getOldTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                    item.setOffsetRate(StrUtil.format("{}%",offsetRate));
                 }
             }
         }
@@ -299,9 +309,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
         List<PurchasePriceChangeDetailEntity> addList = BeanMapper.copyList(purchasePriceChangeDetailList, PurchasePriceChangeDetailEntity.class);
+        //数据验证
+        checkPriceChangeDetail(addList);
         List<String> skuIds = addList.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        LocalDate localDate = LocalDate.now();
         for (PurchasePriceChangeDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -310,8 +321,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setProductName(skuVO.getSpuName());
             }
             item.setPurchasePriceChangeId(purchasePriceChangeId);
-            //失效时间
-            item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
@@ -321,7 +330,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         }
         this.saveBatch(addList);
     }
-
 
     /**
      * 审核通过后 需要修改采购价目详情表的数据
@@ -367,6 +375,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setDeliveryDay(changeDetail.getDeliveryDay());
                 item.setCurrency(changeDetail.getCurrency());
                 item.setEffectiveDate(changeDetail.getEffectiveDate());
+                item.setExpireDate(changeDetail.getExpireDate());
                 item.setMinQty(changeDetail.getMinQty());
                 item.setMaxQty(changeDetail.getMaxQty());
                 updateList.add(item);
@@ -375,7 +384,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
         //添加历史
         purchasePriceHistoryService.saveBatch(historyList);
+
         //修改价目详情
+        approveCheckData(purchasePriceChangeList,updateList);
         purchasePriceDetailService.updateBatchById(updateList);
 
         //同步金蝶数据
@@ -385,7 +396,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             throw new ServiceException(ApiError.ERROR_98024);
         }
     }
-
 
     /**
      * 修改变更价目详情信息
@@ -420,8 +430,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 entity.setProductName(skuVO.getSpuName());
             }
             entity.setPurchasePriceChangeId(purchasePriceChangeId);
-            //失效时间
-            entity.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
@@ -431,6 +439,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             saveOrUpdateList.add(entity);
         }
+
+        //数据验证
+        checkPriceChangeDetail(saveOrUpdateList);
+
         //这是要添加的
         List<PurchasePriceChangeDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -498,6 +510,23 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 orderByDesc(PurchasePriceChangeDetailEntity::getUpdateTime).list();
     }
 
+    /**
+     * @description: 审核通过验证
+     * @author Will
+     * @date: 2024/1/15 17:36
+     * @param purchasePriceChangeList
+     * @param updateList
+     */
+    private void approveCheckData (List<PurchasePriceChangeEntity> purchasePriceChangeList,List<PurchasePriceDetailEntity> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            return;
+        }
+        for (PurchasePriceChangeEntity changeEntity :purchasePriceChangeList) {
+            List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> StrUtil.equals(obj.getPurchasePriceId(), changeEntity.getPurchasePriceId())).collect(Collectors.toList());
+            //报价信息验证
+            purchasePriceDetailService.checkPurchasePriceDetail(changeEntity.getSupplierId(),list);
+        }
+    }
 
     /**
      * 获取删除的id集合
@@ -551,4 +580,21 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         return true;
     }
 
+    /**
+     * @description: 数据验证
+     * @author Will
+     * @date: 2024/1/15 17:41
+     * @param list
+     */
+    private void checkPriceChangeDetail (List<PurchasePriceChangeDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (PurchasePriceChangeDetailEntity entity : list) {
+            //检验失效时间需要大于生效时间
+            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getExpireDate())) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
+            }
+        }
+    }
 }

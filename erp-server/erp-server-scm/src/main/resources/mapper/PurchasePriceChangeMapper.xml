@@ -24,6 +24,7 @@
           pp.purchase_org_id AS purchaseOrgId,
           pp.purchase_org_name AS purchaseOrgName,
           ppd.disabled,
+          ppd.purchase_price_detail_id as purchasePriceDetailId,
           ppd.remark as detailRemark
         FROM purchase_price_change_detail ppd
         INNER JOIN purchase_price_change pp

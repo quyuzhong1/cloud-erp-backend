@@ -1,6 +1,8 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -652,6 +654,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
                 }
             }
+            //历史调价数据
+            List<String> changeDetailIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
+            List<PurchasePriceHistoryEntity> purchasePriceHistoryList = purchasePriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
+
+            //原调价表数据
+            List<String> priceDetailIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+            List<PurchasePriceDetailDTO.ViewDTO> priceDetailList = purchasePriceDetailService.listByPurchasePriceDetailIds(priceDetailIdList);
+
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
@@ -668,6 +678,21 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                     item.setApproveUserName(curApprove);
+                }
+                //历史调价
+                PurchasePriceHistoryEntity purchasePriceHistoryEntity = purchasePriceHistoryList.stream().filter(obj -> StrUtil.equals(item.getChangeDetailId(), obj.getChangeDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(purchasePriceHistoryEntity)) {
+                    //升降比例
+                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), purchasePriceHistoryEntity.getTaxPrice()), purchasePriceHistoryEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                    item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
+                } else {
+                    PurchasePriceDetailDTO.ViewDTO viewDTO = priceDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getPurchasePriceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(viewDTO)) {
+                        continue;
+                    }
+                    //升降比例
+                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), viewDTO.getTaxPrice()), viewDTO.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                    item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
                 }
             }
         }
@@ -778,12 +803,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 excelDTO.setOldTaxPrice(historyEntity.getTaxPrice());
                 if (historyEntity.getTaxRate() != null) {
                     excelDTO.setOldTaxRate(historyEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
+                    //升降比例
+                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), historyEntity.getTaxPrice()), historyEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                    excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
                 }
             } else {
                 if (priceDetailEntity != null) {
                     excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
                     if (priceDetailEntity.getTaxRate() != null) {
                         excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
+                        //升降比例
+                        BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), priceDetailEntity.getTaxPrice()), priceDetailEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                        excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
                     }
                 }
             }
