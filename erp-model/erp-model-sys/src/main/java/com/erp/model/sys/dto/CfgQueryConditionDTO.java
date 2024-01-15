@@ -171,9 +171,9 @@ public class CfgQueryConditionDTO implements Serializable {
     public static class MenuSearchParamDTO {
 
         /**
-         * 页面code
+         * 菜单code
          */
-        private String code;
+        private String menuCode;
     }
 
     /**
