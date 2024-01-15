@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -12,6 +13,7 @@ import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.CfgSettingMapper;
 import com.erp.server.wms.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -82,7 +84,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public CfgSettingEntity getByKey(String key) {
-        return lambdaQuery().eq(CfgSettingEntity::getKey, key).one();
+        if (StringUtils.isBlank(key)) {
+            return null;
+        }
+        CfgSettingEntity entity = baseMapper.getByKey(key);
+        return entity;
     }
 
     /**

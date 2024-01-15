@@ -41,5 +41,14 @@
         where is_deleted = false and  disabled = false order by index asc
     </select>
 
+    <select id="getByKey" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM cfg_setting
+        WHERE is_deleted = FALSE
+        AND disabled = FALSE
+        AND key = #{key}
+    </select>
+
 
 </mapper>

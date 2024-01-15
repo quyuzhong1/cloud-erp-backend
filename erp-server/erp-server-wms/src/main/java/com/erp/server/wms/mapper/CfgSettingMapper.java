@@ -3,6 +3,7 @@ import com.erp.model.wms.entity.CfgSettingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -24,4 +25,13 @@ public interface CfgSettingMapper extends BaseMapper<CfgSettingEntity> {
      * @return List<CfgSettingEntity>
      */
     List<CfgSettingEntity> listCfgSetting();
+
+    /**
+     * 根据key查询配置
+     * @Author Luo_WG
+     * @Date 2024/1/15 14:47
+     * @param key
+     * @return com.erp.model.wms.entity.CfgSettingEntity
+     **/
+    CfgSettingEntity getByKey(@RequestParam("key") String key);
 }
