@@ -1,7 +1,6 @@
 package com.erp.tms.batong.model.order.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import cn.hutool.core.annotation.Alias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +29,7 @@ public class OrderRequest implements Serializable {
      * 客户端的订单唯一标识
      */
     @NotBlank(message = "客户端的订单唯一标识不能为空")
-    @JSONField(name = "reference_no")
+    @Alias("reference_no")
     private String referenceNo;
 
     /**
@@ -38,26 +37,26 @@ public class OrderRequest implements Serializable {
      * 就是服务商代码
      */
     @NotBlank(message = "运输方式代码不能为空")
-    @JSONField(name = "shipping_method")
+    @Alias("shipping_method")
     private String shippingMethod;
 
     /**
      * 服务商单号
      *
      */
-    @JSONField(name = "shipping_method_no")
+    @Alias("shipping_method_no")
     private String shippingMethodNo;
 
     /**
      * 订单重量，单位KG，3位小数，默认为0.2
      */
-    @JSONField(name = "order_weight")
+    @Alias("order_weight")
     private String orderWeight;
 
     /**
      * 外包装件数,默认1
      */
-    @JSONField(name = "order_pieces")
+    @Alias("order_pieces")
     private String orderPieces;
 
     /**
@@ -66,7 +65,7 @@ public class OrderRequest implements Serializable {
      * D：文件
      * B：袋子
      */
-    @JSONField(name = "cargotype")
+    @Alias("cargotype")
     private String cargotype;
 
     /**
@@ -74,52 +73,52 @@ public class OrderRequest implements Serializable {
      * P：已预报 (默认)
      * D：草稿 (如果创建草稿订单，则需要再调用submitforecast【提交预报】接口)
      */
-    @JSONField(name = "order_status")
+    @Alias("order_status")
     private String orderStatus;
 
     /**
      * 买家ID
      */
-    @JSONField(name = "buyer_id")
+    @Alias("buyer_id")
     private String buyerId;
 
     /**
      * 订单备注
      */
-    @JSONField(name = "order_info")
+    @Alias("order_info")
     private String orderInfo;
 
     /**
      * 平台ID（如果您是电商平台，请联系我们添加并确认您对应的平台ID）
      */
-    @JSONField(name = "platform_id")
+    @Alias("platform_id")
     private String platformId;
 
     /**
      * 自定义单号
      */
-    @JSONField(name = "custom_hawbcode")
+    @Alias("custom_hawbcode")
     private String  customHawbcode;
 
-    @JSONField(name = "shipper")
+    @Alias("shipper")
     @NotNull(message = "发件人信息不能为空")
     private Shipper shipper;
 
 
-    @JSONField(name = "consignee")
+    @Alias("consignee")
     @NotNull(message = "收件人信息不能为空")
     private Consignee consignee;
 
 
     @NotNull(message = "海关申报信息不能为空")
     @Size(min = 1,message = "海关申报信息至少需要一个")
-    @JSONField(name = "invoice")
+    @Alias("invoice")
     private List<Invoice> invoiceList;
 
     /**
      * 包裹材积信息
      */
-    @JSONField(name = "cargovolume")
+    @Alias("cargovolume")
     private List<Cargovolume> cargovolumeList;
 
 

@@ -1,5 +1,6 @@
 package com.erp.tms.batong.model.label.base;
 
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,17 +19,20 @@ public class BaseResult<T> implements Serializable {
     /**
      * 是否成功标志，0代表失败；1代表成功
       */
+
     private Integer success;
 
     /**
      * 中文消息
      */
-    private String cnmessage;
+    @Alias("cnmessage")
+    private String cnMessage;
 
     /**
-     * enmessage
+     * 英文消息
      */
-    private String enmessage;
+    @Alias("enmessage")
+    private String enMessage;
 
     private T data;
 

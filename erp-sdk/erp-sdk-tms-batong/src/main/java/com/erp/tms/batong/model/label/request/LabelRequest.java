@@ -1,6 +1,6 @@
 package com.erp.tms.batong.model.label.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,13 +25,13 @@ import java.util.function.Predicate;
 @AllArgsConstructor
 public class LabelRequest implements Serializable {
 
-    @JSONField(name = "configInfo")
+    @Alias("configInfo")
     @NotNull(message = "配置信息不能为空")
     private ConfigInfo configInfo;
 
 
 
-    @JSONField(name = "listorder")
+    @Alias("listorder")
     @NotNull(message = "订单信息不能为空")
     @Size(min = 1, message = "订单信息不能为空")
     private List<ListOrder> orderList;
@@ -47,7 +47,7 @@ public class LabelRequest implements Serializable {
      * 7：A4纸-地址标签+配货单
      * 8：A4纸-地址标签+报关单+配货单
      */
-    @JSONField(name = "config_code")
+    @Alias("config_code")
     private String configCode;
 
 

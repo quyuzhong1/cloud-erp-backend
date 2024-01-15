@@ -1,6 +1,6 @@
 package com.erp.tms.batong.model.order.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,40 +26,40 @@ public class Consignee  implements Serializable {
      * 收件人姓名
      */
     @NotBlank(message = "收件人姓名不能为空")
-    @JSONField(name = "consignee_name")
+    @Alias("consignee_name")
     private String consigneeName;
 
     /**
      * 收件人公司名
      */
-    @JSONField(name = "consignee_company")
+    @Alias("consignee_company")
     private String consigneeCompany;
 
     /**
      * 收件人国家二字代码
      */
     @NotBlank(message = "收件人国家二字代码不能为空")
-    @JSONField(name = "consignee_countrycode")
+    @Alias("consignee_countrycode")
     private String consigneeCountryCode;
 
     /**
      * 收件人州/省
      */
-    @JSONField(name = "consignee_province")
+    @Alias("consignee_province")
     private String consigneeProvince;
 
 
     /**
      * 收件人城市
      */
-    @JSONField(name = "consignee_city")
+    @Alias("consignee_city")
     private String consigneeCity;
 
 
     /**
      * 收件人区/县
      */
-    @JSONField(name = "consignee_name")
+    @Alias("consignee_name")
     private String consigneeDistrict;
 
 
@@ -67,51 +67,51 @@ public class Consignee  implements Serializable {
      * 收件人街道地址
      */
     @NotBlank(message = "收件人街道地址不能为空")
-    @JSONField(name = "consignee_street")
+    @Alias("consignee_street")
     private String consigneeStreet;
 
 
     /**
      * 收件人邮编
      */
-    @JSONField(name = "consignee_postcode")
+    @Alias("consignee_postcode")
     private String consigneePostCode;
 
 
     /**
      * 收件人门牌号
      */
-    @JSONField(name = "consignee_doorplate")
+    @Alias("consignee_doorplate")
     private String consigneeDoorplate;
 
     /**
      * 收件人区域代码
      */
-    @JSONField(name = "consignee_areacode")
+    @Alias("consignee_areacode")
     private String consigneeAreaCode;
 
     /**
      * 收件人电话
      */
-    @JSONField(name = "consignee_telephone")
+    @Alias("consignee_telephone")
     private String consigneeTelephone;
 
     /**
      * 收件人手机
      */
-    @JSONField(name = "consignee_mobile")
+    @Alias("consignee_mobile")
     private String consigneeMobile;
 
     /**
      * 收件人邮箱
      */
-    @JSONField(name = "consignee_email")
+    @Alias("consignee_email")
     private String consigneeEmail;
 
     /**
      * 收件人传真
      */
-    @JSONField(name = "consignee_fax")
+    @Alias("consignee_fax")
     private String consigneeFax;
 
     /**
@@ -119,26 +119,26 @@ public class Consignee  implements Serializable {
      * ID：身份证
      * PP：护照
      */
-    @JSONField(name = "consignee_certificatetype")
+    @Alias("consignee_certificatetype")
     private String consigneeCertificateType;
 
     /**
      * 证件号码
      */
-    @JSONField(name = "consignee_certificatecode")
+    @Alias("consignee_certificatecode")
     private String consigneeCertificateCode;
 
     /**
      * 证件有效期
      */
-    @JSONField(name = "consignee_credentials_period")
+    @Alias("consignee_credentials_period")
     private String consigneeCredentialsPeriod;
 
 
     /**
      * 收件人税号
      */
-    @JSONField(name = "consignee_tariff")
+    @Alias("consignee_tariff")
     private String consigneeTariff;
 
 }

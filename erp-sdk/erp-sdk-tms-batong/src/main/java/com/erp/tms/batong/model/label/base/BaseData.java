@@ -1,9 +1,11 @@
 package com.erp.tms.batong.model.label.base;
 
+import cn.hutool.core.annotation.Alias;
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 
@@ -15,33 +17,31 @@ import java.io.Serializable;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class BaseData  implements Serializable {
-
+    private static final long serialVersionUID = 1L;
 
     /**
      * 代码
      */
-    @JSONField(name = "code")
+    @Alias("code")
     private String code;
 
     /**
      * 中文名称
      */
-    @JSONField(name = "cnname")
+    @Alias("cnname")
     private String cnName;
 
 
     /**
      * 英文名称
      */
-    @JSONField(name = "enname")
+    @Alias("enname")
     private String enName;
 
     /**
      * 备注
      */
-    @JSONField(name = "note")
+    @Alias("note")
     private String note;
 }
