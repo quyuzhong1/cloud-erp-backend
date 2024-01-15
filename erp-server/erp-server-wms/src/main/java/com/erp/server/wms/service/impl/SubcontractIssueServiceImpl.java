@@ -496,6 +496,18 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     }
 
     @Override
+    public List<SubcontractIssueEntity> listBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtil.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SubcontractIssueEntity> list = lambdaQuery()
+                .in(SubcontractIssueEntity::getSourceId, sourceIdList)
+                .eq(SubcontractIssueEntity::getInvalidStatus, Boolean.FALSE)
+                .list();
+        return list;
+    }
+
+    @Override
     public SubcontractIssueDTO.ViewDTO view(String id) {
         SubcontractIssueEntity subcontractIssueEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外发料单数据"));
         SubcontractIssueDTO.ViewDTO data = BeanMapperUtils.map(SubcontractIssueDTO.ViewDTO.class, subcontractIssueEntity);

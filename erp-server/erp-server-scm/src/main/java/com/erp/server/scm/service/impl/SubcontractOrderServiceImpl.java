@@ -40,6 +40,7 @@ import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -439,7 +440,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(ids);
         //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = purchaseOrderService.listBySourceIds(ids);
+
+        //委外发料单
+        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueFeign.listBySourceIdList(ids);
+
         for (SubcontractOrderEntity entity : list) {
+            //判断是否下推委外发料单
+            List<SubcontractIssueEntity> subIssueList = subcontractIssueList.stream().filter(obj -> StrUtil.equals(obj.getSourceId(), entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(subIssueList)) {
+                String codes = subIssueList.stream().map(SubcontractIssueEntity::getCode).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_SUB_PUSH_ISSUE,entity.getCode(),codes);
+            }
             // 判断是否存在下推的采购订单
             List<PurchaseOrderEntity> foundList = purchaseOrderList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(foundList)) {
@@ -452,7 +463,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 String codes = subcontractChangeList.stream().map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.ERROR_SUB_PUSH_CHANGE,entity.getCode(),codes);
             }
-            //判断是否下推委外发料单 TODO
         }
 
 
