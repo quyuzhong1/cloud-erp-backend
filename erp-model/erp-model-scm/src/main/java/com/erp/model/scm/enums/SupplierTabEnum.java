@@ -8,7 +8,7 @@ package com.erp.model.scm.enums;
  */
 public enum SupplierTabEnum {
     ALL_TASK("all", "全部"),
-    TO_ME_CHECK_TASK("waitMe", "待我审核"),
+    TO_ME_CHECK_TASK("toBeApprove", "待我审核"),
     APPROVE("approve", "已审核"),
     REJECT("reject", "不通过"),
     ;
