@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -300,4 +301,38 @@ public class FbaShipmentController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 重新生成调拨单
+     * @author Jim
+     * @date:  2024-01-15
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/regenerateTransferOut")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaShipment:delete",
+            serviceClass = FbaShipmentService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成调拨单:ids={ids}")
+    public ApiResult<List<BatchResultDTO>> regenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = fbaShipmentService.regenerateTransferOut(id);
+            }catch (Exception e){
+                log.error("FBA货件单重新生成调拨单失败",e);
+                FbaShipmentEntity entity = fbaShipmentService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 重新生成调拨单失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

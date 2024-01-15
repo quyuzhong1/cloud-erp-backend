@@ -12,6 +12,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -145,7 +146,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
 
-    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList);
+    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList, LocalDate billDate);
 
     /**
      * 通过fbaShipmentId查询实体
@@ -213,5 +214,12 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Author Jim
      * @Date 2023/12/04
      */
-    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark);
+    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate);
+
+    /**
+     * 重新直接调拨单
+     * @Author Jim
+     * @Date 2024/01/15
+     */
+    BatchResultDTO regenerateTransferOut(String id);
 }
