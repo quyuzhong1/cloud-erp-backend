@@ -296,7 +296,7 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/pull/needPushMQ")
     public Boolean needPushMQ(@RequestBody LocalDateTime lastTime) {
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
-        return kingdeeApiUtils.needPushMQ(lastTime);
+        return kingdeeApiUtils.notNeedPushMQ(lastTime);
     }
 
     /**
