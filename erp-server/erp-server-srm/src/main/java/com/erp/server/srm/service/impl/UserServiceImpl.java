@@ -167,7 +167,7 @@ public class UserServiceImpl implements UserService {
             //scm新增用户都为管理员
             sysUserInfoDTO.setIsSuper(false);
             try {
-                String uid = userInfoFeign.save(sysUserInfoDTO);
+                String uid = userInfoFeign.addSrmUser(sysUserInfoDTO);
                 refUserEntity.setUid(uid);
             }catch (Exception e){
                 excelDTO.setErrorMsg("创建用户异常：" + e.getMessage());

@@ -120,7 +120,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         if (StringUtils.isEmpty(sysUserInfoDTO.getUserType())) {
             sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         }
-        String uid = userInfoFeign.save(sysUserInfoDTO);
+        String uid = userInfoFeign.addSrmUser(sysUserInfoDTO);
         // 操作日志
         String msg = StrUtil.format("供应商协同用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "", uid);
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), uid, "新增操作");
@@ -144,7 +144,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
         if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         //1.更新用户基础信息
-        userInfoFeign.update(sysUserInfoDTO);
+        userInfoFeign.updateSrmUser(sysUserInfoDTO);
         //2.更新供应商关系
         SupplierRefUserEntity old = supplierRefUserService.getById(sysUserInfoDTO.getRefId());
         SupplierRefUserEntity refUserEntity = new SupplierRefUserEntity();
@@ -336,7 +336,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             //scm新增用户都为管理员
             sysUserInfoDTO.setIsSuper(true);
             try {
-                String uid = userInfoFeign.save(sysUserInfoDTO);
+                String uid = userInfoFeign.addSrmUser(sysUserInfoDTO);
                 refUserEntity.setUid(uid);
             }catch (Exception e){
                 excelDTO.setErrorMsg("创建用户异常：" + e.getMessage());

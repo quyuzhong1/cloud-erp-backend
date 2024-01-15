@@ -120,7 +120,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
 
-
+    //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
 
@@ -132,7 +132,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
-        String password = DEFAULT_PASS;//admin12345
+        String password = DEFAULT_PASS;//123456
         boolean needChangePwd;
         //表示自己输入
         if (createPasswordType == 1) {
@@ -167,7 +167,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         boolean saveResult = this.save(entity);
         if (needChangePwd){
-            sendPwdEmail(entity,"admin12345");
+            sendPwdEmail(entity,"123456");
         }
         //保存成功 就去更新角色表
         if (saveResult) {
@@ -223,7 +223,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         this.save(entity);
         //发送email
         if (needChangePwd){
-            sendPwdEmail(entity,"admin12345");
+            sendPwdEmail(entity,"123456");
         }
         return entity.getUid();
     }

@@ -77,13 +77,13 @@ public interface UserInfoFeign {
      * 添加用户
      */
     @RequestMapping("feign/user/addSrmUser")
-    String save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    String addSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
     /**
      * 修改用户
      */
     @RequestMapping("feign/user/updateSrmUser")
-    Boolean update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    Boolean updateSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
 
     /**
