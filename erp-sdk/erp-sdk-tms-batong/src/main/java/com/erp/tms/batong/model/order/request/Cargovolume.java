@@ -1,6 +1,6 @@
 package com.erp.tms.batong.model.order.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,33 +25,33 @@ public class Cargovolume implements Serializable {
     /**
      * 箱号(子单号)
      */
-    @JSONField(name = "child_number")
+    @Alias("child_number")
     private String childNumber;
 
     /**
      * 长，1位小数，单位CM
      */
-    @JSONField(name = "involume_length")
+    @Alias("involume_length")
     private String inVolumeLength;
 
 
     /**
      * 宽，1位小数，单位CM
      */
-    @JSONField(name = "involume_width")
+    @Alias("involume_width")
     private String inVolumeWidth;
 
 
     /**
      * 高，1位小数，单位CM
      */
-    @JSONField(name = "involume_height")
+    @Alias("involume_height")
     private String inVolumeHeight;
 
 
     /**
      * 毛重，3位小数，单位KG
      */
-    @JSONField(name = "involume_grossweight")
+    @Alias("involume_grossweight")
     private String inVolumeGrossWeight;
 }

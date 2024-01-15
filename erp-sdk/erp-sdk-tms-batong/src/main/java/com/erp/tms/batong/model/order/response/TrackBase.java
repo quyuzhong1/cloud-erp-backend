@@ -1,6 +1,6 @@
 package com.erp.tms.batong.model.order.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +24,7 @@ public class TrackBase implements Serializable {
     /**
      * 客户参考号
      */
-    @JSONField(name = "refrence_no")
+    @Alias("refrence_no")
     private String refrenceNo;
 
 
@@ -32,14 +32,14 @@ public class TrackBase implements Serializable {
     /**
      * 服务商单号 就是跟踪单号
      */
-    @JSONField(name = "shipping_method_no")
+    @Alias("shipping_method_no")
     private String shippingMethodNo;
 
 
     /**
      * 渠道转单号
      */
-    @JSONField(name = "channel_hawbcode")
+    @Alias("channel_hawbcode")
     private String channelHawbcode;
 
 }

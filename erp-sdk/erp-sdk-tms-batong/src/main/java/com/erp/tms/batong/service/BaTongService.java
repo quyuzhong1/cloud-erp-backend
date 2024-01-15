@@ -1,11 +1,13 @@
 package com.erp.tms.batong.service;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.tms.batong.constants.BaTongConstants;
+import com.erp.tms.batong.model.label.base.BaseData;
 import com.erp.tms.batong.model.label.base.BaseResult;
 import com.erp.tms.batong.model.label.request.LabelRequest;
 import com.erp.tms.batong.model.label.request.ListOrder;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,9 +35,29 @@ import java.util.Map;
 public class BaTongService {
 
 
+    /**
+     * 获取基础数据 -运输方式
+     */
 
 
-
+    public List<BaseData> listShippingMethod(Map<String, String> authMap) {
+        String baseUrl = BaTongConstants.BASE_URL;
+        String serviceMethod = BaTongConstants.GET_SHIPPING_METHOD;
+        log.info("获取巴通基础信息url：{}", baseUrl + serviceMethod);
+        String paramsJson = "";
+        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+        paramsMap.put("paramsJson", paramsJson);
+        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+        log.info("创建巴通订单返回结果：{}", resBody);
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        Integer success = result.getSuccess();
+        //表示成功
+        if (BaTongConstants.SUCCESS.equals(success)) {
+            return JSONUtil.toList(result.getData().toString(), BaseData.class);
+        } else {
+            throw new ServiceException(result.getCnMessage());
+        }
+    }
 
 
     /**
@@ -44,8 +67,8 @@ public class BaTongService {
      * @return
      */
     public OrderResponse createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
-        String baseUrl = BaTongConstants.BASE_URL;
         String serviceMethod = BaTongConstants.POST_CREATE_ORDER_URL;
+        String baseUrl = BaTongConstants.BASE_URL;
         log.info("创建巴通订单url：{}", baseUrl + serviceMethod);
         String paramsJson = JSONUtil.toJsonStr(orderRequest);
         Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
@@ -58,7 +81,7 @@ public class BaTongService {
         if (BaTongConstants.SUCCESS.equals(success)) {
             return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), OrderResponse.class);
         } else {
-            throw new ServiceException(result.getCnmessage());
+            throw new ServiceException(result.getCnMessage());
         }
     }
 
@@ -82,22 +105,22 @@ public class BaTongService {
         paramsMap.put("paramsJson", JSONUtil.toJsonStr(map));
         String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
         log.info("刪除巴通订单返回结果：{}", resBody);
-        JSONObject jsonObject= JSONUtil.parseObj(resBody);
-        Integer success = jsonObject.getInt("success",0);
-        if(BaTongConstants.SUCCESS.equals(success)){
-           return Boolean.TRUE;
-        }else{
-            throw new ServiceException(jsonObject.getStr("cnmessage","取消订单失败"));
+        JSONObject jsonObject = JSONUtil.parseObj(resBody);
+        Integer success = jsonObject.getInt("success", 0);
+        if (BaTongConstants.SUCCESS.equals(success)) {
+            return Boolean.TRUE;
+        } else {
+            throw new ServiceException(jsonObject.getStr("cnmessage", "取消订单失败"));
         }
     }
 
-    /** 
+    /**
+     * @return
      * @description 获取标签信息
      * @author Lambda
-     * @return 
      * @create 2024-01-15 11:42
      */
-    public LabelResponse getLabel(Map<String, String> authMap, LabelRequest labelRequest){
+    public LabelResponse getLabel(Map<String, String> authMap, LabelRequest labelRequest) {
         String baseUrl = BaTongConstants.BASE_URL;
         String serviceMethod = BaTongConstants.LABEL_URL;
         log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
@@ -112,17 +135,18 @@ public class BaTongService {
         if (BaTongConstants.SUCCESS.equals(success)) {
             return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
         } else {
-            throw new ServiceException(result.getCnmessage());
+            throw new ServiceException(result.getCnMessage());
         }
     }
 
     /**
      * 获取跟踪单号
+     *
      * @param authMap
      * @param order
      * @return
      */
-    public TrackBase getTrack(Map<String, String> authMap, ListOrder order ){
+    public TrackBase getTrack(Map<String, String> authMap, ListOrder order) {
         String baseUrl = BaTongConstants.BASE_URL;
         String serviceMethod = BaTongConstants.GET_TRACK_URL;
         log.info("获取跟踪单号url：{}", baseUrl + serviceMethod);
@@ -137,7 +161,7 @@ public class BaTongService {
         if (BaTongConstants.SUCCESS.equals(success)) {
             return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), TrackBase.class);
         } else {
-            throw new ServiceException(result.getCnmessage());
+            throw new ServiceException(result.getCnMessage());
         }
     }
 
@@ -152,14 +176,12 @@ public class BaTongService {
         String appToken = authMap.get("clientId");
         //API密码
         String appKey = authMap.get("clientSecret");
-        validate(appToken, appKey,serviceMethod);
+        validate(appToken, appKey, serviceMethod);
         paramsMap.put("appToken", appToken);
         paramsMap.put("appKey", appKey);
         paramsMap.put("serviceMethod", serviceMethod);
         return paramsMap;
     }
-
-
 
 
     private void validate(String token, String key, String url) {
@@ -169,8 +191,16 @@ public class BaTongService {
     }
 
     public static void main(String[] args) {
+        BaTongService service = new BaTongService();
+        Map<String, String> authMap = new HashMap<>();
+        authMap.put("clientId", "681425f7eb33b64f3f809d97b56c46cf");
+        authMap.put("clientSecret", "d85a27ff8690a777ee6485ebff679792d85a27ff8690a777ee6485ebff679792");
+        List<BaseData> list = service.listShippingMethod(authMap);
+        System.out.println(JSONUtil.toJsonStr(list));
 
 
     }
+
+
 
 }
