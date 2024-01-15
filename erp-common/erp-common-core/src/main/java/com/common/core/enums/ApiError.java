@@ -902,6 +902,7 @@ public enum ApiError implements Serializable {
     ATTACH_QTY_MAX_FIVE(92127,"附件上传数量不可超过5个文件"),
     UNUSUAL_TYPE_NOT_EXISTS(92128,"异常分类错误"),
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
+    CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
 
 
 

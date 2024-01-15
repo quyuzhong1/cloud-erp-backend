@@ -2101,6 +2101,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //查询退货配置
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.PO_RETURN.getCode());
+        if (ObjectUtils.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException(ApiError.CFG_SETTING_NOT_EXISTS);
+        }
         CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
 
         String unusualHandleUserId = "";
