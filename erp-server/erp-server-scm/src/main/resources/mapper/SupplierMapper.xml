@@ -23,7 +23,7 @@
         purchase_user_name AS purchaseUserName
         FROM supplier
         WHERE is_deleted=FALSE
-        <if test="params.tabFlag != null and 'waitMe'== params.tabFlag">
+        <if test="params.tabFlag != null and 'toBeApprove'== params.tabFlag">
             <if test="params.businessIds != null and params.businessIds.size > 0">
                 AND id IN
                 <foreach collection="params.businessIds" item="businessId" open="(" separator="," close=")">

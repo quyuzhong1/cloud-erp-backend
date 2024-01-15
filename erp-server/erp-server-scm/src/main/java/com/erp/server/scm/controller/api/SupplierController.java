@@ -227,7 +227,7 @@ public class SupplierController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult updateSrmStatus(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean result = supplierService.updateStatus(dto);
+        Boolean result = supplierService.updateSrmStatus(dto);
         return result == true ? success() : failure();
     }
     /**

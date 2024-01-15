@@ -44,5 +44,12 @@ public enum ConfigKeyEnum {
         }
         return "";
     }
-
+    public static ConfigKeyEnum getEnum(String code) {
+        for (ConfigKeyEnum settingEnum : ConfigKeyEnum.values()) {
+            if (code.equals(settingEnum.getCode())) {
+                return settingEnum;
+            }
+        }
+        return null;
+    }
 }

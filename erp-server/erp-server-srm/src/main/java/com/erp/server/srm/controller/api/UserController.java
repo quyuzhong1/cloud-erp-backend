@@ -55,6 +55,7 @@ public class UserController extends BaseController {
     public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
+        dto.getParams().setSupplierId(userService.getSupplierId());
         return supplierUserFeign.page(dto);
     }
 
@@ -67,6 +68,7 @@ public class UserController extends BaseController {
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(false);
         sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
+        sysUserInfoDTO.setSupplierId(userService.getSupplierId());
         supplierUserFeign.save(sysUserInfoDTO);
         return success();
     }

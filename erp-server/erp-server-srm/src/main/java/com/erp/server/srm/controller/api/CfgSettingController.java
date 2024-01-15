@@ -81,9 +81,9 @@ public class CfgSettingController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/getConfig")
-    public ApiResult<List<ConfigVO>> getConfig() {
-        List<ConfigVO> configVOList =cfgSettingService.getConfig();
-        return success(configVOList);
+    @GetMapping("/view")
+    public ApiResult<CfgSettingDTO.ViewDTO> view() {
+        CfgSettingDTO.ViewDTO viewDTO = cfgSettingService.view();
+        return success(viewDTO);
     }
 }
