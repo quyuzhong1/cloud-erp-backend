@@ -121,6 +121,12 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     private String remark;
 
     /**
+     * 报价人id（同主表）
+     */
+    @TableField("pricing_user_id")
+    private String pricingUserId;
+
+    /**
      *  主单单据状态
      */
     @TableField(exist = false)

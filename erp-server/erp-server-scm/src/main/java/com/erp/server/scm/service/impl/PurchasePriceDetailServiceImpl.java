@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -307,6 +308,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 item.setTaxRate(rate);
             }
             item.setCurrency(purchasePriceEntity.getCurrency());
+            item.setPricingUserId(purchasePriceEntity.getPricingUserId());
         }
         this.saveBatch(addList);
     }
@@ -428,7 +430,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         List<PurchasePriceDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceDetailList.size());
-        LocalDate localDate = LocalDate.now();
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
@@ -451,6 +452,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 entity.setTaxRate(rate);
             }
             entity.setCurrency(purchasePriceEntity.getCurrency());
+            entity.setPricingUserId(purchasePriceEntity.getPricingUserId());
             saveOrUpdateList.add(entity);
         }
 
@@ -839,6 +841,21 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 .update(new PurchasePriceDetailEntity());
     }
 
+    @Override
+    public Boolean disabled(BaseIdsDTO.IdsDTO dto) {
+        UpdateStateDTO.BatchUpdateDTO updateDTO = new UpdateStateDTO.BatchUpdateDTO();
+        updateDTO.setIds(dto.getIds());
+        updateDTO.setDisabled(Boolean.TRUE);
+        return updateDisabled(updateDTO);
+    }
+
+    @Override
+    public Boolean enable(BaseIdsDTO.IdsDTO dto) {
+        UpdateStateDTO.BatchUpdateDTO updateDTO = new UpdateStateDTO.BatchUpdateDTO();
+        updateDTO.setIds(dto.getIds());
+        updateDTO.setDisabled(Boolean.FALSE);
+        return updateDisabled(updateDTO);
+    }
 
 
     @Override

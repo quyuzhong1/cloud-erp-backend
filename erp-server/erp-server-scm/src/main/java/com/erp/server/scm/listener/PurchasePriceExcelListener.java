@@ -173,6 +173,9 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         }
 
         PurchasePriceDetailDTO.ImportSaveDTO detailDTO = new  PurchasePriceDetailDTO.ImportSaveDTO();
+        //定价员id
+        detailDTO.setPricingUserId(addDTO.getPricingUserId());
+
         // 明细
         String skuNo = excelDTO.getSkuNo();
         SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);

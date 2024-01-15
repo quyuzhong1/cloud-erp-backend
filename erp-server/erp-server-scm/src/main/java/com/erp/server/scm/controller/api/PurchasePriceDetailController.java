@@ -1,8 +1,11 @@
 package com.erp.server.scm.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,6 +16,7 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
+import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,12 +70,40 @@ public class PurchasePriceDetailController extends BaseController {
 
 
     /**
-     * 批量启用或者禁用 采购价目状态
+     * 批量禁用
+     * @author Will
+     * @date: 2024/1/15 14:22
+     * @param dto
+     * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量启用或者禁用采购价目状态:ids={ids},禁用状态={disabled}(true=禁用,false=启用)")
-    @PostMapping("/updateDisabled")
-    public ApiResult updateDisabled(@RequestBody @Valid UpdateStateDTO.BatchUpdateDTO dto) {
-        Boolean result = purchasePriceDetailService.updateDisabled(dto);
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量禁用采购价目状态:ids={ids}")
+    @PostMapping("/disabled")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:detail:disabled",
+            serviceClass = PurchasePriceDetailService.class,
+            keyIdName = "ids")
+    public ApiResult disabled(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceDetailService.disabled(dto);
+        return result == true ? success() : failure();
+    }
+
+   /**
+    * 批量启用
+    * @author Will
+    * @date: 2024/1/15 15:01
+    * @param dto
+    * @return ApiResult
+    */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量启用采购价目状态:ids={ids}")
+    @PostMapping("/enable")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:detail:enable",
+            serviceClass = PurchasePriceDetailService.class,
+            keyIdName = "ids")
+    public ApiResult enable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceDetailService.enable(dto);
         return result == true ? success() : failure();
     }
 
