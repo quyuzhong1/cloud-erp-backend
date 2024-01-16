@@ -1064,6 +1064,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
 
+    B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
+
 
     /**
      * TMS 错误

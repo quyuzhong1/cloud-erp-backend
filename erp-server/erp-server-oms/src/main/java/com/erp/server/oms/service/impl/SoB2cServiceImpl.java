@@ -924,6 +924,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SUBMIT_DELIVERY, entity.getCode());
         }
+        ApproveStatusEnum approveStatusEnum=entity.getApproveStatus();
+        if(!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)){
+            throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
+        }
+
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (Objects.isNull(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
@@ -4188,7 +4193,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
                 set(isShipped, SoB2cEntity::getSignOrderError, "").
-                set(SoB2cEntity::getBillStatus, billStatus).update(new SoB2cEntity());
+                set(SoB2cEntity::getBillStatus, billStatus).
+                set(StringUtils.isNotBlank(dto.getShippingOrderNo()), SoB2cEntity::getShippingOrderNo, dto.getShippingOrderNo()).
+                update(new SoB2cEntity());
     }
 
     @Override
