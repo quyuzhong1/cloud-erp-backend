@@ -61,4 +61,13 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * @return java.util.List<com.erp.model.scm.entity.PurchasePriceDetailEntity>
      **/
     List<PurchasePriceDetailEntity> listGetListByPurchasePriceIds(@Param("params") PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
+
+    /**
+     * 根据id查询详情
+     * @Author Luo_WG
+     * @Date 2024/1/16 11:25
+     * @param purchasePriceDetailIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceDetailEntity>
+     **/
+    List<PurchasePriceDetailEntity> listByIds(@Param("purchasePriceDetailIds") List<String> purchasePriceDetailIds);
 }

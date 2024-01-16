@@ -1029,22 +1029,26 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void requisitionApplicationCancelProcess(String code, String sourceType) {
-        TransferInfoEntity entity = lambdaQuery().eq(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).one();
+        List<TransferInfoEntity> list = lambdaQuery().eq(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).list();
 
-        if (ObjectUtils.isEmpty(entity)) {
-            TransferInfoEntity jointTransferInfoEntity = lambdaQuery().like(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).one();
-            if (ObjectUtils.isNotEmpty(jointTransferInfoEntity)) {
+        //如果没查询到，判断是不是批量处理的单据
+        if (CollectionUtils.isEmpty(list)) {
+            List<TransferInfoEntity> jointTransferInfoEntitys = lambdaQuery().like(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).list();
+            if (CollectionUtils.isNotEmpty(jointTransferInfoEntitys)) {
                 throw new ServiceException(ApiError.JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS);
             }
-            throw new ServiceException(ApiError.ERROR_99047);
         }
 
-        try {
-            this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+        //反审核，删除调拨单
+        for (TransferInfoEntity entity : list) {
+            try {
+                this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+            }
+
+            this.delete(Arrays.asList(entity.getId()));
         }
 
-        this.delete(Arrays.asList(entity.getId()));
     }
 }

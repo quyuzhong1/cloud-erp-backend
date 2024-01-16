@@ -74,10 +74,13 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     public void syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+        List<String> purchasePriceDetailId = purchasePriceChangeDetailEntities.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
+
         //如果上游单据未发送成功则无需发送
-        PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
-        //采购价目主表数据
-        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+        List<PurchasePriceDetailEntity> purchasePriceDetailEntities = purchasePriceDetailService.listByIds(purchasePriceDetailId);
+        //采购价目明细表数据
+        if (CollectionUtils.isEmpty(purchasePriceDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
 

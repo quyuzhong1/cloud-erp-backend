@@ -107,5 +107,17 @@
             AND sbdi.create_time &gt;= #{params.createTimeList[0]}
             AND sbdi.create_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
         </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--排序-->
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbdi.create_time desc
     </select>
 </mapper>

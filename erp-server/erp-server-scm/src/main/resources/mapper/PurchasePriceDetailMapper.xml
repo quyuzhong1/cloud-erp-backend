@@ -223,4 +223,47 @@
             and pp.code ILIKE concat('%',#{params.priceCode}::text,'%')
         </if>
     </select>
+
+    <select id="listByIds" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
+        SELECT
+        ppd.id,
+        ppd.create_user_id,
+        ppd.create_user_name,
+        ppd.create_time,
+        ppd.update_user_id,
+        ppd.update_user_name,
+        ppd.update_time,
+        ppd.version,
+        ppd.is_deleted,
+        ppd.sku_id,
+        ppd.purchase_price_id,
+        ppd.sku_no,
+        ppd.product_name,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        ppd.tax_price,
+        ppd.expire_date,
+        ppd.tax_rate,
+        ppd.delivery_day,
+        ppd.effective_date,
+        ppd.disabled,
+        ppd.kingdee_detail_id,
+        ppd.remark,
+        ppd.pricing_user_id,
+        pp.approve_status,
+        pp.supplier_id,
+        pp.code AS priceCode,
+        pp.purchase_org_name
+        FROM purchase_price_detail ppd
+        inner join purchase_price pp on pp.id = ppd.purchase_price_id AND ppd.is_deleted = FALSE
+        WHERE pp.is_deleted = FALSE
+        <if test="purchasePriceDetailIds != null and purchasePriceDetailIds.size>0">
+            AND ppd.id IN
+            <foreach collection="purchasePriceDetailIds" item="purchasePriceDetailId" open="(" separator="," close=")">
+                #{purchasePriceDetailId}
+            </foreach>
+        </if>
+    </select>
+
 </mapper>

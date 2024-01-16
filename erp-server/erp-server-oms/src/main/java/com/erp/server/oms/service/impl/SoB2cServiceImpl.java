@@ -393,6 +393,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             startProcess(entity);
         }
 
+        //删除拦截成功的异常提示
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setType(SoB2cErrorTypeEnum.INTERCEPT_SUCCESS.getCode());
+        deleteDTO.setMainId(entity.getId());
+        soB2cErrorService.delete(deleteDTO);
+
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
