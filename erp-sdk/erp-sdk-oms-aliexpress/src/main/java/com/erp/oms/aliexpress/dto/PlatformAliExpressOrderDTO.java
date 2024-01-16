@@ -168,8 +168,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceCode(sourceOrder.getOrderId());
 
         // 标签json
-        Map<String, Object> lableMap = new HashMap<>();
-        lableMap.put("aliexpressStatus", sourceOrder.getOrderStatus());
+        Map<String, Object> labelMap = new HashMap<>();
         //订单明细
         List<OrderItemDetail> orderItemDetailList = detailNotNull ? sourceOrder.getDetail().getChildOrderList() : Collections.emptyList();
         Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
@@ -178,18 +177,18 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                     filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
             isAliexpressPlatformWarehouseOrder = count > 0;
         }
-        lableMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
-        lableMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
+        labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
+        labelMap.put("isAliexpressPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
         String orderStatus = sourceOrder.getOrderStatus();
         if ("RISK_CONTROL".equals(orderStatus)
                 || "IN_CANCEL".equals(orderStatus)
                 || "IN_FROZEN".equals(orderStatus)
         ) {
-            lableMap.put("aliexpressStatus", orderStatus);
+            labelMap.put("aliexpressStatus", orderStatus);
         }
 
         // 标签json
-        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(labelMap));
 
         // 订单状态
         // （soB2cBillStatus字典类型）
