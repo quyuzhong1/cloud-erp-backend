@@ -257,6 +257,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleInvalid(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String operate) {
+
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        if (StringUtils.isBlank(syncKingdeeId)) {
+            return;
+        }
         //作废之前判断状态
         Boolean ifInvalid = this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
         if (ifInvalid) {
