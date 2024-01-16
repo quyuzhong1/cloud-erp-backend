@@ -230,6 +230,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }else{
                 entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
 //                entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
+                //异常订单
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(InterceptStatusEnum.FAILURE.getCode());
+                addError.setParamJson(JSONObject.toJSONString(dto));
+                addError.setReturnJson("");
+                addError.setMainId(entity.getSourceId());
+                addError.setMessage(InterceptStatusEnum.FAILURE.getName());
+                soB2cFeign.addSoB2cError(addError);
+
                 //判断是否不支持线上取消
                 if(cancelResult.getCode().equals(-1) && interceptResult.getCode().equals(-1)){
                     msg = "该物流渠道不支持线上发起物流拦截，请线下与物流商沟通后，手动标记拦截结果";
