@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
@@ -24,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author liuruipeng
@@ -85,7 +87,16 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         ImlResponse<String> response = imlService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        if(Objects.isNull(response.getCancelStatus())){
+            return failure(response.getMessage());
+        }
+        if(response.getCancelStatus().equals(1)){
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
+        }
+        if(response.getCancelStatus().equals(3)){
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
