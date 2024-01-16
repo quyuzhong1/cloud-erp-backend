@@ -24,10 +24,7 @@ import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -1126,8 +1123,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
-        long arrivalStatusCount = purchaseOrderDetailList.stream().filter(obj -> ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())).count();
-        if (arrivalStatusCount > 0) {
+        //已确认和送货中允许下推收货单
+        long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !PurchaseOrderConfirmTypeEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
+                && !PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
+        if (executionStatusCount > 0) {
             throw new ServiceException(ApiError.ERROR_98041);
         }
 

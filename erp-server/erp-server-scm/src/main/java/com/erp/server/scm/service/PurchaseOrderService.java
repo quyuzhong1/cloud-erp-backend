@@ -393,4 +393,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return
      */
     List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.SearchParamDTO dto);
+    /**
+     * @description: 供应商确认
+     * @author Will
+     * @date: 2024/1/16 17:10
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO supplierConfirm(String id,String remark);
 }

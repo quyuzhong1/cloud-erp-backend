@@ -176,12 +176,6 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     @TableField("subcontract_type")
     private String subcontractType;
 
-    /**
-     * 执行状态
-     */
-    @TableField("execution_status")
-    private String executionStatus;
-
     @Override
     public Serializable pkVal() {
         return null;

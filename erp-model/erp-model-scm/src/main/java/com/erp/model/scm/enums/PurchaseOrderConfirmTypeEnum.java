@@ -8,8 +8,6 @@ package com.erp.model.scm.enums;
  */
 public enum PurchaseOrderConfirmTypeEnum {
 
-    //全部
-    ALL("all", "全部"),
     //待确认
     TO_BE_CONFIRM("toBeConfirm", "待确认"),
     //已确认

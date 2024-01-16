@@ -1108,22 +1108,18 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer purchaseQty = orderDetailEntity.getPurchaseQty();
-
-            String arrivalStatus = "";
-            //未到货
-            if (receiveQty - returnQty <= MathUtil.ZERO) {
-                arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
-            } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
-                //部分到货
-                arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            //订单执行状态
+            String executionStatus = "";
+            //收货数量为0或者小于采购数量时执行状态为收货中
+            if ((receiveQty - returnQty <= MathUtil.ZERO) || (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty)) {
+                executionStatus = PurchaseOrderConfirmTypeEnum.DELIVERY.getCode();
             } else {
                 //已到货
-                arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+                executionStatus = PurchaseOrderConfirmTypeEnum.FINISH.getCode();
             }
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
             purchaseOrderDetailEntity.setId(orderDetailEntity.getId());
-            purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
-            purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+            purchaseOrderDetailEntity.setExecutionStatus(executionStatus);
             purchaseOrderDetailEntity.setPurchaseOrderId(orderDetailEntity.getPurchaseOrderId());
             purchaseOrderDetailEntity.setSourceDetailId(orderDetailEntity.getSourceDetailId());
             purchaseOrderDetailEntity.setReceiveQty(receiveQty);

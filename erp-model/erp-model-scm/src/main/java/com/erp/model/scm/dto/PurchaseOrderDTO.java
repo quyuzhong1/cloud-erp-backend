@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.vo.ProductVO;
@@ -47,14 +48,6 @@ public class PurchaseOrderDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
-         * 执行状态
-         */
-        private String executionStatus;
-        /**
-         * 执行状态描述
-         */
-        private String executionStatusStr;
-        /**
          * 确认类型 auto系统 手动
          */
         private String confirmType;
@@ -82,6 +75,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 委外订单编号
          */
         private String subContractCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
         /**
          * 供应商名称
@@ -114,14 +112,14 @@ public class PurchaseOrderDTO implements Serializable {
         private String invalidStatusName;
 
         /**
-         * 到货状态
+         * 执行状态
          */
-        private String arrivalStatus;
+        private String executionStatus;
 
         /**
-         * 到货状态（0未到货，1部分到货，2已到货）
+         * 执行状态名称
          */
-        private String arrivalStatusName;
+        private String executionStatusName;
 
         /**
          * skuId
@@ -207,6 +205,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+
+        /**
+         * srm协同（true 已开启，false 已停用）
+         */
+        private Boolean srmDisabled;
 
         /**
          * 备注
@@ -363,9 +366,14 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean invalidStatus;
 
         /**
-         * 到货状态（0未到货，1部分到货，2已到货）
+         * 执行状态
          */
-        private List<String> arrivalStatusList;
+        private String executionStatus;
+
+        /**
+         * 执行状态名称
+         */
+        private String executionStatusName;
 
         /**
          * 是否加急（false否，true是）

@@ -614,7 +614,7 @@ public enum ApiError implements Serializable {
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
     ERROR_98039(98039,"未找到供应商联系人"),
     ERROR_98040(98040,"只有已审核采购订单能下推签收单"),
-    ERROR_98041(98041,"已到货的采购订单明细不能下推签收单"),
+    ERROR_98041(98041,"只有已确认或送货中的采购订单明细允许下推签收单"),
     ERROR_98042(98042,"未找到采购变更单"),
     ERROR_98043(98043,"未找到采购变更明细单"),
     ERROR_98044(98044,"存在已被供应商引用的等级"),
@@ -691,8 +691,9 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
-    ERROR_PURCHASE_PRICE_CHANGE_DATE(98112,"采购调价表SKU【{}】失效时间不可小于生效时间"),
-
+    ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM(98115,"采购订单【{}】未审核完成不支持确认"),
+    ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM(98116,"采购订单【{}】非待确认不支持确认"),
 
 
     /**

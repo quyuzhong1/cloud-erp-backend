@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.PurchaseOrderConfirmTypeEnum;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -167,5 +168,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      **/
     List<String> listPoIdBySkuNo(String skuNo);
 
-
+    /**
+     * @description: 更新执行状态
+     * @author Will
+     * @date: 2024/1/16 17:47
+     * @param detailIdList
+     * @param typeEnum
+     * @param remark
+     */
+    void updateExecutionStatus(List<String> detailIdList, PurchaseOrderConfirmTypeEnum typeEnum,String remark);
 }
