@@ -112,7 +112,7 @@ public class SupplierUserFeignController extends BaseController {
      * 删除
      */
     @PostMapping("/remove")
-    public ApiResult delete(@RequestBody String uid) {
+    public ApiResult remove(@RequestParam("uid") String uid) {
         return supplierUserService.deleteById(uid);
     }
 

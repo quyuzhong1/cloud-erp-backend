@@ -67,7 +67,7 @@ public interface SupplierUserFeign {
      * 删除
      */
     @PostMapping("/feign/supplierUser/remove")
-    ApiResult delete(@RequestBody String uid);
+    ApiResult remove(@RequestParam("uid") String uid);
 
     /**
      * 批量启用/禁用
