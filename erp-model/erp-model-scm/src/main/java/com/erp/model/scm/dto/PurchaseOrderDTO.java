@@ -42,6 +42,28 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseDetailId;
 
         /**
+         * 下单时间 取自审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 执行状态
+         */
+        private String executionStatus;
+        /**
+         * 执行状态描述
+         */
+        private String executionStatusStr;
+        /**
+         * 确认类型 auto系统 手动
+         */
+        private String confirmType;
+        /**
+         * 客户
+         */
+        private String purchaseOrgName;
+
+        /**
          * 单据类型
          */
         private String type;

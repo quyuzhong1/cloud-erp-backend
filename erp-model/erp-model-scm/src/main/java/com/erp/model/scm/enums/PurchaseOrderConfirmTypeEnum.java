@@ -40,4 +40,13 @@ public enum PurchaseOrderConfirmTypeEnum {
         return name;
     }
 
+    public static String getNameByCode(String code) {
+        PurchaseOrderConfirmTypeEnum[] stateEnums = values();
+        for (PurchaseOrderConfirmTypeEnum stateEnum : stateEnums) {
+            if (stateEnum.getCode().equals(code) ) {
+                return stateEnum.getName();
+            }
+        }
+        return "";
+    }
 }

@@ -187,11 +187,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(params);
-        if (!isFlag) {
-            return new PagingVO(new Page());
-        }
+        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
@@ -1389,6 +1385,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 obj.setApproveUserName(curApprove);
             }
+            //执行状态
+            if (StringUtils.isNotBlank(obj.getExecutionStatus())){
+                String executionStatus = PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus());
+                String confirmType = "";
+                if (StringUtils.isNotBlank(obj.getConfirmType())){
+                    confirmType = OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType());
+                }
+                obj.setExecutionStatusStr(executionStatus + confirmType);
+            }
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
@@ -1581,7 +1586,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> approveStatusList = new ArrayList<>(1);
         List<String> arrivalStatusList = new ArrayList<>(2);
         //待我审核
-        if (PurchaseOrderConfirmTypeEnum.TO_BE_CONFIRM.getCode().equals(params.getSearchType())) {
+        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
