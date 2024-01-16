@@ -185,10 +185,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
                 Class<? extends PlatformAmazonFbaShipmentDTO> tClass = amazonShipmentDTO.getClass();
                 String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
-                // 修改数据
-                UniqueDto updateDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
-                MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
-                mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+                // 保存或更新mongo数据
+                UniqueDto uniqueDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
+                List<? extends PlatformAmazonFbaShipmentDTO> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
+                if (CollectionUtils.isEmpty(mongoData)){
+                    mongoService.saveMongoData(amazonShipmentDTO, tableName);
+                } else {
+                    MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
+                    mongoService.updateMongoData(uniqueDto, mapUtil, tableName, tClass);
+                }
 
                 String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), platform, topic, tag, platformFbaShipmentDTO));
                 // 同步处理
