@@ -3,10 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.FirstPlaceOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseStatisticsDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -146,4 +143,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     List<SkuCostDTO> listPurchaseOrderCost(@Param("params") SkuCostDTO.ParamDTO paramDTO);
 
     List<PurchaseStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    Integer srmPurchaseOrderCount(PurchaseOrderSrmDTO.SearchParamDTO params);
 }

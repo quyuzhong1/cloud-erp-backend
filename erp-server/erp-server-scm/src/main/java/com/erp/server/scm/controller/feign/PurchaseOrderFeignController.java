@@ -2,11 +2,10 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseStatisticsDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -369,5 +368,16 @@ public class PurchaseOrderFeignController {
     @PostMapping("/statisticsBySupplier")
     public PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO) {
         return purchaseOrderService.statisticsBySupplier(requestDTO);
+    }
+
+    /**
+     * srm订单确认列表统计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/srmOrderConfirmCount")
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.RequestDTO dto) {
+        return purchaseOrderService.srmOrderConfirmCount(dto);
     }
 }

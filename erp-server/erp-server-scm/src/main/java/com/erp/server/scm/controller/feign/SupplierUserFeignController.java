@@ -53,7 +53,7 @@ public class SupplierUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto) {
+    public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto) {
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
     }

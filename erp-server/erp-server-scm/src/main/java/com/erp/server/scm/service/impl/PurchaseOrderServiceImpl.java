@@ -2203,4 +2203,38 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return responseDTO;
     }
 
+    /**
+     * 全部  all
+     * 待确认  toBeConfirm
+     * 已确认  confirm
+     * 已拒绝  reject
+     * 送货中  delivery
+     * 已完成  finish
+     * 已关闭  closed
+     *
+     */
+    @Override
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.RequestDTO dto) {
+
+        PurchaseOrderConfirmTypeEnum[] typeEnums = PurchaseOrderConfirmTypeEnum.values();
+        List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = new ArrayList<>(typeEnums.length);
+
+        for (PurchaseOrderConfirmTypeEnum typeEnum : typeEnums) {
+            countDTOS.add(getSrmConfirmCount(dto.getSupplierId(), typeEnum));
+        }
+        return null;
+    }
+
+    private ListStatusCountDTO.PurchaseOrderConfirmCountDTO getSrmConfirmCount(String supplierId, PurchaseOrderConfirmTypeEnum typeEnum) {
+        PurchaseOrderSrmDTO.SearchParamDTO params = new PurchaseOrderSrmDTO.SearchParamDTO();
+        params.setSupplierId(supplierId);
+        params.setExecutionStatus(typeEnum.getCode());
+
+        ListStatusCountDTO.PurchaseOrderConfirmCountDTO dto = new ListStatusCountDTO.PurchaseOrderConfirmCountDTO();
+        dto.setType(typeEnum.getCode());
+        dto.setName(typeEnum.getName());
+        dto.setCount(baseMapper.srmPurchaseOrderCount(params));
+        return dto;
+    }
+
 }

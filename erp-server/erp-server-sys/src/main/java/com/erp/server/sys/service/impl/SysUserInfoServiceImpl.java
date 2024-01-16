@@ -188,7 +188,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
         String password = DEFAULT_PASS;
-        boolean needChangePwd;
+        boolean needChangePwd = sysUserInfoDTO.getNeedChangePwd();
         //表示自己输入
         if (createPasswordType == 1) {
             password = sysUserInfoDTO.getPassword();
@@ -199,10 +199,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (!password.equals(confirmPassword)) {
                 throw new ServiceException(ApiError.ERROR_1001);
             }
-            needChangePwd = false;
-        }else {
-            //自动创建密码 强制登录修改密码
-            needChangePwd = true;
         }
         SysUserInfoEntity entity = new SysUserInfoEntity();
         //复制属性
@@ -222,7 +218,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         this.save(entity);
         //发送email
-        if (needChangePwd){
+        if (createPasswordType == 0){
             sendPwdEmail(entity,"123456");
         }
         return entity.getUid();
@@ -1224,9 +1220,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         PassEntity passEntity = PassHandler.buildPassword(pwd);
         entity.setPassword(passEntity.getPassword());
         entity.setSalt(passEntity.getSalt());
+        entity.setNeedChangePwd(true);
         boolean flag = lambdaUpdate()
                 .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
                 .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .set(SysUserInfoEntity::getNeedChangePwd, entity.getNeedChangePwd())
                 .eq(SysUserInfoEntity::getUid, uid).update();
 //        if (flag) {
 //            boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());

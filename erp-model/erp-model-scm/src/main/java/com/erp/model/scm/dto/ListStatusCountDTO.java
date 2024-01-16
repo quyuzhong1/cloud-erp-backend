@@ -75,4 +75,34 @@ public class ListStatusCountDTO implements Serializable {
         private Integer count;
 
     }
+
+    /**
+     * SRM 订单确认列表统计
+     * PurchaseOrderConfirmTypeEnum
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderConfirmCountDTO {
+
+        /**
+         * 全部  all
+         * 待确认  toBeConfirm
+         * 已确认  confirm
+         * 已拒绝  reject
+         * 送货中  delivery
+         * 已完成  finish
+         * 已关闭  closed
+         *
+         */
+        private String type;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 }

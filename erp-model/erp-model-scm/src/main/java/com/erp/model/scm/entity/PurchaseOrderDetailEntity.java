@@ -201,6 +201,24 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField(exist = false)
     private LocalDate purchaseDate;
 
+    /**
+     * 确认日期
+     */
+    @TableField("confirm_date")
+    private LocalDate confirmDate;
+
+    /**
+     * 确认人id
+     */
+    @TableField("confirm_user_id")
+    private String confirmUserId;
+
+    /**
+     * 确认人名称
+     */
+    @TableField("confirm_user_name")
+    private String confirmUserName;
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 

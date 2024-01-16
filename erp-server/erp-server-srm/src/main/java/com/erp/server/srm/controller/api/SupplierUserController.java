@@ -1,7 +1,6 @@
 package com.erp.server.srm.controller.api;
 
 
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +14,7 @@ import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
+import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +26,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 供应商协同用户
@@ -39,7 +37,7 @@ import java.util.Map;
 @RestController
 @LogSystemModule("供应商协同用户")
 @RequestMapping("/supplierUser")
-public class UserController extends BaseController {
+public class SupplierUserController extends BaseController {
 
     @Resource
     private SupplierUserFeign supplierUserFeign;
@@ -52,7 +50,7 @@ public class UserController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
+    public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());

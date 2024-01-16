@@ -383,4 +383,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO);
 
     PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    /**
+     * SRM 订单确认列表统计
+     * @param dto
+     * @return
+     */
+    List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.RequestDTO dto);
 }

@@ -36,7 +36,7 @@ public interface SupplierUserFeign {
      * @return
      */
     @PostMapping("/feign/supplierUser/paging")
-    ApiResult<PagingVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
+    ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto);
 
     /**
      * 查询供应商列表
