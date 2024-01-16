@@ -2,7 +2,7 @@ package com.erp.model.srm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
@@ -43,8 +43,8 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     /**
     * 预计到达日期
     */
-    @TableField("expected_date")
-    private LocalDateTime expectedDate;
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
     /**
     * 收货单号
     */
@@ -84,12 +84,12 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     * 打印日期
     */
     @TableField("print_date")
-    private LocalDateTime printDate;
+    private LocalDate printDate;
     /**
     * 确认收货日期
     */
     @TableField("confirm_receive_date")
-    private LocalDateTime confirmReceiveDate;
+    private LocalDate confirmReceiveDate;
     /**
     * 收货员id
     */

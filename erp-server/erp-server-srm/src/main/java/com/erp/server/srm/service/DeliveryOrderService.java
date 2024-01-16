@@ -1,8 +1,11 @@
 package com.erp.server.srm.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -35,4 +38,10 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     Integer countByPrint(String supplierId, boolean isPrint);
 
     Integer countByReceiveStatus(String supplierId, String code);
+
+    PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
+
+    List<DeliveryOrderDTO.TabListDTO> tabList();
+
+    DeliveryOrderDTO.ViewDTO view(String id);
 }

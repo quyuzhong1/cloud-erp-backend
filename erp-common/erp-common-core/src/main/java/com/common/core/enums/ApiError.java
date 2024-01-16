@@ -1123,6 +1123,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_96000(96000,"供应商配置信息已存在"),
     ERROR_96001(96001,"查询不到关联供应商"),
+    ERROR_96002(96002,"单据供应商与用户供应商不一致"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),

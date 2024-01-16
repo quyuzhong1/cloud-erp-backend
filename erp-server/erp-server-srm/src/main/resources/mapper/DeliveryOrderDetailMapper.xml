@@ -16,12 +16,16 @@
        <result column="source_detail_id" property="sourceDetailId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="order_qty" property="orderQty" />
        <result column="delivery_qty" property="deliveryQty" />
        <result column="gift_qty" property="giftQty" />
        <result column="receive_qty" property="receiveQty" />
        <result column="gift_receive_qty" property="giftReceiveQty" />
        <result column="qc_good_qty" property="qcGoodQty" />
        <result column="remark" property="remark" />
+       <result column="is_urgent" property="isUrgent" />
+       <result column="product_name" property="productName" />
+        <result column="plan_delivery_date" property="planDeliveryDate" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,7 +39,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, source_detail_id, sku_id, sku_no, delivery_qty, gift_qty, receive_qty, gift_receive_qty, qc_good_qty, remark
+        main_id, source_detail_id, sku_id, sku_no, delivery_qty, gift_qty, receive_qty, gift_receive_qty, qc_good_qty, remark, is_urgent,product_name,order_qty,planDeliveryDate
     </sql>
 
 

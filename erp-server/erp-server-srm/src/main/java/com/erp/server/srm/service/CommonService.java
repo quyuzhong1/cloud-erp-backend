@@ -1,6 +1,7 @@
 package com.erp.server.srm.service;
 
 import com.common.business.vo.LoginUser;
+import com.erp.model.scm.entity.SupplierEntity;
 
 /**
  * @author Lambda
@@ -20,5 +21,5 @@ public interface CommonService {
      */
     public LoginUser getUserInfo();
 
-
+    SupplierEntity getSupplierEntity();
 }

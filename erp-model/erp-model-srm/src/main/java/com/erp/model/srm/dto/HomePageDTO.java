@@ -74,14 +74,14 @@ public class HomePageDTO implements Serializable {
         private Integer waitPrintDeliveryCount;
 
         /**
-         * 待确认送货单数
+         * 待确认退货单数
          */
-        private Integer waitConfirmDeliveryCount;
+        private Integer waitConfirmReturnCount;
 
         /**
-         * 待确认对账单数
+         * 确认中对账单数
          */
-        private Integer waitConfirmReconciliationCount;
+        private Integer ConfirmingReconciliationCount;
     }
 
 

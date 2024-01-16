@@ -75,18 +75,18 @@ public class HomePageServiceImpl implements HomePageService {
 
     @Override
     public HomePageDTO.ToDoItems getToDoItems() {
-        SupplierEntity supplier = getSupplierEntity();
+        SupplierEntity supplier = commonService.getSupplierEntity();
 
-        //TODO:还有两个数量
+        //TODO:还有三个数量
         return HomePageDTO.ToDoItems.builder()
                 .waitPrintDeliveryCount(deliveryOrderService.countByPrint(supplier.getId(),false))
-                .waitConfirmDeliveryCount(deliveryOrderService.countByReceiveStatus(supplier.getId(), DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode()))
+//                .waitConfirmReturnCount(deliveryOrderService.countByReceiveStatus(supplier.getId(), DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode()))
                 .build();
     }
 
     @Override
     public HomePageDTO.Statistical getStatistical(String year) {
-        SupplierEntity supplier = getSupplierEntity();
+        SupplierEntity supplier = commonService.getSupplierEntity();
         //采购数据
         PurchaseStatisticsDTO.RequestDTO purchaseRequestDTO = PurchaseStatisticsDTO.RequestDTO.builder()
                 .surpplierId(supplier.getId())
@@ -167,18 +167,5 @@ public class HomePageServiceImpl implements HomePageService {
         // 按月份排序
         purcahseStatisticsDTOList.sort(Comparator.comparingInt(PurchaseStatisticsDTO.StatisticsMonthDTO::getMonth));
         returnStatisticsDTOList1.sort(Comparator.comparingInt(PurchaseReturnStatisticsDTO.StatisticsMonthDTO::getMonth));
-    }
-
-    private SupplierEntity getSupplierEntity(){
-        LoginUser loginUser = commonService.getUserInfo();
-        if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
-        }
-        //查询供应商信息
-        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
-        if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_96001);
-        }
-        return supplier;
     }
 }
