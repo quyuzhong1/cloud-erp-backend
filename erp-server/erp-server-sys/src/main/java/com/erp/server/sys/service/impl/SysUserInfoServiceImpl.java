@@ -188,7 +188,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
         String password = DEFAULT_PASS;
-        boolean needChangePwd = sysUserInfoDTO.getNeedChangePwd();
+        Boolean needChangePwd = sysUserInfoDTO.getNeedChangePwd();
         //表示自己输入
         if (createPasswordType == 1) {
             password = sysUserInfoDTO.getPassword();
@@ -212,10 +212,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //账号
         entity.setUserAccount(mobile);
         entity.setSalt(passEntity.getSalt());
-        entity.setNeedChangePwd(needChangePwd);
-        if (Objects.isNull(entity.getIsSuper())){
-            entity.setIsSuper(false);
-        }
+        entity.setNeedChangePwd(Objects.nonNull(needChangePwd)? needChangePwd:false);
+        entity.setIsSuper(Objects.nonNull(sysUserInfoDTO.getIsSuper())? sysUserInfoDTO.getIsSuper():false);
         this.save(entity);
         //发送email
         if (createPasswordType == 0){
