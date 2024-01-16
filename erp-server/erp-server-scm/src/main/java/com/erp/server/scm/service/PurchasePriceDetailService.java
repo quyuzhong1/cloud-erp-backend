@@ -9,6 +9,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,6 +47,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return void
      */
     void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
+
+    /**
+     * @description: 报价信息验证
+     * @author Will
+     * @date: 2024/1/15 16:58
+     * @param supplierId
+     * @param list
+     */
+    void checkPurchasePriceDetail (String supplierId, List<PurchasePriceDetailEntity> list);
     /**
      * @description: 根据skuId查询是否存在符合条件的单价和税率
      * @author Will

@@ -292,7 +292,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98024);
         }
         //验证时间
-        checkPurchasePriceDetail(purchasePriceEntity,addList);
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),addList);
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -319,13 +319,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date: 2024/1/15 9:35
      * @param list
      */
-    private void checkPurchasePriceDetail (PurchasePriceEntity purchasePriceEntity,List<PurchasePriceDetailEntity> list) {
+    @Override
+    public void checkPurchasePriceDetail (String supplierId,List<PurchasePriceDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchasePriceDetailDTO.AddDTO> purchaseDetailList = getBySupplierId(purchasePriceEntity.getSupplierId(), null, skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> purchaseDetailList = getBySupplierId(supplierId, null, skuIdList);
 
 
         for (int i = 0;i < list.size();i++) {
@@ -455,6 +456,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setPricingUserId(purchasePriceEntity.getPricingUserId());
             saveOrUpdateList.add(entity);
         }
+
+        //验证时间
+        checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),saveOrUpdateList);
 
         //这是要添加的
         List<PurchasePriceDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -645,6 +649,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setCurrencySymbol(item.getCurrencySymbol());
             result.setOldTaxPrice(item.getTaxPrice());
             result.setOldTaxRate(item.getTaxRate());
+            result.setOldEffectiveDate(item.getEffectiveDate());
             result.setDeliveryDay(item.getDeliveryDay());
             result.setPurchasePriceDetailId(item.getId());
             result.setMinQty(item.getMinQty());
