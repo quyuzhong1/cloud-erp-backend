@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
             SupplierUserInfoVO info = supplierUserFeign.info(uid);
             if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){
                 //用户是否禁用
-                if (Objects.isNull(info.getUserState()) || 1 == info.getUserState()) {
+                if (Objects.isNull(info.getUserState()) || 0 == info.getUserState()) {
                     throw new ServiceException(ApiError.ERROR_9016);
                 }else {
                     return info.getSupplierId();
