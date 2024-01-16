@@ -1039,14 +1039,29 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
         }
 
+
         //反审核，删除调拨单
         for (TransferInfoEntity entity : list) {
-            try {
-                this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
-            } catch (Exception e) {
-                throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+
+            //如果是已审核，反审核
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+                try {
+                    this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+                }
             }
 
+            //如果是审核中，撤销
+            if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+                try {
+                    this.cancelProcess(Arrays.asList(entity.getId()));
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
+                }
+            }
+
+            //删除
             this.delete(Arrays.asList(entity.getId()));
         }
 
