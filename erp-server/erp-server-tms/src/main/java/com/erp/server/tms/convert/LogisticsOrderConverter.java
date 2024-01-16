@@ -533,7 +533,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
             @Mapping(target = "county",source = "receiverInfoVO.district"),
-            @Mapping(target = "streetAddress",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "streetAddress",source = "receiverInfoVO.streetAddress"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "name",source = "receiverInfoVO.name"),

@@ -384,26 +384,31 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
-        for (LogisticsProductDTO.ProductDTO item : skuInfoList) {
+        List<LogisticsProductDTO.ProductDTO> ordersSkuList = new ArrayList<>(skuInfoList.size());
+        for (LogisticsBillDTO.SkuDTO item : skuList) {
             String skuId = item.getSkuId();
-            Integer qty = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).map(LogisticsBillDTO.SkuDTO::getQty).
-                    findFirst().orElse(0);
-            BigDecimal price = item.getDeclarePrice();
-            item.setPrice(price);
-            item.setQuantity(qty);
-            item.setAmount(MathUtil.multiply(price, qty));
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(Objects.nonNull(productDTO)){
+                Integer qty = item.getQty();
+                BigDecimal price = productDTO.getDeclarePrice();
+                productDTO.setQuantity(qty);
+                productDTO.setPrice(price);
+                productDTO.setAmount(MathUtil.multiply(price, qty));
+                //如果是速卖通的话
+                if (isAliExpress) {
+                    String platformSpuNo = item.getPlatformSpuNo();
+                    productDTO.setSkuId(platformSpuNo);
+                    String sourceDetailId = item.getSourceDetailId();
+                    productDTO.setChildOrderId(sourceDetailId);
+                }
 
-            //如果是速卖通的话
-            if (isAliExpress) {
-                String platformSpuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).map(LogisticsBillDTO.SkuDTO::getPlatformSpuNo).findFirst()
-                        .orElse("");
-                item.setSkuId(platformSpuNo);
+                ordersSkuList.add(productDTO);
+
             }
-
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(skuInfoList);
+        List<LogisticsProductVO> logisticsProductList = LogisticsBillConverter.INSTANCE.convertLogisticsProduct(ordersSkuList);
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
         Boolean hasBattery = skuInfoList.stream().filter(s -> s.getIsElectric()).count() > 0;
         //是否带电
@@ -435,7 +440,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).
                 build();
-        log.info("创建订单参数：{}", JSONUtil.toJsonStr(logisticsOrderVO));
+        log.warn("创建订单参数：{}", JSONUtil.toJsonStr(logisticsOrderVO));
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {
