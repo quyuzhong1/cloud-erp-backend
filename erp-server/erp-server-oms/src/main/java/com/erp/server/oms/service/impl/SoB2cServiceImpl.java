@@ -56,7 +56,9 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.HandleResultEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1227,7 +1229,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //TODO
+
+        //未打标拦截的订单不支持取消拦截
+        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(interceptDTOList)) {
+            throw new ServiceException(ApiError.NOT_INTERCEPT_NOT_CANCEL_INTERCEPT);
+        }
+
+        //物流商处理状态为空
+        List<SoB2cDeliveryInterceptEntity> interceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Arrays.asList(id));
+        List<SoB2cDeliveryInterceptEntity> interceptList = interceptEntities.stream()
+                .filter(req -> StringUtils.isBlank(req.getInterceptStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(interceptList)) {
+            throw new ServiceException(ApiError.INTERCEPT_STATUS_IS_NOT_BLANK);
+        }
+
+        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getSourceId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消发货拦截");
     }
 

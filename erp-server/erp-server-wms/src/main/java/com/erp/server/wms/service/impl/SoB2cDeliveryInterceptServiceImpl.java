@@ -221,16 +221,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         String msg = "拦截成功";
         if(cancelResult.isSuccess()){
             entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-            entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
         }else{
             entity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
             ApiResult<InterceptResponseVO> interceptResult = logisticsBillFeign.interceptBill(dto);
             if(interceptResult.isSuccess()){
                 entity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
-                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+//                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             }else{
                 entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
-                entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
+//                entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
                 //判断是否不支持线上取消
                 if(cancelResult.getCode().equals(-1) && interceptResult.getCode().equals(-1)){
                     msg = "该物流渠道不支持线上发起物流拦截，请线下与物流商沟通后，手动标记拦截结果";
@@ -241,11 +240,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }
         }
         LoginUser userInfo = commonService.getUserInfo();
-        entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+        entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus());
         entity.setHandleUserId(userInfo.getUid());
         entity.setHandleUserName(userInfo.getUserName());
         entity.setHandleTime(LocalDateTime.now());
         this.updateById(entity);
+
+        // 操作日志
+        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
         if(isSuccess){
             return BatchResultDTO.success(entity.getId(),entity.getCode(),msg);
         }else{
@@ -326,6 +329,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .eq(SoB2cDeliveryInterceptEntity::getId, id)
                 .update();
 
+        // 操作日志
+        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
+
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
     }
 
@@ -341,11 +348,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .list();
         for (SoB2cDeliveryInterceptEntity interceptEntity : list) {
             SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = new SoB2cDeliveryInterceptDTO.IsInterceptDTO();
-            isInterceptDTO.setId(interceptEntity.getId());
+            isInterceptDTO.setId(interceptEntity.getSoId());
             isInterceptDTO.setHandleResult(interceptEntity.getHandleResult());
             //如果结果确认是拦截成功,返回拦截标识
             if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
                 isInterceptDTO.setIsIntercept(Boolean.TRUE);
+                dtoList.add(isInterceptDTO);
+                continue;
             }
             //如果结果确认是拦截失败,取消拦截标识
             if (HandleResultEnum.FAILURE.getCode().equals(interceptEntity.getHandleResult())) {
@@ -357,8 +366,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     && !InterceptStatusEnum.FAILURE.getCode().equals(interceptEntity.getInterceptStatus())
             ) {
                 isInterceptDTO.setIsIntercept(Boolean.TRUE);
+                dtoList.add(isInterceptDTO);
+                continue;
             }
-            dtoList.add(isInterceptDTO);
         }
         return dtoList;
     }
