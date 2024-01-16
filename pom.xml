@@ -25,6 +25,7 @@
         <module>erp-sdk</module>
         <module>erp-server</module>
         <module>erp-chrome</module>
+        <module>erp-sdk/erp-sdk-tms-baohong</module>
     </modules>
 
     <properties>
