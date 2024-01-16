@@ -27,6 +27,7 @@ import com.erp.server.srm.listener.SupplierUserExcelListener;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -70,7 +71,7 @@ public class UserServiceImpl implements UserService {
             String uid = loginUser.getUid();
             //获取用户关联供应商
             SupplierUserInfoVO info = supplierUserFeign.info(uid);
-            if (Objects.nonNull(info)){
+            if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){
                 //用户是否禁用
                 if (Objects.isNull(info.getUserState()) || !info.getUserState()) {
                     throw new ServiceException(ApiError.ERROR_9016);

@@ -2214,7 +2214,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      *
      */
     @Override
-    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.RequestDTO dto) {
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.SearchParamDTO dto) {
 
         PurchaseOrderConfirmTypeEnum[] typeEnums = PurchaseOrderConfirmTypeEnum.values();
         List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = new ArrayList<>(typeEnums.length);
@@ -2222,7 +2222,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderConfirmTypeEnum typeEnum : typeEnums) {
             countDTOS.add(getSrmConfirmCount(dto.getSupplierId(), typeEnum));
         }
-        return null;
+        return countDTOS;
     }
 
     private ListStatusCountDTO.PurchaseOrderConfirmCountDTO getSrmConfirmCount(String supplierId, PurchaseOrderConfirmTypeEnum typeEnum) {

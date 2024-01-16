@@ -721,6 +721,14 @@
         group by EXTRACT(MONTH FROM po.purchase_date)
     </select>
     <select id="srmPurchaseOrderCount" resultType="java.lang.Integer">
-
+        select
+            count(distinct po.id)
+        from purchase_order po
+                 left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+                 left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pod.is_deleted = false
+        where pos.supplier_id = #{params.surpplierId}
+        <if test="params.executionStatus != null and params.executionStatus != 'All'">
+            po.execution_status = #{params.executionStatus}
+        </if>
     </select>
 </mapper>
