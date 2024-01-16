@@ -190,7 +190,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String password = DEFAULT_PASS;
         Boolean needChangePwd = sysUserInfoDTO.getNeedChangePwd();
         //表示自己输入
-        if (createPasswordType == 1) {
+        if (Objects.nonNull(createPasswordType) && 1 == createPasswordType) {
             password = sysUserInfoDTO.getPassword();
             String confirmPassword = sysUserInfoDTO.getConfirmPassword();
             if (StringUtils.isBlank(password) || StringUtils.isBlank(confirmPassword)) {
@@ -200,10 +200,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 throw new ServiceException(ApiError.ERROR_1001);
             }
         }
-        SysUserInfoEntity entity = new SysUserInfoEntity();
-        //复制属性
-//        BeanMapperUtils.copy(sysUserInfoDTO, entity);
-        entity = SysUserConvert.INSTANCE.copyDTOtoSysUser(sysUserInfoDTO);
+        SysUserInfoEntity entity = SysUserConvert.INSTANCE.copyDTOtoSysUser(sysUserInfoDTO);
         //编号
         String code = sysCodeService.getSeqNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
         entity.setCode(code);
@@ -216,7 +213,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         entity.setIsSuper(Objects.nonNull(sysUserInfoDTO.getIsSuper())? sysUserInfoDTO.getIsSuper():false);
         this.save(entity);
         //发送email
-        if (createPasswordType == 0){
+        if (Objects.nonNull(createPasswordType) && 0 == createPasswordType){
             sendPwdEmail(entity,"123456");
         }
         return entity.getUid();
