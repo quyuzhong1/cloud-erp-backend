@@ -1059,7 +1059,7 @@ public enum ApiError implements Serializable {
     IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
-    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
+    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空，未处理才允许取消拦截"),
     SO_CHANGE_TERMINATE_EXIST(92124,"存在已终止过的销售订单，无法再次终止"),
     ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
