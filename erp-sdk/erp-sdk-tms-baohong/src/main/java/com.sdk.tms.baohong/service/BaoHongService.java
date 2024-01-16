@@ -16,8 +16,8 @@ public class BaoHongService {
 
     public static void main(String[] args) throws MalformedURLException {
         HeaderRequest headerRequest = new HeaderRequest();
-        headerRequest.setAppKey("dd7c2bf37aec54d597c850e0b0f0d19d");
-        headerRequest.setAppToken("630ACC115898BB5B");
+        headerRequest.setAppKey("98f8fd9bb9edfa770bc0a317b8203fc3");
+        headerRequest.setAppToken("BAAC60E49804C53A");
         headerRequest.setCustomerCode("E0207");
 
         ServiceForOrder_Service service = new ServiceForOrder_Service();
