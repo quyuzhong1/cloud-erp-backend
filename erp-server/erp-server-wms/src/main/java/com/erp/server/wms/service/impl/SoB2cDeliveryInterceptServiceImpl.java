@@ -206,7 +206,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         LogisticsBillDTO.CancelBillDTO dto = LogisticsBillDTO.CancelBillDTO.builder()
                 .channelId(entity.getLogisticsChannelId())
                 .transportNo(entity.getTransportNo())
-                .referenceNumber(soB2cEntity.getId())
+                .referenceNumber(soB2cEntity.getCode())
                 .reason("b2c发货拦截单自动拦截")
                 .build();
         //先取消订单，取消订单失败的再拦截订单
