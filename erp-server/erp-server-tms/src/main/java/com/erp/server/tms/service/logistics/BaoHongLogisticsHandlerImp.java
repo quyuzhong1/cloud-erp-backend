@@ -66,11 +66,11 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         map.put("orderId", "8182808069884648");
         map.put("childOrderId","8182808069884648");
         if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
-            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
-            if (Objects.nonNull(shopAuth)) {
-                map.put("shopId", shopAuth.getShopId());
-                map.put("token", shopAuth.getAccessToken());
-            }
+//            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
+//            if (Objects.nonNull(shopAuth)) {
+//                map.put("shopId", shopAuth.getShopId());
+//                map.put("token", shopAuth.getAccessToken());
+//            }
         }
         return map;
     }
