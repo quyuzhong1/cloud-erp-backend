@@ -5,6 +5,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
@@ -19,6 +20,7 @@ import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +40,6 @@ public class BaTongService {
     /**
      * 获取基础数据 -运输方式
      */
-
-
     public List<BaseData> listShippingMethod(Map<String, String> authMap) {
         String baseUrl = BaTongConstants.BASE_URL;
         String serviceMethod = BaTongConstants.GET_SHIPPING_METHOD;
@@ -121,21 +121,30 @@ public class BaTongService {
      * @create 2024-01-15 11:42
      */
     public LabelResponse getLabel(Map<String, String> authMap, LabelRequest labelRequest) {
-        String baseUrl = BaTongConstants.BASE_URL;
-        String serviceMethod = BaTongConstants.LABEL_URL;
-        log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
-        String paramsJson = JSONUtil.toJsonStr(labelRequest);
-        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
-        paramsMap.put("paramsJson", paramsJson);
-        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
-        log.info("获取巴通标签返回结果：{}", resBody);
-        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
-        Integer success = result.getSuccess();
-        //表示成功
-        if (BaTongConstants.SUCCESS.equals(success)) {
-            return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
-        } else {
-            throw new ServiceException(result.getCnMessage());
+        try {
+            String baseUrl = BaTongConstants.BASE_URL;
+            String serviceMethod = BaTongConstants.LABEL_URL;
+            log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
+            String paramsJson = JSONUtil.toJsonStr(labelRequest);
+            Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+            paramsMap.put("paramsJson", paramsJson);
+            String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+            log.info("获取巴通标签返回结果：{}", resBody);
+            BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+            Integer success = result.getSuccess();
+            //表示成功
+            if (BaTongConstants.SUCCESS.equals(success)) {
+                LabelResponse response = JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
+                String labelUrl = response.getLabelUrl();
+                String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
+                response.setBase64(base64);
+                return response;
+            } else {
+                throw new ServiceException(result.getCnMessage());
+            }
+
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage());
         }
     }
 
@@ -200,7 +209,6 @@ public class BaTongService {
 
 
     }
-
 
 
 }

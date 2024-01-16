@@ -37,6 +37,9 @@ public class LabelResponse implements Serializable {
      * 标签文件url地址
      */
     @Alias("lable_file")
-    private String labelFile;
+    private String labelUrl;
+
+
+    private String base64;
 
 }
