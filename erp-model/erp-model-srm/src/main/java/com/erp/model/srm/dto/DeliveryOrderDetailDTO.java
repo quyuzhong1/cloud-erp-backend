@@ -1,12 +1,14 @@
 package com.erp.model.srm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -14,7 +16,7 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author lrp
- * @since 2024-01-12
+ * @since 2024-01-15
 */
 @Data
 @NoArgsConstructor
@@ -33,7 +35,7 @@ public class DeliveryOrderDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        private String  id;
+        private String  detailId;
 
         /**
         * 送货单Id
@@ -56,6 +58,21 @@ public class DeliveryOrderDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 采购数量
+         */
+        private Integer orderQty;
+
+        /**
         * 送货数量
         */
         private Integer deliveryQty;
@@ -76,15 +93,9 @@ public class DeliveryOrderDetailDTO implements Serializable {
         private Integer giftReceiveQty;
 
         /**
-        * 质检合格数
-        */
-        private Integer qcGoodQty;
-
-        /**
         * 备注
         */
         private String remark;
-
 
     }
 
@@ -120,8 +131,6 @@ public class DeliveryOrderDetailDTO implements Serializable {
         /**
         * 送货单Id
         */
-        @NotBlank(message = "送货单Id不能为空")
-        @Size(max = 19,message = "送货单Id最大长度不能超过19位")
         private String mainId;
 
         /**
@@ -137,35 +146,44 @@ public class DeliveryOrderDetailDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuNo不能为空")
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
 
         /**
         * 送货数量
         */
-        @NotNull(message = "送货数量不能为空")
         private Integer deliveryQty;
 
         /**
         * 赠品数量
         */
-        @NotNull(message = "赠品数量不能为空")
         private Integer giftQty;
 
         /**
         * 收货数量
         */
-        @NotNull(message = "收货数量不能为空")
         private Integer receiveQty;
 
         /**
         * 赠品收货数量
         */
-        @NotNull(message = "赠品收货数量不能为空")
         private Integer giftReceiveQty;
 
         /**
         * 质检合格数
         */
-        @NotNull(message = "质检合格数不能为空")
         private Integer qcGoodQty;
 
         /**
@@ -173,7 +191,15 @@ public class DeliveryOrderDetailDTO implements Serializable {
         */
         private String remark;
 
-
+        /**
+        * 是否加急
+        */
+        @NotNull(message = "是否加急不能为空")
+        private Boolean isUrgent;
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
     }
 
 

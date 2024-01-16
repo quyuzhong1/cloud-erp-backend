@@ -67,6 +67,7 @@ public enum ModuleTypeEnum {
     SUPPLIER_REF_USER("63", "供应商用户关系"),
     SUBCONTRACT_ISSUE("64", "委外发料单"),
     SRM_USER("65", "SRM用户"),
+    DELIVERY_ORDER("66", "发货单"),
     ;
 
 

@@ -267,6 +267,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
     public static class ViewProductDTO {
 
         /**
+         * 采购单号
+         */
+        private String  code;
+
+        /**
          * skuId
          */
         private String  skuId;
@@ -385,6 +390,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 一级供应商名称
          */
         private String mainSupplierName;
+
+        /**
+         * 采购员
+         */
+        private String purchaseUserName;
     }
 
     /**

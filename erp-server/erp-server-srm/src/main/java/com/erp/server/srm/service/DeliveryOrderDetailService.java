@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 送货单明细 服务类
@@ -21,16 +23,17 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(DeliveryOrderDetailDTO.AddDTO dto);
+    void add(List<DeliveryOrderDetailDTO.AddDTO> dto, String mainId);
 
-    /**
-    * 修改
-    * @author lrp
-    * @date: 2024-01-12
-    * @param dto
-    * @return
-    */
-    Boolean update(DeliveryOrderDetailDTO.UpdateDTO dto);
+    List<DeliveryOrderDetailEntity> listByMainId(String mainId);
+//    /**
+//    * 修改
+//    * @author lrp
+//    * @date: 2024-01-12
+//    * @param dto
+//    * @return
+//    */
+//    Boolean update(DeliveryOrderDetailDTO.UpdateDTO dto);
 
 
 }

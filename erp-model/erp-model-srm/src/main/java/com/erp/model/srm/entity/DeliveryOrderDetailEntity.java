@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDate;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -16,7 +18,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author lrp
- * @since 2024-01-12
+ * @since 2024-01-15
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -44,6 +46,11 @@ public class DeliveryOrderDetailEntity extends BaseEntity<DeliveryOrderDetailEnt
     */
     @TableField("sku_no")
     private String skuNo;
+    /**
+     * 订单数量
+     */
+    @TableField("order_qty")
+    private Integer orderQty;
     /**
     * 送货数量
     */
@@ -74,7 +81,23 @@ public class DeliveryOrderDetailEntity extends BaseEntity<DeliveryOrderDetailEnt
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 是否加急
+    */
+    @TableField("is_urgent")
+    private Boolean isUrgent;
 
+    /**
+     * 产品名称
+     */
+    @TableField("product_name")
+    private String productName;
+
+    /**
+     * 预计到达日期
+     */
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
 
     public static final String MAIN_ID = "main_id";
 
@@ -95,6 +118,8 @@ public class DeliveryOrderDetailEntity extends BaseEntity<DeliveryOrderDetailEnt
     public static final String QC_GOOD_QTY = "qc_good_qty";
 
     public static final String REMARK = "remark";
+
+    public static final String IS_URGENT = "is_urgent";
 
     @Override
     public Serializable pkVal() {

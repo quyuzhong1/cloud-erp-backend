@@ -1,14 +1,20 @@
 package com.erp.model.srm.dto;
 
-import java.time.LocalDateTime;
+import com.common.business.dto.base.SortDTO;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
+import jnr.ffi.annotations.In;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 /**
  * <p>
  * 送货单请求响应实体
@@ -21,8 +27,185 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class DeliveryOrderDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class StatusListDTO {
 
+        /**
+         * 收货状态
+         */
+        private String receiptStatus;
 
+        /**
+         * 是否打印
+         */
+        private Boolean isPrint;
+
+        /**
+         * 收发差异
+         */
+        private Boolean qtyDifferences;
+
+        private Integer count;
+    }
+
+    /**
+     * tab list
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TabListDTO {
+
+        /**
+         * 类型 （all全部，waitReceiveAndPrint 待收货-未打印 waitReceiveAndPrinted 待收货-已打印 received 已收货 qtyDifference 收发差异）
+         */
+        private String searchType;
+
+        private Integer count;
+    }
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 送货单id
+         */
+        private String id;
+
+        /**
+         * 送货单号
+         */
+        private String code;
+
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 收货单号
+         */
+        private String receiveCode;
+
+        /**
+         * 是否打印
+         */
+        private Boolean isPrint;
+
+        /**
+         * 收货状态
+         */
+        private String receiptStatus;
+
+        /**
+         * 订单单号
+         */
+        private String sourceCode;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 赠品数量
+         */
+        private Integer giftQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
+
+        /**
+         * 质检合格数
+         */
+        private Integer qcGoodQty;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 目的仓
+         */
+        private String toWarehouseName;
+
+        /**
+         * 打印日期
+         */
+        private LocalDate printDate;
+
+        /**
+         * 确认收货日期
+         */
+        private LocalDate confirmReceiveDate;
+
+        /**
+         * 收货员名
+         */
+        private String receiveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
+
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
+
+        /**
+         * 主键id
+         */
+        private String supplierId;
+    }
 
     /**
     * 详情
@@ -42,6 +225,11 @@ public class DeliveryOrderDTO implements Serializable {
         private String code;
 
         /**
+         * 收货状态
+         */
+        private String receiptStatus;
+
+        /**
         * 供应商id
         */
         private String supplierId;
@@ -52,19 +240,39 @@ public class DeliveryOrderDTO implements Serializable {
         private String sourceId;
 
         /**
-        * 预计到达日期
-        */
-        private LocalDateTime expectedDate;
-
-        /**
         * 收货单号
         */
         private String receiveCode;
 
         /**
-        * 来源订单号
+         * 打印日期
+         */
+        private LocalDate printDate;
+
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+        * 订单号
         */
         private String sourceCode;
+
+        /**
+         * 是否打印
+         */
+        private Boolean isPrint;
+
+        /**
+         * 联系人name
+         */
+        private String contactName;
+
+        /**
+         * 目的仓名称
+         */
+        private String toWarehouseName;
 
         /**
         * 客户名称
@@ -77,66 +285,29 @@ public class DeliveryOrderDTO implements Serializable {
         private String contactId;
 
         /**
-        * 联系人name
-        */
-        private String contactName;
-
-        /**
         * 目的仓id
         */
         private String toWarehouseId;
 
         /**
-        * 目的仓名称
-        */
-        private String toWarehouseName;
-
-        /**
-        * 打印日期
-        */
-        private LocalDateTime printDate;
-
-        /**
-        * 确认收货日期
-        */
-        private LocalDateTime confirmReceiveDate;
-
-        /**
-        * 收货员id
-        */
-        private String receiveUserId;
-
-        /**
-        * 收货员名
-        */
+         * 收货员名
+         */
         private String receiveUserName;
 
         /**
-        * 收货电话
-        */
+         * 收货电话
+         */
         private String receivePhone;
 
         /**
-        * 收货地址
-        */
+         * 收货地址
+         */
         private String receiveAddress;
 
         /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 收货状态
-        */
-        private String receiptStatus;
-
-        /**
-        * 是否打印
-        */
-        private Boolean isPrint;
-
-
+         * 产品明细
+         */
+        private List<DeliveryOrderDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -146,6 +317,9 @@ public class DeliveryOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        @NotEmpty(message = "明细不能为空")
+        @Valid
+        private List<DeliveryOrderDetailDTO.AddDTO> detailList;
 
     }
 
@@ -154,13 +328,18 @@ public class DeliveryOrderDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
 
     }
 
@@ -185,7 +364,7 @@ public class DeliveryOrderDTO implements Serializable {
         /**
         * 预计到达日期
         */
-        private LocalDateTime expectedDate;
+        private LocalDate planDeliveryDate;
 
         /**
         * 收货单号
@@ -231,12 +410,12 @@ public class DeliveryOrderDTO implements Serializable {
         /**
         * 打印日期
         */
-        private LocalDateTime printDate;
+        private LocalDate printDate;
 
         /**
         * 确认收货日期
         */
-        private LocalDateTime confirmReceiveDate;
+        private LocalDate confirmReceiveDate;
 
         /**
         * 收货员id
@@ -259,23 +438,19 @@ public class DeliveryOrderDTO implements Serializable {
         private String receiveAddress;
 
         /**
-        * 来源类型
+        * 来源类型  {@link DeliveryOrderEnum.SourceTypeEnum}
         */
         @NotBlank(message = "来源类型不能为空")
-        @Size(max = 20,message = "来源类型最大长度不能超过20位")
         private String sourceType;
 
         /**
-        * 收货状态
+        * 收货状态 {@link DeliveryOrderEnum.ReceiptStatusEnum}
         */
-        @NotBlank(message = "收货状态不能为空")
-        @Size(max = 50,message = "收货状态最大长度不能超过50位")
         private String receiptStatus;
 
         /**
         * 是否打印
         */
-        @NotNull(message = "是否打印不能为空")
         private Boolean isPrint;
 
 

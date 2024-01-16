@@ -15,7 +15,7 @@
        <result column="code" property="code" />
        <result column="supplier_id" property="supplierId" />
        <result column="source_id" property="sourceId" />
-       <result column="expected_date" property="expectedDate" />
+       <result column="plan_delivery_date" property="planDeliveryDate" />
        <result column="receive_code" property="receiveCode" />
        <result column="source_code" property="sourceCode" />
        <result column="customer_name" property="customerName" />
@@ -45,8 +45,57 @@
         update_time,
         version,
         is_deleted,
-        code, supplier_id, source_id, expected_date, receive_code, source_code, customer_name, contact_id, contact_name, to_warehouse_id, to_warehouse_name, print_date, confirm_receive_date, receive_user_id, receive_user_name, receive_phone, receive_address, source_type, receipt_status, is_print
+        code, supplier_id, source_id, plan_delivery_date, receive_code, source_code, customer_name, contact_id, contact_name, to_warehouse_id, to_warehouse_name, print_date, confirm_receive_date, receive_user_id, receive_user_name, receive_phone, receive_address, source_type, receipt_status, is_print
     </sql>
+    <select id="paging" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$ListDTO">
+        select
+            do2.id,
+            do2.code,
+            do2.plan_delivery_date as planDeliveryDate,
+            do2.receive_code as receiveCode,
+            do2.is_print as isPrint,
+            do2.receipt_status as receiptStatus,
+            do2.source_code as sourceCode,
+            doe.sku_id as skuId,
+            doe.sku_no as skuNo,
+            doe.is_urgent as isUrgent,
+            doe.product_name as productName,
+            doe.order_qty as orderQty,
+            doe.delivery_qty as deliveryQty,
+            doe.gift_qty as giftQty,
+            doe.receive_qty as receiveQty,
+            doe.gift_receive_qty as giftReceiveQty,
+            doe.qc_good_qty as qcGoodQty,
+            do2.customer_name as customerName,
+            do2.to_warehouse_name as toWarehouseName,
+            do2.print_date as printDate,
+            do2.confirm_receive_date as confirmReceiveDate,
+            do2.receive_user_name as receiveUserName,
+            do2.create_user_name as createUserName,
+            do2.create_time as createTime
+        from delivery_order do2
+        left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        where do2.is_deleted = false
+        and do2.supplier_id = #{params.supplierId}
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        do2.create_time DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
+        select do2.receipt_status as receiptStatus,
+               do2.is_print as isPrint,
+               ((doe.delivery_qty - doe.receive_qty) != 0 ) as qtyDifferences,
+               count(1) as count
+        from delivery_order do2
+                 inner join delivery_order_detail doe on do2.id = doe.main_id
+        where do2.is_deleted = false and doe.is_deleted = false
+        and do2.supplier_id = #{supplierId}
+        group by do2.receipt_status,do2.is_print,((doe.delivery_qty - doe.receive_qty) != 0 )
+    </select>
 
 
 </mapper>

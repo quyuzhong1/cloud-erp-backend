@@ -1,8 +1,15 @@
 package com.erp.server.srm.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +23,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
 
+    IPage<DeliveryOrderDTO.ListDTO> paging(Page query, @Param("params")DeliveryOrderDTO.ParamDTO params);
+
+    List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierId") String supplierId);
 }
