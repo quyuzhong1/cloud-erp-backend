@@ -221,6 +221,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         String msg = "拦截成功";
         if(cancelResult.isSuccess()){
             entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+            entity.setInterceptStatus("");
         }else{
             entity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
             ApiResult<InterceptResponseVO> interceptResult = logisticsBillFeign.interceptBill(dto);
