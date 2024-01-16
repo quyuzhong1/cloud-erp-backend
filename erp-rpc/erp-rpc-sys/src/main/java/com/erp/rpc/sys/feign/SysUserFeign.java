@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -27,7 +28,7 @@ import java.util.Map;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys")
+@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
 public interface SysUserFeign {
 
     /**

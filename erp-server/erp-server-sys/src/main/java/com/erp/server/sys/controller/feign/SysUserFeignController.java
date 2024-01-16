@@ -489,6 +489,8 @@ public class SysUserFeignController extends BaseController {
      */
     @PostMapping("/addSrmUser")
     public String addSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        //验证用户信息
+//        sysUserInfoService.checkUserInfo(sysUserInfoDTO);
         return sysUserInfoService.addSrmUser(sysUserInfoDTO);
     }
 

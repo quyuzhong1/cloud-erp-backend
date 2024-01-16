@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -22,7 +23,7 @@ import java.util.List;
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-scm", contextId = "supplierUser")
+@FeignClient(name = "erp-scm", contextId = "supplierUser",configuration = {FeignErrorDecoder.class})
 public interface SupplierUserFeign {
 
     /**

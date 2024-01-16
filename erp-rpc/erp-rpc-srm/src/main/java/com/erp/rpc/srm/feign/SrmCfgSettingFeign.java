@@ -1,5 +1,6 @@
 package com.erp.rpc.srm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +17,7 @@ import java.util.List;
  * @date 2024年01月11日
  * @version: 1.0
  */
-@FeignClient(name = "erp-srm", contextId = "cfgSetting")
+@FeignClient(name = "erp-srm", contextId = "cfgSetting",configuration = {FeignErrorDecoder.class})
 public interface SrmCfgSettingFeign {
 
     @PostMapping("/feign/cfgSetting/getConfigList")

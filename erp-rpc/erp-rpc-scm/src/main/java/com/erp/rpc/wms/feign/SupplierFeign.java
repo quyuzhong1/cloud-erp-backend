@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -18,7 +19,7 @@ import java.util.Map;
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-scm", contextId = "supplier")
+@FeignClient(name = "erp-scm", contextId = "supplier",configuration = {FeignErrorDecoder.class})
 public interface SupplierFeign {
 
 

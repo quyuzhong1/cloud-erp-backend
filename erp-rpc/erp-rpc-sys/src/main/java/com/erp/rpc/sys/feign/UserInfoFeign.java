@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -23,7 +24,7 @@ import java.util.Map;
  * @Date 2023-06-19 19:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys", contextId = "user")
+@FeignClient(name = "erp-sys", contextId = "user",configuration = {FeignErrorDecoder.class})
 public interface UserInfoFeign {
 
     /**

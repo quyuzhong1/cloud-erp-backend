@@ -10,6 +10,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
@@ -71,8 +72,12 @@ public class SupplierUserController extends BaseController {
         sysUserInfoDTO.setIsSuper(false);
         sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         sysUserInfoDTO.setSupplierId(userService.getSupplierId());
-        supplierUserFeign.save(sysUserInfoDTO);
-        return success();
+        try {
+            return supplierUserFeign.save(sysUserInfoDTO);
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+
     }
 
     /**
