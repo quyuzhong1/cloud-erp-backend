@@ -144,5 +144,5 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
 
     List<PurchaseStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseStatisticsDTO.RequestDTO requestDTO);
 
-    Integer srmPurchaseOrderCount(@Param("params")PurchaseOrderSrmDTO.SearchParamDTO params);
+    Integer srmPurchaseOrderCount(@Param("params") PurchaseOrderSrmDTO.SearchParamDTO params);
 }

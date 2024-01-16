@@ -65,4 +65,12 @@ public class SupplierFeignController extends BaseController {
     public SupplierEntity getSupplierByUid(@RequestParam("uid") String uid) {
         return supplierService.getSupplierByUid(uid);
     }
+
+    /**
+     * 根据用户id获取供应商
+     */
+    @GetMapping("/getSupplierById")
+    public SupplierEntity getSupplierById(@RequestParam("id") String id) {
+        return supplierService.getById(id);
+    }
 }

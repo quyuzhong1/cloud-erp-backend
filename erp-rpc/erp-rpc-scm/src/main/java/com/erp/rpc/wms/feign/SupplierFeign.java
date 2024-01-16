@@ -51,4 +51,7 @@ public interface SupplierFeign {
 
     @GetMapping("/feign/supplier/getSupplierByUid")
     SupplierEntity getSupplierByUid(@RequestParam("uid") String uid);
+
+    @GetMapping("/feign/supplier/getSupplierById")
+    SupplierEntity getSupplierById(@RequestParam("id") String id);
 }

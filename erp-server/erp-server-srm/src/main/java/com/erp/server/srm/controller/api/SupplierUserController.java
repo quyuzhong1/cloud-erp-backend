@@ -103,7 +103,7 @@ public class SupplierUserController extends BaseController {
     @LogViewService
     @GetMapping("/getSupplier")
     public ApiResult<SupplierEntity> getSupplier() {
-        SupplierEntity supplier = supplierFeign.getSupplierByUid(userService.getSupplierId());
+        SupplierEntity supplier = supplierFeign.getSupplierById(userService.getSupplierId());
         return success(supplier);
     }
     /**
