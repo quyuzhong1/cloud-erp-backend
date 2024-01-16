@@ -377,7 +377,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult
      */
     @PostMapping("/srmOrderConfirmCount")
-    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.RequestDTO dto) {
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
         return purchaseOrderService.srmOrderConfirmCount(dto);
     }
 }

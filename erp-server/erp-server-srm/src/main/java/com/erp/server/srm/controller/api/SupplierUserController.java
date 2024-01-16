@@ -10,11 +10,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,8 @@ public class SupplierUserController extends BaseController {
     private SupplierUserFeign supplierUserFeign;
     @Resource
     private UserService userService;
+    @Resource
+    private SupplierFeign supplierFeign;
 
     /**
      * 分页查询
@@ -88,12 +92,20 @@ public class SupplierUserController extends BaseController {
      */
     @LogViewService
     @GetMapping("/info/{uid}")
-    public ApiResult info(@PathVariable("uid") String uid) {
+    public ApiResult<SupplierUserInfoVO> info(@PathVariable("uid") String uid) {
         SupplierUserInfoVO info = supplierUserFeign.info(uid);
         return success(info);
     }
 
-
+    /**
+     * 获取供应商信息
+     */
+    @LogViewService
+    @GetMapping("/getSupplier")
+    public ApiResult<SupplierEntity> getSupplier() {
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(userService.getSupplierId());
+        return success(supplier);
+    }
     /**
      * 删除
      */

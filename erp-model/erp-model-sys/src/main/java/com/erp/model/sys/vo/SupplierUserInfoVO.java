@@ -61,7 +61,7 @@ public class SupplierUserInfoVO implements Serializable {
     /**
      *启用状态  正常 true 禁用 false  //o 禁用 1 正常
      */
-    private Boolean userState;
+    private Integer userState;
     /**
      * 微信绑定  没有绑定则显示【未绑定】，绑定显示【已绑定】
      */
