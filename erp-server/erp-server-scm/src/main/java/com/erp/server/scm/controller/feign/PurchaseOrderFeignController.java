@@ -2,13 +2,19 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -379,5 +385,18 @@ public class PurchaseOrderFeignController {
     @PostMapping("/srmOrderConfirmCount")
     public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
         return purchaseOrderService.srmOrderConfirmCount(dto);
+    }
+
+    /**
+     * srm订单确认列表分页查询
+     * @author Will
+     * @date: 2023/3/15 16:47
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmPaging")
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.srmOrderConfirmPaging(dto);
+        return pagingVO;
     }
 }

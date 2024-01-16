@@ -153,7 +153,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         refUserEntity.setUid(sysUserInfoDTO.getUid());
         refUserEntity.setSupplierId(sysUserInfoDTO.getSupplierId());
-        refUserEntity.setIsSuper(sysUserInfoDTO.getIsSuper());
+        refUserEntity.setIsSuper(Objects.nonNull(sysUserInfoDTO.getIsSuper())? sysUserInfoDTO.getIsSuper():false);
         refUserEntity.setDisabled(false);
         supplierRefUserService.saveOrUpdate(refUserEntity);
         // 记录主单操作日志

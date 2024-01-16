@@ -68,12 +68,16 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/save")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
-    public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+    public ApiResult saveSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(false);
         sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         sysUserInfoDTO.setSupplierId(userService.getSupplierId());
+        sysUserInfoDTO.setCreatePasswordType(1);
+        sysUserInfoDTO.setConfirmPassword(sysUserInfoDTO.getPassword());
+        sysUserInfoDTO.setNeedChangePwd(false);
+        sysUserInfoDTO.setRealName(sysUserInfoDTO.getUserName());
         try {
-            return supplierUserFeign.save(sysUserInfoDTO);
+            return supplierUserFeign.saveSrm(sysUserInfoDTO);
         }catch (Exception e){
             throw new ServiceException(e.getMessage());
         }
@@ -87,7 +91,7 @@ public class SupplierUserController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(true);
-        supplierUserFeign.update(sysUserInfoDTO);
+        supplierUserFeign.updateSrm(sysUserInfoDTO);
         return success();
     }
 

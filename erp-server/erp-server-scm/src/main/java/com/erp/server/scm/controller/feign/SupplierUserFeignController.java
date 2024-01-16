@@ -72,9 +72,9 @@ public class SupplierUserFeignController extends BaseController {
     /**
      * 添加用户
      */
-    @PostMapping("/save")
+    @PostMapping("/saveSrm")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户")
-    public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+    public ApiResult saveSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         supplierUserService.add(sysUserInfoDTO);
         return success();
     }
@@ -89,9 +89,9 @@ public class SupplierUserFeignController extends BaseController {
     /**
      * 修改用户
      */
-    @PostMapping("/update")
+    @PostMapping("/updateSrm")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
-    public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+    public ApiResult updateSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         if(StringUtils.isEmpty(sysUserInfoDTO.getUid())) throw new ServiceException("用户ID不能为空");
         supplierUserService.update(sysUserInfoDTO);
         return success();

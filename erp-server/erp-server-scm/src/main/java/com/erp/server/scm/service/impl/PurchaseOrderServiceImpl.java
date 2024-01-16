@@ -184,6 +184,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(params);
+        if (!isFlag) {
+            return new PagingVO(new Page());
+        }
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
+        List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        doOpHandlePurchaseOrder(records);
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> testQuery(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
@@ -1561,7 +1581,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> approveStatusList = new ArrayList<>(1);
         List<String> arrivalStatusList = new ArrayList<>(2);
         //待我审核
-        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
+        if (PurchaseOrderConfirmTypeEnum.TO_BE_CONFIRM.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());

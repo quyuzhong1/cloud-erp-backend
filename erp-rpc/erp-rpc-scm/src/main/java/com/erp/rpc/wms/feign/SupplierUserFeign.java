@@ -47,14 +47,14 @@ public interface SupplierUserFeign {
     /**
      * 添加用户
      */
-    @PostMapping("/feign/supplierUser/save")
-    ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    @PostMapping("/feign/supplierUser/saveSrm")
+    ApiResult saveSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
     /**
      * 修改用户
      */
-    @PostMapping("/feign/supplierUser/update")
-    ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    @PostMapping("/feign/supplierUser/updateSrm")
+    ApiResult updateSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
 
     /**

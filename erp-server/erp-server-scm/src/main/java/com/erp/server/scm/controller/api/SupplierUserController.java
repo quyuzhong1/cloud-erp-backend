@@ -110,7 +110,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/remove")
-    public ApiResult delete(@RequestBody DeleteUserDTO dto) {
+    public ApiResult remove(@RequestBody DeleteUserDTO dto) {
         return supplierUserService.deleteById(dto.getUid());
     }
 

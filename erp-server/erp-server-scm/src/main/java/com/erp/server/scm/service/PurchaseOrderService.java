@@ -29,6 +29,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return PagingVO<PurchaseOrderDTO.listDTO>
      */
     PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> testQuery(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
     /**
