@@ -2,8 +2,10 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -61,6 +63,16 @@ public class PurchaseOrderController extends BaseController {
             tableAlias = "po")
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 测试高级查询功能
+     */
+    @PostMapping("/testQuery")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
+    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.testQuery(dto);
         return success(pagingVO);
     }
 

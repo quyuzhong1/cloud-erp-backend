@@ -24,7 +24,15 @@ public enum ApiError implements Serializable {
 
     ERROR_403(403, "您未登录,请登录后操作"),
 
-
+    /**
+     * 高级查询异常
+     */
+    QUERY_NOT_EXTEND_METHOD(2000,"扩展字段没有配置查询脚本"),
+    QUERY_ILLEGAL_FIELD(2001, "非法的查询字段或查询值"),
+    QUERY_ILLEGAL_COND(2002, "非法的查询连接条件"),
+    QUERY_LIST_TYPE_ERROR(2003, "在...列表或不在...列表查询应传递数组"),
+    QUERY_BETWEEN_ERROR(2004, "介于条件需要填起始时间和开始时间"),
+    QUERY_ILLEGAL_DATE_FORMAT(2005, "非法日期格式"),
 
 
     /**
@@ -95,7 +103,6 @@ public enum ApiError implements Serializable {
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
-
     /**
      * 警告信息 从800 开始
      */
