@@ -492,6 +492,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
