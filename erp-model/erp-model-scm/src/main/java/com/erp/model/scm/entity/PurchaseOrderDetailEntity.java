@@ -112,12 +112,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal taxRate;
 
     /**
-     * 签收数量
-     */
-    @TableField(exist = false)
-    private Integer receiveQty;
-
-    /**
      * 是否加急（false否，true是）
      */
     @TableField("is_urgent")
@@ -189,10 +183,21 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String confirmType;
 
     /**
-     * 执行状态
+     * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
      */
     @TableField("execution_status")
     private String executionStatus;
+
+
+
+    //----------------------------------------------------------------------辅助字段 -------------------------------------------------------------------
+
+
+    /**
+     * 签收数量
+     */
+    @TableField(exist = false)
+    private Integer receiveQty;
 
     /**
      * 委外到货状态

@@ -149,6 +149,10 @@ public class CfgQueryConditionDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
+        /**
+         * 自定义option (数组json格式)
+         */
+        private List<Map<String,Object>> optionList;
     }
 
     @Data
@@ -413,5 +417,10 @@ public class CfgQueryConditionDTO implements Serializable {
          * 显示类型{{sys_url}}common/enumDropDown?type=QueryDisplayType
          */
         private String displayType;
+
+        /**
+         * 自定义option (数组json格式)
+         */
+        private List<Map<String,Object>> optionList;
     }
 }

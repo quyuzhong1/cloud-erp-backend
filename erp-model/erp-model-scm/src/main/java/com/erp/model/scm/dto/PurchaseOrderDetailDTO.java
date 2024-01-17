@@ -569,4 +569,17 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private Integer hasStockInQty;
     }
+
+    /**
+     * 明细id
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderConfirmDTO {
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+    }
 }

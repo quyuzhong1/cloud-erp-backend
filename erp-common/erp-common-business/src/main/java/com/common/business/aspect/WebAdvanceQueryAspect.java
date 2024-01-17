@@ -52,8 +52,13 @@ public class WebAdvanceQueryAspect {
         if (controllerDataScope == null) {
             return;
         }
+        IQueryHandler queryHandler;
         //扩展处理类和扩展字段
-        IQueryHandler queryHandler = context.getBean(controllerDataScope.handler());
+        if(controllerDataScope.handler() != IQueryHandler.class) {
+            queryHandler = context.getBean(controllerDataScope.handler());
+        }else{
+            queryHandler = null;
+        }
 
         //获取查询对象(如果为空会初始化一个长度为1的集合）
         List<AdvanceQueryDTO> advanceQueryDTOList = this.getQueryDTOList(point);
@@ -125,7 +130,10 @@ public class WebAdvanceQueryAspect {
             sql.append("(");
         }
         String contentSql;
-        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend() || dto.getField().equals("so.tab")){
+        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend()){
+            if(queryHandler == null){
+                throw new ServiceException(ApiError.QUERY_NOT_EXTEND_CLASS);
+            }
             String compareValueSQL = QueryUtils.splicingCompareValueSQL(condEnum,dto);
             contentSql = queryHandler.splicingSQL(dto.getField(),condEnum.getCode(),dto.getValue(),compareValueSQL);
             if(StringUtils.isBlank(contentSql)){

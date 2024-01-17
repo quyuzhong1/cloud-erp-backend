@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -147,8 +148,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public List<SupplierConfigVO> getConfigList(List<String> supplierIds) {
-        if (CollectionUtils.isEmpty(supplierIds)) return Collections.emptyList();
-        List<CfgSettingEntity> list = lambdaQuery().in(CfgSettingEntity::getSupplierId, supplierIds).eq(CfgSettingEntity::getIsDeleted, false).list();
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return Collections.emptyList();
+        }
+        List<CfgSettingEntity> list = lambdaQuery().in(CfgSettingEntity::getSupplierId, supplierIds).eq(CfgSettingEntity::getDisabled,Boolean.FALSE).list();
         List<SupplierConfigVO> configVOList = new ArrayList<>(supplierIds.size());
         Map<String, CfgSettingEntity> settingEntityMap = null;
         if (CollectionUtils.isNotEmpty(list)) {
@@ -195,6 +198,34 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             handleViewEnum(cfgSetting, viewDTO);
         }
         return viewDTO;
+    }
+
+    @Override
+    public List<CfgSettingDTO.ViewDTO> listByKey(String key) {
+        List<CfgSettingEntity> list = lambdaQuery().eq(CfgSettingEntity::getKey, key).eq(CfgSettingEntity::getDisabled,Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        ConfigKeyEnum keyEnum = ConfigKeyEnum.getEnum(key);
+        List<CfgSettingDTO.ViewDTO> configList = new ArrayList<>(list.size());
+        for (CfgSettingEntity cfgSettingEntity : list) {
+            CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
+            viewDTO.setSupplierId(cfgSettingEntity.getSupplierId());
+            switch (keyEnum) {
+                case ORDER_AUTO_ACCEPT :
+                    OrderAcceptDTO orderAcceptDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
+                    viewDTO.setOrderAcceptDTO(orderAcceptDTO);
+                    break;
+                case RETURN_AUTO_CONFIRM:
+                    ReturnConfirmDTO returnConfirmDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
+                    viewDTO.setReturnConfirmDTO(returnConfirmDTO);
+                    break;
+                default:
+                    throw new ServiceException(ApiError.ERROR_CFG_SETTING_KEY,key);
+            }
+            configList.add(viewDTO);
+        }
+        return configList;
     }
 
     private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {
@@ -282,7 +313,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     private List<CfgSettingEntity> getListBySupplierId(String supplierId) {
-        if (StringUtils.isEmpty(supplierId)) return Collections.emptyList();
+        if (StringUtils.isEmpty(supplierId)) {
+            return Collections.emptyList();
+        }
         return baseMapper.getListBySupplierId(supplierId);
     }
 

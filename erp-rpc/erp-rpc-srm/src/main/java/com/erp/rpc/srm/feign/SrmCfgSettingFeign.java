@@ -1,6 +1,7 @@
 package com.erp.rpc.srm.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -33,4 +34,15 @@ public interface SrmCfgSettingFeign {
      **/
     @PostMapping("/feign/cfgSetting/listByKeyAndSupplier")
     List<CfgSettingEntity> listByKeyAndSupplier(@RequestParam("key") String key, @RequestParam("supplierIds") List<String> supplierIds);
+
+    /**
+     * @description: 根据key值查询所有供应商配置信息
+     * @author Will
+     * @date: 2024/1/17 10:47
+     * @param key
+     * @return List<ViewDTO>
+     */
+    @PostMapping("/feign/cfgSetting/listByKey")
+    List<CfgSettingDTO.ViewDTO> listByKey(@RequestBody String key);
+
 }

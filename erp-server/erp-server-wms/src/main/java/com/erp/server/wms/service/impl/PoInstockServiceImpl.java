@@ -31,6 +31,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -1073,11 +1074,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
 
         //订单明细信息集合
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(ids);
+        List<String> detailIdList = list.stream().map(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailIdList);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            log.error("未找到订单明细信息，ids={}", JSONUtil.toJsonStr(ids));
+            log.error("未找到订单明细信息，detailIdList={}", JSONUtil.toJsonStr(detailIdList));
             throw new ServiceException(ApiError.ERROR_98026);
         }
+
+
         List<String> stockInUserIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getStockInUserId())).map(PurchaseOrderDTO.GenerateStockInDTO::getStockInUserId).collect(Collectors.toList());
         List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(stockInUserIds)) {
@@ -1112,6 +1116,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
                 PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
+
+                //订单明细数据校验
+                String skuNos = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(ExecutionStatusEnum.CLOSED.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
+                }
+
                 addDetailDTO.setSourceDetailId(generateStockInDTO.getPurchaseOrderDetailId());
                 addDetailDTO.setPurchaseOrderDetailId(generateStockInDTO.getPurchaseOrderDetailId());
                 addDetailDTO.setStockInQty(generateStockInDTO.getStockInQty());

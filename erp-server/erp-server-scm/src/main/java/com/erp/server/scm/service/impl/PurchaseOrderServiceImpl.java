@@ -41,6 +41,8 @@ import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -52,6 +54,7 @@ import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -163,6 +166,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Autowired
     private PurchaseChangeService purchaseChangeService;
+
+    @Autowired
+    private SrmCfgSettingFeign srmCfgSettingFeign;
+
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -357,9 +364,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //签收
             if (PurchaseOrderProcessOperationEnum.RECEIVE.getCode().equals(item.getCode())) {
                 long count = entityDetails.stream().filter(obj ->
-                        PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
-                        || PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(obj.getExecutionStatus())
-                        || PurchaseOrderConfirmTypeEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
+                        ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
+                        || ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                        || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
                 ).count();
                 if (count > 0) {
                     processDTO.setIsArrive(Boolean.TRUE);
@@ -374,8 +381,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //签收完成
             if (PurchaseOrderProcessOperationEnum.FINISH_RECEIVE.getCode().equals(item.getCode())) {
                 long count = entityDetails.stream().filter(obj ->
-                        !PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(obj.getExecutionStatus())
-                        && !PurchaseOrderConfirmTypeEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
+                        !ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                        && !ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
                 ).count();
                 if (count > 0) {
                     processDTO.setIsArrive(Boolean.FALSE);
@@ -610,9 +617,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //已确认、已拒绝、送货中允许结束交货
-        long count = purchaseOrderDetailList.stream().filter(obj -> !PurchaseOrderConfirmTypeEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
-                && !PurchaseOrderConfirmTypeEnum.REJECT.getCode().equals(obj.getExecutionStatus())
-                && !PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
+        long count = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
+                && !ExecutionStatusEnum.REJECT.getCode().equals(obj.getExecutionStatus())
+                && !ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
                 ).count();
         if (count > 0 && isValid) {
             throw new ServiceException(ApiError.ERROR_98035);
@@ -620,7 +627,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> mainIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
         List<PurchaseOrderEntity> mainList = this.getList(mainIds);
         //更新明细中的交货状态
-        purchaseOrderDetailService.updateArrivalStatusByIds(PurchaseOrderConfirmTypeEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
+        purchaseOrderDetailService.updateArrivalStatusByIds(ExecutionStatusEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
 
         // 更新库存
         updateInventoryFinish(mainList, purchaseOrderDetailList);
@@ -1343,8 +1350,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             }
             //已完成、已关闭订单交货数量为0
-            Integer deliveryQty = (PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(obj.getExecutionStatus())
-                    || PurchaseOrderConfirmTypeEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
+            Integer deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                    || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
                     ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
@@ -1370,7 +1377,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-            obj.setExecutionStatusName(PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus()));
+            obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
 
             // 采购申请单号
             if(CollUtil.isNotEmpty(refList) && StringUtils.isBlank(obj.getSourceType())) {
@@ -1406,7 +1413,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 obj.setApproveUserName(curApprove);
             }
             //确认类型
-            obj.setConfirmTypeName(OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType()));
+            obj.setConfirmTypeName(ConfirmTypeEnum.getNameByCode(obj.getConfirmType()));
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);
@@ -1933,7 +1940,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailMembers.stream().forEach(member->{
                 //执行状态已完成或已关闭
                 // 的无需再次结束交货
-                if (PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(member.getExecutionStatus()) ) {
+                if (ExecutionStatusEnum.FINISH.getCode().equals(member.getExecutionStatus()) ) {
                     log.info("采购订单明细id:{}，对应采购订单:{}, 已经到货，无需结束交货", member.getId(), po.getCode());
                     return;
                 }
@@ -2272,10 +2279,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.SearchParamDTO dto) {
 
-        PurchaseOrderConfirmTypeEnum[] typeEnums = PurchaseOrderConfirmTypeEnum.values();
+        ExecutionStatusEnum[] typeEnums = ExecutionStatusEnum.values();
         List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = new ArrayList<>(typeEnums.length);
 
-        for (PurchaseOrderConfirmTypeEnum typeEnum : typeEnums) {
+        for (ExecutionStatusEnum typeEnum : typeEnums) {
             countDTOS.add(getSrmConfirmCount(dto.getSupplierId(), typeEnum));
         }
         return countDTOS;
@@ -2297,14 +2304,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //判断执行状态
-        long count = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(PurchaseOrderConfirmTypeEnum.TO_BE_CONFIRM.getCode(), obj.getExecutionStatus()) && StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())).count();
+        long count = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.TO_BE_CONFIRM.getCode(), obj.getExecutionStatus()) && StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM,entity.getCode());
         }
         //采购订单明细id集合
         List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
 
-        purchaseOrderDetailService.updateExecutionStatus(detailIdList,PurchaseOrderConfirmTypeEnum.CONFIRM,remark);
+        purchaseOrderDetailService.purchaseOrderConfirm(detailIdList, ExecutionStatusEnum.CONFIRM,remark, ConfirmTypeEnum.MANUAL);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -2368,8 +2375,24 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    @Override
+    public void purchaseOrderAutoConfirm() {
+        //查询规则设置
+        List<CfgSettingDTO.ViewDTO> list = srmCfgSettingFeign.listByKey(ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode());
+        if (CollectionUtils.isEmpty(list)) {
+            log.warn("未找到存在采购订单设置的供应商！");
+            return;
+        }
+        List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> purchaseOrderList = baseMapper.listPurchaseOrderAutoConfirm(list);
+        if (CollectionUtils.isEmpty(purchaseOrderList)) {
+            return;
+        }
+        List<String> detailIdList = purchaseOrderList.stream().map(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getDetailId).collect(Collectors.toList());
+        purchaseOrderDetailService.purchaseOrderAutoConfirm(detailIdList);
+    }
 
-    private ListStatusCountDTO.PurchaseOrderConfirmCountDTO getSrmConfirmCount(String supplierId, PurchaseOrderConfirmTypeEnum typeEnum) {
+
+    private ListStatusCountDTO.PurchaseOrderConfirmCountDTO getSrmConfirmCount(String supplierId, ExecutionStatusEnum typeEnum) {
         PurchaseOrderSrmDTO.SearchParamDTO params = new PurchaseOrderSrmDTO.SearchParamDTO();
         params.setSupplierId(supplierId);
         params.setExecutionStatus(typeEnum.getCode());

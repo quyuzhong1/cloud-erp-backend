@@ -1,9 +1,11 @@
 package com.erp.server.srm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.query.IQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -12,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.server.srm.query.DeliveryOrderQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -65,6 +68,7 @@ public class DeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         return success(deliveryOrderService.paging(dto));
     }

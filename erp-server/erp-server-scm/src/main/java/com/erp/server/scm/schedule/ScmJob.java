@@ -4,6 +4,7 @@ import com.erp.server.scm.rocketmq.sync.wms.WmsSyncPurchaseService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,5 +39,19 @@ public class ScmJob {
         WmsSyncPurchaseService.syncPurchaseOrderToWms(purchaseOrderService.list());
         WmsSyncPurchaseService.syncPurchaseOrderDetailToWms(purchaseOrderDetailService.list());
         WmsSyncPurchaseService.syncPurchaseOrderSupplierToWms(purchaseOrderSupplierService.list());
+    }
+
+
+    /**
+     * 采购订单自动确认
+     */
+    @XxlJob("purchaseOrderAutoConfirm")
+    public void purchaseOrderAutoConfirm() {
+        XxlJobHelper.log("=====采购订单自动确认 开始任务=====");
+        long start = System.currentTimeMillis();
+        purchaseOrderService.purchaseOrderAutoConfirm();
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====采购订单自动确认 结束任务=====");
     }
 }

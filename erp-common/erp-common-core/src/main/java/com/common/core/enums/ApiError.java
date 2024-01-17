@@ -33,6 +33,7 @@ public enum ApiError implements Serializable {
     QUERY_LIST_TYPE_ERROR(2003, "在...列表或不在...列表查询应传递数组"),
     QUERY_BETWEEN_ERROR(2004, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(2005, "非法日期格式"),
+    QUERY_NOT_EXTEND_CLASS(2006,"扩展字段没有配置处理类"),
 
 
     /**
@@ -103,6 +104,7 @@ public enum ApiError implements Serializable {
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
+    ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     /**
      * 警告信息 从800 开始
      */
@@ -694,7 +696,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM(98115,"采购订单【{}】未审核完成不支持确认"),
     ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM(98116,"采购订单【{}】非待确认不支持确认"),
-
+    ERROR_PURCHASE_ORDER_PUSH_DOWN(98117,"采购订单【{}】SKU【{}】已关闭不支持下推"),
 
     /**
      * WMS 错误

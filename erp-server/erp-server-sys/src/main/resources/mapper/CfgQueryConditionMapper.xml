@@ -24,6 +24,7 @@
         <result column="is_extend" property="isExtend" />
         <result column="group_name" property="groupName" />
         <result column="display_type" property="displayType" />
+        <result column="option_list" property="optionList" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <resultMap id="PagingMap" extends="BaseResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ListDTO">
@@ -54,6 +55,7 @@
             <result property="props" column="props"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="fieldProps" column="fieldProps"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="params" column="param"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result column="option_list" property="optionList" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
         </association>
 
         <!-- 嵌套 Compare 列表 -->
@@ -73,7 +75,7 @@
         update_time,
         version,
         is_deleted,
-        code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group_name, display_type
+        code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group_name, display_type,optionList
     </sql>
 
     <select id="getQueryConditionByCode" resultMap="cfgQueryConditionResultMap">
@@ -98,7 +100,8 @@
             qc.display_type,
             qc.group_name,
             qc.is_extend,
-            qo.props
+            qo.props,
+            qc.option_list
         from cfg_query_condition qc
                  left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
                  left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
@@ -135,7 +138,8 @@
         qc.create_time,
         qc.update_time,
         qc.update_user_name,
-        qo.id as queryOptionId
+        qo.id as queryOptionId,
+        qc.option_list
         from cfg_query_condition qc
         left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
         left join menu me on me.menu_code = qc.code

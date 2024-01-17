@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -1115,8 +1116,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             throw new ServiceException(ApiError.ERROR_98017);
         }
         //已确认和送货中允许下推收货单
-        long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !PurchaseOrderConfirmTypeEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
-                && !PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
+        long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
+                && !ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
         if (executionStatusCount > 0) {
             throw new ServiceException(ApiError.ERROR_98041);
         }
@@ -1152,6 +1153,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
                     if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {
                         WarehouseReceiveDetailDTO.AddDTO detailAddDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                        //订单明细数据校验
+                        String skuNos = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(ExecutionStatusEnum.CLOSED.getCode(), obj.getExecutionStatus()))
+                                .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                        if (StrUtil.isNotBlank(skuNos)) {
+                            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
+                        }
+
                         detailAddDTO.setReceiveQty(receiveDTO.getReceiveQty());
                         detailAddDTO.setExceedQty(receiveDTO.getExceedQty());
                         detailAddDTO.setRemark(receiveDTO.getRemark());

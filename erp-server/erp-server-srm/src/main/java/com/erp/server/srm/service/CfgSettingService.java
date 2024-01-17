@@ -64,4 +64,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     CfgSettingDTO.ViewDTO view();
+    /**
+     * @description: 根据key值查询所有供应配置
+     * @author Will
+     * @date: 2024/1/17 10:49
+     * @param key
+     * @return List<CfgSettingDTO.ViewDTO>
+     */
+    List<CfgSettingDTO.ViewDTO> listByKey(String key);
 }

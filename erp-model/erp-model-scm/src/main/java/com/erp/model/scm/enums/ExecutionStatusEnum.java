@@ -6,7 +6,7 @@ package com.erp.model.scm.enums;
 
  * @date 2023/3/27 10:52
  */
-public enum PurchaseOrderConfirmTypeEnum {
+public enum ExecutionStatusEnum {
 
     //待确认
     TO_BE_CONFIRM("toBeConfirm", "待确认"),
@@ -25,7 +25,7 @@ public enum PurchaseOrderConfirmTypeEnum {
     private String code;
     private String name;
 
-    PurchaseOrderConfirmTypeEnum(String code, String name) {
+    ExecutionStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -39,8 +39,8 @@ public enum PurchaseOrderConfirmTypeEnum {
     }
 
     public static String getNameByCode(String code) {
-        PurchaseOrderConfirmTypeEnum[] stateEnums = values();
-        for (PurchaseOrderConfirmTypeEnum stateEnum : stateEnums) {
+        ExecutionStatusEnum[] stateEnums = values();
+        for (ExecutionStatusEnum stateEnum : stateEnums) {
             if (stateEnum.getCode().equals(code) ) {
                 return stateEnum.getName();
             }

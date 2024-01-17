@@ -95,7 +95,6 @@ public class ${table.dtoName} implements Serializable {
         /**
             * sqlMap 默认key default
         */
-        @JsonIgnore
         private Map<String,String> sqlMap;
 
      }

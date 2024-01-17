@@ -309,7 +309,6 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        @JsonIgnore
         private Map<String,String> sqlMap;
 
         /**
@@ -1093,6 +1092,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购订单id
          */
         private String purchaseOrderId;
+
+        /**
+         * 采购订单编号
+         */
+        private String code;
 
         /**
          * 收料组织

@@ -75,7 +75,9 @@
             do2.create_time as createTime
         from delivery_order do2
         left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
-        where do2.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and do2.is_deleted = false
         and do2.supplier_id = #{params.supplierId}
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
