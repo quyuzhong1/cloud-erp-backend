@@ -308,7 +308,6 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        @JsonIgnore
         private Map<String,String> sqlMap;
 
         /**
