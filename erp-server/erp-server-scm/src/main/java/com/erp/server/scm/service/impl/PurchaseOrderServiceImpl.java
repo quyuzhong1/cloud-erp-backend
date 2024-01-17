@@ -353,7 +353,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //签收
             if (PurchaseOrderProcessOperationEnum.RECEIVE.getCode().equals(item.getCode())) {
-                long count = entityDetails.stream().filter(obj -> ArrivalStatusEnum.ARRIVED.getCode().equals("") || ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals("")).count();
+                long count = entityDetails.stream().filter(obj ->
+                        PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())
+                        || PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                        || PurchaseOrderConfirmTypeEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
+                ).count();
                 if (count > 0) {
                     processDTO.setIsArrive(Boolean.TRUE);
                 }
@@ -366,7 +370,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //签收完成
             if (PurchaseOrderProcessOperationEnum.FINISH_RECEIVE.getCode().equals(item.getCode())) {
-                long count = entityDetails.stream().filter(obj -> ArrivalStatusEnum.NON_ARRIVAL.getCode().equals("") || ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals("")).count();
+                long count = entityDetails.stream().filter(obj ->
+                        !PurchaseOrderConfirmTypeEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                        && !PurchaseOrderConfirmTypeEnum.CLOSED.getCode().equals(obj.getExecutionStatus())
+                ).count();
                 if (count > 0) {
                     processDTO.setIsArrive(Boolean.FALSE);
                 } else {
