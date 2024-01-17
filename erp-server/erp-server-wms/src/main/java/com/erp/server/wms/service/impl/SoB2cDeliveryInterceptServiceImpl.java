@@ -282,6 +282,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
 
+        //修改状态
+        lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .eq(SoB2cDeliveryInterceptEntity::getId, id)
+                .update();
+
         String handleResult = HandleResultEnum.FAILURE.getName();
         String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
         // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
@@ -336,15 +345,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         addError.setMainId(entity.getSourceId());
         addError.setMessage(handleResult);
         soB2cFeign.addSoB2cError(addError);
-
-        //修改状态
-        lambdaUpdate()
-                .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
-                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
-                .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
-                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
-                .eq(SoB2cDeliveryInterceptEntity::getId, id)
-                .update();
 
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());

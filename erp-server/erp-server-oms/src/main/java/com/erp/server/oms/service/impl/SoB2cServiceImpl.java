@@ -940,8 +940,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
 
-        ApproveStatusEnum approveStatusEnum=entity.getApproveStatus();
-        if(!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)){
+        ApproveStatusEnum approveStatusEnum = entity.getApproveStatus();
+        if (!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)) {
             throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
         }
 
@@ -1177,13 +1177,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
-        ApiResult apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
+        ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
             soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
             throw new ServiceException(ApiError.Default.code, message);
+        } else {
+            String shippingOrderNo = apiResult.getData();
+            if (StringUtils.isNotBlank(shippingOrderNo)) {
+                this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
+                        eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
+            }
         }
     }
 
@@ -1247,12 +1253,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 新增发货拦截单
-     * @Author Luo_WG
-     * @Date 2024/1/16 18:52
+     *
      * @param remark
      * @param entity
      * @param logisticsEntity
      * @return void
+     * @Author Luo_WG
+     * @Date 2024/1/16 18:52
      **/
     private BaseResultDTO.AddDTO addIntercept(String remark, SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         //映射拦截单主表信息
@@ -1304,7 +1311,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .filter(req -> InterceptStatusEnum.SUCCESS.getCode().equals(req.getInterceptStatus())
                         || CancelStatusEnum.SUCCESS.getCode().equals(req.getCancelStatus())
                         || StringUtils.isNotBlank(req.getHandleResult())
-        ).collect(Collectors.toList());
+                ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(interceptStatusList)) {
             throw new ServiceException(ApiError.STATUS_END_NOT_INTERCEPT);
         }
@@ -3218,8 +3225,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         b2cCustomer.setCountry(country);
         b2cCustomer.setCountryName(countryName);
-        SoB2cLogisticsEntity soB2cLogisticsEntity= soB2cLogisticsService.getByMainId(soId);
-        if(Objects.nonNull(soB2cLogisticsEntity)){
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soId);
+        if (Objects.nonNull(soB2cLogisticsEntity)) {
             b2cCustomer.setTransportNo(soB2cLogisticsEntity.getCode());
             b2cCustomer.setTrackNo(soB2cLogisticsEntity.getTrackNo());
         }
@@ -3310,6 +3317,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 撤销流程
+     *
      * @param id
      * @return
      */
@@ -3317,8 +3325,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelProcess(String id) {
-        SoB2cEntity entity=this.getById(id);
-        if(Objects.isNull(entity)){
+        SoB2cEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
@@ -3333,7 +3341,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         revokeDTO.setUserId(userId);
         workflowFeign.revokeProcess(revokeDTO);
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
-        this.updateApproveStatus(id,waitSubmit.getStatus());
+        this.updateApproveStatus(id, waitSubmit.getStatus());
         String msg = "销售订单【{}】撤销流程";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "撤销流程");
 
@@ -3343,6 +3351,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 反审核
+     *
      * @param id
      * @return
      */
@@ -3350,8 +3359,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(String id) {
-        SoB2cEntity entity=this.getById(id);
-        if(Objects.isNull(entity)){
+        SoB2cEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
@@ -3359,19 +3368,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!Objects.equals(approveStatus, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        String billStatus=entity.getBillStatus();
+        String billStatus = entity.getBillStatus();
         //待配货
-        String waitDistribution=SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        String waitDistribution = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
         //配货中
-        String inDistribution=SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+        String inDistribution = SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
 
-        List<String> billStatusList=Arrays.asList(waitDistribution,inDistribution);
-        if(!billStatusList.contains(billStatus)){
+        List<String> billStatusList = Arrays.asList(waitDistribution, inDistribution);
+        if (!billStatusList.contains(billStatus)) {
             throw new ServiceException(ApiError.B2C_NOT_DISAPPROVE);
         }
 
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
-        this.updateApproveStatus(id,waitSubmit.getStatus());
+        this.updateApproveStatus(id, waitSubmit.getStatus());
         String msg = "销售订单【{}】反审核流程";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核流程");
@@ -3801,7 +3810,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto) {
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
-        if (dto.getInvalidStatus()){
+        if (dto.getInvalidStatus()) {
             dto.setRemark("平台作废");
         }
         log.debug("===== start saveOrUpdateEntity:{}", dto);
@@ -3854,7 +3863,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (0 == oldEntity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
                 handleData(oldEntity, false, false);
             }
-            ApproveStatusEnum oldApproveStatus=oldEntity.getApproveStatus();
+            ApproveStatusEnum oldApproveStatus = oldEntity.getApproveStatus();
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
@@ -3869,7 +3878,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String oldBillStatus = oldEntity.getBillStatus();
             String newBillStatus = dto.getBillStatus();
             //平台订单状态
-            String platformOrderStatus=dto.getPlatformOrderStatus();
+            String platformOrderStatus = dto.getPlatformOrderStatus();
             // 亚马逊作废保留以前状态
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
@@ -3886,24 +3895,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
             //速卖通
-            if(PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())){
-                if("IN_CANCEL".equals(platformOrderStatus)
-                        ||"IN_FROZEN".equals(platformOrderStatus)
-                        ||"RISK_CONTROL".equals(platformOrderStatus)){
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("IN_CANCEL".equals(platformOrderStatus)
+                        || "IN_FROZEN".equals(platformOrderStatus)
+                        || "RISK_CONTROL".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
-                if("FINISH".equals(platformOrderStatus)){
+                if ("FINISH".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
             //沃尔玛
-            if(PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())){
-                if("Cancelled".equals(platformOrderStatus)
-                        ||"Refund".equals(platformOrderStatus)){
+            if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("Cancelled".equals(platformOrderStatus)
+                        || "Refund".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
@@ -4290,7 +4299,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cErrorService.deleteByCodeAndType(dto.getSoCode(), SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
         return this.lambdaUpdate().eq(StringUtils.isNotBlank(dto.getSoCode()), SoB2cEntity::getCode, dto.getSoCode()).
                 set(isShipped, SoB2cEntity::getSignOrderError, "").
-                set(SoB2cEntity::getBillStatus, billStatus).update(new SoB2cEntity());
+                set(SoB2cEntity::getBillStatus, billStatus).
+                update(new SoB2cEntity());
     }
 
     @Override

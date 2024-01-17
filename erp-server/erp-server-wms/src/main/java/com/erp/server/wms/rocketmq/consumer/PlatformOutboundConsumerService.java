@@ -99,11 +99,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         //这个是B2c销售订单code
         String soB2cCode = dto.getReferenceNo();
         String billStatus = dto.getOrderStatus();
-        String shippingOrderNo = dto.getOrderCode();
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
         updateStatus.setSoCode(soB2cCode);
         updateStatus.setBillStatus(billStatus);
-        updateStatus.setShippingOrderNo(shippingOrderNo);
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
             try {
