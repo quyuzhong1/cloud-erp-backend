@@ -61,9 +61,7 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.enums.HandleResultEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -1299,6 +1297,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(interceptList)) {
             throw new ServiceException(ApiError.INTERCEPT_STATUS_IS_NOT_BLANK);
+        }
+
+        //订单拦截正在处理或已处理完成，无法取消拦截
+        List<SoB2cDeliveryInterceptEntity> interceptStatusList = interceptEntities.stream()
+                .filter(req -> InterceptStatusEnum.SUCCESS.getCode().equals(req.getInterceptStatus())
+                        || CancelStatusEnum.SUCCESS.getCode().equals(req.getCancelStatus())
+                        || StringUtils.isNotBlank(req.getHandleResult())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(interceptStatusList)) {
+            throw new ServiceException(ApiError.STATUS_END_NOT_INTERCEPT);
         }
 
         soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getSourceId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
