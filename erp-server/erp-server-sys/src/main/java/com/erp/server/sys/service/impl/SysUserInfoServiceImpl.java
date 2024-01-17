@@ -631,6 +631,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @date 2022-09-27 15:58
      */
     @Override
+    @Cacheable(cacheNames = "cache:sys:getUserList",keyGenerator = "myKeyGenerator")
     public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         //先添加自己
@@ -676,6 +677,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:getAllUserList",keyGenerator = "myKeyGenerator")
     public List<FindUserDTO> getAllUserList() {
         List<FindUserDTO> resultList = new LinkedList<>();
         List<SysUserInfoEntity> list = this.list();

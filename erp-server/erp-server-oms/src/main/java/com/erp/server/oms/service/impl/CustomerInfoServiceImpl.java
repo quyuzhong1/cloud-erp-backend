@@ -1068,6 +1068,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }

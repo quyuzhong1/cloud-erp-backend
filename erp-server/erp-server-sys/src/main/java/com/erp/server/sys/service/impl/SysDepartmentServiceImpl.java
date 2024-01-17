@@ -213,6 +213,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
@@ -253,6 +254,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentDTO> getDeptList() {
 
         return baseMapper.getDeptList();

@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
@@ -117,16 +118,20 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 //年度的
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
+                    dto.setDateType(DateTypeEnum.YEAR.getCode());
                 } else {
                     setMonthDate(dto, yearMonth);
+                    dto.setDateType(DateTypeEnum.MONTH.getCode());
                 }
                 return salesOrderServiceMapper.getQty(dto);
             case SALES_AMOUNT:
                 //年度
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
+                    dto.setDateType(DateTypeEnum.YEAR.getCode());
                 } else {
                     setMonthDate(dto, yearMonth);
+                    dto.setDateType(DateTypeEnum.MONTH.getCode());
                 }
                 return salesOrderServiceMapper.getAmount(dto, settleRate);
             case NET_SALES_AMOUNT:
