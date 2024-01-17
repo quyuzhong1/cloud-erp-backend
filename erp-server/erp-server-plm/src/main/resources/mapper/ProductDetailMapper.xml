@@ -678,6 +678,13 @@
             OR
             pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
+             ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no), LENGTH(pd.name),
+            pd.sku_no, pd.name;
         </if>
     </select>
     <select id="searchStateSku" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
@@ -691,6 +698,12 @@
         WHERE pd.status = #{state} AND pd.is_deleted = FALSE
         <if test="searchKeyword != null and searchKeyword!=''">
             AND pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
+             ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no),
+            pd.sku_no;
         </if>
     </select>
 
@@ -742,6 +755,13 @@
             OR
             pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
+             ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no), LENGTH(pd.name),
+            pd.sku_no, pd.name;
         </if>
     </select>
 
@@ -871,6 +891,10 @@
             AND pd.status = #{status}
         </if>
 
+        <if test="skuNo != null and skuNo!=''">
+            AND (pd.sku_no = #{skuNo} OR ppu.ean = #{skuNo})
+        </if>
+
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
@@ -878,9 +902,13 @@
             OR
             pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
-        </if>
-        <if test="skuNo != null and skuNo!=''">
-            AND (pd.sku_no = #{skuNo} OR ppu.ean = #{skuNo})
+             ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no), LENGTH(pd.name),
+            pd.sku_no, pd.name;
         </if>
     </select>
 
