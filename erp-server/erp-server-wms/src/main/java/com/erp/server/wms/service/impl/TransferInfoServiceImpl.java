@@ -1031,15 +1031,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public void requisitionApplicationCancelProcess(String code, String sourceType) {
         List<TransferInfoEntity> list = lambdaQuery().eq(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).list();
 
-        //如果没查询到，判断是不是批量处理的单据
-        if (CollectionUtils.isEmpty(list)) {
-            List<TransferInfoEntity> jointTransferInfoEntitys = lambdaQuery().like(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).list();
-            if (CollectionUtils.isNotEmpty(jointTransferInfoEntitys)) {
-                throw new ServiceException(ApiError.JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS);
-            }
-        }
-
-
         //反审核，删除调拨单
         for (TransferInfoEntity entity : list) {
 

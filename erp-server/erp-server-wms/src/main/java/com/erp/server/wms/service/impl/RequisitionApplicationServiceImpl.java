@@ -244,7 +244,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //调出仓库和调入仓库不一致的单据
-        Map<String, List<RequisitionApplicationDTO.HandleListDTO>> map = list.stream().filter(req -> !req.getFromWarehouseId().equals(req.getToWarehouseId())).collect(Collectors.groupingBy(req -> req.getFromWarehouseId().concat(",").concat(req.getToWarehouseId())));
+        Map<String, List<RequisitionApplicationDTO.HandleListDTO>> map = list.stream().filter(req -> !req.getFromWarehouseId().equals(req.getToWarehouseId())).collect(Collectors.groupingBy(req -> req.getSourceCode()));
         for (Map.Entry<String, List<RequisitionApplicationDTO.HandleListDTO>> dto : map.entrySet()) {
             List<RequisitionApplicationDTO.HandleListDTO> value = dto.getValue();
 
@@ -325,7 +325,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //调出仓库和调入仓库不一致的单据
-        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> map = list.stream().filter(req -> !req.getToWarehouseId().equals(req.getRequisitionWarehouseId())).collect(Collectors.groupingBy(req -> req.getRequisitionWarehouseId().concat(",").concat(req.getPickingWarehouseId())));
+        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> map = list.stream().filter(req -> !req.getToWarehouseId().equals(req.getRequisitionWarehouseId())).collect(Collectors.groupingBy(req -> req.getSourceCode()));
         for (Map.Entry<String, List<RequisitionApplicationDTO.FinishListDTO>> dto : map.entrySet()) {
             List<RequisitionApplicationDTO.FinishListDTO> value = dto.getValue();
 
@@ -731,26 +731,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
-        //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
-
-        List<String> soutceCodeList = detailEntityList.stream().map(req -> req.getSourceCode()).distinct().collect(Collectors.toList());
-
-        addDTO.setSourceId("");
-        addDTO.setSourceCode(String.join(",", soutceCodeList));
+        addDTO.setSourceId(detailEntityList.get(0).getSourceId());
+        addDTO.setSourceCode(detailEntityList.get(0).getSourceCode());
         addDTO.setRemark("");
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
-        //相同sku汇总
-        Map<String, RequisitionApplicationDTO.HandleListDTO> handleSkuList = detailEntityList.stream().collect(Collectors.groupingBy(n -> n.getSkuId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            int approveQty = m.stream().mapToInt(RequisitionApplicationDTO.HandleListDTO::getApproveQty).sum();
-            RequisitionApplicationDTO.HandleListDTO updateDTO = new RequisitionApplicationDTO.HandleListDTO();
-            BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
-            updateDTO.setApproveQty(approveQty);
-            return updateDTO;
-        })));
-
-        for (Map.Entry<String, RequisitionApplicationDTO.HandleListDTO> stringhandleListDTOEntry : handleSkuList.entrySet()) {
-            RequisitionApplicationDTO.HandleListDTO detailEntity = stringhandleListDTOEntry.getValue();
+        for (RequisitionApplicationDTO.HandleListDTO detailEntity : detailEntityList) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
@@ -779,6 +765,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailAddDtoList.add(detailAddDto);
             }
         }
+
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
     }
@@ -820,25 +807,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
 
-        //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
-        List<String> soutceCodeList = detailEntityList.stream().map(req -> req.getSourceCode()).distinct().collect(Collectors.toList());
-        addDTO.setSourceId("");
-        addDTO.setSourceCode(String.join(",", soutceCodeList));
+        addDTO.setSourceId(detailEntityList.get(0).getSourceId());
+        addDTO.setSourceCode(detailEntityList.get(0).getSourceCode());
         addDTO.setRemark("");
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
-        //相同sku汇总
-        Map<String, RequisitionApplicationDTO.FinishListDTO> handleSkuList = detailEntityList.stream().collect(Collectors.groupingBy(n -> n.getSkuId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            int pickingQty = m.stream().mapToInt(RequisitionApplicationDTO.FinishListDTO::getPickingQty).sum();
-            RequisitionApplicationDTO.FinishListDTO updateDTO = new RequisitionApplicationDTO.FinishListDTO();
-            BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
-            updateDTO.setPickingQty(pickingQty);
-            return updateDTO;
-        })));
-
-        for (Map.Entry<String, RequisitionApplicationDTO.FinishListDTO> stringhandleListDTOEntry : handleSkuList.entrySet()) {
-            RequisitionApplicationDTO.FinishListDTO detailEntity = stringhandleListDTOEntry.getValue();
+        for (RequisitionApplicationDTO.FinishListDTO detailEntity : detailEntityList) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
