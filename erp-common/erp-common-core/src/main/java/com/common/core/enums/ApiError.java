@@ -696,7 +696,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM(98115,"采购订单【{}】未审核完成不支持确认"),
     ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM(98116,"采购订单【{}】非待确认不支持确认"),
-
+    ERROR_PURCHASE_ORDER_PUSH_DOWN(98117,"采购订单【{}】SKU【{}】已关闭不支持下推"),
 
     /**
      * WMS 错误

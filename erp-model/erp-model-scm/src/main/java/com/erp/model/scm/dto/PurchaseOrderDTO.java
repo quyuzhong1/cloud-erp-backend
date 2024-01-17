@@ -1093,6 +1093,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 采购订单编号
+         */
+        private String code;
+
+        /**
          * 收料组织
          */
         private String ReceiveOrgId;

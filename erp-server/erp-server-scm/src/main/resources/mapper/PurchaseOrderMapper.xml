@@ -421,6 +421,7 @@
     <select id="getPurchaseOrderByOrderIds" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$PurchaseOrderInfoDTO">
             SELECT
             po.id AS purchaseOrderId,
+            po.code,
             ps.supplier_id,
             po.receive_org_id,
             ps.supplier_name,
