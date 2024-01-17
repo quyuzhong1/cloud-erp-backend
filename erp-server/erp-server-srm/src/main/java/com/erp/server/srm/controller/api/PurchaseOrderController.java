@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,6 +61,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/srmOrderConfirmPaging")
     public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        dto.getParams().setSupplierIdList(Collections.singletonList(userService.getSupplierId()));
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
         return pagingVO;
     }

@@ -189,6 +189,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
         params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
+            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
+        }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
@@ -1367,7 +1370,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-            obj.setExecutionStatus(PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus()));
+            obj.setExecutionStatusName(PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus()));
 
             // 采购申请单号
             if(CollUtil.isNotEmpty(refList) && StringUtils.isBlank(obj.getSourceType())) {
@@ -1402,16 +1405,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 obj.setApproveUserName(curApprove);
             }
-            //执行状态
-            if (StringUtils.isNotBlank(obj.getExecutionStatus())){
-                String executionStatus = PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus());
-                obj.setExecutionStatusName(executionStatus);
-            }
             //确认类型
-            if (StringUtils.isNotBlank(obj.getConfirmType())){
-                String name = OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType());
-                obj.setConfirmTypeName(name);
-            }
+            obj.setConfirmTypeName(OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType()));
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);

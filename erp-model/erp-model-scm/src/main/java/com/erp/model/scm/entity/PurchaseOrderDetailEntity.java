@@ -184,6 +184,11 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String confirmRemark;
 
     /**
+     * 确认类型 auto系统 手动
+     */
+    private String confirmType;
+
+    /**
      * 执行状态
      */
     @TableField("execution_status")

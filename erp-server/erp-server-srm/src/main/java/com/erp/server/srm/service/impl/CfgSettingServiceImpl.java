@@ -130,18 +130,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         String supplierId = userService.getSupplierId();
         List<DictBasicDTO.ViewDTO> dicts = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         List<CfgSettingEntity> cfgSettingEntities = getListBySupplierId(supplierId);
-        if (CollectionUtils.isNotEmpty(cfgSettingEntities)) {
-            Map<String, CfgSettingEntity> collect = cfgSettingEntities.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, Function.identity()));
-            if (CollectionUtils.isNotEmpty(dicts)) {
-                dicts.forEach(viewDTO -> {
-                    ConfigVO supplierConfig = getSupplierConfig(supplierId, viewDTO.getCode(), collect.get(viewDTO.getCode()));
-                    if (Objects.nonNull(supplierConfig)) {
-                        configVOList.add(supplierConfig);
-                    }
+        if (CollectionUtils.isEmpty(cfgSettingEntities)) return configVOList;
+        Map<String, CfgSettingEntity> collect = cfgSettingEntities.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, Function.identity()));
+        if (CollectionUtils.isNotEmpty(dicts)) {
+            dicts.forEach(viewDTO -> {
+                ConfigVO supplierConfig = getSupplierConfig(supplierId, viewDTO.getCode(), collect.get(viewDTO.getCode()));
+                if (Objects.nonNull(supplierConfig)) {
+                    configVOList.add(supplierConfig);
+                }
 
-                });
-            }
+            });
         }
+
         return configVOList;
     }
 
@@ -192,7 +192,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return viewDTO;
         }
         for (CfgSettingEntity cfgSetting : list) {
-            handleViewEnum(cfgSetting,viewDTO);
+            handleViewEnum(cfgSetting, viewDTO);
         }
         return viewDTO;
     }

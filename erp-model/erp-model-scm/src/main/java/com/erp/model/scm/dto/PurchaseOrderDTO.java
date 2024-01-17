@@ -360,6 +360,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private List<String> approveStatusList;
+        /**
+         * 到货状态（0未到货，1部分到货，2已到货）
+         */
+        private List<String> arrivalStatusList;
 
         /**
          * 作废状态（false未作废，true已作废）
