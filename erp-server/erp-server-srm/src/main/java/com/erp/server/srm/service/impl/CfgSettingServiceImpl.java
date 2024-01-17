@@ -293,8 +293,8 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         //一个供应商只能存在一个配置
         int count = lambdaQuery()
                 .eq(CfgSettingEntity::getKey, cfgSettingEntity.getKey())
-                .eq(CfgSettingEntity::getIsDeleted, false)
-                .eq(StringUtils.isNotEmpty(cfgSettingEntity.getId()), CfgSettingEntity::getId, cfgSettingEntity.getId())
+                .eq(CfgSettingEntity::getSupplierId, cfgSettingEntity.getSupplierId())
+                .ne(StringUtils.isNotEmpty(cfgSettingEntity.getId()), CfgSettingEntity::getId, cfgSettingEntity.getId())
                 .count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_96000);
