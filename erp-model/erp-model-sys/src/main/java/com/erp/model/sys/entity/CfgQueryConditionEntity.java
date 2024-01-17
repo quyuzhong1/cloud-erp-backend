@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 
@@ -84,6 +85,12 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     */
     @TableField("display_type")
     private String displayType;
+
+    /**
+     * 自定义option (数组json格式)
+     */
+    @TableField(value = "option_list", typeHandler = JacksonTypeHandler.class)
+    private List<Map<String,Object>> optionList;
 
     public static final String CODE = "code";
 
