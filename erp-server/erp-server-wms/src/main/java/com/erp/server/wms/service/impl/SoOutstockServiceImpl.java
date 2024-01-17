@@ -26,10 +26,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -329,8 +326,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
 
-        //查询是否有拦截单
-        checkIsIntercept(list);
+        //查询是否冻结
+        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -877,8 +880,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
-        //查询是否有拦截单
-        checkIsIntercept(list);
+        //查询是否冻结
+        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -903,26 +912,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         return result;
-    }
-
-    /**
-     * 校验是否存在拦截单
-     *
-     * @param list
-     */
-    private void checkIsIntercept(List<SoOutstockEntity> list) {
-        List<String> soIdList = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
-        for (SoOutstockEntity soOutstockEntity : list) {
-            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream()
-                    .filter(req -> req.getId().equals(soOutstockEntity.getSoId())
-                            && !HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())
-                    ).findFirst()
-                    .orElse(null);
-            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soOutstockEntity.getSoCode());
-            }
-        }
     }
 
     /**
@@ -974,8 +963,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98009);
         }
 
-        //查询是否有拦截单
-        checkIsIntercept(list);
+        //查询是否冻结
+        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         Boolean result = this.removeByIds(ids);
         String b2cType = OrderTypeEnum.B2C.getCode();
@@ -1012,8 +1007,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean invalid(List<String> ids, String remark) {
         List<SoOutstockEntity> list = this.listByIds(ids);
 
-        //查询是否有拦截单，有拦截禁止操作
-        checkIsIntercept(list);
+        //查询是否冻结
+        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1155,13 +1156,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
         //查询是否有拦截单
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
+        List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+
         String b2c = OrderTypeEnum.B2C.getCode();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置拦截标识
-            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream().filter(req -> req.getId().equals(item.getSoId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
-                item.setIsIntercept(isInterceptDTO.getIsIntercept());
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(item.getSoId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                item.setIsIntercept(soB2cEntity.getIsIntercept());
             }
 
             ApproveStatusEnum approveStatus = item.getApproveStatus();

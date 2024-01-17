@@ -212,8 +212,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+
+        //查询是否冻结
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
+        if (soB2cEntity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+        }
 
         //已发货、取消发货的数据不允许手动发货，其他状态都可以直接变更为已发货
         if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
@@ -267,8 +271,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_FALSE_SHIPMENT);
         }
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+
+        //查询是否冻结
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
+        if (soB2cEntity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+        }
+
         //调用第三方平台SDK发货
         try {
             if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
@@ -309,9 +318,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, StrUtil.join(",", codeList));
         }
-
-        //校验是否存在拦截单
-        checkIsIntercept(deliveryEntityList);
 
         //查询产品信息
         List<String> skuIds = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -390,8 +396,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean printPicking(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        //校验是否存在拦截单
-        checkIsIntercept(soB2cDeliveryEntities);
+
+        //查询是否冻结
+        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.PICKING.getCode())
@@ -410,8 +423,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean printPickingCancel(List<String> ids) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        //校验是否存在拦截单
-        checkIsIntercept(soB2cDeliveryEntities);
+
+        //查询是否冻结
+        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         //修改打印状态
         return lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintPicking, Boolean.FALSE).in(SoB2cDeliveryEntity::getId, ids).update();
@@ -430,8 +450,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_LABEL, StrUtil.join(",", codeList));
         }
 
-        //校验是否存在拦截单
-        checkIsIntercept(soB2cDeliveryEntities);
+        //查询是否冻结
+        List<String> soIds = soB2cDeliveryEntities.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         //查询物流商信息
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
@@ -656,8 +682,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public void rollbackInventory(List<String> ids) {
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
 
-        //校验是否存在拦截单
-        checkIsIntercept(deliveryEntityList);
+        //查询是否冻结
+        List<String> soIds = deliveryEntityList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+        }
 
         //修改状态为取消发货
         this.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
@@ -941,27 +973,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //更新库存
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
-
-    /**
-     * 校验是否存在拦截单
-     *
-     * @param list
-     */
-    private void checkIsIntercept(List<SoB2cDeliveryEntity> list) {
-        List<String> soIdList = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIdList);
-        for (SoB2cDeliveryEntity soB2cDeliveryEntity : list) {
-            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream()
-                    .filter(req -> req.getId().equals(soB2cDeliveryEntity.getSourceId())
-                            && !HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())
-                    ).findFirst()
-                    .orElse(null);
-            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cDeliveryEntity.getSoCode());
-            }
-        }
-    }
-
 
     /**
      * 同步发货单到DMP

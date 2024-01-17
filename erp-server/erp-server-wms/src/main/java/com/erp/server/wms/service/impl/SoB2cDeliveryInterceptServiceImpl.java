@@ -226,9 +226,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             entity.setInterceptStatus("");
         }else{
             entity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+
             ApiResult<InterceptResponseVO> interceptResult = logisticsBillFeign.interceptBill(dto);
             if(interceptResult.isSuccess()){
                 entity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+                
 //                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             }else{
                 LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(entity.getLogisticsChannelId());
