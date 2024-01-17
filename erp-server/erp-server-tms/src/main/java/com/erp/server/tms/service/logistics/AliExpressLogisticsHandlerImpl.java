@@ -246,7 +246,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             throw new ServiceException("速卖通：单次打印面单不能超过20个");
         }
         List<LogisticsOrderResponseVO> list = new ArrayList<>();
-        logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
+        boolean isSuccess = true;
+        for (LogisticsQueryBaseVO logisticsQueryBaseVO:logisticsQueryVOList) {
             QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
                     .current_page(1)
                     .page_size(20)
@@ -256,6 +257,14 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             ValidatorUtil.validateEntity(queryOrderRequest);
             try {
                 iopResponse = aliExpressShipperService.queryLogisticsOrder(logisticsQueryBaseVO.getAuthMap(), queryOrderRequest);
+                ErrorResponse errorResponse = iopResponse.getErrorResponse();
+                if (Objects.nonNull(errorResponse)){
+                    LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
+                    responseVO.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), errorResponse.getMsg());
+                    list.add(responseVO);
+                    isSuccess = false;
+                    continue;
+                }
                 QueryResponse queryResponse = JSONObject.parseObject(iopResponse.getResult(), QueryResponse.class);
                 //失败
                 if (Objects.isNull(queryResponse) || Objects.isNull(queryResponse.getSuccess()) || !queryResponse.getSuccess()) {
@@ -265,6 +274,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
                     responseVO.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), queryResponse.getErrorDesc());
                     list.add(responseVO);
+                    isSuccess = false;
                 } else {
                     List<QueryResult> responses = queryResponse.getResultList();
                     if (CollectionUtils.isNotEmpty(responses)) {
@@ -306,8 +316,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 list.add(responseVO);
             }
 
-        });
-        return success(list);
+        }
+        return isSuccess? success(list):failure(list);
     }
 
     /**
@@ -341,7 +351,22 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
             return label;
         }else {
-            return failure("速卖通：查询订单异常");
+            //对查询数据问题进行转换
+            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
+            if (CollectionUtils.isNotEmpty(data)){
+                List<LogisticsPrintLabelResponse> responses = new ArrayList<>(data.size());
+                data.forEach(logisticsOrderResponseVO -> {
+                    LogisticsPrintLabelResponse build = LogisticsPrintLabelResponse.builder()
+                            .deliveryNoList(Collections.singletonList(logisticsOrderResponseVO.getDeliveryNo()))
+                            .transportNoList(Collections.singletonList(logisticsOrderResponseVO.getTransportNo()))
+                            .build();
+                    build.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsOrderResponseVO.getDeliveryNo(), logisticsOrderResponseVO.getMessage());
+                    responses.add(build);
+                });
+                return failure(responses);
+            }else {
+                return failure(queryOrderList.getMsg());
+            }
         }
     }
 
