@@ -681,7 +681,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             List<String> purchaseOrderIds = poReturnEntityList.stream().filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderId())).map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-                updateArrivalState(purchaseOrderIds, list);
+                updateArrivalState(purchaseOrderIds);
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(poReturnEntityList);
@@ -774,7 +774,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> purchaseOrderIds = poReturnEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
-            updateArrivalState(purchaseOrderIds, list);
+            updateArrivalState(purchaseOrderIds);
         }
         unApproveInventory(poReturnEntityList); // 库存反审核操作
 
@@ -1083,7 +1083,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList) {
+    public void updateArrivalState(List<String> purchaseOrderIds) {
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
@@ -1110,11 +1110,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             Integer purchaseQty = orderDetailEntity.getPurchaseQty();
             //订单执行状态
             String executionStatus = "";
-            //收货数量为0或者小于采购数量时执行状态为收货中
-            if ((receiveQty - returnQty <= MathUtil.ZERO) || (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty)) {
+            //收货数量为0则执行状态为已确认
+            if (receiveQty - returnQty <= MathUtil.ZERO) {
+                executionStatus = PurchaseOrderConfirmTypeEnum.CONFIRM.getCode();
+            } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+                //小于采购数量时执行状态为收货中
                 executionStatus = PurchaseOrderConfirmTypeEnum.DELIVERY.getCode();
             } else {
-                //已到货
+                //已完成
                 executionStatus = PurchaseOrderConfirmTypeEnum.FINISH.getCode();
             }
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();

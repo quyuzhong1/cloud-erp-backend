@@ -51,6 +51,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 确认类型 auto系统 手动
          */
         private String confirmType;
+        private String confirmTypeName;
         /**
          * 客户
          */

@@ -148,7 +148,7 @@ public class SupplierUserController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM用户")
     @PostMapping("/export")
-    public ApiResult exportSupplier(@RequestBody @Valid UserPagingSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
         dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierIds(Collections.singletonList(userService.getSupplierId()));

@@ -205,7 +205,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param purchaseOrderIds
      * @return void
      **/
-    void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList);
+    void updateArrivalState(List<String> purchaseOrderIds);
 
     
     /**

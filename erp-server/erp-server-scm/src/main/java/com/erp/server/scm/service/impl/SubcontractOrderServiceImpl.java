@@ -62,6 +62,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,58 +81,58 @@ import java.util.stream.Collectors;
 @Service
 public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrderMapper, SubcontractOrderEntity> implements SubcontractOrderService {
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private ModuleOperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CommonService commonService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
-    @Autowired
+    @Resource
     private SupplierService supplierService;
 
-    @Autowired
+    @Resource
     private PurchaseOrderService purchaseOrderService;
 
-    @Autowired
+    @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
-    @Autowired
+    @Resource
     private InventoryFeign inventoryFeign;
 
-    @Autowired
+    @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Autowired
+    @Resource
     private SupplierContactService supplierContactService;
 
-    @Autowired
+    @Resource
     private SyncKingdeeSubcontractOrderService syncKingdeeSubcontractOrderService;
 
-    @Autowired
+    @Resource
     private SubcontractChangeService subcontractChangeService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private SubcontractIssueFeign subcontractIssueFeign;
 
     @Override

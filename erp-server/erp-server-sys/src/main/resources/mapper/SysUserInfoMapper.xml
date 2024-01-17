@@ -358,7 +358,7 @@
                 #{uid}
             </foreach>
         </if>
-        ORDER BY update_time DESC
+        ORDER BY sui.update_time DESC
     </select>
 
 
