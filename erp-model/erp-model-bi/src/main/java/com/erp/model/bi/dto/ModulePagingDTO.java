@@ -51,6 +51,15 @@ public class ModulePagingDTO implements Serializable {
      * 状态
      */
     private Boolean state;
+    /**
+     * 分类id
+     */
+    private String categoryId;
+
+    /**
+     * 分类名
+     */
+    private String categoryName;
 
 
     /**

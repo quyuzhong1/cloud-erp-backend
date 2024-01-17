@@ -11,6 +11,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Classname 日期工具类
@@ -492,5 +494,16 @@ public class DateUtil {
             startDate = startDate.plusDays(1);
         }
         return dates;
+    }
+    /**
+     * 判断字符串是否是合法的日期或时间 yyyy或yyyy-MM或yyyy-MM-DD 或yyyy-MM-DD HH:MI:SS
+     * @param input
+     * @return
+     */
+    public static boolean isDateOrTimeValid(String input) {
+        String regex = "^(\\d{4}|\\d{4}-\\d{2}|\\d{4}-\\d{2}-\\d{2}|\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+        return matcher.matches();
     }
 }

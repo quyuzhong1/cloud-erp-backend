@@ -36,6 +36,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
      * 分页详情
      */
     @Data
+    @AllArgsConstructor
     @NoArgsConstructor
     public static class PagingViewDTO {
 

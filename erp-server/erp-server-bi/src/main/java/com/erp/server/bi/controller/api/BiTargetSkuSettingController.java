@@ -1,11 +1,8 @@
 package com.erp.server.bi.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
-import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,7 +10,12 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetSkuSettingExportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingExportExcelDTO;
+import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 目标管理-单品
@@ -58,6 +61,24 @@ public class BiTargetSkuSettingController extends BaseController {
         PagingVO<BiTargetSkuSettingDTO.PagingViewDTO> pagingVO = biTargetSkuSettingService.paging(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 按照SKU导出目标
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        dto.setPageSize(1000);
+        dto.setCurrPage(1);
+        PagingVO<BiTargetSkuSettingDTO.PagingViewDTO> pagingVO = biTargetSkuSettingService.paging(dto);
+        List<BiTargetSkuSettingDTO.PagingViewDTO> list = (List<BiTargetSkuSettingDTO.PagingViewDTO>) pagingVO.getList();
+        List<TargetSkuSettingExportExcelDTO> excels = BiExportConverter.INSTANCE.exportSkuTargetStaff(list);
+        //数据转换
+        ExcelUtil.export("按SKU导出目标报表", "SKU", excels, TargetSkuSettingExportExcelDTO.class, response);
+        return Boolean.TRUE;
+    }
+
     /**
      * 分页统计
      *

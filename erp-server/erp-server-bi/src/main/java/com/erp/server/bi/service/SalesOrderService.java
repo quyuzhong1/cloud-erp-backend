@@ -9,6 +9,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname SalesOrderService
@@ -243,4 +244,10 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     StatisticalDataVO customerLevelProportion(BiFilterDTO biFilterDTO);
+
+    /**
+     * 获取sku对应item名称
+     * @return
+     */
+    Map<String, String> getSkuItemName();
 }
