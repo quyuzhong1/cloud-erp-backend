@@ -348,8 +348,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             //更改的价目
             PurchasePriceChangeDetailEntity changeDetail = list.stream().filter(P -> P.getPurchasePriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
             if (changeDetail != null) {
-                String supplierId = purchasePriceChangeList.stream().filter(p -> p.getPurchasePriceId().equals(item.getPurchasePriceId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                /*String supplierId = purchasePriceChangeList.stream().filter(p -> p.getPurchasePriceId().equals(item.getPurchasePriceId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");*/
                 //历史的
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
@@ -358,7 +358,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 history.setChangeDetailId(changeDetail.getId());
                 //失效时间
                 history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
-                history.setSupplierId(supplierId);
+                history.setSupplierId(changeDetail.getSupplierId());
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setProductName(changeDetail.getProductName());
