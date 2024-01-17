@@ -702,4 +702,25 @@
             AND po.approve_status = #{params.approveStatus}
         </if>
     </select>
+
+    <select id="listPurchaseOrderAutoConfirm" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
+        select
+            pod.id as detailId
+        from purchase_order po
+        inner join purchase_order_detail pod on pod.is_deleted = false and po.id = pod.purchase_order_id
+        <where>
+             po.is_deleted = false and po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm'
+            <foreach collection="list" item="item" separator="," open="(" close=")">
+                <if test="item.unit != null">
+                    and now() - INTERVAL concat(#{item.duration},'hour')  > po.approve_time
+                </if>
+                <if test="item.unit != null and item.unit == 'M'">
+                    and now() - INTERVAL concat(#{item.duration},'min')  > po.approve_time
+                </if>
+                <if test="item.unit != null and item.unit == 'S'">
+                    and now() - INTERVAL concat(#{item.duration},'sec')  > po.approve_time
+                </if>
+            </foreach>
+        </where>
+    </select>
 </mapper>

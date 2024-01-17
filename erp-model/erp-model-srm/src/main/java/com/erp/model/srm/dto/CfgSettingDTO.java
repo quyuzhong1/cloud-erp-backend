@@ -29,6 +29,11 @@ public class CfgSettingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO extends CommonDTO{
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 
     /**

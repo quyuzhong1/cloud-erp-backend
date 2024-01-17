@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -21,8 +20,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -37,7 +34,6 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -1112,13 +1108,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             String executionStatus = "";
             //收货数量为0则执行状态为已确认
             if (receiveQty - returnQty <= MathUtil.ZERO) {
-                executionStatus = PurchaseOrderConfirmTypeEnum.CONFIRM.getCode();
+                executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
             } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
                 //小于采购数量时执行状态为收货中
-                executionStatus = PurchaseOrderConfirmTypeEnum.DELIVERY.getCode();
+                executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
             } else {
                 //已完成
-                executionStatus = PurchaseOrderConfirmTypeEnum.FINISH.getCode();
+                executionStatus = ExecutionStatusEnum.FINISH.getCode();
             }
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
             purchaseOrderDetailEntity.setId(orderDetailEntity.getId());

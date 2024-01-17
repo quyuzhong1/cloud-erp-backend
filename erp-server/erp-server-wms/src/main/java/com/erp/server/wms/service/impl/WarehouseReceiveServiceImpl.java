@@ -1115,8 +1115,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             throw new ServiceException(ApiError.ERROR_98017);
         }
         //已确认和送货中允许下推收货单
-        long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !PurchaseOrderConfirmTypeEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
-                && !PurchaseOrderConfirmTypeEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
+        long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
+                && !ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
         if (executionStatusCount > 0) {
             throw new ServiceException(ApiError.ERROR_98041);
         }
