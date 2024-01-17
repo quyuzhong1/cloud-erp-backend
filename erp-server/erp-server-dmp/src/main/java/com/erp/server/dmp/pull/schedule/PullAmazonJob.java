@@ -715,11 +715,16 @@ public class PullAmazonJob {
         reportScheduleEntityList.forEach(reportSchedule -> {
             try {
                 reportHandleService.createReport(reportSchedule, currentDateTime);
+                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前任务完成,shopId={},mainId={}, reportType={}",
+                        reportSchedule.getShopId(),
+                        reportSchedule.getId(),
+                        reportSchedule.getReportType()
+                        );
             } catch (Exception e) {
-                String errorMsg = JSONUtil.toJsonStr(e);
-                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 创建亚马逊报表计划失败：reportId={}, error={}",
-                        reportSchedule.getReportScheduleId(),
-                        errorMsg
+                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 创建亚马逊报表计划失败：shopId={}, reportType={}, error={}",
+                        reportSchedule.getShopId(),
+                        reportSchedule.getReportType(),
+                        ExceptionUtil.stacktraceToString(e, 2000)
                 );
             }
         });
