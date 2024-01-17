@@ -54,22 +54,18 @@ public class SoChangeDetailDTO implements Serializable {
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空")
-//        @DecimalMax(value = "999999999", message = "销售数量最大值")
-//        @DecimalMin(value = "1", message = "销售数量不能为0")
         private Integer qty;
 
         /**
          * 单价
          */
         @NotNull(message = "销售单价不能为空")
-//        @DecimalMin(value="0.1",message = "单价不能小于0")
         private BigDecimal price;
 
 
         /**
          * 币种
          */
-//        @NotBlank(message = "币种不能为空")
         private String currency;
 
 

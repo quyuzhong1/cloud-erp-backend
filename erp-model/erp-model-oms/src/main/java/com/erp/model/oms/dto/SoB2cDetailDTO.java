@@ -109,7 +109,7 @@ public class SoB2cDetailDTO implements Serializable {
        /**
         * 明细标签
         */
-       private String label;
+       private String labelJson;
 
         /**
          * 是否匹配仓库规则

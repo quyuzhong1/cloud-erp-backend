@@ -33,7 +33,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private OtherOutstockService otherOutstockService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
     private PoInstockService poInstockService;
@@ -91,7 +91,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //采购退货单
         if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
-            purchaseReturnOrderService.updateSyncKingdeeId(businessId, syncKingdeeId);
+            poReturnService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
         //采购入库单
         if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {

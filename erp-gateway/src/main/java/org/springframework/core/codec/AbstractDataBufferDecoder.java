@@ -48,7 +48,7 @@ import org.springframework.util.MimeType;
 @SuppressWarnings("deprecation")
 public abstract class AbstractDataBufferDecoder<T> extends AbstractDecoder<T> {
 
-    private int maxInMemorySize = 256 * 1024 * 10;
+    private int maxInMemorySize = 256 * 1024 * 1024;
 
 
     protected AbstractDataBufferDecoder(MimeType... supportedMimeTypes) {

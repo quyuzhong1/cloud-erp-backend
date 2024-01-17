@@ -127,7 +127,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         //检查能否变更
         checkIsChange(soId);
         //检查对应详情的变更类型
-        soChangeDetailService.checkChange(dto.getDetailList());
+        List<SoChangeDetailDTO.UpdateDTO> checkList= BeanMapper.copyList(dto.getDetailList(),SoChangeDetailDTO.UpdateDTO.class);
+        soChangeDetailService.checkChange(checkList);
         String id = IdWorker.getIdStr();
         SoChangeEntity soChange = new SoChangeEntity();
         BeanMapper.copy(dto, soChange);
@@ -261,7 +262,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //检查对应详情的变更类型
-        soChangeDetailService.checkChange(BeanMapper.copyList(detailList, SoChangeDetailDTO.AddDTO.class));
+        soChangeDetailService.checkChange(detailList);
         String code = soChange.getCode();
         //旧的
         SoChangeEntity old = new SoChangeEntity();

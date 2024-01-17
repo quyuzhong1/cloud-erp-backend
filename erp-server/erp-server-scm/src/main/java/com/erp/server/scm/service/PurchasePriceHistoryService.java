@@ -35,7 +35,6 @@ public interface PurchasePriceHistoryService extends SuperService<PurchasePriceH
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getHistoryTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 
-
     /**
      * 方法说明
      * @author yl
@@ -44,6 +43,16 @@ public interface PurchasePriceHistoryService extends SuperService<PurchasePriceH
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> skuIdList);
+
+    /**
+     * 方法说明（批量）
+     * @Author Luo_WG
+     * @Date 2024/1/9 14:23
+     * @param supplierIds
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     **/
+    List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIds,List<String> skuIdList);
 
     /**
      * 方法说明

@@ -25,6 +25,8 @@ public interface ThirdWarehouseFeign {
 
     /**
      * 取消海外仓出库单
+     *  拦截中，拦截成功，拦截失败都是返回success data是 {@link com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum} 的code
+     *  如果其他情况返回failure,data 是失败message
      */
     @PostMapping("feign/thirdWarehouse/cancelOutboundOrder")
     ApiResult<String> cancelOutboundOrder(@RequestBody ThirdWarehouseCancelOutboundReq cancelOutboundReq);

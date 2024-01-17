@@ -129,8 +129,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         });
         //判断是否需要推送MQ
         KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
-        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
-            return;
+        if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
+            pushToMqList = pushToMqList.stream().filter(e ->CommonConstants.SYSTEM.equals(e.getDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()

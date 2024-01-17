@@ -71,6 +71,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "qty", source = "qty"),
             @Mapping(target = "platformSkuNo", source = "platformSkuNo"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "sourceDetailId", source = "sourceDetailId"),
 
     })
     LogisticsBillDTO.SkuDTO convertSku(SoB2cDetailEntity data);

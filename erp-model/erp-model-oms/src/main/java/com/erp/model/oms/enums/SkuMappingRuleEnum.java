@@ -171,22 +171,23 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             throw new ServiceException("找不到起始符规则");
         }
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
+            String finalRegex = waitHandleRegex;
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
                 throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
             }
             //起始符或终止符为空，正则都不一样
             if(StringUtils.isNotBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
                 if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
-                    waitHandleRegex = "【#】(.*)";
+                    finalRegex = "【#】(.*)";
                 }else{
-                    waitHandleRegex = ".*【#】(.*)";
+                    finalRegex = ".*【#】(.*)";
                 }
             }
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isNotBlank(ruleConditionsDTO.getEndSymbol())){
-                if(commonDTO.getValidStartingSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
-                    waitHandleRegex = "([^【%】]*)【%】";
+                if(commonDTO.getValidEndSymbolPosition().equals(SkuMappingSymbolicSideEnum.LEFTMOST_SIDE.code)){
+                    finalRegex = "([^【%】]*)【%】";
                 }else{
-                    waitHandleRegex = "(.*)【%】.";
+                    finalRegex = "(.*)【%】.";
                 }
             }
             String startSymbol = ruleConditionsDTO.getStartingSymbol();
@@ -199,7 +200,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             if(Objects.nonNull(endSymbolicEnum) && endSymbolicEnum.isEscape){
                 endSymbol = "\\\\"+endSymbol;
             }
-            String regex = waitHandleRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
+            String regex = finalRegex.replaceAll("【#】",startSymbol).replaceAll("【%】",endSymbol);
             if(commonDTO.getValidStartingSymbolPosition().equals(commonDTO.getValidEndSymbolPosition())
             &&  StringUtils.isNotBlank(startSymbol) && StringUtils.isNotBlank(endSymbol) &&startSymbol.equals(endSymbol)){
                 regex = "123";

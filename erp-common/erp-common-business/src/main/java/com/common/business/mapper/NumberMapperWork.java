@@ -1,5 +1,6 @@
 package com.common.business.mapper;
 
+import com.common.core.utils.MathUtil;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
@@ -27,4 +28,23 @@ public class NumberMapperWork {
 
         return result;
     }
+    @Named("intToStr")
+    public String intToStr(Integer val) {
+        if (val == null){
+            return "";
+        }
+        return String.valueOf(val);
+    }
+
+    @Named("gToKgByInt")
+    public String gToKgByInt(Integer val) {
+        if (val == null){
+            return "";
+        }
+        BigDecimal weightKg= MathUtil.divide(new BigDecimal(val.toString()),new BigDecimal("1000"),3);
+        return String.valueOf(weightKg);
+    }
+
+
+
 }

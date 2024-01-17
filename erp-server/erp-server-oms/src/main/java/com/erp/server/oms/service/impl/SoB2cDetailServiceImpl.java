@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -248,7 +249,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList) {
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuVO> skuList) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
         // 来源为空
@@ -275,7 +276,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
             // 映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            // 检查和获取映射关系
+            ListingInfoWithSkuMappingDTO mappingDTO = this.checkAndMappingDTO(mappingDTOList, detailDTO);
             String skuId = "";
             String skuNO= "";
             String imageUrl= "";
@@ -322,6 +325,27 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     /**
+     * 检查或获取映射关系
+     */
+    private ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, PlatformOrderDetailDTO detailDTO) {
+        if (CollectionUtils.isEmpty(mappingDTOList)) {
+            return null;
+        }
+        if (1 == mappingDTOList.size()){
+            return mappingDTOList.get(0);
+        }
+        // 兼容速卖通多个平台SKU
+        if (StringUtils.isBlank(detailDTO.getPlatformSpuNo())){
+            throw new ServiceException("来源平台SPU未空");
+        }
+        // 查询相同SPU记录
+        return mappingDTOList.stream()
+                .filter(e->e.getPlatformSpuNo().equalsIgnoreCase(detailDTO.getPlatformSpuNo()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
      * 消费明细处理
      */
     @Override
@@ -352,7 +376,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId) {
+    public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId) {
         if (CollectionUtils.isEmpty(platformSkuList)) {
             return Collections.emptyMap();
         }
@@ -368,7 +392,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             return Collections.emptyMap();
         }
         return listDto.stream()
-                .collect(Collectors.toMap(e-> e.getPlatformSkuNo(), Function.identity()));
+                .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
     }
 
     @Override

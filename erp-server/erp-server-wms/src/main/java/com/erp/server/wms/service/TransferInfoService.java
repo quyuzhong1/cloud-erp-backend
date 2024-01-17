@@ -193,4 +193,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      */
     String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark,Boolean isToOnwayWarehouse);
 
+    /**
+     * 要货申请处理撤销
+     * @Author Luo_WG
+     * @Date 2024/1/10 11:15
+     * @param code
+     * @param sourceType
+     * @return java.lang.Boolean
+     **/
+    void requisitionApplicationCancelProcess(String code, String sourceType);
 }

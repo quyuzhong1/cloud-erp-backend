@@ -74,7 +74,7 @@
             lb.source_code as sourceCode,
             lb.outstock_code as outstockCode,
             lb.to_country as toCountry,
-            lbc.customer_name as customerName,
+            lb.shop_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
             lbc.remark,
@@ -88,6 +88,9 @@
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
             lbc.is_deleted = false
+            <if test="params.orderType != null and params.orderType != ''">
+                and lb.order_type = #{params.orderType}
+            </if>
             <if test="params.sourceType != null and params.sourceType != ''">
                 and lb.source_type = #{params.sourceType}
             </if>
@@ -142,16 +145,15 @@
                     <if test="item == 'equal'">
                         lbc.diff_shipping_cost = 0
                     </if>
-                    #{item}
                 </foreach>
             </if>
             <if test="params.deliveryTimeList != null and params.deliveryTimeList.size != ''">
-                and lbc.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
-                DAY' ) > lbc.delivery_time
+                and lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > lb.delivery_time
             </if>
             <if test="params.orderTimeList != null and params.orderTimeList.size != ''">
-                and lbc.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
-                DAY' ) > lbc.order_time
+                and lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > lb.order_time
             </if>
         </where>
         ORDER BY
@@ -184,7 +186,7 @@
             lb.source_code as sourceCode,
             lb.outstock_code as outstockCode,
             lb.to_country as toCountry,
-            lbc.customer_name as customerName,
+            lb.shop_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
             lbc.remark,
@@ -205,6 +207,9 @@
                 </foreach>
             </if>
             <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.orderType != null and params.orderType != ''">
+                    and lb.order_type = #{params.orderType}
+                </if>
                 <if test="params.sourceType != null and params.sourceType != ''">
                     and lb.source_type = #{params.sourceType}
                 </if>
@@ -259,16 +264,15 @@
                         <if test="item == 'equal'">
                             lbc.diff_shipping_cost = 0
                         </if>
-                        #{item}
                     </foreach>
                 </if>
                 <if test="params.deliveryTimeList != null and params.deliveryTimeList.size != ''">
-                    and lbc.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > lbc.delivery_time
+                    and lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lb.delivery_time
                 </if>
                 <if test="params.orderTimeList != null and params.orderTimeList.size != ''">
-                    and lbc.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > lbc.order_time
+                    and lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lb.order_time
                 </if>
             </if>
         </where>

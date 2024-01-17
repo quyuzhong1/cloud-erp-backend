@@ -74,10 +74,13 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     public void syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+        List<String> purchasePriceDetailId = purchasePriceChangeDetailEntities.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
+
         //如果上游单据未发送成功则无需发送
-        PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
-        //采购价目主表数据
-        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+        List<PurchasePriceDetailEntity> purchasePriceDetailEntities = purchasePriceDetailService.listByIds(purchasePriceDetailId);
+        //采购价目明细表数据
+        if (CollectionUtils.isEmpty(purchasePriceDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
@@ -111,12 +114,6 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             resultMap.put("purchaseOrgCode", orgCode);
         }
 
-        //查询供应商
-        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            return;
-        }
-
         //调价明细
         List<PurchasePriceChangeDetailEntity> details = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
@@ -130,6 +127,12 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
+        //查询供应商
+        List<String> supplierIds = details.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+        if (CollectionUtils.isNotEmpty(supplierEntities)) {
+            return;
+        }
 
 
         List<JSONObject> list = new ArrayList<>();
@@ -146,6 +149,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             //采购价目明细金蝶id
             jsonObject.set("kingdeeDetailId",purchasePriceDetailEntity.getKingdeeDetailId());
             //供应商编号
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> detailEntity.getSupplierId().equals(req.getId())).findFirst().orElse(null);
             jsonObject.set("supplierCode",supplierEntity.getCode());
             //从
             jsonObject.set("minQty",detailEntity.getMinQty());
