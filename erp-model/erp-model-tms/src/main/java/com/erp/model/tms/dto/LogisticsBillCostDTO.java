@@ -109,9 +109,19 @@ public class LogisticsBillCostDTO implements Serializable {
          */
        private String id;
         /**
-         * 订单类型名称
+         * 来源类型名称
          */
         private String    sourceTypeName;
+
+        /**
+         * 订单类型
+         */
+        private String    orderType;
+
+        /**
+         * 订单类型名称
+         */
+        private String    orderTypeName;
 
         /**
          * 对账状态

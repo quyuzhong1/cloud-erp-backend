@@ -933,6 +933,8 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
 
+        private String shopId;
+
     }
 
 }

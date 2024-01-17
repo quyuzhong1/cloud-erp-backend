@@ -485,6 +485,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 waybillDetailDTO.setLogisticsChannelId(deliveryEntity.getLogisticsChannelId());
                 waybillDetailDTO.setLogisticsChannelName(deliveryEntity.getLogisticsChannelName());
                 waybillDetailDTO.setTransportNo(deliveryEntity.getTransportNo());
+                waybillDetailDTO.setShopId(deliveryEntity.getShopId());
                 //匹配物流商名称
                 LogisticsChannelDTO.BaseDTO baseDTO = channelInfoList.stream().filter(req -> req.getId().equals(logisticsChannelId)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(baseDTO)) {
@@ -723,6 +724,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             printLogisticsWaybill.setChannelId(detailDTO.getLogisticsChannelId());
             printLogisticsWaybill.setB2cSoId(detailDTO.getSoB2cId());
             printLogisticsWaybill.setDeliveryNo(detailDTO.getSoCode());
+            printLogisticsWaybill.setShopId(detailDTO.getShopId());
 
             SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO logisticsWaybillDetailDTO = waybillDetailDTOList.stream().filter(req -> req.getSoB2cId().equals(detailDTO.getSoB2cId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsWaybillDetailDTO)) {

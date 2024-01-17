@@ -57,6 +57,7 @@
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
         select
             lbc.id,
+            lb.order_type as orderType,
             lb.source_type as sourceType,
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
@@ -169,6 +170,7 @@
     <select id="listByExportExcel" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
         select
             lbc.id,
+            lb.order_type as orderType,
             lb.source_type as sourceType,
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
