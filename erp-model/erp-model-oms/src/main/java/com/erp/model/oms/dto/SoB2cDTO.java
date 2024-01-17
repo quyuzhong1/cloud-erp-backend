@@ -365,7 +365,11 @@ public class SoB2cDTO implements Serializable {
         /**
          * 亚马逊订单
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
     }
 
     @Data
@@ -385,9 +389,9 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isCombination;
         /**
-         * FBA（亚马逊订单FulfillmentChannel=AFN-亚马逊配送时）
+         * FBA（亚马逊订单fulfillmentChannel=AFN-亚马逊配送时）
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
         /**
          * 手工订单（在ERP手动创建的订单）
          */
@@ -810,7 +814,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 平台订单号
          */
-        @Size(max = 32, message = "平台订单号最大长度不能超过32位")
+        @Size(max = 100, message = "平台订单号最大长度不能超过100位")
         private String platformCode;
 
         /**

@@ -7,6 +7,7 @@ package com.erp.oms.aliexpress.dto.response;/**
  */
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -23,19 +24,19 @@ public class AmountInfo implements Serializable {
     /**
      * 金额
      */
-    @JSONField(name = "amount")
+    @SerializedName("amount")
     private String amount;
 
     /**
      * 币别
      */
-    @JSONField(name = "currency_code")
+    @SerializedName("currency_code")
     private String currencyCode;
 
     /**
      * 乘积因子
      */
-    @JSONField(name = "cent_factor")
+    @SerializedName("cent_factor")
     private Integer  centFactor;
 
 

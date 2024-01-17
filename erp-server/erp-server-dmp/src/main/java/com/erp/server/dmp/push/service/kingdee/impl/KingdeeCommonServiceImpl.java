@@ -93,7 +93,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     private OmsTaskFeign omsTaskFeign;
 
 
-
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map, String apiPlatformId, Integer moduleType) {
 
@@ -202,7 +201,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean excuteOperation(KingdeeApiUtils apiUtils, Map<String, Object> map,String number, String operate) {
+    public Boolean excuteOperation(KingdeeApiUtils apiUtils, Map<String, Object> map, String number, String operate) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
 
         String syncKingdeeId = (String) map.get("syncKingdeeId");
@@ -226,28 +225,29 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     /**
-     * @description: 删除（状态判断）
-     * @author Will
-     * @date: 2023/9/25 15:06
      * @param apiUtils
      * @param platformEntity
      * @param map
      * @param type
      * @param number
+     * @description: 删除（状态判断）
+     * @author Will
+     * @date: 2023/9/25 15:06
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
+    public void handleDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
         //删除之前判断状态
         Boolean isDelete = this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
         if (isDelete) {
             //删除
-            this.delete(apiUtils,platformEntity,map,type,number);
+            this.delete(apiUtils, platformEntity, map, type, number);
         }
     }
 
     /**
      * 处理作废
+     *
      * @param apiUtils
      * @param platformEntity
      * @param map
@@ -269,7 +269,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //业务编码
             String code = (String) map.get("code");
             //作废
-            this.excuteOperation(apiUtils,map,code,operate);
+            this.excuteOperation(apiUtils, map, code, operate);
         }
     }
 
@@ -277,7 +277,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public void delete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
 
-       JSONObject jsonObject = new JSONObject();
+        JSONObject jsonObject = new JSONObject();
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         //业务id
@@ -290,9 +290,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void customerGroupDelete(KingdeeApiUtils apiUtils,String syncKingdeeId,String groupFieldKey) {
+    public void customerGroupDelete(KingdeeApiUtils apiUtils, String syncKingdeeId, String groupFieldKey) {
         //删除客户分组
-        apiUtils.customerGroupDelete(syncKingdeeId,groupFieldKey);
+        apiUtils.customerGroupDelete(syncKingdeeId, groupFieldKey);
     }
 
     @Override
@@ -302,7 +302,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
-        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}",msg,JSONUtil.toJsonStr(param),json);
+        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
         //保存客户分组
         RepoRet repoRet = apiUtils.customerGroupSave(param);
         if (ObjectUtil.isNotEmpty(repoRet.getResult()) && repoRet.getResult().getResponseStatus().getSuccessEntitys() != null) {
@@ -326,7 +326,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
-        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}",msg,JSONUtil.toJsonStr(param),json);
+        log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
         SaveResult save = apiUtils.save(param);
         if (!save.isSuccessfully()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
@@ -350,7 +350,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
-        log.info("msg>>>>>{}，param>>>>>>>{}",msg,param);
+        log.info("msg>>>>>{}，param>>>>>>>{}", msg, param);
         SaveResult save = apiUtils.save(param);
         //数据id
         String id = save.getResult().getId();
@@ -365,7 +365,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
         //下推
-        RepoResult  result = sourceApiUtils.push(jsonMap);
+        RepoResult result = sourceApiUtils.push(jsonMap);
         //数据id
         String id = result.getResponseStatus().getSuccessEntitys().get(0).getId();
         //金蝶id
@@ -439,7 +439,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type) {
         //根据状态反审核
-        return this.updateApproved(apiUtils,platformEntity,map,type,KingdeeDocStatusEnum.REAPPROVE,Boolean.TRUE);
+        return this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
     }
 
     @Override
@@ -490,7 +490,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     /**
-     * @param parentMap              1级（数据结果为集合）数据
+     * @param parentMap               1级（数据结果为集合）数据
      * @param mapList
      * @param map                     来源数据值
      * @param cfgApiFieldMapValueList 值映射数据
@@ -671,9 +671,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     /**
-     * @description: 更新状态
-     * @author Will
-     * @date: 2023/9/25 15:00
      * @param apiUtils
      * @param platformEntity
      * @param map
@@ -681,8 +678,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param docStatusEnum
      * @param isNeedError
      * @return Boolean
+     * @description: 更新状态
+     * @author Will
+     * @date: 2023/9/25 15:00
      */
-    private Boolean updateApproved (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,KingdeeDocStatusEnum docStatusEnum,Boolean isNeedError) {
+    private Boolean updateApproved(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, KingdeeDocStatusEnum docStatusEnum, Boolean isNeedError) {
 
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
@@ -700,20 +700,20 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //判断状态是否一致
         String documentStatus = (String) model.get("DocumentStatus");
         //金蝶id
-        String id = String.valueOf(model.get("Id")) ;
+        String id = String.valueOf(model.get("Id"));
         if (StringUtils.isBlank(syncKingdeeId)) {
-            map.put("syncKingdeeId",id);
+            map.put("syncKingdeeId", id);
         }
         if (docStatusEnum.getCode().equals(documentStatus)) {
             return Boolean.TRUE;
         }
         //重新审核
         if (KingdeeDocStatusEnum.REAPPROVE.equals(docStatusEnum)) {
-            return this.unAudit(apiUtils,syncKingdeeId);
+            return this.unAudit(apiUtils, syncKingdeeId);
         }
         //审核通过
         if (KingdeeDocStatusEnum.APPROVED.equals(docStatusEnum)) {
-            return  this.audit(map,apiUtils,syncKingdeeId,type);
+            return this.audit(map, apiUtils, syncKingdeeId, type);
         }
         return Boolean.TRUE;
     }
