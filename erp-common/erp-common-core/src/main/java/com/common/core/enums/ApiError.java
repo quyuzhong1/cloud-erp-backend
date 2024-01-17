@@ -1065,6 +1065,7 @@ public enum ApiError implements Serializable {
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
 
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
+    STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
 
 
 

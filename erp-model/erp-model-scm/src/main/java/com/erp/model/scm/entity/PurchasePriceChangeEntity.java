@@ -34,12 +34,6 @@ public class PurchasePriceChangeEntity extends BaseEntity<PurchasePriceChangeEnt
     private String code;
 
     /**
-     * 供应商id
-     */
-    @TableField("supplier_id")
-    private String supplierId;
-
-    /**
      * 变更原因
      */
     @TableField("reason")

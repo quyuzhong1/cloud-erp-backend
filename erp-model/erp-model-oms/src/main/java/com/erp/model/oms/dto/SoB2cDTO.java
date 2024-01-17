@@ -1703,7 +1703,7 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
-        private String shippingOrderNo;
+
 
     }
 
@@ -1733,6 +1733,39 @@ public class SoB2cDTO implements Serializable {
 
         private String shopId;
 
+
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
         /**
          * 收货地址 对应 fullAddress
          */

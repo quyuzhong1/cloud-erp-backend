@@ -6,10 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
@@ -18,6 +15,7 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.*;
@@ -29,6 +27,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.SoB2cDeliveryInterceptMapper;
@@ -95,6 +94,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private LogisticsAuthFeign logisticsAuthFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -229,7 +231,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 entity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
 //                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             }else{
-                entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+                LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(entity.getLogisticsChannelId());
+                String logisticsPlatform = auth.getLogisticsPlatform();
+                //顺丰没有拦截，不更新拦截状态
+                if (!LogisticsPlatformEnum.SF_EXPRESS.getCode().equals(logisticsPlatform)) {
+                    entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+                }
 //                entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
                 //异常订单
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -274,6 +281,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
+
+        //修改状态
+        lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .eq(SoB2cDeliveryInterceptEntity::getId, id)
+                .update();
 
         String handleResult = HandleResultEnum.FAILURE.getName();
         String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
@@ -329,15 +345,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         addError.setMainId(entity.getSourceId());
         addError.setMessage(handleResult);
         soB2cFeign.addSoB2cError(addError);
-
-        //修改状态
-        lambdaUpdate()
-                .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
-                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
-                .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
-                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
-                .eq(SoB2cDeliveryInterceptEntity::getId, id)
-                .update();
 
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
