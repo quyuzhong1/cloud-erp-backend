@@ -77,7 +77,22 @@ public class TypeConversionWorker {
             return Double.valueOf(0);
         }
     }
-
+    @Named("gTokgStr")
+    public String gTokgStr(Object obj) {
+        if (Objects.isNull(obj)) {
+            return "0";
+        }
+        if (obj instanceof Integer){
+            int res = (Integer) obj/1000;
+            return String.valueOf(res);
+        }else if (obj instanceof Double){
+            Double d = (Double) obj;
+            double v = d / 1000;
+            return String.valueOf(v);
+        }else {
+            return "0";
+        }
+    }
     /**
      * 虾皮 渠道状态0正常1.暂停2.已关闭（默认0）
      * @param obj
