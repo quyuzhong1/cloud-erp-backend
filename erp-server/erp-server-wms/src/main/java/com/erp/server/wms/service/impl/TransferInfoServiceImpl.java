@@ -409,7 +409,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //待提交并且未作废允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())
+                && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
@@ -1029,7 +1030,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void requisitionApplicationCancelProcess(String code, String sourceType) {
-        List<TransferInfoEntity> list = lambdaQuery().eq(TransferInfoEntity::getSourceCode, code).eq(TransferInfoEntity::getSourceType, sourceType).list();
+        List<TransferInfoEntity> list = lambdaQuery()
+                .eq(TransferInfoEntity::getSourceCode, code)
+                .eq(TransferInfoEntity::getSourceType, sourceType)
+                .ne(TransferInfoEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
+                .ne(TransferInfoEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getName())
+                .list();
 
         //反审核，删除调拨单
         for (TransferInfoEntity entity : list) {
