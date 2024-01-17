@@ -87,22 +87,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     @Override
     public PagingVO<SupplierUserVO> paging(PagingDTO<UserPagingSearchDTO> dto) {
         Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
-        if (Objects.nonNull(dto.getParams()) && CollectionUtils.isNotEmpty(dto.getParams().getSupplierIds())) {
-            //选择了供应商则先进行供应商查询，获取用户ids
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getParams().getSupplierIds(), dto.getParams().getIsSuper());
-            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-                dto.getParams().setUserIds(supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList()));
-                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
-            } else {
-                //防止查询数据为空时，数据穿插
-                dto.getParams().setUserIds(Collections.singletonList("-1"));
-            }
-        } else {
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getParams().getIsSuper());
-            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
-            }
-        }
+        buildRequestData(dto.getParams(), supplierMap);
         PagingVO<SupplierUserVO> page = userInfoFeign.srmPaging(dto);
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
         dataProcessSupplierInfo(list, supplierMap);
@@ -287,14 +272,15 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         return Boolean.TRUE;
     }
 
-    @Override
-    public List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto) {
-        Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
+    private void buildRequestData(UserPagingSearchDTO dto,Map<String, SupplierRefUserVO> supplierMap){
         if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getSupplierIds())) {
             //选择了供应商则先进行供应商查询，获取用户ids
             List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getSupplierIds(), dto.getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-                dto.setUserIds(supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList()));
+                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(dto.getUserIds())){
+                    dto.setUserIds(userIds);
+                }
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             } else {
                 //防止查询数据为空时，数据穿插
@@ -303,9 +289,18 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         } else {
             List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getIsSuper());
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
+                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(dto.getUserIds())){
+                    dto.setUserIds(userIds);
+                }
                 supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
             }
         }
+    }
+    @Override
+    public List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto) {
+        Map<String, SupplierRefUserVO> supplierMap = new HashMap<>();
+        buildRequestData(dto, supplierMap);
         List<SupplierUserVO> list = userInfoFeign.srmList(dto);
         dataProcessSupplierInfo(list, supplierMap);
         return list;
