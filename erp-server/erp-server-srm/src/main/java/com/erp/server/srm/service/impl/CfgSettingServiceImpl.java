@@ -206,6 +206,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 orderAcceptDTO.setId(cfgSetting.getId());
                 orderAcceptDTO.setKey(cfgSetting.getKey());
                 orderAcceptDTO.setSupplierId(cfgSetting.getSupplierId());
+                orderAcceptDTO.setDisabled(cfgSetting.getDisabled());
                 viewDTO.setOrderAcceptDTO(orderAcceptDTO);
                 break;
             case RETURN_AUTO_CONFIRM:
@@ -213,6 +214,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 returnConfirmDTO.setId(cfgSetting.getId());
                 returnConfirmDTO.setKey(cfgSetting.getKey());
                 returnConfirmDTO.setSupplierId(cfgSetting.getSupplierId());
+                returnConfirmDTO.setDisabled(cfgSetting.getDisabled());
                 viewDTO.setReturnConfirmDTO(returnConfirmDTO);
                 break;
             default:
