@@ -31,6 +31,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,6 +130,45 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         return DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
     }
 
+    @Override
+    public List<DeliveryOrderDTO.PrintDTO> print(List<String> ids) {
+        List<DeliveryOrderEntity> entityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
+        List<DeliveryOrderDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDTO.PrintDTO.class, entityList);
+        Map<String,List<DeliveryOrderDetailDTO.PrintDTO>> detailEntityMap = detailService.mapPrintByMainIds(ids);
+        printDTOList.forEach(v-> Optional.ofNullable(detailEntityMap.get(v.getId()))
+                .ifPresent(detailList -> {
+                    detailList.forEach(detail -> detail.setCode(v.getSourceCode()));
+                    v.setDetailPrintList(detailList);
+                }));
+        return printDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancelPrint(List<String> ids) {
+        List<DeliveryOrderEntity> deliveryOrderEntityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
+        if(deliveryOrderEntityList.stream().anyMatch(v->!v.getIsPrint() || StringUtils.isNotBlank(v.getReceiptStatus()))){
+            throw new ServiceException("存在未打印或者收货状态不为空的送货单，取消打印失败");
+        }
+        deliveryOrderEntityList.forEach(v->v.setIsPrint(false));
+        return this.updateBatchById(deliveryOrderEntityList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean delete(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return true;
+        }
+        if(!this.removeByIds(ids)){
+            throw new ServiceException("送货单删除失败");
+        }
+        if(!detailService.deleteByMainIds(ids)){
+            throw new ServiceException("送货单明细删除失败");
+        }
+        return true;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DeliveryOrderDTO.AddDTO addDTO) {
@@ -205,8 +245,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 新增修改处理数据
      */
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
-        if(StringUtils.isBlank(deliveryOrderEntity.getReceiptStatus()) && !isUpdate){
-            deliveryOrderEntity.setReceiptStatus(DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode());
-        }
+
     }
 }

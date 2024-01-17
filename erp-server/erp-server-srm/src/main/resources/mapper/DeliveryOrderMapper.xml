@@ -83,7 +83,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        do2.create_time DESC
+        do2.plan_delivery_date ASC
     </select>
     <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
         select do2.receipt_status as receiptStatus,

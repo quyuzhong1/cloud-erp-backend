@@ -1,10 +1,9 @@
 package com.erp.server.srm.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -24,7 +23,6 @@ import java.util.List;
 
 /**
  * 送货单
- *
  * @author lrp
  * @since 2024-01-12
  */
@@ -39,7 +37,6 @@ public class DeliveryOrderController extends BaseController {
 
     /**
      * 获取 tab列表
-     *
      * @return
      */
     @GetMapping("/tabList")
@@ -87,19 +84,52 @@ public class DeliveryOrderController extends BaseController {
     }
 
     /**
-    * 修改
+    * 编辑
     * @author lrp
     * @date:  2024-01-12
     * @param dto
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "送货单修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "送货单编辑")
     public ApiResult<?> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
         deliveryOrderService.update(dto);
         return success();
     }
 
+    /**
+     * 打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/print")
+    public ApiResult<List<DeliveryOrderDTO.PrintDTO>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryOrderService.print(dto.getIds()));
+    }
+    /**
+     * 取消打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/cancelPrint")
+    public ApiResult<?> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryOrderService.cancelPrint(dto.getIds()));
+    }
 
-
+    /**
+     * 删除送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除送货单")
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryOrderService.delete(dto.getIds()));
+    }
 }

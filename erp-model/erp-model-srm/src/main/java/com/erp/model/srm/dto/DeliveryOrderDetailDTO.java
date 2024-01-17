@@ -23,6 +23,56 @@ import java.time.LocalDate;
 public class DeliveryOrderDetailDTO implements Serializable {
 
     /**
+     * 打印DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrintDTO {
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 采购单号
+         */
+        private String code;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
+
+    /**
     * 详情
     */
     @Data

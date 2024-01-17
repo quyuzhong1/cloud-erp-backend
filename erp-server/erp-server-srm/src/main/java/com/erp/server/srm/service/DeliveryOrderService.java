@@ -44,4 +44,10 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     List<DeliveryOrderDTO.TabListDTO> tabList();
 
     DeliveryOrderDTO.ViewDTO view(String id);
+
+    List<DeliveryOrderDTO.PrintDTO> print(List<String> ids);
+
+    Boolean cancelPrint(List<String> ids);
+
+    boolean delete(List<String> ids);
 }
