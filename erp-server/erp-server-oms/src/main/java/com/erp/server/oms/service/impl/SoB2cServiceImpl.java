@@ -3186,6 +3186,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cDTO.CustomerDTO b2cCustomer = new SoB2cDTO.CustomerDTO();
         b2cCustomer.setSalesOrgId(soB2cEntity.getOrgId());
         b2cCustomer.setSalesOrgName(soB2cEntity.getOrgName());
+        b2cCustomer.setDictPlatform(soB2cEntity.getDictPlatform());
         //店铺
         String shopId = soB2cEntity.getShopId();
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
@@ -3194,6 +3195,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             b2cCustomer.setSellerId(shopInfo.getChargeId());
             b2cCustomer.setSellerName(shopInfo.getChargeName());
             b2cCustomer.setCustomerName(shopInfo.getName());
+            b2cCustomer.setShopName(shopInfo.getName());
         }
         String country = "";
         String countryName = "";
@@ -3216,6 +3218,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         b2cCustomer.setCountry(country);
         b2cCustomer.setCountryName(countryName);
+        SoB2cLogisticsEntity soB2cLogisticsEntity= soB2cLogisticsService.getByMainId(soId);
+        if(Objects.nonNull(soB2cLogisticsEntity)){
+            b2cCustomer.setTransportNo(soB2cLogisticsEntity.getCode());
+            b2cCustomer.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+        }
         return b2cCustomer;
     }
 
