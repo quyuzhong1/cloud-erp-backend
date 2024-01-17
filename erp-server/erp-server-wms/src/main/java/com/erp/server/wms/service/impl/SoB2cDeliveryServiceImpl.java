@@ -834,14 +834,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //查询订单
         List<String> soIds = records.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        //拦截标识
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptService.listIsIntercept(soIds);
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
-            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
-                record.setIsIntercept(isInterceptDTO.getIsIntercept());
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                record.setIsIntercept(soB2cEntity.getIsIntercept());
             }
             //平台名称
             record.setDictPlatformName(PlatformDictEnum.getByCode(record.getDictPlatform()).getName());
