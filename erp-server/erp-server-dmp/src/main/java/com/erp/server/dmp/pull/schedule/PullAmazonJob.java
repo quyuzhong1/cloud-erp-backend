@@ -21,6 +21,7 @@ import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -38,10 +39,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
-import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.service.PlatformApiTaskService;
-import com.erp.server.dmp.service.ReportHandleService;
-import com.erp.server.dmp.service.ReportScheduleService;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -121,6 +119,9 @@ public class PullAmazonJob {
 
     @Resource
     private MongoTemplate mongoTemplate;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 拉取亚马逊任务
@@ -488,10 +489,12 @@ public class PullAmazonJob {
         XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 下载开始");
         entityList.forEach(dto -> {
             try {
+                // 校验黑名单不调用亚马逊接口
+                Boolean skipRequest = this.checkSkipList(dto.getUniqueId());
                 // 下载和处理详情
                 PlatformAmazonFbaShipmentDTO newDto;
                 // 非线上支持手动
-                if (!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")) {
+                if ((!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")) || skipRequest) {
                     newDto = dto;
                 } else {
                     newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
@@ -540,6 +543,25 @@ public class PullAmazonJob {
         });
         XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 检查配置是否存在
+     * 存在=跳过请求亚马逊接口
+     */
+    private Boolean checkSkipList(String uniqueId) {
+        String listStr = cfgSettingService.getValue(SettingEnum.AMAZON_FBA_SHIPMENT_SKIP_LIST);
+        // 无配置
+        if (StringUtils.isBlank(listStr)){
+            return false;
+        }
+        List<String> skipList;
+        if (listStr.contains(",")){
+            skipList = Arrays.stream(listStr.split(",")).collect(Collectors.toList());;
+        } else {
+            skipList = Collections.singletonList(listStr);
+        }
+        return skipList.contains(uniqueId);
     }
 
     /**
