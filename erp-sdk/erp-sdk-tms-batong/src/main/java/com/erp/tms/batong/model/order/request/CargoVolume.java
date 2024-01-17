@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 /**
  * @author Lambda
- * @Classname Cargovolume
+ * @Classname CargoVolume
  * @Description 包裹材积信息
  * @Date 2024-01-12 15:19
  * @Created by yl
@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cargovolume implements Serializable {
+public class CargoVolume implements Serializable {
 
 
     /**
