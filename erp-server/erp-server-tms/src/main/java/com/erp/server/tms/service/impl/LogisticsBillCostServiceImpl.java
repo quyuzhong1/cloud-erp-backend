@@ -169,6 +169,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
 
+        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
+        }
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
                 .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
@@ -304,6 +307,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
                 ? entity.getActualWeight() : entity.getVolumeWeight();
         entity.setBillingWeight(billingWeight);
+
+        //物流单
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
+        if (ObjectUtil.isEmpty(logisticsBillEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
+        }
+        entity.setTransportNo(logisticsBillEntity.getTransportNo());
+
     }
 
 
