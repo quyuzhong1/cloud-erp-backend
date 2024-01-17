@@ -130,7 +130,7 @@ public class WebAdvanceQueryAspect {
             sql.append("(");
         }
         String contentSql;
-        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend() || dto.getField().equals("so.tab")){
+        if(Objects.nonNull(dto.getIsExtend())&&dto.getIsExtend()){
             if(queryHandler == null){
                 throw new ServiceException(ApiError.QUERY_NOT_EXTEND_CLASS);
             }
