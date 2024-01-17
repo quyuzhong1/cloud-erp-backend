@@ -33,6 +33,7 @@ public enum ApiError implements Serializable {
     QUERY_LIST_TYPE_ERROR(2003, "在...列表或不在...列表查询应传递数组"),
     QUERY_BETWEEN_ERROR(2004, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(2005, "非法日期格式"),
+    QUERY_NOT_EXTEND_CLASS(2006,"扩展字段没有配置处理类"),
 
 
     /**
