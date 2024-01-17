@@ -1033,8 +1033,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoEntity> list = lambdaQuery()
                 .eq(TransferInfoEntity::getSourceCode, code)
                 .eq(TransferInfoEntity::getSourceType, sourceType)
-                .ne(TransferInfoEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
-                .ne(TransferInfoEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getName())
                 .list();
 
         //反审核，删除调拨单
