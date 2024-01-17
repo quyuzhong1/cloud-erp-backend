@@ -116,7 +116,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, updateDTO);
-
+        logisticsBillCostEntity.setLogisticsBillId(old.getLogisticsBillId());
         // 数据处理
         handleData(logisticsBillCostEntity);
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
@@ -299,6 +299,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     * 新增修改处理数据
     */
     private void handleData(LogisticsBillCostEntity entity) {
+
         //运费差异
         BigDecimal diffShippingCost = MathUtil.subtract(entity.getActualShippingCost(), entity.getEstimatedShippingCost());
         entity.setDiffShippingCost(diffShippingCost);
