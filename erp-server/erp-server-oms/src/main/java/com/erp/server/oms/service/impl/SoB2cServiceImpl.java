@@ -1240,6 +1240,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
                 soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, addDTO.getId());
             }
+
+
         } else {
             //新增发货拦截
             addIntercept(remark, entity, logisticsEntity);
@@ -1273,6 +1275,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
         addDTO.setDetailList(detailList);
 
+        updateIntercept(Boolean.TRUE, Boolean.TRUE, Arrays.asList(entity.getId()));
         //新增拦截单
         return soB2cDeliveryInterceptFeign.add(addDTO);
     }
@@ -4427,5 +4430,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
         taskFeignDTO.setSyncOperate(view.getApproveStatus().getCode());
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
+
+    /**
+     * 拦截标识，冻结
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    public Boolean updateIntercept(Boolean isIntercept, Boolean isFrozen, List<String> ids) {
+        return lambdaUpdate().set(SoB2cEntity::getIsIntercept, isIntercept)
+                .set(SoB2cEntity::getIsFrozen, isFrozen)
+                .in(SoB2cEntity::getId, ids)
+                .update();
     }
 }

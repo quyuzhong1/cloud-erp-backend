@@ -239,6 +239,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("shipping_order_no")
     private String shippingOrderNo;
 
+    /**
+     * 单据冻结状态
+     */
+    @TableField("is_frozen")
+    private Boolean isFrozen;
+
 
 
     public static final String CODE = "code";
