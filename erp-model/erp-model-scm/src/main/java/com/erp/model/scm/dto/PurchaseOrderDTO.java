@@ -277,7 +277,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 页面高级查询
          */
-        private List<AdvanceQueryDTO> advanceQueryList;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
          * sqlMap 默认key default
