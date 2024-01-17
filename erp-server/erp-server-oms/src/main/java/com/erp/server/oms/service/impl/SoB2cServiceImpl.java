@@ -901,12 +901,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
 
         List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
-        //如果是速卖通的话
-        if (isAliExpress) {
-            for (LogisticsBillDTO.SkuDTO item : skuList) {
-                item.setSkuId(item.getPlatformSpuNo());
-            }
-        }
         result.setSkuList(skuList);
         return result;
     }
@@ -927,6 +921,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (Objects.isNull(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+
+        ApproveStatusEnum approveStatusEnum=entity.getApproveStatus();
+        if(!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)){
+            throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
         }
 
         //校验是否存在拦截单

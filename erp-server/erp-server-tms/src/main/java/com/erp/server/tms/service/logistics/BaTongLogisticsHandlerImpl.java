@@ -5,6 +5,8 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MapUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
@@ -23,7 +25,7 @@ import com.erp.tms.batong.model.label.request.ConfigInfo;
 import com.erp.tms.batong.model.label.request.LabelRequest;
 import com.erp.tms.batong.model.label.request.ListOrder;
 import com.erp.tms.batong.model.label.response.LabelResponse;
-import com.erp.tms.batong.model.order.request.OrderRequest;
+import com.erp.tms.batong.model.order.request.*;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import com.erp.tms.batong.service.BaTongService;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
@@ -35,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -60,14 +63,34 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrder) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setReferenceNo(logisticsOrder.getDeliveryNo());
+        orderRequest.setShippingMethod(logisticsOrder.getLogisticsChannelEntity().getCode());
+        ParceInfoVO parceInfoVO = logisticsOrder.getParceInfoVO();
 
+        //总重量 单位g
+        Integer totalWeight = parceInfoVO.getTotalWeight();
+        if (Objects.isNull(totalWeight)) {
+            BigDecimal orderWeight = MathUtil.divide(new BigDecimal(totalWeight), new BigDecimal("1000"), 3);
+            orderRequest.setOrderWeight(orderWeight.toString());
+        }
+        orderRequest.setOrderPieces("1");
+        orderRequest.setCargoType("W");
+        //发货人信息
+        Shipper shipper=LogisticsOrderConverter.INSTANCE.orderShippingByBaTong(logisticsOrder);
+        orderRequest.setShipper(shipper);
 
-        // OrderRequest.builder().
-        // referenceNo(logisticsOrder.getDeliveryNo()).
-        // shippingMethod(logisticsOrder.getLogisticsChannelEntity().getCode()).
-        //
+        //收货人信息
+        Consignee consignee=LogisticsOrderConverter.INSTANCE.orderConsigneeByBaTong(logisticsOrder);
+        orderRequest.setConsignee(consignee);
+        List<LogisticsProductVO> logisticsProductList=logisticsOrder.getLogisticsProductVOList();
+        //报关信息
+        List<Invoice> invoiceList=LogisticsOrderConverter.INSTANCE.orderInvoiceByBaTong(logisticsProductList);
+        orderRequest.setInvoiceList(invoiceList);
 
-
+        //商品信息
+        CargoVolume cargoVolume=LogisticsOrderConverter.INSTANCE.orderCargoVolumeByBaTong(parceInfoVO);
+        List<CargoVolume> cargoVolumeList=Arrays.asList(cargoVolume);
+        orderRequest.setCargoVolumeList(cargoVolumeList);
         return null;
 
     }

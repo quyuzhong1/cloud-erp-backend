@@ -36,7 +36,7 @@ public class Invoice implements Serializable {
     private String invoiceEnName;
 
     /**
-     * 英文品名
+     * 中文品名
      */
     @Alias("invoice_cnname")
     private String invoiceCnName;

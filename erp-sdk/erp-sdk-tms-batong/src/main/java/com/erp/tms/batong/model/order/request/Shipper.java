@@ -100,7 +100,7 @@ public class Shipper implements Serializable {
     @Alias("shipper_email")
     private String shipperEmail;
     /**
-     * 发件人城市
+     * 发件人传真
      */
     @Alias("shipper_fax")
     private String shipperFax;

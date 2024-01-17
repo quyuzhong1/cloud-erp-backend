@@ -841,6 +841,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String platformSpuNo;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
     }
 
 

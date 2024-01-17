@@ -66,7 +66,7 @@ public class OrderRequest implements Serializable {
      * B：袋子
      */
     @Alias("cargotype")
-    private String cargotype;
+    private String cargoType;
 
     /**
      * 订单状态
@@ -119,7 +119,7 @@ public class OrderRequest implements Serializable {
      * 包裹材积信息
      */
     @Alias("cargovolume")
-    private List<Cargovolume> cargovolumeList;
+    private List<CargoVolume> cargoVolumeList;
 
 
 
