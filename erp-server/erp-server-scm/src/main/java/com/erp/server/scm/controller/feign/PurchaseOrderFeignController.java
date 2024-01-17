@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.feign;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -389,8 +390,8 @@ public class PurchaseOrderFeignController {
 
     /**
      * srm订单确认列表分页查询
-     * @author Will
-     * @date: 2023/3/15 16:47
+     * @author zdy
+     * @date: 2024/1/15 17:34
      * @param dto
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
@@ -398,5 +399,18 @@ public class PurchaseOrderFeignController {
     public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.srmOrderConfirmPaging(dto);
         return pagingVO;
+    }
+
+    /**
+     * srm订单确认整单处理
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmStatus")
+    public List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
+        List<BatchResultDTO> batchResultDTOS = purchaseOrderService.srmOrderConfirmStatus(dto);
+        return batchResultDTOS;
     }
 }

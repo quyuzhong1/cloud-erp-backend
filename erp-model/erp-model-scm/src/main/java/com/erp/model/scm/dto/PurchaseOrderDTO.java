@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -1539,5 +1540,31 @@ public class PurchaseOrderDTO implements Serializable {
         @Valid
         @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.PdaViewDTO> details;
+    }
+
+    /**
+     * SRM 整单接受/拒绝
+     * @Author zdy
+     * @Date 2023/8/21 16:33
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmDTO{
+        /**
+         * 主键id 订单id
+         */
+        @NotEmpty(message = "订单不能为空")
+        private List<String> ids;
+        /**
+         * 1整单接受 2整单拒绝
+         */
+        @NotNull(message = "处理状态不能为空")
+        @StateEnumValue(intValues = {1,2},message = "处理状态有误")
+        private Integer status;
+
+        /**
+         * 操作说明 接受原因/拒绝原因
+         */
+        private String remark;
     }
 }

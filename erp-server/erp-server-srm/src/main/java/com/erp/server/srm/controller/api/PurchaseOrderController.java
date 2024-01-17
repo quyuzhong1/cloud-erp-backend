@@ -1,5 +1,6 @@
 package com.erp.server.srm.controller.api;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -64,5 +65,18 @@ public class PurchaseOrderController extends BaseController {
         dto.getParams().setSupplierIdList(Collections.singletonList(userService.getSupplierId()));
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
         return pagingVO;
+    }
+
+    /**
+     * srm订单确认整单处理
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmStatus")
+    public List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
+        List<BatchResultDTO> batchResultDTOS = purchaseOrderFeign.srmOrderConfirmStatus(dto);
+        return batchResultDTOS;
     }
 }

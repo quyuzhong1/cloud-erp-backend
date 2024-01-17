@@ -402,4 +402,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO supplierConfirm(String id,String remark);
+
+    /**
+     * 批量接受/拒绝
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> srmOrderConfirmStatus(PurchaseOrderDTO.ConfirmDTO dto);
 }

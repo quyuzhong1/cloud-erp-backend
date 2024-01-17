@@ -193,7 +193,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             params.setExecutionStatus(pagingDTO.getParams().getSearchType());
         }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
@@ -2306,6 +2306,66 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         purchaseOrderDetailService.updateExecutionStatus(detailIdList,PurchaseOrderConfirmTypeEnum.CONFIRM,remark);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
+    }
+
+    @Override
+    public List<BatchResultDTO> srmOrderConfirmStatus(PurchaseOrderDTO.ConfirmDTO dto) {
+        Set<String> ids;
+        if (CollectionUtils.isEmpty(dto.getIds())){
+            return Collections.emptyList();
+        }
+        //订单去重
+        ids = new HashSet<>(dto.getIds());
+        List<BatchResultDTO> dtos = new ArrayList<>(ids.size());
+        for (String id :ids) {
+            BatchResultDTO batchResultDTO = new BatchResultDTO();
+            PurchaseOrderEntity entity = this.getById(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                batchResultDTO.setId(id);
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setMsg(ApiError.ERROR_98025.msg);
+                dtos.add(batchResultDTO);
+                continue;
+            }
+            try {
+                if (1 == dto.getStatus()){
+                    batchResultDTO = purchaseOrderConfirm(entity, PurchaseOrderConfirmTypeEnum.CONFIRM, dto.getRemark());
+                    dtos.add(batchResultDTO);
+                }else if (2 == dto.getStatus()){
+                    batchResultDTO = purchaseOrderConfirm(entity, PurchaseOrderConfirmTypeEnum.REJECT, dto.getRemark());
+                    dtos.add(batchResultDTO);
+                }
+
+            }catch (Exception e){
+                batchResultDTO.setId(id);
+                batchResultDTO.setCode(entity.getCode());
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setMsg(e.getMessage());
+                dtos.add(batchResultDTO);
+            }
+        }
+        return dtos;
+    }
+
+    private BatchResultDTO purchaseOrderConfirm(PurchaseOrderEntity entity, PurchaseOrderConfirmTypeEnum typeEnum, String remark) {
+        //判断审核状态
+        if (!StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM,entity.getCode());
+        }
+
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //判断执行状态
+        long count = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(PurchaseOrderConfirmTypeEnum.TO_BE_CONFIRM.getCode(), obj.getExecutionStatus()) && StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM,entity.getCode());
+        }
+        //采购订单明细id集合
+        List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        purchaseOrderDetailService.updateExecutionStatus(detailIdList,typeEnum,remark);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
 
