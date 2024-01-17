@@ -104,6 +104,7 @@ public enum ApiError implements Serializable {
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
+    ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     /**
      * 警告信息 从800 开始
      */

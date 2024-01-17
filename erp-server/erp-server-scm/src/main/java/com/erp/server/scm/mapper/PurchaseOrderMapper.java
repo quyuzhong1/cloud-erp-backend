@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -148,4 +149,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     List<PurchaseStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseStatisticsDTO.RequestDTO requestDTO);
 
     Integer srmPurchaseOrderCount(@Param("params") PurchaseOrderSrmDTO.SearchParamDTO params);
+    /**
+     * @description: 查询需要自动确认的采购订单
+     * @author Will
+     * @date: 2024/1/17 10:34
+     * @return List<PurchaseOrderConfirmDTO>
+     */
+    List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> listPurchaseOrderAutoConfirm(@Param("list") List<CfgSettingDTO.ViewDTO> list);
 }

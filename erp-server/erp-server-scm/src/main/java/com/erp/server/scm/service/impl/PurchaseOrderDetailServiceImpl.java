@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -8,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -22,8 +24,9 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ConfirmTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderConfirmTypeEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -41,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -76,7 +79,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private PurchaseApplicationDetailService purchaseApplicationDetailService;
+    private CommonService commonService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
@@ -564,13 +567,26 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
-    public void updateExecutionStatus(List<String> detailIdList,PurchaseOrderConfirmTypeEnum typeEnum,String remark) {
+    public void purchaseOrderConfirm(List<String> detailIdList, ExecutionStatusEnum typeEnum, String remark, ConfirmTypeEnum confirmType) {
         if (CollectionUtils.isEmpty(detailIdList)) {
             return;
         }
+        LoginUser userInfo = commonService.getUserInfo();
         lambdaUpdate().in(PurchaseOrderDetailEntity::getId,detailIdList)
                 .set(PurchaseOrderDetailEntity::getExecutionStatus, typeEnum.getCode())
                 .set(PurchaseOrderDetailEntity::getConfirmRemark,remark)
+                .set(PurchaseOrderDetailEntity::getConfirmUserId, ObjectUtil.isEmpty(userInfo) ? "":userInfo.getUid())
+                .set(PurchaseOrderDetailEntity::getConfirmUserName, ObjectUtil.isEmpty(userInfo) ? "system":userInfo.getUserName())
+                .set(PurchaseOrderDetailEntity::getConfirmDate, LocalDate.now())
+                .set(PurchaseOrderDetailEntity::getConfirmType, confirmType.getCode())
                 .update(new PurchaseOrderDetailEntity());
+    }
+
+    @Override
+    public void purchaseOrderAutoConfirm(List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return;
+        }
+        purchaseOrderConfirm(detailIdList, ExecutionStatusEnum.CONFIRM,"系统自动确认",ConfirmTypeEnum.AUTO);
     }
 }

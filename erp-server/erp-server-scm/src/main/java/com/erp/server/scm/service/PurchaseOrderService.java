@@ -402,4 +402,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO supplierConfirm(String id,String remark);
+    /**
+     * @description: 定时任务自动确认
+     * @author Will
+     * @date: 2024/1/17 10:28
+     */
+    void purchaseOrderAutoConfirm();
 }

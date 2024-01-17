@@ -6,7 +6,7 @@ package com.erp.model.scm.enums;
 
  * @date 2023/3/27 10:52
  */
-public enum OrderConfirmOperatorTypeEnum {
+public enum ConfirmTypeEnum {
 
     //系统
     AUTO("auto", "系统"),
@@ -17,7 +17,7 @@ public enum OrderConfirmOperatorTypeEnum {
     private String code;
     private String name;
 
-    OrderConfirmOperatorTypeEnum(String code, String name) {
+    ConfirmTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -31,8 +31,8 @@ public enum OrderConfirmOperatorTypeEnum {
     }
 
     public static String getNameByCode(String code) {
-        OrderConfirmOperatorTypeEnum[] stateEnums = values();
-        for (OrderConfirmOperatorTypeEnum stateEnum : stateEnums) {
+        ConfirmTypeEnum[] stateEnums = values();
+        for (ConfirmTypeEnum stateEnum : stateEnums) {
             if (stateEnum.getCode().equals(code) ) {
                 return stateEnum.getName();
             }

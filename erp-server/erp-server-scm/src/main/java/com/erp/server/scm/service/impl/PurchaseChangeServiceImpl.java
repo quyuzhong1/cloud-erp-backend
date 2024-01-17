@@ -317,10 +317,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         String executionStatus = "";
         //送货中
         if ((receiveQty - returnQty <= MathUtil.ZERO) || (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty)) {
-            executionStatus = PurchaseOrderConfirmTypeEnum.DELIVERY.getCode();
+            executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
         } else {
             //已完成
-            executionStatus = PurchaseOrderConfirmTypeEnum.FINISH.getCode();
+            executionStatus = ExecutionStatusEnum.FINISH.getCode();
         }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
         purchaseOrderDetailEntity.setId(id);

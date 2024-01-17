@@ -11,8 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.PurchaseOrderConfirmTypeEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
@@ -307,7 +306,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}，收货数量：{}，采购入库[收货单下推]数量：{}, 采购入库[无收货单]数量：{}, ,退货补货退货数量：{}，原采购明细数量：{}", member.getPurchaseOrderDetailId(), instockForcastEntity.getPurchaseOrderCode(), member.getQty(),
                     receiveQty, poRecQty, poUnRecQty, returnQty, member.getOriginQty());
             // 执行状态为已完成、已关闭（包括结束交货）
-            if(Objects.equals(PurchaseOrderConfirmTypeEnum.FINISH.getCode(), executionStatus) || Objects.equals(PurchaseOrderConfirmTypeEnum.CLOSED.getCode(), executionStatus)) {
+            if(Objects.equals(ExecutionStatusEnum.FINISH.getCode(), executionStatus) || Objects.equals(ExecutionStatusEnum.CLOSED.getCode(), executionStatus)) {
                 // 新采购数量- (待检 + 退货在途 + 可用)
                 changeQty = member.getQty() - ((receiveQty - poRecQty) + returnQty + (poUnRecQty + poRecQty));
                 inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
