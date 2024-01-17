@@ -66,11 +66,11 @@ public class CfgSettingController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "系统配置管理修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:cfgSetting:update",
-            serviceClass = CfgSettingService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "srm:cfgSetting:update",
+//            serviceClass = CfgSettingService.class,
+//            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgSettingDTO.UpdateDTO dto) {
         cfgSettingService.update(dto);
         return success();

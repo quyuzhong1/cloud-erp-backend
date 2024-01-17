@@ -43,5 +43,9 @@ public class PurchaseOrderSrmDTO implements Serializable {
          *
          */
         private String executionStatus;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 }

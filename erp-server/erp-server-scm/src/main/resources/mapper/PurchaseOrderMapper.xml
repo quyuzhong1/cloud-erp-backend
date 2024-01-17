@@ -784,5 +784,8 @@
         <if test="params.executionStatus != null and params.executionStatus != 'all'">
             AND pod.execution_status = #{params.executionStatus}
         </if>
+        <if test="params.approveStatus != null and params.approveStatus != ''">
+            AND po.approve_status = #{params.approveStatus}
+        </if>
     </select>
 </mapper>

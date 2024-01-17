@@ -2318,7 +2318,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderSrmDTO.SearchParamDTO params = new PurchaseOrderSrmDTO.SearchParamDTO();
         params.setSupplierId(supplierId);
         params.setExecutionStatus(typeEnum.getCode());
-
+        params.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
         ListStatusCountDTO.PurchaseOrderConfirmCountDTO dto = new ListStatusCountDTO.PurchaseOrderConfirmCountDTO();
         dto.setType(typeEnum.getCode());
         dto.setName(typeEnum.getName());
