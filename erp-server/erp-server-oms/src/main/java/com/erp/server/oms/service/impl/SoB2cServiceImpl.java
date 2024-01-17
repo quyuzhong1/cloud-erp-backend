@@ -413,6 +413,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         deleteDTO.setMainId(entity.getId());
         soB2cErrorService.delete(deleteDTO);
 
+        //修改拦截打标识、冻结状态
+        this.updateIntercept(Boolean.FALSE, Boolean.FALSE, Arrays.asList(entity.getId()));
+
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
@@ -434,8 +437,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+        //校验是否被冻结
+        if (entity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
+        }
 
         // 调用流程审核
         approveProcess(entity, dto, isMatch);
@@ -528,8 +533,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_INVALID, entity.getCode(), soB2cInvalidTypeEnum.getName());
         }
 
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+        //校验是否被冻结
+        if (entity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
+        }
 
         log.info("反作废 开始修改B2C销售订单表状态数据，id：【{}】", id);
         lambdaUpdate().eq(SoB2cEntity::getId, id)
@@ -945,8 +952,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.B2C_APPROVE_DELIVERY, entity.getCode());
         }
 
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+        //校验是冻结
+        if (entity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
+        }
 
         //物流渠道
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
@@ -1280,7 +1289,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
         addDTO.setDetailList(detailList);
 
-        updateIntercept(Boolean.TRUE, Boolean.TRUE, Arrays.asList(entity.getId()));
+        //修改拦截打标识、冻结订单
+        this.updateIntercept(Boolean.TRUE, Boolean.TRUE, Arrays.asList(entity.getId()));
+
         //新增拦截单
         return soB2cDeliveryInterceptFeign.add(addDTO);
     }
@@ -1320,6 +1331,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getSourceId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+
+        //修改拦截打标识、冻结订单
+        updateIntercept(Boolean.FALSE, Boolean.FALSE, Arrays.asList(entity.getId()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消发货拦截");
     }
 
@@ -4207,8 +4221,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
 
-        //校验是否存在拦截单
-        checkIsIntercept(Arrays.asList(entity));
+        //校验是否被冻结
+        if (entity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
+        }
 
         //仓库匹配规则结果
         SoB2cDTO.RuleResultDTO ruleMatchResult = this.warehouseRule(entity.getId(), detailList, new HashMap<>());
@@ -4399,6 +4415,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return isMatch;
     }
 
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean updateIntercept(Boolean isIntercept, Boolean isFrozen, List<String> ids) {
+        return lambdaUpdate().set(SoB2cEntity::getIsIntercept, isIntercept)
+                .set(SoB2cEntity::getIsFrozen, isFrozen)
+                .in(SoB2cEntity::getId, ids)
+                .update();
+    }
 
     /**
      * 校验是否存在拦截单
@@ -4457,19 +4489,4 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 
-    /**
-     * 拦截标识，冻结
-     * @Author Luo_WG
-     * @Date 2024/1/17 18:54
-     * @param isIntercept 是否打标拦截
-     * @param isFrozen 是否冻结单据
-     * @param ids 订单id
-     * @return java.lang.Boolean
-     **/
-    public Boolean updateIntercept(Boolean isIntercept, Boolean isFrozen, List<String> ids) {
-        return lambdaUpdate().set(SoB2cEntity::getIsIntercept, isIntercept)
-                .set(SoB2cEntity::getIsFrozen, isFrozen)
-                .in(SoB2cEntity::getId, ids)
-                .update();
-    }
 }

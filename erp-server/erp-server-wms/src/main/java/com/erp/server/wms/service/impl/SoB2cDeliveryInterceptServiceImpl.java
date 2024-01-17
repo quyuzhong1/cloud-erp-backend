@@ -331,11 +331,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //修改订单状态
             soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+            //修改拦截状态，冻结状态
+            soB2cFeign.updateIntercept(Boolean.TRUE, Boolean.FALSE, Arrays.asList(entity.getSoId()));
         } else {
             handleResult = HandleResultEnum.FAILURE.getName();
             soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
+            //修改拦截状态，冻结状态
+            soB2cFeign.updateIntercept(Boolean.FALSE, Boolean.FALSE, Arrays.asList(entity.getSoId()));
         }
-
 
         //异常订单
         SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();

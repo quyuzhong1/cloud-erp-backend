@@ -261,4 +261,16 @@ public interface SoB2cFeign {
 
     @GetMapping("/feign/soB2c/view")
     SoB2cDTO.ViewDTO view(@RequestParam("id") String id);
+
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateIntercept")
+    Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids);
 }

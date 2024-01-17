@@ -375,4 +375,18 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.view(id);
     }
 
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateIntercept")
+    public Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids) {
+        return soB2cService.updateIntercept(isIntercept, isFrozen, ids);
+    }
+
 }

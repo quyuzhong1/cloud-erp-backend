@@ -359,7 +359,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98019);
         }
 
-        String supplierId = priceChangeEntity.getSupplierId();
         List<String> detailIds = new ArrayList<>();
         /**
          * 报价明细
