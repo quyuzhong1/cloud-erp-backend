@@ -353,7 +353,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceDetailIds(List<String> purchasePriceDetailIds) {
-        List<PurchasePriceDetailEntity> list = baseMapper.listByIds(purchasePriceDetailIds);
+        List<PurchasePriceDetailEntity> list = baseMapper.listDetailByIds(purchasePriceDetailIds);
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
         //处理采购价目明细信息
         handlePurchasePriceDetail(viewList);

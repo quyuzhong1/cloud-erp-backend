@@ -224,7 +224,7 @@
         </if>
     </select>
 
-    <select id="listByIds" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
+    <select id="listDetailByIds" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
         SELECT
         ppd.id,
         ppd.create_user_id,
@@ -250,7 +250,6 @@
         ppd.disabled,
         ppd.kingdee_detail_id,
         ppd.remark,
-        ppd.pricing_user_id,
         pp.approve_status,
         pp.supplier_id,
         pp.code AS priceCode,
