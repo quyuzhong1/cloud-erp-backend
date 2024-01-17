@@ -409,8 +409,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //待提交并且未作废允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())
-                && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
@@ -1033,6 +1032,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoEntity> list = lambdaQuery()
                 .eq(TransferInfoEntity::getSourceCode, code)
                 .eq(TransferInfoEntity::getSourceType, sourceType)
+                .ne(TransferInfoEntity::getApproveStatus, ApproveStatusEnum.REJECT.getCode())
+                .ne(TransferInfoEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getName())
                 .list();
 
         //反审核，删除调拨单
@@ -1057,8 +1058,38 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
 
             //删除
-            this.delete(Arrays.asList(entity.getId()));
+            this.requisitionApplicationDelete(Arrays.asList(entity.getId()));
         }
 
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean requisitionApplicationDelete(List<String> ids) {
+        //根据ids查询
+        List<TransferInfoEntity> list = getList(ids);
+        //待提交并且未作废允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())
+                && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
+        //马帮直接调拨单不允许删除 TODO
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
+        }
+
+        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除明细数据
+        transferInfoDetailService.removeByMainIds(ids);
+        //删除操作日志
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //删除主表数据
+        return this.removeByIds(ids);
     }
 }
