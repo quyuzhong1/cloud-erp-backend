@@ -69,5 +69,5 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * @param purchasePriceDetailIds
      * @return java.util.List<com.erp.model.scm.entity.PurchasePriceDetailEntity>
      **/
-    List<PurchasePriceDetailEntity> listByIds(@Param("purchasePriceDetailIds") List<String> purchasePriceDetailIds);
+    List<PurchasePriceDetailEntity> listDetailByIds(@Param("purchasePriceDetailIds") List<String> purchasePriceDetailIds);
 }
