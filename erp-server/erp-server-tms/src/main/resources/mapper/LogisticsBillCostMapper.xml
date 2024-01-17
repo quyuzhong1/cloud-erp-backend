@@ -88,6 +88,9 @@
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
             lbc.is_deleted = false
+            <if test="params.orderType != null and params.orderType != ''">
+                and lb.order_type = #{params.orderType}
+            </if>
             <if test="params.sourceType != null and params.sourceType != ''">
                 and lb.source_type = #{params.sourceType}
             </if>
@@ -204,6 +207,9 @@
                 </foreach>
             </if>
             <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.orderType != null and params.orderType != ''">
+                    and lb.order_type = #{params.orderType}
+                </if>
                 <if test="params.sourceType != null and params.sourceType != ''">
                     and lb.source_type = #{params.sourceType}
                 </if>
