@@ -42,7 +42,7 @@ public interface SupplierUserFeign {
      * @return
      */
     @PostMapping("/feign/supplierUser/list")
-    List<SupplierUserVO> list(UserPagingSearchDTO dto);
+    List<SupplierUserVO> list(@RequestBody @Validated UserPagingSearchDTO dto);
 
     /**
      * 添加用户

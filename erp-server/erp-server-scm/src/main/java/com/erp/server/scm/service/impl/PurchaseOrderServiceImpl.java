@@ -1398,11 +1398,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //执行状态
             if (StringUtils.isNotBlank(obj.getExecutionStatus())){
                 String executionStatus = PurchaseOrderConfirmTypeEnum.getNameByCode(obj.getExecutionStatus());
-                String confirmType = "";
-                if (StringUtils.isNotBlank(obj.getConfirmType())){
-                    confirmType = OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType());
-                }
-                obj.setExecutionStatusStr(executionStatus + confirmType);
+                obj.setExecutionStatusName(executionStatus);
+            }
+            //确认类型
+            if (StringUtils.isNotBlank(obj.getConfirmType())){
+                String name = OrderConfirmOperatorTypeEnum.getNameByCode(obj.getConfirmType());
+                obj.setConfirmTypeName(name);
             }
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
