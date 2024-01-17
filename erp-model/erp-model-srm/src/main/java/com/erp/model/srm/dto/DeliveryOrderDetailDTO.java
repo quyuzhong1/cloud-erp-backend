@@ -22,9 +22,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class DeliveryOrderDetailDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -119,9 +116,7 @@ public class DeliveryOrderDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
+        private String detailId;
     }
 
     @Data
@@ -147,7 +142,7 @@ public class DeliveryOrderDetailDTO implements Serializable {
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
         /**
-         * skuId
+         * skuNo
          */
         @NotBlank(message = "skuNo不能为空")
         private String skuNo;

@@ -341,6 +341,11 @@ public class DeliveryOrderDTO implements Serializable {
          */
         private LocalDate planDeliveryDate;
 
+        /**
+         * 明细数据
+         */
+        private List<DeliveryOrderDetailDTO.UpdateDTO> detailList;
+
     }
 
     @Data

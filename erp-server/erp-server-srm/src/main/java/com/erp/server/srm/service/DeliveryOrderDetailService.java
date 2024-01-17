@@ -26,14 +26,15 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     void add(List<DeliveryOrderDetailDTO.AddDTO> dto, String mainId);
 
     List<DeliveryOrderDetailEntity> listByMainId(String mainId);
-//    /**
-//    * 修改
-//    * @author lrp
-//    * @date: 2024-01-12
-//    * @param dto
-//    * @return
-//    */
-//    Boolean update(DeliveryOrderDetailDTO.UpdateDTO dto);
+
+    /**
+    * 修改
+    * @author lrp
+    * @date: 2024-01-12
+    * @param dto
+    * @return
+    */
+    Boolean update(List<DeliveryOrderDetailDTO.UpdateDTO> dto,String mainId);
 
 
 }

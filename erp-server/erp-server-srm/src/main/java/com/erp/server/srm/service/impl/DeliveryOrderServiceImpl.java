@@ -171,6 +171,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if (!save) {
             throw new ServiceException("送货单保存失败");
         }
+        //更新明细
+        if(!detailService.update(updateDTO.getDetailList(),deliveryOrderEntity.getId())){
+            throw new ServiceException("送货单明细保存失败");
+        }
         // 记录主单操作日志
         log.info("编辑 开始记录送货单日志数据，单号：【{}】", deliveryOrderEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), deliveryOrderEntity.getCode(), "送货单");
