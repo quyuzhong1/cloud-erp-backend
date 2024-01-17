@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Component
 public class WebAdvanceQueryAspect {
 
-    public static final String ADVANCE_QUERY_FIELD_NAME = "advanceQueryList";
+    public static final String ADVANCE_QUERY_FIELD_NAME = "advanceQueryDTOList";
 
     public static final String SQL_MAP_FIELD_NAME = "sqlMap";
 
