@@ -1,7 +1,9 @@
 package com.erp.model.srm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +17,8 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 送货单请求响应实体
@@ -265,6 +269,14 @@ public class DeliveryOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ParamDTO extends SortDTO {
+
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        @JsonIgnore
+        private Map<String,String> sqlMap;
 
         /**
          * 主键id
