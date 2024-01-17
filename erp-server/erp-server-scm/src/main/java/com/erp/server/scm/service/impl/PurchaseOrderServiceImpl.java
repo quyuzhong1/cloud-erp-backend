@@ -2336,10 +2336,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             try {
                 if (1 == dto.getStatus()){
-                    batchResultDTO = purchaseOrderConfirm(entity, PurchaseOrderConfirmTypeEnum.CONFIRM, dto.getRemark());
+                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.CONFIRM, dto.getRemark(),ConfirmTypeEnum.MANUAL);
                     dtos.add(batchResultDTO);
                 }else if (2 == dto.getStatus()){
-                    batchResultDTO = purchaseOrderConfirm(entity, PurchaseOrderConfirmTypeEnum.REJECT, dto.getRemark());
+                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.REJECT, dto.getRemark(), ConfirmTypeEnum.MANUAL);
                     dtos.add(batchResultDTO);
                 }
 
@@ -2354,7 +2354,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return dtos;
     }
 
-    private BatchResultDTO purchaseOrderConfirm(PurchaseOrderEntity entity, PurchaseOrderConfirmTypeEnum typeEnum, String remark) {
+    private BatchResultDTO purchaseOrderConfirm(PurchaseOrderEntity entity, ExecutionStatusEnum typeEnum, String remark, ConfirmTypeEnum confirmTypeEnum) {
         //判断审核状态
         if (!StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM,entity.getCode());
@@ -2365,13 +2365,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //判断执行状态
-        long count = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(PurchaseOrderConfirmTypeEnum.TO_BE_CONFIRM.getCode(), obj.getExecutionStatus()) && StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())).count();
+        long count = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.TO_BE_CONFIRM.getCode(), obj.getExecutionStatus()) && StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM,entity.getCode());
         }
         //采购订单明细id集合
         List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        purchaseOrderDetailService.updateExecutionStatus(detailIdList,typeEnum,remark);
+        purchaseOrderDetailService.purchaseOrderConfirm(detailIdList,typeEnum,remark,confirmTypeEnum);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
