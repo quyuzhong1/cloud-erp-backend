@@ -493,7 +493,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                     .findFirst().orElse(null);
 
             if (ObjectUtil.isNotEmpty(listSkuDTO)) {
-                viewDTO.setStockSku(listSkuDTO.getWarehouseId());
+                viewDTO.setStockSku(listSkuDTO.getWarehouseSkuNo());
                 viewDTO.setStockSkuName(listSkuDTO.getWarehouseProductName());
             }
 
