@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -37,4 +38,7 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     Boolean update(List<DeliveryOrderDetailDTO.UpdateDTO> dto,String mainId);
 
 
+    boolean deleteByMainIds(List<String> mainIds);
+
+    Map<String,List<DeliveryOrderDetailDTO.PrintDTO>> mapPrintByMainIds(List<String> mainIds);
 }

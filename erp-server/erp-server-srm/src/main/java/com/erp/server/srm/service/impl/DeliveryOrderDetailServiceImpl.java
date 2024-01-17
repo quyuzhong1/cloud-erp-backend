@@ -7,9 +7,12 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.server.srm.mapper.DeliveryOrderDetailMapper;
 import com.erp.server.srm.service.CommonService;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,7 +50,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     private CommonService commonService;
 
     @Resource
-    private PurchaseOrderFeign purchaseOrderFeign;
+    private PlmTaskFeign plmTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     public void add(List<DeliveryOrderDetailDTO.AddDTO> detailList, String mainId) {
@@ -111,6 +115,28 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             throw new ServiceException("送货单明细新增失败");
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteByMainIds(List<String> mainIds) {
+        List<DeliveryOrderDetailEntity> detailEntityList = this.lambdaQuery().in(DeliveryOrderDetailEntity::getMainId, mainIds).list();
+        return this.removeByIds(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public Map<String,List<DeliveryOrderDetailDTO.PrintDTO>> mapPrintByMainIds(List<String> mainIds) {
+        List<DeliveryOrderDetailEntity> detailEntityList = this.lambdaQuery().in(DeliveryOrderDetailEntity::getMainId, mainIds).list();
+        List<DeliveryOrderDetailDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDetailDTO.PrintDTO.class, detailEntityList);
+        List<String> skuIdList = detailEntityList.stream().map(DeliveryOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        Map<String,SkuVO> skuMap = plmTaskFeign.getSkuInfoByIds(skuIdList).stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity(),(v1, v2)->v1));
+        printDTOList.forEach(v->{
+            SkuVO skuVO = skuMap.get(v.getSkuId());
+            if(Objects.nonNull(skuVO)){
+                v.setUnit(skuVO.getUnitName());
+            }
+        });
+        return printDTOList.stream().collect(Collectors.groupingBy(DeliveryOrderDetailDTO.PrintDTO::getMainId));
     }
 
 

@@ -27,6 +27,71 @@ import java.util.List;
 @NoArgsConstructor
 public class DeliveryOrderDTO implements Serializable {
 
+
+    /**
+     * 打印DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrintDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 采购单号
+         */
+        private String sourceCode;
+
+        /**
+         * 送货单号
+         */
+        private String code;
+
+        /**
+         * 预计到达日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+
+        /**
+         * 收货员名
+         */
+        private String receiveUserName;
+
+        /**
+         * 收货电话
+         */
+        private String receivePhone;
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
+        /**
+         * 制单人
+         */
+        private String createUserName;
+
+        /**
+         * 目的仓
+         */
+        private String toWarehouseName;
+
+        /**
+         * 明细
+         */
+        private List<DeliveryOrderDetailDTO.PrintDTO> detailPrintList;
+    }
+
     @Data
     @NoArgsConstructor
     public static class StatusListDTO {
