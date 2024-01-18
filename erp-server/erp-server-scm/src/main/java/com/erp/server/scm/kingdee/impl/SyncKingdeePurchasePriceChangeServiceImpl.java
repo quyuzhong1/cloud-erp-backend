@@ -133,7 +133,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         //查询供应商
         List<String> supplierIds = details.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isNotEmpty(supplierEntities)) {
+        if (CollectionUtils.isEmpty(supplierEntities)) {
             return;
         }
 
