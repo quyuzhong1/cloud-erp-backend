@@ -428,7 +428,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 inventoryDetailService.updateQtyById(detailEntity.getId(), (tradeQty * -1));
 
                 // 此处再次验证，防止变成负库存
-                InventoryDetailEntity curInventoryDetail = inventoryDetailService.getById(detailEntity.getId());
+//                InventoryDetailEntity curInventoryDetail = inventoryDetailService.getById(detailEntity.getId());
                 // 仓库允许负库存判断
 //                if(curInventoryDetail.getQty() < 0 && !this.allowNegativeInventory(param.getWarehouseId())) {
 //                    log.warn("库存明细id：{}出库后的库存数量变为:{}，不允许出库", detailEntity.getId(), curInventoryDetail.getQty());
