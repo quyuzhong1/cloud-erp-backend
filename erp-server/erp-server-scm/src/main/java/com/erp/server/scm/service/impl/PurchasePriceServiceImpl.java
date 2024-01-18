@@ -593,21 +593,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
-        List<String> statusList = new ArrayList<>(1);
-        //待我审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                return new PagingVO(new Page());
-            }
-            params.setIdList(businessIds);
-        }
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, statusList);
+        IPage pageData = baseMapper.paging(query, params);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());

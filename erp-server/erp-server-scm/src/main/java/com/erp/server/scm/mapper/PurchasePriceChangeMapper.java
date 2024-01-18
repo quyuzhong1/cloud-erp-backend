@@ -27,10 +27,9 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @date: 2023/10/18 17:21
      * @param query
      * @param params
-     * @param statusList
      * @return IPage<PagingViewDTO>
      */
-    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params);
     /**
      * @description: 查询导出
      * @author Will
@@ -38,7 +37,7 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @param dto
      * @return List<PagingViewDTO>
      */
-    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
+    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto);
 
     /**
      * 临时查询方法

@@ -67,6 +67,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
