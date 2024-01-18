@@ -90,6 +90,11 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         buildRequestData(dto.getParams(), supplierMap);
         PagingVO<SupplierUserVO> page = userInfoFeign.srmPaging(dto);
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
+        if (CollectionUtils.isNotEmpty(list)){
+            List<String> uids = list.stream().map(SupplierUserVO::getUid).collect(Collectors.toList());
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsByUids(uids);
+            supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
+        }
         dataProcessSupplierInfo(list, supplierMap);
         return page;
     }

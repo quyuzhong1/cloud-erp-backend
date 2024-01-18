@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,7 @@ import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
+import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +60,7 @@ public class SupplierController extends BaseController {
             menuCode = "scm:supplier:paging",
             tableAlias = "supplier"
     )
+    @WebAdvanceQuery(handler = SupplierQueryHandler.class)
     public ApiResult<PagingVO<SupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         PagingVO<SupplierDTO.PagingViewDTO> pagingVO = supplierService.paging(dto);
         return success(pagingVO);

@@ -46,7 +46,7 @@ public class DeliveryOrderFeginController extends BaseController {
      * @return
      */
     @GetMapping("/view")
-    public DeliveryOrderDTO.ViewDTO view(@Param("id") String id) {
+    public DeliveryOrderDTO.ViewDTO view(@RequestParam("id") String id) {
         return deliveryOrderService.view(id);
     }
 

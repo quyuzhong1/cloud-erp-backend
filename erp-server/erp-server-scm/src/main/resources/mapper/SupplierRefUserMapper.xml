@@ -53,6 +53,24 @@
           </if>
 
     </select>
+    <select id="getUserIdsByUids" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+        SELECT
+        sru.id as refId,
+        sru.uid,
+        sru.supplier_id,
+        s.purchase_user_name AS purchaseUserName,
+        s.name AS supplierName
+        FROM
+        supplier_ref_user sru
+        left join supplier s on s.id = sru.supplier_id
+        WHERE sru.is_deleted = FALSE
+        <if test="uids!=null and uids.size>0">
+            AND sru.uid IN
+            <foreach collection="uids" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

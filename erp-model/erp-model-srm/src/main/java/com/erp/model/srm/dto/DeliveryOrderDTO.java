@@ -113,7 +113,7 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * 收发差异
          */
-        private Boolean qtyDifferences;
+        private Integer qtyDifferences;
 
         private Integer count;
     }

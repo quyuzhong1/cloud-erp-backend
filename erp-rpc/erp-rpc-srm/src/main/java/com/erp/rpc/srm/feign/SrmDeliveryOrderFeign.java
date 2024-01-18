@@ -10,6 +10,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public interface SrmDeliveryOrderFeign {
     List<DeliveryOrderDTO.TabListDTO> tabList(@RequestBody DeliveryOrderDTO.ParamDTO paramDTO);
 
     @GetMapping("/feign/deliveryOrder/view")
-    DeliveryOrderDTO.ViewDTO view(@Param("id") String id);
+    DeliveryOrderDTO.ViewDTO view(@RequestParam("id") String id);
 
     @PostMapping("/feign/deliveryOrder/paging")
     PagingVO<DeliveryOrderDTO.ListDTO> paging(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
