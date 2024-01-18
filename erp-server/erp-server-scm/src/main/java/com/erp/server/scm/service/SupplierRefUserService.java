@@ -55,4 +55,11 @@ public interface SupplierRefUserService extends SuperService<SupplierRefUserEnti
      * @param uids
      */
     void deleteRefByUids(List<String> uids);
+
+    /**
+     * 根据用户获取供应商信息
+     * @param uids
+     * @return
+     */
+    List<SupplierRefUserVO> getUserIdsByUids(List<String> uids);
 }
