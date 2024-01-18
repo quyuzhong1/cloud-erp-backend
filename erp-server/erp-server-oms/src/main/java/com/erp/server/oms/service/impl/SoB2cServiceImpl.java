@@ -3186,10 +3186,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         b2cCustomer.setSalesOrgId(soB2cEntity.getOrgId());
         b2cCustomer.setSalesOrgName(soB2cEntity.getOrgName());
         b2cCustomer.setDictPlatform(soB2cEntity.getDictPlatform());
+        b2cCustomer.setPayTime(soB2cEntity.getPayTime());
         //店铺
         String shopId = soB2cEntity.getShopId();
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soId);
+        b2cCustomer.setShopId(shopId);
         if (Objects.nonNull(shopInfo)) {
             b2cCustomer.setSellerId(shopInfo.getChargeId());
             b2cCustomer.setSellerName(shopInfo.getChargeName());
