@@ -111,7 +111,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        checkSourceDetailQty(list,mainId);
 
         //处理父子级数据
         List<SubcontractChangeDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
@@ -160,31 +159,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 map(SubcontractChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SubcontractChangeDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
-    }
-    /**
-     * 验证数量
-     */
-    private void checkSourceDetailQty (List<SubcontractChangeDetailEntity> list,String mainId){
-        /**
-         * 变更数量不能小于采购订单数量
-         */
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        List<String> sourceDetailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sourceDetailIds)) {
-            return;
-        }
-        List<PurchaseOrderDetailEntity> poList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
-
-        for (SubcontractChangeDetailEntity detailEntity : list) {
-            if (CollectionUtils.isNotEmpty(poList)) {
-                Integer purchaseQty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (purchaseQty > detailEntity.getQty()) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code, StrUtil.format(ApiError.ERROR_98087.msg,detailEntity.getSkuNo(),detailEntity.getQty(),purchaseQty)));
-                }
-            }
-        }
     }
 
     /**
