@@ -80,21 +80,21 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //待收货-未打印
         DeliveryOrderDTO.TabListDTO dto2 = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINT.getCode())
-                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
+                .count(statusListDTOList.stream().filter(v->(v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())||StringUtils.isBlank(v.getReceiptStatus()))
                 && !v.getIsPrint()).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
                 .build();
         result.add(dto2);
         //待收货-已打印
         DeliveryOrderDTO.TabListDTO dto3 = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINTED.getCode())
-                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
+                .count(statusListDTOList.stream().filter(v->(v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())||StringUtils.isBlank(v.getReceiptStatus()))
                         && v.getIsPrint()).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
                 .build();
         result.add(dto3);
         //待收货
         DeliveryOrderDTO.TabListDTO dto6 = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE.getCode())
-                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
+                .count(statusListDTOList.stream().filter(v->(v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())||StringUtils.isBlank(v.getReceiptStatus()))).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
                 .build();
         result.add(dto6);
         //已收货
@@ -106,8 +106,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //收发差异
         DeliveryOrderDTO.TabListDTO dto5 = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.QTY_DIFFERENCE.getCode())
-                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
-                        && v.getQtyDifferences()).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
+                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())).mapToInt(DeliveryOrderDTO.StatusListDTO::getQtyDifferences).sum())
                 .build();
         result.add(dto5);
         return result;

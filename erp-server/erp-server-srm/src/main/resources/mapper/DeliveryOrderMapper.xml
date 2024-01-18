@@ -91,18 +91,26 @@
         do2.plan_delivery_date ASC
     </select>
     <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
-        select do2.receipt_status as receiptStatus,
-               do2.is_print as isPrint,
-               ((doe.delivery_qty - doe.receive_qty) != 0 ) as qtyDifferences,
-               count(1) as count
-        from delivery_order do2
-                 inner join delivery_order_detail doe on do2.id = doe.main_id
-        where do2.is_deleted = false and doe.is_deleted = false
-        and do2.supplier_id in
+        select tab.receiptStatus,tab.isPrint,sum(qtyDifferences) as qtyDifferences,sum(count)  as count from (
+        SELECT
+        do2.id,
+        do2.receipt_status AS receiptStatus,
+        do2.is_print AS isPrint,
+        (SELECT COUNT(1) FROM delivery_order_detail doe WHERE doe.main_id = do2.id AND doe.delivery_qty != doe.receive_qty) AS qtyDifferences,
+        COUNT ( 1 )   AS COUNT
+        FROM
+        delivery_order do2
+        WHERE
+        do2.is_deleted = FALSE
+        AND do2.supplier_id IN
         <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
-        group by do2.receipt_status,do2.is_print,((doe.delivery_qty - doe.receive_qty) != 0 )
+        GROUP BY
+        do2.receipt_status,
+        do2.is_print,
+        do2.id
+        ) tab group by tab.receiptStatus,tab.isPrint
     </select>
 
 
