@@ -1,26 +1,58 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.server.tms.service.SettingForecastService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
+import javax.annotation.Resource;
+import java.util.List;
+
 /**
  * 预报设置
+ *
  * @author Lambda
  * @since 2024-01-18
  */
+@Slf4j
 @RestController
+@LogSystemModule("预报设置")
 @RequestMapping("/forecastSetting")
 public class SettingForecastController extends BaseController {
 
 
-    @PostMapping("list")
-    public ApiResult  list(){
+    @Resource
+    private SettingForecastService settingForecastService;
 
+    /**
+     * 预报设置列表
+     *
+     * @return
+     */
+    @PostMapping("/list")
+    public ApiResult<List<SettingForecastDTO.ListDTO>> list() {
+        List<SettingForecastDTO.ListDTO> list = settingForecastService.listAll();
+        return success(list);
     }
+
+    /**
+     * 添加
+     * @return
+     */
+    @PostMapping("/add")
+    public ApiResult batchAdd(@RequestBody @Validated List<SettingForecastDTO.SaveOrUpdateDTO> list) {
+        Boolean result=settingForecastService.addOrUpdate(list);
+        return result?success():failure();
+    }
+
 
 }

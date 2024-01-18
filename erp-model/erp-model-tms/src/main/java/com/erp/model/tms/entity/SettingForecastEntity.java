@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,7 +49,7 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
      * 组包启用时间
      */
     @TableField("enable_package_time")
-    private Date enablePackageTime;
+    private LocalDateTime enablePackageTime;
 
     /**
      * 是否强制中转  true 是
@@ -60,7 +61,7 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
      * 中转时间启用时间
      */
     @TableField("enable_transfer_time")
-    private Date enableTransferTime;
+    private LocalDateTime enableTransferTime;
 
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
