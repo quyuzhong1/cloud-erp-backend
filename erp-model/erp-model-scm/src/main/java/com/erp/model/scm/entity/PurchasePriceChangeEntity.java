@@ -76,17 +76,6 @@ public class PurchasePriceChangeEntity extends BaseEntity<PurchasePriceChangeEnt
     private String purchaseOrgName;
 
     /**
-     * 采购价目表id
-     *
-     * @author yl
-     * @date 2023-03-16 16:49
-     * @param null
-     * @return
-     */
-    @TableField("purchase_price_id")
-    private String purchasePriceId;
-
-    /**
      * 同步金蝶id
      */
     @TableField("sync_kingdee_id")

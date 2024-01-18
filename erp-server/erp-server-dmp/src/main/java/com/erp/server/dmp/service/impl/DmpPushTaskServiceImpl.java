@@ -326,7 +326,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (StrUtil.isBlank(entity.getParentId())) {
             return Boolean.TRUE;
         }
-        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().eq(DmpPushTaskEntity::getSourceId,entity.getParentId()).last("limit 1").one();
+        List<String> parentIdList = Arrays.stream(entity.getParentId().split(",")).collect(Collectors.toList());
+
+        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().in(DmpPushTaskEntity::getSourceId,parentIdList).last("limit 1").one();
 
         if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
             entity.setReturnMsg("未找到上级单据推送任务");

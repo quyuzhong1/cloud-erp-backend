@@ -93,6 +93,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String id;
 
         /**
+         * 原因
+         */
+        private String reason;
+
+        /**
          * 调价日期
          */
         @NotNull(message = "调价日期不能为空")

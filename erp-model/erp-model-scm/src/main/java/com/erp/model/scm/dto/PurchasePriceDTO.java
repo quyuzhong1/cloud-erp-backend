@@ -390,6 +390,11 @@ public class PurchasePriceDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 采购交期
+         */
+        private String deliveryDay;
     }
 
 
