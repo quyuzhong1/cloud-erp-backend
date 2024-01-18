@@ -1187,6 +1187,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
+        log.info("第三方仓下单结果:{}",JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
@@ -3236,6 +3237,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(soB2cLogisticsEntity)) {
             b2cCustomer.setTransportNo(soB2cLogisticsEntity.getCode());
             b2cCustomer.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+            b2cCustomer.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
         }
         return b2cCustomer;
     }
