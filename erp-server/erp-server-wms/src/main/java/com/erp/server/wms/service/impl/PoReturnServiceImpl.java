@@ -546,13 +546,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //TODO 待加审核流程
 
-
+        //更新审核状态
         lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PoReturnEntity::getId, ids)
                 .set(PoReturnEntity::getApproveUserId, "")
                 .set(PoReturnEntity::getApproveUserName, "")
                 .set(PoReturnEntity::getApproveTime, null)
-
+                .update();
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -628,12 +628,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //操作日志
         List<Pair<String, String>> pairList = poReturnEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
-
         LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
-
             String confirmStatus = "";
             //查询退货配置
             CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.PO_RETURN.getCode());
@@ -915,10 +912,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @Date 2023/4/13 18:59
      **/
     @Override
-    public void exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PurchaseReturnOrderDTO.PagingViewDTO> list = this.baseMapper.listExport(dto);
         if(CollUtil.isEmpty(list)) {
-            return;
+            return Boolean.TRUE;
         }
         // 数据处理
         fillList(list);
@@ -934,6 +931,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+        return Boolean.TRUE;
     }
 
     /**

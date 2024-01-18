@@ -387,7 +387,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         purchasePriceHistoryService.saveBatch(historyList);
 
         //修改价目详情
-        approveCheckData(purchasePriceChangeList,updateList);
+        approveCheckData(list,updateList);
         purchasePriceDetailService.updateBatchById(updateList);
 
         //同步金蝶数据
@@ -523,17 +523,23 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @description: 审核通过验证
      * @author Will
      * @date: 2024/1/15 17:36
-     * @param purchasePriceChangeList
+     * @param detailList
      * @param updateList
      */
-    private void approveCheckData (List<PurchasePriceChangeEntity> purchasePriceChangeList,List<PurchasePriceDetailEntity> updateList) {
+    private void approveCheckData (List<PurchasePriceChangeDetailEntity> detailList,List<PurchasePriceDetailEntity> updateList) {
         if (CollectionUtils.isEmpty(updateList)) {
             return;
         }
-        for (PurchasePriceChangeEntity changeEntity :purchasePriceChangeList) {
-            List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> StrUtil.equals(obj.getPurchasePriceId(), changeEntity.getPurchasePriceId())).collect(Collectors.toList());
+        Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getPriceCode));
+
+        for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> entry :map.entrySet()) {
+
+            List<PurchasePriceChangeDetailEntity> value = entry.getValue();
+            List<String> purchasePriceDetailIdList = value.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
+
+            List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> purchasePriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
             //报价信息验证
-            purchasePriceDetailService.checkPurchasePriceDetail(changeEntity.getSupplierId(),list);
+            purchasePriceDetailService.checkPurchasePriceDetail(value.get(0).getSupplierId(),list);
         }
     }
 

@@ -285,8 +285,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
-        //修改到货状态
-        poReturnService.updateArrivalState(Arrays.asList(warehouseReceiveEntity.getPurchaseOrderId()), new ArrayList<>());
         return warehouseReceiveEntity.getId();
 
     }
@@ -328,11 +326,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "", "");
         //更新收货单详情表信息
         Boolean flag = warehouseReceiveDetailService.update(dto);
-
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
-            poReturnService.updateArrivalState(Arrays.asList(entity.getPurchaseOrderId()), new ArrayList<>());
-        }
-
 
         return flag;
     }
@@ -849,9 +842,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-        //修改到货状态
-        poReturnService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
-
         //作废发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
@@ -887,8 +877,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         boolean flag = this.removeByIds(ids);
 
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
-        //修改到货状态
-        poReturnService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
 
         //审核通过发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));

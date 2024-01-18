@@ -140,7 +140,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    void exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
 
 
     /**

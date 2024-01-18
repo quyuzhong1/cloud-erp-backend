@@ -306,7 +306,7 @@ public class PoReturnController extends BaseController {
             tableAlias = "po")
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = poReturnService.exportExcel(dto, response);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
 
