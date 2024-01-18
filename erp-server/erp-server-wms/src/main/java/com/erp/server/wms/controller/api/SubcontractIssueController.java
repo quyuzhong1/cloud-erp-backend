@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
+import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -99,8 +101,9 @@ public class SubcontractIssueController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractIssue:paging",
-            tableAlias = ""
+            tableAlias = "si"
     )
+    @WebAdvanceQuery(handler = SubcontractIssueQueryHandler.class)
     public ApiResult<PagingVO<SubcontractIssueDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto) {
         return success(subcontractIssueService.paging(dto));
     }
