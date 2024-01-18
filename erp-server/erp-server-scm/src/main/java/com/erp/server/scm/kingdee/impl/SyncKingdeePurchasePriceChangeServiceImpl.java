@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -14,6 +15,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -83,6 +85,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         if (CollectionUtils.isEmpty(purchasePriceDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        String purchasePriceIdStr = purchasePriceDetailEntities.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.joining(","));
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -97,7 +100,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
+            sendMqAndSaveTask(entity,operate,resultMap, purchasePriceIdStr);
             return;
         }
         //调价原因
@@ -168,7 +171,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         resultMap.put("list",list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        sendMqAndSaveTask(entity,operate,resultMap, purchasePriceIdStr);
     }
 
     /**
@@ -179,7 +182,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap, String purchasePriceIdStr) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -191,7 +194,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpSyncTaskDTO.setParentId(entity.getPurchasePriceId());
+        //多个ID用','拼接
+        dmpSyncTaskDTO.setParentId(purchasePriceIdStr);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }
