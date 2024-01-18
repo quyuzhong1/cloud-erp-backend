@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class AbstractQueryHandler implements IQueryHandler{
 
+    @Override
     public String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql) {
         try {
             String sql = handleSqlLogic(field,  value, compareCodeSplicingValueSql);
@@ -35,6 +36,17 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     protected void buildDefaultDTO(String field, Object value){
         AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO(field,value);
         AdvanceQueryContext.addQuery(advanceQueryDTO);
+    }
+
+    /**
+     * 默认封装DTO方法 field 数据库别名，value 值
+     */
+    protected String getSplicingSQL(){
+        try {
+            return QueryUtils.splicingSQL(AdvanceQueryContext.getQueryList());
+        }finally {
+            AdvanceQueryContext.remove();
+        }
     }
 
     protected String getQueryEmptySql(){
