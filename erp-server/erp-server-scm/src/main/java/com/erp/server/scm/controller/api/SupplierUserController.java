@@ -1,8 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
-import cn.hutool.core.lang.Assert;
-import com.common.business.dto.base.ForgotPasswordDTO;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -19,6 +18,7 @@ import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.server.scm.query.SupplierUserQueryHandler;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import java.util.Map;
 
 /**
  * 供应商协同用户
@@ -53,6 +51,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(true);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);

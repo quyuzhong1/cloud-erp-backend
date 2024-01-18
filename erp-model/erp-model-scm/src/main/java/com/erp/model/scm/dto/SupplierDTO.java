@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 供应商信息
@@ -458,89 +460,99 @@ public class SupplierDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 供应商名
+         * 页面高级查询
          */
-        private String name;
-
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 供应商 code
+         * sqlMap 默认key default
          */
-        private String code;
+        private Map<String,String> sqlMap;
 
-        /**
-         * 任务类型
-         * all 全部
-         * toBeApprove 待我审核
-         * approve 已审核
-         * reject 不通过
-         */
-        @NotNull(message = "任务类型不能为空")
-        @StateEnumValue(strValues = {"all", "toBeApprove", "approve","reject"}, message = "搜索类型有误")
-        private String tabFlag;
-        /**
-         * 记录id
-         */
-        private List<String> businessIds;
-        /**
-         * 分类id集合
-         */
-        private List<String> categoryIdList;
-
-
-        /**
-         * 阶段
-         */
-        private List<String> phaseList;
-
-
-        /**
-         * 等级
-         */
-        private List<String> gradeIdList;
-
-
-        /**
-         * 采购员id
-         */
-        private List<String> purchaseUserIdList;
-
-
-        /**
-         * 联系人名
-         */
-        private String contactPerson;
-
-
-        /**
-         * 联系电话
-         */
-        private String contactTelNumber;
-
-        /**
-         * 结算方式
-         */
-        private List<String> payMethodIdList;
-
-        /**
-         * 禁用状态
-         * true 禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * SRM协同
-         */
-        private Boolean srmDisabled;
-        /**
-         * 创建人id集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 时间
-         */
-        private List<LocalDate> createTimeList;
+//        /**
+//         * 供应商名
+//         */
+//        private String name;
+//
+//
+//        /**
+//         * 供应商 code
+//         */
+//        private String code;
+//
+//        /**
+//         * 任务类型
+//         * all 全部
+//         * toBeApprove 待我审核
+//         * approve 已审核
+//         * reject 不通过
+//         */
+//        @NotNull(message = "任务类型不能为空")
+//        @StateEnumValue(strValues = {"all", "toBeApprove", "approve","reject"}, message = "搜索类型有误")
+//        private String tabFlag;
+//        /**
+//         * 记录id
+//         */
+//        private List<String> businessIds;
+//        /**
+//         * 分类id集合
+//         */
+//        private List<String> categoryIdList;
+//
+//
+//        /**
+//         * 阶段
+//         */
+//        private List<String> phaseList;
+//
+//
+//        /**
+//         * 等级
+//         */
+//        private List<String> gradeIdList;
+//
+//
+//        /**
+//         * 采购员id
+//         */
+//        private List<String> purchaseUserIdList;
+//
+//
+//        /**
+//         * 联系人名
+//         */
+//        private String contactPerson;
+//
+//
+//        /**
+//         * 联系电话
+//         */
+//        private String contactTelNumber;
+//
+//        /**
+//         * 结算方式
+//         */
+//        private List<String> payMethodIdList;
+//
+//        /**
+//         * 禁用状态
+//         * true 禁用
+//         */
+//        private Boolean disabled;
+//
+//        /**
+//         * SRM协同
+//         */
+//        private Boolean srmDisabled;
+//        /**
+//         * 创建人id集合
+//         */
+//        private List<String> createUserIdList;
+//
+//        /**
+//         * 时间
+//         */
+//        private List<LocalDate> createTimeList;
     }
 
 

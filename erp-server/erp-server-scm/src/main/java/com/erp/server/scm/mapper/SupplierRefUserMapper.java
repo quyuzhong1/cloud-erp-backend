@@ -21,4 +21,6 @@ import java.util.List;
 public interface SupplierRefUserMapper extends BaseMapper<SupplierRefUserEntity> {
 
     List<SupplierRefUserVO> getUserIdsBySupplierIds(@Param("supplierIds") List<String> supplierIds, @Param("isSuper") Boolean isSuper);
+
+    List<SupplierRefUserVO> getUserIdsByUids(@Param("uids") List<String> uids);
 }
