@@ -578,7 +578,7 @@ public enum ApiError implements Serializable {
     ERROR_98021(98021,"只有审核不通过和待提交才能编辑"),
     ERROR_REPEAT_SKU(98022,"存在重复的SKU,不可提交"),
     ERROR_INTERVAL_OVERLAP(98023,"区间存在重叠，不可提交"),
-    ERROR_INTERVAL_SUPPLIER_OVERLAP(98047,"该供应商SKU区间存在重叠，不可提交"),
+    ERROR_INTERVAL_SUPPLIER_OVERLAP(98047,"该供应商SKU【{}】区间存在重叠，不可提交"),
     ERROR_INTERVAL_SUPPLIER_CHANGE_OVERLAP(98048,"与该供应商SKU变更区间存在重叠，不可提交"),
     ERROR_INTERVAL_EXIST(98047,"区间有误，不可提交"),
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
