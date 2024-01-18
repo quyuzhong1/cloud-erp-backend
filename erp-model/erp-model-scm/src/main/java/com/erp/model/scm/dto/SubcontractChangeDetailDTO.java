@@ -99,6 +99,11 @@ public class SubcontractChangeDetailDTO implements Serializable {
         private String bomVersion;
 
         /**
+         * 采购数量
+         */
+        private Integer qty;
+
+        /**
          * 明细子集
          */
         private List<ChildDTO> childList;
@@ -250,11 +255,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
         @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
-        /**
-        * 采购数量
-        */
-        @NotNull(message = "采购数量不能为空")
-        private Integer qty;
+
 
         /**
         * 含税单价

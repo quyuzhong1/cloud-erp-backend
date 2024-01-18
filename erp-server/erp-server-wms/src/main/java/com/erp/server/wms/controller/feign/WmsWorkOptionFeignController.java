@@ -34,7 +34,7 @@ public class WmsWorkOptionFeignController {
     private PoInstockService poInstockService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
     private TransferApplicationService transferApplicationService;
@@ -96,7 +96,7 @@ public class WmsWorkOptionFeignController {
      **/
     @PostMapping("/purchaseReturnOrderApprove")
     public Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = purchaseReturnOrderService.approve(baseApproveParamDTO);
+        Boolean flag = poReturnService.approve(baseApproveParamDTO);
         return flag;
     }
 

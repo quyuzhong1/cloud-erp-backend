@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -99,11 +100,13 @@ public class PurchasePriceChangeController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/getSkuChangeList")
-    public ApiResult<List<PurchasePriceChangeDetailDTO.ViewDTO>> getSkuChangeList(@RequestParam(value = "purchasePriceId") String purchasePriceId) {
-        List<PurchasePriceChangeDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(purchasePriceId);
+    @PostMapping("/getSkuChangeList")
+    public ApiResult<List<PurchasePriceChangeDetailDTO.ViewDTO>> getSkuChangeList(@RequestBody PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        List<PurchasePriceChangeDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(dto);
         return success(list);
     }
+
+
 
     /**
      * 提交并审核

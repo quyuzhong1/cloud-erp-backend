@@ -68,7 +68,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     private WarehouseService warehouseService;
 
     @Autowired
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private PoReturnDetailService poReturnDetailService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -260,7 +260,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             // 获取原采购订单明细的入库信息
             List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
             // 获取原退货单明细的退货信息
-            List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
+            List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
 
             String arriveStatus = member.getArriveStatus();
             Integer changeQty = 0;
@@ -298,7 +298,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
                         && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
                         && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
-                        .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             log.info("采购订单【{}】对应的采购订单明细【{}】到货状态【{}】",instockForcastEntity.getPurchaseOrderCode(), member.getPurchaseOrderDetailId(), arriveStatus);

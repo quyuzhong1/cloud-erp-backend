@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -365,7 +366,11 @@ public class SoB2cDTO implements Serializable {
         /**
          * 亚马逊订单
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
     }
 
     @Data
@@ -385,9 +390,9 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isCombination;
         /**
-         * FBA（亚马逊订单FulfillmentChannel=AFN-亚马逊配送时）
+         * FBA（亚马逊订单fulfillmentChannel=AFN-亚马逊配送时）
          */
-        private String FulfillmentChannel;
+        private String fulfillmentChannel;
         /**
          * 手工订单（在ERP手动创建的订单）
          */
@@ -810,7 +815,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 平台订单号
          */
-        @Size(max = 32, message = "平台订单号最大长度不能超过32位")
+        @Size(max = 100, message = "平台订单号最大长度不能超过100位")
         private String platformCode;
 
         /**
@@ -1699,6 +1704,8 @@ public class SoB2cDTO implements Serializable {
 
         private String billStatus;
 
+
+
     }
 
     @Data
@@ -1727,6 +1734,39 @@ public class SoB2cDTO implements Serializable {
 
         private String shopId;
 
+
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
         /**
          * 收货地址 对应 fullAddress
          */
@@ -1783,5 +1823,35 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+    }
+
+    /**
+     * 拦截订单修改订单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptUpdateOrderDTO {
+        /**
+         * 订单id
+         */
+        private List<String> ids;
+        /**
+         * 是否打标拦截
+         */
+        private Boolean isIntercept;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
     }
 }

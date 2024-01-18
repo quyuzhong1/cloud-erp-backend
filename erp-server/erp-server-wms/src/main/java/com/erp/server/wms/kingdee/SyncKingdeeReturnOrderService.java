@@ -1,9 +1,6 @@
 package com.erp.server.wms.kingdee;
 
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import com.erp.model.wms.entity.PoReturnEntity;
 
 /**
  * 同步金蝶采购退货单
@@ -20,5 +17,5 @@ public interface SyncKingdeeReturnOrderService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate);
+    void syncDataToKingdee(PoReturnEntity entity, String operate);
 }

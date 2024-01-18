@@ -7,9 +7,13 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.excel.TargetCategorySettingExportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetNewProductSettingExportExcelDTO;
+import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +30,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 目标管理-新品
@@ -61,6 +67,23 @@ public class BiTargetNewProductSettingController extends BaseController {
     public ApiResult<PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> pagingVO = biTargetNewProductSettingService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 按照新品导出目标
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        dto.setPageSize(1000);
+        dto.setCurrPage(1);
+        PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> pagingVO = biTargetNewProductSettingService.paging(dto);
+        List<BiTargetNewProductSettingDTO.PagingViewDTO> list = (List<BiTargetNewProductSettingDTO.PagingViewDTO>) pagingVO.getList();
+        List<TargetNewProductSettingExportExcelDTO> excels = BiExportConverter.INSTANCE.exportNewProductTargetStaff(list);
+        //数据转换
+        ExcelUtil.export("按新品导出目标报表", "新品", excels, TargetNewProductSettingExportExcelDTO.class, response);
+        return Boolean.TRUE;
     }
 
     /**

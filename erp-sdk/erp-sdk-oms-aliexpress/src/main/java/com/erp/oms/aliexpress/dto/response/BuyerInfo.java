@@ -1,6 +1,6 @@
 package com.erp.oms.aliexpress.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -22,20 +22,20 @@ public class BuyerInfo implements Serializable {
     /**
      *国家/地区
      */
-    @JSONField(name = "country")
+    @SerializedName("country")
     private String country;
 
     /**
      *first name
      */
-    @JSONField(name = "first_name")
+    @SerializedName("first_name")
     private String firstName;
 
     /**
      *
      * last name
      */
-    @JSONField(name = "last_name")
+    @SerializedName("last_name")
     private String lastName;
 
 
@@ -43,7 +43,7 @@ public class BuyerInfo implements Serializable {
      *
      * 登陆id
      */
-    @JSONField(name = "login_id")
+    @SerializedName("login_id")
     private String loginId;
 
 

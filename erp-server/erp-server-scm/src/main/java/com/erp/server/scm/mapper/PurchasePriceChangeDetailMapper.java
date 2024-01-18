@@ -37,4 +37,13 @@ public interface PurchasePriceChangeDetailMapper extends BaseMapper<PurchasePric
      * @return List<PurchasePriceChangeDetailEntity>
      */
     List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(@Param("purchasePriceChangeId") String purchasePriceChangeId);
+
+    /**
+     * 根据采购价目详情id查询变更详情
+     * @Author Luo_WG
+     * @Date 2024/1/9 15:04
+     * @param purchasePriceDetailIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceChangeDetailEntity>
+     **/
+    List<PurchasePriceChangeDetailEntity> listByPurchasePriceDetailIds(@Param("purchasePriceDetailIds") List<String> purchasePriceDetailIds);
 }

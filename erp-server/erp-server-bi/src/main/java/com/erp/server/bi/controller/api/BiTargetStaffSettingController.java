@@ -7,7 +7,10 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingExportExcelDTO;
+import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 目标管理-人员
@@ -61,6 +64,24 @@ public class BiTargetStaffSettingController extends BaseController {
         return success(pagingVO);
     }
 
+
+    /**
+     * 导出人员目标数据
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        dto.setPageSize(1000);
+        dto.setCurrPage(1);
+        PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> pagingVO = biTargetStaffSettingService.paging(dto);
+        List<BiTargetStaffSettingDTO.PagingViewDTO> list = (List<BiTargetStaffSettingDTO.PagingViewDTO>) pagingVO.getList();
+        List<TargetStaffSettingExportExcelDTO> excels = BiExportConverter.INSTANCE.exportUserTargetStaff(list);
+        //数据转换
+        ExcelUtil.export("按人员导出目标报表", "人员", excels, TargetStaffSettingExportExcelDTO.class, response);
+        return Boolean.TRUE;
+    }
 
     /**
      * 分页统计

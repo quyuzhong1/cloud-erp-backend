@@ -1,12 +1,11 @@
 package com.erp.oms.aliexpress.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -19,21 +18,26 @@ import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
-import com.erp.oms.aliexpress.dto.response.AliExpressProduct;
+import com.erp.oms.aliexpress.dto.response.BuyerTradeAddress;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.ui.context.Theme;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
@@ -80,28 +84,26 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("current_page", orderRequest.getCurrentPage());
-//        paramMap.put("order_status", "WAIT_SELLER_SEND_GOODS");
         paramMap.put("page_size", pageSize);
         paramMap.put("create_date_start", orderRequest.getStartTime());
         paramMap.put("create_date_end", orderRequest.getEndTime());
         request.addApiParameter("simplify", "true");
-        request.addApiParameter("param_aeop_order_query", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("param_aeop_order_query", JSONUtil.toJsonStr(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-        Boolean success = resultJsONObject.getBooleanValue("success");
+        Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {
             log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
             return;
         }
-        JSONArray jsonArray = (JSONArray) resultJsONObject.get("target_list");
-        if (Objects.isNull(jsonArray)) {
+        //目录列表
+        List<AliExpressOrder> orderInfoList = resultJsONObject.getBeanList("target_list", AliExpressOrder.class);
+        if (CollectionUtils.isEmpty(orderInfoList)) {
             return;
         }
-        //目录列表
-        List<AliExpressOrder> orderInfoList = JSONObject.parseArray(jsonArray.toJSONString(), AliExpressOrder.class);
         for (AliExpressOrder item : orderInfoList) {
             //订单id
             String orderId = item.getOrderId();
@@ -112,7 +114,7 @@ public class AliExpressOrderService {
         }
         orderList.addAll(orderInfoList);
         //总页数
-        Integer totalPage = resultJsONObject.getInteger("total_page");
+        Integer totalPage = resultJsONObject.getInt("total_page", 0);
         //表示还有
         if (Objects.nonNull(totalPage) && !totalPage.equals(currentPage)) {
             orderRequest.setCurrentPage(currentPage + 1);
@@ -141,13 +143,12 @@ public class AliExpressOrderService {
         request.addApiParameter("simplify", "true");
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("order_id", orderId);
-        request.addApiParameter("param1", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("param1", JSONUtil.toJsonStr(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         //成功
         if (jsonObject.containsKey("target")) {
-            JSONObject json = jsonObject.getJSONObject("target");
-            AliExpressOrderDetail detail = JSONObject.parseObject(json.toJSONString(), AliExpressOrderDetail.class);
+            AliExpressOrderDetail detail = jsonObject.get("target", AliExpressOrderDetail.class);
             return detail;
         }
 
@@ -189,7 +190,7 @@ public class AliExpressOrderService {
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
-                redisUtil.set(tokenKey, result,shopAuthEntity.getExpiresIn());
+                redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
             }
 
             return result;
@@ -231,13 +232,42 @@ public class AliExpressOrderService {
         request.setApiName(apiName);
         IopResponse response = client.execute(request, token, Protocol.TOP);
         String body = response.getBody();
-        JSONObject jsonObject = JSONObject.parseObject(body);
-        Boolean success = jsonObject.getBooleanValue("result_success");
+        JSONObject jsonObject = JSONUtil.parseObj(body);
+        Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
         if (!success) {
             String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
             throw new ServiceException(ApiError.Default, msg);
         }
 
+    }
+
+
+    /**
+     * 下载地址信息 因地址信息加密了
+     *
+     * @return
+     */
+    public BuyerTradeAddress getBuyerTradeAddress(AddressRequest addressRequest) throws ApiException {
+        String appKey = addressRequest.getClientId();
+        String appSecret = addressRequest.getClientSecret();
+        String baseUrl = addressRequest.getBaseUrl();
+        String token = addressRequest.getToken();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        String apiName = AliexpressConstants.ADDRESS;
+        request.setApiName(apiName);
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("orderId", addressRequest.getOrderId());
+        request.addApiParameter("oaid", addressRequest.getOaid());
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+        String code = jsonObject.getOrDefault("code", "").toString();
+        //成功
+        if (jsonObject.containsKey("result_obj")) {
+            BuyerTradeAddress address = jsonObject.get("result_obj", BuyerTradeAddress.class);
+            return address;
+        }
+        return null;
     }
 
     public static void main(String[] args) throws ApiException {
@@ -246,20 +276,29 @@ public class AliExpressOrderService {
         String appKey = "502978";
         String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
         String baseUrl = "https://api-sg.aliexpress.com";
-        String apiName = AliexpressConstants.DECLARE_DELIVER;
-        String token = "500002000383xXYuTpfDpvgviHHR2uUB9yHxEIwiRSF7Dgx9Mz12af849325O8FaLsaz";
+//        String apiName = AliexpressConstants.DECLARE_DELIVER;
+//        String token = "500002000383xXYuTpfDpvgviHHR2uUB9yHxEIwiRSF7Dgx9Mz12af849325O8FaLsaz";
+//        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+//        IopRequest request = new IopRequest();
+//        request.addApiParameter("simplify", "true");
+//        request.addApiParameter("country", "123");
+//        request.addApiParameter("warehouseCustomerId", "123");
+//
+//        request.setApiName("/qimen/aliexpress/warehouse/baseinfo/get");
+//        IopResponse response = client.execute(request, Protocol.GOP);
+//        String body = response.getBody();
+//        System.out.println(body);
+
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
-        request.addApiParameter("simplify", "true");
-        request.addApiParameter("logistics_no", "580555992124");
-        request.addApiParameter("send_type", "all");
-        request.addApiParameter("out_ref", "8181197194141756");
-        request.addApiParameter("service_name", "OTHER_UK");
+        request.setApiName("/qimen/aliexpress/warehouse/baseinfo/get");
+        request.addApiParameter("country", "123");
+        request.addApiParameter("warehouseCustomerId", "123");
+        request.addApiParameter("systemType", "oms");
+        request.setHttpMethod("GET");
+        IopResponse response = client.execute(request, Protocol.GOP);
+        System.out.println(response.getBody());
 
-        request.setApiName(apiName);
-        IopResponse response = client.execute(request, token, Protocol.TOP);
-        String body = response.getBody();
-        System.out.println(body);
     }
 
 

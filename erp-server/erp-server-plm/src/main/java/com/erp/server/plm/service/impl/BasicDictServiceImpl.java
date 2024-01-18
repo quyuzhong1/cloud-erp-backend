@@ -96,6 +96,7 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:plm:listDictDropDown",keyGenerator = "myKeyGenerator")
     public List<DictControllerDTO.DictDropDownDTO> listDictDropDown(String code) {
         List<BasicDictEntity> list = this.lambdaQuery()
                 .eq(StrUtil.isNotBlank(code), BasicDictEntity::getType, code)

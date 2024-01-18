@@ -71,4 +71,15 @@ public interface SoB2cDeliveryInterceptFeign {
      **/
     @PostMapping("feign/soB2cDeliveryIntercept/updateHandleStatus")
     Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status);
+
+    /**
+     * 发货拦截结果确认
+     * @Author Luo_WG
+     * @Date 2024/1/16 18:56
+     * @param dto
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/interceptResultConfirm")
+    BatchResultDTO interceptResultConfirm(@RequestParam("dto") SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id);
 }

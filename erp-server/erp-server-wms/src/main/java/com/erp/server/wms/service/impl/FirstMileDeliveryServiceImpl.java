@@ -456,6 +456,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
 
+
+        //查询已下推的海外入库单
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(entity.getId()));
+
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
@@ -469,7 +473,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
-            detailAddDto.setRemark(entity.getSourceCode());
+            //如果是备货海外仓
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+                //查询已下推的入库单获取入库单号
+                OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
+                        .filter(req -> req.getSourceId().equals(entity.getId())
+                                && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
+                        ).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
+                    detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
+                }
+            } else {
+                detailAddDto.setRemark(entity.getSourceCode());
+            }
+
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
@@ -1418,7 +1435,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //已下推入库单，不允许修改装箱信息
         OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId(),OverseasInstockStatusEnum.CANCELED.getCode());
-        if (ObjectUtil.isNotEmpty(overseasWarehouseInbound)) {
+        if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) || !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
         }
 

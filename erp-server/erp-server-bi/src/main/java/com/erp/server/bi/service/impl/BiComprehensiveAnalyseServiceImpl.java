@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.BiCountryRegionImportExcelDTO;
@@ -22,6 +23,8 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.DateTypeEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.lang.StringUtils;
@@ -65,6 +68,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SalesOrderService salesOrderService;
+
     /**
      * SKU矩阵
      *
@@ -102,6 +108,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(MatrixVO::getSales)).forEach(x -> {
+            if (MathUtil.compareTo(x.getSales(),BigDecimal.ZERO) == MathUtil.ZERO) {
+                return;
+            }
             List<Object> tempList = new ArrayList<>();
             tempList.add(x.getSales());
             tempList.add(x.getNetProfit());
@@ -277,7 +286,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     @Override
     @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
-    public StatisticalDataVO salePriceDistribution(BiFilterDTO biFilterDTO) {
+    public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO biFilterDTO) {
         Optional.ofNullable(biFilterDTO.getRangeType()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST));
         Optional.ofNullable(biFilterDTO.getSettleMethod()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
         return dmpOrderInfoService.salePriceDistribution(biFilterDTO);
@@ -480,19 +489,20 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         LocalDateTime endTime = LocalDateTime.of(biFilterDTO.getEndTime().minusYears(1).toLocalDate(), LocalTime.MAX);
 //        biFilterDTO.setDateType(StrUtil.isNotBlank(biFilterDTO.getDateType()) ? biFilterDTO.getDateType() : "DAY");
         // 固定是天
-        biFilterDTO.setDateType("DAY");
+//        biFilterDTO.setDateType(DateTypeEnum.DAY.getType());
         // 组装去年filter
         SkuDateFilterDTO lastYearBiFilterDTO = new SkuDateFilterDTO();
         BeanUtils.copyProperties(biFilterDTO, lastYearBiFilterDTO);
         lastYearBiFilterDTO.setStartTime(startTime);
         lastYearBiFilterDTO.setEndTime(endTime);
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(lastYearBiFilterDTO);
+        String settleRate = getSettleRate(biFilterDTO.getSettleMethod());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(lastYearBiFilterDTO,settleRate);
         Map<String, BigDecimal> lastYearSaleMap = skuYearSakeAmountVOS.stream().collect(Collectors.toMap(SkuYearSaleAmountVO::getName, SkuYearSaleAmountVO::getAmount));
         // 去年销售总金额
         lastYearBiFilterDTO.setStartTime(LocalDateTime.of(startTime.getYear(), 1,1,0,0,0));
         lastYearBiFilterDTO.setEndTime(LocalDateTime.of(startTime.getYear() + 1, 1,1,0,0,0));
 
-        BigDecimal yearSakeAmount = baseMapper.yearSaleAmountBySku(lastYearBiFilterDTO);
+        BigDecimal yearSakeAmount = baseMapper.yearSaleAmountBySku(lastYearBiFilterDTO,settleRate);
 
         //查询前年sku销售信息
         // 组装前年filter
@@ -500,13 +510,13 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         BeanUtils.copyProperties(biFilterDTO, twoYearAgeBiFilterDTO);
         twoYearAgeBiFilterDTO.setStartTime(startTime.minusYears(1));
         twoYearAgeBiFilterDTO.setEndTime(endTime.minusYears(1));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(twoYearAgeBiFilterDTO);
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(twoYearAgeBiFilterDTO,settleRate);
         Map<String, BigDecimal> twoYearAgeSaleMap = skuYearSakeAmountVOST.stream().collect(Collectors.toMap(SkuYearSaleAmountVO::getName, SkuYearSaleAmountVO::getAmount));
         // 前年销售总金额
         twoYearAgeBiFilterDTO.setStartTime(LocalDateTime.of(startTime.minusYears(1).getYear(), 1,1,0,0,0));
         lastYearBiFilterDTO.setEndTime(LocalDateTime.of(startTime.getYear(), 1,1,0,0,0));
-        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(twoYearAgeBiFilterDTO);
-
+        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(twoYearAgeBiFilterDTO,settleRate);
+        if (Objects.isNull(yearSakeAmountT)){ yearSakeAmountT = BigDecimal.ZERO;}
 //        Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
 //        Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
 //        String start = DateUtil.getRingRatioDate(endDate, startDate);
@@ -521,7 +531,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         Map<String, SaleDetailVO> refundMap = refundList.stream().collect(Collectors.toMap(SaleDetailVO::getName, Function.identity()));
 
         //组装近两年销售额信息
-        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailDate(biFilterDTO);
+        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailDate(biFilterDTO,settleRate);
         for (SaleDetailVO saleDetailVO : saleDetailList) {
             // 退货信息
             saleDetailVO.setReturnOrderAmount(returnOrderMap.getOrDefault(saleDetailVO.getName(), BigDecimal.ZERO));
@@ -538,16 +548,16 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             }
             //计算去年sku销售额
-            String lastYearKey = LocalDate.parse(saleDetailVO.getName()).minusYears(1).toString();
+            String lastYearKey = biFilterDTO.getEndTime().minusYears(1).toString();
             BigDecimal currentLastYearSaleAmount = lastYearSaleMap.getOrDefault(lastYearKey, BigDecimal.ZERO);
             saleDetailVO.setLastYearSaleAmount(currentLastYearSaleAmount);
             // 占比
             saleDetailVO.setLastYearSaleProportion(
-                    yearSakeAmount.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO :
+                    MathUtil.compareTo(yearSakeAmount,BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO :
                     currentLastYearSaleAmount.divide(yearSakeAmount, 4, RoundingMode.DOWN).multiply(BigDecimal.valueOf(100)));
 
             //计算前年sku销售额
-            String TwoYearAgeKey = LocalDate.parse(saleDetailVO.getName()).minusYears(2).toString();
+            String TwoYearAgeKey = biFilterDTO.getEndTime().minusYears(2).toString();
             BigDecimal currentTwoYearAgeAmount = twoYearAgeSaleMap.getOrDefault(TwoYearAgeKey, BigDecimal.ZERO);
             saleDetailVO.setYearBeforeLastSaleAmount(currentTwoYearAgeAmount);
             // 占比
@@ -582,27 +592,30 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     @Cacheable(cacheNames = "cache:bi:skuDateSaleTrend",keyGenerator = "myKeyGenerator")
     public List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO) {
-        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = null;
-        switch (biFilterDTO.getDateType()) {
-            case "DAY":
-                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
-                break;
-            case "WEEK":
-                skuDateSaleTrendVOS = baseMapper.skuWeekSaleTrend(biFilterDTO);
-                break;
-            case "MONTH":
-                skuDateSaleTrendVOS = baseMapper.skuMonthSaleTrend(biFilterDTO);
-                break;
-            case "QUARTER":
-                skuDateSaleTrendVOS = baseMapper.skuQuarterSaleTrend(biFilterDTO);
-                break;
-            case "YEAR":
-                skuDateSaleTrendVOS = baseMapper.skuYearSaleTrend(biFilterDTO);
-                break;
-            default:
-                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
-                break;
-        }
+//        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = null;
+        biFilterDTO.setSku(Arrays.asList(biFilterDTO.getSkuNo()));
+        String settleRate = getSettleRate(biFilterDTO.getSettleMethod());
+        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = baseMapper.skuSaleTrend(biFilterDTO, settleRate);
+//        switch (biFilterDTO.getDateType()) {
+//            case "DAY":
+//                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
+//                break;
+//            case "WEEK":
+//                skuDateSaleTrendVOS = baseMapper.skuWeekSaleTrend(biFilterDTO);
+//                break;
+//            case "MONTH":
+//                skuDateSaleTrendVOS = baseMapper.skuMonthSaleTrend(biFilterDTO);
+//                break;
+//            case "QUARTER":
+//                skuDateSaleTrendVOS = baseMapper.skuQuarterSaleTrend(biFilterDTO);
+//                break;
+//            case "YEAR":
+//                skuDateSaleTrendVOS = baseMapper.skuYearSaleTrend(biFilterDTO);
+//                break;
+//            default:
+//                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
+//                break;
+//        }
         return skuDateSaleTrendVOS;
     }
 
@@ -645,16 +658,18 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             resultDto.setParentCategoryName(category.getName());
         }
 
+        Map<String, String> skuItemName = salesOrderService.getSkuItemName();
+        resultDto.setNameCn(skuItemName.get(dto.getSkuNo()));
         // 最新订单
-        DmpOrderItemEntity orderItemEntity = dmpOrderItemService.lambdaQuery()
-                .eq(DmpOrderItemEntity::getSkuNo, dto.getSkuNo())
-                .orderByDesc(DmpOrderItemEntity::getId)
-                .last("LIMIT 1")
-                .one();
-        if(null != orderItemEntity){
-            // 设置最新名称
-           resultDto.setNameCn(orderItemEntity.getItemName());
-        }
+//        DmpOrderItemEntity orderItemEntity = dmpOrderItemService.lambdaQuery()
+//                .eq(DmpOrderItemEntity::getSkuNo, dto.getSkuNo())
+//                .orderByDesc(DmpOrderItemEntity::getId)
+//                .last("LIMIT 1")
+//                .one();
+//        if(null != orderItemEntity){
+//            // 设置最新名称
+//           resultDto.setNameCn(orderItemEntity.getItemName());
+//        }
 
         // 平台首次下单时间
         if (null != salesDTO && null != salesDTO.getFirstOrderDate()){
@@ -684,6 +699,21 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     }
 
     /**
+     * 获取到结算汇率
+     *
+     * @param code
+     * @return
+     */
+    private String getSettleRate(Integer code) {
+        SettleMethodEnum settleMethod = SettleMethodEnum.getByCode(code);
+        if (settleMethod != null) {
+            return settleMethod.getField();
+        }
+        return "";
+    }
+
+
+    /**
      * 区域销售分析
      */
     @Override
@@ -694,9 +724,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 .stream()
                 // 过滤其他
                 .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
-                .collect(Collectors.toList());;
+                .collect(Collectors.toList());
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         // 国家销售额
-        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto,settleRate);
 
         // 区域Map<子区域Code, 国家List>
         Map<String, List<DictCountryDTO.ListDTO>> regionMap = countryList
@@ -779,9 +812,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 // 过滤其他
                 .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
                 .collect(Collectors.toList());
-                ;
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         // 国家销售额
-        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto, settleRate);
 
         // 国家销量Map<国家名称, 国家销量>
         Map<String, BigDecimal> countrySalesMap = countrySalesList

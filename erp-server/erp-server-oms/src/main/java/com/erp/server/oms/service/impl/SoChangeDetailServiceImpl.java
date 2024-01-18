@@ -628,72 +628,88 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @date 2023-05-25 10:14
      */
     @Override
-    public void checkChange(List<SoChangeDetailDTO.AddDTO> detailList) {
-        if (CollectionUtils.isNotEmpty(detailList)) {
-            //刪除
-            String deleteCode = SoChangeTypeEnum.DELETE.getCode();
-            List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
-            long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
-            if (qtyCount > 0) {
-                throw new ServiceException("销售数量不能小于0");
+    public void checkChange(List<SoChangeDetailDTO.UpdateDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        //刪除
+        SoChangeTypeEnum delete = SoChangeTypeEnum.DELETE;
+        List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().equals(delete)).collect(Collectors.toList());
+        long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
+        if (qtyCount > 0) {
+            throw new ServiceException("销售数量不能小于0");
+        }
+        long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+        if (priceCount > 0) {
+            throw new ServiceException("单价不能小于0");
+        }
+        List<SoChangeDetailDTO.UpdateDTO> deleteDetailList = listDetailParamByType(detailList, delete);
+        if (CollectionUtils.isNotEmpty(deleteDetailList)) {
+            List<String> soDetailIdList = deleteDetailList.stream().
+                    map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soDetailIdList)) {
+                throw new ServiceException(ApiError.ERROR_92015);
             }
-            long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
-            if (priceCount > 0) {
-                throw new ServiceException("单价不能小于0");
+            //下推单据的数量
+            Integer pushDownCount = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if (pushDownCount > 0) {
+                throw new ServiceException(ApiError.ERROR_92037);
             }
-            List<SoChangeDetailDTO.AddDTO> deleteDetailList = detailList.stream().filter(d -> d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(deleteDetailList)) {
-                List<String> soDetailIdList = deleteDetailList.stream().
-                        map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(soDetailIdList)) {
-                    throw new ServiceException(ApiError.ERROR_92015);
-                }
-                //下推单据的数量
-                Integer pushDownCount = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
-                if (pushDownCount > 0) {
-                    throw new ServiceException(ApiError.ERROR_92037);
-
+        }
+        //这个是修改
+        SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+        List<SoChangeDetailDTO.UpdateDTO> updateDetailList = listDetailParamByType(detailList, update);
+        if (CollectionUtils.isNotEmpty(updateDetailList)) {
+            List<String> soDetailIdList = updateDetailList.stream().
+                    map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soDetailIdList)) {
+                throw new ServiceException(ApiError.ERROR_92015);
+            }
+            //发货通知单
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIdList);
+            for (SoChangeDetailDTO.UpdateDTO item : updateDetailList) {
+                Integer qty = item.getQty();
+                Integer deliveryQty = soDeliveryNoticeDetailList.stream().filter(s -> s.getSourceDetailId().
+                                equals(item.getSoDetailId()) && !s.getInvalidStatus()).
+                        mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
+                if (qty < deliveryQty) {
+                    throw new ServiceException(ApiError.ERROR_92049);
                 }
             }
-            //这个是修改
-            SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
-            List<SoChangeDetailDTO.AddDTO> updateDetailList = detailList.stream().filter(d -> update.equals(d.getChangeType())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(updateDetailList)) {
-                List<String> soDetailIdList = updateDetailList.stream().
-                        map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(soDetailIdList)) {
-                    throw new ServiceException(ApiError.ERROR_92015);
-                }
-                //发货通知单
-                List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIdList);
-                for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
-                    Integer qty = item.getQty();
-                    Integer deliveryQty = soDeliveryNoticeDetailList.stream().filter(s -> s.getSourceDetailId().
-                                    equals(item.getSoDetailId()) && !s.getInvalidStatus()).
-                            mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
-                    if (qty < deliveryQty) {
-                        throw new ServiceException(ApiError.ERROR_92049);
-                    }
-                }
-                //这个是发货通知单的
-                List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyList = soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
-
-                for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
-                    Integer qty = item.getQty();
-                    Integer deliveryQty = deliveryQtyList.stream().filter(s -> s.getSoDetailId().
-                                    equals(item.getSoDetailId())).
-                            mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-                    if (qty < deliveryQty) {
-                        throw new ServiceException(ApiError.ERROR_92050);
-                    }
-                }
-
+        }
+        //这个是终止
+        SoChangeTypeEnum terminate = SoChangeTypeEnum.TERMINATE;
+        //终止的
+        List<SoChangeDetailDTO.UpdateDTO> terminateDetailList = listDetailParamByType(detailList, terminate);
+        if (CollectionUtils.isNotEmpty(terminateDetailList)) {
+            List<String> idList=terminateDetailList.stream().filter(t->StringUtils.isNotBlank(t.getId())).
+                    map(SoChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+            //销售订单详情id
+            List<String> soDetailIdList = terminateDetailList.stream().map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
+            //已经存在的
+            List<SoChangeDetailEntity> dbChangeDetailList = this.listBySoDetailIdList(soDetailIdList,terminate);
+            List<SoChangeDetailEntity>  needCheckList= dbChangeDetailList.stream().filter(d->!idList.contains(d.getId())).collect(Collectors.toList());
+            long existCount= needCheckList.stream().filter(c->soDetailIdList.contains(c.getSoDetailId())).count();
+            if(existCount>0){
+                throw new ServiceException(ApiError.SO_CHANGE_TERMINATE_EXIST);
             }
-
 
         }
 
+    }
 
+
+    private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList,SoChangeTypeEnum typeEnum) {
+        if (CollectionUtils.isEmpty(soDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoChangeDetailEntity::getSoDetailId,soDetailIdList)
+                .eq(SoChangeDetailEntity::getChangeType,typeEnum).list();
+    }
+
+
+    public List<SoChangeDetailDTO.UpdateDTO> listDetailParamByType(List<SoChangeDetailDTO.UpdateDTO> detailList, SoChangeTypeEnum typeEnum) {
+        return detailList.stream().filter(d -> typeEnum.equals(d.getChangeType())).collect(Collectors.toList());
     }
 
 

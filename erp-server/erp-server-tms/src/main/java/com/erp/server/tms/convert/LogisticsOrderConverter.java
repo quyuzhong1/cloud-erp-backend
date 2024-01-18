@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -7,6 +8,10 @@ import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.model.order.request.DeclareProduct;
+import com.erp.tms.batong.model.order.request.CargoVolume;
+import com.erp.tms.batong.model.order.request.Consignee;
+import com.erp.tms.batong.model.order.request.Invoice;
+import com.erp.tms.batong.model.order.request.Shipper;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
@@ -39,7 +44,7 @@ import java.util.List;
  * @date 2023年11月06日
  * @version: 1.0
  */
-@Mapper(uses = {BooleanMapperWork.class, TypeConversionWorker.class,NumberMapperWork.class}, builder = @Builder(disableBuilder = true))
+@Mapper(uses = {BooleanMapperWork.class, TypeConversionWorker.class,NumberMapperWork.class, BigDecimalMapperWork.class}, builder = @Builder(disableBuilder = true))
 public interface LogisticsOrderConverter {
 
     LogisticsOrderConverter INSTANCE = Mappers.getMapper(LogisticsOrderConverter.class);
@@ -486,7 +491,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
             @Mapping(target = "product_id" ,source = "skuId"),
             @Mapping(target = "product_num" ,source = "quantity"),
-            @Mapping(target = "product_weight" ,source = "weight"),
+            @Mapping(target = "product_weight" ,source = "weight", qualifiedByName = "gTokgStr"),
             @Mapping(target = "child_order_id" ,source = "childOrderId"),
             @Mapping(target = "sc_item_code" ,source = "scItemCode"),
             @Mapping(target = "sc_item_id" ,source = "scItemId"),
@@ -533,7 +538,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
             @Mapping(target = "county",source = "receiverInfoVO.district"),
-            @Mapping(target = "streetAddress",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "streetAddress",source = "receiverInfoVO.streetAddress"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "name",source = "receiverInfoVO.name"),
@@ -554,4 +559,59 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "email",source = "returnInfo.email")
     })
     Address orderRequestRefundUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "shipperName",source = "senderInfo.contact"),
+            @Mapping(target = "shipperCompany",constant = "senderInfo.companyName"),
+            @Mapping(target = "shipperCountryCode",source = "senderInfo.country"),
+            @Mapping(target = "shipperProvince",source = "senderInfo.provinceName"),
+            @Mapping(target = "shipperCity",source = "senderInfo.cityName"),
+            @Mapping(target = "shipperDistrict",source = "senderInfo.districtName"),
+            @Mapping(target = "shipperStreet",source = "senderInfo.addressFirst"),
+            @Mapping(target = "shipperPostCode",source = "senderInfo.zipCode"),
+            @Mapping(target = "shipperTelephone",source = "senderInfo.telNumber"),
+            @Mapping(target = "shipperMobile",source = "senderInfo.telNumber"),
+            @Mapping(target = "shipperEmail",source = "senderInfo.email")
+    })
+    Shipper orderShippingByBaTong(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "consigneeName",source = "receiverInfoVO.contact"),
+            @Mapping(target = "consigneeCompany",constant = "receiverInfoVO.companyName"),
+            @Mapping(target = "consigneeCountryCode",source = "receiverInfoVO.country"),
+            @Mapping(target = "consigneeProvince",source = "receiverInfoVO.province"),
+            @Mapping(target = "consigneeCity",source = "receiverInfoVO.city"),
+            @Mapping(target = "consigneeDistrict",source = "receiverInfoVO.district"),
+            @Mapping(target = "consigneeStreet",source = "receiverInfoVO.streetAddress"),
+            @Mapping(target = "consigneePostCode",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "consigneeTelephone",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "consigneeMobile",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "consigneeEmail",source = "receiverInfoVO.email")
+    })
+    Consignee orderConsigneeByBaTong(LogisticsOrderVO logisticsOrder);
+
+
+    @Mappings({
+            @Mapping(target = "skuNo",source = "skuNo"),
+            @Mapping(target = "invoiceEnName",constant = "declareEnglishName"),
+            @Mapping(target = "invoiceCnName",source = "declareChineseName"),
+            @Mapping(target = "invoiceQuantity",source = "quantity"),
+            @Mapping(target = "unitCode", constant = "PCE"),
+            @Mapping(target = "invoiceUnitCharge",source = "price",qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "hsCode",source = "customsCode"),
+            @Mapping(target = "invoiceMaterial",source = "englishMaterial"),
+            @Mapping(target = "invoiceNote",source = "distributionInfo"),
+            @Mapping(target = "invoiceUse",source = "englishUsage"),
+    })
+    Invoice orderInvoiceByBaTong(LogisticsProductVO logisticsProductVO);
+    List<Invoice> orderInvoiceByBaTong(List<LogisticsProductVO> logisticsProductVOList);
+
+    @Mappings({
+            @Mapping(target = "inVolumeLength",source = "length", qualifiedByName="intToStr"),
+            @Mapping(target = "inVolumeWidth",constant = "width",qualifiedByName="intToStr"),
+            @Mapping(target = "inVolumeHeight",source = "height",qualifiedByName="intToStr"),
+            @Mapping(target = "inVolumeGrossWeight",source = "totalWeight",qualifiedByName="gToKgByInt"),
+
+    })
+    CargoVolume orderCargoVolumeByBaTong(ParceInfoVO parceInfoVO);
 }

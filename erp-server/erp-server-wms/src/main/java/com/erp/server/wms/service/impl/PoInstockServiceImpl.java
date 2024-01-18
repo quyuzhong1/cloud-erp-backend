@@ -111,7 +111,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private PoInstockDetailService poInstockDetailService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
     private WarehouseReceiveService warehouseReceiveService;
@@ -129,7 +129,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private PoReturnDetailService poReturnDetailService;
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
@@ -328,7 +328,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
         //查询退货明细
-        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
         //采购订单数量校验
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
@@ -349,7 +349,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //退货单补货数量
                 Integer returnQty = MathUtil.ZERO;
                 if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                    returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                    returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
 
                 //入库完成
@@ -421,7 +421,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
         //查询退货明细
-        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
 
         //收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
@@ -446,7 +446,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //退货单补货数量
             Integer returnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
@@ -654,7 +654,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98014);
         }
         //判断是否已经下推退货单
-        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
+        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
             throw new ServiceException(ApiError.ERROR_99014);
         }
@@ -842,7 +842,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addList.add(addDTO);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
-            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
+            addList.forEach(obj -> poReturnService.add(obj));
         }
 
         return Boolean.TRUE;
