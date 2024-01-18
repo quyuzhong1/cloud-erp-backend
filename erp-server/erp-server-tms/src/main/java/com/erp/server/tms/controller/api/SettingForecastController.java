@@ -1,11 +1,14 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.tms.service.SettingForecastService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +19,7 @@ import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 预报设置
@@ -46,13 +50,27 @@ public class SettingForecastController extends BaseController {
 
     /**
      * 添加
+     *
      * @return
      */
     @PostMapping("/add")
     public ApiResult batchAdd(@RequestBody @Validated List<SettingForecastDTO.SaveOrUpdateDTO> list) {
-        Boolean result=settingForecastService.addOrUpdate(list);
-        return result?success():failure();
+        Boolean result = settingForecastService.addOrUpdate(list);
+        return result ? success() : failure();
     }
 
+
+    /**
+     * 删除
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> idList = dto.getIds();
+        Boolean result=settingForecastService.delete(idList);
+        return result ? success() : failure();
+    }
 
 }

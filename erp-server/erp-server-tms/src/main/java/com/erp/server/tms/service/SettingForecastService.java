@@ -35,4 +35,15 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @create 2024-01-18 16:32
      */
     Boolean addOrUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list);
+
+    
+    /**
+     * 删除
+     * @description
+     * @param idList
+     * @author Lambda
+     * @return 
+     * @create 2024-01-18 18:59
+     */
+    Boolean delete(List<String> idList);
 }
