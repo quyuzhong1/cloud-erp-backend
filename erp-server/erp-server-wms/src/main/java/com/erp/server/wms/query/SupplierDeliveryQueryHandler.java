@@ -1,15 +1,11 @@
-package com.erp.server.srm.query;
+package com.erp.server.wms.query;
 
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import org.springframework.stereotype.Component;
 
-/**
- * @author liuruipeng
- * @date 2024年01月08日 9:54
- */
 @Component
-public class DeliveryOrderQueryHandler extends AbstractQueryHandler {
+public class SupplierDeliveryQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -17,11 +13,8 @@ public class DeliveryOrderQueryHandler extends AbstractQueryHandler {
             if(DeliveryOrderEnum.SearchTypeEnum.ALL.getCode().equals(value)){
                 return super.getQueryAllSql();
             }
-            if(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINT.getCode().equals(value)){
-                return " do2.receipt_status != 'confirmed' and do2.is_print = false ";
-            }
-            if(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINTED.getCode().equals(value)){
-                return " do2.receipt_status != 'confirmed' and do2.is_print = true ";
+            if(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE.getCode().equals(value)){
+                return " do2.receipt_status != 'confirmed' ";
             }
             if(DeliveryOrderEnum.SearchTypeEnum.RECEIVED.getCode().equals(value)){
                 return " do2.receipt_status = 'confirmed' ";
@@ -33,4 +26,3 @@ public class DeliveryOrderQueryHandler extends AbstractQueryHandler {
         return null;
     }
 }
-

@@ -13,6 +13,7 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
 import com.erp.server.wms.service.CommonService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -75,7 +76,7 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         dto.getParams().setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         return success(srmDeliveryFeign.paging(dto));
