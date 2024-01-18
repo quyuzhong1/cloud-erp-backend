@@ -1315,7 +1315,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.STATUS_END_NOT_INTERCEPT);
         }
 
-        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getSourceId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
+        soB2cDeliveryInterceptFeign.updateHandleStatus(Arrays.asList(entity.getId()), SoB2cDeliveryInterceptStatusEnum.CANCEL.getCode());
 
         //修改拦截打标识、冻结订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
