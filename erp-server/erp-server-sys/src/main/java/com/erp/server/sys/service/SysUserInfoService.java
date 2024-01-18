@@ -156,7 +156,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param uid 用户id
      * @return java.lang.Boolean
      **/
-    Boolean resetPassword(String uid);
+    Boolean changePassword(String uid);
     /**
      * 重置密码
      * @Author Luo_WG
@@ -164,7 +164,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param uid 用户id
      * @return java.lang.Boolean
      **/
-    Boolean resetPassword(String uid,String pwd);
+    Boolean changePassword(String uid,String pwd);
     /**
      * 忘记密码
      * @Author Luo_WG

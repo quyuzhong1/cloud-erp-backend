@@ -86,8 +86,8 @@ public interface SupplierUserFeign {
      * @param pwd
      * @return
      */
-    @GetMapping("/feign/supplierUser/resetPassword")
-    ApiResult resetPassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
+    @GetMapping("/feign/supplierUser/changePassword")
+    ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
 
     /**
      * 保存用户关系

@@ -192,8 +192,8 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    public ApiResult resetPassword(String uid, String pwd) {
-        return userInfoFeign.resetPassword(uid,pwd);
+    public ApiResult changePassword(String uid, String pwd) {
+        return userInfoFeign.changePassword(uid,pwd);
     }
 
     @Override

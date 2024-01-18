@@ -117,8 +117,8 @@ public interface UserInfoFeign {
      * @Author Luo_WG
      * @Date 2023/4/20 9:43
      **/
-    @GetMapping("feign/user/resetPassword")
-    ApiResult resetPassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
+    @GetMapping("feign/user/changePassword")
+    ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
 
     /**
      * 忘记密码
