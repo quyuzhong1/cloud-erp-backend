@@ -47,7 +47,9 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     List<DeliveryOrderDTO.PrintDTO> print(List<String> ids);
 
-    Boolean cancelPrint(List<String> ids);
+    List<BatchResultDTO> cancelPrint(List<String> ids);
 
     boolean delete(List<String> ids);
+
+    boolean confirmPrint(List<String> ids);
 }

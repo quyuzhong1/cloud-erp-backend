@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -74,6 +75,7 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         dto.getParams().setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         return success(srmDeliveryFeign.paging(dto));

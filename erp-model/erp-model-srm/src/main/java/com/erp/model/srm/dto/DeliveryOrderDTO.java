@@ -16,6 +16,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -264,7 +265,7 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
 
     }
 
@@ -280,7 +281,6 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        @JsonIgnore
         private Map<String,String> sqlMap;
 
         /**
@@ -310,6 +310,11 @@ public class DeliveryOrderDTO implements Serializable {
          * 收货状态
          */
         private String receiptStatus;
+
+        /**
+         * 收货状态名称
+         */
+        private String receiptStatusName;
 
         /**
         * 供应商id

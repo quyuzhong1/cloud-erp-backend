@@ -4,6 +4,7 @@ package com.erp.server.srm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.query.IQueryHandler;
 import com.common.business.vo.PagingVO;
@@ -120,6 +121,19 @@ public class DeliveryOrderController extends BaseController {
     public ApiResult<List<DeliveryOrderDTO.PrintDTO>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(deliveryOrderService.print(dto.getIds()));
     }
+
+    /**
+     * 确认打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/confirmPrint")
+    public ApiResult<?> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryOrderService.confirmPrint(dto.getIds()));
+    }
+
     /**
      * 取消打印送货单
      * @author lrp
@@ -128,8 +142,9 @@ public class DeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelPrint")
-    public ApiResult<?> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(deliveryOrderService.cancelPrint(dto.getIds()));
+    public ApiResult<List<BatchResultDTO>> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> batchResultDTOList = deliveryOrderService.cancelPrint(dto.getIds());
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess)?success(batchResultDTOList):failure(batchResultDTOList);
     }
 
     /**

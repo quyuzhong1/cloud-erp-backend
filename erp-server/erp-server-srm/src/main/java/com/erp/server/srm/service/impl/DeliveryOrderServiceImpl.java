@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -126,7 +127,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<DeliveryOrderDTO.PrintDTO> print(List<String> ids) {
         List<DeliveryOrderEntity> entityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
         List<DeliveryOrderDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDTO.PrintDTO.class, entityList);
@@ -136,20 +136,35 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                     detailList.forEach(detail -> detail.setCode(v.getSourceCode()));
                     v.setDetailPrintList(detailList);
                 }));
-        entityList.forEach(v->v.setIsPrint(true));
-        this.updateBatchById(entityList);
         return printDTOList;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelPrint(List<String> ids) {
+    public List<BatchResultDTO> cancelPrint(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<DeliveryOrderEntity> deliveryOrderEntityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
-        if(deliveryOrderEntityList.stream().anyMatch(v->!v.getIsPrint() || StringUtils.isNotBlank(v.getReceiptStatus()))){
-            throw new ServiceException("存在未打印或者收货状态不为空的送货单，取消打印失败");
+        List<DeliveryOrderEntity> updateList = new ArrayList<>();
+        for(DeliveryOrderEntity deliveryOrderEntity : deliveryOrderEntityList){
+            BatchResultDTO resultDTO = new BatchResultDTO();
+            resultDTO.setCode(deliveryOrderEntity.getCode());
+            resultDTO.setId(deliveryOrderEntity.getId());
+            if(!deliveryOrderEntity.getIsPrint() || StringUtils.isNotBlank(deliveryOrderEntity.getReceiptStatus())){
+                resultDTO.setSuccess(false);
+                resultDTO.setMsg("存在未打印或者收货状态不为空的送货单，取消打印失败");
+            }else{
+                resultDTO.setSuccess(true);
+                deliveryOrderEntity.setIsPrint(false);
+                updateList.add(deliveryOrderEntity);
+            }
+            resultDTOList.add(resultDTO);
         }
-        deliveryOrderEntityList.forEach(v->v.setIsPrint(false));
-        return this.updateBatchById(deliveryOrderEntityList);
+        if(CollectionUtils.isNotEmpty(updateList)){
+            if(!this.updateBatchById(updateList)){
+                throw new ServiceException("更新送货单打印状态失败");
+            }
+        }
+        return resultDTOList;
     }
 
     @Override
@@ -167,6 +182,17 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         if(!detailService.deleteByMainIds(ids)){
             throw new ServiceException("送货单明细删除失败");
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean confirmPrint(List<String> ids) {
+        List<DeliveryOrderEntity> entityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
+        entityList.forEach(v->v.setIsPrint(true));
+        if(!this.updateBatchById(entityList)){
+            throw new ServiceException("更新打印状态失败");
         }
         return true;
     }
