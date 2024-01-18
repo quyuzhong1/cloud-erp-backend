@@ -39,7 +39,7 @@ import java.util.*;
 public class DownloadParseCsvTest {
 
 
-    public static void main3(String[] args) {
+    public static void main(String[] args) {
         Map<String, String> map = new HashMap<>();
         map.put("item-name", "itemName");
         map.put("item-description", "itemDescription");
@@ -68,8 +68,9 @@ public class DownloadParseCsvTest {
         map.put("pending-quantity", "pendingQuantity");
         map.put("fulfillment-channel", "fulfillmentChannel");
         map.put("merchant-shipping-group","merchantShippingGroup");
-        String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T064255Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=921cb9dfb1678bebcbd5634398e5c00fbb2d28475bae8f2713406e784194cb51";
-        String compressionAlgorithm = "";
+//        String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T064255Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=921cb9dfb1678bebcbd5634398e5c00fbb2d28475bae8f2713406e784194cb51";
+        String url= "https://tortuga-prod-na.s3-external-1.amazonaws.com/8bb81768-0d19-4aa5-8d98-7c081d182f4b.amzn1.tortuga.4.na.T2BSEYGYJIYPRI?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240118T071214Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RANYTMPKWM%2F20240118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=1b728f607647d25850c1c4b37d07c9a8ef7c36304629fa524c83341e0de4fb78";
+        String compressionAlgorithm = "GZIP";
         DownloadHandler obj = new DownloadHandler();
         try {
             JSONArray download = obj.download(url, compressionAlgorithm, map);
@@ -80,7 +81,7 @@ public class DownloadParseCsvTest {
     }
 
 
-    public static void main(String[] args) {
+    public static void main4(String[] args) {
         String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T073308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=737b2b2b924fe9366f95421dde0021b7e74c387b87df41cff5a187723159d003";
         Set<String> columnName = null;
         try {

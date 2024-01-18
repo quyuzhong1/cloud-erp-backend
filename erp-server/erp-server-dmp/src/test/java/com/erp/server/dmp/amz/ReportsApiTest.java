@@ -237,16 +237,17 @@ public class ReportsApiTest {
         // 正式环境参数
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.584baa05-f1b8-4d53-88fc-5c5b32051236.T2SXAUMO86QN6T.300";
         // 亚马逊物流管理库存
-        String reportDocumentId = "amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650";
+//        String reportDocumentId = "amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650";
+        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
         // 亚马逊物流管理库存状况报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600";
         // 亚马逊物流预留库存报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681";
         // 沙箱环境参数
 //        String reportDocumentId = "0356cf79-b8b0-4226-b4b9-0ee058ea5760";
-        String shopId = "";
+        String shopId = "1739494918432231426";
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
@@ -337,18 +338,18 @@ public class ReportsApiTest {
     public void getReportsTest() throws Exception {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
+        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null
                 ;
-        Integer pageSize = 100;
+        Integer pageSize = 10;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
-        String shopId = "1734478618727288833";
+        String shopId = "1739494918432231426";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
