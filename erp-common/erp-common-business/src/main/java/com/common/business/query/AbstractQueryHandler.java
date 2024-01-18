@@ -1,21 +1,16 @@
 package com.common.business.query;
 
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 查询条件处理程序扩展handler
  */
 public abstract class AbstractQueryHandler implements IQueryHandler{
 
+    @Override
     public String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql) {
         try {
             String sql = handleSqlLogic(field,  value, compareCodeSplicingValueSql);
@@ -41,6 +36,17 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     protected void buildDefaultDTO(String field, Object value){
         AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO(field,value);
         AdvanceQueryContext.addQuery(advanceQueryDTO);
+    }
+
+    /**
+     * 默认封装DTO方法 field 数据库别名，value 值
+     */
+    protected String getSplicingSQL(){
+        try {
+            return QueryUtils.splicingSQL(AdvanceQueryContext.getQueryList());
+        }finally {
+            AdvanceQueryContext.remove();
+        }
     }
 
     protected String getQueryEmptySql(){
