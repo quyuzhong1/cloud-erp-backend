@@ -495,6 +495,7 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
     ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
+    ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
     ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
 
@@ -691,6 +692,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
     ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE(98110,"采购订单已下推采购变更单"),
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
+    PRICE_NOT_EXIST(98112,"采购价目表不存在"),
+    PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
@@ -826,6 +829,8 @@ public enum ApiError implements Serializable {
     SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
+    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】SKU【{}】已下推加工单"),
+
     ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到发货单"),
     IS_DELIVERY_DELETE(99097,"只有未发货的数据支持删除"),
     FBA_SHIPMENT_DETAIL_NOT_EXIST(99098,"货件详情不存在"),
@@ -856,7 +861,7 @@ public enum ApiError implements Serializable {
     IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
-    WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
+    WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理，处理中，已处理的单据允许撤销"),
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
@@ -899,12 +904,15 @@ public enum ApiError implements Serializable {
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
-    ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截，禁止变更状态"),
+    ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】已发货和取消发货单状态，不允许再打印标签"),
+    TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
+    TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
+    JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -1042,6 +1050,7 @@ public enum ApiError implements Serializable {
     ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
     ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
     ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
+    ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
@@ -1076,11 +1085,18 @@ public enum ApiError implements Serializable {
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
     ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
     ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
-    NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货、已发货的订单可以发起拦截"),
+    NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货订单可以发起拦截"),
     IS_EXIST_NOT_INTERCEPT(92120,"打标拦截的订单不支持重复发起拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
-    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
+    INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空，未处理才允许取消拦截"),
+    SO_CHANGE_TERMINATE_EXIST(92124,"存在已终止过的销售订单，无法再次终止"),
+    ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
+    B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
+
+    B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
+    STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
+
 
 
     /**
@@ -1118,7 +1134,7 @@ public enum ApiError implements Serializable {
     ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【{}】渠道,尚未配置销售渠道"),
     PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
-
+    ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
 
     /**
      * SRM 错误

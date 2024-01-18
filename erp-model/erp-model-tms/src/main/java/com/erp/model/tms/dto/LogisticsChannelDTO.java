@@ -91,6 +91,26 @@ public class LogisticsChannelDTO implements Serializable {
 
 
     /**
+     * 基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsPlatformDTO {
+
+        /**
+         * 渠道id
+         */
+        private String  channelId;
+
+        /**
+         * 对应平台
+         */
+        private String logisticsPlatform;
+
+    }
+
+
+    /**
      * 标记发货所需要的参数
      */
     @Data

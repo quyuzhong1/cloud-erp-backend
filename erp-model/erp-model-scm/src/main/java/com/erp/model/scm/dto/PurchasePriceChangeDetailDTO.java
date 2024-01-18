@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -35,6 +37,17 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id能为空")
+        private String supplierId;
+
+        /**
+         * 价目表编码
+         */
+        private String priceCode;
 
         /**
          * 采购价目详情表id
@@ -118,6 +131,18 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 价目表编码
+         */
+        private String priceCode;
 
         /**
          * sku id
@@ -207,6 +232,22 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private String id;
 
         /**
+         * 价目表Code
+         */
+        private String priceCode;
+
+        /**
+         * 供应商表id
+         */
+        private String supplierId;
+
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -222,7 +263,9 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private String skuNo;
 
-
+        /**
+         * 价目表详情id
+         */
         private String purchasePriceDetailId;
 
         /**
@@ -239,7 +282,6 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 最大数量
          */
         private Integer maxQty;
-
 
         /**
          * 币种
@@ -307,9 +349,29 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private Boolean disabled=false;
 
         /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
          * 升降比例（带百分比）
          */
         private String offsetRate;
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuChangeParamDTO {
+        /**
+         * id
+         */
+        private List<String> purchasePriceIds;
+        /**
+         * 价目表编号
+         */
+        private String priceCode;
+    }
 }

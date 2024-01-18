@@ -38,6 +38,7 @@ public enum DeliveryOrderEnum {
         ALL("all", "全部"),
         WAIT_RECEIVE_AND_PRINT("waitReceiveAndPrint", "待收货-未打印"),
         WAIT_RECEIVE_AND_PRINTED("waitReceiveAndPrinted", "待收货-已打印"),
+        WAIT_RECEIVE("waitReceive", "待收货"),
         RECEIVED("received", "已收货"),
         QTY_DIFFERENCE("qtyDifference", "收发差异"),
         ;

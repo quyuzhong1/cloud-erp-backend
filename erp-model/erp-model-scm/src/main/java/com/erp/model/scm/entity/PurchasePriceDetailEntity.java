@@ -118,6 +118,7 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     /**
      * 备注
      */
+    @TableField("remark")
     private String remark;
 
     /**
@@ -131,6 +132,24 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
      */
     @TableField(exist = false)
     private String approveStatus;
+
+    /**
+     * 供应商id
+     */
+    @TableField(exist = false)
+    private String supplierId;
+
+    /**
+     * 价目表编码
+     */
+    @TableField(exist = false)
+    private String priceCode;
+
+    /**
+     * 采购组织
+     */
+    @TableField(exist = false)
+    private String purchaseOrgName;
 
     @Override
     public Serializable pkVal() {

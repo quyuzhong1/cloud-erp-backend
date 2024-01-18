@@ -116,6 +116,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private PoReturnService poReturnService;
 
+    @Resource
+    private MachineRefSoService machineRefSoService;
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -435,6 +437,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         machineSubComponentsService.removeByMainIds(ids);
         //删除明细数据
         machineDetailService.removeByMainIds(ids);
+        //删除关联关系数据
+        machineRefSoService.removeByMachineIdList(ids);
         //删除操作日志
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", commonService.getUserInfo().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -467,6 +471,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .set(MachineInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(MachineInfoEntity::getInvalidRemark, reason)
                 .update();
+        //删除关联关系表数据
+        machineRefSoService.removeByMachineIdList(ids);
         //金蝶推送
         list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         //操作日志

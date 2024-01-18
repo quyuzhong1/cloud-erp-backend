@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
@@ -341,11 +342,11 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         /**
          * 创建人
          */
-        private List<LocalDateTime> createUserIdList;
+        private List<String> createUserIdList;
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
     }
 
     /**
@@ -465,11 +466,11 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
         /**
          * 处理时间
          */
-        private String handleTime;
+        private LocalDateTime handleTime;
     }
 
     /**

@@ -15,8 +15,10 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.FieldConstant;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -25,7 +27,6 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.UserRangeTypeEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
@@ -56,6 +57,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -459,11 +461,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         // 填充名称
         fillInventoryPageData(dataList);
-        List<ExportInventoryExcelDTO> resultList = BeanMapperUtils.copyList(ExportInventoryExcelDTO.class, dataList);
-        String fileName = StrUtil.format("即时库存数据{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/inventory.xlsx";
+        String name = "即时库存导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
         try {
-            ExcelUtil.exportAdapt(fileName, "即时库存数据", resultList, ExportInventoryExcelDTO.class, response, null);
-        } catch (Exception e) {
+            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
@@ -646,7 +652,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
         //物料编码
         List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         //仓库

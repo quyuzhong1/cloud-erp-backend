@@ -32,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -84,25 +85,26 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
             sb.setLength(0);
             sb.append(baseUrl);
             if (StringUtil.isBlank(nextCursor)) {
-                sb.append("?lastModifiedStartDate=");
+                sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
+/*                sb.append("&lastModifiedStartDate=");
                 sb.append(data.getLastTime());
                 sb.append("&lastModifiedEndDate=");
-                sb.append(data.getNextTime());
+                sb.append(data.getNextTime());*/
                 sb.append("&createdStartDate=");
-                sb.append(data.getLastTime());
+                sb.append(data.getLastTime().minusDays(15));
                 sb.append("&createdEndDate=");
                 sb.append(data.getNextTime());
-                sb.append("&status=Acknowledged,Shipped,Delivered,Cancelled");
                 sb.append("&limit=200&productInfo=true");
             } else {
-                sb.append(baseUrl);
                 sb.append(nextCursor);
             }
             //拉取数据
             String date = walmartSdkClientService.sendWalmartGet(sb.toString(), shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
-
+            log.info(String.format("::::: 发送Get请求到沃尔玛【拉取订单】 ::::: clientId => %s, clientSecret => %s, 入参 => %s, 返回参数 => %s ",
+                    shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), sb.toString(), date));
             WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
             if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
+                log.info(String.format("::::: 【沃尔玛】获取walmartOrderDTO.getList().getElements().getOrder()::=====>错误！！没有获取到值"));
                 break;
             }
 

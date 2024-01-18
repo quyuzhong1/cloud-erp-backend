@@ -78,7 +78,10 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
-        and do2.supplier_id = #{params.supplierId}
+        and do2.supplier_id in
+        <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -95,7 +98,10 @@
         from delivery_order do2
                  inner join delivery_order_detail doe on do2.id = doe.main_id
         where do2.is_deleted = false and doe.is_deleted = false
-        and do2.supplier_id = #{supplierId}
+        and do2.supplier_id in
+        <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         group by do2.receipt_status,do2.is_print,((doe.delivery_qty - doe.receive_qty) != 0 )
     </select>
 

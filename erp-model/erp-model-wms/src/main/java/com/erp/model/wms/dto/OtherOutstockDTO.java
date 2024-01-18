@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
@@ -136,6 +137,11 @@ public class OtherOutstockDTO implements Serializable {
          * 审核人名称
          */
         private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 创建人名称
@@ -404,7 +410,7 @@ public class OtherOutstockDTO implements Serializable {
         /**
          * 审核时间
          */
-        private String approveTime;
+        private LocalDateTime approveTime;
 
         /**
          * 审核人

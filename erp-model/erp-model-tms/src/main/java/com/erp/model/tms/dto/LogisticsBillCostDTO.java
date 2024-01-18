@@ -42,9 +42,13 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private List<String> reconciliationStatusList;
         /**
-         * 订单类型
+         * 来源类型
          */
         private String sourceType;
+        /**
+         * 订单类型
+         */
+        private String orderType;
         /**
          * 店铺
          */
@@ -105,9 +109,19 @@ public class LogisticsBillCostDTO implements Serializable {
          */
        private String id;
         /**
-         * 订单类型名称
+         * 来源类型名称
          */
         private String    sourceTypeName;
+
+        /**
+         * 订单类型
+         */
+        private String    orderType;
+
+        /**
+         * 订单类型名称
+         */
+        private String    orderTypeName;
 
         /**
          * 对账状态

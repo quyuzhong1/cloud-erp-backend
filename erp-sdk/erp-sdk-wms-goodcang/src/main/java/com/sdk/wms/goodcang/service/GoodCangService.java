@@ -166,10 +166,10 @@ public class GoodCangService {
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_OUTBOUND_BILL,json);
         //处理返回值
         GoodCangResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
-        if(Objects.nonNull(respDto.getData())){
-            respDto.setData(JSONObject.parseObject(respDto.getData()).get("order_code").toString());
+        if(Objects.nonNull(respDto.getOrderCode())){
+            respDto.setData(respDto.getOrderCode());
         }
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        return respDto;
     }
 
     /**

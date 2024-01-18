@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -48,12 +49,14 @@ public class SupplierDTO implements Serializable {
          * 供应商联系信息
          */
         @Valid
+        @NotEmpty(message = "联系信息至少有一条")
         private List<SupplierContactDTO.AddDTO> contactList;
 
         /**
          * 供应商银行账户信息
          */
         @Valid
+        @NotEmpty(message = "银行账户信息至少有一条")
         private List<SupplierAccountDTO.AddDTO> bankAccountList;
 
         /**
@@ -186,12 +189,14 @@ public class SupplierDTO implements Serializable {
          * 供应商联系信息
          */
         @Valid
+        @NotEmpty(message = "联系信息至少有一条")
         private List<SupplierContactDTO.UpdateDTO> contactList;
 
         /**
          * 供应商银行账户信息
          */
         @Valid
+        @NotEmpty(message = "银行账户信息至少有一条")
         private List<SupplierAccountDTO.UpdateDTO> bankAccountList;
 
         /**
@@ -379,6 +384,7 @@ public class SupplierDTO implements Serializable {
          * 公司地址
          */
         @Size(max = 100, message = "公司地址最大100字符")
+        @NotBlank(message = "公司地址必填")
         private String companyAddress;
 
 
@@ -393,7 +399,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 结算付款方式
          */
-        //@NotBlank(message = "结算方式不能为空")
+        @NotBlank(message = "结算方式不能为空")
         private String payMethodId;
 
         /**
@@ -424,6 +430,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 付款条件
          */
+        @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
 
     }
@@ -725,6 +732,11 @@ public class SupplierDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -734,6 +746,8 @@ public class SupplierDTO implements Serializable {
          * 创建人
          */
         private String createUserName;
+
+
 
     }
 

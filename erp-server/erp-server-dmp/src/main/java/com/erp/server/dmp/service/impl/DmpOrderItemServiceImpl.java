@@ -23,6 +23,7 @@ import com.erp.model.dmp.entity.DmpSplitErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.service.DmpBomService;
@@ -413,12 +414,12 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             }
             //3、获取到马帮的财务编码，匹配ERP的bom
             DmpBomEntity finalDmpBomEntity = dmpBomEntity;
-            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalDmpBomEntity.getFinancialCode())).collect(Collectors.toList());
+            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalDmpBomEntity.getFinancialCode()) && BomTypeEnum.COMBINATION.getType().equals(req.getType())).collect(Collectors.toList());
             splitSkuDTO.setMabangSkuNo(dmpBomEntity.getFinancialCode());
         } else {
             //不是马帮的直接SKU匹配ERP的bom
             String finalOtherSkuNo = skuNo;
-            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalOtherSkuNo)).collect(Collectors.toList());
+            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalOtherSkuNo) && BomTypeEnum.COMBINATION.getType().equals(req.getType())).collect(Collectors.toList());
         }
 
         /**

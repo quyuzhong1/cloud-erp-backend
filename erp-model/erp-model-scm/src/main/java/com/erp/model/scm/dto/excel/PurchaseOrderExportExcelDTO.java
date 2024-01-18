@@ -157,21 +157,27 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String approveUserName;
 
     /**
+     * 审核完成时间
+     */
+    @ExcelProperty(value = "审核完成时间", index = 23, converter= LocalDateStringConverter.class)
+    private LocalDateTime approveTime;
+
+    /**
      * 申请人
      */
-    @ExcelProperty(value = "申请人", index = 23)
+    @ExcelProperty(value = "申请人", index = 24)
     private String purchaseUserName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 24)
+    @ExcelProperty(value = "创建人", index = 25)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 25, converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 26, converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 }

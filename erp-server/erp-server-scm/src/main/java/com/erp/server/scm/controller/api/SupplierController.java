@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
@@ -100,6 +101,25 @@ public class SupplierController extends BaseController {
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 取消流程
+     * @author Will
+     * @date: 2023/12/01 13:59
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销供应商信息")
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:cancelProcess",
+            serviceClass = SupplierService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = supplierService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
 

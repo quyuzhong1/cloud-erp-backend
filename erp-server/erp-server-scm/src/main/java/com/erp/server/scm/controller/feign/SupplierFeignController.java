@@ -59,6 +59,14 @@ public class SupplierFeignController extends BaseController {
     }
 
     /**
+     * 获取采购员对应供应商列表
+     */
+    @GetMapping("/listByPurchaseUserId")
+    public List<SupplierEntity> listByPurchaseUserId(@RequestParam("purchaseUserId") String purchaseUserId) {
+        return supplierService.listByPurchaseUserId(purchaseUserId);
+    }
+
+    /**
      * 根据用户id获取供应商
      */
     @GetMapping("/getSupplierByUid")

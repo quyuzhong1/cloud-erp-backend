@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -14,6 +15,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -74,18 +76,16 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     public void syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+        List<String> purchasePriceDetailId = purchasePriceChangeDetailEntities.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
+
         //如果上游单据未发送成功则无需发送
-        PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
-        //采购价目主表数据
-        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+        List<PurchasePriceDetailEntity> purchasePriceDetailEntities = purchasePriceDetailService.listByIds(purchasePriceDetailId);
+        //采购价目明细表数据
+        if (CollectionUtils.isEmpty(purchasePriceDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-
-        /*DmpPushTaskEntity purchasePriceTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
-        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceTask.getStatus())) {
-            log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
-            return;
-        }*/
+        String purchasePriceIdStr = purchasePriceDetailEntities.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.joining(","));
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -100,7 +100,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
+            sendMqAndSaveTask(entity,operate,resultMap, purchasePriceIdStr);
             return;
         }
         //调价原因
@@ -117,12 +117,6 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             resultMap.put("purchaseOrgCode", orgCode);
         }
 
-        //查询供应商
-        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            return;
-        }
-
         //调价明细
         List<PurchasePriceChangeDetailEntity> details = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
@@ -136,6 +130,12 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
+        //查询供应商
+        List<String> supplierIds = details.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+        if (CollectionUtils.isNotEmpty(supplierEntities)) {
+            return;
+        }
 
 
         List<JSONObject> list = new ArrayList<>();
@@ -152,6 +152,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             //采购价目明细金蝶id
             jsonObject.set("kingdeeDetailId",purchasePriceDetailEntity.getKingdeeDetailId());
             //供应商编号
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> detailEntity.getSupplierId().equals(req.getId())).findFirst().orElse(null);
             jsonObject.set("supplierCode",supplierEntity.getCode());
             //从
             jsonObject.set("minQty",detailEntity.getMinQty());
@@ -170,7 +171,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         resultMap.put("list",list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        sendMqAndSaveTask(entity,operate,resultMap, purchasePriceIdStr);
     }
 
     /**
@@ -181,7 +182,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap, String purchasePriceIdStr) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -193,6 +194,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
+        //多个ID用','拼接
+        dmpSyncTaskDTO.setParentId(purchasePriceIdStr);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

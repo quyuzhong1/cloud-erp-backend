@@ -20,7 +20,8 @@
         pay_method_id AS payMethodId,
         payment_condition as paymentCondition,
         purchase_user_id AS purchaseUserId,
-        purchase_user_name AS purchaseUserName
+        purchase_user_name AS purchaseUserName,
+        approve_time as approveTime
         FROM supplier
         WHERE
         ${params.sqlMap.default}
@@ -130,7 +131,8 @@
         disabled AS disabled,
         pay_method_id AS payMethodId,
         purchase_user_id AS purchaseUserId,
-        purchase_user_name AS purchaseUserName
+        purchase_user_name AS purchaseUserName,
+        approve_time as approveTime
         FROM supplier
         WHERE is_deleted=FALSE
         <choose>

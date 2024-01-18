@@ -468,7 +468,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
 
         // 更新审核信息
-        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //审核通过发送金蝶
         list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
@@ -1273,26 +1273,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     /**
-    * 反审核更新审核信息
-    * @param ids
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(List<String> ids, String approveStatus) {
-        this.lambdaUpdate().in(SubcontractOrderEntity::getId, ids)
-            .set(SubcontractOrderEntity::getApproveUserId, "")
-            .set(SubcontractOrderEntity::getApproveUserName, "")
-            .set(SubcontractOrderEntity::getApproveStatus, approveStatus)
-            .set(SubcontractOrderEntity::getApproveTime, null)
-            .update();
-        }
-
-    /**
     * 更新审核状态
     */
     private Boolean updateApproveStatus(List<String> ids, String approveStatus) {
         return lambdaUpdate().in(SubcontractOrderEntity::getId, ids)
                 .set(SubcontractOrderEntity::getApproveStatus, approveStatus)
+                .set(SubcontractOrderEntity::getApproveUserId, "")
+                .set(SubcontractOrderEntity::getApproveUserName, "")
+                .set(SubcontractOrderEntity::getApproveTime, null)
                 .update();
     }
 

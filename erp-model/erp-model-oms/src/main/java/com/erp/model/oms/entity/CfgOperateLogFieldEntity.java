@@ -42,7 +42,7 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
     private String classPath;
 
     /**
-     * 字段类型 0字符串，1是或否，2枚举
+     * 字段类型 0字符串，1是或否，2枚举，3字典，4人员，5部门，6国家，7城市，8客户
      */
     @TableField("type")
     private Integer type;
@@ -54,10 +54,10 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
     private String enumClass;
 
     /**
-     * true|false对应值,竖线分隔
+     * 当类型1时，true|false对应值,竖线分隔，当类型3时存储字典类型
      */
-    @TableField("boolean_value")
-    private String booleanValue;
+    @TableField("value")
+    private String value;
 
 
     public static final String FIELD = "field";
@@ -70,7 +70,7 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
 
     public static final String ENUM_CLASS = "enum_class";
 
-    public static final String BOOLEAN_VALUE = "boolean_value";
+    public static final String VALUE = "value";
 
     @Override
     public Serializable pkVal() {

@@ -9,6 +9,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.erp.tms.aliexpress.model.query.response.ServiceResult;
+import com.erp.tms.batong.model.label.base.BaseData;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
 import com.sdk.oms.walmart.dto.walmart.WalmartCarriersDTO;
@@ -54,6 +55,22 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByYanWen(YanWenChannel yanWenChannelList);
     List<LogisticsSaleChannelEntity> channelConvertByYanWenList(List<YanWenChannel> yanWenChannelList);
+
+
+    /**
+     * 巴通所有渠道
+      * @param
+     * @return
+     */
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "cnName"),
+            @Mapping(target = "enName", source = "enName"),
+            @Mapping(target = "logisticsPlatform", constant = "BaTong"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByBaTong(BaseData baTong);
+    List<LogisticsSaleChannelEntity> channelConvertByBaTong(List<BaseData> baTongChannelList);
 
     @Mappings({
             @Mapping(target = "code", source = "logistics_product_code"),

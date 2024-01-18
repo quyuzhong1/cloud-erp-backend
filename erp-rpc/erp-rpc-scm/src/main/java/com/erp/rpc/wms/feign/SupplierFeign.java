@@ -50,6 +50,13 @@ public interface SupplierFeign {
     @PostMapping("/feign/supplier/listBySupplierByNames")
     List<SupplierEntity> listBySupplierByNames(List<String> singletonList);
 
+    /**
+     * 获取采购员对应供应商列表
+     * @return
+     */
+    @GetMapping("/feign/supplier/listByPurchaseUserId")
+    List<SupplierEntity> listByPurchaseUserId(@RequestParam("purchaseUserId") String purchaseUserId);
+
     @GetMapping("/feign/supplier/getSupplierByUid")
     SupplierEntity getSupplierByUid(@RequestParam("uid") String uid);
 

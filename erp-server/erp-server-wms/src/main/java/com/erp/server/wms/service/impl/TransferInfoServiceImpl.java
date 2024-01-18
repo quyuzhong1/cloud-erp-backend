@@ -964,7 +964,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional
-    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark) {
+    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark,Boolean isToOnwayWarehouse) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
         //目的仓
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()
@@ -975,8 +975,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
 
+        WarehouseEntity destWarehouseEntity = warehouseService.getById(destWarehouse.getId());
         //查询在途仓
         WarehouseEntity onWayWarehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
+        WarehouseEntity toWarehouseEntity = isToOnwayWarehouse?onWayWarehouseEntity:destWarehouseEntity;
+        WarehouseEntity fromWarehouseEntity = isToOnwayWarehouse?destWarehouseEntity:onWayWarehouseEntity;
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：海外仓入库单
@@ -986,11 +990,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(destWarehouse.getOrgId());
+        addDTO.setInOrgId(toWarehouseEntity.getOrgId());
         //调出组织
-        addDTO.setOutOrgId(onWayWarehouseEntity.getOrgId());
+        addDTO.setOutOrgId(fromWarehouseEntity.getOrgId());
         //调拨类型
-        if (onWayWarehouseEntity.getOrgId().equals(destWarehouse.getOrgId())) {
+        if (destWarehouseEntity.getOrgId().equals(onWayWarehouseEntity.getOrgId())) {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -1009,10 +1013,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //映射产品信息
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
-            detailAddDto.setQty(receivedEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(onWayWarehouseEntity.getId());
+            detailAddDto.setQty(Math.abs(receivedEntity.getReceiveQty()));
+            detailAddDto.setOutWarehouseId(fromWarehouseEntity.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(destWarehouse.getId());
+            detailAddDto.setInWarehouseId(toWarehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(receivedEntity.getId());
             detailAddDtoList.add(detailAddDto);
@@ -1022,4 +1026,68 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         return this.addAndApprove(addDTO);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void requisitionApplicationCancelProcess(String code, String sourceType) {
+        List<TransferInfoEntity> list = lambdaQuery()
+                .eq(TransferInfoEntity::getSourceCode, code)
+                .eq(TransferInfoEntity::getSourceType, sourceType)
+                .list();
+
+        //反审核，删除调拨单
+        for (TransferInfoEntity entity : list) {
+
+            //如果是已审核，反审核
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+                try {
+                    this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+                }
+            }
+
+            //如果是审核中，撤销
+            if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+                try {
+                    this.cancelProcess(Arrays.asList(entity.getId()));
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
+                }
+            }
+
+            //删除
+            this.requisitionApplicationDelete(Arrays.asList(entity.getId()));
+        }
+
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean requisitionApplicationDelete(List<String> ids) {
+        //根据ids查询
+        List<TransferInfoEntity> list = getList(ids);
+        //待提交并且未作废允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())
+                && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
+        //马帮直接调拨单不允许删除 TODO
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
+        }
+
+        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除明细数据
+        transferInfoDetailService.removeByMainIds(ids);
+        //删除操作日志
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        //删除主表数据
+        return this.removeByIds(ids);
+    }
 }

@@ -196,7 +196,11 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("customer_property")
     private String customerProperty;
 
-    
+    /**
+     * 通讯地址
+     */
+    @TableField("mail_address")
+    private String mailAddress;
 
     public static final String CODE = "code";
 

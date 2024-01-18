@@ -54,8 +54,6 @@ public class WalmartSdkClientService {
         String clientId = "2434a35c-7c42-4420-9618-0c179b68a8c2";
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
         //获取令牌
-        baseUrl = WalmartStaticKey.baseUrlTest + "token";
-
 
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
@@ -67,8 +65,8 @@ public class WalmartSdkClientService {
 
         JobTaskDTO taskDTO = new JobTaskDTO();
 
-        taskDTO.setLastTime(LocalDateTime.parse("2023-10-20 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        taskDTO.setNextTime(LocalDateTime.parse("2023-12-21 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        taskDTO.setLastTime(LocalDateTime.parse("2023-12-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        taskDTO.setNextTime(LocalDateTime.parse("2023-12-02 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";
         StringBuffer sb = new StringBuffer();
@@ -78,14 +76,16 @@ public class WalmartSdkClientService {
             sb.append(baseUrl);
             if (StringUtil.isBlank(nextCursor)) {
                 sb.append("?status=Acknowledged,Shipped,Delivered,Cancelled");
-                sb.append("&lastModifiedStartDate=");
-                sb.append(taskDTO.getLastTime());
+/*                sb.append("&lastModifiedStartDate=");
+                sb.append(data.getLastTime());
                 sb.append("&lastModifiedEndDate=");
+                sb.append(data.getNextTime());*/
+                sb.append("&createdStartDate=");
+                sb.append(taskDTO.getLastTime().minusDays(15));
+                sb.append("&createdEndDate=");
                 sb.append(taskDTO.getNextTime());
-
                 sb.append("&limit=200&productInfo=true");
             } else {
-                sb.append(baseUrl);
                 sb.append(nextCursor);
             }
             //拉取数据
@@ -93,6 +93,7 @@ public class WalmartSdkClientService {
             System.out.println(date);
             WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
             if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
+                System.out.println("没有值");
                 break;
             }
 

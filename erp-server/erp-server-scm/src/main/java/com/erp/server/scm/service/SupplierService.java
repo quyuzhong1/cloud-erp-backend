@@ -300,6 +300,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.util.List<com.erp.model.scm.entity.SupplierEntity>
      */
     List<SupplierEntity> listBySupplierByNames(List<String> supplierNames);
+    /**
+     * @description: 撤销流程
+     * @author Will
+     * @date: 2023/12/1 16:01
+     * @param ids
+     * @return Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
 
     SupplierEntity getSupplierByUid(String uid);
 
@@ -308,4 +316,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return
      */
     List<SupplierTabCountDTO> getTabCount();
+
+    List<SupplierEntity> listByPurchaseUserId(String purchaseUserId);
 }

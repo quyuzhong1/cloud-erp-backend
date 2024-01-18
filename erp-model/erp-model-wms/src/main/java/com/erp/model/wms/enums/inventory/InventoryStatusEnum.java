@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums.inventory;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
@@ -79,4 +80,15 @@ public enum InventoryStatusEnum {
         return Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
     }
 
+    /**
+     * 根据代码获取
+     * @param code
+     * @return
+     */
+    public static InventoryStatusEnum getAndCheckByCode(String code) {
+        return Arrays.stream(InventoryStatusEnum.values())
+                .filter(r -> Objects.equals(r.getCode(), code))
+                .findFirst()
+                .orElseThrow(()-> new ServiceException("InventoryStatusEnum类型不存在：code=" + code));
+    }
 }

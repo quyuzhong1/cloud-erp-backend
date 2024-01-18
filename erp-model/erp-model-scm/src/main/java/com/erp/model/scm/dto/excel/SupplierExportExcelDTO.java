@@ -162,9 +162,24 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
+     * 审核人（最新）
+     */
+    @ExcelProperty(value = "审核人（最新）", index = 19)
+    @ColumnWidth(20)
+    private String approveUserName;
+
+
+    /**
+     * 审核完成时间
+     */
+    @ExcelProperty(value = "审核完成时间", index = 20)
+    @ColumnWidth(10)
+    private LocalDateTime approveTime;
+
+    /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 19)
+    @ExcelProperty(value = "创建时间", index = 21)
     @ColumnWidth(20)
     private LocalDateTime createTime;
 
@@ -172,7 +187,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 20)
+    @ExcelProperty(value = "创建人", index = 22)
     @ColumnWidth(10)
     private String createUserName;
 

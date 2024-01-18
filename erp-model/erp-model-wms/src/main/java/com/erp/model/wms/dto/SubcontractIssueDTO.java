@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -55,9 +58,14 @@ public class SubcontractIssueDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 搜索类型
-         */
-         private String  tabFlag;
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String,String> sqlMap;
 
      }
     /**

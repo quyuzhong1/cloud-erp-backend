@@ -21,7 +21,7 @@ public enum SalePriceRangeEnum {
     FOUR_HUNDRED("400", 400, 500),
     FIVE_HUNDRED("500", 500, 600),
     SIX_HUNDRED("600", 600, 700),
-    SEVEN_HUNDRED("700", 700, -1);
+    SEVEN_HUNDRED("700", 700, 1000);
 
     SalePriceRangeEnum(String code, Integer startValue, Integer endValue) {
         this.code = code;

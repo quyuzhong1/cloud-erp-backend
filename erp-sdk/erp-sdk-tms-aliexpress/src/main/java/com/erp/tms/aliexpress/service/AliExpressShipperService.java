@@ -257,7 +257,7 @@ public class AliExpressShipperService {
 //        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
 //        System.out.println(logisticsAddress);
         QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(8182864532297635L)
+                .order_id(1102446978507349L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)

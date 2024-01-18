@@ -47,10 +47,7 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.ReportColumnConfigService;
-import com.erp.server.dmp.service.ReportHandleService;
-import com.erp.server.dmp.service.ReportScheduleService;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -95,13 +92,13 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Resource
     private ReportScheduleService reportScheduleService;
     @Resource
-    private DmpAmazonFeign dmpAmazonFeign;
-    @Resource
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private WmsShipmentFeign wmsShipmentFeign;
     @Resource
     private ReportColumnConfigService reportColumnConfigService;
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
 
     @Override
@@ -111,7 +108,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 获取店铺信息
         String shopId = dto.getShopId();
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
@@ -185,10 +182,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
                 Class<? extends PlatformAmazonFbaShipmentDTO> tClass = amazonShipmentDTO.getClass();
                 String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
-                // 修改数据
-                UniqueDto updateDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
-                MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
-                mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+                // 保存或更新mongo数据
+                UniqueDto uniqueDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
+                List<? extends PlatformAmazonFbaShipmentDTO> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
+                if (CollectionUtils.isEmpty(mongoData)){
+                    mongoService.saveMongoData(amazonShipmentDTO, tableName);
+                } else {
+                    MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
+                    mongoService.updateMongoData(uniqueDto, mapUtil, tableName, tClass);
+                }
 
                 String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), platform, topic, tag, platformFbaShipmentDTO));
                 // 同步处理
@@ -226,7 +228,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 获取店铺信息
         String shopId = reportSchedule.getShopId();
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
@@ -281,7 +283,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 获取店铺信息
         String shopId = reportSchedule.getShopId();
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
@@ -390,7 +392,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
 
         // TODO 扩展
-        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
+        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
             this.pullBusinessHandler(reportScheduleEntity.getShopId(), report.getReportId(), mongoDTOSList);
         }
     }
@@ -422,7 +424,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
 
         // TODO 扩展
-        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
+        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
             this.pullBusinessHandler(reportScheduleEntity.getShopId(),
                     report.getReportId(),
                     mongoDTOSList);
@@ -641,7 +643,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         if (StringUtils.isBlank(mongoDTO.getShopId())){
             throw new ServiceException("报告数据异常：店铺为空");
         }
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(mongoDTO.getShopId());
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(mongoDTO.getShopId());
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         if (null == marketplaceEnum){
             throw new ServiceException("市场不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));

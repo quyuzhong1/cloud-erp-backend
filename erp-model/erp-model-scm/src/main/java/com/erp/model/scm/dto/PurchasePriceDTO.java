@@ -365,6 +365,11 @@ public class PurchasePriceDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建人名称
          */
         private String createUserName;
@@ -385,6 +390,11 @@ public class PurchasePriceDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 采购交期
+         */
+        private String deliveryDay;
     }
 
 

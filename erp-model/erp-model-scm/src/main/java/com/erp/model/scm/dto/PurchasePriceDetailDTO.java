@@ -27,6 +27,11 @@ public class PurchasePriceDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO {
         /**
+         * 供应商表id
+         */
+        private String supplierId;
+
+        /**
          * sku id
          */
         @NotBlank(message = "sku不能为空")
@@ -346,6 +351,26 @@ public class PurchasePriceDetailDTO implements Serializable {
         private String remark;
 
         private String kingdeeDetailId;
+
+        /**
+         * 供应商表id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商表名称
+         */
+        private String supplierName;
+
+        /**
+         * 价目表编码
+         */
+        private String priceCode;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
     }
 
 

@@ -15,12 +15,19 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
 import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.OperateLogMapper;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +60,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
+
 
     @Override
     public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
@@ -100,11 +111,31 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
             //字典
             if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
-                valuePair = setDistValue(valuePair);
+                valuePair = setDistValue(valuePair,fieldEntity.getValue());
             }
             //人员
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
                 valuePair = setUserValue(valuePair);
+            }
+            //部门
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DEPT.getCode().equals(type)) {
+                valuePair = setDeptValue(valuePair);
+            }
+            //国家
+            if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
+                valuePair = setCountryValue(valuePair);
+            }
+            //城市
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CITY.getCode().equals(type)) {
+                valuePair = setCityValue(valuePair);
+            }
+            //客户
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CUSTOMER.getCode().equals(type)) {
+                valuePair = setCustomerValue(valuePair);
+            }
+            //币别
+            if (ModuleOperateLogFieldTypeEnum.TYPE_CURRENCY.getCode().equals(type)) {
+                valuePair = setCurrencyValue(valuePair);
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
@@ -178,7 +209,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     private Pair<String,String> setBooleanValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         String trueValue = "是";
         String falseValue = "否";
-        String booleanValue = fieldEntity.getBooleanValue();
+        String booleanValue = fieldEntity.getValue();
         if (StringUtils.isNotBlank(booleanValue)) {
             String[] booleanValues = booleanValue.split("\\|");
             trueValue = booleanValues[0];
@@ -193,16 +224,16 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     /**
      * 设置字典值
      */
-    private Pair<String,String> setDistValue (Pair<String, String> valuePair) {
+    private Pair<String,String> setDistValue (Pair<String, String> valuePair,String value) {
         String  oldValue = "";
         String  newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
-        if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+        DictBasicEntity oldEntity = dictBasicService.getByTypeAndValue(value, valuePair.getKey());
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            oldValue = oldEntity.getName();
         }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
-        if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+        DictBasicEntity newEntity = dictBasicService.getByTypeAndValue(value, valuePair.getValue());
+        if (ObjectUtils.isNotEmpty(newEntity)) {
+            newValue = newEntity.getName();
         }
         return new Pair<>(oldValue,newValue);
     }
@@ -223,6 +254,81 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return new Pair<>(oldValue,newValue);
     }
+
+    /**
+     * 设置部门值
+     */
+    private Pair<String,String> setDeptValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(deptList)) {
+            oldValue = deptList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = deptList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置国家值
+     */
+    private Pair<String,String> setCountryValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        if (CollectionUtils.isNotEmpty(countryList)) {
+            oldValue = countryList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            newValue = countryList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置城市值
+     */
+    private Pair<String,String> setCityValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictCityEntity> cityList = sysUserFeign.listCityByIds(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(cityList)) {
+            oldValue = cityList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = cityList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置客户值
+     */
+    private Pair<String,String> setCustomerValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<CustomerInfoEntity> oldList = customerInfoService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(CustomerInfoEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        List<CustomerInfoEntity> newList = customerInfoService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(CustomerInfoEntity::getName).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置币别值
+     */
+    private Pair<String,String> setCurrencyValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(valuePair.getKey(), valuePair.getValue()));
+        if (CollectionUtils.isNotEmpty(currencyList)) {
+            oldValue = currencyList.stream().filter(obj -> obj.getId().equals(valuePair.getKey())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            newValue = currencyList.stream().filter(obj -> obj.getId().equals(valuePair.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+
     /**
      * 设置枚举值
      */

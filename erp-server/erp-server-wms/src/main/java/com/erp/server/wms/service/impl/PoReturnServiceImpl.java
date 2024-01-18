@@ -546,10 +546,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //TODO 待加审核流程
 
-        //更新审核状态
+
         lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PoReturnEntity::getId, ids)
-                .update();
+                .set(PoReturnEntity::getApproveUserId, "")
+                .set(PoReturnEntity::getApproveUserName, "")
+                .set(PoReturnEntity::getApproveTime, null)
+
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -626,6 +629,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<Pair<String, String>> pairList = poReturnEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
 
+        LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
             LoginUser userInfo = commonService.getUserInfo();
@@ -689,6 +693,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
+                    .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
+                    .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
                     .in(PoReturnEntity::getId, ids)
                     .update();
         }
@@ -743,6 +750,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //修改状态为待提交
         lambdaUpdate()
                 .set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(PoReturnEntity::getApproveUserId, "")
+                .set(PoReturnEntity::getApproveUserName, "")
+                .set(PoReturnEntity::getApproveTime, null)
                 .set(PoReturnEntity::getConfirmStatus, confirmStatus)
                 .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
                 .in(PoReturnEntity::getId, ids)

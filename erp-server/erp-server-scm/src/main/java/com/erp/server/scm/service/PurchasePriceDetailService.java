@@ -83,6 +83,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
     List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId);
 
     /**
+     * 根据价目表id 获取产品明细信息
+     * @author yl
+     * @date 2023-03-27 9:48
+     * @param dto
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     */
+    List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
+
+    /**
      * @description: 根据价目表明细ids获取产品明细信息
      * @author Will
      * @date: 2023/7/17 12:10
@@ -151,7 +160,17 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
 
-    
+    /**
+     * 查询供应商的
+     * @Author Luo_WG
+     * @Date 2024/1/9 14:20
+     * @param supplierIdList
+     * @param detailIds
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     **/
+    List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIdList,List<String> detailIds,List<String> skuIdList);
+
     /**
      * 采购价目表 点击变更报价 获取到详情
      * @author yl
@@ -165,10 +184,10 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 根据采购价目表id 获取到采购价目变更的明细
      * @author yl
      * @date 2023-04-06 18:54
-     * @param purchasePriceId
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
      */
-    List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId);
+    List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto);
     /**
      * @description: 更新明细金蝶id
      * @author Will
@@ -186,6 +205,16 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return java.util.List<java.lang.String>
      */
     List<PurchasePriceDetailEntity> listDetailByMainId(String id);
+
+
+    /**
+     * 获取根据主表ids
+     * @author yl
+     * @date 2023-05-05 16:41
+     * @param ids
+     * @return java.util.List<java.lang.String>
+     */
+    List<PurchasePriceDetailEntity> listDetailByMainIds(List<String> ids);
 
     /**
      * 根据供应商和状态查询价目信息

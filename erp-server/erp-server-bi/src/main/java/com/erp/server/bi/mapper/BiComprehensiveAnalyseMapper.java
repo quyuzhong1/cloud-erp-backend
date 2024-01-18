@@ -133,7 +133,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SaleDetailVO> saleDetailDate(@Param("params") BiFilterDTO biFilterDTO);
+    List<SaleDetailVO> saleDetailDate(@Param("params") BiFilterDTO biFilterDTO, @Param("settleRate")String settleRate);
 
     /**
      * 查询sku年销售额
@@ -142,7 +142,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
      **/
-    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("params") SkuDateFilterDTO biFilterDTO);
+    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("params") SkuDateFilterDTO biFilterDTO,@Param("settleRate")String settleRate);
 
     /**
      * 根据sku查询年销售额
@@ -151,7 +151,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
      **/
-    BigDecimal yearSaleAmountBySku(@Param("params") BiFilterDTO biFilterDTO);
+    BigDecimal yearSaleAmountBySku(@Param("params") BiFilterDTO biFilterDTO,@Param("settleRate")String settleRate);
 
     /**
      * 根据时间查询退货金额
@@ -173,44 +173,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SkuDateSaleTrendVO> skuDaySaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
-
-    /**
-     * SKU日期销售额趋势图-周
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     **/
-    List<SkuDateSaleTrendVO> skuWeekSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
-
-    /**
-     * SKU日期销售额趋势图-月
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     **/
-    List<SkuDateSaleTrendVO> skuMonthSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
-
-    /**
-     * SKU日期销售额趋势图-季度
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     **/
-    List<SkuDateSaleTrendVO> skuQuarterSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
-
-    /**
-     * SKU日期销售额趋势图-年
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     **/
-    List<SkuDateSaleTrendVO> skuYearSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
-
+    List<SkuDateSaleTrendVO> skuSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO,@Param("settleRate")String settleRate);
 
     /**
      * SKU日期销售额趋势图-年
@@ -219,7 +182,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param dto BiCountryRegionFilterDTO
      * @return java.util.List<com.erp.model.bi.dto.BiCountryAnalyzeDTO>
      **/
-    List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto);
+    List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto, @Param("settleRate") String settleRate);
 
 
     /**

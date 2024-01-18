@@ -1,5 +1,6 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -136,7 +137,7 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     /**
      * 审核时间
      */
-    @TableField("approve_time")
+    @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime approveTime;
 
     /**

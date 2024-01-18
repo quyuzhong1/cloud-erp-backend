@@ -123,6 +123,24 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     @TableField(exist = false)
     private String CJJMCode;
 
+    /**
+     * 主表编码
+     */
+    @TableField(exist = false)
+    private String code;
+
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
+    /**
+     * 价目表编码
+     */
+    @TableField("price_code")
+    private String priceCode;
+
 
     @Override
     public Serializable pkVal() {

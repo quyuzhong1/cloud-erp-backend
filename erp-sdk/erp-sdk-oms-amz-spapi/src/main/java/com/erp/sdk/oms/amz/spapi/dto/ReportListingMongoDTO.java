@@ -99,4 +99,6 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
     @Panno(findType = PannoEnum.EQ, field = "merchant-shipping-group")
     private String merchantShippingGroup;
 
+    @Panno(findType = PannoEnum.EQ, field = "status")
+    private String status;
 }

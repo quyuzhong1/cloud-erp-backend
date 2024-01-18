@@ -22,6 +22,7 @@
             wrd.purchase_qty AS purchaseQty,
             wrd.exceed_qty AS exceedQty,
             wr.approve_user_name AS approveUserName,
+            wr.approve_time AS approveTime,
             wr.create_user_name AS createUserName,
             wrd.purchase_order_detail_id AS purchaseOrderDetailId,
             wrd.remark,
