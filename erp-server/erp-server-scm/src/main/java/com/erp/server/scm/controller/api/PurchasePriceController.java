@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -15,6 +16,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
+import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +53,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:paging",
             tableAlias = "pp")
+    @WebAdvanceQuery(handler = PurchasePriceQueryHandler.class)
     public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PagingVO<PurchasePriceDTO.PagingViewDTO> pagingVO = purchasePriceService.paging(dto);
         return success(pagingVO);
@@ -239,6 +243,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:paging",
             tableAlias = "pp")
+    @WebAdvanceQuery(handler = PurchasePriceQueryHandler.class)
     public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.ExportDTO dto, HttpServletResponse response) {
         purchasePriceService.exportPurchasePrice(dto, response);
         return success();

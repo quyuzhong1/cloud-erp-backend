@@ -639,21 +639,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
 
-        String searchType = params.getSearchType();
-
-        List<String> statusList = new ArrayList<>(1);
-        //待我审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                return new PagingVO(new Page());
-            }
-            params.setIdList(businessIds);
-        }
-
-        IPage pageData = baseMapper.paging(query, params, statusList);
+        IPage pageData = baseMapper.paging(query, params);
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
@@ -783,22 +769,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
 
-        //搜索类型
-        String searchType = dto.getSearchType();
-
-        List<String> statusList = new ArrayList<>(1);
-        //待我审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-            dto.setIdList(businessIds);
-        }
         //获取导出数据
-        List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto, statusList);
+        List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(viewList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
