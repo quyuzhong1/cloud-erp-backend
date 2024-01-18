@@ -1,7 +1,6 @@
 package com.erp.server.srm.service;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 
 import java.util.List;
@@ -41,4 +40,6 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     boolean deleteByMainIds(List<String> mainIds);
 
     Map<String,List<DeliveryOrderDetailDTO.PrintDTO>> mapPrintByMainIds(List<String> mainIds);
+
+    List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds);
 }

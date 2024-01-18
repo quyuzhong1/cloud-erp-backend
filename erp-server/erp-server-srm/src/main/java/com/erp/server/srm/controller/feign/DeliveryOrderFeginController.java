@@ -7,6 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -29,6 +31,9 @@ public class DeliveryOrderFeginController extends BaseController {
 
     @Resource
     private DeliveryOrderService deliveryOrderService;
+
+    @Resource
+    private DeliveryOrderDetailService detailService;
 
     /**
      * 获取 tab列表
@@ -71,5 +76,14 @@ public class DeliveryOrderFeginController extends BaseController {
     @PostMapping("/print")
     public List<DeliveryOrderDTO.PrintDTO> print(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return deliveryOrderService.print(dto.getIds());
+    }
+
+
+    /**
+     * 打印送货单
+     */
+    @PostMapping("/listDetailByDetailSourceIds")
+    public List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds){
+        return detailService.listDetailByDetailSourceIds(purchaseDetailIds);
     }
 }

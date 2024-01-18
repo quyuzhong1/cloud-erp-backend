@@ -27,10 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
@@ -137,6 +134,14 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             }
         });
         return printDTOList.stream().collect(Collectors.groupingBy(DeliveryOrderDetailDTO.PrintDTO::getMainId));
+    }
+
+    @Override
+    public List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds) {
+        if(CollectionUtils.isEmpty(purchaseDetailIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(DeliveryOrderDetailEntity::getSourceDetailId, purchaseDetailIds).list();
     }
 
 

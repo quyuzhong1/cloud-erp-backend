@@ -302,6 +302,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer receiveQty;
 
         /**
+         * 已发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
          * 未交货数量
          */
         private Integer unReceiveQty;
@@ -327,7 +332,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer realityReturnQty;
 
         /**
-         * 超收数量
+         * 超收数量(赠品收货数量)
          */
         private Integer exceedQty;
 
