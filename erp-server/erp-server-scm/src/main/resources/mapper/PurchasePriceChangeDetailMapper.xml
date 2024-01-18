@@ -16,10 +16,11 @@
         FROM  purchase_price_change_detail  WHERE
         is_deleted=FALSE  AND
         purchase_price_change_id IN (
-          SELECT id FROM purchase_price_change
-          WHERE supplier_id=#{supplierId} AND is_deleted=FALSE
+          SELECT distinct ppc.id FROM purchase_price_change ppc
+          LEFT JOIN purchase_price_change_detail ppcd ON ppc.id = ppcd.purchase_price_change_id AND ppcd.is_deleted = FALSE
+          WHERE ppcd.supplier_id=#{supplierId} AND ppc.is_deleted=FALSE
           <if test="statusList!=null and statusList.size>0">
-          AND approve_status IN
+          AND ppc.approve_status IN
              <foreach collection="statusList" item="status" open="(" separator="," close=")">
                  #{status}
              </foreach>
@@ -43,7 +44,8 @@
         ppcd.expire_date,
         pp.code as CJJMCode,
         ppcd.purchase_price_detail_id,
-        ppcd.purchase_price_change_id
+        ppcd.purchase_price_change_id,
+        ppcd.supplier_id
         FROM  purchase_price_change_detail ppcd
         left join purchase_price_detail ppd on ppcd.purchase_price_detail_id = ppd.id and ppd.is_deleted = false
         left join purchase_price pp on pp.id = ppd.purchase_price_id and pp.is_deleted = false
@@ -68,7 +70,8 @@
         ppcd.expire_date,
         ppc.code as code,
         ppcd.purchase_price_detail_id,
-        ppcd.purchase_price_change_id
+        ppcd.purchase_price_change_id,
+        ppcd.supplier_id
         FROM  purchase_price_change_detail ppcd
         LEFT JOIN purchase_price_change ppc ON ppcd.purchase_price_change_id = ppc.id AND ppcd.is_deleted = FALSE
         WHERE ppc.is_deleted = FALSE
