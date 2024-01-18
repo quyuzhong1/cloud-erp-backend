@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -15,11 +16,9 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -412,5 +411,23 @@ public class PurchaseOrderFeignController {
     public List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
         List<BatchResultDTO> batchResultDTOS = purchaseOrderService.srmOrderConfirmStatus(dto);
         return batchResultDTOS;
+    }
+
+    /**
+     * 查询详情
+     * @author Will
+     * @date: 2023/3/15 17:44
+     * @param id
+     * @return ApiResult<PurchaseOrderDTO.viewDTO>
+     */
+//    @LogViewService
+    @GetMapping("/srmOrderView")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:purchaseOrder:view",
+//            serviceClass = PurchaseOrderService.class,
+//            keyIdName = "id")
+    public PurchaseOrderDTO.ViewDTO srmOrderView(@Param("id") String id) {
+        return purchaseOrderService.view(id);
     }
 }

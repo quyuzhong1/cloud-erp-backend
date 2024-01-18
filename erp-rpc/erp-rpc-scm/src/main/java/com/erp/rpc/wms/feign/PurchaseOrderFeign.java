@@ -7,8 +7,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -48,4 +50,6 @@ public interface PurchaseOrderFeign {
     @PostMapping("/feign/purchaseOrder/srmOrderConfirmStatus")
     List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto);
 
+    @GetMapping("/feign/purchaseOrder/srmOrderView")
+    PurchaseOrderDTO.ViewDTO srmOrderView(@Param("id") String id);
 }

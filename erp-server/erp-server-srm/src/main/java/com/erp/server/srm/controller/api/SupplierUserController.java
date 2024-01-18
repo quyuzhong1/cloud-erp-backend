@@ -139,9 +139,9 @@ public class SupplierUserController extends BaseController {
      * @param pwd
      * @return
      */
-    @GetMapping("/resetPassword")
-    public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
-        return supplierUserFeign.resetPassword(uid,pwd);
+    @GetMapping("/changePassword")
+    public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        return supplierUserFeign.changePassword(uid,pwd);
     }
     /**
      * 供应商协作用户导出

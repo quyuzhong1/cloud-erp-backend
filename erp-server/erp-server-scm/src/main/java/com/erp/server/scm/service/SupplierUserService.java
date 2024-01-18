@@ -78,7 +78,7 @@ public interface SupplierUserService {
      * @param pwd
      * @return
      */
-    ApiResult resetPassword(String uid, String pwd);
+    ApiResult changePassword(String uid, String pwd);
 
     /**
      * 下载导出协作用户模板

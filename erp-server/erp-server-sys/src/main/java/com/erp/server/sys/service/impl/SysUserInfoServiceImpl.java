@@ -1151,7 +1151,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean resetPassword(String uid) {
+    public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -1195,8 +1195,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public Boolean resetPassword(String uid, String pwd) {
-        log.info("resetPassword：uid：{}，pwd：{}",uid,pwd);
+    public Boolean changePassword(String uid, String pwd) {
+        log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }

@@ -540,9 +540,9 @@ public class SysUserFeignController extends BaseController {
      * @return
      **/
     @DataIdempotent(keyIdName = "uid")
-    @GetMapping("/resetPassword")
-    public ApiResult resetPassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
-        Boolean flag = sysUserInfoService.resetPassword(uid,pwd);
+    @GetMapping("/changePassword")
+    public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        Boolean flag = sysUserInfoService.changePassword(uid,pwd);
         return flag == true ? success() : failure();
     }
 
