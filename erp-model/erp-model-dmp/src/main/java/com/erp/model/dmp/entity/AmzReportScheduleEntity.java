@@ -1,0 +1,99 @@
+package com.erp.model.dmp.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+import java.time.LocalDateTime;
+
+
+/**
+ * <p>
+ * 亚马逊报告计划表
+ * </p>
+ *
+ * @author Jim
+ * @since 2024-01-18
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("amz_report_schedule")
+public class AmzReportScheduleEntity extends BaseEntity<AmzReportScheduleEntity> {
+
+    /**
+    * 报告计划ID
+    */
+    @TableField("amz_report_schedule_id")
+    private String amzReportScheduleId;
+    /**
+    * 市场IDS
+    */
+    @TableField("marketplace_ids")
+    private String marketplaceIds;
+    /**
+    * OMS店铺ID
+    */
+    @TableField("shop_id")
+    private String shopId;
+    /**
+    * 报告生成间隔时间:PT5M，PT15M，PT30M，PT1H，PT2H，PT4H，PT8H，PT12H，P1D，P2D，P3D，PT84H，P7D，P14D，P15D，P18D，P30D，P1M
+    */
+    @TableField("period")
+    private String period;
+    /**
+    * 首次创建下次创建报告的时间
+    */
+    @TableField("first_next_report_creation_time")
+    private LocalDateTime firstNextReportCreationTime;
+    /**
+    * 报告类型
+    */
+    @TableField("report_type")
+    private String reportType;
+    /**
+    * 报告类型名称
+    */
+    @TableField("report_type_name")
+    private String reportTypeName;
+    /**
+    * 订阅状态:not=未订阅,wait=待订阅,already=已订阅
+    */
+    @TableField("subscribed_status")
+    private String subscribedStatus;
+    /**
+    * 取消状态:none=无(无需取消), wait=待取消, cancel=已取消
+    */
+    @TableField("cancel_status")
+    private String cancelStatus;
+    /**
+    * 订阅类型:amazon=亚马逊报告计划,manual=手动(定时任务amazonReportJob)
+    */
+    @TableField("subscribed_type")
+    private String subscribedType;
+
+
+    public static final String AMZ_REPORT_SCHEDULE_ID = "amz_report_schedule_id";
+
+    public static final String MARKETPLACE_IDS = "marketplace_ids";
+
+    public static final String SHOP_ID = "shop_id";
+
+    public static final String PERIOD = "period";
+
+    public static final String FIRST_NEXT_REPORT_CREATION_TIME = "first_next_report_creation_time";
+
+    public static final String REPORT_TYPE = "report_type";
+
+    public static final String REPORT_TYPE_NAME = "report_type_name";
+
+    public static final String SUBSCRIBED_STATUS = "subscribed_status";
+
+    public static final String CANCEL_STATUS = "cancel_status";
+
+    public static final String SUBSCRIBED_TYPE = "subscribed_type";
+
+}
