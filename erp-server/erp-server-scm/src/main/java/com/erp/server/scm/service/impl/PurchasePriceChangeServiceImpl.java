@@ -357,19 +357,16 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98019);
         }
 
-        List<String> detailIds = new ArrayList<>();
         /**
          * 报价明细
          */
         List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList = dto.getPurchasePriceChangeDetailList();
-        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
-            detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-        }
         //根据供应商分组
         Map<String, List<PurchasePriceChangeDetailDTO.UpdateDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.UpdateDTO::getSupplierId));
         for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.UpdateDTO>> item : map.entrySet()) {
-            List<String> skuIdList = item.getValue().stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-
+            List<PurchasePriceChangeDetailDTO.UpdateDTO> detailList=item.getValue();
+            List<String> skuIdList = detailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+            List<String> detailIds = detailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getPurchasePriceDetailId).collect(Collectors.toList());
             //根据供应商 获取到 对应 已有的区间
             List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
             //检查区间报价是否重叠
