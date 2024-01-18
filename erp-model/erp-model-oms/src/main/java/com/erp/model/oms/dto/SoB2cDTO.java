@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1822,5 +1823,35 @@ public class SoB2cDTO implements Serializable {
          * 国家名
          */
         private String countryName;
+    }
+
+    /**
+     * 拦截订单修改订单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptUpdateOrderDTO {
+        /**
+         * 订单id
+         */
+        private List<String> ids;
+        /**
+         * 是否打标拦截
+         */
+        private Boolean isIntercept;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
     }
 }

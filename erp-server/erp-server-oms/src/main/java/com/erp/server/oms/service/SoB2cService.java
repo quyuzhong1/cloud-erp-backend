@@ -589,10 +589,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 拦截打标识，冻结订单
      * @Author Luo_WG
      * @Date 2024/1/17 18:54
-     * @param isIntercept 是否打标拦截
-     * @param isFrozen 是否冻结单据
-     * @param ids 订单id
+     * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
      **/
-    Boolean updateIntercept(Boolean isIntercept, Boolean isFrozen, List<String> ids);
+    Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
 }
