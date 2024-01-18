@@ -124,6 +124,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String executionStatusName;
 
         /**
+         * 接收说明
+         */
+        private String confirmRemark;
+
+        /**
          * skuId
          */
         private String skuId;
