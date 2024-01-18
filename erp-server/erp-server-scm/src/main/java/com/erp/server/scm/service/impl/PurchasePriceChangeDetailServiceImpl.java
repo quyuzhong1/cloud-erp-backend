@@ -177,7 +177,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 boolean isSortedResult = isSorted(intervalList);
                 //当不是的时候
                 if (!isSortedResult) {
-                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP, item.getKey());
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
             }
 
@@ -206,7 +206,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 boolean isSortedResult = isSorted(intervalList);
                 //当不是的时候
                 if (!isSortedResult) {
-                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP, item.getKey());
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
             }
         }

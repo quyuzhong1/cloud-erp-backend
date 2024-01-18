@@ -1291,8 +1291,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //未打标拦截的订单不支持取消拦截
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(Arrays.asList(id));
-        if (CollectionUtils.isEmpty(interceptDTOList)) {
+        if (!entity.getIsIntercept()) {
             throw new ServiceException(ApiError.NOT_INTERCEPT_NOT_CANCEL_INTERCEPT);
         }
 
