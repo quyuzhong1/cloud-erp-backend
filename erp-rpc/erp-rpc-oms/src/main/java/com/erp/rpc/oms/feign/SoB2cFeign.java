@@ -6,6 +6,7 @@ import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -246,4 +247,30 @@ public interface SoB2cFeign {
 
     @GetMapping("/feign/soB2c/findMergeByTargetId")
     List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId);
+
+    /**
+     * 获取跟踪单号为空的
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2024-01-05 9:54
+     */
+    @GetMapping("/feign/soB2c/listTrackNoEmptyList")
+    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+
+
+    @GetMapping("/feign/soB2c/view")
+    SoB2cDTO.ViewDTO view(@RequestParam("id") String id);
+
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateIntercept")
+    Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids);
 }

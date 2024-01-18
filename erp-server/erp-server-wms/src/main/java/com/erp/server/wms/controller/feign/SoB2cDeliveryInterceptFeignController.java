@@ -91,9 +91,23 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
      * @param status
      * @return void
      **/
-    @PostMapping("feign/soB2cDeliveryIntercept/updateHandleStatus")
+    @PostMapping("/updateHandleStatus")
     public Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status) {
         Boolean flag = soB2cDeliveryInterceptService.updateHandleStatus(sourceIds, status);
         return flag;
+    }
+
+    /**
+     * 发货拦截结果确认
+     * @Author Luo_WG
+     * @Date 2024/1/16 18:56
+     * @param dto
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    @PostMapping("/interceptResultConfirm")
+    public BatchResultDTO interceptResultConfirm(@RequestParam("dto") SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id) {
+        BatchResultDTO resultDTO = soB2cDeliveryInterceptService.interceptResultConfirm(dto, id);
+        return resultDTO;
     }
 }

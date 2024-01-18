@@ -62,7 +62,9 @@ public class ReceiverInfoVO {
 
     private String district;
 
-    // 街道详细地址
+    /**
+     *  街道详细地址
+      */
     private String  streetAddress;
     /**
      * 国家+城市+详细地址

@@ -47,6 +47,7 @@
             sd.approve_status as approveStatus,
             sd.invalid_status as invalidStatus,
             sd.approve_user_name as approveUserName,
+            sd.approve_time as approveTime,
             sd.create_user_name as createUserName,
             sd.create_time as createTime
         from sales_demand  sd
@@ -139,6 +140,7 @@
             when true then '已作废'
         end as invalidStatusName,
         sd.approve_user_name as approveUserName,
+        sd.approve_time as approveTime,
         sd.create_user_name as createUserName,
         sd.create_time as createTime
         from sales_demand sd

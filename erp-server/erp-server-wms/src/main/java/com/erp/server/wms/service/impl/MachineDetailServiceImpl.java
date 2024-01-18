@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -16,12 +17,14 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
+import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 加工单明细
@@ -60,9 +64,12 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private MachineRefSoService machineRefSoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<MachineDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -90,11 +97,20 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
                 List<MachineSubComponentsDTO.AddDTO> addList = BeanMapperUtils.copyList(MachineSubComponentsDTO.AddDTO.class, detailEntity.getSubComponentsList());
                 machineSubComponentsService.add(addList,detailEntity.getId(),mainId);
             }
+            //新增加工单销售订单关联信息
+            addMachineRefSo(mainId,list);
+            //标记SKU
+            List<String> parentIdList = list.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<String> childSkuIdList = list.stream().flatMap(obj -> Stream.of(obj.getSubComponentsList().stream().map(MachineSubComponentsDTO.AddDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+            parentIdList.addAll(childSkuIdList);
+            plmTaskFeign.updateOccupyStatus(parentIdList);
         }
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<MachineDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();
@@ -108,6 +124,8 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
+            //删除关联关系
+            machineRefSoService.removeByMachineDetailIdList(deleteIds);
         }
         List<MachineDetailEntity> newList = BeanMapperUtils.copyList(MachineDetailEntity.class, detailList);
 
@@ -121,6 +139,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         for (MachineDetailEntity detailEntity : newList) {
             machineSubComponentsService.update(detailEntity.getSubComponentsList(),detailEntity.getId(),mainId);
         }
+        //标记SKU
+        List<String> parentIdList = newList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> childSkuIdList = newList.stream().flatMap(obj -> Stream.of(obj.getSubComponentsList().stream().map(MachineSubComponentsDTO.AddDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        parentIdList.addAll(childSkuIdList);
+        plmTaskFeign.updateOccupyStatus(parentIdList);
     }
 
     @Override
@@ -265,5 +288,46 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
+    }
+
+    /**
+     * @description: 新增加工单销售订单关联信息
+     * @author Will
+     * @date: 2023/12/6 14:52
+     * @param mainId
+     * @param list
+     */
+    private void addMachineRefSo (String mainId, List<MachineDetailEntity> list) {
+        //新增加工单销售订单关联信息
+        MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
+        if (ObjectUtils.isEmpty(machineInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        if (!SourceTypeEnum.SO_INFO.getCode().equals(machineInfoEntity.getSourceType())) {
+            return;
+        }
+        List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
+        List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
+        if (CollectionUtils.isNotEmpty(oldRefList)) {
+            //存在下推的销售订单明细id集合
+            List<String> soDetailIdList = oldRefList.stream().map(MachineRefSoEntity::getSoDetailId).collect(Collectors.toList());
+            //销售订单号
+            String soCodes = oldRefList.stream().map(MachineRefSoEntity::getSoCode).collect(Collectors.joining(","));
+            //SKU编号
+            String skuNoList = list.stream().filter(obj -> soDetailIdList.contains(obj.getRefDetailId())).map(MachineDetailEntity::getSkuNo).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_PUSH_MACHINE,soCodes,skuNoList);
+        }
+        List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
+        for (MachineDetailEntity detailEntity: list) {
+            MachineRefSoDTO.AddDTO addDTO = new MachineRefSoDTO.AddDTO();
+            addDTO.setSoId(detailEntity.getRefId());
+            addDTO.setSoCode(detailEntity.getRefCode());
+            addDTO.setSoDetailId(detailEntity.getRefDetailId());
+            addDTO.setMachineId(mainId);
+            addDTO.setMachineDetailId(detailEntity.getId());
+            refAddList.add(addDTO);
+        }
+        List<MachineRefSoEntity> machineRefSoList = BeanMapperUtils.copyList(MachineRefSoEntity.class, refAddList);
+        machineRefSoService.saveBatch(machineRefSoList);
     }
 }

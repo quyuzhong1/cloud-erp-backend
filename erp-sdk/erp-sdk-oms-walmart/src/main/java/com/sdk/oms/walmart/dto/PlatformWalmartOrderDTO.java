@@ -81,7 +81,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setPayTime(LocalDateTime.ofInstant(instant, zone));
 
         // 订单状态，详情金额汇总
-        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
+        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -168,14 +168,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(orderLineBean.getOrderLineQuantity().getAmount());
-        // 单价
-        detailDTO.setPrice(BigDecimal.ZERO);
+
         // 金额
         BigDecimal amount = orderLineBean.getCharges().getCharge().stream().filter(req -> "ItemPrice".equals(req.getChargeName()))
                 .map(req -> req.getChargeAmount().getAmount())
-                .reduce(BigDecimal::add)
-                .orElse(BigDecimal.ZERO);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         detailDTO.setAmount(amount);
+        // 单价
+        detailDTO.setPrice(amount);
         // 币别（原币）
         String currency = orderLineBean.getCharges().getCharge().stream().map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
         detailDTO.setCurrency(currency);
@@ -186,7 +186,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId("");
+        detailDTO.setSourceDetailId(orderBean.getCustomerOrderId() + "-" + orderLineBean.getLineNumber());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
@@ -207,7 +207,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @param orderDTO 设置的字段类型
      * @return java.lang.String
      **/
-    private static void fieldHandler(List<OrderLineBean> orderLineList, PlatformOrderDTO orderDTO) {
+    private static void fieldHandler(List<OrderLineBean> orderLineList, PlatformOrderDTO orderDTO, String shipNodeType) {
+
         //沃尔玛订单行的状态。有效状态为：Created（已创建）、Acknowledged（已确认）、Shipped（已发货）、Delivered（已交付）和 Cancelled(已取消)。
         //Status of purchase order line. Valid statuses are: Created, Acknowledged, Shipped, Delivered and Cancelled.
         //设置状态
@@ -224,27 +225,33 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         List<OrderLineStatusBean> cancelled = statusList.stream().filter(req -> req.getStatus().contains("Cancelled")).collect(Collectors.toList());
         orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         orderDTO.setInvalidStatus(false);
-        if (CollectionUtils.isEmpty(shipped)) {
+
+        if (CollectionUtils.isNotEmpty(shipped)) {
+            orderDTO.setPlatformOrderStatus("Shipped");
             //沃尔玛：已发货 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(delivered)) {
+        } else if (CollectionUtils.isNotEmpty(delivered)) {
+            orderDTO.setPlatformOrderStatus("Delivered");
             //沃尔玛：已交付 = OMS：已发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(acknowledged)) {
+        } else if (CollectionUtils.isNotEmpty(acknowledged)) {
+            orderDTO.setPlatformOrderStatus("Acknowledged");
             //沃尔玛：已确认 = OMS：待发货
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (CollectionUtils.isEmpty(cancelled)) {
+        } else if (CollectionUtils.isNotEmpty(cancelled)) {
+            orderDTO.setPlatformOrderStatus("Cancelled");
             //沃尔玛：已取消 = OMS：已作废
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setInvalidStatus(true);
         } else {
+            orderDTO.setPlatformOrderStatus("Refund");
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         }
@@ -294,7 +301,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 .districtName(orderBean.getShippingInfo().getPostalAddress().getCountry() + " " + orderBean.getShippingInfo().getPostalAddress().getCity())
                 .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
                 .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
-                .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
+                .secondAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
+                .fullAddress("")
                 .build();
     }
 
@@ -329,7 +337,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                         .code(trackingInfo.getTrackingNumber())
                         .name(trackingInfo.getMethodCode())
                         .deliveryTime(LocalDateTime.ofInstant(instant, zone))
-                        .logisticsChannelId(trackingInfo.getCarrierName().getCarrier())
+                        .logisticsChannelId("")
+                        .logisticsChannelName(trackingInfo.getCarrierName().getCarrier())
                         .estimatedShippingCost(BigDecimal.ZERO)
                         .actualShippingCost(BigDecimal.ZERO)
                         .accessoriesCostCurrency("")

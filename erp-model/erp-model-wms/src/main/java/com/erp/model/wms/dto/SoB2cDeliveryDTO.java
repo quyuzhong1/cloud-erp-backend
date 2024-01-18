@@ -117,7 +117,6 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 详情
          */
         private List<SoB2cDeliveryDetailDTO.ViewDTO> detailList;
-
     }
 
     /**
@@ -556,6 +555,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流单号
          */
         private String transportNo;
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
     /**

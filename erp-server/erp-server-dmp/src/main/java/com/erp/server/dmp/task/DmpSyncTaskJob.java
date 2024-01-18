@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -64,7 +65,7 @@ public class DmpSyncTaskJob {
 
         // 查询DMP同步数据
         List<DmpPullTaskEntity> recordEntityList = dmpPullTaskService.lambdaQuery()
-                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.IN_SYNC.getCode()))
                 .le(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
                 .orderByAsc(DmpPullTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))
@@ -125,22 +126,41 @@ public class DmpSyncTaskJob {
             return ReturnT.SUCCESS;
         }
         recordEntityList.sort(Comparator.comparing(DmpPushTaskEntity::getUpdateTime));
+        //需要修改备注信息
+        List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity recordEntity : recordEntityList) {
             try {
                 // 发送推送同步任务消息
-                String mqData = recordEntity.getMqData();
-                JSONObject jsonObject = JSONUtil.parseObj(mqData);
-                jsonObject.set("dmpSyncTaskId",recordEntity.getId());
-                SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                        JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
-                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
+                //查询来源上级单据
+                Boolean isSend = dmpPushTaskService.isSendParentBillTask(recordEntity);
+                //判断是否存在上级单据，并且推送成功
+                if (!isSend) {
+                    updateList.add(recordEntity);
+                    continue;
                 }
-            }catch (Exception e){
+                if (SyncStatusEnum.TO_BE_SYNC.getCode().equals(recordEntity.getStatus())) {
+                    //待推送的走查询推送
+                    dmpPushTaskService.batchFindDataSync(Arrays.asList(recordEntity.getId()));
+                } else {
+                    String mqData = recordEntity.getMqData();
+                    JSONObject jsonObject = JSONUtil.parseObj(mqData);
+                    jsonObject.set("dmpSyncTaskId", recordEntity.getId());
+                    SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
+                            JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
+                    if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                        throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                    }
+                }
+            } catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
                 XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
             }
+        }
+        //更新信息
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            dmpPushTaskService.updateBatchById(updateList);
         }
         XxlJobHelper.log("DmpPushTaskJob end");
         return ReturnT.SUCCESS;

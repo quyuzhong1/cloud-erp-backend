@@ -7,8 +7,11 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingExportExcelDTO;
+import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 目标管理-店铺
@@ -61,7 +64,22 @@ public class BiTargetShopSettingController extends BaseController {
         return success(pagingVO);
     }
 
-
+    /**
+     * 按照店铺导出目标
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
+        dto.setPageSize(1000);
+        dto.setCurrPage(1);
+        PagingVO<BiTargetShopSettingDTO.PagingViewDTO> pagingVO = biTargetShopSettingService.paging(dto);
+        List<BiTargetShopSettingDTO.PagingViewDTO> list = (List<BiTargetShopSettingDTO.PagingViewDTO>) pagingVO.getList();
+        List<TargetShopSettingExportExcelDTO> excels = BiExportConverter.INSTANCE.exportShopTargetStaff(list);
+        //数据转换
+        ExcelUtil.export("按店铺导出目标报表", "店铺", excels, TargetShopSettingExportExcelDTO.class, response);
+        return Boolean.TRUE;
+    }
     /**
      * 分页统计
      *

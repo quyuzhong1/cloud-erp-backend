@@ -68,6 +68,10 @@ public enum InventoryBusinessTypeEnum {
 
     WAREHOUSE_LOCATION_MOVE_INFO("warehouse_location_move_info", "31","仓位移动（PDA功能）"),
 
+    OTHER_IN_RETURN_GOODS("other_in_return_goods", "32","其他入库（退货）"),
+
+    OTHER_OUT_RETURN_GOODS("other_out_return_goods", "33","其他出库（退货）"),
+
     SO_B2C_DELIVERY("so_b2c_delivery", "34","b2c发货单"),
     SO_OUTSTOCK_USABLE("so_outstock_usable", "35","销售出库扣可用库存"),
 

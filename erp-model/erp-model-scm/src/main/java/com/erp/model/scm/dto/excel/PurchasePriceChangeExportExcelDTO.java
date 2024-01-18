@@ -120,17 +120,31 @@ public class PurchasePriceChangeExportExcelDTO implements Serializable {
     private String detailRemark;
 
     /**
+     * 审核人（最新）
+     */
+    @ExcelProperty(value = "审核人（最新）", index = 14)
+    @ColumnWidth(20)
+    private String approveUserName;
+
+    /**
+     * 审核完成时间
+     */
+    @ExcelProperty(value = "审核完成时间", index = 15,converter= LocalDateStringConverter.class)
+    @ColumnWidth(20)
+    private LocalDateTime approveTime;
+
+    /**
      * 创建人
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 14)
+    @ExcelProperty(value = "创建人", index = 16)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 15,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 17,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 

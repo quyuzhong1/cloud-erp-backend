@@ -139,16 +139,23 @@ public class ReturnOrderExportExcelDTO {
     private String approveUserName;
 
     /**
+     * 审核完成时间
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "审核完成时间", index = 17, converter= LocalDateStringConverter.class)
+    private LocalDateTime approveTime;
+
+    /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 17)
+    @ExcelProperty(value = "创建人", index = 18)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 18, converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 19, converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

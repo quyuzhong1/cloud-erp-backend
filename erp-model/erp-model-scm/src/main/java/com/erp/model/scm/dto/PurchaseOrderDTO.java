@@ -229,6 +229,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 申请人
          */
         private String purchaseUserName;
@@ -345,6 +350,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 委外订单编号
          */
         private String subContractCode;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 产品名称
@@ -625,6 +635,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 编码
          */
         private String code;
+
+        /**
+         * 类型
+         */
+        private String type;
 
     }
 

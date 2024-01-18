@@ -165,6 +165,12 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String sourceId;
 
     /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
      * 来源类型
      */
     @TableField("source_type")

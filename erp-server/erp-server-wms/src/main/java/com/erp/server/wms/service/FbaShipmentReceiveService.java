@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -23,4 +24,12 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * @return java.util.List<com.erp.model.wms.entity.FbaShipmentReceiveEntity>
      **/
     List<FbaShipmentReceiveEntity> listByDetailIds(List<String> detailIds);
+
+    /**
+     * 检查和设置签收的映射关系
+     * @param oldDetailEntityList
+     * @param receiveEntityList
+     * @return
+     */
+    List<FbaShipmentReceiveEntity> checkAndSetReceiveSkuMapping(List<FbaShipmentDetailEntity> oldDetailEntityList, List<FbaShipmentReceiveEntity> receiveEntityList);
 }

@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveTypeEnum;
@@ -114,18 +115,20 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     /**
      * @description: 审核
      * @author Will
-     * @date: 2023/5/17 15:16
-     * @param baseApproveParamDTO
+     * @date: 2023/12/5 11:58
+     * @param id
+     * @param type
+     * @param comment
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(String id, String type, String comment);
     /**
      * @description: 反审核
      * @author Will
      * @date: 2023/5/17 15:16
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
     /**
      * @description: 取消流程
      * @author Will

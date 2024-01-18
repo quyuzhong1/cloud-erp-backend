@@ -38,7 +38,7 @@ public class PlatformInboundConsumerServiceTest {
 
         LoginUser loginUser = JSONObject.parseObject(json,new TypeReference<LoginUser>() {}.getType());
         CommonInterceptor.threadLocal.set(loginUser);
-        String json2 = "{\"dmpSyncTaskId\":\"1734036119193915394\",\"uniqueId\":\"fb2f5cd66f68d145e8cbefd906d72aac\",\"platform\":\"iml\",\"warehousePlatformType\":\"overseasWarehouse\",\"provider\":\"iml\",\"receivingCode\":\"RV86526-230216-0001\",\"receivingStatus\":\"signed\",\"downloadTime\":\"2023-12-11T10:23:21.758\",\"items\":[{\"productSku\":\"0852056919531943\",\"receivedQuantity\":100,\"putawayQuantity\":50,\"boxNo\":\"1\"},{\"productSku\":\"3112\",\"receivedQuantity\":30,\"putawayQuantity\":30,\"boxNo\":\"2\"}],\"hasReceivedData\":false,\"receivingDataList\":null}";
+        String json2 = "{\"dmpSyncTaskId\":\"1734036119193915394\",\"uniqueId\":\"fb2f5cd66f68d145e8cbefd906d72aac\",\"platform\":\"iml\",\"warehousePlatformType\":\"overseasWarehouse\",\"provider\":\"iml\",\"receivingCode\":\"RV86526-230216-0001\",\"receivingStatus\":\"signed\",\"downloadTime\":\"2023-12-29T10:23:21.758\",\"items\":[{\"productSku\":\"0852056919531943\",\"receivedQuantity\":4,\"putawayQuantity\":50,\"boxNo\":\"1\"},{\"productSku\":\"3112\",\"receivedQuantity\":30,\"putawayQuantity\":30,\"boxNo\":\"2\"}],\"hasReceivedData\":false,\"receivingDataList\":null}";
 
         PlatformInboundDTO dto = JSONObject.parseObject(json2,new TypeReference<PlatformInboundDTO>() {}.getType());
 //        PlatformInboundDTO dto = JSONObject.parseObject(json,new TypeReference<PlatformInboundDTO>() {}.getType());

@@ -285,6 +285,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
+        //修改到货状态
+        poReturnService.updateArrivalState(Arrays.asList(warehouseReceiveEntity.getPurchaseOrderId()), new ArrayList<>());
         return warehouseReceiveEntity.getId();
 
     }
@@ -326,6 +328,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "", "");
         //更新收货单详情表信息
         Boolean flag = warehouseReceiveDetailService.update(dto);
+
+        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+            poReturnService.updateArrivalState(Arrays.asList(entity.getPurchaseOrderId()), new ArrayList<>());
+        }
+
+
         return flag;
     }
 
@@ -440,6 +448,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //更新审核状态
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(WarehouseReceiveEntity::getId, ids)
+                .set(WarehouseReceiveEntity::getApproveUserId, "")
+                .set(WarehouseReceiveEntity::getApproveUserName, "")
+                .set(WarehouseReceiveEntity::getApproveTime, null)
                 .update();
         return Boolean.TRUE;
     }
@@ -505,10 +516,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
+        LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
             //审核通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -531,6 +541,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
+                    .set(WarehouseReceiveEntity::getApproveUserName, userInfo.getUserName())
+                    .set(WarehouseReceiveEntity::getApproveTime, LocalDateTime.now())
                     .in(WarehouseReceiveEntity::getId, ids)
                     .update();
         }
@@ -738,6 +751,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(WarehouseReceiveEntity::getApproveUserId, "")
+                .set(WarehouseReceiveEntity::getApproveUserName, "")
+                .set(WarehouseReceiveEntity::getApproveTime, null)
                 .in(WarehouseReceiveEntity::getId, ids)
                 .update();
 
@@ -832,6 +848,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
+        List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+        //修改到货状态
+        poReturnService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
+
         //作废发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
@@ -865,6 +885,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveDetailService.delete(ids);
 
         boolean flag = this.removeByIds(ids);
+
+        List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+        //修改到货状态
+        poReturnService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
 
         //审核通过发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));

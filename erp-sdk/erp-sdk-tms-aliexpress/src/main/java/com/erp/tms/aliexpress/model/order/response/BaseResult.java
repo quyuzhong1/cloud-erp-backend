@@ -17,4 +17,6 @@ public class BaseResult implements Serializable {
     private String result;
     @JSONField(name = "request_id")
     private String requestId;
+    @JSONField(name = "error_response")
+    private ErrorResponse errorResponse;
 }

@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,6 +25,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.scm.dto.SupplierAccountDTO;
+import com.erp.model.scm.dto.SupplierContactDTO;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
@@ -66,6 +73,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -853,6 +861,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //获取供应商配置
             List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
             Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
+
+
+
+            //最新审核人
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            list.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+                listApiResult = workflowFeign.curApprover(dtoList);
+                Integer code = listApiResult.getCode();
+                if (200 != code) {
+                    throw new ServiceException(ApiError.ERROR_500);
+                }
+            }
+
             for (SupplierDTO.PagingViewDTO item : list) {
                 String id = item.getId();
                 SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
@@ -902,7 +927,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
                 exportExcel.setPurchasesCount((int) purchasesCount);
 
-
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                    exportExcel.setApproveUserName(curApprove);
+                }
+                exportExcel.setApproveTime(item.getApproveTime());
                 resultList.add(exportExcel);
 
             }
@@ -1211,6 +1241,52 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
+    public Boolean cancelProcess(List<String> ids) {
+        //根据ids查询
+        List<SupplierEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("供应商撤销流程，ids=【{}】", ids);
+
+        //撤销现有流程
+        LoginUser userInfo = commonService.getUserInfo();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT);
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("供应商【%s】取消流程", ModuleTypeEnum.SUPPLIER.getCode(), pairList, "取消流程操作");
+
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 更新状态
+     * @author Will
+     * @date: 2023/12/1 16:05
+     * @param ids
+     * @param approveStatus
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids, ApproveStatusEnum approveStatus) {
+        this.lambdaUpdate().in(SupplierEntity::getId, ids)
+                .set(SupplierEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    @Override
     public SupplierEntity getSupplierByUid(String uid) {
         SupplierRefUserEntity supplier = supplierRefUserService.getSupplierRelUserByUid(uid);
         if(Objects.isNull(supplier)){
@@ -1337,8 +1413,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 更改状态
      */
     private Boolean updateApproveStatus(List<SupplierEntity> list, ApproveStatusEnum statusEnum) {
+        LoginUser userInfo = commonService.getUserInfo();
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
+                    obj.setApproveTime(LocalDateTime.now());
+                    obj.setApproveUserId(userInfo.getUid());
+                    obj.setApproveUserName(userInfo.getUserName());
+                } else {
+                    obj.setApproveTime(null);
+                    obj.setApproveUserId("");
+                    obj.setApproveUserName("");
+                }
                 obj.setApproveStatus(statusEnum);
             });
             return this.updateBatchById(list);

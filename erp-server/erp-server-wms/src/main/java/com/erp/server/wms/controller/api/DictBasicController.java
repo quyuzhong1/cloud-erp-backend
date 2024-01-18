@@ -45,7 +45,7 @@ public class DictBasicController extends BaseController {
      * qcProblemType 质检单 问题属性
      * handleModeType 质检单 处理措施
      * qcReportResult 质检单 质检报告结果
-     *
+     * inventoryDate 库存时间
      * @return
      */
     @GetMapping("/list")

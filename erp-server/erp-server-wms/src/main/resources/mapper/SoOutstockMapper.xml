@@ -56,7 +56,7 @@
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND sod.is_deleted=FALSE
-        WHERE so.is_deleted=FALSE AND so.source_type!=#{params.neSourceType}
+        WHERE so.is_deleted=FALSE
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -194,7 +194,7 @@
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND  sod.is_deleted=FALSE
-        WHERE so.is_deleted=FALSE AND so.source_type!=#{params.neSourceType}
+        WHERE so.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND so.id IN
@@ -352,7 +352,6 @@
 	        count(*)
 	     FROM so_outstock
 	     WHERE is_deleted=FALSE
-         AND source_type!='SAL_OUTSTOCK'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -438,7 +437,7 @@
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id = sod.main_id AND sod.is_deleted = FALSE
-        WHERE so.is_deleted = FALSE AND so.source_type != #{params.neSourceType}
+        WHERE so.is_deleted = FALSE
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">

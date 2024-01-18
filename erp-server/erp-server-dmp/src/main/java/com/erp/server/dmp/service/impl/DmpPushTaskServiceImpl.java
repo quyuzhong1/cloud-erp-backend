@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -95,7 +96,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public void sendMqAndSaveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+
+        //查询来源上级单据
+        Boolean isSend = isSendParentBillTask(entity);
         String entityId = saveOrUpdateDmpSyncTask(entity);
+        //判断是否存在上级单据，并且推送成功
+        if (!isSend) {
+            return;
+        }
         // 发送MQ消息
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entityId, dto.getMqData());
         String mqData = dmpSyncMqDTO.getMqData();
@@ -228,10 +236,19 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
+        //需要修改备注信息
+        List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity dmpPushTaskEntity : list) {
             try {
                 // 发送MQ消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPushTaskEntity.getId(), dmpPushTaskEntity.getMqData());
+                //查询来源上级单据
+                Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
+                //判断是否存在上级单据，并且推送成功
+                if (!isSend) {
+                    updateList.add(dmpPushTaskEntity);
+                    continue;
+                }
                 String mqData = dmpSyncMqDTO.getMqData();
                 JSONObject jsonObject = JSONUtil.parseObj(mqData);
                 jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
@@ -243,6 +260,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
             }
+        }
+        //更新信息
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
@@ -300,6 +321,26 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
 
+    @Override
+    public Boolean isSendParentBillTask (DmpPushTaskEntity entity) {
+        if (StrUtil.isBlank(entity.getParentId())) {
+            return Boolean.TRUE;
+        }
+        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().eq(DmpPushTaskEntity::getSourceId,entity.getParentId()).last("limit 1").one();
+
+        if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
+            entity.setReturnMsg("未找到上级单据推送任务");
+            entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+            return Boolean.FALSE;
+        }
+        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+            entity.setReturnMsg("上级单据未推送成功，不支持推送下级单据");
+            entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+            return Boolean.FALSE;
+        }
+        return  Boolean.TRUE;
+    }
+
 
     /**
      * @description: 重新查询数据发送MQ
@@ -334,7 +375,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             case PO_RECEIVE:
             case PO_RETURN:
             case SO_OUTSTOCK:
-            case SO_RETURN:
+            case SO_RETURN_INSTOCK:
             case STOCKTAKING_PROFIT_LOSS:
             case TRANSFER_INFO:
             case WAREHOUSE:
@@ -389,4 +430,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         this.saveOrUpdate(entity);
         return entity.getId();
     }
+
+
 }

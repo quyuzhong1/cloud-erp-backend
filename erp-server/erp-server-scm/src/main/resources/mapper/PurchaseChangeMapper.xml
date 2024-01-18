@@ -53,6 +53,7 @@
             pcd.remark as remark,
             pc.change_user_name as changeUserName,
             pc.approve_user_name as approveUserName,
+            pc.approve_time as approveTime,
             pc.create_user_name as createUserName,
             pc.create_time as createTime
         from
@@ -151,6 +152,7 @@
         pcd.remark as remark,
         pc.change_user_name as changeUserName,
         pc.approve_user_name as approveUserName,
+        pc.approve_time as approveTime,
         pc.create_user_name as createUserName,
         pc.create_time as createTime
         from

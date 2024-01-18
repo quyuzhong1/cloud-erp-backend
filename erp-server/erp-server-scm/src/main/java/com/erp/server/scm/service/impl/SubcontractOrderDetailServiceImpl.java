@@ -111,6 +111,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
         this.saveBatch(resultList);
+        //标记SKU
+        List<String> skuIds = resultList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
 
@@ -185,6 +188,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
 
         this.saveOrUpdateBatch(resultList);
+        //标记SKU
+        List<String> skuIds = resultList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override

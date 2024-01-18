@@ -6,6 +6,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -351,6 +352,41 @@ public class SoB2cFeignController extends BaseController {
         return soB2cRefService.listByTargetId(targetId, SoB2cOptionTypeEnum.ENUM_MERGE);
     }
 
+    /**
+     * 获取到b2c 销售订单物流跟踪号为空的
+     * @description
+     * @author Lambda
+     * @return
+     * @create 2024-01-05 9:44
+     */
+    @GetMapping("/listTrackNoEmptyList")
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
+        return soB2cLogisticsService.listTrackNoEmptyList();
+    }
+    /**
+     * 查询订单详情
+     * @Author Luo_WG
+     * @Date 2024/1/5 9:50
+     * @param id
+     * @return com.erp.model.oms.dto.SoB2cDTO.ViewDTO
+     **/
+    @GetMapping("/view")
+    public SoB2cDTO.ViewDTO view(@RequestParam("id") String id) {
+        return soB2cService.view(id);
+    }
 
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param isIntercept 是否打标拦截
+     * @param isFrozen 是否冻结单据
+     * @param ids 订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateIntercept")
+    public Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids) {
+        return soB2cService.updateIntercept(isIntercept, isFrozen, ids);
+    }
 
 }

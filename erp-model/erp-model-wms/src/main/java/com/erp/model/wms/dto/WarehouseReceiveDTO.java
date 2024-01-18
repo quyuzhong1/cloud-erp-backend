@@ -414,6 +414,11 @@ public class WarehouseReceiveDTO {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建人
          */
         private String createUserName;

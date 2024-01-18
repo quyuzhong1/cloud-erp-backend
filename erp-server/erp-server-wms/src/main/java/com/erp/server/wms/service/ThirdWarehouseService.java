@@ -48,7 +48,7 @@ public interface ThirdWarehouseService {
 
 
     /**
-     * 出库取消接口
+     * 出库取消接口 ThirdWarehouseCancelResultEnum
      */
     ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq,String authId);
 }

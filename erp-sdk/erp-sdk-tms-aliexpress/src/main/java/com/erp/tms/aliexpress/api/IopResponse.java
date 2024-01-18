@@ -1,4 +1,6 @@
 package com.erp.tms.aliexpress.api;
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.io.Serializable;
 /**
  * @author zdy
@@ -16,6 +18,7 @@ public class IopResponse implements Serializable{
 
     private String message;
 
+    @JSONField(name = "request_id")
     private String requestId;
 
     private String body;

@@ -49,6 +49,7 @@
             mi.warehouse_name as warehouseName,
             md.remark,
             mi.approve_user_name as approveUserName,
+            mi.approve_time as approveTime,
             mi.create_user_name as createUserName,
             mi.create_time as createTime,
             md.warehouse_location as warehouseLocation
@@ -146,6 +147,7 @@
         md.warehouse_location as warehouseLocation,
         md.remark,
         mi.approve_user_name as approveUserName,
+        mi.approve_time as approveTime,
         mi.create_user_name as createUserName,
         mi.create_time as createTime
         from machine_info mi

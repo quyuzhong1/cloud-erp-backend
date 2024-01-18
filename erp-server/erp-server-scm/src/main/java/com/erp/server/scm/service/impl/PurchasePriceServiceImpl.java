@@ -31,10 +31,7 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -69,6 +66,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -124,6 +122,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private SysDictFeign sysDictFeign;
 
+
+
+    @Resource
+    private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
     /**
      * 添加采购价目表
@@ -671,6 +673,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             List<String> skuIds = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+            //最新审核人
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            viewList.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+            if (CollectionUtils.isNotEmpty(dtoList)) {
+                listApiResult = workflowFeign.curApprover(dtoList);
+                Integer code = listApiResult.getCode();
+                if (200 != code) {
+                    throw new ServiceException(ApiError.ERROR_500);
+                }
+            }
             for (PurchasePriceDTO.PagingViewDTO item : viewList) {
                 SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 PurchasePriceExportExcelDTO excelDTO = new PurchasePriceExportExcelDTO();
@@ -691,6 +707,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 excelDTO.setTaxPrice(currencySymbol + taxPrice.toString());
+
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                    excelDTO.setApproveUserName(curApprove);
+                }
+                excelDTO.setApproveTime(item.getApproveTime());
+
                 resultList.add(excelDTO);
             }
 
@@ -759,8 +783,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 12:13
      */
     private Boolean updateApproveStatus(List<PurchasePriceEntity> list, ApproveStatusEnum statusEnum) {
+        LoginUser userInfo = commonService.getUserInfo();
+
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
+                    obj.setApproveTime(LocalDateTime.now());
+                    obj.setApproveUserId(userInfo.getUid());
+                    obj.setApproveUserName(userInfo.getUserName());
+                } else {
+                    obj.setApproveTime(null);
+                    obj.setApproveUserId("");
+                    obj.setApproveUserName("");
+                }
                 obj.setApproveStatus(statusEnum);
             });
             return this.updateBatchById(list);
@@ -951,15 +986,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<PurchasePriceChangeEntity> priceChangeList = purchasePriceChangeService.listByPurchasePriceIds(ids);
-        if (CollectionUtils.isNotEmpty(priceChangeList)) {
-            List<String> priceIdList = priceChangeList.stream().map(PurchasePriceChangeEntity::getPurchasePriceId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(priceIdList)) {
-                String code = list.stream().filter(p -> priceIdList.contains(p.getId())).
-                        map(PurchasePriceEntity::getCode).collect(Collectors.joining(","));
-               if(StringUtils.isNotBlank(code)){
-                    throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE,code);
-               }
+
+
+        for (PurchasePriceEntity purchasePriceEntity : list) {
+            List<PurchasePriceDetailEntity> purchasePriceDetailEntities = priceDetailService.listDetailByMainId(purchasePriceEntity.getId());
+            List<String> priceDetailIds = purchasePriceDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByPurchasePriceDetailIds(priceDetailIds);
+            if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailEntities)) {
+                throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE, purchasePriceEntity.getCode());
             }
         }
 

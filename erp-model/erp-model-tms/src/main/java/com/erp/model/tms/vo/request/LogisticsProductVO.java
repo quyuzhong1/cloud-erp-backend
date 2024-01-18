@@ -47,6 +47,8 @@ public class LogisticsProductVO  implements Serializable {
      */
     private String skuId;
 
+    private String skuNo;
+
     /**
      * 产品属性
      */
@@ -154,6 +156,7 @@ public class LogisticsProductVO  implements Serializable {
     private String combinationDeclareType;
     /**
      * 交易子单号
+     * 速卖通必填
      */
     private String childOrderId;
     /**
