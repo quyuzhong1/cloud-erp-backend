@@ -206,6 +206,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())){
             throw new ServiceException("发货单已成功拦截，无法重复操作");
         }
+        if(CancelStatusEnum.SUCCESS.getCode().equals(entity.getCancelStatus()) || InterceptStatusEnum.SUCCESS.getCode().equals(entity.getInterceptStatus())){
+            throw new ServiceException("订单取消状态：取消成功或物流拦截状态：拦截成功，不支持再次发起物流拦截");
+        }
+
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(Collections.singletonList(entity.getSourceId()));
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
@@ -297,6 +301,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
         // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
         if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
+            //修改拦截状态，冻结状态
+            soB2cFeign.updateIntercept(Boolean.TRUE, Boolean.FALSE, Arrays.asList(entity.getSoId()));
 
             //反审核销售出库单，并作废
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
@@ -333,8 +339,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //修改订单状态
             soB2cFeign.updateSoB2cStatus(Arrays.asList(entity.getSourceId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-            //修改拦截状态，冻结状态
-            soB2cFeign.updateIntercept(Boolean.TRUE, Boolean.FALSE, Arrays.asList(entity.getSoId()));
+
         } else {
             handleResult = HandleResultEnum.FAILURE.getName();
             soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();

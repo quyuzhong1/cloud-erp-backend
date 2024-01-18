@@ -117,20 +117,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String add(PurchasePriceChangeDTO.AddDTO dto) {
-        List<String> detailIds = new ArrayList<>();
 
         /**
          * 报价明细
          */
         List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList = dto.getPurchasePriceChangeDetailList();
-        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
-            detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-        }
 
         //根据供应商分组
         Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSupplierId));
         for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
-            List<String> skuIdList = item.getValue().stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+            List<PurchasePriceChangeDetailDTO.AddDTO> detailList =  item.getValue();
+            List<String> skuIdList = detailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+            List<String> detailIds = detailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
 
             //根据供应商 获取到 对应 已有的区间
             List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
