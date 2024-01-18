@@ -1260,7 +1260,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @Author Luo_WG
      * @Date 2024/1/16 18:52
      **/
-    public BaseResultDTO.AddDTO addIntercept(String remark, SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+    public void addIntercept(String remark, SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         //映射拦截单主表信息
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
@@ -1277,8 +1277,49 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
         addDTO.setDetailList(detailList);
 
-        //新增拦截单
-        return soB2cDeliveryInterceptFeign.add(addDTO);
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+
+        //1、新增拦截单
+        BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
+
+        //2、如果是API对接的海外仓拦截调用海外仓拦截，否则触发物流拦截
+        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
+        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+            //API海外物流拦截
+            this.overseasProviderIntercept(add.getId(), entity, platformEnum);
+        } else {
+            //触发物流拦截
+            soB2cDeliveryInterceptFeign.logisticsIntercept(add.getId());
+        }
+    }
+
+    private void overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum) {
+        ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
+        req.setOrderCode(soB2cEntity.getShippingOrderNo());
+        req.setThirdWarehouseProvideCode(platformEnum.getCode());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByPlatformCode(platformEnum.getCode());
+        if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
+            req.setAuthId(overseasProviderEntity.getId());
+        }
+
+        ApiResult<String> stringApiResult = thirdWarehouseFeign.cancelOutboundOrder(req);
+        if (stringApiResult.getCode() == 200) {
+            //自动拦截结果确认，拦截成功
+            SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
+            dto.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+            dto.setResultRemark("第三方海外仓拦截成功，自动生成拦截单");
+            soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
+
+        } else {
+            //自动拦截结果确认，拦截失败
+            SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
+            dto.setHandleResult(HandleResultEnum.FAILURE.getCode());
+            dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
+            soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
+        }
     }
 
     @Override

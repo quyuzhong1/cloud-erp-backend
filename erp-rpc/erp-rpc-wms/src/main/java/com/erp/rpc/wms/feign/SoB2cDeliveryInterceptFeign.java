@@ -81,5 +81,5 @@ public interface SoB2cDeliveryInterceptFeign {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     @PostMapping("feign/soB2cDeliveryIntercept/interceptResultConfirm")
-    BatchResultDTO interceptResultConfirm(@RequestParam("dto") SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id);
+    BatchResultDTO interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id);
 }
