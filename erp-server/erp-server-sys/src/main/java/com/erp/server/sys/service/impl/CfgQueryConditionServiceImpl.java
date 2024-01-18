@@ -55,6 +55,9 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
         if(QueryDisplayTypeEnum.TAB.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.TAB.getCode()))){
             throw new ServiceException("tabFlag类型字段只能配置一个");
         }
+        if(QueryDisplayTypeEnum.EXPORT.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.EXPORT.getCode()))){
+            throw new ServiceException("导出类型字段只能配置一个");
+        }
         CfgQueryConditionEntity entity = new CfgQueryConditionEntity();
         BeanUtil.copyProperties(dto,entity);
         return this.save(entity);
@@ -64,6 +67,16 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     public Boolean update(CfgQueryConditionDTO.UpdateDTO dto) {
         CfgQueryConditionEntity entity = this.getById(dto.getId());
         BeanUtil.copyProperties(dto,entity,"id");
+        List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
+        if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()))){
+            throw new ServiceException("已存在配置字段,无法重复新增");
+        }
+        if(QueryDisplayTypeEnum.TAB.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.TAB.getCode()))){
+            throw new ServiceException("tabFlag类型字段只能配置一个");
+        }
+        if(QueryDisplayTypeEnum.EXPORT.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.EXPORT.getCode()))){
+            throw new ServiceException("导出类型字段只能配置一个");
+        }
         return this.updateById(entity);
     }
 
