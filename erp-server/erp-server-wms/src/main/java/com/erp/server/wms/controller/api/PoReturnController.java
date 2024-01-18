@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,6 +17,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.wms.query.PoReturnQueryHandler;
 import com.erp.server.wms.service.PoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -51,6 +53,7 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro"
     )
+    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.paging(dto);
         return success(pagingVO);
