@@ -1233,6 +1233,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return dtos;
     }
 
+    @Override
+    public List<SupplierEntity> listByPurchaseUserId(String purchaseUserId) {
+        if (StringUtils.isBlank(purchaseUserId)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(SupplierEntity::getPurchaseUserId, purchaseUserId)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).list();
+    }
+
     private void getRejectCount(List<SupplierTabCountDTO> dtos) {
         int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false)
                 .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.REJECT.getStatus())

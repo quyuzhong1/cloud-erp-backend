@@ -36,10 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * <p>
@@ -65,16 +62,15 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        dto.getParams().setSupplierId(commonService.getSupplierEntity().getId());
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
-        pageData.getRecords().forEach(v-> v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus())));
+        pageData.getRecords().forEach(v-> v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus())));
         return new PagingVO<>(pageData);
     }
 
     @Override
-    public List<DeliveryOrderDTO.TabListDTO> tabList() {
+    public List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList) {
         List<DeliveryOrderDTO.TabListDTO> result = new ArrayList<>();
-        List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(commonService.getSupplierEntity().getId());
+        List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(supplierIdList);
         //ALL
         DeliveryOrderDTO.TabListDTO allDto = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.ALL.getCode())
@@ -95,6 +91,12 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                         && v.getIsPrint()).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
                 .build();
         result.add(dto3);
+        //待收货
+        DeliveryOrderDTO.TabListDTO dto6 = DeliveryOrderDTO.TabListDTO.builder()
+                .searchType(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE.getCode())
+                .count(statusListDTOList.stream().filter(v->v.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())).mapToInt(DeliveryOrderDTO.StatusListDTO::getCount).sum())
+                .build();
+        result.add(dto6);
         //已收货
         DeliveryOrderDTO.TabListDTO dto4 = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.RECEIVED.getCode())
@@ -125,6 +127,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<DeliveryOrderDTO.PrintDTO> print(List<String> ids) {
         List<DeliveryOrderEntity> entityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
         List<DeliveryOrderDTO.PrintDTO> printDTOList = BeanMapperUtils.copyList(DeliveryOrderDTO.PrintDTO.class, entityList);
@@ -134,6 +137,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                     detailList.forEach(detail -> detail.setCode(v.getSourceCode()));
                     v.setDetailPrintList(detailList);
                 }));
+        entityList.forEach(v->v.setIsPrint(true));
+        this.updateBatchById(entityList);
         return printDTOList;
     }
 
@@ -153,6 +158,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     public boolean delete(List<String> ids) {
         if(CollectionUtils.isEmpty(ids)){
             return true;
+        }
+        List<DeliveryOrderEntity> deliveryOrderEntityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
+        if(deliveryOrderEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getReceiveCode()))){
+            throw new ServiceException("已有送货单生成收货单，无法删除");
         }
         if(!this.removeByIds(ids)){
             throw new ServiceException("送货单删除失败");

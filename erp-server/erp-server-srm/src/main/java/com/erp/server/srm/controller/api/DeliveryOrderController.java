@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.server.srm.query.DeliveryOrderQueryHandler;
+import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -22,6 +23,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,13 +42,16 @@ public class DeliveryOrderController extends BaseController {
     @Resource
     private DeliveryOrderService deliveryOrderService;
 
+    @Resource
+    private CommonService commonService;
+
     /**
      * 获取 tab列表
      * @return
      */
     @GetMapping("/tabList")
     public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList() {
-        List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList();
+        List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList(Collections.singletonList(commonService.getSupplierEntity().getId()));
         return success(tabList);
     }
 
@@ -70,6 +77,7 @@ public class DeliveryOrderController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
+        dto.getParams().setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
         return success(deliveryOrderService.paging(dto));
     }
 

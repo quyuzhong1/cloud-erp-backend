@@ -41,7 +41,7 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 
-    List<DeliveryOrderDTO.TabListDTO> tabList();
+    List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList);
 
     DeliveryOrderDTO.ViewDTO view(String id);
 

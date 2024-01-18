@@ -25,5 +25,5 @@ public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
 
     IPage<DeliveryOrderDTO.ListDTO> paging(Page query, @Param("params")DeliveryOrderDTO.ParamDTO params);
 
-    List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierId") String supplierId);
+    List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierIdList") List<String> supplierIdList);
 }

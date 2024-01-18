@@ -308,4 +308,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return
      */
     List<SupplierTabCountDTO> getTabCount();
+
+    List<SupplierEntity> listByPurchaseUserId(String purchaseUserId);
 }
