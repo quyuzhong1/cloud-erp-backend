@@ -1237,8 +1237,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
 
-        //修改拦截打标识、冻结订单
-//        this.updateIntercept(Boolean.TRUE, Boolean.TRUE, Arrays.asList(entity.getId()));
+        //修改拦截打标识、冻结状态
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+        this.updateIntercept(interceptUpdateOrderDTO);
 
         //新增发货拦截
         addIntercept(remark, entity, logisticsEntity);

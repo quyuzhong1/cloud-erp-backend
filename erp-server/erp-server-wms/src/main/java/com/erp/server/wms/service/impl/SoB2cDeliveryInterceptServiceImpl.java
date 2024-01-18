@@ -364,7 +364,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
             interceptUpdateOrderDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
             soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
             //反审核销售出库单，并作废
@@ -406,7 +406,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
             interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
             interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
             soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
         }
 
