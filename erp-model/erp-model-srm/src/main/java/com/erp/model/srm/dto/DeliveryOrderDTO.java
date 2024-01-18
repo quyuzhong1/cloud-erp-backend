@@ -172,6 +172,11 @@ public class DeliveryOrderDTO implements Serializable {
         private String receiptStatus;
 
         /**
+         * 收货状态中文
+         */
+        private String receiptStatusName;
+
+        /**
          * 订单单号
          */
         private String sourceCode;
@@ -279,9 +284,9 @@ public class DeliveryOrderDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 主键id
+         * 供应商IdList
          */
-        private String supplierId;
+        private List<String> supplierIdList;
     }
 
     /**
