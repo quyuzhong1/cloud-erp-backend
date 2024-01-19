@@ -359,7 +359,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseUserId;
 
         /**
-         * 采购员名称
+         * 采购员名称/客户联系人
          */
         private String purchaseUserName;
 
@@ -373,12 +373,19 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
-
+        /**
+         * 采购组织名称/客户
+         */
+        private String purchaseOrgName;
         /**
          * 交货仓库id
          */
         @NotBlank(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
+        /**
+         * 目的仓库/交货仓库
+         */
+        private String deliveryWarehouseName;
 
         /**
          * 新品首批（false否,true是）
@@ -481,7 +488,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
-
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
         /**
          * 收料组织id
          */
@@ -491,6 +501,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 收料组织名称
          */
         private String receiveOrgName;
+
+        /**
+         * 已审核通过时间/下单时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 操作流程（仅详情显示，无需传参）
