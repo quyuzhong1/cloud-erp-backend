@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -47,5 +48,10 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return true;
+    }
+
+    @Override
+    public List<BatchResultDTO> generateReceive(DeliveryOrderDTO.GenerateDTO dto) {
+        return null;
     }
 }

@@ -32,13 +32,6 @@ public interface SubcontractIssueMapper extends BaseMapper<SubcontractIssueEntit
     IPage<SubcontractIssueDTO.ListDTO> paging(Page query, @Param("params") SubcontractIssueDTO.PagingParamDTO params);
 
     /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SubcontractIssueDTO.PagingParamDTO params);
-
-    /**
     * 导出Excel查询
     * @param params
     * @return
@@ -51,5 +44,5 @@ public interface SubcontractIssueMapper extends BaseMapper<SubcontractIssueEntit
     * @param searchParam
     * @return
     */
-    List<SubcontractIssueDTO.TabListDTO> tabList(@Param("params") SubcontractIssueDTO.PagingParamDTO searchParam);
+    Integer tabList(@Param("params") SubcontractIssueDTO.PagingParamDTO searchParam);
 }

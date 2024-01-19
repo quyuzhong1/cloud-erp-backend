@@ -77,7 +77,13 @@ public class QueryUtils {
         if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
             sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
         } else if (!QueryConditionEnum.IS_NULL.equals(condEnum) && !QueryConditionEnum.NOT_NULL.equals(condEnum) &&  !QueryConditionEnum.BETWEEN.equals(condEnum)){
-            sql.append(condEnum.getCode()).append(" ");
+            //日期格式的年月日小于等于 需要修改为小于，因为需要加一天
+            String interval = QueryUtils.getDateStr(dto.getValue().toString());
+            if(QueryDataTypeEnum.DATE.getCode().equals(dto.getDataType()) && QueryConditionEnum.LE.equals(condEnum)&& StringUtils.isNotBlank(interval)){
+                sql.append(QueryConditionEnum.LT.getCode()).append(" ");
+            }else{
+                sql.append(condEnum.getCode()).append(" ");
+            }
         }
         String val = "";
         //大于小于等于这种直接拼接值
@@ -151,7 +157,7 @@ public class QueryUtils {
                 String interval = QueryUtils.getDateStr(result);
                 result = "'"+ fieldVal + "'";
                 if(condEnum.equals(QueryConditionEnum.LE) && StringUtils.isNotBlank(interval)){
-                    result = "to_timestamp("+ result + ",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1 "+interval+"' ";
+                    result = " (to_timestamp("+ result + ",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1 "+interval+"')";
                 }else{
                     result = "to_timestamp(" + result + ",'yyyy-MM-DD HH24:MI:SS')";
                 }

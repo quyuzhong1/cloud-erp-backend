@@ -41,9 +41,14 @@ public class SubcontractIssueDTO implements Serializable {
      public static class TabListDTO {
 
          /**
-         * 类型
+         * 类型 ,(waitSubmit待提交,approveIng待审核,approve已审核,reject不通过)
          */
          private String tabFlag;
+
+         /**
+          * 类型
+          */
+         private String tabFlagName;
 
          /**
          * 数量

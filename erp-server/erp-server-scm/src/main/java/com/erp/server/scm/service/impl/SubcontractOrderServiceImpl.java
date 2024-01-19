@@ -165,9 +165,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     public List<SubcontractOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
-        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        PurchaseTableFlagEnum[] values = PurchaseTableFlagEnum.values();
         List<SubcontractOrderDTO.TabListDTO> list = new ArrayList<>();
-        for (PurchaseListTypeEnum item : values) {
+        for (PurchaseTableFlagEnum item : values) {
             SubcontractOrderDTO.PagingParamDTO searchParamDTO = new SubcontractOrderDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(param.getPermissionSql());
             SubcontractOrderDTO.TabListDTO resultDTO = new SubcontractOrderDTO.TabListDTO();
@@ -1304,7 +1304,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> approveStatusList = new ArrayList<>(1);
         List<String> arrivalStatusList = new ArrayList<>(2);
         //待我审核
-        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
@@ -1314,22 +1314,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             params.setIdList(businessIds);
         }
         // 待提交
-        if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         }
         //待到货
-        if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             arrivalStatusList.add(ArrivalStatusEnum.NON_ARRIVAL.getCode());
             arrivalStatusList.add(ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode());
         }
         //已到货
-        if (PurchaseListTypeEnum.CREATED.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.CREATED.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             arrivalStatusList.add(ArrivalStatusEnum.ARRIVED.getCode());
         }
         //不通过
-        if (PurchaseListTypeEnum.REJECT.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.REJECT.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {

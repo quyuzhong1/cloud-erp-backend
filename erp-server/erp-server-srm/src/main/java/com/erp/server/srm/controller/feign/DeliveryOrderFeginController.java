@@ -1,22 +1,26 @@
 package com.erp.server.srm.controller.feign;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.server.srm.query.DeliveryOrderQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,6 +72,17 @@ public class DeliveryOrderFeginController extends BaseController {
     }
 
     /**
+     * 合计
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     */
+    @PostMapping("/pagingTotal")
+    public DeliveryOrderDTO.TotalInfo pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
+        return deliveryOrderService.pagingTotal(dto);
+    }
+
+    /**
      * 打印送货单
      * @author lrp
      * @date:  2024-01-12
@@ -81,6 +96,30 @@ public class DeliveryOrderFeginController extends BaseController {
 
 
     /**
+     * 确认打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/confirmPrint")
+    public Boolean confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return deliveryOrderService.confirmPrint(dto.getIds());
+    }
+
+    /**
+     * 取消打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/cancelPrint")
+    public  List<BatchResultDTO> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return deliveryOrderService.cancelPrint(dto.getIds());
+    }
+
+    /**
      * 获取明细来源id对应的明细
      */
     @PostMapping("/listDetailByDetailSourceIds")
@@ -88,12 +127,19 @@ public class DeliveryOrderFeginController extends BaseController {
         return detailService.listDetailByDetailSourceIds(purchaseDetailIds);
     }
 
-
     /**
-     * 打印送货单
+     * 导出
      */
     @PostMapping("/getExportList")
     public List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto){
         return deliveryOrderService.getExportList(dto);
+    }
+
+    /**
+     * 下推列表
+     */
+    @PostMapping("/listGenerateReceive")
+    public List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@RequestBody BaseIdsDTO.IdsDTO dto){
+        return deliveryOrderService.listGenerateReceive(dto);
     }
 }

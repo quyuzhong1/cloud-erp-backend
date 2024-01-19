@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -17,12 +18,14 @@ import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,6 +90,19 @@ public class SupplierDeliveryOrderController extends BaseController {
         return success(srmDeliveryFeign.paging(dto));
     }
 
+    /**
+     * 合计
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     */
+    @PostMapping("/pagingTotal")
+    @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
+    public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
+        dto.setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        return success(srmDeliveryFeign.pagingTotal(dto));
+    }
+
 
     /**
      * 打印送货单
@@ -101,6 +117,31 @@ public class SupplierDeliveryOrderController extends BaseController {
     }
 
     /**
+     * 确认打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/confirmPrint")
+    public ApiResult<?> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(srmDeliveryFeign.confirmPrint(dto));
+    }
+
+    /**
+     * 取消打印送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/cancelPrint")
+    public ApiResult<List<BatchResultDTO>> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> batchResultDTOList = srmDeliveryFeign.cancelPrint(dto);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess)?success(batchResultDTOList):failure(batchResultDTOList);
+    }
+
+    /**
      * 导出送货单
      * @author lrp
      * @date:  2024-01-12
@@ -111,5 +152,30 @@ public class SupplierDeliveryOrderController extends BaseController {
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<Boolean> export(@RequestBody  DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
         return success(service.export(dto,response));
+    }
+
+    /**
+     * 下推收货单查询列表
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/listGenerateReceive")
+    public ApiResult<List<DeliveryOrderDTO.GenerateReceiveListDTO>> listGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = srmDeliveryFeign.listGenerateReceive(dto);
+        return receiveListDTOList.stream().anyMatch(v-> StringUtils.isNotBlank(v.getReceiptStatus()))?failure("仅无收货状态的收获单支持下推"):success(receiveListDTOList);
+    }
+
+
+    /**
+     * 下推收货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @return ApiResult
+     */
+    @PostMapping("/generateReceive")
+    public ApiResult<List<BatchResultDTO>> generateReceive(@RequestBody @Validated DeliveryOrderDTO.GenerateDTO dto) {
+        return success(service.generateReceive(dto));
     }
 }

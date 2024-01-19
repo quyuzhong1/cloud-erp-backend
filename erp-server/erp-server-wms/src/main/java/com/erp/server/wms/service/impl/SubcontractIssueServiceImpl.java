@@ -12,9 +12,12 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PoTableFlagEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -27,6 +30,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueMapper;
+import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -105,6 +109,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Autowired
     private InventoryService inventoryService;
 
+    @Autowired
+    private SubcontractIssueQueryHandler subcontractIssueQueryHandler;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -181,19 +188,21 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     public List<SubcontractIssueDTO.TabListDTO> tabList(PermissionsDTO param) {
         SubcontractIssueDTO.PagingParamDTO searchParam = new SubcontractIssueDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<SubcontractIssueDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SubcontractIssueDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SubcontractIssueDTO.TabListDTO(status, 0));
+        TabFlagEnum[] values = TabFlagEnum.values();
+        List<SubcontractIssueDTO.TabListDTO> list = new ArrayList<>();
+        for (TabFlagEnum item : values) {
+            searchParam.setPermissionSql(param.getPermissionSql());
+            SubcontractIssueDTO.TabListDTO resultDTO = new SubcontractIssueDTO.TabListDTO();
+            String tabSql = subcontractIssueQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParam.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParam);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
         }
-        });
-        list.add(new SubcontractIssueDTO.TabListDTO("all", list.stream().mapToInt(SubcontractIssueDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 

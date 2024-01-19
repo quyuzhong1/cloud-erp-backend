@@ -56,4 +56,8 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     boolean confirmPrint(List<String> ids);
 
     List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto);
+
+    List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(BaseIdsDTO.IdsDTO dto);
+
+    DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto);
 }

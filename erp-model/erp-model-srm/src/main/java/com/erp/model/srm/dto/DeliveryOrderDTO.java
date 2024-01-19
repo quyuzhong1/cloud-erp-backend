@@ -33,6 +33,135 @@ import java.util.Map;
 public class DeliveryOrderDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    public static class TotalInfo {
+        /**
+         * 订单数量
+         */
+        private Integer totalOrderQty;
+
+        /**
+         * 送货数量
+         */
+        private Integer totalDeliveryQty;
+
+        /**
+         * 赠品送货数量
+         */
+        private Integer totalGiftQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer totalReceiveQty;
+
+        /**
+         * 赠品收货数量
+         */
+        private Integer totalGiftReceiveQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDTO {
+        List<GenerateReceiveDTO> generateReceiveDTOList;
+    }
+
+        /**
+     * 下推收货单列表查询DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateReceiveDTO {
+
+        /**
+         * 收货单id
+         */
+        private String id;
+
+        /**
+         * 收货单明细Id
+         */
+        private String detailId;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 赠品收货数量
+         */
+        private Integer giftReceiveQty;
+
+    }
+
+    /**
+     * 下推收货单列表查询DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateReceiveListDTO {
+
+        /**
+         * 收货单id
+         */
+        private String id;
+
+        /**
+         * 收货单明细Id
+         */
+        private String detailId;
+
+        /**
+         * 收货状态
+         */
+        private String receiptStatus;
+
+        /**
+         * 送货单号
+         */
+        private String code;
+
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 赠品数量
+         */
+        private Integer giftQty;
+
+    }
+
     /**
      * 打印DTO
      */
@@ -146,6 +275,11 @@ public class DeliveryOrderDTO implements Serializable {
          * 送货单id
          */
         private String id;
+
+        /**
+         * 送货单明细id
+         */
+        private String detailId;
 
         /**
          * 送货单号
