@@ -1288,10 +1288,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum);
             return resultDTO;
         } else {
-            //触发物流拦截
-            BatchResultDTO resultDTO = soB2cDeliveryInterceptFeign.logisticsIntercept(add.getId());
-            return resultDTO;
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "已生成发货拦截单");
         }
+
     }
 
     /**
