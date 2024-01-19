@@ -64,6 +64,8 @@ public enum ModuleTypeEnum {
     SKU_MAPPING_RULE("60", "sku自动匹配规则"),
     SKU_MAPPING("61", "sku映射表"),
     LISTING_INFO("62", "对应平台sku 表"),
+    TRANSFER_LOGISTICS_CHANNEL("63", "中转报关服务商渠道"),
+    TRANSFER_LOGISTICS_SUPPLIER("64", "中转报关服务商"),
     ;
 
 

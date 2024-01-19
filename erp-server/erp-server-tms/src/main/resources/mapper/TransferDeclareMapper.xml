@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="plan_transfer_date" property="planTransferDate" />
+       <result column="upload_status" property="uploadStatus" />
+       <result column="delivery_logistics_supplier_id" property="deliveryLogisticsSupplierId" />
+       <result column="delivery_logistics_supplier_name" property="deliveryLogisticsSupplierName" />
+       <result column="transfer_logistics_supplier_id" property="transferLogisticsSupplierId" />
+       <result column="transfer_logistics_supplier_name" property="transferLogisticsSupplierName" />
+       <result column="transfer_channel_id" property="transferChannelId" />
+       <result column="transfer_channel_name" property="transferChannelName" />
+       <result column="package_total_qty" property="packageTotalQty" />
+       <result column="package_total_weight" property="packageTotalWeight" />
+       <result column="weight_unit" property="weightUnit" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, plan_transfer_date, upload_status, delivery_logistics_supplier_id, delivery_logistics_supplier_name, transfer_logistics_supplier_id, transfer_logistics_supplier_name, transfer_channel_id, transfer_channel_name, package_total_qty, package_total_weight, weight_unit
+    </sql>
+
+
+</mapper>
