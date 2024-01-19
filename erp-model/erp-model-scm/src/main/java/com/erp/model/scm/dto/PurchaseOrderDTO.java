@@ -324,6 +324,26 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class SrmSearchParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+    }
+    @Data
+    @NoArgsConstructor
     public static class CommonDTO {
 
         /**

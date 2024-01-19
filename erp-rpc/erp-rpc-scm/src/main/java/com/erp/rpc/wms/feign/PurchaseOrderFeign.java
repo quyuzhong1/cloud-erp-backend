@@ -38,8 +38,16 @@ public interface PurchaseOrderFeign {
      * @return ApiResult
      */
     @PostMapping("/feign/purchaseOrder/srmOrderConfirmPaging")
-    PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
-
+    PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
+    /**
+     * srm订单确认列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/feign/purchaseOrder/srmOrderConfirmTotal")
+    PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
     /**
      * srm订单确认整单处理
      * @author zdy
