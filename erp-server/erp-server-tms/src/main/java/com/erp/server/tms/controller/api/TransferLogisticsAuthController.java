@@ -77,15 +77,13 @@ public class TransferLogisticsAuthController extends BaseController {
         return success(result);
     }
 
-
     /**
      * 详情
-     *
+     * @Author Luo_WG
+     * @Date 2024/1/19 18:09
      * @param id
-     * @return ApiResult
-     * @author Lambda
-     * @date: 2023-11-02
-     */
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.tms.dto.TransferLogisticsAuthDTO.ViewDTO>
+     **/
     @LogViewService
     @GetMapping("/view")
     public ApiResult<TransferLogisticsAuthDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
