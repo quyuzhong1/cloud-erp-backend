@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 物理商表
+ * 中转报关服务商
  *
  * @author Luo_WG
  * @since 2024-01-19
