@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
@@ -64,6 +65,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -170,16 +172,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Autowired
     private SrmCfgSettingFeign srmCfgSettingFeign;
 
-
+    @Resource
+    private PurchaseOrderQueryHandler purchaseOrderQueryHandler;
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(params);
-        if (!isFlag) {
-            return new PagingVO(new Page());
-        }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
@@ -195,10 +193,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
-            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
-        }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
@@ -209,27 +203,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         doOpHandlePurchaseOrder(records);
         return new PagingVO(pageData);
     }
-
-    @Override
-    public PagingVO<PurchaseOrderDTO.ListDTO> testQuery(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
-        PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
-        params.setPermissionSql(pagingDTO.getPermissionSql());
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(params);
-        if (!isFlag) {
-            return new PagingVO(new Page());
-        }
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.testQuery(query, params);
-        List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
-        if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
-        }
-        //数据赋值处理
-        doOpHandlePurchaseOrder(records);
-        return new PagingVO(pageData);
-    }
-
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -870,20 +843,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
-            //搜索类型
-            searchParamDTO.setSearchType(item.getCode());
-            //列表Tab查询状态处理
-            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
-            Integer count = MathUtil.ZERO;
-            if (isFlag) {
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
+            String tabSql = purchaseOrderQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setType(item.getCode());
             list.add(resultDTO);
         }
         return list;
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1573,12 +1544,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto) {
-        Boolean isFlag = this.doOpHandleTableParam(dto);
-        if (!isFlag) {
-            PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = new PurchaseOrderDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO);
-            return pagingTotalDTO;
-        }
         PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
+        if (ObjectUtil.isEmpty(pagingTotalDTO)) {
+            return new PurchaseOrderDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO);
+        }
         return pagingTotalDTO;
     }
 
@@ -1596,47 +1565,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return lambdaQuery().in(PurchaseOrderEntity::getSourceId,sourceIds)
                 .eq(PurchaseOrderEntity::getInvalidStatus,Boolean.FALSE)
                 .list();
-    }
-
-    /**
-     * @description: 列表Tab查询状态处理
-     * @author Will
-     * @date: 2023/7/11 15:10
-     * @param params
-     * @return Boolean
-     */
-    private Boolean doOpHandleTableParam (PurchaseOrderDTO.SearchParamDTO params) {
-        List<String> approveStatusList = new ArrayList<>(1);
-        //待我审核
-        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                return Boolean.FALSE;
-            }
-            params.setIdList(businessIds);
-        }
-        // 待提交
-        if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        }
-        //待到货
-        if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-        //已到货
-        if (PurchaseListTypeEnum.CREATED.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-        //不通过
-        if (PurchaseListTypeEnum.REJECT.getCode().equals(params.getSearchType())) {
-            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-        if (CollectionUtils.isNotEmpty(approveStatusList)) {
-            params.setApproveStatusList(approveStatusList);
-        }
-        return Boolean.TRUE;
     }
 
     /**
