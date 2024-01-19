@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="tracking_no" property="trackingNo" />
+       <result column="package_weight" property="packageWeight" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="outstock_status" property="outstockStatus" />
+       <result column="transfer_staus" property="transferStaus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, so_id, so_code, logistics_channel_id, logistics_channel_name, tracking_no, package_weight, weight_unit, outstock_status, transfer_staus
+    </sql>
+
+
+</mapper>
