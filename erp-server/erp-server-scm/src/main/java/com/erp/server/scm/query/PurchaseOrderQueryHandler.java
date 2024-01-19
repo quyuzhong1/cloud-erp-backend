@@ -9,6 +9,7 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.business.query.IQueryHandler;
 import com.common.business.utils.QueryUtils;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.server.scm.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,38 +40,51 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
                     " where parp.purchase_order_id = po.id and pa.code "+ compareCodeSplicingValueSql +" ) end";
         }
         if("so.tab".equals(field)){
-            //待我审核
-            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
-                super.buildDefaultDTO("po.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                //需要审核的业务ids
-                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
-                if (CollectionUtils.isNotEmpty(businessIds)) {
-                    super.buildDefaultDTO("po.id", businessIds);
-                }else{
-                    //返回空结果
-                    return this.getQueryEmptySql();
-                }
-            }
-            // 待提交
-            if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
-                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
-            }
-            //待到货
-            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(value)) {
-                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                super.buildDefaultDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-            }
-            //已到货
-            if (PurchaseListTypeEnum.CREATED.getCode().equals(value)) {
-                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                super.buildDefaultDTO("pod.arrival_status", Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-            }
-            //不通过
-            if (PurchaseListTypeEnum.REJECT.getCode().equals(value)) {
-                super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
-            }
+            getTabSql(value);
         }
         return null;
+    }
+
+
+    /**
+     * @description: tabSql拼接
+     * @author Will
+     * @date: 2024/1/18 19:58
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        //待我审核
+        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("po.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                super.buildDefaultDTO("po.id", businessIds);
+            }else{
+                //返回空结果
+                return this.getQueryEmptySql();
+            }
+        }
+        // 待提交
+        if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+        }
+        //待到货
+        if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(value)) {
+            super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("pod.execution_status", Arrays.asList(ExecutionStatusEnum.CONFIRM.getCode(),ExecutionStatusEnum.DELIVERY.getCode()));
+        }
+        //已到货
+        if (PurchaseListTypeEnum.CREATED.getCode().equals(value)) {
+            super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("pod.execution_status", Arrays.asList(ExecutionStatusEnum.FINISH.getCode(),ExecutionStatusEnum.CLOSED.getCode()));
+        }
+        //不通过
+        if (PurchaseListTypeEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("po.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        return super.getSplicingSQL();
     }
 }
 

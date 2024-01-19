@@ -74,16 +74,6 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 测试高级查询功能
-     */
-    @PostMapping("/testQuery")
-    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
-    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> testQuery(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
-        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.testQuery(dto);
-        return success(pagingVO);
-    }
-
-    /**
      * 列表查询合计
      *
      * @param dto
@@ -94,6 +84,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseOrderDTO.SearchParamDTO dto) {
         PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = purchaseOrderService.pagingTotal(dto);
         return success(pagingTotalDTO);

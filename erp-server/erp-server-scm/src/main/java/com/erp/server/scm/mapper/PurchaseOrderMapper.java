@@ -42,8 +42,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     IPage<PurchaseOrderDTO.ListDTO> srmPaging(Page query,@Param("params") PurchaseOrderDTO.SearchParamDTO params);
 
 
-    IPage<PurchaseOrderDTO.ListDTO> testQuery(Page query,@Param("params") PurchaseOrderDTO.SearchParamDTO params);
-
     /**
      * @description: 查询总数量、金额
      * @author Will
