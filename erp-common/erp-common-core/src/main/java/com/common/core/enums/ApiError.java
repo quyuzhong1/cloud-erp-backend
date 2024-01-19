@@ -89,7 +89,7 @@ public enum ApiError implements Serializable {
     ERROR_1039(1039,"单据【{}】未审核完成，不支持下推"),
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
-    ERROR_1042(1042,"单据提交失败"),
+    ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
@@ -105,6 +105,8 @@ public enum ApiError implements Serializable {
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
     ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
+    ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+
     /**
      * 警告信息 从800 开始
      */

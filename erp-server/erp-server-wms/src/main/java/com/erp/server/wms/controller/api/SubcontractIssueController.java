@@ -127,7 +127,7 @@ public class SubcontractIssueController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = subcontractIssueService.submit(id);
+                submit = subcontractIssueService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("委外发料单 提交审核失败",e);
                 SubcontractIssueEntity entity = subcontractIssueService.getById(id);

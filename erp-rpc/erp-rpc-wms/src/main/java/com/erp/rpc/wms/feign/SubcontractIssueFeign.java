@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -17,7 +18,7 @@ import java.util.List;
  * @author Will
  * @date: 2024/1/12 14:16
  */
-@FeignClient(name = "erp-wms", contextId = "subcontractIssue", path = "/feign/subcontractIssue")
+@FeignClient(name = "erp-wms", contextId = "subcontractIssue", path = "/feign/subcontractIssue",configuration = {FeignErrorDecoder.class})
 public interface SubcontractIssueFeign {
 
    /**
@@ -27,8 +28,8 @@ public interface SubcontractIssueFeign {
     * @param dto
     * @return String
     */
-    @PostMapping("add")
-    String add(@RequestBody @Validated SubcontractIssueDTO.AddDTO dto);
+    @PostMapping("/add")
+    String add(@RequestBody @Validated SubcontractIssueDTO.AutoAddDTO dto);
 
 
    /**
@@ -38,7 +39,7 @@ public interface SubcontractIssueFeign {
     * @param sourceIdList
     * @return String
     */
-    @PostMapping("listBySourceIdList")
+    @PostMapping("/listBySourceIdList")
     List<SubcontractIssueEntity> listBySourceIdList(@RequestBody List<String> sourceIdList);
 }
 

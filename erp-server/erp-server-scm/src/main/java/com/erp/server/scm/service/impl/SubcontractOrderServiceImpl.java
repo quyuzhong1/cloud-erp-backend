@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -30,24 +31,29 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
-import com.erp.model.wms.dto.SubcontractIssueDTO;
-import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.CfgSettingCreateTypeEnum;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SubcontractIssueFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -134,6 +140,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private SubcontractIssueFeign subcontractIssueFeign;
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -1457,6 +1466,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
+        //查询系统配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.SUBCONTRACT_ISSUE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return;
+        }
+        CfgSettingValueDTO.SubcontractIssueSettingDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
+        //不自动生成
+        if (CfgSettingCreateTypeEnum.NOT_AUTO_CREATE.getCode().equals(dto.getCreateType())) {
+            return;
+        }
+        //判断是否自动审核
+        Boolean isApprove = CfgSettingCreateTypeEnum.AUTO_CREATE_APPROVE.getCode().equals(dto.getCreateType()) ? Boolean.TRUE : Boolean.FALSE;
         //委外明细信息
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainIds(ids);
         for (String id : ids) {
@@ -1479,7 +1500,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 detailList.add(addDetailDTO);
             }
             addDTO.setDetailList(detailList);
-            subcontractIssueFeign.add(addDTO);
+            //自动新增
+            SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
+            subcontractIssueFeign.add(autoAddDTO);
         }
     }
 

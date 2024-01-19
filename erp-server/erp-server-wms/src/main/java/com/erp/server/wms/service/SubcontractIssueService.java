@@ -70,7 +70,7 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id,Boolean isProcess);
 
     /**
     * 审核
@@ -151,4 +151,12 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @return List<SubcontractIssueEntity>
      */
     List<SubcontractIssueEntity> listBySourceIdList(List<String> sourceIdList);
+    /**
+     * @description: 自动新增
+     * @author Will
+     * @date: 2024/1/19 9:47
+     * @param dto
+     * @return AddDTO
+     */
+    BaseResultDTO.AddDTO AutoAddDTO(SubcontractIssueDTO.AutoAddDTO dto);
 }
