@@ -448,7 +448,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult
      */
     @PostMapping("/srmWaitDeliveryCount")
-    public List<ListStatusCountDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+    public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
         return purchaseOrderService.srmWaitDeliveryCount(dto);
     }
 

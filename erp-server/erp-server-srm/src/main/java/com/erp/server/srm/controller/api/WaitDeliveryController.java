@@ -46,10 +46,9 @@ public class WaitDeliveryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/srmWaitDeliveryCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO>> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
-        dto.setSupplierId(userService.getSupplierId());
-        List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = purchaseOrderFeign.srmOrderConfirmCount(dto);
-        return success(countDTOS);
+    public ApiResult<PurchaseOrderSrmDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO = purchaseOrderFeign.srmWaitDeliveryCount(dto);
+        return success(waitDeliveryCountDTO);
     }
 
 

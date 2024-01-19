@@ -69,4 +69,30 @@ public class PurchaseOrderSrmDTO implements Serializable {
          */
         private List<String> executionStatusList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryCountDTO implements Serializable {
+        /**
+         * "expired", "已超期"
+         */
+        private Integer expiredCount;
+        /**
+         * "almostOverdue", "即将超期"
+         */
+        private Integer almostOverdueCount;
+        /**
+         * "inOneMonth", "1个月内"
+         */
+        private Integer inOneMonthCount;
+        /**
+         * "inTwoMonth", "2个月内"
+         */
+        private Integer inTwoMonthCount;
+        /**
+         * "twoMonthLater", "2个月以后"
+         */
+        private Integer twoMonthLaterCount;
+
+    }
 }

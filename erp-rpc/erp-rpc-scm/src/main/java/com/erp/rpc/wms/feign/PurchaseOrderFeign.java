@@ -61,4 +61,13 @@ public interface PurchaseOrderFeign {
 
     @GetMapping("/feign/purchaseOrder/srmOrderView")
     PurchaseOrderDTO.ViewDTO srmOrderView(@RequestParam("id") String id);
+
+    /**
+     * srm待发货列表统计
+     * @author zdy
+     * @date: 2024/1/16 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/feign/purchaseOrder/srmWaitDeliveryCount")
+    PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
 }
