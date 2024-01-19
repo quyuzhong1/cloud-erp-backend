@@ -223,6 +223,11 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean srmDisabled;
 
         /**
+         * srm协同名称（true 已停用，false 已开启）
+         */
+        private String srmDisabledName;
+
+        /**
          * 备注/明细备注
          */
         private String remark;
