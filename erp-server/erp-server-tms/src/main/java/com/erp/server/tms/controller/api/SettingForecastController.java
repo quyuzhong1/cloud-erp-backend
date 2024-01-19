@@ -1,7 +1,9 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -10,11 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
@@ -42,7 +41,7 @@ public class SettingForecastController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/list")
+    @GetMapping("/list")
     public ApiResult<List<SettingForecastDTO.ListDTO>> list() {
         List<SettingForecastDTO.ListDTO> list = settingForecastService.listAll();
         return success(list);
@@ -54,7 +53,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult batchAdd(@RequestBody @Validated List<SettingForecastDTO.SaveOrUpdateDTO> list) {
+    public ApiResult batchAdd(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
         Boolean result = settingForecastService.addOrUpdate(list);
         return result ? success() : failure();
     }
@@ -69,8 +68,19 @@ public class SettingForecastController extends BaseController {
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> idList = dto.getIds();
-        Boolean result=settingForecastService.delete(idList);
+        Boolean result = settingForecastService.delete(idList);
         return result ? success() : failure();
+    }
+
+    /**
+     * 物流商列表
+     *
+     * @return
+     */
+    @GetMapping("/listLogisticsSupplier")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listLogisticsSupplier() {
+        List<BaseDropDownDTO.DisabledDTO> list = settingForecastService.listLogisticsSupplier();
+        return success(list);
     }
 
 }

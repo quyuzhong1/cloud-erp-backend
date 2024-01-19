@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
@@ -48,11 +49,24 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public Boolean delete(List<String> idList) {
-        List<String> deleteIdList = idList.stream().filter(id -> !StringUtils.isNotBlank(id)).collect(Collectors.toList());
+        List<String> deleteIdList = idList.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             return this.removeByIds(deleteIdList);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier() {
+        List<SettingForecastEntity> dbList = this.list();
+        List<String> dbLogisticsSupplierIdList=dbList.stream().map(SettingForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
+        List<BaseDropDownDTO.DisabledDTO> list=logisticsSupplierService.listAll();
+        list.forEach(item->{
+            if(dbLogisticsSupplierIdList.contains(item.getCode())){
+                item.setDisabled(true);
+            }
+        });
+        return list;
     }
 
 

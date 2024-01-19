@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.common.business.service.SuperService;
@@ -46,4 +47,14 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @create 2024-01-18 18:59
      */
     Boolean delete(List<String> idList);
+
+    
+    /**
+     * 物流商列表
+     * @description
+     * @author Lambda
+     * @return 
+     * @create 2024-01-19 9:39
+     */
+    List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier();
 }

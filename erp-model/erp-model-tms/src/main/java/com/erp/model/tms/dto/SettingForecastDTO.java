@@ -20,7 +20,6 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class SettingForecastDTO implements Serializable {
 
 
@@ -85,7 +84,7 @@ public class SettingForecastDTO implements Serializable {
 
 
         /**
-         * 是否强制中转
+         * 组包启用时间
          */
         private LocalDateTime enablePackageTime;
 
