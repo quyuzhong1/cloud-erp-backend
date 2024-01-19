@@ -291,7 +291,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Override
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
-        List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = soB2cDeliveryInterceptDetailService.listByMainIds(Arrays.asList(id));
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
@@ -362,7 +361,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
         interceptUpdateOrderDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());

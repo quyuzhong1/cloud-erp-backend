@@ -411,18 +411,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             startProcess(entity);
         }
 
-        //删除拦截成功的异常提示
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setType(SoB2cErrorTypeEnum.INTERCEPT_SUCCESS.getCode());
-        deleteDTO.setMainId(entity.getId());
-        soB2cErrorService.delete(deleteDTO);
-
         //修改拦截打标识、冻结状态
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
         this.updateIntercept(interceptUpdateOrderDTO);
+        //取消异常原因
+        this.updateAbnormalType(entity.getId(), "");
 
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
