@@ -11,16 +11,20 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
-import com.common.business.enums.*;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
-import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -28,7 +32,6 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -37,7 +40,10 @@ import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
-import com.erp.sdk.oms.amz.spapi.enums.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
@@ -52,6 +58,9 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -90,13 +99,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Resource
     private BusinessServiceImpl businessService;
     @Resource
-    private ReportScheduleService reportScheduleService;
+    private AmzReportScheduleService reportScheduleService;
     @Resource
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private WmsShipmentFeign wmsShipmentFeign;
     @Resource
-    private ReportColumnConfigService reportColumnConfigService;
+    private CfgAmzReportFieldService cfgAmzReportFieldService;
+    @Resource
+    private MongoTemplate mongoTemplate;
     @Resource
     private CfgAppClientService cfgAppClientService;
 
@@ -213,7 +224,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createReportSchedule(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
+    public void createReportSchedule(AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         // 支持切换时间间隔
         OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
@@ -257,7 +268,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
         // 更新到记录
-        reportSchedule.setReportScheduleId(response.getReportScheduleId());
+        reportSchedule.setAmzReportScheduleId(response.getReportScheduleId());
         reportSchedule.setFirstNextReportCreationTime(roundedOffsetDateTime.toLocalDateTime());
         reportSchedule.setSubscribedStatus(ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
         if (!reportScheduleService.updateById(reportSchedule)) {
@@ -267,9 +278,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
-        // 间隔
-        Thread.sleep(20000);
+    public void createReport(AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, String groupId, AmazonJobParamDTO.ReportJobDTO jobParamDTO) throws Exception {
         // 校验MarketplaceId
         String[] marketplaceSplit = reportSchedule.getMarketplaceIds().split(",");
         if (marketplaceSplit.length == 0) {
@@ -288,8 +297,8 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
-        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         // 支持切换时间间隔
+        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         // 修改下次创建时间
         OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
         LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
@@ -300,8 +309,11 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             throw new ServiceException("[reportSchedule] 更新失败");
         }
 
+        // 请求亚马逊报告列表（getReports）是否有最新报告记录
+//        ReportInfoMongoDTO reportInfoMongoDTO = this.
+
         // 请求亚马逊接口
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, );
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(reportSchedule.getReportType());
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
@@ -380,7 +392,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     }
 
     @Override
-    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
+    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
         List<?> cvsList = handleDownloadAndParse(reportDocument, recordTypeEnum, columnMap);
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
@@ -407,7 +419,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     }
 
     @Override
-    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
+    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, AmzReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO, Map<String, String> columnMap) throws IOException {
 
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
@@ -589,7 +601,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
         // 报告计划
         String reportScheduleId = report.getReportScheduleId();
-        ReportScheduleEntity reportScheduleEntity = null;
+        AmzReportScheduleEntity reportScheduleEntity = null;
         // 报告计划任务
         if (StringUtils.isNotBlank(reportScheduleId)) {
             // 查询报告计划ID是否已存在
@@ -653,7 +665,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             throw new ServiceException("报告类型不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
         }
         // 查询报告配置map<报告列表名, mongo保存字段名>
-        Map<String, String> columnMap = reportColumnConfigService.mayByReportType(recordTypeEnum.getRecordType());
+        Map<String, String> columnMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         if (columnMap.isEmpty()){
             throw new ServiceException("报告类型列表配置不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
         }
@@ -662,6 +674,16 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(mongoDTO.getReportId());
         this.handleReport(reportsApi, report, recordTypeEnum, columnMap);
+    }
+
+    @Override
+    public List<ReportInfoMongoDTO> mongoNewReportInfo(String shopId, String reportType, OffsetDateTime currentDateTime, Integer size) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("shopId").is(shopId)
+                .and("reportType").is(reportType)
+                .and("createdTime").gte(currentDateTime.toString()));
+        query.limit(size);
+        return mongoTemplate.find(query, ReportInfoMongoDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
     }
 
 

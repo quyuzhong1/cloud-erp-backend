@@ -1,8 +1,7 @@
 package com.erp.server.dmp.service;
+
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.AmzReportInfoDTO;
 
 /**
  * <p>
@@ -14,6 +13,12 @@ import com.erp.model.dmp.dto.AmzReportInfoDTO;
  */
 public interface AmzReportInfoService extends SuperService<AmzReportInfoEntity> {
 
+    /**
+     * 根据报告ID查询信息
+     *
+     * @author Jim
+     * @date: 2024-01-19
+     */
 
-
+    AmzReportInfoEntity getByReportId(String reportId, String processingStatus);
 }

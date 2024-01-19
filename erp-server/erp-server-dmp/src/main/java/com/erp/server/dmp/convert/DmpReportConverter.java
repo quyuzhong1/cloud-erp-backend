@@ -1,6 +1,8 @@
 package com.erp.server.dmp.convert;
 
-import com.erp.model.dmp.entity.ReportScheduleEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
@@ -10,6 +12,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -44,7 +48,7 @@ public interface DmpReportConverter {
             @Mapping(target = "processingEndTime", expression = "java(report.getProcessingEndTime().toString())"),
             @Mapping(target = "processingStatus", expression = "java(report.getProcessingStatus().getValue())"),
     })
-    ReportInfoMongoDTO newReportInfoMongoDTO(Report report, ReportDocument reportDocument, ReportScheduleEntity reportScheduleEntity);
+    ReportInfoMongoDTO newReportInfoMongoDTO(Report report, ReportDocument reportDocument, AmzReportScheduleEntity reportScheduleEntity);
 
 
     @Mappings({
@@ -56,6 +60,7 @@ public interface DmpReportConverter {
             @Mapping(target = "reportType", source = "report.reportType"),
             @Mapping(target = "reportScheduleId", source = "report.reportScheduleId"),
             @Mapping(target = "reportId", source = "report.reportId"),
+            @Mapping(target = "reportCreatedTime", expression = "java(report.getCreatedTime().toString())"),
             @Mapping(target = "createdTime", source = "mongoDTO.createdTime"),
             @Mapping(target = "shopId", source = "mongoDTO.shopId"),
             @Mapping(target = "dataStartTime", expression = "java(report.getDataStartTime().toString())"),
@@ -66,4 +71,19 @@ public interface DmpReportConverter {
             @Mapping(target = "downloadStatus", constant = "1"),
     })
     ReportInfoMongoDTO updateReportInfoMongoDTO(ReportInfoMongoDTO mongoDTO, ReportDocument reportDocument, Report report);
+
+
+    @Mappings({
+            @Mapping(target = "mainId", source = "entity.id"),
+            @Mapping(target = "shopId", source = "entity.shopId"),
+            @Mapping(target = "reportType", source = "entity.reportType"),
+            @Mapping(target = "reportTypeName", source = "entity.reportTypeName"),
+            @Mapping(target = "marketplaceIds", source = "entity.marketplaceIds"),
+            @Mapping(target = "reqDataStartTime", source = "reqDataStartTime"),
+            @Mapping(target = "reqDataEndTime", source = "reqDataEndTime"),
+            @Mapping(target = "reportId", source = "reqDataEndTime"),
+            @Mapping(target = "status", constant = "created"),
+            @Mapping(target = "statusDesc", constant = "待请求/创建报表(第一步)"),
+    })
+    AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, LocalDateTime reqDataStartTime, LocalDateTime reqDataEndTime);
 }

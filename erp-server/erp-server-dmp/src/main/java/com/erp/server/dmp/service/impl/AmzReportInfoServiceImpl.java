@@ -19,4 +19,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class AmzReportInfoServiceImpl extends SuperServiceImpl<AmzReportInfoMapper, AmzReportInfoEntity> implements AmzReportInfoService {
 
+    @Override
+    public AmzReportInfoEntity getByReportId(String reportId, String processingStatus) {
+        return lambdaQuery()
+                .eq(AmzReportInfoEntity::getReportId, reportId)
+                .eq(AmzReportInfoEntity::getProcessingStatus, processingStatus)
+                .last("LIMIT 1")
+                .one();
+    }
 }

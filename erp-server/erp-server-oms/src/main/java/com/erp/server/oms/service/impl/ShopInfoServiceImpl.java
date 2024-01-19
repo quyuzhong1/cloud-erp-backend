@@ -245,6 +245,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     }
 
+    @Override
+    public List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto) {
+        return lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(ShopInfoEntity::getAuthStatus, dto.getAuthStatus())
+                .eq(ShopInfoEntity::getDisabled, false)
+                .in(CollectionUtils.isNotEmpty(dto.getShopIdList()), ShopInfoEntity::getId, dto.getShopIdList())
+                .list()
+                ;
+    }
+
     /**
      * 检查店铺是否存在
      *

@@ -2,10 +2,8 @@ package com.erp.server.dmp.controller.feign;
 
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.ReportHandleService;
-import com.erp.server.dmp.service.ReportScheduleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 

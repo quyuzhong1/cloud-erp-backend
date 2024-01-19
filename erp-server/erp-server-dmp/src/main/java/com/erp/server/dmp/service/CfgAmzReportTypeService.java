@@ -1,8 +1,12 @@
 package com.erp.server.dmp.service;
+
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.CfgAmzReportTypeDTO;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -15,5 +19,19 @@ import com.erp.model.dmp.dto.CfgAmzReportTypeDTO;
 public interface CfgAmzReportTypeService extends SuperService<CfgAmzReportTypeEntity> {
 
 
+    /**
+     * 查询有效报告类型配置
+     *
+     * @Author Jim
+     * @since 2024-01-19
+     **/
+    List<CfgAmzReportTypeEntity> findActive();
 
+    /**
+     * 查询有效报告类型配置map
+     *
+     * @Author Jim
+     * @since 2024-01-19
+     **/
+    Map<String, List<CfgAmzReportTypeEntity>> mapByReportGroup();
 }

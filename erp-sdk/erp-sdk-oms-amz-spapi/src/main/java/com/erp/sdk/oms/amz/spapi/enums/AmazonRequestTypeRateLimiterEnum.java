@@ -25,6 +25,13 @@ public enum AmazonRequestTypeRateLimiterEnum {
 
     // 商品相关
     PRODUCT_ITEMS("5", "5", "product","商品详情"),
+
+    // 货件相关
+    FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
+
+    // 报告相关
+    REPORTS("0.0222", "10","reports","报告列表"),
+    REPORTS_CREATE("0.0167 ", "15","reports_create","创建报告"),
     ;
 
 

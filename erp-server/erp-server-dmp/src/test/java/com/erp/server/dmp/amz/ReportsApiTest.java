@@ -13,23 +13,18 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,9 +34,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,6 +50,8 @@ public class ReportsApiTest {
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private ReportColumnConfigService reportColumnConfigService;
 
 
     /**
@@ -336,32 +331,53 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportsTest() throws Exception {
-//        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
         List<String> processingStatuses = null;
-        List<String> marketplaceIds = null
-                ;
-        Integer pageSize = 10;
+//        List<String> marketplaceIds = null;
+        Integer pageSize = 20;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
-        String shopId = "1739494918432231426";
+        String shopId = "1735479610549735425";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
       AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");
         System.out.println(JSON.toJsonStr(response));
         // TODO: test validations
+    }
+
+    @Test
+    public void getReportDownload() throws Exception{
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.6b252e9b-54b7-4df0-86f1-15076134f63b.T1KKOFBL8G8FZF.2650";
+        String shopId = "1734478618723094529";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportDocument reportDocument = api.getReportDocument(reportDocumentId);
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA;
+        Map<String, String> configMap = reportColumnConfigService.mayByReportType(recordTypeEnum.getRecordType());
+        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
+        JSONArray jsonArray = AmazonSpApiReportUtils.download(reportDocument.getUrl(), compressionAlgorithm, configMap);
+        System.out.println("报告下载结果");
+        System.out.println(jsonArray);
+
     }
 
 }

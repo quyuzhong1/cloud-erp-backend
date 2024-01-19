@@ -216,4 +216,9 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     ShopInfoEntity getRelatedShopByIdAndCountry(ShopInfoDTO.RelatedDTO relateDTO);
 
     String autoCreateShopCustomer(String id);
+
+    /**
+     * 查询指定或所有店铺
+     */
+    List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto);
 }

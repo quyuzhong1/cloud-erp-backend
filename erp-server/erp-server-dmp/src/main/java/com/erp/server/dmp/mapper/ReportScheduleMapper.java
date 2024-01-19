@@ -1,5 +1,4 @@
 package com.erp.server.dmp.mapper;
-import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;

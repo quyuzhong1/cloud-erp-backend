@@ -110,6 +110,12 @@ public interface RedisCacheConstants {
     String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";
 
     /**
+     * 平台请求频率:平台类型:sellerId:业务类型/接口类型:端点
+     */
+    String PLATFORM_RATE_LIMIT_ENDPOINTS = "platform_rate_limit:{}:{}:{}:{}";
+
+
+    /**
      * 平台请求频率前缀:groupId
      */
     String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
