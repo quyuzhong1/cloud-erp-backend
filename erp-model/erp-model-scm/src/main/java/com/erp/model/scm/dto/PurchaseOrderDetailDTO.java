@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -150,6 +151,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 未交货数量
          */
         private Integer unReceiveQty;
+        /**
+         * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+         */
+        private String executionStatus;
+        /**
+         * 执行状态描述
+         */
+        private String executionStatusName;
     }
 
     @Data

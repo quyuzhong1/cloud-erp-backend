@@ -198,10 +198,13 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Integer toDeliverQty;
         /**
-         * 签收数量/已送货数量
+         * 签收数量/已送货数量/已收货数量
          */
         private Integer receiveQty;
-
+        /**
+         * 已送货未签收数量/已送货数量
+         */
+        private Integer waitReceiveQty;
         /**
          * 入库数量
          */
@@ -289,6 +292,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 交货周期
+         * product_purchase
+         */
+        private Integer deliveryCycle;
+        /**
+         * 交货周期描述
+         */
+        private String deliveryCycleName;
+
+        /**
          * 采购申请单id集合
          */
         @JsonIgnore
@@ -341,7 +354,6 @@ public class PurchaseOrderDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
-
 
         /**
          * 供应商id

@@ -333,7 +333,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98026);
         }
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
-        details.forEach(obj -> obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100)));
+        details.forEach(obj -> {
+            obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100));
+            obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
+        });
         dto.setDetails(details);
 
         List<String> podIds = entityDetails.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
@@ -1366,7 +1369,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
-
+            //交货周期
+            if(Objects.nonNull(obj.getDeliveryCycle())){
+                if (obj.getDeliveryCycle() <= 0){
+                    obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
+                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 0){
+                    obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
+                }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_ONE_MONTH.getName());
+                }else if (60 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 30){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_TWO_MONTH.getName());
+                }else if (obj.getDeliveryCycle()> 60){
+                    obj.setDeliveryCycleName("2个月以上");
+                }
+            }
             // 采购申请单号
             if(CollUtil.isNotEmpty(refList) && StringUtils.isBlank(obj.getSourceType())) {
                 // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
@@ -2350,8 +2366,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
-        return null;
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
+        List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        doOpHandlePurchaseOrder(records);
+        return new PagingVO(pageData);
     }
 
     @Override
