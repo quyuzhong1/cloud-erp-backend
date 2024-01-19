@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,4 +50,16 @@ public interface SrmDeliveryOrderFeign {
 
     @PostMapping("/feign/deliveryOrder/pagingTotal")
     DeliveryOrderDTO.TotalInfo pagingTotal(@RequestBody DeliveryOrderDTO.ParamDTO dto);
+
+    @PostMapping("/feign/deliveryOrder/listByIds")
+    List<DeliveryOrderEntity> listByIds(@RequestBody List<String> ids);
+
+    @PostMapping("/feign/deliveryOrder/listDetailByIds")
+    List<DeliveryOrderDetailEntity> listDetailByIds(@RequestBody List<String> detailIds);
+
+    @PostMapping("/feign/deliveryOrder/updateDeliveryOrder")
+    boolean updateDeliveryOrder(@RequestBody DeliveryOrderEntity deliveryOrderEntity);
+
+    @PostMapping("/feign/deliveryOrder/updateDeliveryDetail")
+    boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList);
 }

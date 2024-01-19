@@ -1,26 +1,24 @@
 package com.erp.server.srm.controller.feign;
 
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
-import com.erp.server.srm.query.DeliveryOrderQueryHandler;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -141,5 +139,41 @@ public class DeliveryOrderFeginController extends BaseController {
     @PostMapping("/listGenerateReceive")
     public List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@RequestBody BaseIdsDTO.IdsDTO dto){
         return deliveryOrderService.listGenerateReceive(dto);
+    }
+
+
+    /**
+     * 查询发货单
+     */
+    @PostMapping("/listByIds")
+    public List<DeliveryOrderEntity> listByIds(@RequestBody List<String> ids){
+        return deliveryOrderService.listByIds(ids);
+    }
+
+    /**
+     * 查询发货单明细
+     */
+    @PostMapping("/listDetailByIds")
+    public List<DeliveryOrderDetailEntity> listDetailByIds(@RequestBody List<String> detailIds){
+        return detailService.listByIds(detailIds);
+    }
+
+
+    /**
+     * 更新主记录
+     */
+    @PostMapping("/updateDeliveryOrder")
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean updateDeliveryOrder(@RequestBody DeliveryOrderEntity deliveryOrderEntity){
+        return deliveryOrderService.updateById(deliveryOrderEntity);
+    }
+
+    /**
+     * 更新明细
+     */
+    @PostMapping("/updateDeliveryDetail")
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList){
+        return detailService.updateBatchById(detailEntityGroupList);
     }
 }
