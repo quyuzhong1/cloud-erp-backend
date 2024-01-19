@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -32,4 +33,7 @@ public interface SrmDeliveryOrderFeign {
 
     @PostMapping("/feign/deliveryOrder/listDetailByDetailSourceIds")
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
+
+    @PostMapping("/feign/deliveryOrder/getExportList")
+    List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto);
 }

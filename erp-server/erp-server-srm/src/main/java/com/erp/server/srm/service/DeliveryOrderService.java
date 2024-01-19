@@ -1,5 +1,7 @@
 package com.erp.server.srm.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
+import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -52,4 +54,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     boolean delete(List<String> ids);
 
     boolean confirmPrint(List<String> ids);
+
+    List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto);
 }
