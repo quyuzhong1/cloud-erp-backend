@@ -91,7 +91,7 @@ public class TransferLogisticsSupplierController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.dto.base.BaseResultDTO.AddDTO>
      **/
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物理商表新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "中转报关服务商表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TransferLogisticsSupplierDTO.AddDTO dto) {
         return success(transferLogisticsSupplierService.add(dto));
     }
@@ -131,7 +131,7 @@ public class TransferLogisticsSupplierController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
      **/
     @PostMapping("/sync")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道同步")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "中转报关服务商物流渠道同步")
     public ApiResult<List<BatchResultDTO>> sync(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
 
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -143,7 +143,7 @@ public class TransferLogisticsSupplierController extends BaseController {
                 log.error("物流渠道同步失败{}", e);
                 TransferLogisticsSupplierEntity entity = transferLogisticsSupplierService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "物流商不存在, 同步失败");
+                    result = BatchResultDTO.fail(id, id, "中转报关服务商不存在, 同步失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -176,7 +176,7 @@ public class TransferLogisticsSupplierController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "物流商删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "中转报关服务商删除")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -193,7 +193,7 @@ public class TransferLogisticsSupplierController extends BaseController {
                 log.error("物流商删除失败{}", e);
                 TransferLogisticsSupplierEntity entity = transferLogisticsSupplierService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "物流商不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "中转报关服务商不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }

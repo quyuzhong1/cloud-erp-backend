@@ -10,6 +10,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -272,6 +273,18 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
      * 新增修改处理数据
      */
     private void handleData(TransferLogisticsSupplierEntity logisticsSupplierEntity) {
+        String logisticsSupplier = "物流供应商";
+        String supplierId = logisticsSupplierEntity.getSupplierId();
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException("供应商不存在");
+        }
+        //供应商分类名
+        String supplierCategoryName = supplier.getCategoryName();
+        if (!logisticsSupplier.equals(supplierCategoryName)) {
+            throw new ServiceException("供应商分类不为物流供应商");
+        }
+        logisticsSupplierEntity.setSupplierName(supplier.getName());
 
     }
 }

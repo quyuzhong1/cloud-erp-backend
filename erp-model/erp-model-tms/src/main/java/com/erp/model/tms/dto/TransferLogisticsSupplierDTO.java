@@ -83,7 +83,7 @@ public class TransferLogisticsSupplierDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO extends LogisticsSupplierDTO.PagingParamDTO {
+    public static class ExportDTO extends PagingParamDTO {
         private List<String> ids;
     }
 
@@ -306,7 +306,7 @@ public class TransferLogisticsSupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends LogisticsSupplierDTO.CommonDTO {
+    public static class AddDTO extends CommonDTO {
 
 
     }
@@ -316,7 +316,7 @@ public class TransferLogisticsSupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends LogisticsSupplierDTO.CommonDTO {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主键id
