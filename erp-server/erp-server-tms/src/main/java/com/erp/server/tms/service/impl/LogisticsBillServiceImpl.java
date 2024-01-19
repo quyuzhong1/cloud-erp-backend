@@ -18,6 +18,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.*;
@@ -745,18 +746,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
             Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
 
-            //平台
-            String logisticsPlatform = auth.getLogisticsPlatform();
-            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-
-            if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
-                authMap = service.getLogisticsAuthConfig(dto.getShopId());
-            }
-
             //请求面单参数
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
+
+            //平台
+            String logisticsPlatform = auth.getLogisticsPlatform();
+            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
+                authMap = service.getLogisticsAuthConfig(dto.getShopId());
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
+                }
+            }
 
             //运单号
             getLabelVO.setTransportNo(dto.getTransportNo());

@@ -137,9 +137,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         // 新增明细（如果有明细的话）
         soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
 
-        //触发物流拦截
-        this.logisticsIntercept(soB2cDeliveryInterceptEntity.getId());
-
         return new BaseResultDTO.AddDTO(soB2cDeliveryInterceptEntity.getId(), code);
     }
 
@@ -232,16 +229,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(entity.getLogisticsChannelId());
         if (Objects.isNull(auth)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
-        }
-
-        //API对接的海外仓拦截
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
-            BatchResultDTO result = overseasProviderIntercept(entity, soB2cEntityList, platformEnum);
-            return result;
         }
 
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
@@ -308,35 +299,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
     }
 
-    private BatchResultDTO overseasProviderIntercept(SoB2cDeliveryInterceptEntity entity, List<SoB2cEntity> soB2cEntityList, LogisticsPlatformEnum platformEnum) {
-        ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
-        req.setOrderCode(soB2cEntityList.get(0).getShippingOrderNo());
-        req.setThirdWarehouseProvideCode(platformEnum.getCode());
-        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByPlatformCode(platformEnum.getCode());
-        if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
-            req.setAuthId(overseasProviderEntity.getId());
-        }
-
-        ApiResult<String> stringApiResult = thirdWarehouseFeign.cancelOutboundOrder(req);
-        if (stringApiResult.getCode() == 200) {
-            //自动拦截结果确认，拦截成功
-            SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
-            dto.setHandleResult(HandleResultEnum.SUCCESS.getCode());
-            dto.setResultRemark("第三方海外仓拦截成功，自动生成拦截单");
-            this.interceptResultConfirm(dto, entity.getId());
-
-            return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截成功");
-        } else {
-            //自动拦截结果确认，拦截失败
-            SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
-            dto.setHandleResult(HandleResultEnum.FAILURE.getCode());
-            dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
-            this.interceptResultConfirm(dto, entity.getId());
-
-            return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截失败");
-        }
-    }
-
     @Override
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
@@ -359,7 +321,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
         if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
             //修改拦截状态，冻结状态
-            updateSoInterceptStatus(entity);
+            updateInterceptStatus(entity);
 
             //反审核销售出库单，并作废
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
@@ -422,7 +384,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void updateSoInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
+    public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
