@@ -295,6 +295,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
 
+        //已处理不可重复操作
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
+        }
+
         //修改状态
         lambdaUpdate()
                 .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
