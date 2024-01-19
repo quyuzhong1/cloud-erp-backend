@@ -45,19 +45,6 @@ public class TransferLogisticsChannelController extends BaseController {
     private TransferLogisticsChannelService transferLogisticsChannelService;
 
     /**
-     * 新增
-     * @Author Luo_WG
-     * @Date 2024/1/19 17:42
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.dto.base.BaseResultDTO.AddDTO>
-     **/
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "中转报关服务商物流渠道新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TransferLogisticsChannelDTO.AddDTO dto) {
-        return success(transferLogisticsChannelService.add(dto));
-    }
-
-    /**
      * 物流渠道详情
      * @Author Luo_WG
      * @Date 2024/1/19 17:42
@@ -73,24 +60,6 @@ public class TransferLogisticsChannelController extends BaseController {
     public ApiResult<TransferLogisticsChannelDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id") String id) {
         TransferLogisticsChannelDTO.ViewDTO view = transferLogisticsChannelService.view(id);
         return success(view);
-    }
-
-    /**
-     * 物流渠道修改
-     * @Author Luo_WG
-     * @Date 2024/1/19 17:43
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/update")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:transferLogisticsChannel:update",
-            serviceClass = TransferLogisticsChannelService.class,
-            keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated TransferLogisticsChannelDTO.UpdateDTO dto) {
-        transferLogisticsChannelService.update(dto);
-        return success();
     }
 
     /**
@@ -183,7 +152,7 @@ public class TransferLogisticsChannelController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>>
      **/
     @GetMapping("listAll")
-    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll() {
         return success(transferLogisticsChannelService.listAll());
     }
 
