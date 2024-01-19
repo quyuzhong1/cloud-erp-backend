@@ -42,6 +42,7 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -55,6 +56,7 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
+import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -173,6 +175,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private PurchaseOrderQueryHandler purchaseOrderQueryHandler;
+
+    @Resource
+    private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
+
+    
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -1224,9 +1231,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //入库信息
         List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
-        //收货信息
-        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-
+        //送货单信息
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
 
         //退货数量
         List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
@@ -1280,14 +1286,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
-            //有效收货数量
-            Integer hasQty = MathUtil.ZERO;
             //收货数量
-            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
-                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                hasQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
-                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //入库数量
@@ -1300,7 +1302,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已完成、已关闭订单交货数量为0
             Integer deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
                     || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
-                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
+                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - receiveQty;
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
             //待送货数量
