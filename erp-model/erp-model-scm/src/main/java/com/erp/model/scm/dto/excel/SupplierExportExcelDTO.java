@@ -68,7 +68,7 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
-     * 供应商分类
+     * 启用状态
      */
     @ExcelProperty(value = "启用状态", index = 6)
     @ColumnWidth(10)
@@ -76,28 +76,28 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
-     * 供应商分类
+     * SRM协同 true 停用 false 开启
      */
     @ExcelProperty(value = "SRM协同", index = 7)
     @ColumnWidth(10)
     private String srmDisabled;
 
     /**
-     * 供应商分类
+     * 订单接受规则
      */
     @ExcelProperty(value = "订单接受规则", index = 8)
     @ColumnWidth(10)
     private String orderAcceptRule;
 
     /**
-     * 供应商分类
+     * 退货确认规则
      */
     @ExcelProperty(value = "退货确认规则", index = 9)
     @ColumnWidth(10)
     private String returnConfirmRule;
 
     /**
-     * 结算付款方式
+     * 结算方式
      */
     @ExcelProperty(value = "结算方式", index = 10)
     @ColumnWidth(20)
@@ -110,7 +110,9 @@ public class SupplierExportExcelDTO implements Serializable {
     @ColumnWidth(20)
     private String paymentConditionName;
 
-
+    /**
+     * 采购员
+     */
     @ExcelProperty(value = "采购员", index = 12)
     @ColumnWidth(10)
     private String purchaseUserName;
@@ -125,7 +127,7 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
-     * 联系人名
+     * 联系人电话
      */
     @ExcelProperty(value = "联系人电话", index = 14)
     @ColumnWidth(20)

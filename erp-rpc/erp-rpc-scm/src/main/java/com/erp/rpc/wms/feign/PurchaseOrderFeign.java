@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -59,5 +60,14 @@ public interface PurchaseOrderFeign {
     List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto);
 
     @GetMapping("/feign/purchaseOrder/srmOrderView")
-    PurchaseOrderDTO.ViewDTO srmOrderView(@Param("id") String id);
+    PurchaseOrderDTO.ViewDTO srmOrderView(@RequestParam("id") String id);
+
+    /**
+     * srm待发货列表统计
+     * @author zdy
+     * @date: 2024/1/16 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/feign/purchaseOrder/srmWaitDeliveryCount")
+    PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
 }

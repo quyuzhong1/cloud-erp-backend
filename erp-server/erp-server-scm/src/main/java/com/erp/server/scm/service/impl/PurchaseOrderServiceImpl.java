@@ -44,6 +44,7 @@ import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -287,7 +288,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 dto.setPurchaseUserName(purchaseUser.getUserName());
             }
         }
-
+        //新品首批
+        if (Objects.nonNull(dto.getIsFirstMassProduct())){
+            dto.setFirstMassProductName(dto.getIsFirstMassProduct() ? "是":"否");
+        }
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
@@ -295,6 +299,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98031);
         }
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
+
+        //结算方式
+        DictBasicEntity payMethod = dictBasicService.getById(supplierUpdateDTO.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(payMethod)) {
+            supplierUpdateDTO.setPayMethodName(payMethod.getName());
+        }
+        //结算币种
+        if (StringUtils.isNotBlank(supplierUpdateDTO.getPayCurrency())){
+            List<CurrencyDTO.ViewDTO> viewDTOS = sysUserFeign.listByCurrency(Collections.singletonList(supplierUpdateDTO.getPayCurrency()));
+            if (CollectionUtils.isNotEmpty(viewDTOS)){
+                supplierUpdateDTO.setPayCurrencyName(viewDTOS.get(0).getName());
+            }
+        }
+        // 采购订单供应商付款条件
+        if(StrUtils.isNotEmpty(supplierUpdateDTO.getPaymentCondition())) {
+            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
+            if(paymentConditionMap.containsKey(supplierUpdateDTO.getPaymentCondition())) {
+                supplierUpdateDTO.setPaymentConditionName(paymentConditionMap.get(supplierUpdateDTO.getPaymentCondition()).get(0).getName());
+            }
+        }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
 
         //单据类型
@@ -319,6 +344,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             receiveDetailList = receiveDetailList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).collect(Collectors.toList());
 
         }
+        //审核状态
+        dto.setApproveStatusName(ApproveStatusEnum.getName(dto.getApproveStatus()));
         //流程信息
         List<PurchaseOrderProcessDTO> processList = new ArrayList<>();
         PurchaseOrderProcessOperationEnum[] values = PurchaseOrderProcessOperationEnum.values();
@@ -515,6 +542,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+
         List<String> podIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         //验证有没有下推收货单据
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
@@ -530,6 +558,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseChangeEntity> purchaseChangeList = purchaseChangeService.listByPoIds(ids);
         if (CollectionUtils.isNotEmpty(purchaseChangeList)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE);
+        }
+
+        //送货中、已完成、已关闭不能反审核,但是上面验证了下推收货单据则只需要验证已关闭即可
+        long closeCount = purchaseOrderDetailList.stream().filter(obj -> ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus())).count();
+        if (closeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_DISAPPROVE_CLOSE);
         }
 
         log.info("采购订单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -1371,6 +1405,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);
+            obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "已启用": "已停用");
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
@@ -2310,8 +2345,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
-        return null;
+    public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        return baseMapper.srmWaitDeliveryCount(dto.getSupplierId());
     }
 
     @Override

@@ -223,6 +223,11 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean srmDisabled;
 
         /**
+         * srm协同名称（true 已停用，false 已开启）
+         */
+        private String srmDisabledName;
+
+        /**
          * 备注/明细备注
          */
         private String remark;
@@ -359,7 +364,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseUserId;
 
         /**
-         * 采购员名称
+         * 采购员名称/客户联系人
          */
         private String purchaseUserName;
 
@@ -373,19 +378,29 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
-
+        /**
+         * 采购组织名称/客户
+         */
+        private String purchaseOrgName;
         /**
          * 交货仓库id
          */
         @NotBlank(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
+        /**
+         * 目的仓库/交货仓库
+         */
+        private String deliveryWarehouseName;
 
         /**
          * 新品首批（false否,true是）
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
-
+        /**
+         * 新品首批 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
         /**
          * 委外订单类型(child子级，parent父级)
          */
@@ -481,7 +496,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
-
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
         /**
          * 收料组织id
          */
@@ -491,6 +509,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 收料组织名称
          */
         private String receiveOrgName;
+
+        /**
+         * 已审核通过时间/下单时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 操作流程（仅详情显示，无需传参）

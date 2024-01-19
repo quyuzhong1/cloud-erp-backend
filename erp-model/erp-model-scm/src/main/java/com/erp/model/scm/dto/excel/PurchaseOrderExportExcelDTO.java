@@ -55,10 +55,10 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String invalidStatusName;
 
     /**
-     * 到货状态（0未到货，1部分到货，2已到货）
+     * 执行状态
      */
-    @ExcelProperty(value = "到货状态", index = 6)
-    private String arrivalStatusName;
+    @ExcelProperty(value = "执行状态", index = 6)
+    private String executionStatusName;
 
     /**
      * sku编码
@@ -127,9 +127,9 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private Integer deliveryQty;
 
     /**
-     * 签收数量
+     * 已收货数量
      */
-    @ExcelProperty(value = "签收数量", index = 18)
+    @ExcelProperty(value = "已收货数量", index = 18)
     private Integer receiveQty;
 
     /**
@@ -151,33 +151,39 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String remark;
 
     /**
+     * SRM协同
+     */
+    @ExcelProperty(value = "SRM协同", index = 22)
+    private String srmDisabledName;
+
+    /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 22)
+    @ExcelProperty(value = "审核人（最新）", index = 23)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 23, converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 24, converter= LocalDateStringConverter.class)
     private LocalDateTime approveTime;
 
     /**
      * 申请人
      */
-    @ExcelProperty(value = "申请人", index = 24)
+    @ExcelProperty(value = "申请人", index = 25)
     private String purchaseUserName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 25)
+    @ExcelProperty(value = "创建人", index = 26)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 26, converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 27, converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 }
