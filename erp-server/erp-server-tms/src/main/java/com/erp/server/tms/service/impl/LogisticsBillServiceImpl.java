@@ -406,14 +406,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
                 if(maxCustoms<0){
-                    destDeclarePrice=maxCustomsAmount;
+                    productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
-                int minCustoms = minCustomsAmount.compareTo(destDeclarePrice);
+                int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
                 if(minCustoms<0){
-                    destDeclarePrice=minCustomsAmount;
+                    productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
-                productDTO.setDestDeclarePrice(destDeclarePrice);
+
                 //如果是速卖通的话
                 if (isAliExpress) {
                     String platformSpuNo = item.getPlatformSpuNo();
