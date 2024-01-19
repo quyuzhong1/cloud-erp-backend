@@ -10,6 +10,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.mapper.TransferLogisticsChannelMapper;
 import com.erp.server.tms.service.TransferDeclareService;
@@ -136,7 +137,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         }
         entity.setDisabled(disabled);
         this.updateById(entity);
-        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
+        String msg = StrUtil.format("用户【{}】修改【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
 
@@ -158,22 +159,6 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean copy(String id) {
-        TransferLogisticsChannelEntity channel = this.getById(id);
-        if (Objects.isNull(channel)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
-        }
-        TransferLogisticsChannelEntity addChannel = new TransferLogisticsChannelEntity();
-        String addChannelId = IdWorker.getIdStr();
-        BeanMapperUtils.copy(channel, addChannel);
-        addChannel.setId(addChannelId);
-        Boolean result = this.save(addChannel);
-        return result;
-    }
-
-
-    @Override
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<TransferLogisticsChannelEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
@@ -191,6 +176,13 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
             return Collections.emptyList();
         }
         return lambdaQuery().in(TransferLogisticsChannelEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String transferLogisticsSupplierId) {
+        List<TransferLogisticsChannelEntity> channelList = this.listByMainIds(Arrays.asList(transferLogisticsSupplierId));
+        List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
+        return resultList;
     }
 
     /**

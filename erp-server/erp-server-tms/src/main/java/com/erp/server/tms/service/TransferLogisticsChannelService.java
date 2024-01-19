@@ -83,15 +83,6 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
     void removeByMainIdList(List<String> sourceIdList);
 
     /**
-     * 复制渠道
-     * @Author Luo_WG
-     * @Date 2024/1/19 14:28
-     * @param id
-     * @return java.lang.Boolean
-     **/
-    Boolean copy(String id);
-
-    /**
      * 获取到所有的渠道
      * @Author Luo_WG
      * @Date 2024/1/19 14:28
@@ -117,4 +108,12 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
      **/
     List<TransferLogisticsChannelEntity> listByMainIds(List<String> mainIds);
 
+    /**
+     * 根据物流商id 获取渠道
+     * @Author Luo_WG
+     * @Date 2024/1/19 17:56
+     * @param transferLogisticsSupplierId
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>
+     **/
+    List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String transferLogisticsSupplierId);
 }
