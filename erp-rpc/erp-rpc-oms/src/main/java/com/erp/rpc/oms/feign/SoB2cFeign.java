@@ -271,4 +271,15 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateIntercept")
     Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
+
+    /**
+     * 修改订单异常原因
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:51
+     * @param id
+     * @param soB2cAbnormalType
+     * @return java.lang.Boolean
+     **/
+    @GetMapping("/feign/soB2c/updateAbnormalType")
+    Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType);
 }

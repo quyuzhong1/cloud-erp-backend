@@ -4450,29 +4450,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getIsFrozen, interceptUpdateOrderDTO.getIsFrozen())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus()), SoB2cEntity::getApproveStatus, interceptUpdateOrderDTO.getApproveStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus()), SoB2cEntity::getBillStatus, interceptUpdateOrderDTO.getBillStatus())
+                .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getAbnormalType()), SoB2cEntity::getAbnormalType, interceptUpdateOrderDTO.getAbnormalType())
                 .in(SoB2cEntity::getId, interceptUpdateOrderDTO.getIds())
                 .update();
     }
 
-    /**
-     * 校验是否存在拦截单
-     *
-     * @param list
-     */
-    private void checkIsIntercept(List<SoB2cEntity> list) {
-        List<String> soIdList = list.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        List<SoB2cDeliveryInterceptDTO.IsInterceptDTO> interceptDTOList = soB2cDeliveryInterceptFeign.listIsIntercept(soIdList);
-        for (SoB2cEntity soB2cEntity : list) {
-            SoB2cDeliveryInterceptDTO.IsInterceptDTO isInterceptDTO = interceptDTOList.stream()
-                    .filter(req -> req.getId().equals(soB2cEntity.getId())
-                            && !HandleResultEnum.SUCCESS.getCode().equals(req.getHandleResult())
-                    ).findFirst()
-                    .orElse(null);
-            if (ObjectUtil.isNotEmpty(isInterceptDTO)) {
-                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
-            }
-        }
+    @Override
+    public Boolean updateAbnormalType(String id, String soB2cAbnormalType) {
+        return lambdaUpdate().eq(SoB2cEntity::getId, id)
+                .set(SoB2cEntity::getAbnormalType, soB2cAbnormalType)
+                .update();
     }
+
 
     /**
      * 查询店铺权限设置
