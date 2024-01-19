@@ -59,6 +59,8 @@ import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -119,8 +121,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO) {
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
-        LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, updateDTO);
-        logisticsBillCostEntity.setLogisticsBillId(old.getLogisticsBillId());
+        //赋值
+        LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
+        logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
+        logisticsBillCostEntity.setActualShippingCost(updateDTO.getActualShippingCost());
+        logisticsBillCostEntity.setRemark(updateDTO.getRemark());
+
         // 数据处理
         handleData(logisticsBillCostEntity);
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
@@ -429,6 +435,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             excelDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
             if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !StrUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
                 errorMsgList.add("导入币别与物流费用单币别不一致");
+            }
+            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
+            || ReconciliationStatusEnum.INVALID.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
+                errorMsgList.add("物流费用单已确认或已作废不支持更新");
             }
 
         }

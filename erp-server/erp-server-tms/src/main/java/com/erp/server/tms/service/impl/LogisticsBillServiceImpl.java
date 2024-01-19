@@ -680,47 +680,42 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @date: 2023/11/20 12:27
      */
     public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
-        try {
-            LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
-            //渠道关联模板
-            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
-            //来源b2c销售订单
-            if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
-                //物流信息
-                List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
-                if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-                }
-                addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
-                //存在模板时计算体积重
-                if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                    BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
-                            .multiply(soB2cLogisticsList.get(0).getWeight())
-                            .multiply(soB2cLogisticsList.get(0).getLength());
-                    addDTO.setVolumeWeight(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
-                }
+        LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+        //渠道关联模板
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
+        //来源b2c销售订单
+        if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
+            //物流信息
+            List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
+            if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
             }
+            addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
+            //存在模板时计算体积重
             if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                //计费重
-                BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
-                        ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
-                //预估运费
-                ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-                viewParamDTO.setWeight(addDTO.getActualWeight());
-                viewParamDTO.setMainId(shippingTemplateEntity.getId());
-                ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-                if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
-                    BigDecimal shippingCost = shippingCalculationService.calculationShippingCost(shippingTemplateEntity, shippingTemplateRule, billingWeight);
-                    addDTO.setEstimatedShippingCost(shippingCost);
-                }
+                BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
+                        .multiply(soB2cLogisticsList.get(0).getWeight())
+                        .multiply(soB2cLogisticsList.get(0).getLength());
+                addDTO.setVolumeWeight(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
             }
-            addDTO.setCurrency(currency);
-            addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-            logisticsBillCostService.add(addDTO);
-        } catch (Exception e) {
-            log.error("生成物流费用出错>>>>>{}", e.getMessage());
         }
-
+        if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
+            //计费重
+            BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
+                    ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
+            //预估运费
+            ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+            viewParamDTO.setWeight(addDTO.getActualWeight());
+            viewParamDTO.setMainId(shippingTemplateEntity.getId());
+            ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+            if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
+                ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, billingWeight);
+                addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
+            }
+        }
+        addDTO.setCurrency(currency);
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        logisticsBillCostService.add(addDTO);
     }
 
     /**
