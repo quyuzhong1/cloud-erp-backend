@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
@@ -261,4 +262,19 @@ public interface SoB2cFeign {
 
     @GetMapping("/feign/soB2c/view")
     SoB2cDTO.ViewDTO view(@RequestParam("id") String id);
+
+
+    /**
+     * 更改订单的组包状态
+     * @return
+     */
+    @PostMapping("/feign/soB2c/updatePackageStatus")
+    Boolean updatePackageStatus(@RequestBody UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+    /**
+     * 更改订单的中转状态
+     * @return
+     */
+    @PostMapping("/feign/soB2c/updateTransferStatus")
+    Boolean updateTransferStatus(@RequestBody UpdateStateDTO.UpdateByStrStatusDTO dto);
 }

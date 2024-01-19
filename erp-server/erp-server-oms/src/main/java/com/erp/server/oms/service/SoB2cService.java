@@ -564,4 +564,24 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-03 17:37
      */
     Boolean updateWarehouseByShopId(String id, String shopId);
+
+    /**
+     * 更新组包状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2024-01-19 10:58
+     */
+    Boolean updatePackageStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+    /**
+     * 更新中转状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2024-01-19 11:07
+     */
+    Boolean updateTransferStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
 }

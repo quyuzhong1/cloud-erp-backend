@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -15,6 +16,7 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -373,6 +375,33 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/view")
     public SoB2cDTO.ViewDTO view(@RequestParam("id") String id) {
         return soB2cService.view(id);
+    }
+
+
+    /**
+     * 更新组包状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return 
+     * @create 2024-01-19 10:57
+     */
+    @PutMapping("/updatePackageStatus")
+    public  Boolean updatePackageStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        return soB2cService.updatePackageStatus(dto);
+    }
+
+    /**
+     * 更新中转状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 10:57
+     */
+    @PutMapping("/updateTransferStatus")
+    public  Boolean updateTransferStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        return soB2cService.updateTransferStatus(dto);
     }
 
 }

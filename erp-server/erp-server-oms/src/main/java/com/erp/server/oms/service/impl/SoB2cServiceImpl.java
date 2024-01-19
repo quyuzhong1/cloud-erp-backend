@@ -3212,6 +3212,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.FALSE;
     }
 
+
+    @Override
+    public Boolean updatePackageStatus(UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        //组包状态
+        String status = dto.getStatus();
+        String name = PackageStatusEnum.getName(status);
+        if (StringUtils.isBlank(name)) {
+            throw new ServiceException("组包状态有误");
+        }
+        return this.lambdaUpdate().set(SoB2cEntity::getPackageStatus, status).
+                eq(SoB2cEntity::getId, dto.getId()).update(new SoB2cEntity());
+    }
+
+
+    @Override
+    public Boolean updateTransferStatus(UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        //组包状态
+        String status = dto.getStatus();
+        String name = TransferStatusEnum.getName(status);
+        if (StringUtils.isBlank(name)) {
+            throw new ServiceException("组包状态有误");
+        }
+        return this.lambdaUpdate().set(SoB2cEntity::getTransferStatus, status).
+                eq(SoB2cEntity::getId, dto.getId()).update(new SoB2cEntity());
+    }
+
     /**
      * @param id
      * @param approveStatusEnum
