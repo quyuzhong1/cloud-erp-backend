@@ -39,7 +39,7 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @param params
      * @return
      */
-    IPage<PurchaseOrderDTO.ListDTO> srmPaging(Page query,@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+    IPage<PurchaseOrderDTO.ListDTO> srmPaging(Page query,@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
 
 
     /**
@@ -168,5 +168,5 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @param params
      * @return
      */
-    List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+    List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
 }

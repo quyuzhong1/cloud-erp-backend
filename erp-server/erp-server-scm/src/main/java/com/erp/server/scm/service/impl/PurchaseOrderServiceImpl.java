@@ -190,8 +190,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
-        PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
@@ -2336,26 +2336,94 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
-        PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
-        params.setPermissionSql(pagingDTO.getPermissionSql());
-//        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-//        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
-//            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
-//        }
-        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(params);
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PurchaseOrderDTO.SrmSearchParamDTO pagingDTO) {
+        PurchaseOrderDTO.ListDTO dto = new PurchaseOrderDTO.ListDTO();
+        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(pagingDTO);
         if (CollectionUtils.isEmpty(list)) {
-            return new PurchaseOrderDTO.ListDTO();
+            return countPurchaseOrder(dto, list);
         }
         //数据赋值处理
-        doOpHandlePurchaseOrder(list);
+        buildPurchaseOrderCount(list);
         //汇总
-        return new PurchaseOrderDTO.ListDTO();
+        return countPurchaseOrder(dto, list);
+    }
+    private  void buildPurchaseOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 采购订单明细id集合
+        List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        //入库信息
+        List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
+        //退货数量
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        for (PurchaseOrderDTO.ListDTO obj : records) {
+            //退货补货数量
+            Integer replenishQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //有效收货数量
+            Integer hasQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            //入库数量
+            Integer stockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            }
+            //已完成、已关闭订单交货数量为0
+            Integer deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                    || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
+                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
+            obj.setReceiveQty(receiveQty);
+            obj.setDeliveryQty(deliveryQty);
+            //待送货数量
+            if (Objects.nonNull(obj.getPurchaseQty())){
+                obj.setToDeliverQty(obj.getPurchaseQty() - receiveQty);
+            }else {
+                obj.setToDeliverQty(MathUtil.ZERO);
+            }
+            Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            obj.setReturnQty(returnQtyt);
+            obj.setStockInQty(stockInQty);
+            obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
+        }
+    }
+
+    private PurchaseOrderDTO.ListDTO countPurchaseOrder(PurchaseOrderDTO.ListDTO dto, List<PurchaseOrderDTO.ListDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            dto.setPurchaseQty(MathUtil.ZERO);
+            dto.setReceiveQty(MathUtil.ZERO);
+            dto.setDeliveryQty(MathUtil.ZERO);
+            dto.setStockInQty(MathUtil.ZERO);
+            dto.setToDeliverQty(MathUtil.ZERO);
+            dto.setReturnQty(MathUtil.ZERO);
+            return dto;
+        }
+        dto.setPurchaseQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
+        dto.setReceiveQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
+        dto.setDeliveryQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
+        dto.setStockInQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
+        dto.setToDeliverQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getToDeliverQty).sum());
+        dto.setReturnQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
+        return dto;
     }
 
 

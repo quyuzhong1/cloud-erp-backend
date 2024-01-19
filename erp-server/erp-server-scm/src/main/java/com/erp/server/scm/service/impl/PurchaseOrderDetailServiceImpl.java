@@ -397,8 +397,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //查询发货数据
         List<DeliveryOrderDetailEntity> deliveryDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(purchaseDetailIds);
-        Map<String,List<DeliveryOrderDetailEntity>> deliveryMap = deliveryDetailList.stream().collect(Collectors.groupingBy(DeliveryOrderDetailEntity::getSourceDetailId));
-
         //查询收货数据
         List<WarehouseReceiveDetailEntity> receiveDetails = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(purchaseDetailIds);
 

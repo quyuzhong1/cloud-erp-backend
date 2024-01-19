@@ -395,7 +395,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmPaging")
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.srmOrderConfirmPaging(dto);
         return pagingVO;
     }
@@ -407,7 +407,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmTotal")
-    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         return purchaseOrderService.srmOrderConfirmTotal(dto);
     }
     /**
@@ -461,7 +461,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmWaitDeliveryPaging")
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         return purchaseOrderService.srmWaitDeliveryPaging(dto);
     }
 }

@@ -184,7 +184,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 采购数量[可排序]
+         * 采购数量/订单数量[可排序]
          */
         private Integer purchaseQty;
 
@@ -194,11 +194,11 @@ public class PurchaseOrderDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 待送数量
+         * 待送货量
          */
         private Integer toDeliverQty;
         /**
-         * 签收数量
+         * 签收数量/已送货数量
          */
         private Integer receiveQty;
 
@@ -213,7 +213,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
-         * 退货数量
+         * 退货数量/已退货数量
          */
         private Integer returnQty;
 
@@ -223,7 +223,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean srmDisabled;
 
         /**
-         * 备注
+         * 备注/明细备注
          */
         private String remark;
 
@@ -234,7 +234,7 @@ public class PurchaseOrderDTO implements Serializable {
 
 
         /**
-         * 申请人
+         * 申请人/客户联系人
          */
         private String purchaseUserName;
 
@@ -322,6 +322,26 @@ public class PurchaseOrderDTO implements Serializable {
         private Map<String,String> sqlMap;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SrmSearchParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+    }
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

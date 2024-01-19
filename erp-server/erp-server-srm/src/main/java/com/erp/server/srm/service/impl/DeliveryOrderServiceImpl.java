@@ -16,13 +16,16 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.CommonService;
@@ -60,12 +63,23 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Resource
     private DeliveryOrderDetailService detailService;
 
+    @Resource
+    private SupplierFeign supplierFeign;
+
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
-        pageData.getRecords().forEach(v-> v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus())));
+        this.fillData(pageData.getRecords(),dto.getParams().getSupplierIdList());
         return new PagingVO<>(pageData);
+    }
+
+    private void fillData(List<DeliveryOrderDTO.ListDTO> dataList,List<String> supplierIdList){
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(supplierIdList);
+        dataList.forEach(v->{
+            v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
+            v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+        });
     }
 
     @Override
@@ -195,6 +209,18 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             throw new ServiceException("更新打印状态失败");
         }
         return true;
+    }
+
+    @Override
+    public List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto) {
+        List<DeliveryOrderExportExcelDTO> list = this.baseMapper.getExportList(dto);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dto.getSupplierIdList());
+        list.forEach(v->{
+            v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
+            v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
+            v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+        });
+        return list;
     }
 
     @Transactional(rollbackFor = Exception.class)

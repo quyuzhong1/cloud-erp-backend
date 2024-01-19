@@ -15,12 +15,14 @@ import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
 import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,9 @@ public class SupplierDeliveryOrderController extends BaseController {
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SupplierDeliveryOrderService service;
 
     /**
      * 获取 tab列表
@@ -95,4 +100,16 @@ public class SupplierDeliveryOrderController extends BaseController {
         return success(srmDeliveryFeign.print(dto));
     }
 
+    /**
+     * 导出送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
+    public ApiResult<Boolean> export(@RequestBody  DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
+        return success(service.export(dto,response));
+    }
 }
