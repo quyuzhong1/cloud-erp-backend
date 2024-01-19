@@ -2331,8 +2331,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
-        return null;
+    public List<ListStatusCountDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+
+        WaitDeliveryCycleEnum[] typeEnums = WaitDeliveryCycleEnum.values();
+        List<ListStatusCountDTO.WaitDeliveryCountDTO> countDTOS = new ArrayList<>(typeEnums.length);
+
+        for (WaitDeliveryCycleEnum typeEnum : typeEnums) {
+            countDTOS.add(getWaitDeliveryCount(dto.getSupplierId(), typeEnum));
+        }
+        return countDTOS;
+    }
+
+    private ListStatusCountDTO.WaitDeliveryCountDTO getWaitDeliveryCount(String supplierId, WaitDeliveryCycleEnum typeEnum) {
+        ListStatusCountDTO.WaitDeliveryCountDTO dto = new ListStatusCountDTO.WaitDeliveryCountDTO();
+        dto.setType(typeEnum.getCode());
+        dto.setName(typeEnum.getName());
+        dto.setCount(baseMapper.srmWaitDeliveryCount(supplierId, typeEnum.getCode()));
+        return dto;
     }
 
     @Override

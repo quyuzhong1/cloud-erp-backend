@@ -218,7 +218,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer returnQty;
 
         /**
-         * srm协同（true 已开启，false 已停用）
+         * SRM协同 true 停用 false 开启
          */
         private Boolean srmDisabled;
 

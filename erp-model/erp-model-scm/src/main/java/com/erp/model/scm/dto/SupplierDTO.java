@@ -298,7 +298,7 @@ public class SupplierDTO implements Serializable {
         private Boolean disabled;
 
         /**
-         * SRM协同
+         * SRM协同 true 停用 false 开启
          */
         private Boolean srmDisabled;
 
@@ -423,7 +423,7 @@ public class SupplierDTO implements Serializable {
         private Boolean disabled;
 
         /**
-         * SRM协同
+         * SRM协同 true 停用 false 开启
          */
         private Boolean srmDisabled;
 
@@ -548,7 +548,7 @@ public class SupplierDTO implements Serializable {
 //        private Boolean disabled;
 //
 //        /**
-//         * SRM协同
+//         * SRM协同 true 停用 false 开启
 //         */
 //        private Boolean srmDisabled;
 //        /**
@@ -633,7 +633,7 @@ public class SupplierDTO implements Serializable {
          */
         private String categoryName;
         /**
-         * SRM协同 true 是 false 开启
+         * SRM协同 true 停用 false 开启
          */
         private Boolean srmDisabled;
         /**

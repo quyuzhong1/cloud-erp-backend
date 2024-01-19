@@ -419,7 +419,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return
      */
-    List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
+    List<ListStatusCountDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
 
     /**
      * 待发货 分页列表

@@ -623,4 +623,19 @@
         </if>
         po.id desc,pod.id asc
     </select>
+    <select id="srmWaitDeliveryCount" resultType="java.lang.Integer">
+        select
+            case when count(distinct po.id)
+        from purchase_order po
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order so on so.id = po.source_id and so.is_deleted = false
+        where pos.supplier_id = #{params.supplierId}
+        <if test="params.executionStatus != null and params.executionStatus != 'all'">
+            AND pod.execution_status = #{params.executionStatus}
+        </if>
+        <if test="params.approveStatus != null and params.approveStatus != ''">
+            AND po.approve_status = #{params.approveStatus}
+        </if>
+    </select>
 </mapper>

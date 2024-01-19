@@ -169,4 +169,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
+
+    /**
+     * 汇总待发货订单明细数量
+     * @param supplierId
+     * @param code
+     * @return
+     */
+    Integer srmWaitDeliveryCount(@Param("supplierId")String supplierId, @Param("code") String code);
 }

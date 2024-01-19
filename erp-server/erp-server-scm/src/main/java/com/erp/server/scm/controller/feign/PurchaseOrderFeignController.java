@@ -437,7 +437,7 @@ public class PurchaseOrderFeignController {
 //            menuCode = "scm:purchaseOrder:view",
 //            serviceClass = PurchaseOrderService.class,
 //            keyIdName = "id")
-    public PurchaseOrderDTO.ViewDTO srmOrderView(@Param("id") String id) {
+    public PurchaseOrderDTO.ViewDTO srmOrderView(@RequestParam("id") String id) {
         return purchaseOrderService.view(id);
     }
 
@@ -448,7 +448,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult
      */
     @PostMapping("/srmWaitDeliveryCount")
-    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+    public List<ListStatusCountDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
         return purchaseOrderService.srmWaitDeliveryCount(dto);
     }
 
