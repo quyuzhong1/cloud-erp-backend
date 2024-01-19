@@ -67,6 +67,11 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
+
+        /**
+         * 付款条件
+         */
+        private String paymentConditionName;
     }
 
     @Data

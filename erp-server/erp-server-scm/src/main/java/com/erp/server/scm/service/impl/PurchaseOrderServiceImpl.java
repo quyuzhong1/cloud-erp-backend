@@ -288,7 +288,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 dto.setPurchaseUserName(purchaseUser.getUserName());
             }
         }
-
+        //新品首批
+        if (Objects.nonNull(dto.getIsFirstMassProduct())){
+            dto.setFirstMassProductName(dto.getIsFirstMassProduct() ? "是":"否");
+        }
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
@@ -307,6 +310,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             List<CurrencyDTO.ViewDTO> viewDTOS = sysUserFeign.listByCurrency(Collections.singletonList(supplierUpdateDTO.getPayCurrency()));
             if (CollectionUtils.isNotEmpty(viewDTOS)){
                 supplierUpdateDTO.setPayCurrencyName(viewDTOS.get(0).getName());
+            }
+        }
+        // 采购订单供应商付款条件
+        if(StrUtils.isNotEmpty(supplierUpdateDTO.getPaymentCondition())) {
+            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
+            if(paymentConditionMap.containsKey(supplierUpdateDTO.getPaymentCondition())) {
+                supplierUpdateDTO.setPaymentConditionName(paymentConditionMap.get(supplierUpdateDTO.getPaymentCondition()).get(0).getName());
             }
         }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
@@ -2335,9 +2346,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
-
-        WaitDeliveryCycleEnum[] typeEnums = WaitDeliveryCycleEnum.values();
-        List<ListStatusCountDTO.WaitDeliveryCountDTO> countDTOS = new ArrayList<>(typeEnums.length);
         return baseMapper.srmWaitDeliveryCount(dto.getSupplierId());
     }
 

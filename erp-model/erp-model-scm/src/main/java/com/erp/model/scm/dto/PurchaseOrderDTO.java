@@ -397,7 +397,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
-
+        /**
+         * 新品首批 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
         /**
          * 委外订单类型(child子级，parent父级)
          */
