@@ -2344,10 +2344,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
-            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
-        }
+//        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
+//            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
+//        }
         List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(params);
         if (CollectionUtils.isEmpty(list)) {
             return new PurchaseOrderDTO.ListDTO();
