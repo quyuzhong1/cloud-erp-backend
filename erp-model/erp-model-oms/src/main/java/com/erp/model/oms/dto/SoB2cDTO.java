@@ -194,6 +194,17 @@ public class SoB2cDTO implements Serializable {
         private Boolean invalidStatus;
 
         /**
+         * 组包状态  not 不需要  wait 待组包   already 已经组包
+         *
+         */
+        private String packageStatus;
+        /**
+         * 中转状态 not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
+
+        /**
          * 国家
          */
         private String countryName;

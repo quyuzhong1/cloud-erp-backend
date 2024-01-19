@@ -42,6 +42,8 @@
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
         sb2c.bill_status as billStatus,
+        sb2c.package_status as packageStatus,
+        sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
         sb2c.amount as amount,
         sb2c.currency as currency,
