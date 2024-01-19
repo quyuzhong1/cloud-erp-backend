@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -436,4 +437,26 @@ public class SubcontractIssueDTO implements Serializable {
         private List<SubcontractIssueDetailDTO.ListSourceDetailDTO> detailList;
     }
 
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoAddDTO {
+       /**
+        * 新增参数
+        */
+       @NotNull(message = "新增数据不能为空")
+       @Valid
+       private AddDTO addDTO;
+
+        /**
+         * 是否审核
+         */
+       @NotNull(message = "是否审核标识不能为空")
+       private Boolean isApprove;
+
+    }
 }

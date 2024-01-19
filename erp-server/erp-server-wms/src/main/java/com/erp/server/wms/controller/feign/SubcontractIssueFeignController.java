@@ -34,8 +34,8 @@ public class SubcontractIssueFeignController {
      * @return String
      */
     @PostMapping("/add")
-    public String add(@RequestBody @Validated SubcontractIssueDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO add = subcontractIssueService.add(dto);
+    public String add(@RequestBody @Validated SubcontractIssueDTO.AutoAddDTO dto) {
+        BaseResultDTO.AddDTO add = subcontractIssueService.AutoAddDTO(dto);
         return  add.getId();
     }
 

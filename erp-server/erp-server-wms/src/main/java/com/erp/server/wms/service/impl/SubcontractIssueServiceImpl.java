@@ -220,7 +220,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
+    public BatchResultDTO submit(String id,Boolean isProcess) {
         SubcontractIssueEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到委外发料单数据");
@@ -235,7 +235,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
         log.info("提交 开始启动委外发料单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
+        if (isProcess) {
+            startProcess(entity);
+        }
         // 记录操作日志
         log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
@@ -505,6 +507,33 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 .eq(SubcontractIssueEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
         return list;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResultDTO.AddDTO AutoAddDTO(SubcontractIssueDTO.AutoAddDTO dto) {
+        SubcontractIssueDTO.AddDTO addDTO = dto.getAddDTO();
+        //新增
+        BaseResultDTO.AddDTO add = this.add(addDTO);
+        //无需审核
+        if (!dto.getIsApprove()) {
+            return add;
+        }
+        //提交
+        BatchResultDTO submit = this.submit(add.getId(),Boolean.FALSE);
+        if (!submit.getSuccess()) {
+            throw new ServiceException(ApiError.ERROR_1042,"委外发料");
+        }
+        //审核
+        ApproveOneDTO oneDTO = new ApproveOneDTO();
+        oneDTO.setId(add.getId());
+        oneDTO.setComment("自动审核");
+        oneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        BatchResultDTO approve = this.approve(oneDTO);
+        if (!approve.getSuccess()) {
+            throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
+        }
+        return add;
     }
 
     @Override
