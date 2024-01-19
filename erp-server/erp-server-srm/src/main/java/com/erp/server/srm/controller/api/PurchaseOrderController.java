@@ -47,7 +47,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/srmOrderConfirmCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO>> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
+    public ApiResult<List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO>> srmOrderConfirmCount() {
+        PurchaseOrderSrmDTO.SearchParamDTO dto = new PurchaseOrderSrmDTO.SearchParamDTO();
         dto.setSupplierId(userService.getSupplierId());
         List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = purchaseOrderFeign.srmOrderConfirmCount(dto);
         return success(countDTOS);
@@ -103,35 +104,5 @@ public class PurchaseOrderController extends BaseController {
     @GetMapping("/srmOrderView")
     public ApiResult<PurchaseOrderDTO.ViewDTO> srmOrderView(@Param("id") String id) {
         return success(purchaseOrderFeign.srmOrderView(id));
-    }
-
-
-
-    /**
-     * srm待发货列表统计
-     * @author zdy
-     * @date: 2024/1/16 17:34
-     * @return ApiResult
-     */
-    @PostMapping("/srmWaitDeliveryCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO>> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
-        dto.setSupplierId(userService.getSupplierId());
-        List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> countDTOS = purchaseOrderFeign.srmOrderConfirmCount(dto);
-        return success(countDTOS);
-    }
-
-
-    /**
-     * srm待发货分页查询
-     * @author Will
-     * @date: 2023/3/15 16:47
-     * @param dto
-     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
-     */
-    @PostMapping("/srmWaitDeliveryPaging")
-    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
-        dto.getParams().setSupplierId(userService.getSupplierId());
-        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
-        return success(pagingVO);
     }
 }

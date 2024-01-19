@@ -223,7 +223,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean srmDisabled;
 
         /**
-         * 备注
+         * 备注/明细备注
          */
         private String remark;
 
@@ -234,7 +234,7 @@ public class PurchaseOrderDTO implements Serializable {
 
 
         /**
-         * 申请人
+         * 申请人/客户联系人
          */
         private String purchaseUserName;
 
