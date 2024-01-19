@@ -163,6 +163,7 @@
         select
             do2.id,
             doe.id as detailId,
+            do2.receipt_status as receiptStatus,
             do2.code,
             do2.supplier_id,
             doe.sku_id,

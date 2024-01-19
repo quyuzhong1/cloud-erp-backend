@@ -18,6 +18,7 @@ import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -162,7 +163,8 @@ public class SupplierDeliveryOrderController extends BaseController {
      */
     @PostMapping("/listGenerateReceive")
     public ApiResult<List<DeliveryOrderDTO.GenerateReceiveListDTO>> listGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(srmDeliveryFeign.listGenerateReceive(dto));
+        List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = srmDeliveryFeign.listGenerateReceive(dto);
+        return receiveListDTOList.stream().anyMatch(v-> StringUtils.isNotBlank(v.getReceiptStatus()))?failure("仅无收货状态的收获单支持下推"):success(receiveListDTOList);
     }
 
 

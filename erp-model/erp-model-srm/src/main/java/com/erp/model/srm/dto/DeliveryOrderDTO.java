@@ -116,6 +116,11 @@ public class DeliveryOrderDTO implements Serializable {
         private String detailId;
 
         /**
+         * 收货状态
+         */
+        private String receiptStatus;
+
+        /**
          * 送货单号
          */
         private String code;
