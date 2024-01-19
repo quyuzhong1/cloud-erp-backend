@@ -4099,21 +4099,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoId(entity.getId());
         dto.setSoCode(entity.getCode());
         dto.setPlanDeliveryDate(entity.getCreateTime().toLocalDate());
-        String sourceId = id;
+        String sourceId = "";
         String sourceType = SourceTypeEnum.SO_B2C.getCode();
         String sourceCode = "";
-        String detailRemark = "";
+        String detailRemark = "B2C订单发货自动生成";
 
-        //发货的
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
-        if (CollectionUtils.isNotEmpty(soB2cDeliveryList)) {
-            sourceId = soB2cDeliveryList.get(0).getId();
-            soB2cDeliveryList.get(0).getId();
-            sourceType = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
-            sourceCode = soB2cDeliveryList.get(0).getCode();
-        } else {
-            detailRemark = "B2C订单发货自动生成";
-        }
         dto.setSourceId(sourceId);
         dto.setSourceType(sourceType);
         dto.setSourceCode(sourceCode);
