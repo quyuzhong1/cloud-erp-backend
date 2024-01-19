@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
@@ -790,30 +789,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return Boolean.TRUE;
     }
 
-    private void checkRequiredData (List<PurchaseOrderEntity> list,List<String> ids) {
-        //交货仓库校验
-        String whCodes = list.stream().filter(obj -> ObjectUtils.isEmpty(obj.getDeliveryWarehouseId())).map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(whCodes)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_WH_REQUIRED,whCodes);
-        }
-        //收料组织校验
-        String orgCodes = list.stream().filter(obj -> ObjectUtils.isEmpty(obj.getReceiveOrgId())).map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(orgCodes)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_ORG_REQUIRED,orgCodes);
-        }
-        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
-        //明细预计交货日期校验
-        for (PurchaseOrderEntity entity : list) {
-            String skuNos = detailList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseOrderId()) && ObjectUtils.isEmpty(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
-            if (StringUtils.isNotBlank(skuNos)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE,entity.getCode(),skuNos);
-            }
-        }
-    }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto) {
@@ -837,9 +812,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount(PermissionsDTO dto) {
-        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        PoTableFlagEnum[] values = PoTableFlagEnum.values();
         List<ListStatusCountDTO.PurchaseOrderCountDTO> list = new ArrayList<>();
-        for (PurchaseListTypeEnum item : values) {
+        for (PoTableFlagEnum item : values) {
             PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
@@ -849,7 +824,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             searchParamDTO.setSqlMap(map);
             Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -1250,6 +1226,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
 
         //退货数量
         List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
@@ -2437,6 +2414,37 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         dto.setName(typeEnum.getName());
         dto.setCount(baseMapper.srmPurchaseOrderCount(params));
         return dto;
+    }
+
+    /**
+     * @description: 提交时校验
+     * @author Will
+     * @date: 2024/1/19 10:47
+     * @param list
+     * @param ids
+     */
+    private void checkRequiredData (List<PurchaseOrderEntity> list,List<String> ids) {
+        //交货仓库校验
+        String whCodes = list.stream().filter(obj -> ObjectUtils.isEmpty(obj.getDeliveryWarehouseId())).map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(whCodes)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_WH_REQUIRED,whCodes);
+        }
+        //收料组织校验
+        String orgCodes = list.stream().filter(obj -> ObjectUtils.isEmpty(obj.getReceiveOrgId())).map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(orgCodes)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORG_REQUIRED,orgCodes);
+        }
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //明细预计交货日期校验
+        for (PurchaseOrderEntity entity : list) {
+            String skuNos = detailList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseOrderId()) && ObjectUtils.isEmpty(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(skuNos)) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE,entity.getCode(),skuNos);
+            }
+        }
     }
 
 }

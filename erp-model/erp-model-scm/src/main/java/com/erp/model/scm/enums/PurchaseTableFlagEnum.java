@@ -6,22 +6,23 @@ package com.erp.model.scm.enums;
 
  * @date 2023/3/27 10:52
  */
-public enum PurchaseListTypeEnum {
+public enum PurchaseTableFlagEnum {
 
     WAIT_SUBMIT("waitSubmit", "待提交"),
     TO_BE_APPROVE("toBeApprove", "待审批"),
     TO_BE_CREATE("toBeCreate", "待生成"),
     CREATED("created", "已生成"),
-    REJECT("reject", "不通过");
-
+    REJECT("reject", "不通过"),
+    ;
 
     private String code;
     private String name;
 
-    PurchaseListTypeEnum(String code, String name) {
+    PurchaseTableFlagEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
+
 
     public String getCode() {
         return code;
@@ -29,4 +30,5 @@ public enum PurchaseListTypeEnum {
     public String getName() {
         return name;
     }
+
 }

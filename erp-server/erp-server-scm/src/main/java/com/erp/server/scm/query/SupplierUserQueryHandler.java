@@ -1,10 +1,6 @@
 package com.erp.server.scm.query;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.scm.vo.SupplierRefUserVO;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.SupplierRefUserService;
@@ -13,10 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**

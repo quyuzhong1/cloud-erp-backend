@@ -72,10 +72,6 @@
         </where>
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from subcontract_issue where is_deleted = false group by approve_status
-    </select>
-
     <select id="listExport" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
@@ -98,16 +94,16 @@
     </select>
 
 
-    <select id="tabList" resultType="com.erp.model.wms.dto.SubcontractIssueDTO$TabListDTO">
+    <select id="tabList" resultType="java.lang.Integer">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  subcontract_issue
-        WHERE is_deleted=FALSE
+        count(si.id)
+        FROM  subcontract_issue si
+        WHERE
+        ${params.sqlMap.default}
+        and si.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${permissionSql}
         </if>
-        GROUP BY approve_status
     </select>
 
 </mapper>

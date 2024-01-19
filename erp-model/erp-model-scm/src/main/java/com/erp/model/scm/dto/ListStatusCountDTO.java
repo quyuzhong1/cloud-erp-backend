@@ -50,14 +50,19 @@ public class ListStatusCountDTO implements Serializable {
     public static class PurchaseOrderCountDTO {
 
         /**
-         * 类型(toBeApprove待审批，toBeCreate待到货，created已到货，reject不通过)
+         * 类型,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
          */
-        private String type;
+        private String tabFlag;
+
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
         /**
          * 数量
          */
         private Integer count;
-
     }
 
 
