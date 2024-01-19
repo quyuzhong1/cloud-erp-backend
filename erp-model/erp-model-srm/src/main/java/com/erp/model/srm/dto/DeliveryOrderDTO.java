@@ -136,7 +136,7 @@ public class DeliveryOrderDTO implements Serializable {
         private Integer count;
     }
     /**
-     * 新增
+     * 列表
      */
     @Data
     @NoArgsConstructor
@@ -176,6 +176,16 @@ public class DeliveryOrderDTO implements Serializable {
          * 收货状态中文
          */
         private String receiptStatusName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 订单单号

@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -26,4 +27,6 @@ public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
     IPage<DeliveryOrderDTO.ListDTO> paging(Page query, @Param("params")DeliveryOrderDTO.ParamDTO params);
 
     List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierIdList") List<String> supplierIdList);
+
+    List<DeliveryOrderExportExcelDTO> getExportList(@Param("params") DeliveryOrderDTO.ParamDTO dto);
 }
