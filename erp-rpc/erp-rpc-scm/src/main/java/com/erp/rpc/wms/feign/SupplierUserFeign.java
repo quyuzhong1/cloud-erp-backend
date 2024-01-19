@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
+import com.erp.model.scm.vo.SupplierRefUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
@@ -97,4 +98,12 @@ public interface SupplierUserFeign {
      */
     @PostMapping("/feign/supplierUser/saveRef")
     Boolean saveRef(@RequestBody @Validated SupplierRefUserEntity refUserEntity);
+
+    /**
+     * 根据用户获取供应商关联信息
+     * @param uids
+     * @return
+     */
+    @PostMapping("/feign/supplierUser/getSupplierRefByUids")
+    List<SupplierRefUserVO> getSupplierRefByUids(@RequestBody List<String> uids);
 }

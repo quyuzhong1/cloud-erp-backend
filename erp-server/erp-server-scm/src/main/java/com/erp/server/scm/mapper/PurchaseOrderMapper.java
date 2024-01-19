@@ -162,4 +162,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<PurchaseOrderConfirmDTO>
      */
     List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> listPurchaseOrderAutoConfirm(@Param("list") List<CfgSettingDTO.ViewDTO> list);
+
+    /**
+     * 查询确认订单列表
+     * @param params
+     * @return
+     */
+    List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
 }

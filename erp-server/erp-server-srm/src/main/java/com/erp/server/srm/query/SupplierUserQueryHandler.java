@@ -1,22 +1,14 @@
-package com.erp.server.scm.query;
+package com.erp.server.srm.query;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.scm.vo.SupplierRefUserVO;
-import com.erp.server.scm.service.CommonService;
-import com.erp.server.scm.service.SupplierRefUserService;
+import com.erp.rpc.wms.feign.SupplierUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -27,10 +19,7 @@ import java.util.stream.Collectors;
 public class SupplierUserQueryHandler extends AbstractQueryHandler {
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
-    private SupplierRefUserService supplierRefUserService;
+    private SupplierUserFeign supplierUserFeign;
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("supplierIds".equals(field)){
@@ -45,7 +34,7 @@ public class SupplierUserQueryHandler extends AbstractQueryHandler {
                 return this.getQueryEmptySql();
             }
             //选择了供应商则先进行供应商查询，获取用户ids
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(ids, true);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(ids);
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(userIds)){

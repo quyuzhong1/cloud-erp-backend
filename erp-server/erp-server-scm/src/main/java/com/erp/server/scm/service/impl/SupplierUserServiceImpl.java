@@ -92,7 +92,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         List<SupplierUserVO> list = (List<SupplierUserVO>) page.getList();
         if (CollectionUtils.isNotEmpty(list)){
             List<String> uids = list.stream().map(SupplierUserVO::getUid).collect(Collectors.toList());
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsByUids(uids);
+            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getSupplierRefByUids(uids);
             supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
         }
         dataProcessSupplierInfo(list, supplierMap);
@@ -278,29 +278,29 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     private void buildRequestData(UserPagingSearchDTO dto,Map<String, SupplierRefUserVO> supplierMap){
-        if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getSupplierIds())) {
-            //选择了供应商则先进行供应商查询，获取用户ids
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getSupplierIds(), dto.getIsSuper());
-            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(dto.getUserIds())){
-                    dto.setUserIds(userIds);
-                }
-                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
-            } else {
-                //防止查询数据为空时，数据穿插
-                dto.setUserIds(Collections.singletonList("-1"));
-            }
-        } else {
-            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getIsSuper());
-            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(dto.getUserIds())){
-                    dto.setUserIds(userIds);
-                }
-                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
-            }
-        }
+//        if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getSupplierIds())) {
+//            //选择了供应商则先进行供应商查询，获取用户ids
+//            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(dto.getSupplierIds(), dto.getIsSuper());
+//            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
+//                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+//                if (CollectionUtils.isEmpty(dto.getUserIds())){
+//                    dto.setUserIds(userIds);
+//                }
+//                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
+//            } else {
+//                //防止查询数据为空时，数据穿插
+//                dto.setUserIds(Collections.singletonList("-1"));
+//            }
+//        } else {
+//            List<SupplierRefUserVO> supplierRefUserVOS = supplierRefUserService.getUserIdsBySupplierIds(null, dto.getIsSuper());
+//            if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
+//                List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+//                if (CollectionUtils.isEmpty(dto.getUserIds())){
+//                    dto.setUserIds(userIds);
+//                }
+//                supplierMap = supplierRefUserVOS.stream().collect(Collectors.toMap(SupplierRefUserVO::getUid, Function.identity()));
+//            }
+//        }
     }
     @Override
     public List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto) {

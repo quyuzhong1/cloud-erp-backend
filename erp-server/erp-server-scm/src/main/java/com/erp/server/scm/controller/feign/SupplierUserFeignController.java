@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 import cn.hutool.core.lang.Assert;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -11,11 +12,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
+import com.erp.model.scm.vo.SupplierRefUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.server.scm.query.SupplierUserQueryHandler;
 import com.erp.server.scm.service.SupplierRefUserService;
 import com.erp.server.scm.service.SupplierUserService;
 import lombok.AllArgsConstructor;
@@ -53,6 +56,7 @@ public class SupplierUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto) {
         PagingVO<SupplierUserVO> pagingVO = supplierUserService.paging(dto);
         return success(pagingVO);
@@ -138,5 +142,15 @@ public class SupplierUserFeignController extends BaseController {
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd) {
         return supplierUserService.changePassword(uid, pwd);
+    }
+
+    /**
+     * 根据用户获取供应商信息
+     * @param uids
+     * @return
+     */
+    @PostMapping("/getSupplierRefByUids")
+    public List<SupplierRefUserVO> getSupplierRefByUids(@RequestBody List<String> uids){
+        return supplierRefUserService.getSupplierRefByUids(uids);
     }
 }

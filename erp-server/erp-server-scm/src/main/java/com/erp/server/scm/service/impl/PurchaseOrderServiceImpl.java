@@ -1326,8 +1326,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
-
-
+            //待送货数量
+            if (Objects.nonNull(obj.getPurchaseQty())){
+                obj.setToDeliverQty(obj.getPurchaseQty() - receiveQty);
+            }else {
+                obj.setToDeliverQty(MathUtil.ZERO);
+            }
             Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
@@ -2324,6 +2328,34 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<String> detailIdList = purchaseOrderList.stream().map(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getDetailId).collect(Collectors.toList());
         purchaseOrderDetailService.purchaseOrderAutoConfirm(detailIdList);
+    }
+
+    @Override
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+//        params.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//        if (StringUtils.isNotBlank(pagingDTO.getParams().getSearchType()) && !"all".equalsIgnoreCase(pagingDTO.getParams().getSearchType())){
+//            params.setExecutionStatus(pagingDTO.getParams().getSearchType());
+//        }
+        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(params);
+        if (CollectionUtils.isEmpty(list)) {
+            return new PurchaseOrderDTO.ListDTO();
+        }
+        //数据赋值处理
+        doOpHandlePurchaseOrder(list);
+        //汇总
+        return new PurchaseOrderDTO.ListDTO();
     }
 
 

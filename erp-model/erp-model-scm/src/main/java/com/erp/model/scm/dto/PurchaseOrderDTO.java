@@ -154,7 +154,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
-         * 计划交期
+         * 计划交期 [可排序]
          */
         private String planDeliveryDate;
 
@@ -164,7 +164,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String deliveryWarehouseName;
 
         /**
-         * 含税单价
+         * 含税单价[可排序]
          */
         private BigDecimal taxPrice;
 
@@ -184,7 +184,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 采购数量
+         * 采购数量[可排序]
          */
         private Integer purchaseQty;
 
@@ -193,6 +193,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private BigDecimal purchaseAmount;
 
+        /**
+         * 待送数量
+         */
+        private Integer toDeliverQty;
         /**
          * 签收数量
          */

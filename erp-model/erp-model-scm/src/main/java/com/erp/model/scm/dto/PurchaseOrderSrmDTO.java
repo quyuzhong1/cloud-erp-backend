@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author zdy
@@ -47,5 +48,25 @@ public class PurchaseOrderSrmDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryParamDTO extends SortDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 全部  all
+         * 待确认  toBeConfirm
+         * 已确认  confirm
+         * 已拒绝  reject
+         * 送货中  delivery
+         * 已完成  finish
+         * 已关闭  closed
+         *
+         */
+        private List<String> executionStatusList;
     }
 }
