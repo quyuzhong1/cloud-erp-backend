@@ -38,11 +38,19 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          */
         @NotBlank(message = "结算方式不能为空")
         private String payMethodId;
+        /**
+         * 结算方式
+         */
+        private String payMethodName;
 
         /**
          * 结算币种
          */
         private String payCurrency;
+        /**
+         * 结算币种名称
+         */
+        private String payCurrencyName;
 
         /**
          * 供应商联系人表id

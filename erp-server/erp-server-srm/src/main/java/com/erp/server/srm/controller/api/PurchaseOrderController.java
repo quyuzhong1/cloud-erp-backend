@@ -105,7 +105,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogViewService
     @GetMapping("/srmOrderView")
-    public ApiResult<PurchaseOrderDTO.ViewDTO> srmOrderView(@Param("id") String id) {
+    public ApiResult<PurchaseOrderDTO.ViewDTO> srmOrderView(@RequestParam("id") String id) {
         return success(purchaseOrderFeign.srmOrderView(id));
     }
 }

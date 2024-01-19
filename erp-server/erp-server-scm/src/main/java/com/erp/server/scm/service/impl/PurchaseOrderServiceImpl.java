@@ -44,6 +44,7 @@ import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -295,6 +296,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98031);
         }
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
+
+        //结算方式
+        DictBasicEntity payMethod = dictBasicService.getById(supplierUpdateDTO.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(payMethod)) {
+            supplierUpdateDTO.setPayMethodName(payMethod.getName());
+        }
+        //结算币种
+        if (StringUtils.isNotBlank(supplierUpdateDTO.getPayCurrency())){
+            List<CurrencyDTO.ViewDTO> viewDTOS = sysUserFeign.listByCurrency(Collections.singletonList(supplierUpdateDTO.getPayCurrency()));
+            if (CollectionUtils.isNotEmpty(viewDTOS)){
+                supplierUpdateDTO.setPayCurrencyName(viewDTOS.get(0).getName());
+            }
+        }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
 
         //单据类型
