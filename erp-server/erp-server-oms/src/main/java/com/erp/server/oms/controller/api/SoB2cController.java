@@ -34,8 +34,7 @@ public class SoB2cController extends BaseController {
     @Autowired
     private SoB2cService soB2cService;
 
-    @Autowired
-    private SoB2cErrorService soB2cErrorService;
+
 
 
     /**
