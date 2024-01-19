@@ -398,13 +398,6 @@ public class LogisticsBillCostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 物流渠道id
-        */
-        @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
-        private String channelId;
-
-        /**
         * 物流单id
         */
         @NotBlank(message = "物流单id不能为空")
