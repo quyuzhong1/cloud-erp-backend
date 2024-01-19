@@ -99,4 +99,25 @@ public class SettingForecastDTO implements Serializable {
 
     }
 
+
+    /**
+     * 预报状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForecastStatusDto {
+
+        /**
+         * 组包状态
+         */
+        private String packageStatus;
+
+
+        /**
+         * 中转状态
+         */
+        private String transferStatus;
+
+    }
+
 }

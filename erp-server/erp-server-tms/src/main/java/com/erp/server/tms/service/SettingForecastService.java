@@ -57,4 +57,14 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @create 2024-01-19 9:39
      */
     List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier();
+
+    /**
+     * 根据渠道id 获取到 有效的预报设置
+     * @description
+     * @param logisticsChannelId
+     * @author Lambda
+     * @return 
+     * @create 2024-01-19 17:51
+     */
+    SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(String logisticsChannelId);
 }

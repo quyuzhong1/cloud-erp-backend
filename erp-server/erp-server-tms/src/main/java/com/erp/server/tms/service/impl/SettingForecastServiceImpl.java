@@ -69,6 +69,15 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         return list;
     }
 
+    @Override
+    public SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(String logisticsChannelId) {
+        if(StringUtils.isBlank(logisticsChannelId)){
+            return null;
+        }
+
+        return null;
+    }
+
 
     /**
      * 处理数据
