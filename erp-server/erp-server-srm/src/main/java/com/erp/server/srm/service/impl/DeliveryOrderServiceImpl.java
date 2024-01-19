@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -221,6 +223,27 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
         });
         return list;
+    }
+
+    @Override
+    public List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        List<DeliveryOrderDTO.GenerateReceiveListDTO> receiveListDTOList = baseMapper.listGenerateReceive(ids);
+        if(CollectionUtils.isNotEmpty(receiveListDTOList)){
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(receiveListDTOList.stream().map(DeliveryOrderDTO.GenerateReceiveListDTO::getSupplierId).distinct().collect(Collectors.toList()));
+            receiveListDTOList.forEach(v->{
+                v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+            });
+        }
+        return receiveListDTOList;
+    }
+
+    @Override
+    public DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto) {
+        return this.baseMapper.pagingTotal(dto);
     }
 
     @Transactional(rollbackFor = Exception.class)

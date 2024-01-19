@@ -82,6 +82,18 @@ public class DeliveryOrderController extends BaseController {
         return success(deliveryOrderService.paging(dto));
     }
 
+    /**
+     * 合计
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dto
+     */
+    @PostMapping("/pagingTotal")
+    @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
+    public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
+        dto.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
+        return success(deliveryOrderService.pagingTotal(dto));
+    }
 
     /**
     * 新增

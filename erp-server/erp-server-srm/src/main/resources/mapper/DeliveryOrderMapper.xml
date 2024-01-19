@@ -50,6 +50,7 @@
     <select id="paging" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$ListDTO">
         select
             do2.id,
+            doe.id as detailId,
             do2.code,
             do2.plan_delivery_date as planDeliveryDate,
             do2.receive_code as receiveCode,
@@ -156,6 +157,44 @@
             </foreach>
         </if>
         do2.plan_delivery_date ASC
+    </select>
+    <select id="listGenerateReceive"
+            resultType="com.erp.model.srm.dto.DeliveryOrderDTO$GenerateReceiveListDTO">
+        select
+            do2.id,
+            doe.id as detailId,
+            do2.code,
+            do2.supplier_id,
+            doe.sku_id,
+            doe.sku_no,
+            doe.product_name,
+            doe.delivery_qty,
+            doe.gift_qty
+        from delivery_order do2
+        inner join delivery_order_detail doe on do2.id = doe.main_id
+        where do2.is_deleted = false and doe.is_deleted = false
+        and do2.id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+            order by do2.id
+    </select>
+    <select id="pagingTotal" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$TotalInfo">
+        select
+            sum(doe.order_qty) as totalOrderQty,
+            sum(doe.delivery_qty) as totalDeliveryQty,
+            sum(doe.gift_qty) as totalGiftQty,
+            sum(doe.receive_qty) as totalReceiveQty,
+            sum(doe.gift_receive_qty) as totalGiftReceiveQty
+        from delivery_order do2
+        left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and do2.is_deleted = false
+        and do2.supplier_id in
+        <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
     </select>
 
 

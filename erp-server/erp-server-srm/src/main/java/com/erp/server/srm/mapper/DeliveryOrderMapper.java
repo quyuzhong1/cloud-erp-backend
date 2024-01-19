@@ -29,4 +29,8 @@ public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
     List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierIdList") List<String> supplierIdList);
 
     List<DeliveryOrderExportExcelDTO> getExportList(@Param("params") DeliveryOrderDTO.ParamDTO dto);
+
+    List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@Param("ids") List<String> ids);
+
+    DeliveryOrderDTO.TotalInfo pagingTotal(@Param("params")DeliveryOrderDTO.ParamDTO dto);
 }

@@ -2,13 +2,14 @@ package com.erp.rpc.srm.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,9 +32,21 @@ public interface SrmDeliveryOrderFeign {
     @PostMapping("/feign/deliveryOrder/print")
     List<DeliveryOrderDTO.PrintDTO> print(@RequestBody BaseIdsDTO.IdsDTO dto);
 
+    @PostMapping("/feign/deliveryOrder/confirmPrint")
+    Boolean confirmPrint(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+    @PostMapping("/feign/deliveryOrder/cancelPrint")
+    List<BatchResultDTO> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto);
+
     @PostMapping("/feign/deliveryOrder/listDetailByDetailSourceIds")
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
 
     @PostMapping("/feign/deliveryOrder/getExportList")
     List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto);
+
+    @PostMapping("/feign/deliveryOrder/listGenerateReceive")
+    List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+    @PostMapping("/feign/deliveryOrder/pagingTotal")
+    DeliveryOrderDTO.TotalInfo pagingTotal(@RequestBody DeliveryOrderDTO.ParamDTO dto);
 }
