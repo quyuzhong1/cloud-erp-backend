@@ -184,7 +184,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 采购数量[可排序]
+         * 采购数量/订单数量[可排序]
          */
         private Integer purchaseQty;
 
@@ -194,11 +194,11 @@ public class PurchaseOrderDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 待送数量
+         * 待送货量
          */
         private Integer toDeliverQty;
         /**
-         * 签收数量
+         * 签收数量/已送货数量
          */
         private Integer receiveQty;
 
@@ -213,7 +213,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
-         * 退货数量
+         * 退货数量/已退货数量
          */
         private Integer returnQty;
 

@@ -433,5 +433,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return
      */
-    PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
+    PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
 }

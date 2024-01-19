@@ -76,7 +76,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmTotal")
-    public ApiResult<PurchaseOrderDTO.ListDTO> srmOrderConfirmTotal(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
+    public ApiResult<PurchaseOrderDTO.ListDTO> srmOrderConfirmTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         PurchaseOrderDTO.ListDTO total = purchaseOrderFeign.srmOrderConfirmTotal(dto);
         return success(total);
     }

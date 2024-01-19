@@ -407,7 +407,7 @@ public class PurchaseOrderFeignController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmTotal")
-    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         return purchaseOrderService.srmOrderConfirmTotal(dto);
     }
     /**

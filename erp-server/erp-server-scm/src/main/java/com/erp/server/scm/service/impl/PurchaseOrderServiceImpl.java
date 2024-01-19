@@ -2341,11 +2341,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> pagingDTO) {
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PurchaseOrderDTO.SrmSearchParamDTO pagingDTO) {
         PurchaseOrderDTO.ListDTO dto = new PurchaseOrderDTO.ListDTO();
-        PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
-        params.setPermissionSql(pagingDTO.getPermissionSql());
-        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(params);
+        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(pagingDTO);
         if (CollectionUtils.isEmpty(list)) {
             return countPurchaseOrder(dto, list);
         }
