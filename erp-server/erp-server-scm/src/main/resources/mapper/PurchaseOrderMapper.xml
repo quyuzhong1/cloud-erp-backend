@@ -872,4 +872,7 @@
             </foreach>
         </where>
     </select>
+    <select id="srmPurchaseOrderList" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
+
+    </select>
 </mapper>

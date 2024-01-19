@@ -61,5 +61,5 @@ public interface SupplierRefUserService extends SuperService<SupplierRefUserEnti
      * @param uids
      * @return
      */
-    List<SupplierRefUserVO> getUserIdsByUids(List<String> uids);
+    List<SupplierRefUserVO> getSupplierRefByUids(List<String> uids);
 }

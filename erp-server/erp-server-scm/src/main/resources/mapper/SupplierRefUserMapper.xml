@@ -53,7 +53,7 @@
           </if>
 
     </select>
-    <select id="getUserIdsByUids" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+    <select id="getSupplierRefByUids" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
         SELECT
         sru.id as refId,
         sru.uid,

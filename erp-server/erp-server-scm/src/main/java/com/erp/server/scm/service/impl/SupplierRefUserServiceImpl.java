@@ -116,9 +116,9 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
     }
 
     @Override
-    public List<SupplierRefUserVO> getUserIdsByUids(List<String> uids) {
+    public List<SupplierRefUserVO> getSupplierRefByUids(List<String> uids) {
         if (CollectionUtils.isEmpty(uids)) return Collections.emptyList();
-        return baseMapper.getUserIdsByUids(uids);
+        return baseMapper.getSupplierRefByUids(uids);
     }
 
 

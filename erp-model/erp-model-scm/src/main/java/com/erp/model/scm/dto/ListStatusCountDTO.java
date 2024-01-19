@@ -78,7 +78,7 @@ public class ListStatusCountDTO implements Serializable {
 
     /**
      * SRM 订单确认列表统计
-     * PurchaseOrderConfirmTypeEnum
+     * ExecutionStatusEnum
      */
     @Data
     @NoArgsConstructor
@@ -92,6 +92,33 @@ public class ListStatusCountDTO implements Serializable {
          * 送货中  delivery
          * 已完成  finish
          * 已关闭  closed
+         *
+         */
+        private String type;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * SRM 待发货列表统计
+     * WaitDeliveryCycleEnum
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryCountDTO {
+
+        /**
+         * "expired", "已超期"
+         * "inOneMonth", "1个月内"
+         * "inTwoMonth", "2个月内"
+         * "twoMonthLater", "2个月以后"
          *
          */
         private String type;

@@ -399,7 +399,17 @@ public class PurchaseOrderFeignController {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.srmOrderConfirmPaging(dto);
         return pagingVO;
     }
-
+    /**
+     * srm订单确认列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmTotal")
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        return purchaseOrderService.srmOrderConfirmTotal(dto);
+    }
     /**
      * srm订单确认整单处理
      * @author zdy
@@ -429,5 +439,29 @@ public class PurchaseOrderFeignController {
 //            keyIdName = "id")
     public PurchaseOrderDTO.ViewDTO srmOrderView(@Param("id") String id) {
         return purchaseOrderService.view(id);
+    }
+
+    /**
+     * srm待发货列表统计
+     * @author zdy
+     * @date: 2024/1/16 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/srmWaitDeliveryCount")
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        return purchaseOrderService.srmWaitDeliveryCount(dto);
+    }
+
+
+    /**
+     * srm待发货分页查询
+     * @author Will
+     * @date: 2023/3/15 16:47
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmWaitDeliveryPaging")
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        return purchaseOrderService.srmWaitDeliveryPaging(dto);
     }
 }

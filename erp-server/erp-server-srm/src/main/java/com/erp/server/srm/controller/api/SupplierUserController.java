@@ -1,6 +1,7 @@
 package com.erp.server.srm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -19,6 +20,7 @@ import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
+import com.erp.server.srm.query.SupplierUserQueryHandler;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +57,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);

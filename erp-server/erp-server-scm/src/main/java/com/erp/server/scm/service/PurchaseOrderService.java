@@ -152,11 +152,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
     /**
-     * @description: 
+     * @description:
      * @author Will
      * @date: 2023/3/27 15:51
      * @param dto
-     * @return Boolean 
+     * @return Boolean
      */
     Boolean updateAndSubmit(PurchaseOrderDTO.UpdateDTO dto);
     /**
@@ -235,7 +235,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(List<String> purchaseOrderIds);
 
-    
+
     /**
      * 采购订单 下推 退货数据显示
      * @author yl
@@ -415,4 +415,25 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @date: 2024/1/17 10:28
      */
     void purchaseOrderAutoConfirm();
+
+    /**
+     * 待发货 时间周期统计
+     * @param dto
+     * @return
+     */
+    List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
+
+    /**
+     * 待发货 分页列表
+     * @param dto
+     * @return
+     */
+    PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+
+    /**
+     * srm订单确认列表合计
+     * @param dto
+     * @return
+     */
+    PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
 }
