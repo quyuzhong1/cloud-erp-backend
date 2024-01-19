@@ -715,7 +715,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
             }
             addDTO.setCurrency(currency);
-            addDTO.setChannelId(logisticsBillEntity.getChannelId());
             addDTO.setLogisticsBillId(logisticsBillEntity.getId());
             logisticsBillCostService.add(addDTO);
         } catch (Exception e) {

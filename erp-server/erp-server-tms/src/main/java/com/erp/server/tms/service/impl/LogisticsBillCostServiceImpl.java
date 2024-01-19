@@ -26,6 +26,7 @@ import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -85,6 +86,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -316,7 +319,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
+        entity.setChannelId(logisticsBillEntity.getChannelId());
 
+        //重量单位
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+        if (ObjectUtil.isEmpty(channelEntity)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        entity.setWeightUnit(channelEntity.getWeightUnit());
     }
 
 
