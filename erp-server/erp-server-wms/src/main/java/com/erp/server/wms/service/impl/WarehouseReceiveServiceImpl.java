@@ -1505,6 +1505,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailBySourceDetailIds(receiveIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(warehouseReceiveEntity.getDeliveryWarehouseId()));
 
+        //获取发货数量
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailEntityList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(detailId);
+
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapperUtils.copy(warehouseReceiveDetailEntity, detailView);
@@ -1517,6 +1520,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
             Integer receive = detailEntitieList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive);
+
+            Integer deliveryQty = deliveryOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(purchaseOrderDetailEntity.getId())).mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
+            detailView.setDeliveryQty(deliveryQty);
             //获取sku信息
             SkuVO skuVO = skuList.stream().filter(entityClass -> entityClass.getSkuId().equals(detailView.getSkuId())).findFirst().orElse(new SkuVO());
             detailView.setVariantProperty(skuVO.getVariantProperty());
