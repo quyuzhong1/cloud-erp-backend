@@ -145,4 +145,14 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
      **/
     void updateLogisticsAuthStatus(String mainId, String authStatus);
 
+    /**
+     * 根据授权id组装授权信息
+     * @Author Luo_WG
+     * @Date 2024/1/20 9:44
+     * @param authId
+     * @param logisticsPlatform
+     * @return java.util.Map<java.lang.String,java.lang.String>
+     **/
+    Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform);
+
 }
