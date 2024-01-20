@@ -206,6 +206,18 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //物流属性
         productBaseInfo.setLogisticsPropertyName(propertyName);
         declareInfo.setSourceCountryName(sourceCountryName);
+        //报关申报价币种
+        String declareCurrency=declareInfo.getDeclareCurrency();
+        //目的国申报价币种
+        String destCurrency=declareInfo.getDestCurrency();
+        if(StringUtils.isBlank(declareCurrency)){
+            declareInfo.setDeclareCurrency(CurrencyEnum.USD.getCurrencyCode());
+            declareInfo.setDeclareCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+        }
+        if(StringUtils.isBlank(destCurrency)){
+            declareInfo.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
+            declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+        }
         result.setDeclareInfo(declareInfo);
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
