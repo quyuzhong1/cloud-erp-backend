@@ -814,7 +814,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 完成质检，免检
-     * 当是 质检类型为b2b 质检的时候
+     * 当是 质检类型为b2b 质检的时候 或者来源是采购收货并且收货对应的质检单已全部质检完成
      * 自动批量完成入库单
      *
      * @return void
@@ -857,6 +857,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             addStockIn.setDetails(details);
             addList.add(addStockIn);
+        }
+        List<QcInfoEntity> qcInfoEntityList = listByIds(idList);
+        List<String> receiveIdList = qcInfoEntityList.stream().filter(v->SourceTypeEnum.PO_RECEIVE.getCode().equals(v.getSourceType())).map(QcInfoEntity::getSourceId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(receiveIdList)){
+            warehouseReceiveService.generateStockInWhenQcFinish(receiveIdList);
         }
         //批量生成 入库单
         purchaseStorageService.batchAdd(addList);
@@ -1975,6 +1980,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     public List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    public List<QcInfoEntity> listQCBySourceIdsAndType(List<String> sourceIds, String sourceType) {
+        return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).eq(QcInfoEntity::getSourceType,sourceType).list();
     }
 
     @Override

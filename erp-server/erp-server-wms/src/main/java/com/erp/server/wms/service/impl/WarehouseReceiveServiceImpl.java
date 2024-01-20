@@ -49,6 +49,7 @@ import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.convert.WarehouseReceiveConverter;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -131,6 +132,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
+
 /*
     @Autowired
     private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
@@ -165,8 +167,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
+        //查询质检单
+        List<String> receiveIds = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
+                if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
+                    obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
+                    obj.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
+                }else if(resultList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
+                    obj.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
+                    obj.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
+                }else{
+                    obj.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
+                    obj.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
@@ -1710,5 +1727,37 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .eq(WarehouseReceiveEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public Boolean generateStockInWhenQcFinish(List<String> ids) {
+        List<WarehouseReceiveEntity> warehouseReceiveEntityList = this.listByIds(ids);
+        if(CollectionUtils.isEmpty(warehouseReceiveEntityList)){
+            return true;
+        }
+        List<WarehouseReceiveDetailEntity> allDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+        Map<String,List<WarehouseReceiveDetailEntity>> detailMap = allDetailList.stream().collect(Collectors.groupingBy(WarehouseReceiveDetailEntity::getMainId));
+        //去掉质检单还没有全部质检的
+        for(WarehouseReceiveEntity main : warehouseReceiveEntityList){
+            List<WarehouseReceiveDetailEntity> detailList = detailMap.get(main.getId());
+            if(CollectionUtils.isEmpty(detailList)){
+                continue;
+            }
+            List<QcInfoEntity> qcInfoList = poInstockService.getReceiveQcInfo(detailList,new ArrayList<>());
+            if(CollectionUtils.isEmpty(qcInfoList)){
+                continue;
+            }
+            if(!qcInfoList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
+                continue;
+            }
+            //暂停需求，因为入货数量不确定，可能质检不良率达到一定比例会整单退掉，后面质检规则确定后再看开发
+            List<WarehouseReceiveDTO.GenerateStockInDTO> dtos = new ArrayList<>();
+//            for(WarehouseReceiveDetailEntity detail : detailList){
+//                WarehouseReceiveDTO.GenerateStockInDTO addDTO = WarehouseReceiveConverter.INSTANCE.entityToGenerateStockConvert(detail,main);
+//                dtos.add(addDTO);
+//            }
+//            this.generateStockIn(dtos);
+        }
+        return true;
     }
 }
