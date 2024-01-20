@@ -180,4 +180,7 @@ public class GetShippingMethodListResponse {
         return this.dataList;
     }
 
+    public void setDataList(List<SmRow> dataList) {
+        this.dataList = dataList;
+    }
 }

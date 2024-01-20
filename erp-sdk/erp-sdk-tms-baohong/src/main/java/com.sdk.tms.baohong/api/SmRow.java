@@ -40,14 +40,29 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class SmRow {
 
+    /**
+     * 物流渠道名称
+     */
     @XmlElement(name = "sm_name_cn", required = true)
     protected String smNameCn;
+    /**
+     * 物流渠道代码
+     */
     @XmlElement(name = "sm_code", required = true)
     protected String smCode;
+    /**
+     * 仓库代码 如果值为ALL表示所有仓库可用
+     */
     @XmlElement(name = "warehouse_code", required = true)
     protected String warehouseCode;
+    /**
+     * 物流渠道类别
+     */
     @XmlElement(name = "sm_class_code")
     protected String smClassCode;
+    /**
+     * 是否自有渠道
+     */
     @XmlElement(name = "sm_channel")
     protected String smChannel;
 

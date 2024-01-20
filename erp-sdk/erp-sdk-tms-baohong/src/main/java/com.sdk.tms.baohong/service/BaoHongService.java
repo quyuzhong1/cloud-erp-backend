@@ -1,16 +1,19 @@
 package com.sdk.tms.baohong.service;
 
-import com.sdk.tms.baohong.api.HeaderRequest;
-import com.sdk.tms.baohong.api.ServiceForOrder;
-import com.sdk.tms.baohong.api.ServiceForOrder_Service;
-import com.sdk.tms.baohong.api.SmRow;
+import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.exception.ServiceException;
+import com.sdk.tms.baohong.api.*;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 import javax.xml.ws.Holder;
 import java.net.MalformedURLException;
 import java.util.List;
 
-@Slf4j
+@Component
+@Validated
 public class BaoHongService {
 
 
@@ -32,11 +35,66 @@ public class BaoHongService {
         Holder<List<SmRow>> smRowListHolder = new Holder<>();
 
         serviceForOrderSOAP.getShippingMethodList(headerRequest, pageHolder, pageSizeHolder, askHolder, messageHolder, totalHolder, smRowListHolder);
-        System.out.println(messageHolder.value);
 
-
+        GetShippingMethodListResponse response = new GetShippingMethodListResponse();
+        response.setAsk(askHolder.value);
+        response.setMessage(messageHolder.value);
+        response.setPage(pageHolder.value);
+        response.setPageSize(pageSizeHolder.value);
+        response.setTotal(totalHolder.value);
+        response.setDataList(smRowListHolder.value);
     }
 
+
+    /**
+     * 授权（调用拉取仓库接口，接口调用成功则说明授权成功）
+     * @param s
+     */
+    public GetShippingMethodListResponse authorization(String s){
+        String customerCode = String.valueOf(ThirdWarehouseContext.getAuthMap().get("customerCode"));
+        String appToken = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appToken"));
+        String appKey = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appKey"));
+
+        if(StringUtil.isBlank(appKey) || StringUtil.isBlank(appToken) || StringUtil.isBlank(customerCode)){
+            throw new ServiceException("获取不到授权值，正确授权值为：customerCode,appToken,appKey");
+        }
+        //头信息
+        HeaderRequest headerRequest = new HeaderRequest();
+        headerRequest.setCustomerCode(customerCode);
+        headerRequest.setAppToken(appToken);
+        headerRequest.setAppKey(appKey);
+
+        //入参
+        ServiceForOrder_Service service = new ServiceForOrder_Service();
+        ServiceForOrder serviceForOrderSOAP = service.getServiceForOrderSOAP();
+        Holder<Integer> pageHolder = new Holder<Integer>();
+        pageHolder.value = 1;
+        Holder<Integer> pageSizeHolder = new Holder<Integer>();
+        pageSizeHolder.value = 100;
+        Holder<String> askHolder = new Holder<>();
+        Holder<String> messageHolder = new Holder<>();
+        Holder<Integer> totalHolder = new Holder<>();
+        Holder<List<SmRow>> smRowListHolder = new Holder<>();
+
+        //查询渠道接口，成功表示授权成功，查询失败表示授权失败
+        serviceForOrderSOAP.getShippingMethodList(headerRequest, pageHolder, pageSizeHolder, askHolder, messageHolder, totalHolder, smRowListHolder);
+
+        //---------------------------------反参---------------------------------
+        GetShippingMethodListResponse response = new GetShippingMethodListResponse();
+        //成功提示：0,返回失败 1,返回成功
+        response.setAsk(askHolder.value);
+        //返回提示信息
+        response.setMessage(messageHolder.value);
+        //第几页
+        response.setPage(pageHolder.value);
+        //每页的行数
+        response.setPageSize(pageSizeHolder.value);
+        //总数
+        response.setTotal(totalHolder.value);
+        //数据集数组
+        response.setDataList(smRowListHolder.value);
+        return response;
+    }
 
 
 
