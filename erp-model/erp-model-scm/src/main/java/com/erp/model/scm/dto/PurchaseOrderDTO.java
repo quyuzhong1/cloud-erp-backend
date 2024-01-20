@@ -470,6 +470,14 @@ public class PurchaseOrderDTO implements Serializable {
         private String id;
 
         /**
+         * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+         */
+        private String executionStatus;
+        /**
+         * 执行状态描述
+         */
+        private String executionStatusName;
+        /**
          * 供应商信息
          */
         @Valid

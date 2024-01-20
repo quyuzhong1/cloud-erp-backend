@@ -338,7 +338,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
         });
         dto.setDetails(details);
-
+        PurchaseOrderDetailDTO.UpdateDTO updateDTO = details.stream().filter(e -> StringUtils.isNotBlank(e.getExecutionStatusName())).findFirst().orElse(null);
+        if (Objects.nonNull(updateDTO)){
+            dto.setExecutionStatus(updateDTO.getExecutionStatus());
+            dto.setExecutionStatusName(updateDTO.getExecutionStatusName());
+        }
         List<String> podIds = entityDetails.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         //获取收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
@@ -2393,6 +2397,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //汇总
         return countPurchaseOrder(dto, list);
     }
+
+    @Override
+    public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO pagingDTO) {
+        PurchaseOrderDTO.ListDTO dto = new PurchaseOrderDTO.ListDTO();
+        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(pagingDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return countPurchaseOrder(dto, list);
+        }
+        //数据赋值处理
+        buildPurchaseOrderCount(list);
+        //汇总
+        return countPurchaseOrder(dto, list);
+    }
+
     private  void buildPurchaseOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
             return;

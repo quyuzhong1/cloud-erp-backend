@@ -94,8 +94,8 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/srmOrderConfirmStatus")
     public ApiResult<List<BatchResultDTO>> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
-        List<BatchResultDTO> batchResultDTOS = purchaseOrderFeign.srmOrderConfirmStatus(dto);
-        return success(batchResultDTOS);
+        List<BatchResultDTO> resultDTOS = purchaseOrderFeign.srmOrderConfirmStatus(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

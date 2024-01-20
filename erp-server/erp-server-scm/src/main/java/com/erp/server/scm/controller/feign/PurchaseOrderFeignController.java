@@ -464,4 +464,16 @@ public class PurchaseOrderFeignController {
     public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         return purchaseOrderService.srmWaitDeliveryPaging(dto);
     }
+
+    /**
+     * srm订单确认列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmWaitDeliveryTotal")
+    public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
+        return purchaseOrderService.srmWaitDeliveryTotal(dto);
+    }
 }
