@@ -128,4 +128,9 @@
             DAY' ) > td.create_time
         </if>
     </select>
+
+    <!--tab页数量-->
+    <select id="listCount" resultType="java.lang.Integer">
+
+    </select>
 </mapper>

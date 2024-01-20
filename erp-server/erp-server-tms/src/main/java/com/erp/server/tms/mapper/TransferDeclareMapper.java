@@ -30,4 +30,13 @@ public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity>
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
      **/
     IPage<TransferDeclareDTO.ListDTO> paging(Page query, @Param("params") TransferDeclareDTO.PagingParamDTO params);
+
+    /**
+     * 查询状态
+     * @Author Luo_WG
+     * @Date 2024/1/20 17:09
+     * @param pagingParamDTO
+     * @return java.lang.Integer
+     **/
+    Integer listCount(@Param("params")TransferDeclareDTO.PagingParamDTO pagingParamDTO);
 }

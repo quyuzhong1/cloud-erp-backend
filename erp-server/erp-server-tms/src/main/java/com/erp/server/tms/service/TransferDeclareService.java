@@ -27,6 +27,15 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
 
     /**
+     * 分页列表tab页
+     * @Author Luo_WG
+     * @Date 2024/1/20 16:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.TabListDTO>>
+     **/
+    List<TransferDeclareDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
     * 新增
     * @author Luo_WG
     * @date: 2024-01-19

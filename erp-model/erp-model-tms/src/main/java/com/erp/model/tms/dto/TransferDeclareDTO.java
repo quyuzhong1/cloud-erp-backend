@@ -376,4 +376,21 @@ public class TransferDeclareDTO implements Serializable {
          */
         private LocalDateTime createTime;
     }
+
+    /**
+     * tab页
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+        /**
+         * tab
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 }

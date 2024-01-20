@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 中转状态
+ * 中转报关状态
  */
-public enum TransferStatusEnum implements EnumMessage {
+public enum TransferLogisticsStatusEnum implements EnumMessage {
 
     UNUSUAL("unusual", "异常"),
     CONFIRMED("confirmed", "已确认"),
@@ -26,7 +26,7 @@ public enum TransferStatusEnum implements EnumMessage {
      */
     private String name;
 
-    TransferStatusEnum(String code, String name) {
+    TransferLogisticsStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -45,7 +45,7 @@ public enum TransferStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (TransferStatusEnum statusEnum : TransferStatusEnum.values()) {
+        for (TransferLogisticsStatusEnum statusEnum : TransferLogisticsStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

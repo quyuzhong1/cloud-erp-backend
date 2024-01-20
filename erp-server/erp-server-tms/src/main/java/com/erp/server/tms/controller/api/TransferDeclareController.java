@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+
+import java.util.List;
 
 /**
  * 中转报关表
@@ -48,11 +51,29 @@ public class TransferDeclareController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:transferDeclare:paging",
-            tableAlias = "ci"
+            tableAlias = "td"
     )
     public ApiResult<PagingVO<TransferDeclareDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
         PagingVO<TransferDeclareDTO.ListDTO> pagingVO = transferDeclareService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 分页列表tab页
+     * @Author Luo_WG
+     * @Date 2024/1/20 16:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.TabListDTO>>
+     **/
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:transferDeclare:paging",
+            tableAlias = "td"
+    )
+    public ApiResult<List<TransferDeclareDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<TransferDeclareDTO.TabListDTO> tabList = transferDeclareService.tabList(dto);
+        return success(tabList);
     }
 
     /**
