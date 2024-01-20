@@ -171,6 +171,20 @@ public class GoodCangService {
         }
         return respDto;
     }
+    /**
+     * 获取出库单号
+     */
+    public GoodCangResponse<String> getOutboundCode(@Valid @NotEmpty(message = "参考单号不能为空")String referenceNo){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("reference_no",referenceNo);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_OUT_BOUND_CODE,paramsMap);
+        //处理返回值
+        GoodCangResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.nonNull(respDto.getData())){
+            respDto.setData(JSONObject.parseObject(respDto.getData()).get("order_code").toString());
+        }
+        return respDto;
+    }
 
     /**
      * 取消出库单
