@@ -55,5 +55,48 @@
         supplier_id, supplier_name, main_id, source_detail_id, source_id, source_code, source_type, po_code, po_id, confirm_date, sku_id, sku_no, delivery_qty, receive_qty, tax_rate, tax_price, tax_amount, settle_org_id, settle_org_Name, settle_dict, payment_condition, business_status, supplier_remark, purchase_remark, currency, exchange_rate, is_add_account
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
+        select
+               *
+        from po_reconciliation_detail prd
+        <where>
+            ${params.sqlMap.default}
+            and prd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            prd.id desc
+        </where>
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
+        select
+        *
+        from po_reconciliation_detail prd
+        <where>
+            ${params.sqlMap.default}
+            and prd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            prd.id desc
+        </where>
+    </select>
+
 
 </mapper>
