@@ -554,7 +554,7 @@
         <where>
              po.is_deleted = false and po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm'
             <foreach collection="list" item="item" separator="," open="(" close=")">
-                <if test="item.unit != null">
+                <if test="item.unit != null and item.unit == 'H'">
                     and now() - INTERVAL concat(#{item.duration},'hour')  > po.approve_time
                 </if>
                 <if test="item.unit != null and item.unit == 'M'">
