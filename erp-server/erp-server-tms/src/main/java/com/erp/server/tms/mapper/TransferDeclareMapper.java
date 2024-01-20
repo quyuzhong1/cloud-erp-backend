@@ -32,11 +32,20 @@ public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity>
     IPage<TransferDeclareDTO.ListDTO> paging(Page query, @Param("params") TransferDeclareDTO.PagingParamDTO params);
 
     /**
-     * 查询状态
+     * 查询上传状态数量
      * @Author Luo_WG
      * @Date 2024/1/20 17:09
      * @param pagingParamDTO
      * @return java.lang.Integer
      **/
-    Integer listCount(@Param("params")TransferDeclareDTO.PagingParamDTO pagingParamDTO);
+    Integer listUploadStatusCount(@Param("params") TransferDeclareDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     * 查询中转状态数量
+     * @Author Luo_WG
+     * @Date 2024/1/20 17:09
+     * @param pagingParamDTO
+     * @return java.lang.Integer
+     **/
+    Integer listTransferStatusCount(@Param("params")TransferDeclareDTO.PagingParamDTO pagingParamDTO);
 }

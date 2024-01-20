@@ -133,4 +133,31 @@
     <select id="listCount" resultType="java.lang.Integer">
 
     </select>
+
+    <!--查询上传状态数量-->
+    <select id="listUploadStatusCount" resultType="java.lang.Integer">
+        SELECT
+            count(DISTINCT td.id)
+        FROM transfer_declare td
+        <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
+            and td.upload_status in
+            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
+                #{uploadStatus}
+            </foreach>
+        </if>
+    </select>
+
+    <!--查询中转状态数量-->
+    <select id="listTransferStatusCount" resultType="java.lang.Integer">
+        SELECT
+            count(DISTINCT tdd.id)
+        FROM transfer_declare_detail tdd
+        <!--中转状态-->
+        <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
+            and tdd.transfer_status in
+            <foreach collection="params.transferStatusList" item="transferStatus" open="(" separator="," close=")">
+                #{transferStatus}
+            </foreach>
+        </if>
+    </select>
 </mapper>

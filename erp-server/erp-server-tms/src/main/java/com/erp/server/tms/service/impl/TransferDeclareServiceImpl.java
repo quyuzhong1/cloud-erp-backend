@@ -9,9 +9,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cTabEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
@@ -74,6 +76,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public List<TransferDeclareDTO.TabListDTO> tabList(PermissionsDTO param) {
+        List<TransferDeclareDTO.TabListDTO> result = new ArrayList<>();
         TransferDeclareTabFlagEnum[] values = TransferDeclareTabFlagEnum.values();
         for (TransferDeclareTabFlagEnum item : values) {
             TransferDeclareDTO.PagingParamDTO pagingParamDTO = new TransferDeclareDTO.PagingParamDTO();
@@ -83,11 +86,26 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             //tab页条件匹配状态
             handleTableParam(pagingParamDTO);
 
-            Integer count = baseMapper.listCount(pagingParamDTO);
+            Integer count = MathUtil.ZERO;
+            if (TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode().equals(item.getCode())) {
+                count = this.baseMapper.listUploadStatusCount(pagingParamDTO);
+            }
+            if (TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode().equals(item.getCode())) {
+                count = this.baseMapper.listUploadStatusCount(pagingParamDTO);
+            }
+            if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(item.getCode())) {
+                count = this.baseMapper.listTransferStatusCount(pagingParamDTO);
+            }
+            if (TransferDeclareTabFlagEnum.LOGISTICS_OUTSTOCK.getCode().equals(item.getCode())) {
+                count = this.baseMapper.listTransferStatusCount(pagingParamDTO);
+            }
 
             TransferDeclareDTO.TabListDTO resultDTO = new TransferDeclareDTO.TabListDTO();
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setCount(count);
+            result.add(resultDTO);
         }
-         return null;
+         return result;
     }
 
     /**
