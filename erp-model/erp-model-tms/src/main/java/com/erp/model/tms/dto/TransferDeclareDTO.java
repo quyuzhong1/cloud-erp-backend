@@ -2,10 +2,16 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.cglib.core.Local;
+
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -207,5 +213,167 @@ public class TransferDeclareDTO implements Serializable {
 
     }
 
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * tabFlag
+         * 来源：/tms/drop/down/dict/list/key=TransferDeclareTabFlag
+         */
+        private String tabFlag;
 
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 订单编号
+         */
+        private String soCode;
+
+        /**
+         * 物流渠道id
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        private List<String> logisticsChannelIdList;
+
+        /**
+         * 发货物流商id
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        private List<String> deliveryLogisticsSupplierIdList;
+
+        /**
+         * 中转物流商id
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/28031
+         */
+        private List<String> transferLogisticsSupplierIdList;
+
+        /**
+         * 上传状态
+         * 来源：/tms/drop/down/dict/list/key=transferUploadStatus
+         */
+        private List<String> uploadStatusList;
+
+        /**
+         * 出库状态
+         * 来源：/tms/drop/down/dict/list/key=transferOutstockStatus
+         */
+        private List<String> outstockStatusList;
+
+        /**
+         * 中转状态
+         */
+        private List<String> transferStatusList;
+
+        /**
+         * 创建人
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+    }
+
+    /**
+     * 分页列表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 中转报关单号
+         */
+        private String code;
+        /**
+         * 预计中转时间
+         */
+        private String planTransferDate;
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
+        /**
+         * 上传状态中文
+         */
+        private String uploadStatusName;
+        /**
+         * 发货物流商中文
+         */
+        private String deliveryLogisticsSupplierName;
+        /**
+         * 中转物流商中文
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转渠道中文
+         */
+        private String transferChannelName;
+        /**
+         * 包裹总数量
+         */
+        private String packageQtyTotal;
+        /**
+         * 包裹总重量
+         */
+        private String packageWeightTotal;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 物流渠道中文
+         */
+        private String logisticsChannelName;
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
+        /**
+         * 出库状态
+         */
+        private String outstockStatus;
+        /**
+         * 出库状态中文
+         */
+        private String outstockStatusName;
+        /**
+         * 中转状态
+         */
+        private String transferStatus;
+        /**
+         * 中转状态中文
+         */
+        private String transferStatusName;
+        /**
+         * 失败原因
+         */
+        private String failureReason;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+    }
 }

@@ -1,9 +1,15 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.TransferDeclareService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,6 +45,33 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Override
+    public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        //列表Tab查询状态处理
+        handleTableParam(pagingParamDTO.getParams());
+
+        IPage<TransferDeclareDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void handleTableParam(TransferDeclareDTO.PagingParamDTO params) {
+
+/*        if () {
+
+        }*/
+    }
+
+    private void fillList(List<TransferDeclareDTO.ListDTO> records) {
+
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

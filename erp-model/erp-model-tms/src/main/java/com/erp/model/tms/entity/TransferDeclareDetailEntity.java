@@ -73,8 +73,8 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     /**
     * 中转状态
     */
-    @TableField("transfer_staus")
-    private String transferStaus;
+    @TableField("transfer_status")
+    private String transferStatus;
 
 
     public static final String MAIN_ID = "main_id";

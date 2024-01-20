@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -15,6 +16,15 @@ import java.util.List;
  * @since 2024-01-19
  */
 public interface TransferDeclareService extends SuperService<TransferDeclareEntity> {
+
+    /**
+     * 分页列表查询
+     * @Author Luo_WG
+     * @Date 2024/1/20 14:50
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
+     **/
+    PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
 
     /**
     * 新增
@@ -42,4 +52,5 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return com.erp.model.tms.entity.TransferDeclareEntity
      **/
     TransferDeclareEntity checkExistByChannelIds(List<String> ids);
+
 }

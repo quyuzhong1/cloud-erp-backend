@@ -1,8 +1,13 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +21,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity> {
 
+    /**
+     * 分页列表查询
+     * @Author Luo_WG
+     * @Date 2024/1/20 14:53
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
+     **/
+    IPage<TransferDeclareDTO.ListDTO> paging(Page query, @Param("params") TransferDeclareDTO.PagingParamDTO params);
 }

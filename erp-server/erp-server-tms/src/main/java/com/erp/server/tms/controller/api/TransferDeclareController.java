@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CustomerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -34,6 +36,24 @@ public class TransferDeclareController extends BaseController {
 
     @Resource
     private TransferDeclareService transferDeclareService;
+
+    /**
+     * 分页列表查询
+     * @Author Luo_WG
+     * @Date 2024/1/20 14:50
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>>
+     **/
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:transferDeclare:paging",
+            tableAlias = "ci"
+    )
+    public ApiResult<PagingVO<TransferDeclareDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
+        PagingVO<TransferDeclareDTO.ListDTO> pagingVO = transferDeclareService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
     * 新增

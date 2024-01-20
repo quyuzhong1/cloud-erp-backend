@@ -85,7 +85,7 @@ public class TransferDeclareDetailDTO implements Serializable {
         /**
         * 中转状态
         */
-        private String transferStaus;
+        private String transferStatus;
 
 
     }
@@ -187,7 +187,7 @@ public class TransferDeclareDetailDTO implements Serializable {
         */
         @NotBlank(message = "中转状态不能为空")
         @Size(max = 30,message = "中转状态最大长度不能超过30位")
-        private String transferStaus;
+        private String transferStatus;
 
 
     }
