@@ -136,7 +136,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param response
      * @return void
      */
-    void exportPurchasePrice(PurchasePriceDTO.ExportDTO dto, HttpServletResponse response);
+    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 删除供应商的时候后 看是否有关联 如果有就不能删除

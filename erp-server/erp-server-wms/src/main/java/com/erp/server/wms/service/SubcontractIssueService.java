@@ -125,7 +125,7 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
     * @param response
     * @return
     */
-    void exportList(SubcontractIssueDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SubcontractIssueDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

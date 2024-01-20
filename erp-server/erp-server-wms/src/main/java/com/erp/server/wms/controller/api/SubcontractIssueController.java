@@ -354,7 +354,7 @@ public class SubcontractIssueController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外发料单导出Excel数据")
     @WebAdvanceQuery(handler = SubcontractIssueQueryHandler.class)
-    public void exportList(@RequestBody @Validated SubcontractIssueDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(@RequestBody @Validated SubcontractIssueDTO.PagingParamDTO dto, HttpServletResponse response) {
         subcontractIssueService.exportList(dto, response);
     }
 

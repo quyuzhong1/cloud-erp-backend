@@ -774,7 +774,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public void export(PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
 
         //获取导出数据
         List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto);

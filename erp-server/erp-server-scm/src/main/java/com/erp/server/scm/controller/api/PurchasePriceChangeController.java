@@ -306,7 +306,7 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:paging",
             tableAlias = "pp")
     @WebAdvanceQuery(handler = PurchasePriceChangeQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         purchasePriceChangeService.export(dto, response);
         return success();
     }

@@ -32,7 +32,7 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
         }
         //选项卡
         if("tab".equals(field)){
-            getTabSql(value);
+            return getTabSql(value);
         }
         return null;
     }
@@ -49,7 +49,7 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
         if (TabFlagEnum.APPROVE_ING.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             if (CollectionUtils.isNotEmpty(businessIds)) {
                 super.buildDefaultDTO("pp.id", businessIds);
             }else{

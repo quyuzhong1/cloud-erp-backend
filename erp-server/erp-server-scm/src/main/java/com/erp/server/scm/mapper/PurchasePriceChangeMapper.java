@@ -38,11 +38,11 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @param dto
      * @return List<PagingViewDTO>
      */
-    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto);
+    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.PagingParamDTO dto);
 
     /**
      * 临时查询方法
-     * @return
+     * @returnch
      */
     List<PurchasePriceChangeDetailEntity> listTemp();
     /**
@@ -52,5 +52,5 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @param searchParamDTO
      * @return Integer
      */
-    Integer tabList(PurchaseOrderDTO.SearchParamDTO searchParamDTO);
+    Integer tabList(@Param("params")PurchaseOrderDTO.SearchParamDTO searchParamDTO);
 }
