@@ -3,6 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
@@ -44,4 +45,12 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @return
      */
     List<PurchasePriceChangeDetailEntity> listTemp();
+    /**
+     * @description: tab集合
+     * @author Will
+     * @date: 2024/1/20 9:26
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer tabList(PurchaseOrderDTO.SearchParamDTO searchParamDTO);
 }

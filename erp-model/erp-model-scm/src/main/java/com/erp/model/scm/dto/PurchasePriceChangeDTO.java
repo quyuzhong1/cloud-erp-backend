@@ -5,6 +5,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -407,5 +408,30 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 主键id集合
          */
         private List<String> ids;
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型 ,(approveIng待我审核,approve已审核,reject不通过)
+         */
+        private String tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 }

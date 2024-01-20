@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -24,15 +25,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PoTableFlagEnum;
+import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -47,6 +48,8 @@ import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
+import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -122,7 +125,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private SysDictFeign sysDictFeign;
 
-
+    @Resource
+    private PurchasePriceQueryHandler purchasePriceQueryHandler;
 
     @Resource
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
@@ -1004,6 +1008,27 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         purchasePriceDetailService.updateDetailRemark(ids,remark);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        PurchasePriceTabFlagEnum[] values = PurchasePriceTabFlagEnum.values();
+        List<PurchasePriceDTO.TabListDTO> list = new ArrayList<>();
+        for (PurchasePriceTabFlagEnum item : values) {
+            PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
+            PurchasePriceDTO.TabListDTO resultDTO = new PurchasePriceDTO.TabListDTO();
+            String tabSql = purchasePriceQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

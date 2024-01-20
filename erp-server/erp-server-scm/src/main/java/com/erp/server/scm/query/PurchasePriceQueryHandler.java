@@ -31,34 +31,47 @@ public class PurchasePriceQueryHandler extends AbstractQueryHandler {
         }
         //选项卡
         if("tab".equals(field)){
-            //待我审核
-            if (PurchasePriceTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                //需要审核的业务ids
-                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
-                if (CollectionUtils.isNotEmpty(businessIds)) {
-                    super.buildDefaultDTO("pp.id", businessIds);
-                }else{
-                    //返回空结果
-                    return this.getQueryEmptySql();
-                }
-            }
-            // 不通过
-            if (PurchasePriceTabFlagEnum.REJECT.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
-            }
-            //已审核启用
-            if (PurchasePriceTabFlagEnum.APPROVE_ENABLE.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                super.buildDefaultDTO("pp.disabled",Boolean.FALSE);
-            }
-            //已审核停用
-            if (PurchasePriceTabFlagEnum.APPROVE_DISABLED.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                super.buildDefaultDTO("pp.disabled", Boolean.TRUE);
-            }
+            getTabSql(value);
         }
         return null;
     }
+
+    /**
+     * @description: tabSql拼接
+     * @author Will
+     * @date: 2024/1/18 19:58
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        //待我审核
+        if (PurchasePriceTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                super.buildDefaultDTO("pp.id", businessIds);
+            }else{
+                //返回空结果
+                return this.getQueryEmptySql();
+            }
+        }
+        // 不通过
+        if (PurchasePriceTabFlagEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        //已审核启用
+        if (PurchasePriceTabFlagEnum.APPROVE_ENABLE.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("pp.disabled",Boolean.FALSE);
+        }
+        //已审核停用
+        if (PurchasePriceTabFlagEnum.APPROVE_DISABLED.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("pp.disabled", Boolean.TRUE);
+        }
+        return super.getSplicingSQL();
+    }
+
 }
 

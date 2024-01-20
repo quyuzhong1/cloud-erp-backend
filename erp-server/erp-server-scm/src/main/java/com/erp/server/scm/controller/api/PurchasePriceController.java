@@ -3,10 +3,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
@@ -27,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 采购价目管理
@@ -79,14 +78,20 @@ public class PurchasePriceController extends BaseController {
 
 
     /**
-     * 列表tab数据
-     *
+     * tab列表
+     * @author Will
+     * @date: 2024/1/20 9:20
      * @param dto
-     * @return
+     * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tab/list")
-    public ApiResult tabList(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        return success();
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:paging",
+            tableAlias = "pp")
+    public ApiResult<List<PurchasePriceDTO.TabListDTO>> tabList(PermissionsDTO dto) {
+        List<PurchasePriceDTO.TabListDTO> list = purchasePriceService.tabList(dto);
+        return success(list);
     }
 
     /**

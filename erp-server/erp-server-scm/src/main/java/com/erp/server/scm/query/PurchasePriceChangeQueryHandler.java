@@ -32,28 +32,41 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
         }
         //选项卡
         if("tab".equals(field)){
-            //待我审核
-            if (TabFlagEnum.APPROVE_ING.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                //需要审核的业务ids
-                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
-                if (CollectionUtils.isNotEmpty(businessIds)) {
-                    super.buildDefaultDTO("pp.id", businessIds);
-                }else{
-                    //返回空结果
-                    return this.getQueryEmptySql();
-                }
-            }
-            // 已审核
-            if (TabFlagEnum.APPROVE.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-            }
-            //不通过
-            if (TabFlagEnum.REJECT.getCode().equals(value)) {
-                super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
-            }
+            getTabSql(value);
         }
         return null;
     }
+
+    /**
+     * @description: tabSql拼接
+     * @author Will
+     * @date: 2024/1/18 19:58
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        //待我审核
+        if (TabFlagEnum.APPROVE_ING.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                super.buildDefaultDTO("pp.id", businessIds);
+            }else{
+                //返回空结果
+                return this.getQueryEmptySql();
+            }
+        }
+        // 已审核
+        if (TabFlagEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        }
+        //不通过
+        if (TabFlagEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        return super.getSplicingSQL();
+    }
+
 }
 

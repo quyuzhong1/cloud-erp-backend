@@ -2,8 +2,10 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -206,4 +208,12 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids,String remark);
+    /**
+     * @description: tab查询
+     * @author Will
+     * @date: 2024/1/19 18:49
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

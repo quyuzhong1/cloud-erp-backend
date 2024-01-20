@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -26,13 +27,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
+import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -42,6 +42,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
+import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
+import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -106,6 +108,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private SupplierService supplierService;
+
+    @Resource
+    private PurchasePriceChangeQueryHandler purchasePriceChangeQueryHandler;
+
+
 
     /**
      * 添加采购价目变更
@@ -1010,5 +1017,26 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(updateList)) {
             purchasePriceHistoryService.updateBatchById(updateList);
         }
+    }
+
+    @Override
+    public List<PurchasePriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        PurchasePriceChangeTabFlagEnum[] values = PurchasePriceChangeTabFlagEnum.values();
+        List<PurchasePriceChangeDTO.TabListDTO> list = new ArrayList<>();
+        for (PurchasePriceChangeTabFlagEnum item : values) {
+            PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
+            PurchasePriceChangeDTO.TabListDTO resultDTO = new PurchasePriceChangeDTO.TabListDTO();
+            String tabSql = purchasePriceChangeQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 }

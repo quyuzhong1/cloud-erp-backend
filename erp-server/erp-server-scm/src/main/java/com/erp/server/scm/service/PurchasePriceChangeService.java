@@ -2,6 +2,7 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -161,4 +162,12 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return void
      */
     void tempUpdateHistoryDb();
+    /**
+     * @description: tab列表
+     * @author Will
+     * @date: 2024/1/20 9:22
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchasePriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
 }
