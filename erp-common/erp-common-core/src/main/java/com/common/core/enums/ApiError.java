@@ -899,6 +899,7 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
+    HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
 
     /**
      * OMS 错误

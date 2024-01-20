@@ -222,6 +222,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException("订单取消状态：取消成功或物流拦截状态：拦截成功，不支持再次发起物流拦截");
         }
 
+        //已处理不可重复操作
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus()) || SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
+            throw new ServiceException(ApiError.HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT);
+        }
+
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(Collections.singletonList(entity.getSourceId()));
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
@@ -278,6 +283,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }
         }
 
+        //更新拦截状态
+        this.updateById(entity);
+
         // 操作日志
         String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
@@ -300,10 +308,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
         }
 
+        LoginUser userInfo = commonService.getUserInfo();
+
         //修改状态
         lambdaUpdate()
                 .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
                 .set(SoB2cDeliveryInterceptEntity::getHandleRemark, dto.getResultRemark())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
                 .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
                 .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
                 .eq(SoB2cDeliveryInterceptEntity::getId, id)
@@ -425,9 +437,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Boolean.FALSE;
         }
+        LoginUser userInfo = commonService.getUserInfo();
+
         return lambdaUpdate()
                 .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)
                 .set(SoB2cDeliveryInterceptEntity::getHandleStatus, status)
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
                 .update();
     }
 
