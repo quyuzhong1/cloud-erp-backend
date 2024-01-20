@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -13,6 +14,7 @@ import com.erp.server.tms.service.SettingForecastService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -46,6 +48,14 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Override
     public Boolean addOrUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         List<SettingForecastEntity> saveOrUpdateList = BeanMapperUtils.copyList(SettingForecastEntity.class, list);
+        //存在的
+        List<SettingForecastEntity> dbList=this.list();
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
         // 数据处理
         handleData(saveOrUpdateList);
         return this.saveOrUpdateBatch(saveOrUpdateList);
@@ -134,6 +144,14 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
                     findFirst().map(LogisticsSupplierEntity::getSupplierName).orElse("");
             item.setLogisticsSupplierName(logisticsSupplierName);
         }
+
+    }
+
+    private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SettingForecastEntity> dbList) {
+        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+                map(obj -> obj.getKey()).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(SettingForecastEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
 
     }
 
