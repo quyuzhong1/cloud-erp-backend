@@ -45,7 +45,7 @@ public class SoB2cDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单）
+         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单 ）
          */
         private String tabFlag;
 
@@ -79,6 +79,16 @@ public class SoB2cDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 组包状态 （soB2cPackageStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private String packageStatus;
+
+        /**
+         * 中转状态 （soB2cTransferStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private String transferStatus;
         /**
          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */

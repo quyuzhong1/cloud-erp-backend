@@ -2,6 +2,8 @@ package com.erp.server.tms.service.impl;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
@@ -14,8 +16,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -59,10 +63,10 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier() {
         List<SettingForecastEntity> dbList = this.list();
-        List<String> dbLogisticsSupplierIdList=dbList.stream().map(SettingForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
-        List<BaseDropDownDTO.DisabledDTO> list=logisticsSupplierService.listAll();
-        list.forEach(item->{
-            if(dbLogisticsSupplierIdList.contains(item.getCode())){
+        List<String> dbLogisticsSupplierIdList = dbList.stream().map(SettingForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
+        List<BaseDropDownDTO.DisabledDTO> list = logisticsSupplierService.listAll();
+        list.forEach(item -> {
+            if (dbLogisticsSupplierIdList.contains(item.getCode())) {
                 item.setDisabled(true);
             }
         });
@@ -71,11 +75,47 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(String logisticsChannelId) {
-        if(StringUtils.isBlank(logisticsChannelId)){
-            return null;
+        SettingForecastDTO.ForecastStatusDto forecastStatus = new SettingForecastDTO.ForecastStatusDto();
+
+        String packageStatus = PackageStatusEnum.NOT.getCode();
+        String transferStatus = TransferStatusEnum.NOT.getCode();
+        LocalDateTime now = LocalDateTime.now();
+        if (StringUtils.isBlank(logisticsChannelId)) {
+            forecastStatus.setTransferStatus(transferStatus);
+            forecastStatus.setPackageStatus(packageStatus);
+            return forecastStatus;
+        }
+        SettingForecastEntity entity = baseMapper.getByLogisticsChannelId(logisticsChannelId);
+        if (Objects.nonNull(entity)) {
+            //是否强制组包
+            Boolean isMustPackage = entity.getIsMustPackage();
+            LocalDateTime enablePackageTime = entity.getEnablePackageTime();
+            if (isMustPackage) {
+                if (Objects.isNull(enablePackageTime)) {
+                    packageStatus = PackageStatusEnum.WAIT.getCode();
+                } else {
+                    if (now.compareTo(enablePackageTime) > 0) {
+                        packageStatus = PackageStatusEnum.WAIT.getCode();
+                    }
+                }
+            }
+            //是否强制中转
+            Boolean isMustTransfer = entity.getIsMustTransfer();
+            LocalDateTime enableTransferTime = entity.getEnableTransferTime();
+            if (isMustTransfer) {
+                if (Objects.isNull(enableTransferTime)) {
+                    transferStatus = TransferStatusEnum.WAIT.getCode();
+                } else {
+                    if (now.compareTo(enablePackageTime) > 0) {
+                        transferStatus = TransferStatusEnum.WAIT.getCode();
+                    }
+                }
+            }
         }
 
-        return null;
+        forecastStatus.setPackageStatus(packageStatus);
+        forecastStatus.setTransferStatus(transferStatus);
+        return forecastStatus;
     }
 
 
