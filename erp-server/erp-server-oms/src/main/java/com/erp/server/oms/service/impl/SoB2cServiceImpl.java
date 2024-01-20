@@ -4126,7 +4126,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setCarrierId(logisticsBase.getLogisticsSupplierId());
                 }
             }
-            dto.setTrackNo(soB2cLogistics.getTrackNo());
+            String trackNo = soB2cLogistics.getTrackNo();
+            if (StringUtils.isBlank(trackNo)) {
+                trackNo = soB2cLogistics.getCode();
+            }
+            dto.setTrackNo(trackNo);
             dto.setTransportNo(soB2cLogistics.getCode());
         }
         //根据主表id 查询出库的信息
