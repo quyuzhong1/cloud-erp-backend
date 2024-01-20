@@ -62,7 +62,7 @@ public class TransferLogisticsAuthDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends LogisticsAuthDTO.CommonDTO {
+    public static class AddDTO extends CommonDTO {
 
 
     }
@@ -72,7 +72,7 @@ public class TransferLogisticsAuthDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends LogisticsAuthDTO.CommonDTO {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主键id
@@ -89,6 +89,7 @@ public class TransferLogisticsAuthDTO implements Serializable {
         /**
          * 物流平台
          * http://172.16.100.11:3002/project/128/interface/api/25522
+         * key=logisticsPlatform
          */
         @NotBlank(message = "物流平台不能为空")
         @Size(max = 30,message = "物流平台最大长度不能超过30位")
