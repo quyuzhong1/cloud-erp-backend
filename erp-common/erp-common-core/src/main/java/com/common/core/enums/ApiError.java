@@ -1057,7 +1057,9 @@ public enum ApiError implements Serializable {
     NOT_INTERCEPT_NOT_CANCEL_INTERCEPT(92122,"未打标拦截的订单不支持取消拦截"),
     INTERCEPT_STATUS_IS_NOT_BLANK(92123,"物流商处理状态为空才允许取消拦截"),
     ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
-
+    ERROR_WAIT_SHIPPED_TRANSFER(92125,"只有待发货的订单才能中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"只有待中转的订单才能中转报关"),
+    ALREADY_PACKAGE_CAN_TRANSFER(92127,"已组包的订单不能中转报关"),
     /**
      * TMS 错误
      * 从94000 开始

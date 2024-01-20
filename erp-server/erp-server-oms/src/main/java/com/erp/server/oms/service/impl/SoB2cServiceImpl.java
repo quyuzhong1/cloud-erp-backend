@@ -3248,9 +3248,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<SoB2cDTO.ForecastCountDTO> forecastCount(PermissionsDTO dto) {
         List<SoB2cDTO.ForecastCountDTO> list = new ArrayList<>(2);
-        String sql =dto.getPermissionSql();
-        if(StringUtils.isBlank(sql)){
-            sql="";
+        String sql = dto.getPermissionSql();
+        if (StringUtils.isBlank(sql)) {
+            sql = "";
         }
         SoB2cDTO.ForecastCountDTO packageCountDTO = new SoB2cDTO.ForecastCountDTO();
         //待组包
@@ -3275,6 +3275,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         transferCountDTO.setStatusName(waitTransferStatusName);
         list.add(transferCountDTO);
         return list;
+    }
+
+
+    @Override
+    public BatchResultDTO transferDeclare(String id) {
+        //B2C销售订单主表信息
+        SoB2cEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        String billStatus = entity.getBillStatus();
+        String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        if (!waitShipped.equals(billStatus)) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SHIPPED_TRANSFER);
+        }
+        //中转状态
+        String transferStatus = entity.getTransferStatus();
+        String waitTransfer = TransferStatusEnum.WAIT.getCode();
+        if (!waitTransfer.equals(transferStatus)) {
+            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER);
+        }
+        String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
+        //组包状态
+        String packageStatus = entity.getPackageStatus();
+        if(alreadyPackage.equals(packageStatus)){
+            throw new ServiceException(ApiError.ALREADY_PACKAGE_CAN_TRANSFER);
+        }
+
+        //TODO  调用tms feign 生成中转报关单
+        return null;
     }
 
     /**

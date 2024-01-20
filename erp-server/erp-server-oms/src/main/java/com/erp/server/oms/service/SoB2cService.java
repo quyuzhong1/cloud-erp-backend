@@ -592,4 +592,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.ForecastCountDTO> forecastCount(PermissionsDTO dto);
+
+    /**
+     * 中转报关
+     * @description
+     * @param id
+     * @author Lambda
+     * @return 
+     * @create 2024-01-20 15:47
+     */
+    BatchResultDTO transferDeclare(String id);
 }
