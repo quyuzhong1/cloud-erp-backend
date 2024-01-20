@@ -65,6 +65,9 @@ public class WebAdvanceQueryAspect {
         //获取查询对象(如果为空会初始化一个长度为1的集合）
         List<AdvanceQueryDTO> advanceQueryDTOList = this.getQueryDTOList(point);
 
+        if(Objects.isNull(advanceQueryDTOList)){
+            throw new ServiceException("获取不到高级查询对象，请确认前端传参和后端参数");
+        }
         //group 为空默认为default
         advanceQueryDTOList.replaceAll(v -> {
             v.setGroupName(StringUtils.defaultIfBlank(v.getGroupName(), "default"));
@@ -215,6 +218,9 @@ public class WebAdvanceQueryAspect {
     }
 
     private Map<String,String> getMapWithFieldName(Class<?> resultClz, Object arg) throws IllegalAccessException {
+        if (resultClz == null) {
+            return null;
+        }
         Field[] fieldInfo = resultClz.getDeclaredFields();
         for (Field field : fieldInfo) {
             if (!SQL_MAP_FIELD_NAME.equals(field.getName())) {
@@ -229,10 +235,13 @@ public class WebAdvanceQueryAspect {
             }
             return ( Map<String,String>) fieldValue;
         }
-        return null;
+        return getMapWithFieldName(resultClz.getSuperclass(), arg);
     }
 
     private List<AdvanceQueryDTO> getListWithFieldName(Class<?> resultClz, Object arg) throws IllegalAccessException {
+        if (resultClz == null) {
+            return null;
+        }
         Field[] fieldInfo = resultClz.getDeclaredFields();
         for (Field field : fieldInfo) {
             if (!ADVANCE_QUERY_FIELD_NAME.equals(field.getName())) {
@@ -250,7 +259,7 @@ public class WebAdvanceQueryAspect {
             }
             return (List<AdvanceQueryDTO>) fieldValue;
         }
-        return null;
+        return getListWithFieldName(resultClz.getSuperclass(), arg);
     }
 
     /**
