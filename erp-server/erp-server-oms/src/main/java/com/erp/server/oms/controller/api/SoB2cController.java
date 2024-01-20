@@ -749,4 +749,18 @@ public class SoB2cController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 中转报关
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-20 15:27
+     */
+    @PostMapping("/transferDeclare")
+    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody BaseIdsDTO.IdsDTO dto){
+     return success();
+    }
 }
