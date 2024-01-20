@@ -1343,14 +1343,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
         List<PurchaseOrderDetailEntity> detailEntityListByPoId = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(dto.getPurchaseOrderId()));
+        List<DeliveryOrderDetailEntity> allDeliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(poReceiveDetailIds);
 
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
             }
-
             List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            List<DeliveryOrderDetailEntity> deliveryOrderDetailist = allDeliveryOrderDetailList.stream().filter(req -> req.getSourceDetailId().equals(detailEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(deliveryOrderDetailist)){
+                int deliveryQty = deliveryOrderDetailist.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
+                if(addDTO.getReceiveQty() > deliveryQty){
+                    throw new ServiceException(ApiError.RECEIVE_QTY_ERROR);
+                }
+            }
+
             //校验sku是否有重复，重复需要拆单
             if (detailEntityList.size() > MathUtil.ONE) {
                 List<String> podIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
