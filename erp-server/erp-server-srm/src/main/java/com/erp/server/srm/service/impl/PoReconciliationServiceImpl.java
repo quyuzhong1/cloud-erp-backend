@@ -16,11 +16,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
-import com.erp.server.srm.service.AttachmentService;
-import com.erp.server.srm.service.PoReconciliationService;
+import com.erp.server.srm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -61,6 +58,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Autowired
     private AttachmentService attachmentService;
 
+    @Autowired
+    private PoReconciliationDetailService poReconciliationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -99,11 +98,9 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     public Boolean update(PoReconciliationDTO.UpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单"));
-
-        //
-
-
-
+        //添加上传附件url
+        addMultipartFileUrl(updateDTO);
+        //更新明细
         return Boolean.TRUE;
     }
 
@@ -112,8 +109,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
             return;
         }
         addMultipartFileUrl(updateDTO);
-        Class<CustomerInfoEntity> customerClass = CustomerInfoEntity.class;
-        TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
+        Class<PoReconciliationEntity> uploadClass = PoReconciliationEntity.class;
+        TableName tableName = uploadClass.getDeclaredAnnotation(TableName.class);
         //获取到表名
         String type = tableName.value();
         //保存附件
