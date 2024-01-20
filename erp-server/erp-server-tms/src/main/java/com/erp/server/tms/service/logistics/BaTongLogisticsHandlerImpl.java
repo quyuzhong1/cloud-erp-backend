@@ -19,6 +19,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
 import com.erp.tms.batong.model.label.request.AdditionalInfo;
 import com.erp.tms.batong.model.label.request.ConfigInfo;
@@ -303,6 +304,29 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return "2";
         }
         return "1";
-
     }
+
+
+    /**
+     * 授权判断
+     *
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap) {
+        try {
+            baTongService.listShippingMethod(authMap);
+            return success();
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+
+        }
+    }
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.BaTong;
+    }
+
+
 }
