@@ -7,7 +7,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-04-07
  */
-public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnOrderEntity> {
+public interface PoReturnService extends SuperService<PoReturnEntity> {
     /**
      * 分页查询
      * @Author Luo_WG
@@ -166,7 +166,7 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @param sourceIds
      * @return List<PurchaseReturnOrderEntity>
      */
-    List<PurchaseReturnOrderEntity> listBySourceIds(List<String> sourceIds);
+    List<PoReturnEntity> listBySourceIds(List<String> sourceIds);
 
     /**
      * 获取退货数量
@@ -299,4 +299,5 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Boolean
      **/
     Boolean dataRepairTemp();
+
 }

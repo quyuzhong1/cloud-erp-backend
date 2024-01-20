@@ -30,7 +30,6 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "outWarehouseLocation", source = "fromWarehouseLocation"),
             @Mapping(target = "inWarehouseId", source = "toWarehouseId"),
             @Mapping(target = "inWarehouseLocation", source = "toWarehouseLocation"),
-            @Mapping(target = "sourceDetailId", constant = "")
     })
     TransferInfoDetailDTO.AddDTO radHandleListToTransferInfoDetail(RequisitionApplicationDTO.HandleListDTO handleListDTO);
 
@@ -39,7 +38,6 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "outWarehouseId", source = "toWarehouseId"),
             @Mapping(target = "inWarehouseId", source = "requisitionWarehouseId"),
             @Mapping(target = "inWarehouseLocation", source = "requisitionWarehouseLocation"),
-            @Mapping(target = "sourceDetailId", constant = "")
     })
     TransferInfoDetailDTO.AddDTO radFinishListToTransferInfoDetail(RequisitionApplicationDTO.FinishListDTO finishListDTO);
 

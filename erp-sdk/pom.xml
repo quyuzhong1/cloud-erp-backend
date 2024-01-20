@@ -34,6 +34,7 @@
         <module>erp-sdk-tms-tongyou</module>
         <module>erp-sdk-tms-aliexpress</module>
         <module>erp-sdk-oms-aliexpress</module>
+        <module>erp-sdk-tms-batong</module>
         <module>erp-sdk-tms-baohong</module>
     </modules>
 

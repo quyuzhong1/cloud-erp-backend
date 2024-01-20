@@ -12,6 +12,7 @@ import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -111,10 +112,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             log.warn("金蝶退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
-        //判断是否需要推送MQ
-        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
-        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
-            return;
+        //过滤oms 推送的订单数据
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils();
+        if (kingdeeApiUtils.notNeedPushMQ(dto.getJobTaskDTO().getLastTime())){
+            pushToMqList = pushToMqList.stream().filter(e ->CommonConstants.SYSTEM.equals(e.getFULZDataSources())).collect(Collectors.toList());
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()

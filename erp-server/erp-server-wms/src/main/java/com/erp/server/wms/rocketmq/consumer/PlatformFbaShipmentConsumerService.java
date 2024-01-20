@@ -114,11 +114,18 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         // sku是否是组合类型
         List<String> hasChildrenSkuIds = new ArrayList<>();
 
+        // 查询当前店铺
+        ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+
+        // 查询仓库中心对应国家并设置对应店铺
+        checkAndSetCountryWithShop(entity, dto, currentShopEntity);
+
+        // 根据仓储中心店铺查询对应sku映射
         if (!CollectionUtils.isEmpty(sellerSkuList)) {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
-            paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
+            paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
             // 查询ListingInfo和skuMapping的关系
@@ -142,11 +149,6 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                     .map(BomChildrenSkuDTO::getParentSkuId)
                     .collect(Collectors.toList());
         }
-        // 查询当前店铺
-        ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
-
-        // 查询仓库中心对应国家并设置对应店铺
-        checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 
         // 查询国家信息
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());

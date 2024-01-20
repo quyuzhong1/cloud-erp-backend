@@ -566,11 +566,40 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean updateWarehouseByShopId(String id, String shopId);
 
     /**
+     * 撤销流程
+     * @description
+     * @param id
+     * @author Lambda
+     * @return
+     * @create 2024-01-09 12:06
+     */
+    BatchResultDTO cancelProcess(String id);
+
+    /**
+     * 反审核
+     * @description
+     * @param id
+     * @author Lambda
+     * @return
+     * @create 2024-01-09 14:17
+     */
+    BatchResultDTO disApprove(String id);
+
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param interceptUpdateOrderDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
+
+    /**
      * 更新组包状态
      * @description
      * @param dto
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-19 10:58
      */
     Boolean updatePackageStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
@@ -580,7 +609,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description
      * @param dto
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-19 11:07
      */
     Boolean updateTransferStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
@@ -598,7 +627,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description
      * @param id
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-20 15:47
      */
     BatchResultDTO transferDeclare(String id);

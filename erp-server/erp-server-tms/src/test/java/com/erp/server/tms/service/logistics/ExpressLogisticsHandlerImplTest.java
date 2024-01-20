@@ -39,10 +39,11 @@ public class ExpressLogisticsHandlerImplTest {
 
     public ExpressLogisticsHandlerImplTest() {
         String CLIENT_CODE = "WJKJVX16Y0N";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "BP6oSEoP3dnELDGMtnbYh7Ig5UKlWIBS";//此处替换为您在丰桥平台获取的校验码
-        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
+        String CHECK_WORD = "BP6oSEoP3dnELDGMtnbYh7Ig5UKlWIBS";
+        String url = "https://sfapi-sbox.sf-express.com/std/service";
         authMap.put("clientId", CLIENT_CODE);
         authMap.put("clientSecret", CHECK_WORD);
+        authMap.put("url", url);
     }
 
     public Map<String, String> getLogisticsAuthConfig() {
@@ -106,7 +107,7 @@ public class ExpressLogisticsHandlerImplTest {
         logisticsProductVO.setQuantity(10);
         logisticsProductVO.setSourceCountry("CN");
         LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
-        logisticsChannel.setCode("UBI.CA2US.CAPOST");
+        logisticsChannel.setCode("1");
         //DDU/DDP
         logisticsChannel.setTaxModel("DDU");
 
@@ -150,9 +151,10 @@ public class ExpressLogisticsHandlerImplTest {
                         logisticsProductVO
                 ))
                 .logisticsChannelEntity(logisticsChannel)
+                .logisticsSaleChannel(logisticsSaleChannel)
                 .build();
         ApiResult<LogisticsOrderResponseVO> order = expressLogisticsHandler.createOrder(logisticsOrderVO);
-        System.out.println(order);
+        System.out.println("order:"+ order);
     }
 
     @Test
@@ -177,7 +179,7 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void interceptOrder() {
         LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList2.setDeliveryNo("wj12345167721");
+        logisticsQueryVOList2.setDeliveryNo("1746722100644679681");
         logisticsQueryVOList2.setAuthMap(authMap);
         ApiResult<List<InterceptResponseVO>> listApiResult = expressLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
         System.out.println(listApiResult);
@@ -186,9 +188,9 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void cancelOrder() {
         LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
-        logisticsQueryVOList.setTrackNo("LM000002721CA");
+        logisticsQueryVOList.setDeliveryNo("wj12345167723");
+        logisticsQueryVOList.setTransportNo("SF7444476771065");
+//        logisticsQueryVOList.setTrackNo("LM000002721CA");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<CancelResponseVO>> listApiResult = expressLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);

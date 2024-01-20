@@ -263,6 +263,16 @@ public interface SoB2cFeign {
     @GetMapping("/feign/soB2c/view")
     SoB2cDTO.ViewDTO view(@RequestParam("id") String id);
 
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param interceptUpdateOrderDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateIntercept")
+    Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
+
 
     /**
      * 更改订单的组包状态

@@ -62,7 +62,7 @@ import org.springframework.util.MimeType;
  */
 public abstract class AbstractJackson2Decoder extends Jackson2CodecSupport implements HttpMessageDecoder<Object> {
 
-    private int maxInMemorySize = 256 * 1024 * 10;
+    private int maxInMemorySize = 256 * 1024 * 1024;
 
 
     /**

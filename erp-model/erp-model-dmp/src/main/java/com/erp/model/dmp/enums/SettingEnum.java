@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 /**
  * @author CLOUD
  * @version 1.0
@@ -44,6 +42,8 @@ public enum SettingEnum {
     //同步ERP的b2c订单同步到中台启动时间
     ERP_B2C_TO_DMP_LISTING_DATE("listing_date",SettingEnum.ERP_B2C_TO_DMP, "同步ERP的b2c订单同步到中台启动时间"),
 
+    // 亚马逊货件白名单
+    AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
     ;
 
     @EnumValue
@@ -72,7 +72,7 @@ public enum SettingEnum {
     public static final String KD_TO_ERP_FILTER = "kd_to_erp_filter";
 
     /**
-     * 金蝶发货单同步到ERP过滤参数
+     * 亚马逊SP API参数
      */
     public static final String AMAZON_SP_API_CONFIG = "amazon_sp_api_config";
 
@@ -85,6 +85,11 @@ public enum SettingEnum {
      * 同步erp的b2c订单到dmp中台
      */
     public static final String ERP_B2C_TO_DMP = "erp_b2c_to_dmp";
+
+    /**
+     * 亚马逊FBA货件暂时跳过亚马逊请求
+     */
+    public static final String AMAZON_FBA_SHIPMENT_SKIP = "amazon_fba_shipment_skip";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

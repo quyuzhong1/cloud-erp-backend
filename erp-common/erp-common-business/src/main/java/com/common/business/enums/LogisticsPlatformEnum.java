@@ -29,6 +29,8 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     GOOD_CANG(OmsPlatformEnum.OMS_GOOD_CANG.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getName(), "谷仓", "","",""),
     IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", "","",""),
     BAO_HONG("BaoHong", "保宏", "保宏", "","",""),
+    BaTong("BaTong", "巴通", "巴通", "","",""),
+
     ;
 
 

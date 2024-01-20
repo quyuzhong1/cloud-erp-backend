@@ -613,7 +613,9 @@ public class LogisticsBillDTO implements Serializable {
     @AllArgsConstructor
     public static class GenerateBillDTO{
 
-       private String token;
+        private String token;
+
+
 
 
         @NotBlank(message = "渠道不能为空")
@@ -841,6 +843,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String platformSpuNo;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
     }
 
 
@@ -925,6 +932,8 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
+
+        private String shopId;
 
     }
 

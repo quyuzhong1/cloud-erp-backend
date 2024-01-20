@@ -40,26 +40,7 @@ public class SpringAsyncConfig {
 		printThreadPoolStatus(executor);
 		return executor;
 	}
-	@Bean("AsyncDataPhysicalThreadPool")
-	public ThreadPoolTaskExecutor AsyncDataPhysicalExecutor() {
-		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		// 设置核心线程数
-		executor.setCorePoolSize(this.corePoolSize);
-		// 设置最大线程数
-		executor.setMaxPoolSize(this.maxPoolSize);
-		//配置队列大小
-		executor.setQueueCapacity(this.queueCapacity);
-		// 设置线程活跃时间（秒）
-		executor.setKeepAliveSeconds(1800);
-		// 设置线程名称
-		executor.setThreadNamePrefix(this.poolName+"-");
-		// 等待所有任务结束后再关闭线程池
-		executor.setWaitForTasksToCompleteOnShutdown(true);
-		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-		//执行初始化
-		executor.initialize();
-		return executor;
-	}
+
 	private ThreadPoolTaskExecutor createExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		// 设置核心线程数

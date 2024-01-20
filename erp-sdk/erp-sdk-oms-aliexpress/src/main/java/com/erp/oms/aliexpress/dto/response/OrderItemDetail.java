@@ -1,6 +1,6 @@
 package com.erp.oms.aliexpress.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -21,60 +21,67 @@ public class OrderItemDetail implements Serializable {
     /**
      *商品数量
      */
-    @JSONField(name = "product_count")
+    @SerializedName("product_count")
     private Integer productCount;
+
+    /**
+     *物流类型，买家选择的物流方式
+     */
+    @SerializedName("logistics_type")
+    private String logisticsType;
+
 
     /**
      *商品ID
      */
-    @JSONField(name = "product_id")
+    @SerializedName("product_id")
     private Long productId;
 
 
     /**
      *商品名
      */
-    @JSONField(name = "product_name")
+    @SerializedName("product_name")
     private String productName;
 
     /**
      *商品单价
      */
-    @JSONField(name = "product_price")
+    @SerializedName("product_price")
     private AmountInfo productPrice;
 
 
     /**
      *SKU信息
      */
-    @JSONField(name = "sku_code")
+    @SerializedName("sku_code")
     private String skuCode;
 
 
     /**
      *商品主图Url
      */
-    @JSONField(name = "product_img_url")
-    private String ProductImgUrl;
+    @SerializedName("product_img_url")
+    private String productImgUrl;
 
 
     /**
      *买家备注(子订单级别)
      */
-    @JSONField(name = "buyer_memo")
+    @SerializedName("buyer_memo")
     private String buyerMemo;
 
     /**
      *
      * 子订单中的各种标
      */
-    @JSONField(name = "tags")
+    @SerializedName("tags")
     private List<String> tags;
 
     /**
      * 子订单ID
      */
-    @JSONField(name = "child_order_id")
+    @SerializedName("child_order_id")
     private String childOrderId;
 
 
@@ -84,12 +91,14 @@ public class OrderItemDetail implements Serializable {
      * 商家ERP进行过滤此类型的订单（子订单）。
      * 其他情况为空
      */
-    @JSONField(name = "logistics_warehouse_type")
+    @SerializedName("logistics_warehouse_type")
     private String logisticsWarehouseType;
 
     /**
      * U_TAXED海外仓已税，跨境已税是I_TAXED
      */
-    @JSONField(name = "already_taxed")
+    @SerializedName("already_taxed")
     private String alreadyTaxed;
+
+
 }

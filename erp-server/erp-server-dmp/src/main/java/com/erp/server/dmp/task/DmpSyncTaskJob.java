@@ -65,7 +65,7 @@ public class DmpSyncTaskJob {
 
         // 查询DMP同步数据
         List<DmpPullTaskEntity> recordEntityList = dmpPullTaskService.lambdaQuery()
-                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.IN_SYNC.getCode()))
                 .le(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
                 .orderByAsc(DmpPullTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))

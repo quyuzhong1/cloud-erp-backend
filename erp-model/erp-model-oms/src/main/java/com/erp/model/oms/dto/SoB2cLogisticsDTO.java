@@ -213,6 +213,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         private String soB2cId;
 
         private String transportNo;
+
     }
 
 

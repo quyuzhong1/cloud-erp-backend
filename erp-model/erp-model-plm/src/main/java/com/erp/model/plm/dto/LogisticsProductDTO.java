@@ -895,6 +895,12 @@ public class LogisticsProductDTO {
     public static class ProductDTO{
 
 
+        /**
+         * 子订单id
+         */
+        private String childOrderId;
+
+
        private BigDecimal price;
 
        private BigDecimal amount;
@@ -923,6 +929,8 @@ public class LogisticsProductDTO {
         
         
         private String skuId;
+
+        private String skuNo;
 
         /**
          * 属性

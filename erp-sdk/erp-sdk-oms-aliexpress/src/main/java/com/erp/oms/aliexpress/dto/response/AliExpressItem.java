@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,6 +15,6 @@ import java.io.Serializable;
  */
 @Data
 public class AliExpressItem implements Serializable {
-    @JSONField(name = "product_id")
+    @SerializedName("product_id")
     private Long productId;
 }

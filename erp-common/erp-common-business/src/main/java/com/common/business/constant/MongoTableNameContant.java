@@ -215,6 +215,12 @@ public interface MongoTableNameContant {
      */
     String THIRD_SYSTEM_SHOPEE_PRODUCT = "third_system_Shopee_product";
 
+
+    /**
+     * 速卖通订单表
+     */
+    String THIRD_SYSTEM_ALI_EXPRESS_ORDER = "third_system_AliExpress_order";
+
     /**
      * 根据任务 key 获取表名
      * @param key

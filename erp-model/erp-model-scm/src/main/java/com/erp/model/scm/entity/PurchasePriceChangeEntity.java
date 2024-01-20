@@ -34,12 +34,6 @@ public class PurchasePriceChangeEntity extends BaseEntity<PurchasePriceChangeEnt
     private String code;
 
     /**
-     * 供应商id
-     */
-    @TableField("supplier_id")
-    private String supplierId;
-
-    /**
      * 变更原因
      */
     @TableField("reason")
@@ -80,17 +74,6 @@ public class PurchasePriceChangeEntity extends BaseEntity<PurchasePriceChangeEnt
      */
     @TableField("purchase_org_name")
     private String purchaseOrgName;
-
-    /**
-     * 采购价目表id
-     *
-     * @author yl
-     * @date 2023-03-16 16:49
-     * @param null
-     * @return
-     */
-    @TableField("purchase_price_id")
-    private String purchasePriceId;
 
     /**
      * 同步金蝶id

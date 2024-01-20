@@ -23,7 +23,7 @@ import java.time.LocalDate;
 @Setter
 @Accessors(chain = true)
 @TableName("po_return_detail")
-public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOrderDetailEntity> {
+public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
 
     /**
      * 退货单主表id

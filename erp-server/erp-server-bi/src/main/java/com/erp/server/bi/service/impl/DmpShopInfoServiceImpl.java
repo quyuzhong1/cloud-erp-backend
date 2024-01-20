@@ -1,5 +1,7 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -16,6 +18,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -33,6 +36,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -242,6 +246,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             String site = item.getKey();
             vo.setSite(site);
             vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+            vo.setShopName(shopInfoList.stream().map(DmpShopInfoEntity::getName).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
@@ -279,8 +284,38 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     }
 
     @Override
-    public List<DmpShopInfoEntity> listByStoreSign() {
-        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign,"").list();
+    @Cacheable(cacheNames = "cache:bi:listShopDropDown",keyGenerator = "myKeyGenerator")
+    public List<ShopDropDownVO.ShopDropDownNameVO> listShopDropDown(Integer status) {
+        List<DmpShopInfoEntity> list = this.lambdaQuery()
+                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
+                .eq(null != status, DmpShopInfoEntity::getStatus, status)
+                .orderByAsc(DmpShopInfoEntity::getName)
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+                .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getName()))
+                .distinct()
+                .collect(Collectors.toList());
+        return result;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:bi:listSiteDropDown",keyGenerator = "myKeyGenerator")
+    public List<ShopDropDownVO.ShopDropDownNameVO> listSiteDropDown() {
+        List<DmpShopInfoEntity> list = this.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+                .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getSite()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .collect(Collectors.toList());
+        return result;
     }
 
     private List<DmpShopInfoEntity> getSiteShopList() {
@@ -358,5 +393,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             throw new ServiceException(ApiError.ERROR_97007);
         }
     }
-
+    @Override
+    public List<DmpShopInfoEntity> listByStoreSign() {
+        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign, "").list();
+    }
 }

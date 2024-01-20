@@ -377,13 +377,25 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.view(id);
     }
 
+    /**
+     * 拦截打标识，冻结订单
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
+     * @param interceptUpdateOrderDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateIntercept")
+    public Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
+        return soB2cService.updateIntercept(interceptUpdateOrderDTO);
+    }
+
 
     /**
      * 更新组包状态
      * @description
      * @param dto
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-19 10:57
      */
     @PutMapping("/updatePackageStatus")

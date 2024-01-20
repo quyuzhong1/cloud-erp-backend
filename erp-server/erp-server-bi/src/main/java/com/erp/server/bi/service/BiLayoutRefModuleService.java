@@ -61,4 +61,6 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
      * @return java.util.List<com.erp.model.bi.dto.LayoutRefModuleDTO.LayoutRefModuleInfoDTO>
      */
     List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> listByLayoutIds(List<String> layoutIdList);
+
+    List<BiLayoutRefModuleEntity> getByModuleIds(List<String> ids);
 }

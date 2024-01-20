@@ -555,6 +555,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流单号
          */
         private String transportNo;
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
     /**
