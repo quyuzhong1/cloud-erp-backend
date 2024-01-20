@@ -157,6 +157,11 @@ public class WarehouseReceiveDetailDTO {
         private Integer receiveQty;
 
         /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+
+        /**
          * 超收数量
          */
         private Integer exceedQty;

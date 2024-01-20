@@ -15,6 +15,7 @@ public interface DeliveryOrderConverter {
     DeliveryOrderConverter INSTANCE = Mappers.getMapper(DeliveryOrderConverter.class);
 
     @Mapping(target = "detailId", source = "id")
+    @Mapping(target = "purchaseQty", source = "orderQty")
     DeliveryOrderDetailDTO.ViewDTO detailViewConvert(DeliveryOrderDetailEntity detail);
     List<DeliveryOrderDetailDTO.ViewDTO> detailViewConvert(List<DeliveryOrderDetailEntity> details);
 

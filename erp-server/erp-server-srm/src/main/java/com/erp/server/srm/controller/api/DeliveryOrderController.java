@@ -70,6 +70,18 @@ public class DeliveryOrderController extends BaseController {
     }
 
     /**
+     * 根据code获取详情
+     * @param
+     * @return
+     */
+    @LogViewService
+    @GetMapping("/viewByCode")
+    public ApiResult<DeliveryOrderDTO.ViewDTO> viewByCode(@Param("code") String code) {
+        DeliveryOrderDTO.ViewDTO view = deliveryOrderService.viewByCode(code);
+        return success(view);
+    }
+
+    /**
      * 分页
      * @author lrp
      * @date:  2024-01-12

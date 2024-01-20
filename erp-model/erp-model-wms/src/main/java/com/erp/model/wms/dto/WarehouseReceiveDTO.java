@@ -50,6 +50,12 @@ public class WarehouseReceiveDTO {
          */
         private String receiveDeptId;
 
+
+        /**
+         * 是否通过送货单下推 ，默认false
+         */
+        private Boolean generateByDelivery = false;
+
         /**
          * 收货日期
          */

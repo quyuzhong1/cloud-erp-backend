@@ -60,4 +60,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(BaseIdsDTO.IdsDTO dto);
 
     DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto);
+
+    DeliveryOrderDTO.ViewDTO viewByCode(String code);
 }
