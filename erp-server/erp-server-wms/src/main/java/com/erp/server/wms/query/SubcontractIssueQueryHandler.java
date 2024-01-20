@@ -18,7 +18,7 @@ public class SubcontractIssueQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
-            getTabSql(value);
+            return getTabSql(value);
         }
         return null;
     }

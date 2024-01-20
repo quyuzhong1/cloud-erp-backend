@@ -152,7 +152,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param dto
      * @param response
      */
-    void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
+    void export(PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 修复历史数据

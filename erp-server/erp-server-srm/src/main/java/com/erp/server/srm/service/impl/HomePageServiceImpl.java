@@ -65,7 +65,7 @@ public class HomePageServiceImpl implements HomePageService {
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
         return HomePageDTO.AccountInfoDTO.builder()
-                .userName(loginUser.getRealName())
+                .userName(loginUser.getUserName())
                 .phone(loginUser.getMobile())
                 .wxName(Objects.isNull(sysUserWechatEntity)?null:sysUserWechatEntity.getNickName())
                 .companyName(Objects.isNull(supplier)?null:supplier.getName())

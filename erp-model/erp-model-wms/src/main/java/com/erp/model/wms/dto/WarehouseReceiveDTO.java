@@ -50,6 +50,12 @@ public class WarehouseReceiveDTO {
          */
         private String receiveDeptId;
 
+
+        /**
+         * 是否通过送货单下推 ，默认false
+         */
+        private Boolean generateByDelivery = false;
+
         /**
          * 收货日期
          */
@@ -347,6 +353,15 @@ public class WarehouseReceiveDTO {
          * 审核状态名称
          */
         private String approveStatusName;
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
+        private String qcStatusName;
 
         /**
          * 作废状态

@@ -110,6 +110,11 @@ public class DeliveryOrderDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
          * 计划交货日期
          */
         private LocalDate planDeliveryDate;
@@ -118,6 +123,11 @@ public class DeliveryOrderDetailDTO implements Serializable {
          * 采购数量
          */
         private Integer orderQty;
+
+        /**
+         * 采购数量(给PDA详情使用)
+         */
+        private Integer purchaseQty;
 
         /**
         * 送货数量
@@ -138,6 +148,11 @@ public class DeliveryOrderDetailDTO implements Serializable {
         * 赠品收货数量
         */
         private Integer giftReceiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
 
         /**
         * 备注

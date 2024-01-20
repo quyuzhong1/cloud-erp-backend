@@ -588,12 +588,12 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<List<ViewSubcontractPoDTO>>
      */
     @PostMapping("/supplierConfirm")
-    public ApiResult<List<BatchResultDTO>> supplierConfirm(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> supplierConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = purchaseOrderService.supplierConfirm(id,dto.getRemark());
+                resultDTO = purchaseOrderService.supplierConfirm(id);
             }catch (Exception e){
                 log.error("采购订单 提交审核失败",e);
                 PurchaseOrderEntity entity = purchaseOrderService.getById(id);

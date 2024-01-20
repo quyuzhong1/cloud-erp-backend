@@ -67,4 +67,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
      * @return
      */
     List<BatchResultDTO> addDeliveryOrder(List<DeliveryOrderDTO.AddDeliveryDTO> dtos);
+
+    DeliveryOrderDTO.ViewDTO viewByCode(String code);
 }

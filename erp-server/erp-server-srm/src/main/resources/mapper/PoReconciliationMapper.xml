@@ -50,5 +50,49 @@
         code, status, start_date, end_date, settle_org_id, settle_org_Name, supplier_id, supplier_name, amount, currency, supplier_reconciliation_user_id, supplier_reconciliation_user_name, purchase_reconciliation_user_id, purchase_reconciliation_user_name, reconciliation_date, supplier_confirm_date, purchase_confirm_date, receive_date, supplier_confirm_user_id, supplier_confirm_user_name, purchase_confirm_user_id, purchase_confirm_user_name
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
+        select
+               *
+        from po_reconciliation pr
+        <where>
+            ${params.sqlMap.default}
+            and pr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pr.id desc
+        </where>
+    </select>
+
+    <!-- 导出 -->
+    <select id="listExport" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
+        select
+        *
+        from po_reconciliation pr
+        <where>
+            ${params.sqlMap.default}
+            and pr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pr.id desc
+        </where>
+    </select>
+
 
 </mapper>

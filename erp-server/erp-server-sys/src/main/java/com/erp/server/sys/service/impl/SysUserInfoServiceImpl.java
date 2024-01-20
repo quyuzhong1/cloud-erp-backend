@@ -1249,7 +1249,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).eq(SysUserInfoEntity::getUserType,forgotPasswordDTO.getUserType()).one();
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery()
+                .eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount())
+                .eq(SysUserInfoEntity::getUserType,forgotPasswordDTO.getUserType())
+                .eq(SysUserInfoEntity::getDeleteState,0)
+                .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }
@@ -1286,7 +1290,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     public Map<String, Object> forgotPasswordGetCode(String userAccount,String userType) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).eq(SysUserInfoEntity::getUserType,userType).one();
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).eq(SysUserInfoEntity::getUserType,userType)
+                .eq(SysUserInfoEntity::getDeleteState,0)
+                .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }

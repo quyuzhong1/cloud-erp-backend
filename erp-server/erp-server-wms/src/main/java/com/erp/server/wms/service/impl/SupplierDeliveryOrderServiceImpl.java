@@ -119,6 +119,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             List<DeliveryOrderDetailEntity> detailEntityGroupList = detailEntityGroupMap.get(key);
             WarehouseReceiveDTO.AddDTO addDTO = SupplierDeliveryConverter.INSTANCE.deliveryToReceiveConvert(deliveryOrderEntity,detailEntityGroupList);
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
+            addDTO.setGenerateByDelivery(true);
             String id = warehouseReceiveService.add(addDTO);
             //回写送货单的 收货单号 receive_user_id receive_user_name receipt_status 明细的 收货数量  赠品收货数量
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveService.getById(id);

@@ -1,7 +1,6 @@
 package com.erp.server.srm.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,6 +12,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -21,6 +21,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MathUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -35,7 +37,13 @@ import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.model.workflow.entity.ProcessBusinessEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.CommonService;
@@ -51,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +87,12 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     private SupplierFeign supplierFeign;
     @Resource
     private PurchaseOrderFeign purchaseOrderFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -390,6 +405,45 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         return deliveryOrderEntity;
     }
 
+    @Override
+    public DeliveryOrderDTO.ViewDTO viewByCode(String code) {
+        DeliveryOrderEntity  entity = lambdaQuery()
+                .eq(DeliveryOrderEntity :: getCode,code)
+                .last("limit 1")
+                .one();
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
+        SupplierEntity supplier = commonService.getSupplierEntity();
+        if(!supplier.getId().equals(entity.getSupplierId())){
+            throw new ServiceException(ApiError.ERROR_96002);
+        }
+        List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainId(entity.getId());
+        DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
+        viewDTO.setSupplierName(supplier.getName());
+        List<DeliveryOrderDetailDTO.ViewDTO> detailList = viewDTO.getDetailList();
+        Map<String,SkuVO> skuVOMap = plmTaskFeign.getSkuInfoByIds(detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList())).stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(),(v1, v2)->v1));
+        List<String> purchaseDetailIds = detailList.stream().map(DeliveryOrderDetailDTO.ViewDTO::getSourceDetailId).collect(Collectors.toList());
+        //查询退货数据
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(purchaseDetailIds);
+        //查询收货数据
+        List<WarehouseReceiveDetailEntity> receiveDetails = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(purchaseDetailIds);
+        for(DeliveryOrderDetailDTO.ViewDTO detailViewDTO : detailList){
+            SkuVO skuVO = skuVOMap.get(detailViewDTO.getSkuId());
+            if(Objects.nonNull(skuVO)){
+                detailViewDTO.setUnitName(skuVO.getUnitName());
+            }
+
+            Integer receiveQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetails)) {
+                receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailViewDTO.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailViewDTO.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            //未收货数量
+            detailViewDTO.setUnReceiveQty(detailViewDTO.getOrderQty() + returnQty - receiveQty);
+        }
+        return viewDTO;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DeliveryOrderDTO.AddDTO addDTO) {
@@ -468,4 +522,5 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
 
     }
+
 }

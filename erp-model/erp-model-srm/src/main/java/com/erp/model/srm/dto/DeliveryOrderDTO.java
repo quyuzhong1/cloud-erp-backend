@@ -265,7 +265,7 @@ public class DeliveryOrderDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型 （all全部，waitReceiveAndPrint 待收货-未打印 waitReceiveAndPrinted 待收货-已打印 received 已收货 qtyDifference 收发差异）
+         * 类型 （all全部， waitReceive 待收货， waitReceiveAndPrint 待收货-未打印 waitReceiveAndPrinted 待收货-已打印 received 已收货 qtyDifference 收发差异）
          */
         private String searchType;
 
@@ -473,7 +473,13 @@ public class DeliveryOrderDTO implements Serializable {
         private String supplierId;
 
         /**
-        * 来源id
+         * 供应商名称
+         */
+        private String supplierName;
+
+
+        /**
+        * 来源id(采购订单id)
         */
         private String sourceId;
 

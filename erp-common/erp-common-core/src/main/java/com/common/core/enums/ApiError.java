@@ -701,7 +701,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM(98115,"采购订单【{}】未审核完成不支持确认"),
     ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM(98116,"采购订单【{}】非待确认不支持确认"),
-    ERROR_PURCHASE_ORDER_PUSH_DOWN(98117,"采购订单【{}】SKU【{}】已关闭不支持下推"),
+    ERROR_PURCHASE_ORDER_PUSH_DOWN(98117,"采购订单【{}】SKU【{}】非已确认和送货中不支持下推"),
     ERROR_PURCHASE_ORDER_DISAPPROVE_CLOSE(98118,"已关闭采购订单不支持反审核"),
     ERROR_PURCHASE_ORDER_NO_SUPPLIER_CONFIRM(98119,"采购订单【{}】未关联供应商不支持确认"),
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"采购订单【{}】不能操作其他供应商采购订单"),
@@ -926,6 +926,7 @@ public enum ApiError implements Serializable {
     UNUSUAL_TYPE_NOT_EXISTS(92128,"异常分类错误"),
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
+    RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
 
 
 

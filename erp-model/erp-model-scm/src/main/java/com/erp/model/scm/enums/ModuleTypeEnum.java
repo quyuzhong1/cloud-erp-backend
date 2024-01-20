@@ -68,6 +68,7 @@ public enum ModuleTypeEnum {
     SUBCONTRACT_ISSUE("64", "委外发料单"),
     SRM_USER("65", "SRM用户"),
     DELIVERY_ORDER("66", "发货单"),
+    PO_RECONCILIATION("67", "对账单"),
     ;
 
 

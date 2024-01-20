@@ -36,7 +36,7 @@ public interface SubcontractIssueMapper extends BaseMapper<SubcontractIssueEntit
     * @param params
     * @return
     */
-    List<SubcontractIssueDTO.ListDTO> listExport(@Param("params") SubcontractIssueDTO.ExportDTO params);
+    List<SubcontractIssueDTO.ListDTO> listExport(@Param("params") SubcontractIssueDTO.PagingParamDTO params);
 
 
     /**
