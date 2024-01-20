@@ -715,8 +715,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
             //计费重
-            BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
+            BigDecimal weight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
                     ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
+            //重量转成模板单位传入计算运费
+            if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                //kg
+                weight = MathUtil.multiply(weight,new BigDecimal(1000));
+            }
             //预估运费
             ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
             viewParamDTO.setWeight(addDTO.getActualWeight());
@@ -725,7 +730,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
                 //渠道
                 LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
-                ShippingCalculationDTO.ViewDTO  viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule,logisticsChannelEntity, billingWeight,
+                ShippingCalculationDTO.ViewDTO  viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule,logisticsChannelEntity, weight,
                         length,width,height);
                 addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
             }
