@@ -33,7 +33,7 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
                     " where parp.purchase_order_id = po.id and pa.code "+ compareCodeSplicingValueSql +" ) end";
         }
         if("tab".equals(field)){
-            getTabSql(value);
+           return getTabSql(value);
         }
         return null;
     }

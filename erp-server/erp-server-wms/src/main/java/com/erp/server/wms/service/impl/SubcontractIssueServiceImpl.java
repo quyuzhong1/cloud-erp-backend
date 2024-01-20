@@ -207,7 +207,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     }
 
     @Override
-    public void exportList(SubcontractIssueDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(SubcontractIssueDTO.PagingParamDTO param, HttpServletResponse response) {
         List<SubcontractIssueDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;

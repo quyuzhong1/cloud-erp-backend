@@ -116,12 +116,12 @@
 
     <select id="tabList" resultType="java.lang.Integer">
         select
-        count(distinct ppc.id)
-        from purchase_price_change ppc
-        left join purchase_price_change_detail ppcd on ppc.id = ppcd.purchase_price_change_id and ppcd.is_deleted = false
+        count(distinct pp.id)
+        from purchase_price_change pp
+        left join purchase_price_change_detail ppd on pp.id = ppd.purchase_price_change_id and ppd.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and ppc.is_deleted = false
+            and pp.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

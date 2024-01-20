@@ -31,7 +31,7 @@ public class PurchasePriceQueryHandler extends AbstractQueryHandler {
         }
         //选项卡
         if("tab".equals(field)){
-            getTabSql(value);
+            return getTabSql(value);
         }
         return null;
     }
@@ -63,12 +63,12 @@ public class PurchasePriceQueryHandler extends AbstractQueryHandler {
         //已审核启用
         if (PurchasePriceTabFlagEnum.APPROVE_ENABLE.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-            super.buildDefaultDTO("pp.disabled",Boolean.FALSE);
+            super.buildDefaultDTO("ppd.disabled",Collections.singletonList(Boolean.FALSE));
         }
         //已审核停用
         if (PurchasePriceTabFlagEnum.APPROVE_DISABLED.getCode().equals(value)) {
             super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-            super.buildDefaultDTO("pp.disabled", Boolean.TRUE);
+            super.buildDefaultDTO("ppd.disabled", Collections.singletonList(Boolean.TRUE));
         }
         return super.getSplicingSQL();
     }
