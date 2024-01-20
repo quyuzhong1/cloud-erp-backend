@@ -105,6 +105,13 @@ public class TransferLogisticsChannelDTO implements Serializable {
         * 是否禁用
         */
         private Boolean disabled;
+
+        /**
+         * 物流平台编号
+         */
+        @NotBlank(message = "物流平台编号不能为空")
+        @Size(max = 50,message = "物流平台编号最大长度不能超过50位")
+        private String logisticsPlatform;
     }
 
     @Data

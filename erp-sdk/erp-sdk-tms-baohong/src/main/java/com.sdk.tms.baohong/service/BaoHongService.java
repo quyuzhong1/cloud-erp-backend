@@ -98,9 +98,9 @@ public class BaoHongService {
 
 
 
-/*
 
-    *//**
+
+    /**
      * 功能描述:  发起通用请求
      *
      * @param paramMap 参数 map

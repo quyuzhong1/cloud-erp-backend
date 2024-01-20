@@ -44,6 +44,11 @@ public class TransferLogisticsChannelEntity extends BaseEntity<TransferLogistics
     */
     @TableField("main_id")
     private String mainId;
+    /**
+     * 物流平台编号
+     */
+    @TableField("logistics_platform")
+    private String logisticsPlatform;
 
 
     public static final String NAME = "name";
