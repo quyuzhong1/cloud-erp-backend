@@ -80,7 +80,7 @@ public class PullAmzReportJob {
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private ReportHandleService reportHandleService;
+    private AmzReportHandleService amzReportHandleService;
     @Resource
     private AmzReportScheduleService reportScheduleService;
     @Resource
@@ -129,7 +129,7 @@ public class PullAmzReportJob {
 
         reportScheduleEntityList.forEach(reportSchedule -> {
             try {
-                reportHandleService.createReportSchedule(reportSchedule, currentDateTime);
+                amzReportHandleService.createReportSchedule(reportSchedule, currentDateTime);
             } catch (Exception e) {
                 String errorMsg = JSONUtil.toJsonStr(e);
                 XxlJobHelper.log("[亚马逊请求报表计划任务] 创建亚马逊报表计划失败：reportId={}, error={}",
@@ -175,15 +175,15 @@ public class PullAmzReportJob {
         List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
         List<String> recordTypeList = reportTypeConfigList.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
         // (任务参数优选)
-        if (!CollectionUtils.isEmpty(jobParamDTO.getRecordTypeList())){
+        if (!CollectionUtils.isEmpty(jobParamDTO.getRecordTypeList())) {
             recordTypeList = jobParamDTO.getRecordTypeList();
         }
-        if (!CollectionUtils.isEmpty(jobParamDTO.getShopIdList())){
+        if (!CollectionUtils.isEmpty(jobParamDTO.getShopIdList())) {
             shopIds = jobParamDTO.getShopIdList();
         }
         LocalDateTime minTime = LocalDateTime.now(ZoneId.systemDefault());
-        if (null != jobParamDTO.getIgnoreNextReportCreationTime()){
-            if (jobParamDTO.getIgnoreNextReportCreationTime()){
+        if (null != jobParamDTO.getIgnoreNextReportCreationTime()) {
+            if (jobParamDTO.getIgnoreNextReportCreationTime()) {
                 minTime = null;
             }
         }
@@ -201,14 +201,13 @@ public class PullAmzReportJob {
         String platform = PlatformDictEnum.AMAZON.getCode();
         // 根据groupId分组店铺
         Map<String, List<ShopInfoEntity>> taskGroupMap = shopInfoEntityList.stream()
-                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+                // 平台类型:sellerId:请求的端点区域
                 .collect(Collectors.groupingBy(e ->
-                        StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_ENDPOINTS,
+                        StrUtil.format("{}:{}:{}",
                                 platform,
                                 e.getPlatformShopCode(),
-                                AmazonRequestTypeRateLimiterEnum.REPORTS_CREATE.getBusinessTypeName(),
-                                AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getEndpointsEnum().getRegion())
-                        ));
+                                AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getEndpointsEnum().name())
+                ));
         // 当前时间
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -298,7 +297,7 @@ public class PullAmzReportJob {
 
         reportInfoMongoDTOList.forEach(mongoDTO -> {
             try {
-                reportHandleService.checkAndDownload(mongoDTO);
+                amzReportHandleService.checkAndDownload(mongoDTO);
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：reportId={},msg={}, json={}",
                         mongoDTO.getReportId(),

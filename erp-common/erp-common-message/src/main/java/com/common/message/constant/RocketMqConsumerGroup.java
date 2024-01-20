@@ -1,5 +1,7 @@
 package com.common.message.constant;
 
+import com.common.message.enums.RocketMqTagEnum;
+
 /**
  * @author Will
  * @version 1.0
@@ -250,4 +252,24 @@ public class RocketMqConsumerGroup {
      * ERP B2c发货单->DMP
      */
     public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
+
+    /**
+     * 亚马逊创建报告
+     */
+    public static final String SYNC_AMZ_REPORT_CREATE = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_create_consumer";
+    /**
+     * 亚马逊查询报告
+     */
+    public static final String SYNC_AMZ_REPORT_QUERY = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_query_consumer";
+
+    /**
+     * 亚马逊下载报告
+     */
+    public static final String SYNC_AMZ_REPORT_DOWNLOAD = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_download_consumer";
+
+    /**
+     * 亚马逊解析报告
+     */
+    public static final String SYNC_AMZ_REPORT_PARSE = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_parse_consumer";
+
 }

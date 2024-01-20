@@ -69,7 +69,7 @@ public class AmazonSpApiReportUtils {
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public static JSONArray download(String url, String compressionAlgorithm, Map<String, String> columnMap) throws IOException, IllegalArgumentException {
+    public static JSONArray download(String url, String compressionAlgorithm, Map<String, String> columnMap) {
 //        OkHttpClient httpclient = new OkHttpClient();
 //        Request request = new Request.Builder()
 //                .url(url)
@@ -95,7 +95,7 @@ public class AmazonSpApiReportUtils {
             return obj.download(url, compressionAlgorithm, columnMap);
         } catch (Exception e) {
             //Handle exception here.
-            throw new ServerException("下载亚马逊报告异常：url=" + url + " error="+ e.getMessage());
+            throw new RuntimeException("下载亚马逊报告异常：url=" + url + " error="+ e.getMessage());
         }
     }
 

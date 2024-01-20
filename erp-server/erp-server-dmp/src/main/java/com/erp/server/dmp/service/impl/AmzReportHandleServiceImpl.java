@@ -5,8 +5,8 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
@@ -15,15 +15,17 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
@@ -36,19 +38,20 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.rpc.wms.feign.WmsShipmentFeign;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.*;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.convert.DmpReportConverter;
@@ -59,8 +62,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -70,6 +71,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -86,7 +88,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Service
-public class ReportHandleServiceImpl implements ReportHandleService {
+public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Resource
     private MongoService mongoService;
@@ -110,6 +112,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     private MongoTemplate mongoTemplate;
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private AmazonSpApiRateLimitUtils amazonSpApiRateLimitUtils;
+    @Resource
+    private RedisUtil redisUtil;
 
 
     @Override
@@ -263,7 +269,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         body.setNextReportCreationTime(formatTime);
         body.setPeriod(periodEnum);
         // 请求
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO , true);
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO , true, null);
         // TODO 兼容已创建
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
@@ -278,61 +284,55 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createReport(AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, String groupId, AmazonJobParamDTO.ReportJobDTO jobParamDTO) throws Exception {
+    public String createAmzReport(AmzReportTaskEntity taskEntity){
         // 校验MarketplaceId
-        String[] marketplaceSplit = reportSchedule.getMarketplaceIds().split(",");
+        String[] marketplaceSplit = taskEntity.getMarketplaceIds().split(",");
         if (marketplaceSplit.length == 0) {
-            throw new ServiceException("未找到MarketplaceId,reportScheduleId=" + reportSchedule.getId());
+            throw new ServiceException("未找到MarketplaceId,reportScheduleId=" + taskEntity.getId());
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceSplit[0]);
         if (null == marketplaceEnum) {
-            String msg = StrUtil.format("未找到Marketplace枚举类型,reportScheduleId={}, marketplaceId={}", reportSchedule.getId(), reportSchedule.getMarketplaceIds());
+            String msg = StrUtil.format("未找到Marketplace枚举类型,reportScheduleId={}, marketplaceId={}", taskEntity.getId(), taskEntity.getMarketplaceIds());
             throw new ServiceException(msg);
         }
         // 获取店铺信息
-        String shopId = reportSchedule.getShopId();
+        String shopId = taskEntity.getShopId();
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-
-        // 支持切换时间间隔
-        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-        // 修改下次创建时间
-        OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
-        LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
-                .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
-                .toLocalDateTime();
-        reportSchedule.setFirstNextReportCreationTime(nextTime);
-        if (!reportScheduleService.updateById(reportSchedule)) {
-            throw new ServiceException("[reportSchedule] 更新失败");
-        }
-
-        // 请求亚马逊报告列表（getReports）是否有最新报告记录
-//        ReportInfoMongoDTO reportInfoMongoDTO = this.
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_CREATE;
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, taskEntity.getGroupId());
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        String rateLimitStr;
 
         // 请求亚马逊接口
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, );
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         CreateReportSpecification body = new CreateReportSpecification();
-        body.setReportType(reportSchedule.getReportType());
+        body.setReportType(taskEntity.getReportType());
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
-        CreateReportResponse reportResponse = reportsApi.createReport(body);
+        if (null != taskEntity.getReqDataStartTime()){
+            body.setDataStartTime(taskEntity.getReqDataStartTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        }
+        if (null != taskEntity.getReqDataEndTime()){
+            body.setDataEndTime(taskEntity.getReqDataEndTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        }
+        ApiResponse<CreateReportResponse> reportWithHttpInfo;
+        try {
+            reportWithHttpInfo = reportsApi.createReportWithHttpInfo(body);
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+        // 检查和缓存响应的速率到redis
+        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportWithHttpInfo);
+        CreateReportResponse reportResponse = reportWithHttpInfo.getData();
         String reportId = reportResponse.getReportId();
         if (null == reportId) {
             throw new ServiceException("请求亚马逊创建报告失败：body=" + JSONUtil.toJsonStr(reportResponse));
         }
-        ReportInfoMongoDTO reportInfoMongoDTO = new ReportInfoMongoDTO();
-        reportInfoMongoDTO.setReportId(reportId);
-        reportInfoMongoDTO.setReportType(reportSchedule.getReportType());
-        reportInfoMongoDTO.setMainId(reportSchedule.getId());
-        reportInfoMongoDTO.setCreatedTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-        reportInfoMongoDTO.setShopId(reportSchedule.getShopId());
-        reportInfoMongoDTO.setDownloadStatus(0);
-
-        // 报告保存
-        mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
-
+        return reportId;
     }
 
     @Override
@@ -652,38 +652,71 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void checkAndDownload(ReportInfoMongoDTO mongoDTO) throws Exception {
-        if (StringUtils.isBlank(mongoDTO.getShopId())){
-            throw new ServiceException("报告数据异常：店铺为空");
-        }
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(mongoDTO.getShopId());
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        if (null == marketplaceEnum){
-            throw new ServiceException("市场不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
-        }
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(mongoDTO.getReportType());
-        if (null == recordTypeEnum){
-            throw new ServiceException("报告类型不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
-        }
         // 查询报告配置map<报告列表名, mongo保存字段名>
         Map<String, String> columnMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         if (columnMap.isEmpty()){
             throw new ServiceException("报告类型列表配置不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
         }
-
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
-        // 查询当前报告是否是属于系统计划报告
-        Report report = reportsApi.getReport(mongoDTO.getReportId());
         this.handleReport(reportsApi, report, recordTypeEnum, columnMap);
     }
 
     @Override
-    public List<ReportInfoMongoDTO> mongoNewReportInfo(String shopId, String reportType, OffsetDateTime currentDateTime, Integer size) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("shopId").is(shopId)
-                .and("reportType").is(reportType)
-                .and("createdTime").gte(currentDateTime.toString()));
-        query.limit(size);
-        return mongoTemplate.find(query, ReportInfoMongoDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
+    @Transactional(rollbackFor = Exception.class)
+    public Report queryAmzReportInfo(AmzReportTaskEntity taskEntity) {
+        // 店铺信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(taskEntity.getShopId());
+        // 市场信息
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_QUERY;
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getGroupId(), requestTypeRateLimiterEnum.getBusinessTypeName());
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+
+        // 请求亚马逊接口
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+
+        ApiResponse<Report> reportWithHttpInfo;
+        Report report;
+        try {
+            reportWithHttpInfo = reportsApi.getReportWithHttpInfo(taskEntity.getReportId());
+            report = reportWithHttpInfo.getData();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+        // 检查和缓存响应的速率到redis
+        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportWithHttpInfo);
+        return report;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity taskEntity) {
+        // 店铺
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(reportInfoEntity.getShopId());
+        // 市场
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 接口类型
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_DOCUMENT_QUERY;
+
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getGroupId(), requestTypeRateLimiterEnum.getBusinessTypeName());
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+
+        // 请求亚马逊接口
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+
+        ApiResponse<ReportDocument> respWithHttpInfo;
+        ReportDocument reportDocument;
+        try {
+            respWithHttpInfo = reportsApi.getReportDocumentWithHttpInfo(reportInfoEntity.getReportDocumentId());
+            reportDocument = respWithHttpInfo.getData();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+        // 检查和缓存响应的速率到redis
+        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, respWithHttpInfo);
+        return reportDocument;
     }
 
 

@@ -68,4 +68,11 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      */
     List<AmzReportScheduleEntity> listByParams(String subscribedStatus, String cancelStatus, String subscribedType, List<String> recordTypeList, List<String> shopIds, LocalDateTime minTime);
 
+    /**
+     * 更新时间
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void updateNextTime(String mainId);
 }

@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * <p>
  * 亚马逊报告任务执行状态
@@ -21,7 +24,8 @@ public enum AmzReportTaskStatusEnum {
     DOWNLOAD("download","待下载数据(第三步)"),
     PARSE("parse","待解析(第四步)"),
     FINISH("finish","已完成"),
-    STOP("stop","已终止"),
+    STOP("stop","系统终止"),
+    MANUAL_STOP("manual_stop","人工终止"),
 
     ;
 
@@ -37,4 +41,15 @@ public enum AmzReportTaskStatusEnum {
     private final String name;
 
 
+    /**
+     * 非完成或终止的任务状态
+     */
+    public static List<String> notFinishOrStopList() {
+        return Arrays.asList(
+                AmzReportTaskStatusEnum.CREATED.getCode(),
+                AmzReportTaskStatusEnum.QUERY.getCode(),
+                AmzReportTaskStatusEnum.DOWNLOAD.getCode(),
+                AmzReportTaskStatusEnum.PARSE.getCode()
+        );
+    }
 }

@@ -23,7 +23,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.ReportHandleService;
+import com.erp.server.dmp.service.AmzReportHandleService;
 import com.erp.server.dmp.service.mq.JmsAmazonSqsConsumer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +45,7 @@ public class JmsConsumerTest {
     @Resource
     private JmsAmazonSqsConsumer jmsAmazonSqsConsumer;
     @Resource
-    private ReportHandleService reportHandleService;
+    private AmzReportHandleService amzReportHandleService;
     @Resource
     private MongoService mongoService;
 
@@ -329,6 +329,6 @@ public class JmsConsumerTest {
         mongoDTO.setReportId(reportId);
         List<ReportListingMongoDTO> mongoData = mongoService.findMongoData(mongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingMongoDTO.class);
 
-        reportHandleService.pullBusinessHandler(shopId, reportId, mongoData);
+        amzReportHandleService.pullBusinessHandler(shopId, reportId, mongoData);
     }
 }

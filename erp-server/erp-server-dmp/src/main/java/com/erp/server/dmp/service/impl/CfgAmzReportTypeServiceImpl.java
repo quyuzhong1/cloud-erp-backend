@@ -44,4 +44,13 @@ public class CfgAmzReportTypeServiceImpl extends SuperServiceImpl<CfgAmzReportTy
         return list.stream()
                 .collect(Collectors.groupingBy(CfgAmzReportTypeEntity::getReportGroup));
     }
+
+    @Override
+    public CfgAmzReportTypeEntity getByRecordType(String reportType) {
+        return lambdaQuery()
+                .eq(CfgAmzReportTypeEntity::getReportType, reportType)
+                .eq(CfgAmzReportTypeEntity::getDisabled, false)
+                .last("LIMIT 1")
+                .one();
+    }
 }

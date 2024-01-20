@@ -1,6 +1,6 @@
 package com.erp.server.dmp.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.dto.*;
@@ -84,6 +84,29 @@ public interface DmpReportConverter {
             @Mapping(target = "reportId", source = "reqDataEndTime"),
             @Mapping(target = "status", constant = "created"),
             @Mapping(target = "statusDesc", constant = "待请求/创建报表(第一步)"),
+            @Mapping(target = "groupId", source= "groupId"),
     })
-    AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, LocalDateTime reqDataStartTime, LocalDateTime reqDataEndTime);
+    AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, LocalDateTime reqDataStartTime, LocalDateTime reqDataEndTime, String groupId);
+
+
+    @Mappings({
+            @Mapping(target = "mainId", source = "taskEntity.id"),
+            @Mapping(target = "shopId", source = "taskEntity.shopId"),
+            @Mapping(target = "createdTime", expression = "java(java.time.LocalDateTime.now().toString())"),
+            @Mapping(target = "reportDocumentId", constant = ""),
+            @Mapping(target = "reportDocumentUrl", constant = ""),
+            @Mapping(target = "reportHandleStatus", constant = "0"),
+            @Mapping(target = "reportCancelStatus", constant = "0"),
+            @Mapping(target = "marketplaceIds", source = "report.marketplaceIds"),
+            @Mapping(target = "reportType", source = "report.reportType"),
+            @Mapping(target = "reportId", source = "report.reportId"),
+            @Mapping(target = "createdMethod", source = "createdMethod"),
+            @Mapping(target = "reportScheduleId", expression = "java(null != report.getReportScheduleId() ? report.getReportScheduleId() : \"\")"),
+            @Mapping(target = "dataStartTime", expression = "java(null != report.getDataStartTime() ? report.getDataStartTime().toString() : \"\")"),
+            @Mapping(target = "dataEndTime", expression = "java(null != report.getDataEndTime() ? report.getDataEndTime().toString() : \"\" )"),
+            @Mapping(target = "processStartTime", expression = "java(null != report.getProcessingStartTime() ? report.getProcessingStartTime().toString() : \"\")"),
+            @Mapping(target = "processEndTime", expression = "java(null != report.getProcessingEndTime() ? report.getProcessingEndTime().toString() : \"\")"),
+            @Mapping(target = "processingStatus", expression = "java(report.getProcessingStatus().getValue())"),
+    })
+    AmzReportInfoEntity newReportInfoEntity(Report report, AmzReportTaskEntity taskEntity, String createdMethod);
 }

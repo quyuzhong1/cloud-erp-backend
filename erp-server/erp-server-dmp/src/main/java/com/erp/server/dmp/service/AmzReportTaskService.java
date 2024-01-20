@@ -1,10 +1,13 @@
 package com.erp.server.dmp.service;
+
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
+import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +39,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-19
      */
-    void createTask(String groupKey, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap);
+    void createTask(String redissonKey, String groupKey, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap);
 
     /**
      * 查询上一次的任务记录
@@ -45,4 +48,70 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-19
      */
     AmzReportTaskEntity findLastTask(AmzReportScheduleEntity reportSchedule);
+
+    /**
+     * 查询任务是否完成或停止
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    boolean checkFinishOrStop(String id);
+
+    /**
+     * 消费创建报告查询
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void consumerReportCreate(String reportRedissonKey, AmzReportTaskEntity entity);
+
+    /**
+     * 消费报告查询
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void consumerReportQuery(String reportRedissonKey, AmzReportTaskEntity entity);
+
+
+    /**
+     * 消费报告下载
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void consumerReportDownload(String reportRedissonKey, AmzReportTaskEntity entity);
+
+    /**
+     * 消费报告解析
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void consumerReportParse(String reportRedissonKey, AmzReportTaskEntity entity);
+
+    /**
+     * 查询未完成或终止的任务
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    List<AmzReportTaskEntity> findNotFinishOrStop(String shopId, String reportType);
+
+    /**
+     * 更新异常信息和重试次数
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void updateErrorMsgAndCount(AmzReportTaskEntity entity, String errorMsg, Integer createdRetryCount, Integer queryRetryCount, Integer downloadRetryCount, Integer parseRetryCount);
+
+
+    /**
+     * 更新状态和时间
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime);
 }

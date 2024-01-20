@@ -24,8 +24,8 @@
        <result column="process_start_time" property="processStartTime" />
        <result column="process_end_time" property="processEndTime" />
        <result column="report_document_id" property="reportDocumentId" />
-       <result column="amz_report_document_url" property="amzReportDocumentUrl" />
-       <result column="local_file_path" property="localFilePath" />
+       <result column="amz_report_document_url" property="reportUrl" />
+       <result column="local_file_path" property="filePath" />
        <result column="report_id" property="reportId" />
        <result column="processing_status" property="processingStatus" />
        <result column="cancel_status" property="cancelStatus" />

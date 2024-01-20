@@ -126,6 +126,12 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
      */
     @TableField("parse_retry_count")
     private Integer parseRetryCount;
+    /**
+     * 请求的分组ID
+     * amazon:sellerId:端口区域
+     */
+    @TableField("group_id")
+    private String groupId;
 
 
     public static final String MAIN_ID = "main_id";

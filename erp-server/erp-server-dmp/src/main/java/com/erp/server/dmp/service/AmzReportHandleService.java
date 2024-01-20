@@ -1,9 +1,10 @@
 package com.erp.server.dmp.service;
 
 import cn.hutool.json.JSONObject;
-import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
@@ -23,7 +24,7 @@ import java.util.Map;
  * @author Jim
  * @since 2023-11-08
  */
-public interface ReportHandleService {
+public interface AmzReportHandleService {
 
     /**
      * 拉取货件
@@ -40,14 +41,6 @@ public interface ReportHandleService {
      * @since 2023-11-10
      **/
     void createReportSchedule(AmzReportScheduleEntity reportSchedule, OffsetDateTime roundedDateTime) throws Exception;
-
-    /**
-     * 请求创建报告
-     *
-     * @Author Jim
-     * @since 2023-11-10
-     **/
-    void createReport(AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, String groupId, AmazonJobParamDTO.ReportJobDTO jobParamDTO) throws Exception;
 
     /**
      * 推送到处理器
@@ -131,13 +124,31 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-12-04
      **/
-    void checkAndDownload(ReportInfoMongoDTO mongoDTO)throws Exception;
+    void checkAndDownload(ReportInfoMongoDTO mongoDTO) throws Exception;
 
     /**
-     * 查询mongo报告记录的最新内容
+     * 请求创建亚马逊报告
      *
      * @Author Jim
-     * @since 2024-01-10
+     * @since 2023-11-10
      **/
-    List<ReportInfoMongoDTO> mongoNewReportInfo(String shopId, String reportType, OffsetDateTime currentDateTime, Integer size);
+    String createAmzReport(AmzReportTaskEntity taskEntity);
+
+    /**
+     * 查询亚马逊报告
+     *
+     * @Author Jim
+     * @since 2024-01-20
+     **/
+    Report queryAmzReportInfo(AmzReportTaskEntity taskEntity);
+
+    /**
+     *
+     * 获取报告文档
+     *
+     * @Author Jim
+     * @since 2024-01-20
+     **/
+    ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity entity);
+
 }

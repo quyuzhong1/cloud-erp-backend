@@ -34,4 +34,12 @@ public interface CfgAmzReportTypeService extends SuperService<CfgAmzReportTypeEn
      * @since 2024-01-19
      **/
     Map<String, List<CfgAmzReportTypeEntity>> mapByReportGroup();
+
+    /**
+     * 根据recordType查询
+     *
+     * @Author Jim
+     * @since 2024-01-19
+     **/
+    CfgAmzReportTypeEntity getByRecordType(String reportType);
 }

@@ -39,7 +39,7 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
     @TableField("remark")
     private String remark;
     /**
-     * 订阅类型:amazon=亚马逊报告计划,manual=手动(定时任务amazonReportJob)
+     * 订阅类型:amazon=亚马逊报告计划,manual=手动(定时任务amazonReportJob),query=查询最新
      */
     @TableField("subscribed_type")
     private String subscribedType;

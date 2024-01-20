@@ -115,6 +115,9 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public AmazonShopInfoDTO cacheAndFindShopAuth(String shopId) {
+        if (StringUtils.isBlank(shopId)){
+            throw new ServiceException("获取店铺授权异常:数据异常：店铺ID为空");
+        }
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
         // 缓存获取

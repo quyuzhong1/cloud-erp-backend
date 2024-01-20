@@ -105,6 +105,11 @@ public interface RedisCacheConstants {
     String PLATFORM_REQUEST_PREFIX = "platform_request:{}";
 
     /**
+     * 亚马逊报告同类型处理中:shopId:recordType
+     */
+    String AMZ_REPORT_HANDLE_PREFIX = "amz_report_handle:{}:{}";
+
+    /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型
      */
     String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";
@@ -119,4 +124,10 @@ public interface RedisCacheConstants {
      * 平台请求频率前缀:groupId
      */
     String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
+
+
+    /**
+     * 平台请求频率:groupId:操作类型
+     */
+    String PLATFORM_RATE_LIMIT_PREFIX_LAST = "platform_rate_limit:{}:{}";
 }

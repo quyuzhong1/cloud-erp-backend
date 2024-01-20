@@ -57,7 +57,7 @@ public class DownloadHandler {
                 InputStream inputStream = responseBody.byteStream();
                 closeThis = inputStream;
 
-                if ("GZIP".equals(compressionAlgorithm)) {
+                if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
                     inputStream = new GZIPInputStream(inputStream);
                     closeThis = inputStream;
                 }
@@ -169,35 +169,6 @@ public class DownloadHandler {
         return jl;
     }
 
-//    public static JSONArray downLoadFileToLocal(String uri, Map<String, String> excelConfig) {
-//        URLConnection conn = null;
-//        InputStream inStream = null;
-//        InputStream gzip = null;
-//        InputStreamReader reader = null;
-//        BufferedReader in = null;
-//        try {
-//            URL url = new URL(uri);
-//            conn = url.openConnection();
-//            inStream = conn.getInputStream();
-//            reader = new InputStreamReader(inStream);
-//            in = new BufferedReader(reader);
-//            return parseToJSONArray(excelConfig, in);
-//        } catch (IOException e) {
-//            throw new ServiceException("解析错误:" + e.getMessage());
-//        } finally {
-//            try {
-//                assert inStream != null;
-//                inStream.close();
-//                assert reader != null;
-//                reader.close();
-//                assert in != null;
-//                in.close();
-//            } catch (Exception e) {
-//                throw new RuntimeException("解析关闭资源错误", e);
-//            }
-//        }
-//    }
-
 
     private static LinkedHashMap<String, Integer> getReportTitle(String title) {
         if (ObjectUtils.isEmpty(title)) {
@@ -281,7 +252,7 @@ public class DownloadHandler {
             }
         }
         if (r.isEmpty()) {
-            return null;
+           throw new ServiceException("未找到字段配置");
         }
         return r;
     }

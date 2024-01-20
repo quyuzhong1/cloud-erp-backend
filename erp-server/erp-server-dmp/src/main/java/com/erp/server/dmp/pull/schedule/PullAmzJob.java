@@ -91,10 +91,7 @@ public class PullAmzJob {
     private ShopInfoFeign shopInfoFeign;
 
     @Resource
-    private ReportHandleService reportHandleService;
-
-    @Resource
-    private ReportScheduleService reportScheduleService;
+    private AmzReportHandleService amzReportHandleService;
 
     @Resource
     private WmsFbaInventoryFeign wmsFbaInventoryFeign;
@@ -659,7 +656,7 @@ public class PullAmzJob {
                         return;
                     }
                     // 保存或更新
-                    reportHandleService.saveOrUpdateAllReportFbaMyiAllInventory(mongoDTO, fbaMyiAllInventoryMongoDTOList);
+                    amzReportHandleService.saveOrUpdateAllReportFbaMyiAllInventory(mongoDTO, fbaMyiAllInventoryMongoDTOList);
                 }
                 if (AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType().equalsIgnoreCase(mongoDTO.getReportType())) {
                     // 库存预留数据
@@ -670,7 +667,7 @@ public class PullAmzJob {
                         return;
                     }
                     // 保存或更新
-                    reportHandleService.saveOrUpdateAllReportReserved(mongoDTO, reportReservedMongoDTOList);
+                    amzReportHandleService.saveOrUpdateAllReportReserved(mongoDTO, reportReservedMongoDTOList);
                 }
 
                 if (AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType().equalsIgnoreCase(mongoDTO.getReportType())) {
@@ -682,7 +679,7 @@ public class PullAmzJob {
                         return;
                     }
                     // 保存或更新
-                    reportHandleService.saveOrUpdateAllReportFbaInventoryPlanning(mongoDTO, planningMongoDTOList);
+                    amzReportHandleService.saveOrUpdateAllReportFbaInventoryPlanning(mongoDTO, planningMongoDTOList);
                 }
             } catch (Exception e) {
                 String jsonStr = JSONUtil.toJsonStr(mongoDTO);

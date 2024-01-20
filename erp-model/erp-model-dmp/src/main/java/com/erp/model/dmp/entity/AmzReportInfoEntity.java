@@ -7,13 +7,10 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 
-import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -80,12 +77,12 @@ public class AmzReportInfoEntity extends BaseEntity<AmzReportInfoEntity> {
      * 报告处理开始时间
      */
     @TableField("process_start_time")
-    private LocalDateTime processStartTime;
+    private String processStartTime;
     /**
      * 报告处理结束时间
      */
     @TableField("process_end_time")
-    private LocalDateTime processEndTime;
+    private String processEndTime;
     /**
      * 报告文档ID
      */
@@ -94,13 +91,13 @@ public class AmzReportInfoEntity extends BaseEntity<AmzReportInfoEntity> {
     /**
      * 报告文档下载路径
      */
-    @TableField("amz_report_document_url")
-    private String amzReportDocumentUrl;
+    @TableField("report_url")
+    private String reportUrl;
     /**
      * 报告文件的存储路径
      */
-    @TableField("local_file_path")
-    private String localFilePath;
+    @TableField("file_path")
+    private String filePath;
     /**
      * 亚马逊报告ID
      */

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
@@ -10,6 +11,7 @@ import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.server.dmp.mapper.AmzReportScheduleMapper;
 import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
@@ -20,7 +22,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -130,5 +134,24 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 .le(null != minTime, AmzReportScheduleEntity::getFirstNextReportCreationTime, minTime)
                 .orderByAsc(AmzReportScheduleEntity::getId)
                 .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateNextTime(String mainId) {
+        AmzReportScheduleEntity reportSchedule = this.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到计划任务ID=" + mainId));
+        // 支持切换时间间隔
+        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
+        // 之前的时间
+        LocalDateTime historyTime = reportSchedule.getFirstNextReportCreationTime();
+        OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(historyTime.atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        // 修改下次创建时间
+        LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
+                .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
+                .toLocalDateTime();
+        reportSchedule.setFirstNextReportCreationTime(nextTime);
+        if (!this.updateById(reportSchedule)) {
+            throw new ServiceException("[reportSchedule] 更新失败");
+        }
     }
 }
