@@ -24,6 +24,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 采购订单feign
@@ -466,7 +467,7 @@ public class PurchaseOrderFeignController {
     }
 
     /**
-     * srm订单确认列表合计
+     * srm待发货列表合计
      * @author zdy
      * @date: 2024/1/15 17:34
      * @param dto
@@ -475,5 +476,31 @@ public class PurchaseOrderFeignController {
     @PostMapping("/srmWaitDeliveryTotal")
     public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         return purchaseOrderService.srmWaitDeliveryTotal(dto);
+    }
+
+    /**
+     * 根据采购订单获取订单信息
+     * @param orderIds
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderByIds")
+    public List<PurchaseOrderEntity> getPurchaseOrderByIds(@RequestBody Set<String> orderIds){
+        if (CollectionUtils.isEmpty(orderIds)){
+            return Collections.emptyList();
+        }
+        return purchaseOrderService.listByIds(orderIds);
+    }
+
+    /**
+     * 根据订单明细获取信息
+     * @param detailIds
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderDetailByIds")
+    List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(List<String> detailIds){
+        if (CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
+        return purchaseOrderDetailService.listByIds(detailIds);
     }
 }

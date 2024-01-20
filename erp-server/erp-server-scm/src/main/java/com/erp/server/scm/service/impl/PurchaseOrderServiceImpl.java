@@ -1349,13 +1349,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
                     ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
             obj.setReceiveQty(receiveQty);
+            //待交货数量
             obj.setDeliveryQty(deliveryQty);
-            //待送货数量
-            if (Objects.nonNull(obj.getPurchaseQty())){
-                obj.setToDeliverQty(obj.getPurchaseQty() - receiveQty);
-            }else {
-                obj.setToDeliverQty(MathUtil.ZERO);
-            }
             Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
@@ -1377,20 +1372,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
-            //交货周期
-            if(Objects.nonNull(obj.getDeliveryCycle())){
-                if (obj.getDeliveryCycle() <= 0){
-                    obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
-                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 0){
-                    obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
-                }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){
-                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_ONE_MONTH.getName());
-                }else if (60 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 30){
-                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_TWO_MONTH.getName());
-                }else if (obj.getDeliveryCycle()> 60){
-                    obj.setDeliveryCycleName("2个月以上");
-                }
-            }
             // 采购申请单号
             if(CollUtil.isNotEmpty(refList) && StringUtils.isBlank(obj.getSourceType())) {
                 // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
@@ -2313,10 +2294,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             try {
                 if (1 == dto.getStatus()){
-                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.CONFIRM, dto.getRemark(),ConfirmTypeEnum.MANUAL);
+                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.CONFIRM, dto,ConfirmTypeEnum.MANUAL);
                     dtos.add(batchResultDTO);
                 }else if (2 == dto.getStatus()){
-                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.REJECT, dto.getRemark(), ConfirmTypeEnum.MANUAL);
+                    batchResultDTO = purchaseOrderConfirm(entity, ExecutionStatusEnum.REJECT, dto, ConfirmTypeEnum.MANUAL);
                     dtos.add(batchResultDTO);
                 }
 
@@ -2331,7 +2312,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return dtos;
     }
 
-    private BatchResultDTO purchaseOrderConfirm(PurchaseOrderEntity entity, ExecutionStatusEnum typeEnum, String remark, ConfirmTypeEnum confirmTypeEnum) {
+    private BatchResultDTO purchaseOrderConfirm(PurchaseOrderEntity entity, ExecutionStatusEnum typeEnum, PurchaseOrderDTO.ConfirmDTO dto, ConfirmTypeEnum confirmTypeEnum) {
         //判断审核状态
         if (!StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM,entity.getCode());
@@ -2346,9 +2327,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM,entity.getCode());
         }
+        //供应商数据归属判断
+        PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
+        if (Objects.isNull(orderSupplier) || StringUtils.isBlank(orderSupplier.getSupplierId())){
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_NO_SUPPLIER_CONFIRM,entity.getCode());
+        }
+        if (!dto.getSupplierId().equalsIgnoreCase(orderSupplier.getSupplierId())){
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF,entity.getCode());
+        }
         //采购订单明细id集合
         List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        purchaseOrderDetailService.purchaseOrderConfirm(detailIdList,typeEnum,remark,confirmTypeEnum);
+        purchaseOrderDetailService.purchaseOrderConfirm(detailIdList,typeEnum,dto.getRemark(),confirmTypeEnum);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -2386,7 +2375,53 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //数据赋值处理
         doOpHandlePurchaseOrder(records);
+        //重新赋值待发货字段逻辑
+        doWaitDeliveryPurchaseOrder(records);
         return new PagingVO(pageData);
+    }
+
+    private void doWaitDeliveryPurchaseOrder(List<PurchaseOrderDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 采购订单明细id集合
+        List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        //送货信息
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
+
+        records.forEach(obj -> {
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setReceiveQty(receiveQty);
+            //已送货数量
+            Integer waitReceiveQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setWaitReceiveQty(waitReceiveQty);
+            //待交货量
+            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
+            //交货周期
+            if(Objects.nonNull(obj.getDeliveryCycle())){
+                if (obj.getDeliveryCycle() <= 0){
+                    obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
+                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 0){
+                    obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
+                }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_ONE_MONTH.getName());
+                }else if (60 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 30){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_TWO_MONTH.getName());
+                }else if (obj.getDeliveryCycle()> 60){
+                    obj.setDeliveryCycleName("2个月以上");
+                }
+            }
+        });
     }
 
     @Override
@@ -2456,13 +2491,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
                     ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
             obj.setReceiveQty(receiveQty);
-            obj.setDeliveryQty(deliveryQty);
             //待送货数量
-            if (Objects.nonNull(obj.getPurchaseQty())){
-                obj.setToDeliverQty(obj.getPurchaseQty() - receiveQty);
-            }else {
-                obj.setToDeliverQty(MathUtil.ZERO);
-            }
+            obj.setDeliveryQty(deliveryQty);
             Integer returnQtyt = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
@@ -2476,7 +2506,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             dto.setReceiveQty(MathUtil.ZERO);
             dto.setDeliveryQty(MathUtil.ZERO);
             dto.setStockInQty(MathUtil.ZERO);
-            dto.setToDeliverQty(MathUtil.ZERO);
             dto.setReturnQty(MathUtil.ZERO);
             return dto;
         }
@@ -2484,7 +2513,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         dto.setReceiveQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
         dto.setDeliveryQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
         dto.setStockInQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
-        dto.setToDeliverQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getToDeliverQty).sum());
         dto.setReturnQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
         return dto;
     }

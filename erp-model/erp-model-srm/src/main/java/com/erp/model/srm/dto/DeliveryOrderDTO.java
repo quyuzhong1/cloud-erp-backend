@@ -1,5 +1,6 @@
 package com.erp.model.srm.dto;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
@@ -16,6 +17,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -357,7 +359,7 @@ public class DeliveryOrderDTO implements Serializable {
         private Integer orderQty;
 
         /**
-         * 送货数量
+         * 待交货量
          */
         private Integer deliveryQty;
 
@@ -557,6 +559,78 @@ public class DeliveryOrderDTO implements Serializable {
         @Valid
         private List<DeliveryOrderDetailDTO.AddDTO> detailList;
 
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDeliveryDTO implements Serializable {
+
+        /**
+         * 主键id
+         */
+        @NotNull(message = "采购订单id不能为空")
+        private String id;
+
+        /**
+         * 采购订单明细id
+         */
+        @NotNull(message = "采购订单明细id不能为空")
+        private String purchaseDetailId;
+
+        /**
+         * 采购单号
+         */
+        private String code;
+
+        /**
+         * 供应商id
+         */
+        @NotNull(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 采购数量/订单数量[可排序]
+         */
+        @NotNull(message = "采购数量不能为空")
+        private Integer purchaseQty;
+        /**
+         * 未交货数量/待交货量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 预计到货日期
+         */
+        @NotNull(message = "预计到货日期不能为空")
+        private LocalDateTime planDeliveryDate;
+        /**
+         * 送货数量
+         */
+        @NotNull(message = "送货数量不能为空")
+        private Integer planDeliveryQty;
     }
 
     /**

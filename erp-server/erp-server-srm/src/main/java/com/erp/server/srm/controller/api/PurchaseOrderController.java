@@ -80,7 +80,9 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmTotal")
+    @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.ListDTO> srmOrderConfirmTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
+        dto.setSupplierId(userService.getSupplierId());
         PurchaseOrderDTO.ListDTO total = purchaseOrderFeign.srmOrderConfirmTotal(dto);
         return success(total);
     }
@@ -94,6 +96,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/srmOrderConfirmStatus")
     public ApiResult<List<BatchResultDTO>> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
+        dto.setSupplierId(userService.getSupplierId());
         List<BatchResultDTO> resultDTOS = purchaseOrderFeign.srmOrderConfirmStatus(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

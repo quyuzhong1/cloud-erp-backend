@@ -2,6 +2,7 @@ package com.erp.server.srm.query;
 
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,20 +18,20 @@ public class WaitDeliveryQueryHandler extends AbstractQueryHandler {
             if("all".equals(value)){
                 return " pod.execution_status in ('confirm','delivery') ";
             }
-            if(ExecutionStatusEnum.TO_BE_CONFIRM.getCode().equals(value)){
-                return " po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm'";
+            if(WaitDeliveryCycleEnum.EXPIRED.getCode().equals(value)){
+                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 0";
             }
-            if(ExecutionStatusEnum.CONFIRM.getCode().equals(value)){
-                return " po.approve_status = 'approve' and pod.execution_status = 'confirm'";
+            if(WaitDeliveryCycleEnum.ALMOST_OVERDUE.getCode().equals(value)){
+                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 0 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 7";
             }
-            if(ExecutionStatusEnum.REJECT.getCode().equals(value)){
-                return " po.approve_status = 'approve' and pod.execution_status = 'reject'";
+            if(WaitDeliveryCycleEnum.IN_ONE_MONTH.getCode().equals(value)){
+                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 30";
             }
-            if(ExecutionStatusEnum.DELIVERY.getCode().equals(value)){
-                return " po.approve_status = 'approve' and pod.execution_status = 'delivery'";
+            if(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode().equals(value)){
+                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 30 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 60";
             }
-            if(ExecutionStatusEnum.CLOSED.getCode().equals(value)){
-                return " po.approve_status = 'approve' and pod.execution_status = 'closed'";
+            if(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode().equals(value)){
+                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 60 ";
             }
         }
         return null;

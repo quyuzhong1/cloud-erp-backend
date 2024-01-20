@@ -194,15 +194,11 @@ public class PurchaseOrderDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 待送货量
-         */
-        private Integer toDeliverQty;
-        /**
-         * 签收数量/已送货数量/已收货数量
+         * 签收数量/已送货数量/已收货数量（已签收）
          */
         private Integer receiveQty;
         /**
-         * 已送货未签收数量/已送货数量
+         * 已送货未签收数量/已送货数量（待发货页面使用）
          */
         private Integer waitReceiveQty;
         /**
@@ -211,7 +207,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer stockInQty;
 
         /**
-         * 交货数量
+         * 未交货数量/待交货量
          */
         private Integer deliveryQty;
 
@@ -1545,5 +1541,9 @@ public class PurchaseOrderDTO implements Serializable {
          * 操作说明 接受原因/拒绝原因
          */
         private String remark;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 }
