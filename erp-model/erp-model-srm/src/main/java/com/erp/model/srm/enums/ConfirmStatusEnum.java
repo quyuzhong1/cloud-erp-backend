@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * 采购退货单确认状态
  */
-public enum DeliveryOrderConfirmStatusEnum implements EnumMessage {
+public enum ConfirmStatusEnum implements EnumMessage {
     WAIT_CONFIRM("waitConfirm", "待确认"),
     CONFIRM("confirm", "已确认"),
     ;
@@ -17,7 +17,7 @@ public enum DeliveryOrderConfirmStatusEnum implements EnumMessage {
     private String code;
     private String name;
 
-    DeliveryOrderConfirmStatusEnum(String code, String name) {
+    ConfirmStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }

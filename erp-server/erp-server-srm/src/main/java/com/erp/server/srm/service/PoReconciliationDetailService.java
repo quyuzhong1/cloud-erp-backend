@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -30,10 +31,11 @@ public interface PoReconciliationDetailService extends SuperService<PoReconcilia
     * 修改
     * @author will
     * @date: 2024-01-19
-    * @param dto
+    * @param detailList
+    * @param mainId
     * @return
     */
-    Boolean update(PoReconciliationDetailDTO.UpdateDTO dto);
+    Boolean update(List<PoReconciliationDetailDTO.UpdateDTO> detailList,String mainId);
 
     /**
      * @description: 分页查询

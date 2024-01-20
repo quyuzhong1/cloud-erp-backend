@@ -1,8 +1,13 @@
 package com.erp.server.srm.query;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.enums.ConfirmStatusEnum;
+import com.erp.server.srm.service.PoReconciliationService;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * @author liuruipeng
@@ -11,24 +16,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
 
+    @Resource
+    private PoReconciliationService poReconciliationService;
+
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("do2.tab".equals(field)){
-            if(DeliveryOrderEnum.SearchTypeEnum.ALL.getCode().equals(value)){
-                return super.getQueryAllSql();
+        //查询待对账明细
+        if("waitReconciliationDetail".equals(field)){
+            //对账单
+            PoReconciliationEntity entity = poReconciliationService.getById(value.toString());
+            if (ObjectUtil.isEmpty(entity)) {
+                //返回空结果
+                return this.getQueryEmptySql();
             }
-            if(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINT.getCode().equals(value)){
-                return " do2.receipt_status != 'confirmed' and do2.is_print = false ";
-            }
-            if(DeliveryOrderEnum.SearchTypeEnum.WAIT_RECEIVE_AND_PRINTED.getCode().equals(value)){
-                return " do2.receipt_status != 'confirmed' and do2.is_print = true ";
-            }
-            if(DeliveryOrderEnum.SearchTypeEnum.RECEIVED.getCode().equals(value)){
-                return " do2.receipt_status = 'confirmed' ";
-            }
-            if(DeliveryOrderEnum.SearchTypeEnum.QTY_DIFFERENCE.getCode().equals(value)){
-                return " do2.receipt_status = 'confirmed' and doe.delivery_qty != doe.receive_qty";
-            }
+            super.buildDefaultDTO("prd.supplier_id",entity.getSupplierId());
+            super.buildDefaultDTO("prd.settle_org_id",entity.getSettleOrgId());
+            super.buildDefaultDTO("prd.business_status", ConfirmStatusEnum.CONFIRM.getCode());
         }
         return null;
     }
