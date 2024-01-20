@@ -1,8 +1,11 @@
 package com.erp.server.srm.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -32,5 +35,20 @@ public interface PoReconciliationDetailService extends SuperService<PoReconcilia
     */
     Boolean update(PoReconciliationDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2024/1/20 11:31
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<PoReconciliationDetailDTO.ListDTO> paging(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/1/20 12:03
+     * @param dto
+     * @param response
+     */
+    void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
 }

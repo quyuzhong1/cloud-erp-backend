@@ -1,9 +1,17 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.PoReconciliationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,6 +27,9 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 采购对账单明细 服务实现类
@@ -87,11 +98,54 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<PoReconciliationDetailDTO.ListDTO> paging(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<PoReconciliationDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/poReconciliationDetail.xlsx";
+        String name = "对账明细导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(PoReconciliationDetailEntity poReconciliationDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<PoReconciliationDetailDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
     }
 }

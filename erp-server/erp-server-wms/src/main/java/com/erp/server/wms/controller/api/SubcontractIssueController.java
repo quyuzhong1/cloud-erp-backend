@@ -84,7 +84,7 @@ public class SubcontractIssueController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractIssue:paging",
-            tableAlias = ""
+            tableAlias = "si"
     )
     public ApiResult<List<SubcontractIssueDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(subcontractIssueService.tabList(dto));
@@ -349,8 +349,8 @@ public class SubcontractIssueController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:subcontractIssue:export",
-            tableAlias = ""
+            menuCode = "wms:subcontractIssue:paging",
+            tableAlias = "si"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外发料单导出Excel数据")
     @WebAdvanceQuery(handler = SubcontractIssueQueryHandler.class)
