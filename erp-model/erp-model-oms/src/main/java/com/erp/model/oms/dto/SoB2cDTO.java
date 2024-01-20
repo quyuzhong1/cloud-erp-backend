@@ -57,6 +57,30 @@ public class SoB2cDTO implements Serializable {
     }
 
     /**
+     * 销售订单的预报统计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForecastCountDTO  {
+
+        /**
+         * 状态
+         */
+        private String status;
+
+
+        /**
+         * 状态名
+         */
+        private String statusName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    /**
      * 分页列表查询参数
      */
     @Data
@@ -83,12 +107,12 @@ public class SoB2cDTO implements Serializable {
         /**
          * 组包状态 （soB2cPackageStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
-        private String packageStatus;
+        private List<String> packageStatusList;
 
         /**
          * 中转状态 （soB2cTransferStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
-        private String transferStatus;
+        private List<String> transferStatusList;
         /**
          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */

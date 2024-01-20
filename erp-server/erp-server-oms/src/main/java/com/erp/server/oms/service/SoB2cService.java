@@ -584,4 +584,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-19 11:07
      */
     Boolean updateTransferStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+
+    /**
+     * 预报状态统计
+     * @param dto
+     * @return
+     */
+    List<SoB2cDTO.ForecastCountDTO> forecastCount(PermissionsDTO dto);
 }

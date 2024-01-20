@@ -3238,6 +3238,45 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 eq(SoB2cEntity::getId, dto.getId()).update(new SoB2cEntity());
     }
 
+
+    /**
+     * 预报统计
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SoB2cDTO.ForecastCountDTO> forecastCount(PermissionsDTO dto) {
+        List<SoB2cDTO.ForecastCountDTO> list = new ArrayList<>(2);
+        String sql =dto.getPermissionSql();
+        if(StringUtils.isBlank(sql)){
+            sql="";
+        }
+        SoB2cDTO.ForecastCountDTO packageCountDTO = new SoB2cDTO.ForecastCountDTO();
+        //待组包
+        String waitPackageStatus = PackageStatusEnum.WAIT.getCode();
+        String waitPackageStatusName = PackageStatusEnum.WAIT.getName();
+        int waitPackageCount = this.lambdaQuery().eq(SoB2cEntity::getPackageStatus, waitPackageStatus).last(sql).count();
+
+        packageCountDTO.setCount(waitPackageCount);
+        packageCountDTO.setStatus(waitPackageStatus);
+        packageCountDTO.setStatusName(waitPackageStatusName);
+        list.add(packageCountDTO);
+
+
+        SoB2cDTO.ForecastCountDTO transferCountDTO = new SoB2cDTO.ForecastCountDTO();
+        //待中转
+        String waitTransferStatus = TransferStatusEnum.WAIT.getCode();
+        String waitTransferStatusName = TransferStatusEnum.WAIT.getName();
+        int waitTransferCount = this.lambdaQuery().eq(SoB2cEntity::getTransferStatus, waitTransferStatus).last(sql).
+                count();
+        transferCountDTO.setCount(waitTransferCount);
+        transferCountDTO.setStatus(waitTransferStatus);
+        transferCountDTO.setStatusName(waitTransferStatusName);
+        list.add(transferCountDTO);
+        return list;
+    }
+
     /**
      * @param id
      * @param approveStatusEnum

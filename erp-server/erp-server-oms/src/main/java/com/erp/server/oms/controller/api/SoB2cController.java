@@ -48,6 +48,17 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 预报统计
+     * @param dto
+     * @return
+     */
+    @PostMapping("/forecastCount")
+    public ApiResult<List<SoB2cDTO.ForecastCountDTO>> forecastCount(@RequestBody PermissionsDTO dto){
+        List<SoB2cDTO.ForecastCountDTO> result = soB2cService.forecastCount(dto);
+        return success(result);
+    }
+
+    /**
      * 列表查询
      *
      * @param dto
