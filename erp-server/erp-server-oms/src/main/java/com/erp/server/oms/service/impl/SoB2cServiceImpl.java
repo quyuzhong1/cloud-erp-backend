@@ -4263,7 +4263,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Boolean.FALSE;
         }
         Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
-                .set(SoB2cEntity::getApproveStatus, status)
+                .set(SoB2cEntity::getBillStatus, status)
                 .update();
         String statusName = SoB2cBillStatusEnum.getName(status);
         String msg = "销售订单状态变更为:" + statusName;

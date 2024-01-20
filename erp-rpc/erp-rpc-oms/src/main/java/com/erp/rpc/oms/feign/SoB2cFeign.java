@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -282,4 +283,5 @@ public interface SoB2cFeign {
      **/
     @GetMapping("/feign/soB2c/updateAbnormalType")
     Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType);
+
 }
