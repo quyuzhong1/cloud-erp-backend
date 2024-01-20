@@ -2,9 +2,11 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -19,9 +21,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ConfirmTypeEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
@@ -29,6 +36,7 @@ import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -77,6 +85,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private SupplierFeign supplierFeign;
+    @Resource
+    private PurchaseOrderFeign purchaseOrderFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -260,6 +270,139 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto) {
         return this.baseMapper.pagingTotal(dto);
+    }
+
+    @Override
+    public List<BatchResultDTO> addDeliveryOrder(List<DeliveryOrderDTO.AddDeliveryDTO> addDeliveryDTOS) {
+        //根据采购订单进行分组
+        if (CollectionUtils.isEmpty(addDeliveryDTOS)){
+            return Collections.emptyList();
+        }
+        List<BatchResultDTO> dtos = new ArrayList<>();
+        Map<String, List<DeliveryOrderDTO.AddDeliveryDTO>> purchaseMap = addDeliveryDTOS.stream().collect(Collectors.groupingBy(DeliveryOrderDTO.AddDeliveryDTO::getId));
+        Set<String> orderIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getId).collect(Collectors.toSet());
+        List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderFeign.getPurchaseOrderByIds(orderIds);
+        //订单数据为空直接返回
+        if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98025.msg));
+            return dtos;
+        }
+        List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderFeign.getPurchaseOrderDetailByIds(detailIds);
+        if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.msg));
+            return dtos;
+        }
+        List<DeliveryOrderEntity> deliveryOrderEntityList = this.getDeliveryOrderBySourceIds(orderIds);
+
+        for (Map.Entry<String, List<DeliveryOrderDTO.AddDeliveryDTO>> entry  :purchaseMap.entrySet()) {
+            String orderId = entry.getKey();
+            //明细记录
+            List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS = entry.getValue();
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
+            if (Objects.isNull(purchaseOrderEntity)){
+                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_98025.msg));
+                continue;
+            }
+            try {
+                DeliveryOrderEntity deliveryOrderEntity = deliveryOrderEntityList.stream().filter(e -> e.getSourceId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
+                if (Objects.isNull(deliveryOrderEntity)){
+                    deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
+                }
+                //处理明细列表
+                handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos);
+            }catch (Exception e){
+                dtos.add(BatchResultDTO.fail(orderId,purchaseOrderEntity.getCode(),e.getMessage()));
+            }
+        }
+        return dtos;
+    }
+
+    /**
+     * 校验待发货明细
+     * @param mainId 主表id
+     * @param deliveryDTOS
+     * 新增或更新主表明细时，以订单维度锁表，这时不允许修改明细（在变更明细表记录时，增加订单维度数据幂等）
+     */
+    @DataIdempotent(keyIdName = "deliveryOrderEntity.id")
+    private void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
+                                              List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos) {
+        if (CollectionUtils.isEmpty(deliveryDTOS)){
+            return;
+        }
+        //循环增加明细
+        for (DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO : deliveryDTOS) {
+            try {
+                PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(e -> e.getId().equalsIgnoreCase(addDeliveryDTO.getPurchaseDetailId())).findFirst().orElse(null);
+                //订单明细校验
+                checkPurchaseOrderDetail(addDeliveryDTO,detailEntity);
+                //发货单明细新增
+                addDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
+            }catch (Exception e){
+                dtos.add(BatchResultDTO.fail(mainId,addDeliveryDTO.getSkuNo(),e.getMessage()));
+            }
+        }
+    }
+
+    /**
+     * 根据送货单主单和发货明细新增记录
+     * @param mainId
+     * @param addDeliveryDTO
+     */
+    private void addDeliveryOrderDetail(String mainId, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity) {
+        DeliveryOrderDetailEntity deliveryOrderDetailEntity = DeliveryOrderConverter.INSTANCE
+                .purchaseOrderDetailToDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
+        detailService.save(deliveryOrderDetailEntity);
+    }
+
+    private void checkPurchaseOrderDetail(DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO,PurchaseOrderDetailEntity detailEntity) {
+        //送货数量校验
+        if (addDeliveryDTO.getPlanDeliveryQty() <= 0){
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //校验数量不可超过【待交货量】
+        //没有采购明细记录
+        if (Objects.isNull(detailEntity)){
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //订单总数
+        Integer orderQty = detailEntity.getPurchaseQty();
+        //已送货数量
+        Integer deliveryQty = MathUtil.ZERO;
+        //收货数量
+        Integer receiveQty = MathUtil.ZERO;
+        //已送货明细
+        List<DeliveryOrderDetailEntity> orderDetailEntities = detailService.listDetailByDetailSourceIds(Collections.singletonList(addDeliveryDTO.getPurchaseDetailId()));
+        if (CollectionUtils.isNotEmpty(orderDetailEntities)){
+            deliveryQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
+            receiveQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getReceiveQty).sum();
+        }
+        //可送货数量
+        int waitDeliveryQty = orderQty - deliveryQty;
+        if (addDeliveryDTO.getPlanDeliveryQty() > waitDeliveryQty){
+            throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY, addDeliveryDTO.getPurchaseDetailId());
+        }
+    }
+
+    private List<DeliveryOrderEntity> getDeliveryOrderBySourceIds(Set<String> orderIds) {
+        if (CollectionUtils.isEmpty(orderIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(DeliveryOrderEntity::getSourceId, orderIds).list();
+    }
+
+    /**
+     * 校验是否存在送货单 不存在则新增
+     * @param purchaseOrderEntity
+     * @param deliveryDTOS
+     * @return
+     */
+    private DeliveryOrderEntity builderDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS) {
+        DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO = deliveryDTOS.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO);
+        deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
+        this.save(deliveryOrderEntity);
+        return deliveryOrderEntity;
     }
 
     @Override

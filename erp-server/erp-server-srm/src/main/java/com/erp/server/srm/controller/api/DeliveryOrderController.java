@@ -1,6 +1,8 @@
 package com.erp.server.srm.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -121,6 +123,21 @@ public class DeliveryOrderController extends BaseController {
     }
 
     /**
+     * 生成送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dtos
+     * @return ApiResult<String>
+     */
+    @PostMapping("/generateDeliveryOrder")
+    @Idempotent
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
+    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
+        List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 编辑
     * @author lrp
     * @date:  2024-01-12
@@ -129,6 +146,7 @@ public class DeliveryOrderController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "送货单编辑")
+    @DataIdempotent(keyIdName = "dto.id")
     public ApiResult<?> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
         deliveryOrderService.update(dto);
         return success();

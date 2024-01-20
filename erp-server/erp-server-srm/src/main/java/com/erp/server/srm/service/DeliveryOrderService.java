@@ -61,5 +61,12 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto);
 
+    /**
+     * 生成送货单
+     * @param dtos
+     * @return
+     */
+    List<BatchResultDTO> addDeliveryOrder(List<DeliveryOrderDTO.AddDeliveryDTO> dtos);
+
     DeliveryOrderDTO.ViewDTO viewByCode(String code);
 }

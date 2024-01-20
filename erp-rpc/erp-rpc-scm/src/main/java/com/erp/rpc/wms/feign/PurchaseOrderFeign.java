@@ -7,6 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 采购订单feign
@@ -70,4 +73,39 @@ public interface PurchaseOrderFeign {
      */
     @PostMapping("/feign/purchaseOrder/srmWaitDeliveryCount")
     PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@RequestBody PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
+
+    /**
+     * srm待发货列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/feign/purchaseOrder/srmWaitDeliveryTotal")
+    PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto);
+    /**
+     * srm待发货分页查询
+     * @author Will
+     * @date: 2023/3/15 16:47
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/feign/purchaseOrder/srmWaitDeliveryPaging")
+    PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
+
+    /**
+     * 根据采购订单获取订单信息
+     * @param orderIds
+     * @return
+     */
+    @PostMapping("/feign/purchaseOrder/getPurchaseOrderByIds")
+    List<PurchaseOrderEntity> getPurchaseOrderByIds(@RequestBody Set<String> orderIds);
+
+    /**
+     * 根据订单明细获取信息
+     * @param detailIds
+     * @return
+     */
+    @PostMapping("/feign/purchaseOrder/getPurchaseOrderDetailByIds")
+    List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(List<String> detailIds);
 }

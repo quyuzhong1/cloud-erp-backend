@@ -607,7 +607,9 @@
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         left join subcontract_order so on so.id = po.source_id and so.is_deleted = false
         <where>
-            ${params.sqlMap.default}
+            <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+                ${params.sqlMap.default}
+            </if>
             and po.is_deleted = false
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pos.supplier_id = #{params.supplierId}

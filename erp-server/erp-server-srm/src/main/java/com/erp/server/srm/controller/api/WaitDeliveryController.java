@@ -1,5 +1,6 @@
 package com.erp.server.srm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -9,6 +10,7 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -62,9 +64,24 @@ public class WaitDeliveryController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmWaitDeliveryPaging")
+    @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         dto.getParams().setSupplierId(userService.getSupplierId());
-        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmWaitDeliveryPaging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * srm待发货列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmWaitDeliveryTotal")
+    public ApiResult<PurchaseOrderDTO.ListDTO> srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
+        dto.setSupplierId(userService.getSupplierId());
+        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderFeign.srmWaitDeliveryTotal(dto);
+        return success(listDTO);
     }
 }
