@@ -135,21 +135,21 @@ public class SupplierExportExcelDTO implements Serializable {
     @ColumnWidth(10)
     private LocalDateTime approveTime;
 
-    /**
-     * 创建时间
-     */
-    @ExcelProperty(value = "创建时间", index = 15)
-    @ColumnWidth(20)
-    private LocalDateTime createTime;
-
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 16)
+    @ExcelProperty(value = "创建人", index = 15)
     @ColumnWidth(10)
     private String createUserName;
 
+
+    /**
+     * 创建时间
+     */
+    @ExcelProperty(value = "创建时间", index = 16)
+    @ColumnWidth(20)
+    private LocalDateTime createTime;
 
 
 }
