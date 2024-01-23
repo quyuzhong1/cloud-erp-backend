@@ -66,6 +66,7 @@ public enum ModuleTypeEnum {
     LISTING_INFO("62", "对应平台sku 表"),
     TRANSFER_LOGISTICS_CHANNEL("63", "中转报关服务商渠道"),
     TRANSFER_LOGISTICS_SUPPLIER("64", "中转报关服务商"),
+    TRANSFER_DECLARE("65", "中转报关单"),
     ;
 
 

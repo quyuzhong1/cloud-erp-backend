@@ -114,7 +114,10 @@ public class TransferDeclareDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 详情
+         */
+        private List<TransferDeclareDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -130,6 +133,10 @@ public class TransferDeclareDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 详情
+         */
+        private List<TransferDeclareDetailDTO.AddDTO> detailList;
     }
 
     @Data
@@ -140,13 +147,6 @@ public class TransferDeclareDTO implements Serializable {
         * 预计中转日期
         */
         private LocalDate planTransferDate;
-
-        /**
-        * 上传状态
-        */
-        @NotBlank(message = "上传状态不能为空")
-        @Size(max = 30,message = "上传状态最大长度不能超过30位")
-        private String uploadStatus;
 
         /**
         * 发货物流商id

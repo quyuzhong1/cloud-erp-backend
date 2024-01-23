@@ -63,6 +63,7 @@ public enum BusinessNoTypeEnum {
     CODE_YHSQ(53, "yhsq","要货申请","YHSQ"),
     CODE_FHDC(54, "fhdc","b2c发货单","FHDC"),
     CODE_FHLJ(55, "fhlj","b2c发货拦截单","FHLJ"),
+    CODE_ZZBG(56, "zzbg","中转报关","ZZBG"),
 
     ;
 

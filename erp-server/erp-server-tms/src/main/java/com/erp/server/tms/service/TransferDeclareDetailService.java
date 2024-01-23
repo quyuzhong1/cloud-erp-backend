@@ -1,8 +1,12 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -21,7 +25,7 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(TransferDeclareDetailDTO.AddDTO dto);
+    void add(TransferDeclareDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -30,7 +34,14 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
     * @param dto
     * @return
     */
-    Boolean update(TransferDeclareDetailDTO.UpdateDTO dto);
+    void update(TransferDeclareDTO.UpdateDTO dto, String mainId);
 
-
+    /**
+     * 根据主表id查询详情信息
+     * @Author Luo_WG
+     * @Date 2024/1/23 11:23
+     * @param mainIds
+     * @return java.util.List<com.erp.model.tms.entity.TransferDeclareDetailEntity>
+     **/
+    List<TransferDeclareDetailEntity> listByMainIds(List<String> mainIds);
 }

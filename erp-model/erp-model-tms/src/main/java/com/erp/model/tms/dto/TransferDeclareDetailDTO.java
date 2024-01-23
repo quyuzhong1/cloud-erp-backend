@@ -120,13 +120,6 @@ public class TransferDeclareDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 销售单id
         */
         @NotBlank(message = "销售单id不能为空")
@@ -174,21 +167,6 @@ public class TransferDeclareDetailDTO implements Serializable {
         @NotBlank(message = "包裹重量单位不能为空")
         @Size(max = 10,message = "包裹重量单位最大长度不能超过10位")
         private String weightUnit;
-
-        /**
-        * 出库状态
-        */
-        @NotBlank(message = "出库状态不能为空")
-        @Size(max = 30,message = "出库状态最大长度不能超过30位")
-        private String outstockStatus;
-
-        /**
-        * 中转状态
-        */
-        @NotBlank(message = "中转状态不能为空")
-        @Size(max = 30,message = "中转状态最大长度不能超过30位")
-        private String transferStatus;
-
 
     }
 
