@@ -1,24 +1,55 @@
 package com.erp.server.wms.query;
 
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.vo.LoginUser;
+import com.erp.model.sys.entity.SysPostUserEntity;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
+import com.erp.model.wms.enums.PoReturnStatusEnum;
+import com.erp.rpc.sys.feign.SysPostFeign;
+import com.erp.server.wms.service.CommonService;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class PoReturnQueryHandler extends AbstractQueryHandler {
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private CommonService commonService;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("returnOrderSource".equals(field)){
-
+        if("pro.source_type".equals(field)){
             if ("other".equals(value)) {
-                return "'qcInfo'";
+                return "pro.source_type != 'qcInfo'";
             } else {
-                return "'qcInfo'";
+                return "pro.source_type = 'qcInfo'";
             }
-/*            value = "'"+value+"'";
-            return "case when  subString ( " + value + ",1,2) != 'PL' then po.source_code "+ compareCodeSplicingValueSql +
-                    " else EXISTS ( select pa.id from purchase_application pa left join purchase_application_ref_po parp on parp.is_deleted = false and pa.id = parp.purchase_application_id " +
-                    " where parp.purchase_order_id = po.id and pa.code "+ compareCodeSplicingValueSql +" ) end";*/
+        }
+        if("tab".equals(field)){
+            if (PoReturnStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
+                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.WAIT_SUBMIT.getCode());
+            }
+            if (PoReturnStatusEnum.TO_BE_APPROVE.getCode().equals(value)) {
+                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.TO_BE_APPROVE.getCode());
+            }
+            if (PoReturnStatusEnum.APPROVE.getCode().equals(value)) {
+                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.APPROVE.getCode());
+            }
+            if (PoReturnStatusEnum.REJECT.getCode().equals(value)) {
+                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.REJECT.getCode());
+            }
+            if (PoReturnStatusEnum.WAIT_FOR_ME_HANDLE.getCode().equals(value)) {
+                LoginUser userInfo = commonService.getUserInfo();
+                List<SysPostUserEntity> postUserList = sysPostFeign.getPostUserByUserId(userInfo.getUid());
+                List<String> postIdStr = postUserList.stream().map(req -> req.getPostId()).distinct().collect(Collectors.toList());
+                super.buildDefaultDTO("pro.confirm_status", PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode());
+                super.buildDefaultDTO("pro.unusual_handle_user_id", postIdStr);
+            }
         }
         return null;
     }

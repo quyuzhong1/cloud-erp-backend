@@ -1152,6 +1152,13 @@ public enum ApiError implements Serializable {
     ERROR_96002(96002,"单据供应商与用户供应商不一致"),
     ERROR_PO_RECONCILIATION_NOT_EXIST(96003,"对账单不存在"),
     ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"对账明细不存在"),
+    ERROR_PO_RECONCILIATION_CONFIRM(96005,"仅【待供方确认】支持此操作"),
+    ERROR_PO_RECONCILIATION_CANCEL_CONFIRM(96005,"仅【待采方确认】支持此操作"),
+    ERROR_PO_RECONCILIATION_SCM_CANCEL_CONFIRM(96005,"仅【待采方确认】或【已确认待完结】支持此操作"),
+    ERROR_PO_RECONCILIATION_DELETE(96006,"仅【待供方确认】或【待采方确认】支持删除对账单"),
+    ERROR_PO_RECONCILIATION_RECEIVE(96007,"仅【已确认待完结】支持单据签收"),
+    ERROR_PO_RECONCILIATION_UPDATE(96008,"仅【待供方确认】或【待采方确认】支持修改对账单"),
+    ERROR_PO_RECONCILIATION_ADD_DETAIL(96009,"对账单【{}】添加对账明细数据的供应商【{}】和结算组织【{}】必须一致"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),

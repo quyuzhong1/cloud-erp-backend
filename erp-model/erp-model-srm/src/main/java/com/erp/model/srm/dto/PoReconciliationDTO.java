@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -76,9 +77,69 @@ public class PoReconciliationDTO implements Serializable {
         private String statusName;
 
         /**
+         * 对账开始日期【可排序】
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账结束日期【可排序】
+         */
+        private LocalDate endDate;
+
+        /**
          * 对账周期
          */
         private String cycle;
+
+        /**
+         * 结算组织【可排序】
+         */
+        private String settleOrgName;
+
+        /**
+         * 供应商名称【可排序】
+         */
+        private String supplierName;
+
+        /**
+         * 对账金额【可排序】
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币种【可排序】
+         */
+        private String currency;
+
+        /**
+         * 供方对账人【可排序】
+         */
+        private String supplierReconciliationUserName;
+
+        /**
+         * 采方对账人【可排序】
+         */
+        private String purchaseReconciliationUserName;
+
+        /**
+         * 生成对账日期【可排序】
+         */
+        private LocalDate reconciliationDate;
+
+        /**
+         * 供方确认日期【可排序】
+         */
+        private LocalDate supplierConfirmDate;
+
+        /**
+         * 采方确认日期【可排序】
+         */
+        private LocalDate purchaseConfirmDate;
+
+        /**
+         * 收到单据日期【可排序】
+         */
+        private LocalDate receiveDate;
     }
 
     /**
@@ -104,14 +165,9 @@ public class PoReconciliationDTO implements Serializable {
         private String status;
 
         /**
-        * 对账开始日期
-        */
-        private LocalDateTime startDate;
-
-        /**
-        * 对账结束日期
-        */
-        private LocalDateTime endDate;
+         * 对账状态名称
+         */
+        private String statusName;
 
         /**
         * 结算组织id
@@ -139,29 +195,19 @@ public class PoReconciliationDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+        /**
         * 币别
         */
         private String currency;
-
-        /**
-        * 供方对账人id
-        */
-        private String supplierReconciliationUserId;
-
-        /**
-        * 供方对账人名称
-        */
-        private String supplierReconciliationUserName;
-
-        /**
-        * 采方对账人id
-        */
-        private String purchaseReconciliationUserId;
-
-        /**
-        * 采方对账人名称
-        */
-        private String purchaseReconciliationUserName;
 
         /**
         * 生成对账日期
@@ -182,26 +228,6 @@ public class PoReconciliationDTO implements Serializable {
         * 收到单据日期
         */
         private LocalDate receiveDate;
-
-        /**
-        * 供方确认人id
-        */
-        private String supplierConfirmUserId;
-
-        /**
-        * 供方确认人名称
-        */
-        private String supplierConfirmUserName;
-
-        /**
-        * 采方确认人id
-        */
-        private String purchaseConfirmUserId;
-
-        /**
-        * 采方确认人名称
-        */
-        private String purchaseConfirmUserName;
 
 
     }

@@ -1006,7 +1006,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 List<String> postIds = postUserList.stream().map(req -> req.getPostId()).distinct().collect(Collectors.toList());
                 List<PoReturnEntity> entityList = new ArrayList<>();
                 if (CollectionUtils.isNotEmpty(postIds)) {
-                    entityList = lambdaQuery().in(PoReturnEntity::getUnusualHandleUserId, postIds).list();
+                    entityList = lambdaQuery()
+                            .in(PoReturnEntity::getUnusualHandleUserId, postIds)
+                            .eq(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode())
+                            .list();
                 }
                 count = entityList.size();
             }

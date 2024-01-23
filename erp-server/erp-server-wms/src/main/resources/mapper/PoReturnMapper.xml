@@ -494,10 +494,6 @@
         <if test="params.unusualType != null and params.unusualType != ''">
             and pro.unusual_type = #{params.unusualType}
         </if>
-        <!--退货原因-->
-        <if test="params.returnRemark != null and params.returnRemark != ''">
-            and pro.return_remark ILIKE concat('%',#{params.returnRemark}::text,'%')
-        </if>
         <!--异常说明-->
         <if test="params.unusualRemark != null and params.unusualRemark != ''">
             and pro.unusual_remark ILIKE concat('%',#{params.unusualRemark}::text,'%')

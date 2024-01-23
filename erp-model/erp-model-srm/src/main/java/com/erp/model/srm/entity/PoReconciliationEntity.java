@@ -1,6 +1,8 @@
 package com.erp.model.srm.entity;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -105,12 +107,12 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     /**
     * 供方确认日期
     */
-    @TableField("supplier_confirm_date")
+    @TableField(value = "supplier_confirm_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate supplierConfirmDate;
     /**
     * 采方确认日期
     */
-    @TableField("purchase_confirm_date")
+    @TableField(value = "purchase_confirm_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate purchaseConfirmDate;
     /**
     * 收到单据日期

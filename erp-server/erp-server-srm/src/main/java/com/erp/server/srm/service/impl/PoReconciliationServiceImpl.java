@@ -7,7 +7,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
@@ -15,6 +18,8 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -29,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.srm.dto.PoReconciliationDTO;
+
+import java.time.LocalDate;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -150,6 +157,47 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public BatchResultDTO confirm(String id) {
+        PoReconciliationEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+        }
+        //待供方确认
+        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CONFIRM);
+        }
+        log.info("开始供应商确认，id = {}",id);
+        LoginUser userInfo = commonService.getUserInfo();
+        lambdaUpdate().eq(PoReconciliationEntity::getId, id)
+                .set(PoReconciliationEntity::getStatus, PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode())
+                .set(PoReconciliationEntity::getSupplierConfirmDate, LocalDate.now())
+                .set(PoReconciliationEntity::getSupplierConfirmUserId, userInfo.getUid())
+                .set(PoReconciliationEntity::getSupplierConfirmUserName, userInfo.getUserName())
+                .update(new PoReconciliationEntity());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
+    }
+
+    @Override
+    public BatchResultDTO cancelConfirm(String id) {
+        PoReconciliationEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+        }
+        //待采方确认
+        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
+        }
+        log.info("开始取消确认，id = {}",id);
+        lambdaUpdate().eq(PoReconciliationEntity::getId, id)
+                .set(PoReconciliationEntity::getStatus, PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode())
+                .set(PoReconciliationEntity::getSupplierConfirmDate, null)
+                .set(PoReconciliationEntity::getSupplierConfirmUserId, "")
+                .set(PoReconciliationEntity::getSupplierConfirmUserName, "")
+                .update(new PoReconciliationEntity());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 
 
