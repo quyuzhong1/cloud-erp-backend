@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
@@ -125,6 +127,41 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         }
 
         return null;
+    }
+
+    @Override
+    public Boolean checkIsUpdate(ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
+        long count = list.stream().filter(l -> StringUtils.isBlank(l.getId())).count();
+        if (count > 0) {
+            return Boolean.TRUE;
+        }
+        List<SettingForecastEntity> dbList = this.list();
+        for (SettingForecastDTO.SaveOrUpdateDTO item : list) {
+            String id = item.getId();
+            SettingForecastEntity entity = dbList.stream().filter(l -> l.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                return Boolean.TRUE;
+            }
+            SettingForecastDTO.SaveOrUpdateDTO dbDTO = getSaveOrUpdateByDb(entity);
+            String dbJson = JSONUtil.toJsonStr(dbDTO);
+            String paramJson = JSONUtil.toJsonStr(item);
+            if (!dbJson.equals(paramJson)) {
+                return Boolean.TRUE;
+            }
+
+        }
+        return Boolean.FALSE;
+    }
+
+    private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {
+        SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
+        dto.setId(entity.getId());
+        dto.setLogisticsSupplierId(entity.getLogisticsSupplierId());
+        dto.setIsMustPackage(entity.getIsMustPackage());
+        dto.setIsMustTransfer(entity.getIsMustTransfer());
+        dto.setEnablePackageTime(entity.getEnablePackageTime());
+        dto.setEnableTransferTime(entity.getEnableTransferTime());
+        return dto;
     }
 
 

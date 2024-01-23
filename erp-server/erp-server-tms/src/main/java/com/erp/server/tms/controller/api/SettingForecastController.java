@@ -58,6 +58,17 @@ public class SettingForecastController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 检查是否修改
+     *
+     * @return
+     */
+    @PostMapping("/checkIsUpdate")
+    public ApiResult checkIsUpdate(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
+        Boolean result = settingForecastService.checkIsUpdate(list);
+        return result ? success() : failure();
+    }
+
 
     /**
      * 删除
@@ -82,5 +93,8 @@ public class SettingForecastController extends BaseController {
         List<BaseDropDownDTO.DisabledDTO> list = settingForecastService.listLogisticsSupplier();
         return success(list);
     }
+
+
+
 
 }

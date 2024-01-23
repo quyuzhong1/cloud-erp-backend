@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.validator.ValidList;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.common.business.service.SuperService;
@@ -67,4 +68,11 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @create 2024-01-19 17:51
      */
     SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId);
+
+    /**
+     * 检查是否修改
+     * @param list
+     * @return
+     */
+    Boolean checkIsUpdate(ValidList<SettingForecastDTO.SaveOrUpdateDTO> list);
 }
