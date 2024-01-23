@@ -1,9 +1,12 @@
 package com.erp.server.srm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +29,11 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 采购对账单
+ * 对账单
  *
  * @author will
  * @since 2024-01-19
@@ -101,4 +107,73 @@ public class PoReconciliationController extends BaseController {
 
 
 
+    /**
+     * 确认对账
+     * @author Will
+     * @date: 2024/1/23 11:48
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/confirm")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "确认对账")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:confirm",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "ids")
+    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = poReconciliationService.confirm(id);
+            }catch (Exception e){
+                log.error("对账单 确认失败",e);
+                PoReconciliationEntity entity = poReconciliationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 确认失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消确认
+     * @author Will
+     * @date: 2024/1/23 11:48
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/cancelConfirm")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "取消确认")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:cancelConfirm",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "ids")
+    public ApiResult<?> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = poReconciliationService.cancelConfirm(id);
+            }catch (Exception e){
+                log.error("对账单 取消确认失败",e);
+                PoReconciliationEntity entity = poReconciliationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 取消确认失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

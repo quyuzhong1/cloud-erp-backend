@@ -25,6 +25,15 @@ public enum PoReconciliationEnum {
             this.code = code;
             this.name = name;
         }
+        public static String getNameByCode(String code) {
+            PoReconciliationStatusEnum[] stateEnums = values();
+            for (PoReconciliationStatusEnum stateEnum : stateEnums) {
+                if (stateEnum.getCode().equals(code) ) {
+                    return stateEnum.getName();
+                }
+            }
+            return "";
+        }
     }
 
     @Getter

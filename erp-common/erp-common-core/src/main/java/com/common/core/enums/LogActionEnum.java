@@ -41,6 +41,10 @@ public enum LogActionEnum {
     DOWNLOAD("download", "下载", false),
     // 新接口禁止使用
     UNKNOWN_UPDATE("unknownUpdate", "无法识别的参数更新",false),
+    CONFIRM("confirm", "确认",true),
+    CANCEL_CONFIRM("cancelConfirm", "取消确认",true),
+    RECEIVE("receive", "签收",true),
+
     ;
 
     @EnumValue

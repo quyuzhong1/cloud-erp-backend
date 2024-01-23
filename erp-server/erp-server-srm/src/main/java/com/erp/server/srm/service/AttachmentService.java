@@ -35,4 +35,13 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
 
      */
     void removeAttachment(AttachmentDTO.DeleteDTO dto);
+
+    /**
+     * @description: 根据业务ids查询
+     * @author Will
+     * @date: 2024/1/23 15:19
+     * @param businessIds
+     * @return List<UpdateDTO>
+     */
+    List<AttachmentDTO.UpdateDTO> listByBusinessIds(List<String> businessIds);
 }

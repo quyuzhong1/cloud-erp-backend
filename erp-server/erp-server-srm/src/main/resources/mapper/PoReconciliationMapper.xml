@@ -38,22 +38,27 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        code, status, start_date, end_date, settle_org_id, settle_org_Name, supplier_id, supplier_name, amount, currency, supplier_reconciliation_user_id, supplier_reconciliation_user_name, purchase_reconciliation_user_id, purchase_reconciliation_user_name, reconciliation_date, supplier_confirm_date, purchase_confirm_date, receive_date, supplier_confirm_user_id, supplier_confirm_user_name, purchase_confirm_user_id, purchase_confirm_user_name
+        pr.id,
+        pr.code,
+        pr.status,
+        pr.start_date as startDate,
+        pr.end_date as endDate,
+        pr.settle_org_Name as settleOrgName,
+        pr.supplier_name as supplierName,
+        pr.amount,
+        pr.currency,
+        pr.supplier_reconciliation_user_name as supplierReconciliationUserName,
+        pr.purchase_reconciliation_user_name as purchaseReconciliationUserName,
+        pr.reconciliation_date as reconciliationDate,
+        pr.supplier_confirm_date as supplierConfirmDate,
+        pr.purchase_confirm_date as purchaseConfirmDate,
+        pr.receive_date as receiveDate
     </sql>
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
         select
-               *
+               <include refid="Base_Column_List" />
         from po_reconciliation pr
         <where>
             ${params.sqlMap.default}
@@ -75,7 +80,7 @@
     <!-- 导出 -->
     <select id="listExport" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
         select
-        *
+                <include refid="Base_Column_List" />
         from po_reconciliation pr
         <where>
             ${params.sqlMap.default}

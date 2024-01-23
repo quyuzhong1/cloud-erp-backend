@@ -33,6 +33,9 @@ public enum OperationTypeEnum {
     REGENERATE("regenerate", "重推操作"),
 
     CONFIRM("confirm", "确认操作"),
+    CANCEL_CONFIRM("cancelConfirm", "取消确认操作"),
+    RECEIVE("receive", "单据签收"),
+
     ;
     @JsonValue
     @EnumValue
