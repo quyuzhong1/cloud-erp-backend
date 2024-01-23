@@ -332,6 +332,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         for (DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO : deliveryDTOS) {
             try {
                 PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(e -> e.getId().equalsIgnoreCase(addDeliveryDTO.getPurchaseDetailId())).findFirst().orElse(null);
+                if(StringUtils.isEmpty(addDeliveryDTO.getSupplierId())){
+                    addDeliveryDTO.setSupplierId(userService.getSupplierId());
+                }
                 //订单明细校验
                 checkPurchaseOrderDetail(addDeliveryDTO,detailEntity);
                 //发货单明细新增
@@ -367,11 +370,11 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if (Objects.isNull(detailEntity)){
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        //供应商校验
-        String supplierId = userService.getSupplierId();
-        if (!addDeliveryDTO.getSupplierId().equalsIgnoreCase(supplierId)){
-            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF, addDeliveryDTO.getCode());
-        }
+//        //供应商校验
+//        String supplierId = userService.getSupplierId();
+//        if (!addDeliveryDTO.getSupplierId().equalsIgnoreCase(supplierId)){
+//            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF, addDeliveryDTO.getCode());
+//        }
         //订单总数
         Integer orderQty = detailEntity.getPurchaseQty();
         //已送货数量
@@ -406,6 +409,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      */
     private DeliveryOrderEntity builderDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS) {
         DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO = deliveryDTOS.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        if(StringUtils.isEmpty(addDeliveryDTO.getSupplierId())){
+            addDeliveryDTO.setSupplierId(userService.getSupplierId());
+        }
         DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO);
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
         this.save(deliveryOrderEntity);

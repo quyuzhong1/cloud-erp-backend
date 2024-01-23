@@ -2460,13 +2460,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(dto.getPurchaseDetailIds())){
             return Collections.emptyList();
         }
-        List<PurchaseOrderDTO.ListDTO> listDTOS = this.listBySourceDetailIds(dto.getPurchaseDetailIds());
+        List<PurchaseOrderDTO.ListDTO> listDTOS = this.listByDetailIds(dto.getPurchaseDetailIds());
         if (CollectionUtils.isEmpty(listDTOS)) {
             return listDTOS;
         }
         //数据赋值处理
         doWaitDeliveryPurchaseOrder(listDTOS);
         return listDTOS;
+    }
+
+    private List<PurchaseOrderDTO.ListDTO> listByDetailIds(List<String> purchaseDetailIds) {
+        if (CollectionUtils.isEmpty(purchaseDetailIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByDetailIds(purchaseDetailIds);
     }
 
     private  void buildPurchaseOrderCount(List<PurchaseOrderDTO.ListDTO> records) {

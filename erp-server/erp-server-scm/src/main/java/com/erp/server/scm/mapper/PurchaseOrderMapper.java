@@ -176,4 +176,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@Param("supplierId")String supplierId);
+
+    List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
 }
