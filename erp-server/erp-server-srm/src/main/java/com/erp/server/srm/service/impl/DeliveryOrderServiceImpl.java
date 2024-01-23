@@ -46,10 +46,7 @@ import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
-import com.erp.server.srm.service.CommonService;
-import com.erp.server.srm.service.DeliveryOrderDetailService;
-import com.erp.server.srm.service.DeliveryOrderService;
-import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -93,6 +90,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private UserService userService;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -355,27 +355,36 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         detailService.save(deliveryOrderDetailEntity);
     }
 
+    /**
+     * 校验数量不可超过【待交货量】
+     * @param addDeliveryDTO
+     * @param detailEntity
+     */
     private void checkPurchaseOrderDetail(DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO,PurchaseOrderDetailEntity detailEntity) {
         //送货数量校验
         if (addDeliveryDTO.getPlanDeliveryQty() <= 0){
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        //校验数量不可超过【待交货量】
         //没有采购明细记录
         if (Objects.isNull(detailEntity)){
             throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //供应商校验
+        String supplierId = userService.getSupplierId();
+        if (!addDeliveryDTO.getSupplierId().equalsIgnoreCase(supplierId)){
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF, addDeliveryDTO.getCode());
         }
         //订单总数
         Integer orderQty = detailEntity.getPurchaseQty();
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;
         //收货数量
-        Integer receiveQty = MathUtil.ZERO;
+//        Integer receiveQty = MathUtil.ZERO;
         //已送货明细
         List<DeliveryOrderDetailEntity> orderDetailEntities = detailService.listDetailByDetailSourceIds(Collections.singletonList(addDeliveryDTO.getPurchaseDetailId()));
         if (CollectionUtils.isNotEmpty(orderDetailEntities)){
             deliveryQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
-            receiveQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getReceiveQty).sum();
+//            receiveQty = orderDetailEntities.stream().mapToInt(DeliveryOrderDetailEntity::getReceiveQty).sum();
         }
         //可送货数量
         int waitDeliveryQty = orderQty - deliveryQty;

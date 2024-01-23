@@ -123,21 +123,6 @@ public class DeliveryOrderController extends BaseController {
     }
 
     /**
-     * 生成送货单
-     * @author lrp
-     * @date:  2024-01-12
-     * @param dtos
-     * @return ApiResult<String>
-     */
-    @PostMapping("/generateDeliveryOrder")
-    @Idempotent
-    @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
-    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
-        List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
     * 编辑
     * @author lrp
     * @date:  2024-01-12

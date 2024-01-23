@@ -1,16 +1,22 @@
 package com.erp.server.srm.controller.api;
 
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
+import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.WaitDeliveryQueryHandler;
+import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -40,6 +46,8 @@ public class WaitDeliveryController extends BaseController {
     private UserService userService;
     @Resource
     private PurchaseOrderFeign purchaseOrderFeign;
+    @Resource
+    private DeliveryOrderService deliveryOrderService;
 
     /**
      * srm待发货列表统计
@@ -83,5 +91,20 @@ public class WaitDeliveryController extends BaseController {
         dto.setSupplierId(userService.getSupplierId());
         PurchaseOrderDTO.ListDTO listDTO = purchaseOrderFeign.srmWaitDeliveryTotal(dto);
         return success(listDTO);
+    }
+
+    /**
+     * 生成送货单
+     * @author lrp
+     * @date:  2024-01-12
+     * @param dtos
+     * @return ApiResult<String>
+     */
+    @PostMapping("/generateDeliveryOrder")
+    @Idempotent
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
+    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
+        List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
