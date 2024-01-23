@@ -62,4 +62,12 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      **/
     TransferDeclareEntity checkExistByChannelIds(List<String> ids);
 
+    /**
+     * 详情
+     * @Author Luo_WG
+     * @Date 2024/1/23 18:10
+     * @param id
+     * @return com.erp.model.tms.dto.TransferDeclareDTO.ViewDTO
+     **/
+    TransferDeclareDTO.ViewDTO view(String id);
 }

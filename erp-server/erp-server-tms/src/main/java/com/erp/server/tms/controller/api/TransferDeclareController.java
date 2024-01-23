@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -108,6 +109,22 @@ public class TransferDeclareController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 详情
+     * @Author Luo_WG
+     * @Date 2024/1/23 18:07
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.tms.dto.TransferDeclareDTO.ViewDTO>
+     **/
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:view",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<TransferDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(transferDeclareService.view(id));
+    }
 
 }
