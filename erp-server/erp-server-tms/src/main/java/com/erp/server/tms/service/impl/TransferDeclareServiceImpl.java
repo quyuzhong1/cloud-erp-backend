@@ -208,7 +208,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if(!save) {
             throw new ServiceException("中转报关单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
             log.info("编辑 开始记录中转报关单日志数据，单号：【{}】", transferDeclareEntity.getCode());
