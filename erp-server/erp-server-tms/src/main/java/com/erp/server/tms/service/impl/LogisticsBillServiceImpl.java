@@ -714,14 +714,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-            //计费重
-            BigDecimal weight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
-                    ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
-            //重量转成模板单位传入计算运费
-            if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
-                //kg
-                weight = MathUtil.multiply(weight,new BigDecimal(1000));
-            }
             //预估运费
             ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
             viewParamDTO.setWeight(addDTO.getActualWeight());
@@ -730,6 +722,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
                 //渠道
                 LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+
+                //重量,根据计费规则判断用何种重量计算运费
+                BigDecimal weight = addDTO.getActualWeight();
+                if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())) {
+                    weight = MathUtil.compareTo(addDTO.getVolumeWeight(), weight) > MathUtil.ZERO ? addDTO.getVolumeWeight() : weight;
+                }
+                if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())) {
+                    weight = addDTO.getVolumeWeight();
+                }
+                //重量转成模板单位传入计算运费
+                if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                    //kg
+                    weight = MathUtil.multiply(weight,new BigDecimal(1000));
+                }
                 ShippingCalculationDTO.ViewDTO  viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule,logisticsChannelEntity, weight,
                         length,width,height);
                 addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
