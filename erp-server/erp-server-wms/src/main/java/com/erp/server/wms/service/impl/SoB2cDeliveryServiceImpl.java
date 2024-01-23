@@ -30,6 +30,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -215,7 +216,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //查询是否冻结
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
-        if (soB2cEntity.getIsFrozen()) {
+        if (Objects.nonNull(soB2cEntity) && soB2cEntity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
 
@@ -225,6 +226,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
+        if (Objects.nonNull(soB2cEntity)) {
+            String waitTransfer = TransferStatusEnum.WAIT.getCode();
+            String transferStatus = soB2cEntity.getTransferStatus();
+            if (waitTransfer.equals(transferStatus)) {
+                throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+            }
+        }
+
 
         //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
         if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
