@@ -1,10 +1,12 @@
 package com.erp.server.srm.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.srm.dto.PoReconciliationDetailDTO;
-import com.erp.model.srm.entity.PoReconciliationEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
+import com.erp.model.srm.entity.PoReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author will
  * @since 2024-01-19
  */
-public interface PoReconciliationService extends SuperService<PoReconciliationEntity> {
+public interface PoReconciliationScmService extends SuperService<PoReconciliationEntity> {
 
     /**
     * 新增
@@ -53,7 +55,7 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      */
     void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
-     * @description: 对账确认
+     * @description: 采方确认
      * @author Will
      * @date: 2024/1/23 11:53
      * @param id
@@ -68,4 +70,29 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @return BatchResultDTO
      */
     BatchResultDTO cancelConfirm(String id);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2024/1/23 14:19
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
+    /**
+     * @description: 签收
+     * @author Will
+     * @date: 2024/1/23 14:25
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO receive(String id);
+
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param id
+     * @return ViewDTO
+     */
+    PoReconciliationDTO.ViewDTO viewMain(String id);
 }

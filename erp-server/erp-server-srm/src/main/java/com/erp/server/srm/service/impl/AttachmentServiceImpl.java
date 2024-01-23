@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -61,6 +62,21 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         }
 
     }
+
+    @Override
+    public List<AttachmentDTO.UpdateDTO> listByBusinessIds(List<String> businessIds) {
+        if (CollectionUtils.isEmpty(businessIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        List<AttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
 
     @Override
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {

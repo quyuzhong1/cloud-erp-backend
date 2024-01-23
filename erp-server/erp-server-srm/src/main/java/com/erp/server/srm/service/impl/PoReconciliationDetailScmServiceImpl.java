@@ -8,35 +8,31 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
-import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
-import com.erp.server.srm.service.PoReconciliationDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.srm.dto.PoReconciliationDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.stringtemplate.v4.ST;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,11 +44,14 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Slf4j
 @Service
-public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconciliationDetailMapper, PoReconciliationDetailEntity> implements PoReconciliationDetailService {
+public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoReconciliationDetailMapper, PoReconciliationDetailEntity> implements PoReconciliationDetailScmService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private PoReconciliationScmService poReconciliationScmService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -106,18 +105,26 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //已存在对账明细
+        //已存在对应明细
         List<String> detailIdList = list.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
         List<PoReconciliationDetailEntity> poReconciliationDetailList = this.listByIds(detailIdList);
-
-        //对账单数据
-
+        //对账单
+        PoReconciliationEntity poReconciliationEntity = poReconciliationScmService.getById(mainId);
+        if (ObjectUtils.isEmpty(poReconciliationEntity)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+        }
         for (PoReconciliationDetailEntity entity : list) {
             //添加日志
             PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
             }
+            //供应商、结算组织验证
+            if (!StrUtil.equals(poReconciliationEntity.getSupplierId(),old.getSupplierId())
+                    || !StrUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
+                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
+            }
+
             if (StrUtil.isBlank(old.getMainId())) {
                 String content = StrUtil.format("新增了一条SKU【{}】", old.getSkuNo());
                 operateLogService.addModuleOperateLog(content, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId, "编辑操作");
