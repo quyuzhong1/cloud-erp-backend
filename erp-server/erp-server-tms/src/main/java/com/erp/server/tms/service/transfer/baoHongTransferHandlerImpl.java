@@ -7,7 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
-import com.sdk.tms.baohong.api.GetShippingMethodListResponse;
+import com.sdk.tms.baohong.api.order.GetShippingMethodListResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
