@@ -27,7 +27,7 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //供应商名称
         if("supplierName".equals(field)){
-            return "pp.supplier_id IN (SELECT id FROM supplier  WHERE is_deleted= false "+ compareCodeSplicingValueSql +
+            return "pp.supplier_id IN (SELECT id FROM supplier  WHERE is_deleted= false and name "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         //选项卡
