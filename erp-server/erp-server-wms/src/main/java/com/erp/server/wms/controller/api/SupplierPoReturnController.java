@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.server.wms.query.PoReturnQueryHandler;
 import com.erp.server.wms.service.PoReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -45,6 +47,7 @@ public class SupplierPoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>>
      **/
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {
         PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pagingVO = poReturnService.supplierPaging(dto);
         return success(pagingVO);

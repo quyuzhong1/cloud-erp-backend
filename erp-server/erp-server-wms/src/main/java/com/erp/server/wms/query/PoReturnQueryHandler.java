@@ -1,22 +1,15 @@
 package com.erp.server.wms.query;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.vo.LoginUser;
-import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.entity.SysPostUserEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.PoReturnStatusEnum;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.service.CommonService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
