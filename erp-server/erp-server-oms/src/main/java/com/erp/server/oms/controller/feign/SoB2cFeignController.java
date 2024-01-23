@@ -389,6 +389,19 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateIntercept(interceptUpdateOrderDTO);
     }
 
+    /**
+     * 修改订单异常原因
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:51
+     * @param id
+     * @param soB2cAbnormalType
+     * @return java.lang.Boolean
+     **/
+    @GetMapping("/updateAbnormalType")
+    public Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType) {
+        return soB2cService.updateAbnormalType(id, soB2cAbnormalType);
+    }
+
 
     /**
      * 更新组包状态

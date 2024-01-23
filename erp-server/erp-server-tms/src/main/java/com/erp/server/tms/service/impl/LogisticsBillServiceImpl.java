@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
@@ -406,14 +403,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
                 if(maxCustoms<0){
-                    destDeclarePrice=maxCustomsAmount;
+                    productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
-                int minCustoms = minCustomsAmount.compareTo(destDeclarePrice);
+                int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
                 if(minCustoms<0){
-                    destDeclarePrice=minCustomsAmount;
+                    productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
-                productDTO.setDestDeclarePrice(destDeclarePrice);
+
                 //如果是速卖通的话
                 if (isAliExpress) {
                     String platformSpuNo = item.getPlatformSpuNo();
@@ -680,48 +677,75 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @date: 2023/11/20 12:27
      */
     public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
-        try {
-            LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
-            //渠道关联模板
-            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
-            //来源b2c销售订单
-            if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
-                //物流信息
-                List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
-                if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-                }
-                addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
-                //存在模板时计算体积重
-                if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                    BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
-                            .multiply(soB2cLogisticsList.get(0).getWeight())
-                            .multiply(soB2cLogisticsList.get(0).getLength());
-                    addDTO.setVolumeWeight(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
-                }
-            }
-            if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                //计费重
-                BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
-                        ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
-                //预估运费
-                ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-                viewParamDTO.setWeight(addDTO.getActualWeight());
-                viewParamDTO.setMainId(shippingTemplateEntity.getId());
-                ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-                if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
-                    BigDecimal shippingCost = shippingCalculationService.calculationShippingCost(shippingTemplateEntity, shippingTemplateRule, billingWeight);
-                    addDTO.setEstimatedShippingCost(shippingCost);
-                }
-            }
-            addDTO.setCurrency(currency);
-            addDTO.setChannelId(logisticsBillEntity.getChannelId());
-            addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-            logisticsBillCostService.add(addDTO);
-        } catch (Exception e) {
-            log.error("生成物流费用出错>>>>>{}", e.getMessage());
-        }
+        LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+        //渠道关联模板
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
 
+        //来源b2c销售订单
+        BigDecimal length = BigDecimal.ZERO;
+        BigDecimal width = BigDecimal.ZERO;
+        BigDecimal height = BigDecimal.ZERO;
+        if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
+            //物流信息
+            List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
+            if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            }
+            //销售订单重量单位转成kg
+            BigDecimal actualWeight = MathUtil.divide(soB2cLogisticsList.get(0).getWeight(), new BigDecimal(1000),4);
+            addDTO.setActualWeight(actualWeight);
+
+            //存在模板时计算体积重
+            if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
+                //模板重量单位转成kg
+                BigDecimal volumeRatio = BigDecimal.ONE;
+                if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                    //g
+                    volumeRatio = new BigDecimal(0.001);
+                }
+                length = soB2cLogisticsList.get(0).getLength();
+                width = soB2cLogisticsList.get(0).getWidth();
+                height = soB2cLogisticsList.get(0).getHeight();
+                BigDecimal volume = height
+                        .multiply(width)
+                        .multiply(length);
+                BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())), volumeRatio, 4);
+                addDTO.setVolumeWeight(volumeWeight);
+            }
+        }
+        if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
+            //计费重
+            BigDecimal weight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
+                    ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
+            //重量转成模板单位传入计算运费
+            if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                //kg
+                weight = MathUtil.multiply(weight,new BigDecimal(1000));
+            }
+            //预估运费
+            ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+            viewParamDTO.setWeight(addDTO.getActualWeight());
+            viewParamDTO.setMainId(shippingTemplateEntity.getId());
+            ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+            if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
+                //渠道
+                LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+                ShippingCalculationDTO.ViewDTO  viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule,logisticsChannelEntity, weight,
+                        length,width,height);
+                addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
+            }
+        }
+        addDTO.setCurrency(currency);
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        logisticsBillCostService.add(addDTO);
+    }
+
+    public static void main(String[] args) {
+        BigDecimal volume = new BigDecimal(10)
+                .multiply(new BigDecimal(20))
+                .multiply(new BigDecimal(30));
+        BigDecimal divide = MathUtil.divide(volume, new BigDecimal(2000));
+        System.out.println(divide);
     }
 
     /**

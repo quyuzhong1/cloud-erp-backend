@@ -2,9 +2,11 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -149,8 +151,11 @@ public class SoB2cDeliveryController extends BaseController {
                 if (isManual) {
                     //生成销售出库单
                     if(isSuccess){
-                        //生成销售出库单
-                        soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+                        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
+                        generateB2cDTO.setSourceId(entity.getId());
+                        generateB2cDTO.setSourceCode(entity.getCode());
+                        generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+                        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
                     }
                 }
                 //清状态

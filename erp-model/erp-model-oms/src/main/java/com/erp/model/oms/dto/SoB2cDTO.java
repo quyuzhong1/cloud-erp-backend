@@ -1898,5 +1898,11 @@ public class SoB2cDTO implements Serializable {
          * 单据状态
          */
         private String billStatus;
+
+        /**
+         * 异常原因
+         * 取值：SoB2cAbnormalTypeEnum
+         */
+        private String abnormalType;
     }
 }

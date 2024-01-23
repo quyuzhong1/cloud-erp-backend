@@ -11,10 +11,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
@@ -26,6 +23,7 @@ import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -58,6 +56,8 @@ import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -85,6 +85,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -116,8 +118,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO) {
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
-        LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, updateDTO);
-        logisticsBillCostEntity.setLogisticsBillId(old.getLogisticsBillId());
+        //赋值
+        LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
+        logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
+        logisticsBillCostEntity.setActualShippingCost(updateDTO.getActualShippingCost());
+        logisticsBillCostEntity.setRemark(updateDTO.getRemark());
+
         // 数据处理
         handleData(logisticsBillCostEntity);
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
@@ -316,7 +322,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
-
+        entity.setChannelId(logisticsBillEntity.getChannelId());
+        //默认kg
+        entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
     }
 
 
@@ -419,6 +427,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             excelDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
             if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !StrUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
                 errorMsgList.add("导入币别与物流费用单币别不一致");
+            }
+            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
+            || ReconciliationStatusEnum.INVALID.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
+                errorMsgList.add("物流费用单已确认或已作废不支持更新");
             }
 
         }

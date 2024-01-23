@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -593,6 +594,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
+
+    /**
+     * 修改异常原因
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:47
+     * @param id
+     * @param soB2cAbnormalType
+     * @return java.lang.Boolean
+     **/
+    Boolean updateAbnormalType(String id, String soB2cAbnormalType);
 
     /**
      * 更新组包状态

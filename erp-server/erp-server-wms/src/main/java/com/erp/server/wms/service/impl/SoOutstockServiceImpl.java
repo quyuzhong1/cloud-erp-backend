@@ -2090,6 +2090,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
 
+    @Override
+    public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
+        Boolean result = createB2cSoOutstock(generateB2cDTO);
+        return result;
+    }
+
     private SoOutstockEntity getBySoId(String soB2cId) {
         return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).
                 last("LIMIT 1").one();
