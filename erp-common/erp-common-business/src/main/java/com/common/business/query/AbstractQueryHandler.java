@@ -1,6 +1,8 @@
 package com.common.business.query;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +37,11 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
      */
     protected void buildDefaultDTO(String field, Object value){
         AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildDefaultSplicingSQLDTO(field,value);
+        AdvanceQueryContext.addQuery(advanceQueryDTO);
+    }
+
+    protected void buildSplicingSQLDTO(String field, QueryConditionEnum queryConditionEnum, Object value, QueryDataTypeEnum dataTypeEnum){
+        AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(field,queryConditionEnum,value,dataTypeEnum);
         AdvanceQueryContext.addQuery(advanceQueryDTO);
     }
 

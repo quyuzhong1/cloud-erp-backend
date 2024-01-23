@@ -25,11 +25,11 @@ public interface CfgSettingConfigConverter {
 
     @Mapping(target = "index", constant = "1")
     @Mapping(target = "disabled", constant = "false")
-    @Mapping(target = "key", constant = "order_auto_accept")
+    @Mapping(target = "key", constant = "orderAutoAccept")
     CfgSettingEntity ConfigToOrderAcceptEntity(OrderAcceptDTO orderAcceptDTO);
 
     @Mapping(target = "index", constant = "2")
     @Mapping(target = "disabled", constant = "false")
-    @Mapping(target = "key", constant = "return_auto_confirm")
+    @Mapping(target = "key", constant = "returnAutoConfirm")
     CfgSettingEntity ConfigToReturnConfigEntity(ReturnConfirmDTO returnConfirmDTO);
 }
