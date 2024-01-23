@@ -334,8 +334,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 }
             }
         }
-        String handleResult = HandleResultEnum.FAILURE.getName();
-        String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
+
         //修改状态
         lambdaUpdate()
                 .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())

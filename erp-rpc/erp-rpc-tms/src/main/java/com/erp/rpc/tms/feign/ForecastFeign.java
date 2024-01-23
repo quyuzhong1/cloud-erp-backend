@@ -1,12 +1,9 @@
 package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.entity.SettingForecastEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 /**
  * @author Lambda
@@ -25,7 +22,7 @@ public interface ForecastFeign {
      * @return
      */
     @GetMapping("/feign/settingForecast/getByLogisticsChannelId")
-    SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId);
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId);
 
 
 }

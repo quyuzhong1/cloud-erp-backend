@@ -66,5 +66,5 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @return 
      * @create 2024-01-19 17:51
      */
-    SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(String logisticsChannelId);
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId);
 }
