@@ -14,8 +14,10 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -302,11 +304,33 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Override
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
-        List<SoB2cDeliveryInterceptDetailEntity> detailEntityList = soB2cDeliveryInterceptDetailService.listByMainIds(Arrays.asList(id));
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
-
+        Boolean isSuccess= HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult());
+        if (isSuccess) {
+            //已组包/已中转不可操作拦截成功
+            //来源id 就是b2c销售订单id
+            String sourceId = entity.getSourceId();
+            if (StringUtils.isNotBlank(sourceId)) {
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+                if (Objects.nonNull(soB2cEntity)) {
+                    //组包状态
+                    String packageStatus = soB2cEntity.getPackageStatus();
+                    //中转状态
+                    String transferStatus = soB2cEntity.getTransferStatus();
+                    //已组包
+                    String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
+                    //已中转
+                    String alreadyTransfer = TransferStatusEnum.ALREADY.getCode();
+                    if (alreadyPackage.equals(packageStatus) || alreadyTransfer.equals(transferStatus)) {
+                        throw new ServiceException(ApiError.ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT, entity.getCode());
+                    }
+                }
+            }
+        }
+        String handleResult = HandleResultEnum.FAILURE.getName();
+        String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
         //修改状态
         lambdaUpdate()
                 .set(SoB2cDeliveryInterceptEntity::getHandleResult, dto.getHandleResult())
@@ -316,13 +340,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .eq(SoB2cDeliveryInterceptEntity::getId, id)
                 .update();
 
-        String handleResult = HandleResultEnum.FAILURE.getName();
-        String soB2cErrorType = SoB2cErrorTypeEnum.INTERCEPT_FAIL.getCode();
+
         // 拦截成功后，关联的发货单和销售出库单会作废，库存会自动退回到发货仓
-        if (HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult())) {
+        if (isSuccess) {
             //修改拦截状态，冻结状态
             updateInterceptStatus(entity);
-
             //反审核销售出库单，并作废
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soOutstockEntities)) {

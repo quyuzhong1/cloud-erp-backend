@@ -3441,8 +3441,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
         //组包状态
         String packageStatus = entity.getPackageStatus();
-        if(alreadyPackage.equals(packageStatus)){
-            throw new ServiceException(ApiError.ALREADY_PACKAGE_CAN_TRANSFER);
+        if(!alreadyPackage.equals(packageStatus)){
+            throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
         }
 
         //TODO  调用tms feign 生成中转报关单

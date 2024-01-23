@@ -898,6 +898,8 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
+    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
+
 
     /**
      * OMS 错误
@@ -1066,8 +1068,8 @@ public enum ApiError implements Serializable {
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
     ERROR_WAIT_SHIPPED_TRANSFER(92125,"只有待发货的订单才能中转报关"),
-    ERROR_WAIT_TRANSFER(92126,"只有待中转的订单才能中转报关"),
-    ALREADY_PACKAGE_CAN_TRANSFER(92127,"已组包的订单不能中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"仅可操作待中转订单的单据"),
+    ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
     /**
      * TMS 错误
      * 从94000 开始
