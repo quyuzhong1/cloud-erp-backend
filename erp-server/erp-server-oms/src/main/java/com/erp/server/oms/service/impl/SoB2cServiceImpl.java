@@ -52,6 +52,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
@@ -70,6 +71,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -232,6 +234,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
 
+    @Resource
+    private ForecastFeign forecastFeign;
+
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -302,11 +308,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
             soB2cEntity.setCode(businessNo);
         }
+        //渠道id
+        String logisticsChannelId = addDTO.getLogisticsDTO().getLogisticsChannelId();
+        if (StringUtils.isNotBlank(logisticsChannelId)) {
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
+            if (Objects.nonNull(forecastStatus)) {
+                soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
+                soB2cEntity.setTransferStatus(forecastStatus.getTransferStatus());
+            }
+        }
         boolean save = super.save(soB2cEntity);
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
         }
-
         //新增物流信息
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //新增买家信息
@@ -360,6 +374,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         handleData(soB2cEntity, true, true);
 
         log.info("编辑 开始修改B2C销售订单表数据，单号：【{}】", old.getCode());
+
+        //渠道id
+        String logisticsChannelId = updateDTO.getLogisticsDTO().getLogisticsChannelId();
+        if (StringUtils.isNotBlank(logisticsChannelId)) {
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
+            if (Objects.nonNull(forecastStatus)) {
+                soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
+                soB2cEntity.setTransferStatus(forecastStatus.getTransferStatus());
+            }
+        }
+
         boolean save = super.updateById(soB2cEntity);
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
@@ -723,7 +748,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
         //选择了渠道则更新
-        if (StrUtil.isNotBlank(dto.getLogisticsChannelId())) {
+        if (StrUtil.isNotBlank(logisticsChannelId)) {
+            SettingForecastDTO.ForecastStatusDTO forecastStatusDTO = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
+            if (Objects.nonNull(forecastStatusDTO)) {
+                entity.setPackageStatus(forecastStatusDTO.getPackageStatus());
+                entity.setTransferStatus(forecastStatusDTO.getTransferStatus());
+            }
             if (Boolean.TRUE.equals(isCover)) {
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
@@ -1191,7 +1221,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
-        log.info("第三方仓下单结果:{}",JSONUtil.toJsonStr(apiResult));
+        log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
@@ -1294,13 +1324,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     *
-     * @Author Luo_WG
-     * @Date 2024/1/19 11:23
-     * @param id 拦截单id
-     * @param soB2cEntity 订单信息
+     * @param id           拦截单id
+     * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
      * @return com.common.business.dto.base.BatchResultDTO
+     * @Author Luo_WG
+     * @Date 2024/1/19 11:23
      **/
     private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
@@ -3448,7 +3477,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
         //组包状态
         String packageStatus = entity.getPackageStatus();
-        if(!alreadyPackage.equals(packageStatus)){
+        if (!alreadyPackage.equals(packageStatus)) {
             throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
         }
 
@@ -4535,10 +4564,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 拦截打标识，冻结订单
-     * @Author Luo_WG
-     * @Date 2024/1/17 18:54
+     *
      * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
      **/
     @Override
     public Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {

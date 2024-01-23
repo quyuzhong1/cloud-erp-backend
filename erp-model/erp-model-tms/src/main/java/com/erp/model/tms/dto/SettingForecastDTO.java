@@ -105,7 +105,7 @@ public class SettingForecastDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ForecastStatusDto {
+    public static class ForecastStatusDTO {
 
         /**
          * 组包状态

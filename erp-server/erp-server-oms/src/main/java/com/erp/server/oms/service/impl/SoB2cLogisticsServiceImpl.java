@@ -129,6 +129,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             if (Objects.nonNull(channelEntity)) {
                 logisticsChannelName = channelEntity.getName();
             }
+
         }
         entity.setLogisticsChannelName(logisticsChannelName);
         entity.setEstimatedShippingCost(ObjectUtil.isEmpty(entity.getEstimatedShippingCost()) ? BigDecimal.ZERO : entity.getEstimatedShippingCost());

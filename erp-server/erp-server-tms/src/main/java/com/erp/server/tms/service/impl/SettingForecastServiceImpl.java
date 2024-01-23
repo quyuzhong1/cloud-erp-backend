@@ -2,7 +2,6 @@ package com.erp.server.tms.service.impl;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -49,7 +48,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     public Boolean addOrUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         List<SettingForecastEntity> saveOrUpdateList = BeanMapperUtils.copyList(SettingForecastEntity.class, list);
         //存在的
-        List<SettingForecastEntity> dbList=this.list();
+        List<SettingForecastEntity> dbList = this.list();
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
@@ -84,19 +83,17 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     }
 
     @Override
-    public SettingForecastDTO.ForecastStatusDto getByLogisticsChannelId(String logisticsChannelId) {
-        SettingForecastDTO.ForecastStatusDto forecastStatus = new SettingForecastDTO.ForecastStatusDto();
-
-        String packageStatus = PackageStatusEnum.NOT.getCode();
-        String transferStatus = TransferStatusEnum.NOT.getCode();
-        LocalDateTime now = LocalDateTime.now();
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId) {
         if (StringUtils.isBlank(logisticsChannelId)) {
-            forecastStatus.setTransferStatus(transferStatus);
-            forecastStatus.setPackageStatus(packageStatus);
-            return forecastStatus;
+            return null;
         }
         SettingForecastEntity entity = baseMapper.getByLogisticsChannelId(logisticsChannelId);
+
         if (Objects.nonNull(entity)) {
+            LocalDateTime now = LocalDateTime.now();
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
+            String packageStatus = PackageStatusEnum.NOT.getCode();
+            String transferStatus = TransferStatusEnum.NOT.getCode();
             //是否强制组包
             Boolean isMustPackage = entity.getIsMustPackage();
             LocalDateTime enablePackageTime = entity.getEnablePackageTime();
@@ -121,11 +118,13 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
                     }
                 }
             }
+
+            forecastStatus.setPackageStatus(packageStatus);
+            forecastStatus.setTransferStatus(transferStatus);
+            return forecastStatus;
         }
 
-        forecastStatus.setPackageStatus(packageStatus);
-        forecastStatus.setTransferStatus(transferStatus);
-        return forecastStatus;
+        return null;
     }
 
 
