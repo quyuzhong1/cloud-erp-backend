@@ -55,6 +55,115 @@ public class PoReconciliationDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
 
+        /**
+         * 对账明细主键id
+         */
+        private String id;
+
+        /**
+         * 单据单号【可排序】
+         */
+        private String sourceCode;
+
+        /**
+         * 采购单号【可排序】
+         */
+        private String poCode;
+
+        /**
+         * 单据类型【可排序】
+         */
+        private String sourceType;
+
+        /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+
+        /**
+         * 供应商名称【可排序】
+         */
+        private String supplierName;
+
+        /**
+         * 业务状态【可排序】
+         */
+        private String businessStatus;
+
+        /**
+         * 业务状态名称
+         */
+        private String businessStatusName;
+
+        /**
+         * 确认日期【可排序】
+         */
+        private LocalDate confirmDate;
+
+        /**
+         * SKU【可排序】
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 送货数量【可排序】
+         */
+        private String deliveryQty;
+
+        /**
+         * 收货数量【可排序】
+         */
+        private String receiveQty;
+
+        /**
+         * 税率【可排序】
+         */
+        private String taxRate;
+
+        /**
+         * 含税单价【可排序】
+         */
+        private String taxPrice;
+
+        /**
+         * 价税合计【可排序】
+         */
+        private String taxAmount;
+
+        /**
+         * 结算组织名称【可排序】
+         */
+        private String settleOrgName;
+
+        /**
+         * 结算方式【可排序】
+         */
+        private String settleDict;
+
+        /**
+         * 结算方式名称
+         */
+        private String settleDictName;
+
+        /**
+         * 付款条件【可排序】
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 是否加入账单(true是，flase否)【可排序】
+         */
+        private Boolean isAddAccount;
     }
 
     /**

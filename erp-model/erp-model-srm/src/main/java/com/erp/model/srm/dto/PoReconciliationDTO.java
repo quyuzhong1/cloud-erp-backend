@@ -55,6 +55,30 @@ public class PoReconciliationDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
 
+        /**
+         * 对账单主键id
+         */
+        private String id;
+
+        /**
+         * 对账单号【可排序】
+         */
+        private String code;
+
+        /**
+         * 对账状态【可排序】
+         */
+        private String status;
+
+        /**
+         * 对账状态名称
+         */
+        private String statusName;
+
+        /**
+         * 对账周期
+         */
+        private String cycle;
     }
 
     /**
