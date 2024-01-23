@@ -115,5 +115,5 @@ public interface PurchaseOrderFeign {
      * @return
      */
     @PostMapping("/feign/purchaseOrder/generateDeliveryList")
-    List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
+    List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
 }

@@ -510,7 +510,7 @@ public class PurchaseOrderFeignController {
      * @return
      */
     @PostMapping("/generateDeliveryList")
-    public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
+    public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
         return list;
     }

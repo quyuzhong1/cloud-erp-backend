@@ -2397,7 +2397,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            obj.setStockInQty(receiveQty);
+            obj.setReceiveQty(receiveQty);
             //已送货数量
             Integer waitReceiveQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
