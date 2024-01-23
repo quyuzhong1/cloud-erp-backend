@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -30,6 +31,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -451,6 +453,17 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             detailViewDTO.setUnReceiveQty(detailViewDTO.getOrderQty() + returnQty - receiveQty);
         }
         return viewDTO;
+    }
+
+    @Override
+    public List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO) {
+        List<DeliveryOrderDTO.WaitDeliveryCountDTO> dtos = new ArrayList<>();
+        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.EXPIRED.getCode(),WaitDeliveryCycleEnum.EXPIRED.getName(),waitDeliveryCountDTO.getExpiredCount()));
+        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.ALMOST_OVERDUE.getCode(),WaitDeliveryCycleEnum.ALMOST_OVERDUE.getName(),waitDeliveryCountDTO.getAlmostOverdueCount()));
+        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_ONE_MONTH.getCode(),WaitDeliveryCycleEnum.IN_ONE_MONTH.getName(),waitDeliveryCountDTO.getInOneMonthCount()));
+        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode(),WaitDeliveryCycleEnum.IN_TWO_MONTH.getName(),waitDeliveryCountDTO.getInTwoMonthCount()));
+        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode(),WaitDeliveryCycleEnum.TWO_MONTH_LATER.getName(),waitDeliveryCountDTO.getTwoMonthLaterCount()));
+        return dtos;
     }
 
     @Transactional(rollbackFor = Exception.class)

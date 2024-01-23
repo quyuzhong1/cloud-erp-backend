@@ -1,5 +1,6 @@
 package com.erp.server.srm.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
@@ -69,4 +70,11 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     List<BatchResultDTO> addDeliveryOrder(List<DeliveryOrderDTO.AddDeliveryDTO> dtos);
 
     DeliveryOrderDTO.ViewDTO viewByCode(String code);
+
+    /**
+     * 汇总待发货列表统计
+     * @param waitDeliveryCountDTO
+     * @return
+     */
+    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
 }

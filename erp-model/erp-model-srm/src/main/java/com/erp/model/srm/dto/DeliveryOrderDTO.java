@@ -777,5 +777,33 @@ public class DeliveryOrderDTO implements Serializable {
 
     }
 
+    /**
+     * SRM 订单确认列表统计
+     * ExecutionStatusEnum
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WaitDeliveryCountDTO {
 
+        /**
+         * 全部  all
+         * 已超期  expired
+         * 即将超期  almostOverdue
+         * 1个月内  inOneMonth
+         * 2个月内  inTwoMonth
+         * 2个月以后  twoMonthLater
+         *
+         */
+        private String type;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 }

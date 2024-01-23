@@ -296,6 +296,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 交货周期描述
          */
         private String deliveryCycleName;
+        /**
+         * 交货周期标识 true 红色  false 无
+         */
+        private Boolean deliveryCycleFlag;
 
         /**
          * 采购申请单id集合

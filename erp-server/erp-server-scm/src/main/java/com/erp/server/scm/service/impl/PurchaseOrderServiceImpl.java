@@ -2408,11 +2408,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //待交货量
             obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
             //交货周期
+            Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
                 if (obj.getDeliveryCycle() <= 0){
                     obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
+                    deliveryCycleFlag = true;
                 }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 0){
                     obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
+                    deliveryCycleFlag = true;
                 }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){
                     obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_ONE_MONTH.getName());
                 }else if (60 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 30){
@@ -2421,6 +2424,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     obj.setDeliveryCycleName("2个月以上");
                 }
             }
+            obj.setDeliveryCycleFlag(deliveryCycleFlag);
         });
     }
 
