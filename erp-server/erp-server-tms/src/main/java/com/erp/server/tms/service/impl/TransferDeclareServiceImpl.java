@@ -110,58 +110,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTO.setCount(count);
             result.add(resultDTO);
         }
-         return result;
+        return result;
     }
 
-    /**
-     * tab页状态处理
-     * @Author Luo_WG
-     * @Date 2024/1/20 16:35
-     * @param params
-     * @return void
-     **/
-    private void handleTableParam(TransferDeclareDTO.PagingParamDTO params) {
-        List<String> uploadStatusList = params.getUploadStatusList();
-        List<String> transferStatusList = params.getTransferStatusList();
-        //待上传
-        if (TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode().equals(params.getTabFlag())) {
-            uploadStatusList.add(TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode());
-        }
-        //上传失败
-        if (TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode().equals(params.getTabFlag())) {
-            uploadStatusList.add(TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode());
-        }
-        //物流商未出库
-        if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(params.getTabFlag())) {
-            transferStatusList.add(TransferLogisticsStatusEnum.UNUSUAL.getCode());
-            transferStatusList.add(TransferLogisticsStatusEnum.CONFIRMED.getCode());
-        }
-        //物流商已出库
-        if (TransferDeclareTabFlagEnum.LOGISTICS_OUTSTOCK.getCode().equals(params.getTabFlag())) {
-            transferStatusList.add(TransferLogisticsStatusEnum.OUTSTOCK.getCode());
-        }
-
-        //上传状态
-        if (CollectionUtil.isNotEmpty(uploadStatusList)) {
-            params.setUploadStatusList(uploadStatusList);
-        }
-
-        //中转状态
-        if (CollectionUtil.isNotEmpty(transferStatusList)) {
-            params.setTransferStatusList(transferStatusList);
-        }
-    }
-
-    private void fillList(List<TransferDeclareDTO.ListDTO> dateList) {
-        for (TransferDeclareDTO.ListDTO listDTO : dateList) {
-            //出库状态中文
-            listDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(listDTO.getOutstockStatus()));
-            //中转状态中文
-            listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
-            //上传状态中文
-            listDTO.setUploadStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadStatus()));
-        }
-    }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -220,6 +171,61 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public TransferDeclareEntity checkExistByChannelIds(List<String> ids) {
         return lambdaQuery().in(TransferDeclareEntity::getTransferChannelId, ids).last("LIMIT 1").one();
+    }
+
+
+    /**
+     * tab页状态处理
+     * @Author Luo_WG
+     * @Date 2024/1/20 16:35
+     * @param params
+     * @return void
+     **/
+    private void handleTableParam(TransferDeclareDTO.PagingParamDTO params) {
+        List<String> uploadStatusList = params.getUploadStatusList();
+        List<String> transferStatusList = params.getTransferStatusList();
+        //待上传
+        if (TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode().equals(params.getTabFlag())) {
+            uploadStatusList.add(TransferDeclareTabFlagEnum.WAIT_UPLOAD.getCode());
+        }
+        //上传失败
+        if (TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode().equals(params.getTabFlag())) {
+            uploadStatusList.add(TransferDeclareTabFlagEnum.UPLOAD_FAILURE.getCode());
+        }
+        //物流商未出库
+        if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(params.getTabFlag())) {
+            transferStatusList.add(TransferLogisticsStatusEnum.UNUSUAL.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.CONFIRMED.getCode());
+        }
+        //物流商已出库
+        if (TransferDeclareTabFlagEnum.LOGISTICS_OUTSTOCK.getCode().equals(params.getTabFlag())) {
+            transferStatusList.add(TransferLogisticsStatusEnum.OUTSTOCK.getCode());
+        }
+
+        //上传状态
+        if (CollectionUtil.isNotEmpty(uploadStatusList)) {
+            params.setUploadStatusList(uploadStatusList);
+        }
+
+        //中转状态
+        if (CollectionUtil.isNotEmpty(transferStatusList)) {
+            params.setTransferStatusList(transferStatusList);
+        }
+    }
+
+    /**
+     * 分页列表字段处理
+     * @param dateList
+     */
+    private void fillList(List<TransferDeclareDTO.ListDTO> dateList) {
+        for (TransferDeclareDTO.ListDTO listDTO : dateList) {
+            //出库状态中文
+            listDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(listDTO.getOutstockStatus()));
+            //中转状态中文
+            listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
+            //上传状态中文
+            listDTO.setUploadStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadStatus()));
+        }
     }
 
     /**
