@@ -2397,7 +2397,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            obj.setReceiveQty(receiveQty);
+            obj.setStockInQty(receiveQty);
             //已送货数量
             Integer waitReceiveQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
@@ -2407,6 +2407,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setWaitReceiveQty(waitReceiveQty);
             //待交货量
             obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
+
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
@@ -2449,7 +2450,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return countPurchaseOrder(dto, list);
         }
         //数据赋值处理
-        buildDeliveryOrderCount(list);
+        doWaitDeliveryPurchaseOrder(list);
         //汇总
         return countPurchaseOrder(dto, list);
     }
@@ -2464,41 +2465,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return listDTOS;
         }
         //数据赋值处理
-        buildDeliveryOrderCount(listDTOS);
+        doWaitDeliveryPurchaseOrder(listDTOS);
         return listDTOS;
-    }
-
-    /**
-     * 根据srm 退货单进行汇总数量
-     * @param records
-     */
-    private void buildDeliveryOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
-        if (CollectionUtils.isEmpty(records)) {
-            return;
-        }
-        // 采购订单明细id集合
-        List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
-
-        //收货信息
-        List<DeliveryOrderDetailEntity> deliveryDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
-        for (PurchaseOrderDTO.ListDTO obj : records) {
-            //已收货数量
-            Integer receiveQty = MathUtil.ZERO;
-            //已送货数量
-            Integer waitReceiveQty = MathUtil.ZERO;
-            //收货数量
-            if (CollectionUtils.isNotEmpty(deliveryDetailList)) {
-                receiveQty = deliveryDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()))
-                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                waitReceiveQty = deliveryDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()))
-                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            }
-            //待送货数量
-            Integer deliveryQty = obj.getPurchaseQty() - waitReceiveQty;
-            obj.setDeliveryQty(deliveryQty);
-            obj.setWaitReceiveQty(waitReceiveQty);
-            obj.setStockInQty(receiveQty);
-        }
     }
 
     private  void buildPurchaseOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
