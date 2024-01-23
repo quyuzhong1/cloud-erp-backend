@@ -497,10 +497,21 @@ public class PurchaseOrderFeignController {
      * @return
      */
     @PostMapping("/getPurchaseOrderDetailByIds")
-    List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(List<String> detailIds){
+    public List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(@RequestBody List<String> detailIds){
         if (CollectionUtils.isEmpty(detailIds)){
             return Collections.emptyList();
         }
         return purchaseOrderDetailService.listByIds(detailIds);
+    }
+
+    /**
+     * 生成送货单列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/generateDeliveryList")
+    public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
+        List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
+        return list;
     }
 }

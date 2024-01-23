@@ -2449,9 +2449,56 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return countPurchaseOrder(dto, list);
         }
         //数据赋值处理
-        buildPurchaseOrderCount(list);
+        buildDeliveryOrderCount(list);
         //汇总
         return countPurchaseOrder(dto, list);
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getPurchaseDetailIds())){
+            return Collections.emptyList();
+        }
+        List<PurchaseOrderDTO.ListDTO> listDTOS = this.listBySourceDetailIds(dto.getPurchaseDetailIds());
+        if (CollectionUtils.isEmpty(listDTOS)) {
+            return listDTOS;
+        }
+        //数据赋值处理
+        buildDeliveryOrderCount(listDTOS);
+        return listDTOS;
+    }
+
+    /**
+     * 根据srm 退货单进行汇总数量
+     * @param records
+     */
+    private void buildDeliveryOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 采购订单明细id集合
+        List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+
+        //收货信息
+        List<DeliveryOrderDetailEntity> deliveryDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
+        for (PurchaseOrderDTO.ListDTO obj : records) {
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //已送货数量
+            Integer waitReceiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(deliveryDetailList)) {
+                receiveQty = deliveryDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()))
+                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                waitReceiveQty = deliveryDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()))
+                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //待送货数量
+            Integer deliveryQty = obj.getPurchaseQty() - waitReceiveQty;
+            obj.setDeliveryQty(deliveryQty);
+            obj.setWaitReceiveQty(waitReceiveQty);
+            obj.setStockInQty(receiveQty);
+        }
     }
 
     private  void buildPurchaseOrderCount(List<PurchaseOrderDTO.ListDTO> records) {
@@ -2509,15 +2556,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             dto.setPurchaseQty(MathUtil.ZERO);
             dto.setReceiveQty(MathUtil.ZERO);
             dto.setDeliveryQty(MathUtil.ZERO);
+            dto.setWaitReceiveQty(MathUtil.ZERO);
             dto.setStockInQty(MathUtil.ZERO);
             dto.setReturnQty(MathUtil.ZERO);
             return dto;
         }
-        dto.setPurchaseQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
-        dto.setReceiveQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
-        dto.setDeliveryQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
-        dto.setStockInQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
-        dto.setReturnQty(list.stream().filter(Objects::nonNull).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
+        dto.setPurchaseQty(list.stream().filter(e -> Objects.nonNull(e.getPurchaseQty())).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
+        dto.setReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
+        dto.setWaitReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getWaitReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitReceiveQty).sum());
+        dto.setDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
+        dto.setStockInQty(list.stream().filter(e -> Objects.nonNull(e.getStockInQty())).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
+        dto.setReturnQty(list.stream().filter(e -> Objects.nonNull(e.getReturnQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
         return dto;
     }
 

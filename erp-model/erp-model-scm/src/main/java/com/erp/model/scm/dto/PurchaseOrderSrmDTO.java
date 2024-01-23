@@ -58,6 +58,10 @@ public class PurchaseOrderSrmDTO implements Serializable {
          */
         private String supplierId;
         /**
+         * 订单明细id列表
+         */
+        private List<String> purchaseDetailIds;
+        /**
          * 全部  all
          * 待确认  toBeConfirm
          * 已确认  confirm
@@ -68,6 +72,23 @@ public class PurchaseOrderSrmDTO implements Serializable {
          *
          */
         private List<String> executionStatusList;
+    }
+
+    /**
+     * 生成送货单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliveryParamDTO implements Serializable {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 订单明细id列表
+         */
+        @NotNull(message = "订单明细列表不能为空")
+        private List<String> purchaseDetailIds;
     }
 
     @Data

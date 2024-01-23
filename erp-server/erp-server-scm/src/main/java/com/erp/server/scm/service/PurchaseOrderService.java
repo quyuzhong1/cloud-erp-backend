@@ -440,4 +440,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return
      */
     PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
+
+    /**
+     * 生成送货单
+     * @param dto
+     * @return
+     */
+    List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
 }

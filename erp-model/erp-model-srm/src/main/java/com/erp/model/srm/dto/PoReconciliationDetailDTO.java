@@ -56,6 +56,11 @@ public class PoReconciliationDetailDTO implements Serializable {
     public static class ListDTO {
 
         /**
+         * 对账明细主键id
+         */
+        private String id;
+
+        /**
          * 单据单号【可排序】
          */
         private String sourceCode;
@@ -144,6 +149,21 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 结算方式名称
          */
         private String settleDictName;
+
+        /**
+         * 付款条件【可排序】
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 是否加入账单(true是，flase否)【可排序】
+         */
+        private Boolean isAddAccount;
     }
 
     /**

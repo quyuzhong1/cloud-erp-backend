@@ -82,6 +82,19 @@ public class WaitDeliveryController extends BaseController {
     }
 
     /**
+     * 生成送货单列表
+     * @author Will
+     * @date: 2023/3/15 16:47
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/generateDeliveryList")
+    public ApiResult<List<PurchaseOrderDTO.ListDTO>> generateDeliveryList(@RequestBody @Validated PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto) {
+        dto.setSupplierId(userService.getSupplierId());
+        List<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.generateDeliveryList(dto);
+        return success(pagingVO);
+    }
+    /**
      * srm待发货列表合计
      * @author zdy
      * @date: 2024/1/15 17:34
@@ -89,6 +102,7 @@ public class WaitDeliveryController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmWaitDeliveryTotal")
+    @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.ListDTO> srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         dto.setSupplierId(userService.getSupplierId());
         PurchaseOrderDTO.ListDTO listDTO = purchaseOrderFeign.srmWaitDeliveryTotal(dto);
