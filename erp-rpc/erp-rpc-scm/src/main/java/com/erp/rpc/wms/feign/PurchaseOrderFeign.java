@@ -107,5 +107,13 @@ public interface PurchaseOrderFeign {
      * @return
      */
     @PostMapping("/feign/purchaseOrder/getPurchaseOrderDetailByIds")
-    List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(List<String> detailIds);
+    List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(@RequestBody List<String> detailIds);
+
+    /**
+     * 生成送货单列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/purchaseOrder/generateDeliveryList")
+    List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
 }
