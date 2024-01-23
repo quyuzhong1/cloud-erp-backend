@@ -927,6 +927,7 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
+    RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
 
 
 
@@ -1149,6 +1150,8 @@ public enum ApiError implements Serializable {
     ERROR_96000(96000,"供应商配置信息已存在"),
     ERROR_96001(96001,"查询不到关联供应商"),
     ERROR_96002(96002,"单据供应商与用户供应商不一致"),
+    ERROR_PO_RECONCILIATION_NOT_EXIST(96003,"对账单不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"对账明细不存在"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),

@@ -101,6 +101,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
         //更新明细
+        poReconciliationDetailService.update(updateDTO.getDetailList(),updateDTO.getId());
         return Boolean.TRUE;
     }
 
