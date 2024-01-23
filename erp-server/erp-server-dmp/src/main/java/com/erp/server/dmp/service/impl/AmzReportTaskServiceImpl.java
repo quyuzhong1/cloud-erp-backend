@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -419,9 +420,18 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         this.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH,null, null,null, LocalDateTime.now());
 
         // 下载和解析文件内容
-        String fullFileUrl = FastDFSClientUtil.publicUrl.concat(reportInfo.getFilePath());
-        String compressionAlgorithm = fullFileUrl.contains("gzip") ? "" : "gzip";
-        JSONArray jsonArray = AmazonSpApiReportUtils.download(fullFileUrl, compressionAlgorithm, columnMap);
+//        String fullFileUrl = FastDFSClientUtil.publicUrl.concat(reportInfo.getFilePath());
+        String fullFileUrl = reportInfo.getFilePath();
+        if (StringUtils.isBlank(reportInfo.getFilePath())){
+            throw new ServiceException("解析失败, 文件路径为空=" + reportInfo.getFilePath());
+        }
+        InputStream inputStream = FastDFSClientUtil.getInputStream(reportInfo.getFilePath());
+        if (inputStream == null ) {
+            throw new ServiceException("文件路径转流失败为空=" + reportInfo.getFilePath());
+        }
+
+        JSONArray jsonArray = AmazonSpApiReportUtils.downloadAndParse(fullFileUrl, columnMap, entity.getReportType());
+        // 业务处理
 
     }
 

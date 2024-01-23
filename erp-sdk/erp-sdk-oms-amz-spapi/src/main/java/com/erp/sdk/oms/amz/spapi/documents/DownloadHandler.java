@@ -7,17 +7,18 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.rmi.ServerException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -26,6 +27,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Example that downloads a document.
@@ -37,87 +39,102 @@ public class DownloadHandler {
     /**
      * Download and optionally decompress the document retrieved from the given url.
      *
+     * @param url the url pointing to a document
+     * @throws IOException              when there is an error reading the response
+     * @throws IllegalArgumentException when the charset is missing
+     */
+    public JSONArray downloadAndParse(String url, Map<String, String> excelConfig, String recordType) throws IOException, IllegalArgumentException {
+
+//        try (InputStream inputStream = FastDFSClientUtil.getInputStream(url)) {
+//            Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(url);
+//            if (!CollectionUtils.isEmpty(fileMetadata)) {
+//                throw new ServerException("文件元数据为空:url=" + url);
+//            }
+//
+//
+//            String mediaTypeStr = fileMetadata.get("Content-Type");
+//            if (StringUtils.isBlank(mediaTypeStr)) {
+//
+//            } else {
+//                MediaType mediaType = MediaType.parse(mediaTypeStr);
+//                Charset charset = mediaType.charset();
+//                if (charset == null) {
+//                    throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
+//                }
+//            }
+//
+//
+//        }
+//
+//
+//        Closeable closeThis = null;
+//        BufferedReader reader = null;
+//        try {
+//            closeThis = inputStream;
+//
+//            if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
+//                inputStream = new GZIPInputStream(inputStream);
+//                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+//                reader = new BufferedReader(inputStreamReader);
+//                closeThis = inputStream;
+//            }
+//
+//            // This example assumes that the download content has a charset in the content-type header, e.g.
+//            // text/plain; charset=UTF-8
+//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+//                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
+//                closeThis = inputStreamReader;
+//                reader = new BufferedReader(inputStreamReader);
+//                closeThis = reader;
+//            }
+//            if (null == reader) {
+//                String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
+//                throw new ServerException(msg);
+//            }
+//            return parseToJSONArray(excelConfig, reader, recordType);
+//        } finally {
+//            if (closeThis != null) {
+//                closeThis.close();
+//            }
+//        }
+        return null;
+    }
+
+
+    /**
+     * Download and optionally decompress the document retrieved from the given url.
+     *
      * @param url                  the url pointing to a document
      * @param compressionAlgorithm the compressionAlgorithm used for the document
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public JSONArray download(String url, String compressionAlgorithm, Map<String, String> excelConfig) throws IOException, IllegalArgumentException {
+    public String downloadAndUploadFastDFS(String url, String compressionAlgorithm, String filePath) throws IOException, IllegalArgumentException {
         Response response = sendRequest(url);
 
         try (ResponseBody responseBody = response.body()) {
-            MediaType mediaType = MediaType.parse(response.header("Content-Type"));
+            String mediaTypeHeader = response.header("Content-Type");
+            MediaType mediaType = MediaType.parse(mediaTypeHeader);
             Charset charset = mediaType.charset();
             if (charset == null) {
                 throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
             }
+            // 解析文件信息
+            Map<String, String> nameValuePair = new HashMap<>();
+            nameValuePair.put("Content-Type", mediaTypeHeader);
+            nameValuePair.put("compressionAlgorithm", compressionAlgorithm);
 
-            Closeable closeThis = null;
-            try {
-                InputStream inputStream = responseBody.byteStream();
-                closeThis = inputStream;
-
-                if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
-                    inputStream = new GZIPInputStream(inputStream);
-                    closeThis = inputStream;
+            try (InputStream inputStream = responseBody.byteStream()) {
+                if (null == inputStream) {
+                    String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
+                    throw new ServerException(msg);
                 }
-
-                // This example assumes that the download content has a charset in the content-type header, e.g.
-                // text/plain; charset=UTF-8
-                if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
-                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
-                    closeThis = inputStreamReader;
-
-                    BufferedReader reader = new BufferedReader(inputStreamReader);
-                    closeThis = reader;
-
-                    return parseToJSONArray(excelConfig, reader);
-                    //Handle content with binary data/other media types here.
-                }
-            } finally {
-                if (closeThis != null) {
-                    closeThis.close();
-                }
+                // 保存到FastDFS
+                return FastDFSClientUtil.uploadFile(inputStream, filePath, nameValuePair);
             }
         }
-        throw new ServerException("下载失败未找到有效mediaType, url=" + url);
     }
 
-//    /**
-//     * url:访问的网络地址
-//     */
-//    public static JSONArray downLoadFileToLocalGzip(String uri, Map<String, String> excelConfig) {
-//        URLConnection conn = null;
-//        InputStream inStream = null;
-//        GZIPInputStream gzip = null;
-//        InputStreamReader reader = null;
-//        BufferedReader in = null;
-//        try {
-//            URL url = new URL(uri);
-//            conn = url.openConnection();
-//
-//            inStream = conn.getInputStream();
-//            gzip = new GZIPInputStream(inStream);
-//            reader = new InputStreamReader(gzip);
-//            in = new BufferedReader(reader);
-//            return parseToJSONArray(excelConfig, in);
-//        } catch (IOException e) {
-//            throw new ServiceException("解析错误:" + e.getMessage());
-//        } finally {
-//            try {
-//                assert inStream != null;
-//                inStream.close();
-//                assert gzip != null;
-//                gzip.close();
-//                assert reader != null;
-//                reader.close();
-//                assert in != null;
-//                in.close();
-//            } catch (Exception e) {
-//                throw new RuntimeException("解析关闭资源错误", e);
-//            }
-//        }
-//    }
 
     private static Set<String> parseToTitle(BufferedReader in) throws IOException {
         String line;
@@ -135,7 +152,7 @@ public class DownloadHandler {
         throw new ServerException("获取异常");
     }
 
-    private static JSONArray parseToJSONArray(Map<String, String> excelConfig, BufferedReader in) throws IOException {
+    private static JSONArray parseToJSONArray(Map<String, String> excelConfig, BufferedReader in, String recordType) throws IOException {
         String line;
         int k = 1;
         JSONArray jl = new JSONArray();
@@ -149,7 +166,7 @@ public class DownloadHandler {
                     if (p == null) {
                         break;
                     }
-                    r = getExcelConfig(p, excelConfig);
+                    r = getExcelConfig(p, excelConfig, recordType);
                     if (r == null) {
                         break;
                     }
@@ -244,7 +261,7 @@ public class DownloadHandler {
     }
 
 
-    private static Map<Integer, String> getExcelConfig(Map<String, Integer> p, Map<String, String> excelConfig) {
+    private static Map<Integer, String> getExcelConfig(Map<String, Integer> p, Map<String, String> excelConfig, String recordType) {
         Map<Integer, String> r = new HashMap<>();
         for (Map.Entry<String, Integer> entry : p.entrySet()) {
             if (excelConfig.get(entry.getKey()) != null) {
@@ -252,9 +269,17 @@ public class DownloadHandler {
             }
         }
         if (r.isEmpty()) {
-           throw new ServiceException("未找到字段配置");
+            throw new ServiceException("未找到字段配置");
         }
-        return r;
+        // 查找不存在的键
+        List<String> notExistKeyList = p.keySet().stream()
+                .filter(key -> !excelConfig.containsKey(key))
+                .collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(notExistKeyList)) {
+            return r;
+        }
+        String msg = StrUtil.format("cfg_amz_report_field报告类型【{}】存在未配置的字段：{}", recordType, notExistKeyList);
+        throw new ServiceException(msg);
     }
 
     private static JSONObject getReportData(String str, Map<Integer, String> r) {

@@ -413,9 +413,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException {
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
-        return AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(),
-                compressionAlgorithm,
-                recordTypeEnum.getCvsClass(), columnMap);
+        return AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
     }
 
     @Override
@@ -423,7 +421,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
-        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), compressionAlgorithm, recordTypeEnum.getCvsClass(), columnMap);
+        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 
@@ -646,18 +644,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, reportDocument, report);
         // 更新并处理
         this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO, columnMap);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void checkAndDownload(ReportInfoMongoDTO mongoDTO) throws Exception {
-        // 查询报告配置map<报告列表名, mongo保存字段名>
-        Map<String, String> columnMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
-        if (columnMap.isEmpty()){
-            throw new ServiceException("报告类型列表配置不存在, shopInfoDTO=" + JSONUtil.toJsonStr(shopInfoDTO));
-        }
-        this.handleReport(reportsApi, report, recordTypeEnum, columnMap);
     }
 
     @Override

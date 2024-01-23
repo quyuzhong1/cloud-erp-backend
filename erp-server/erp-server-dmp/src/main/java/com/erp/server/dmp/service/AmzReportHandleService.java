@@ -118,15 +118,6 @@ public interface AmzReportHandleService {
     void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception;
 
     /**
-     * 定时任务处理
-     * 检查和下载报告
-     *
-     * @Author Jim
-     * @since 2023-12-04
-     **/
-    void checkAndDownload(ReportInfoMongoDTO mongoDTO) throws Exception;
-
-    /**
      * 请求创建亚马逊报告
      *
      * @Author Jim

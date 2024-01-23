@@ -25,6 +25,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
+import com.erp.server.dmp.service.CfgAmzReportFieldService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,7 +52,7 @@ public class ReportsApiTest {
     @Resource
     private CfgAppClientService cfgAppClientService;
     @Resource
-    private ReportColumnConfigService reportColumnConfigService;
+    private CfgAmzReportFieldService cfgAmzReportFieldService;
 
 
     /**
@@ -69,7 +70,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         api.cancelReport(reportId);
 
         // TODO: test validations
@@ -95,7 +96,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         api.cancelReportSchedule(reportScheduleId);
 
         // TODO: test validations
@@ -127,7 +128,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         CreateReportResponse response = api.createReport(body);
         System.out.println("创建报告");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -174,7 +175,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         CreateReportScheduleResponse response = api.createReportSchedule(body);
         System.out.println("创建自动更新报告");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -208,7 +209,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         Report response = api.getReport(reportId);
         System.out.println("获取报告");
         System.out.println(JSON.toJsonStr(response));
@@ -247,7 +248,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportDocument response = api.getReportDocument(reportDocumentId);
 
         System.out.println("报告文档");
@@ -286,7 +287,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportSchedule response = api.getReportSchedule(reportScheduleId);
         System.out.println("getReportScheduleTest");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -314,7 +315,7 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportScheduleList response = api.getReportSchedules(reportTypes);
         System.out.println("getReportSchedulesTest");
         System.out.println(JSON.toJsonStr(response));
@@ -349,10 +350,10 @@ public class ReportsApiTest {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-      AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");
         System.out.println(JSON.toJsonStr(response));
@@ -360,8 +361,9 @@ public class ReportsApiTest {
     }
 
     @Test
-    public void getReportDownload() throws Exception{
-        String reportDocumentId = "amzn1.spdoc.1.4.eu.6b252e9b-54b7-4df0-86f1-15076134f63b.T1KKOFBL8G8FZF.2650";
+    public void getReportDownload() throws Exception {
+//        String reportDocumentId = "amzn1.spdoc.1.4.eu.6b252e9b-54b7-4df0-86f1-15076134f63b.T1KKOFBL8G8FZF.2650";
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.6e3958ce-6971-4598-ad78-a6d50e495488.T1F4UYWRDP426O.300";
         String shopId = "1734478618723094529";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
@@ -369,14 +371,17 @@ public class ReportsApiTest {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+        ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportDocument reportDocument = api.getReportDocument(reportDocumentId);
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA;
-        Map<String, String> configMap = reportColumnConfigService.mayByReportType(recordTypeEnum.getRecordType());
+//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA;
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+//        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
-        JSONArray jsonArray = AmazonSpApiReportUtils.download(reportDocument.getUrl(), compressionAlgorithm, configMap);
+
+
+        String filePath = "";
+        AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(),compressionAlgorithm, filePath);
         System.out.println("报告下载结果");
-        System.out.println(jsonArray);
 
     }
 

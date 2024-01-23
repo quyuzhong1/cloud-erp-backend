@@ -15,18 +15,8 @@ package com.erp.sdk.oms.amz.spapi.download;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.core.utils.StrUtils;
-import com.erp.sdk.oms.amz.spapi.client.JSON;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaInventoryPlanningCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
 import com.erp.sdk.oms.amz.spapi.documents.DownloadHandler;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
-import com.opencsv.CSVReader;
 
 
 import java.io.IOException;
@@ -73,7 +63,7 @@ public class DownloadParseCsvTest {
         String compressionAlgorithm = "GZIP";
         DownloadHandler obj = new DownloadHandler();
         try {
-            JSONArray download = obj.download(url, compressionAlgorithm, map);
+            JSONArray download = obj.downloadAndParse(url, map, "");
             System.out.println(download);
         } catch (IOException | IllegalArgumentException e) {
             //Handle exception here.
