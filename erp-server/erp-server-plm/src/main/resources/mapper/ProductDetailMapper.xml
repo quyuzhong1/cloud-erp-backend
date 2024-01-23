@@ -536,7 +536,7 @@
         SELECT id,sku_no AS name FROM product_detail
         WHERE is_deleted=FALSE
         <if test="skuIdList!=null and skuIdList.size>0 ">
-            id IN
+            AND id IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
