@@ -162,10 +162,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
         DeliveryOrderEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
-        SupplierEntity supplier = commonService.getSupplierEntity();
-        if(!supplier.getId().equals(entity.getSupplierId())){
-            throw new ServiceException(ApiError.ERROR_96002);
-        }
         List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainId(entity.getId());
         return DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
     }
