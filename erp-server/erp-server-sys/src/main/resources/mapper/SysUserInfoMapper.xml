@@ -291,8 +291,10 @@
         sui.create_time
         FROM sys_user_info sui
         LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
-        WHERE
-        ${params.sqlMap.default}
+        <where>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
           AND delete_state=1 AND user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
@@ -312,12 +314,13 @@
         <if test="params.isSuper != null">
             AND sui.is_super = #{params.isSuper}
         </if>
-<!--        <if test="params.userIds != null and params.userIds.size()>0">-->
-<!--            AND sui.uid in-->
-<!--            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">-->
-<!--                #{uid}-->
-<!--            </foreach>-->
-<!--        </if>-->
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+        </where>
         ORDER BY sui.update_time DESC
     </select>
     <select id="srmList" resultType="com.erp.model.sys.vo.SupplierUserVO">
@@ -335,8 +338,10 @@
         sui.create_time
         FROM sys_user_info sui
         LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
-        WHERE
-        ${params.sqlMap.default}
+        <where>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
         AND delete_state=1 AND user_account not in ('admin')
 <!--        <if test="params.state !=null">-->
 <!--            AND sui.user_state=#{params.state}-->
@@ -362,6 +367,7 @@
                 #{uid}
             </foreach>
         </if>
+        </where>
         ORDER BY sui.update_time DESC
     </select>
 

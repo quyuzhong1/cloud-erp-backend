@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.vo.SupplierRefUserVO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
@@ -23,6 +24,7 @@ import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.query.SupplierUserQueryHandler;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +33,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 供应商协同用户
@@ -61,7 +65,12 @@ public class SupplierUserController extends BaseController {
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
         dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
-        dto.getParams().setSupplierIds(Collections.singletonList(userService.getSupplierId()));
+        dto.getParams().setSupplierId(userService.getSupplierId());
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
+        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
+            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            dto.getParams().setUserIds(userIds);
+        }
         return supplierUserFeign.page(dto);
     }
 
@@ -154,7 +163,12 @@ public class SupplierUserController extends BaseController {
     public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
         dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
-        dto.setSupplierIds(Collections.singletonList(userService.getSupplierId()));
+        dto.setSupplierId(userService.getSupplierId());
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
+        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
+            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            dto.setUserIds(userIds);
+        }
         userService.exportSupplier(dto, response);
         return success();
     }

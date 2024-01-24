@@ -32,6 +32,10 @@ public class UserPagingSearchDTO {
      */
     private List<String> supplierIds;
     /**
+     * 用户所在供应商
+     */
+    private String supplierId;
+    /**
      * 用户id
      */
     private List<String> userIds;
