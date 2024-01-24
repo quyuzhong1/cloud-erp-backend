@@ -628,11 +628,11 @@
     </select>
     <select id="srmWaitDeliveryCount" resultType="com.erp.model.scm.dto.PurchaseOrderSrmDTO$WaitDeliveryCountDTO">
         SELECT
-            SUM (CASE WHEN date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 0 THEN 1 ELSE 0 END ) AS expiredCount,
-            SUM ( case when date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) > 0  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 7 THEN 1 ELSE 0 END ) as almostOverdueCount,
-            SUM ( case when date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) > 7  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 30 THEN 1 ELSE 0 END ) as inOneMonthCount,
-            SUM ( case when date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) > 30  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 60 THEN 1 ELSE 0 END ) as inTwoMonthCount,
-            SUM ( case when date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) > 60 THEN 1 ELSE 0 END ) as twoMonthLaterCount
+            SUM (CASE WHEN date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <![CDATA[ <= ]]> 0 THEN 1 ELSE 0 END ) AS expiredCount,
+            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 0  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 7 THEN 1 ELSE 0 END ) as almostOverdueCount,
+            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 30 THEN 1 ELSE 0 END ) as inOneMonthCount,
+            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 30  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 60 THEN 1 ELSE 0 END ) as inTwoMonthCount,
+            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 60 THEN 1 ELSE 0 END ) as twoMonthLaterCount
         from purchase_order_detail as pod
         left join purchase_order po on po.id = pod.purchase_order_id and po.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
