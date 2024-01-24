@@ -1,6 +1,8 @@
 package com.erp.model.sys.dto;
 
 
+import com.common.core.anno.RegularValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.sys.validator.AddGroup;
 import com.erp.model.sys.validator.UpdateGroup;
 import lombok.Data;
@@ -26,19 +28,22 @@ public class SysUserInfoDTO implements Serializable {
     //用户id
     private String uid;
 
-    @NotBlank(message = "用户名不能为空",  groups = {AddGroup.class})
-    @Size(max = 25,message = "用户名最大长度为25")
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 1,max = 25,message = "用户名最大长度为25,最小长度为1")
     private String userName;
 
-    @NotBlank(message = "真实名不能为空",groups = {AddGroup.class, UpdateGroup.class})
-    @Size(max = 25,message = "真实名最大长度为25")
+    @NotBlank(message = "真实名不能为空")
+    @Size(min = 1,max = 25,message = "真实名最大长度为25,最小长度为1")
     private String realName;
 
-
+    @Size(min = 3,max = 50, message = "邮箱最大50字符,最小长度为3")
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
     private String email;
 
     //电话
     @NotBlank(message = "电话不能为空")
+    @Size(min = 7,max = 20, message = "电话最大20字符,最小长度为7")
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
     private String mobile;
 
     //o 禁用 1 正常
