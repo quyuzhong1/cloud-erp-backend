@@ -39,7 +39,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "手机号码", index = 2)
-    @FieldValid(fieldName = "手机号码",isNotBlank = true)
+    @FieldValid(fieldName = "手机号码",formatPattern = FieldFormatPatternTypeEnum.MOBILE)
     private String mobile;
 
 
