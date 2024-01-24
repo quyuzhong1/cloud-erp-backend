@@ -50,6 +50,7 @@
         prd.source_type as sourceType,
         prd.po_code as poCode,
         prd.confirm_date as confirmDate,
+        prd.sku_id as skuId,
         prd.sku_no as skuNo,
         prd.delivery_qty as deliveryQty,
         prd.receive_qty as receiveQty,
@@ -97,6 +98,24 @@
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            prd.id desc
+        </where>
+    </select>
+
+    <!-- 查看详情信息 -->
+    <select id="listDetail" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from po_reconciliation_detail prd
+        <where>
+            ${params.sqlMap.default}
+            and prd.is_deleted = false
             ORDER BY
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">

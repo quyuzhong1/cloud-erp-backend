@@ -8,6 +8,7 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
+import com.erp.server.srm.service.PoReconciliationScmService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -47,7 +48,6 @@ public class PoReconciliationController extends BaseController {
     @Resource
     private PoReconciliationService poReconciliationService;
 
-
     /**
      * 分页查询
      * @author Will
@@ -67,6 +67,23 @@ public class PoReconciliationController extends BaseController {
     }
 
     /**
+     * 获取状态统计
+     * @author Will
+     * @date: 2024/1/23 15:59
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:poReconciliation:paging",
+            tableAlias = "pr"
+    )
+    public ApiResult<List<PoReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(poReconciliationService.tabList(dto));
+    }
+
+    /**
      * 修改
      * @author will
      * @date:  2024-01-19
@@ -83,6 +100,37 @@ public class PoReconciliationController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
         poReconciliationService.update(dto);
         return success();
+    }
+
+    /**
+     * 查看详情（对账单主表）
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/viewMain")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:viewMain",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "id")
+    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestParam("id") String id) {
+        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationService.viewMain(id);
+        return success(viewDTO);
+    }
+
+    /**
+     * 查看详情（对账单明细）
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/viewDetail")
+    public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
+        List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationService.viewDetail(dto);
+        return success(list);
     }
 
 

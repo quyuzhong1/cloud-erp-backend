@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -17,15 +18,6 @@ import javax.servlet.http.HttpServletResponse;
  * @since 2024-01-19
  */
 public interface PoReconciliationService extends SuperService<PoReconciliationEntity> {
-
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-01-19
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(PoReconciliationDTO.AddDTO dto);
 
     /**
     * 修改
@@ -68,4 +60,28 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @return BatchResultDTO
      */
     BatchResultDTO cancelConfirm(String id);
+    /**
+     * @description: 查询列表统计
+     * @author Will
+     * @date: 2024/1/23 17:18
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * @description: 查询主表
+     * @author Will
+     * @date: 2024/1/23 17:24
+     * @param id
+     * @return ViewDTO
+     */
+    PoReconciliationDTO.ViewDTO viewMain(String id);
+    /**
+     * @description: 查询明细
+     * @author Will
+     * @date: 2024/1/23 17:25
+     * @param dto
+     * @return List<ViewDTO>
+     */
+    List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
 }
