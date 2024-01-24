@@ -867,8 +867,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 exportExcel.setPayMethodName(payMethodName);
                 //付款条件
-                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                item.setPaymentConditionName(paymentConditionName);
+                String  paymentCondition = item.getPaymentCondition();
+                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                exportExcel.setPaymentConditionName(paymentConditionName);
                 //采购员
                 exportExcel.setPurchaseUserName(item.getPurchaseUserName());
                 SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
@@ -879,7 +880,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 //采购次数
                 long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
                 exportExcel.setPurchasesCount((int) purchasesCount);
-
+                exportExcel.setCreateTime(item.getCreateTime());
+                exportExcel.setCreateUserName(item.getCreateUserName());
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
