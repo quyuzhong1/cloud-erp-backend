@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.MultipleOptionConstants;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,10 +23,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
@@ -36,12 +38,10 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
-import com.erp.server.tms.service.TransferDeclareDetailService;
-import com.erp.server.tms.service.TransferDeclareService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -52,12 +52,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferDeclareDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.validation.constraints.NotEmpty;
+
 /**
  * <p>
  * 中转报关表 服务实现类
@@ -77,6 +80,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private TransferDeclareDetailService transferDeclareDetailService;
+    @Autowired
+    private MultipleOptionService multipleOptionService;
+    @Autowired
+    private TransferDeclareGenerationSettingService transferDeclareGenerationSettingService;
+    @Autowired
+    private TransferLogisticsChannelService transferLogisticsChannelService;
+    @Autowired
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -205,6 +216,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
         List<TransferDeclareDetailDTO.ViewDTO> viewDTOS = transferDeclareDetailService.viewDetailList(dto);
         return viewDTOS;
+    }
+
+    @Override
+    public Boolean forcastSetting(List<TransferDeclareGenerationSettingDTO.AddDTO> dtoList) {
+        transferDeclareGenerationSettingService.save(dtoList);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView() {
+        return transferDeclareGenerationSettingService.forcastSettingView();
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -80,4 +81,22 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>
      **/
     List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto);
+
+    /**
+     * 报关设置
+     * @Author Luo_WG
+     * @Date 2024/1/24 15:40
+     * @param dtoList
+     * @return java.lang.Boolean
+     **/
+    Boolean forcastSetting(List<TransferDeclareGenerationSettingDTO.AddDTO> dtoList);
+
+    /**
+     * 报告设置详情
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:31
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO.ViewDTO>
+     **/
+    List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView();
+
 }

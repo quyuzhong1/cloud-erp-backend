@@ -1,10 +1,12 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,5 +143,31 @@ public class TransferDeclareController extends BaseController {
         List<TransferDeclareDetailDTO.ViewDTO> result = transferDeclareService.viewDetailList(dto);
         return success(result);
     }
+
+    /**
+     * 报关设置
+     * @Author Luo_WG
+     * @Date 2024/1/24 15:39
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/forcastSetting")
+    public ApiResult forcastSetting(@RequestBody @Validated ValidList<TransferDeclareGenerationSettingDTO.AddDTO> dto) {
+        Boolean flag = transferDeclareService.forcastSetting(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 报关设置-详情（设置后第二次点击调用）
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:31
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO.ViewDTO>>
+     **/
+    @PostMapping("/forcastSettingView")
+    public ApiResult<List<TransferDeclareGenerationSettingDTO.ViewDTO>> forcastSettingView() {
+        List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList = transferDeclareService.forcastSettingView();
+        return success(viewDTOList);
+    }
+
 
 }

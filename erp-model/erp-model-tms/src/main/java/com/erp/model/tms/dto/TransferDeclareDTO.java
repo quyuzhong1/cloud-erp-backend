@@ -12,10 +12,7 @@ import org.springframework.cglib.core.Local;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -416,5 +413,30 @@ public class TransferDeclareDTO implements Serializable {
          * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
          */
         private List<String> logisticsChannelIdList;
+    }
+
+    /**
+     * 预报设置入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForcastSettingParamDTO {
+        /**
+         * 主键id（报关设置id）
+         */
+        private String id;
+
+        /**
+         * 发货物流商id
+         */
+        @NotEmpty(message = "发货物流商id不能为空")
+        private List<String> deliveryLogisticsSupplierIdList;
+
+        /**
+         * 中转物流商/中转渠道Id
+         */
+        @NotBlank(message = "中转渠道Id不能为空")
+        private String transferChannelId;
+
     }
 }
