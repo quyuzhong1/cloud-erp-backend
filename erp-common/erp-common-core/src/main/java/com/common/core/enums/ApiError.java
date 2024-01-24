@@ -1159,6 +1159,7 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_RECEIVE(96007,"仅【已确认待完结】支持单据签收"),
     ERROR_PO_RECONCILIATION_UPDATE(96008,"仅【待供方确认】或【待采方确认】支持修改对账单"),
     ERROR_PO_RECONCILIATION_ADD_DETAIL(96009,"对账单【{}】添加对账明细数据的供应商【{}】和结算组织【{}】必须一致"),
+    ERROR_LOGIN_SRM_DISABLE(96010,"已停止跟您的合作，无法正常登录"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
