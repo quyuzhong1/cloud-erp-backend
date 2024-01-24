@@ -90,7 +90,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        do2.plan_delivery_date ASC
+        do2.plan_delivery_date ,do2.id ASC
     </select>
     <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
         select tab.receiptStatus,tab.isPrint,sum(qtyDifferences) as qtyDifferences,sum(count)  as count from (
