@@ -170,11 +170,13 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
             detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
             detailByTrackNo.setTrackTime(LocalDateTime.now());
-            logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
             if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
                 //TODO 同步订单状态
-
+                detailByTrackNo.setSignTime(LocalDateTime.now());
+            }else{
+                detailByTrackNo.setSignTime(null);
             }
+            logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
         }
     }
 

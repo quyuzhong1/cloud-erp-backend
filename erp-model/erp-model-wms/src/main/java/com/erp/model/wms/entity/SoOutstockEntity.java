@@ -116,7 +116,7 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      * 实际发货日期
      */
     @TableField("actual_delivery_date")
-    private LocalDate actualDeliveryDate;
+    private LocalDateTime actualDeliveryDate;
 
     /**
      * 运输单号

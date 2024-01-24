@@ -624,7 +624,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(SoOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(SoOutstockEntity::getApproveStatus, approveStatus)
                 .set(SoOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(SoOutstockEntity::getActualDeliveryDate, LocalDate.now())
+                .set(SoOutstockEntity::getActualDeliveryDate, LocalDateTime.now())
                 .update(new SoOutstockEntity());
     }
 
@@ -665,7 +665,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (noticeSoOutstock != null) {
                 //更新打包时间
                 item.setPackDate(noticeSoOutstock.getPackDate());
-                item.setActualDeliveryDate(noticeSoOutstock.getActualDeliveryDate());
+                item.setActualDeliveryDate(noticeSoOutstock.getActualDeliveryDate()!=null?noticeSoOutstock.getActualDeliveryDate().toLocalDate():null);
             }
             item.setDeliveryStatus(Boolean.TRUE);
         }
@@ -721,6 +721,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String orderType = entity.getOrderType();
             String b2cType = OrderTypeEnum.B2C.getCode();
             addDTO.setOrderType(orderType);
+            addDTO.setDeliveryTime(entity.getActualDeliveryDate());
             //表明是是b2b
             if (!b2cType.equals(orderType)) {
                 SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
@@ -772,9 +773,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
 
-            LocalDate actualDeliveryDate = entity.getActualDeliveryDate();
+            LocalDateTime actualDeliveryDate = entity.getActualDeliveryDate();
             if (Objects.isNull(actualDeliveryDate)) {
-                actualDeliveryDate = entity.getBillDate();
+                actualDeliveryDate = entity.getBillDate().atStartOfDay();
             }
             //发货时间
             addDTO.setDeliveryTime(actualDeliveryDate);
@@ -1670,7 +1671,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setApproveUserName(approveUserName);
                 item.setApproveTime(approveTime);
                 if (approveTime != null) {
-                    item.setActualDeliveryDate(approveTime.toLocalDate());
+                    item.setActualDeliveryDate(approveTime);
                 }
             }
             return this.updateBatchById(list);

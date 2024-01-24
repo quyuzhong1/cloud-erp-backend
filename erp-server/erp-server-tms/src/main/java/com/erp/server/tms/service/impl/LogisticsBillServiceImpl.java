@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -635,7 +636,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LocalDateTime now = LocalDateTime.now();
         List<String> trackNoList = list.stream().map(LogisticsBillDTO.PagingVO::getTrackNo).distinct().collect(Collectors.toList());
         List<LogisticsTrackEntity> trackList = logisticsTrackService.listByTrackNoList(trackNoList);
+        String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         for (LogisticsBillDTO.PagingVO item : list) {
+            //是否签收
+            Boolean isSign=signCode.equals(item.getTrackStatus());
             String salesPlatform = item.getSalesPlatform();
             PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(salesPlatform);
             String salesPlatformName = Objects.nonNull(salesPlatformEnum) ? salesPlatformEnum.getDesc() : "";
@@ -643,9 +647,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             //发货时间
             LocalDateTime deliveryTime = item.getDeliveryTime();
             Integer transportDays = 0;
+            LocalDateTime signTime = item.getSignTime();
             if (Objects.nonNull(deliveryTime)) {
-                Duration duration = Duration.between(now, deliveryTime);
-                transportDays = Math.toIntExact(duration.toDays());
+                if(!isSign){
+                    long daysBetween = ChronoUnit.DAYS.between(deliveryTime, now);
+                    if (daysBetween > 0) {
+                        transportDays = Math.toIntExact(daysBetween);
+                    }
+                }else{
+                    if(Objects.nonNull(signTime)){
+                        long daysBetween = ChronoUnit.DAYS.between(deliveryTime, signTime);
+                        if (daysBetween > 0) {
+                            transportDays = Math.toIntExact(daysBetween);
+                        }
+                    }
+                }
             }
             item.setTransportDays(transportDays);
             String trackStatus = item.getTrackStatus();
@@ -658,14 +674,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 item.setTrackContent(trackEntity.getContent());
                 item.setUpdateTime(trackEntity.getUpdateTime());
             }
-            LocalDateTime signTime = trackList.stream().filter(t -> "6".equals(t.getStatus())).findFirst().
-                    map(LogisticsTrackEntity::getCreateTime).orElse(null);
-            item.setSignTime(signTime);
-
             String orderType = item.getOrderType();
             String orderTypeName = OrderTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
-
 
         }
     }

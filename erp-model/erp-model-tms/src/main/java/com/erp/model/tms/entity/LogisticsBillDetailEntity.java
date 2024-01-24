@@ -51,6 +51,13 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
      */
     @TableField("track_time")
     private LocalDateTime trackTime;
+
+
+    /**
+     * 签收时间
+     */
+    @TableField("sign_time")
+    private LocalDateTime signTime;
     /**
      * 是否需要进行物流轨迹查询
      */

@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.temporal.ChronoUnit;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -81,7 +83,7 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     * 发货时间
     */
     @TableField("delivery_time")
-    private LocalDate deliveryTime;
+    private LocalDateTime deliveryTime;
     /**
     * 运输单号
     */
@@ -132,6 +134,14 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime dateTime1 = LocalDateTime.of(2023, 6, 24, 10, 30);
+        LocalDateTime dateTime2 = LocalDateTime.of(2023, 6, 23, 10, 30);
+
+        long daysBetween = ChronoUnit.DAYS.between(dateTime2, dateTime1);
+        System.out.println("两个日期相差的天数: " + daysBetween);
     }
 
 }
