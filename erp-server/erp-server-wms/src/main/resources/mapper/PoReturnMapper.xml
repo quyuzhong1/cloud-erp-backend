@@ -544,4 +544,28 @@
           and pr.is_deleted = false
         group by EXTRACT(MONTH FROM pr.bill_date)
     </select>
+
+    <select id="listPoReturnAutoConfirm" resultType="java.lang.String">
+        SELECT
+        prd.id AS detailId
+        FROM po_return pr
+        INNER JOIN po_return_detail prd ON prd.is_deleted = FALSE AND pr.id = prd.main_id
+        WHERE po.is_deleted = FALSE
+        AND po.approve_status = 'approve'
+        AND pr.confirm_status = 'waitConfirm' AND
+        <foreach collection="params" item="item" separator="or" open="(" close=")">
+            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'H'">
+                and now() - make_interval(hours => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'M'">
+                and now() - make_interval(mins => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'S'">
+                and now() - make_interval(secs => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+        </foreach>
+    </select>
 </mapper>
