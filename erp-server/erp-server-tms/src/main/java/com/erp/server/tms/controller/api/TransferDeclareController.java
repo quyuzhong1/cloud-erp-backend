@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,12 +120,25 @@ public class TransferDeclareController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:view",
+            menuCode = "wms:transferDeclare:view",
             serviceClass = TransferDeclareService.class,
             keyIdName = "id")
     @LogViewService
     public ApiResult<TransferDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(transferDeclareService.view(id));
+    }
+
+
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transferDeclare:view",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<TransferDeclareDetailDTO.ViewDTO> viewDetailList(@RequestBody @Validated PagingDTO<TransferDeclareDTO.ViewDetailParamDTO> dto) {
+//        return success(transferDeclareService.viewDetailList(id));
+        return null;
     }
 
 }

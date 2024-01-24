@@ -51,7 +51,8 @@ public class baoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             ThirdWarehouseContext.setAuthMap(authObjMap);
 
-            GetShippingMethodListResponse response = baoHongService.authorization("");
+//            GetShippingMethodListResponse response = baoHongService.authorization("");
+            GetShippingMethodListResponse response = null;
 
             return "1".equals(response.getAsk()) ? success("授权成功") : failure("授权失败:" + response.getMessage());
         } catch (Exception e) {

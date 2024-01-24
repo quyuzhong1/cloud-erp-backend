@@ -393,4 +393,13 @@ public class TransferDeclareDTO implements Serializable {
         private Integer count;
 
     }
+
+    /**
+     * 详情列表查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDetailParamDTO {
+
+    }
 }
