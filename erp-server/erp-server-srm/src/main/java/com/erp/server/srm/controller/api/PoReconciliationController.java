@@ -56,11 +56,6 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:paging",
-            tableAlias = "pr"
-    )
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public ApiResult<PagingVO<PoReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
         return success(poReconciliationService.paging(dto));
@@ -74,11 +69,6 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:paging",
-            tableAlias = "pr"
-    )
     public ApiResult<List<PoReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(poReconciliationService.tabList(dto));
     }
@@ -92,11 +82,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "采购对账单修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:update",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
         poReconciliationService.update(dto);
         return success();
@@ -110,11 +95,6 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewMain")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:viewMain",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "id")
     public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestParam("id") String id) {
         PoReconciliationDTO.ViewDTO viewDTO = poReconciliationService.viewMain(id);
         return success(viewDTO);
@@ -142,11 +122,6 @@ public class PoReconciliationController extends BaseController {
      * @param response
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:paging",
-            tableAlias = "pr"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
@@ -164,11 +139,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认对账")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:confirm",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "ids")
     public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -199,11 +169,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/cancelConfirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "取消确认")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:cancelConfirm",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "ids")
     public ApiResult<?> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
