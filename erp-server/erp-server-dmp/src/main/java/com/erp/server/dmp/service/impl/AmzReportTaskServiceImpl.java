@@ -22,6 +22,7 @@ import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpReportConverter;
+import com.erp.server.dmp.factory.AmzReportHandlerFactory;
 import com.erp.server.dmp.mapper.AmzReportTaskMapper;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -366,8 +367,10 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 查询文档信息
         ReportDocument reportDocument = amzReportHandleService.queryAmzReportDocument(reportInfo, entity);
 
-        // TODO 根据url下载到FastDFS
-        String fastDFSUrl = "";
+        // 根据url下载到FastDFS
+        String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
+        String fileName = StrUtil.subBetween(reportDocument.getUrl(), ".com/", "?");
+        String fastDFSUrl = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, fileName, reportDocument.getReportDocumentId(), reportInfo.getReportType());
 
         // 更新报告信息
         reportInfo.setReportUrl(reportDocument.getUrl());
@@ -420,19 +423,15 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         this.updateStatus(null, entity, AmzReportTaskStatusEnum.FINISH,null, null,null, LocalDateTime.now());
 
         // 下载和解析文件内容
-//        String fullFileUrl = FastDFSClientUtil.publicUrl.concat(reportInfo.getFilePath());
         String fullFileUrl = reportInfo.getFilePath();
         if (StringUtils.isBlank(reportInfo.getFilePath())){
             throw new ServiceException("解析失败, 文件路径为空=" + reportInfo.getFilePath());
         }
-        InputStream inputStream = FastDFSClientUtil.getInputStream(reportInfo.getFilePath());
-        if (inputStream == null ) {
-            throw new ServiceException("文件路径转流失败为空=" + reportInfo.getFilePath());
-        }
-
+        // 从FastDFS下载后解析
         JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(fullFileUrl, columnMap, entity.getReportType());
         // 业务处理
-
+        AmzReportHandlerFactory.createHandler(reportInfo.getReportType())
+                .businessHandler(entity, jsonArray);
     }
 
     @Override

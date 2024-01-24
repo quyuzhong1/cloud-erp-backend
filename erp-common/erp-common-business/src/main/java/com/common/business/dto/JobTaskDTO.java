@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.data.annotation.Transient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -126,7 +125,7 @@ public class JobTaskDTO {
      * 平台api接口id
      * (数据库不存在该字段)
      */
-    private List<?> mongoDataList;
+    private List<?> sourceList;
 
     /**
      * 扩展信息json

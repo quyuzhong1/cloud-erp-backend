@@ -43,14 +43,6 @@ public interface AmzReportHandleService {
     void createReportSchedule(AmzReportScheduleEntity reportSchedule, OffsetDateTime roundedDateTime) throws Exception;
 
     /**
-     * 推送到处理器
-     *
-     * @Author Jim
-     * @since 2023-11-10
-     **/
-    void pullBusinessHandler(String shopId, String reportId, List<? extends ReportSuperMongoDTO> mongoDTOSList);
-
-    /**
      * 亚马逊报告通知处理
      *
      * @Author Jim

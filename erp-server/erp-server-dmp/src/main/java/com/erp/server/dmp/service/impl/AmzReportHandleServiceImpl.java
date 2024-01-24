@@ -336,30 +336,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     @Override
-    public void pullBusinessHandler(String shopId, String reportId, List<? extends ReportSuperMongoDTO> mongoDTOSList) {
-        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setShopId(shopId);
-        jobTaskDTO.setShopName(shopId);
-        jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
-        jobTaskDTO.setApiCode("products");
-        jobTaskDTO.setApiName("亚马逊Listing");
-        jobTaskDTO.setIntervalTime(900);
-        jobTaskDTO.setStatus(3);
-        jobTaskDTO.setRetryTimes(0);
-        jobTaskDTO.setCreateTime(LocalDateTime.now());
-        jobTaskDTO.setUpdateTime(LocalDateTime.now());
-        //
-        jobTaskDTO.setPlatformApiId(reportId);
-        jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
-        jobTaskDTO.setBillType(BusinessTypeEnum.PRODUCT.getCode());
-        jobTaskDTO.setOperateType("pull");
-        jobTaskDTO.setMongoDataList(mongoDTOSList);
-        // 事务处理
-        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO);
-
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void handlerNotifications(cn.hutool.json.JSONObject textMessageObj) throws Exception {
@@ -403,10 +379,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         // 填充报告来源信息
         mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
 
-        // TODO 扩展
-        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-            this.pullBusinessHandler(reportScheduleEntity.getShopId(), report.getReportId(), mongoDTOSList);
-        }
     }
 
     @Override
@@ -435,9 +407,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
         // TODO 扩展
         if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-            this.pullBusinessHandler(reportScheduleEntity.getShopId(),
-                    report.getReportId(),
-                    mongoDTOSList);
         }
     }
 

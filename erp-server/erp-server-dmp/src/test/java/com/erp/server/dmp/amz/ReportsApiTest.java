@@ -13,6 +13,7 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
@@ -198,14 +199,15 @@ public class ReportsApiTest {
 //        String reportId = "716008019646";
         // 亚马逊物流管理库存{"reportId":"724464019664"}
 //        String reportId = "724464019664";
-        String reportId = "727635019669";
+//        String reportId = "727635019669";
+        String reportId = "1964678019738";
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
 //        String reportId = "724480019664";
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
 //        String reportId = "724489019664";
-        String shopId = "";
+        String shopId = "1735512178565320710";
         // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
@@ -366,8 +368,11 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.eu.6e3958ce-6971-4598-ad78-a6d50e495488.T1F4UYWRDP426O.300";
 //        String shopId = "1734478618723094529";
 
-        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
-        String shopId = "1739494918432231426";
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.a83e1cb2-2b19-4505-9865-d22a28d06e5e.T1MT8HGFRWZRWK.300";
+        String shopId = "1735512178565320710";
+
+//        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
+//        String shopId = "1739494918432231426";
 
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
@@ -377,16 +382,21 @@ public class ReportsApiTest {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportDocument reportDocument = api.getReportDocument(reportDocumentId);
-//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA;
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
+        String url = reportDocument.getUrl();
+        System.out.println("路径");
+        System.out.println(url);
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
-
-        String fileId = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, reportDocumentId, reportDocumentId, recordTypeEnum.getRecordType());
+        String fileName = StrUtil.subBetween(reportDocument.getUrl(), ".com/", "?");
+        String fileId = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, fileName, reportDocumentId, recordTypeEnum.getRecordType());
         System.out.println("报告下载结果");
-        // group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300
+        // group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300=group1/M00/00/57/rBBkDGWwuAGAPmJMAAA9CK6hNZY.T1RW0R
         // GZIP
         // group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700
+
+        // group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A
         System.out.println(fileId);
 
     }
@@ -403,11 +413,14 @@ public class ReportsApiTest {
     public void downloadFromFastDFSAndParse() throws Exception {
         //group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300
         // GET_MERCHANT_LISTINGS_DATA
-//        String filePath = "group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300";
+//        String filePath = "group1/M00/00/57/rBBkDGWwwAGAKM66AAA9CK6hNZY.T1RW0R";
+        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
+//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
         // GET_LEDGER_DETAIL_VIEW_DATA
-        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+//        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;
 
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;
         Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(filePath, configMap, recordTypeEnum.getRecordType());
         System.out.println("下载解析后的结果------------------------------------------------------------");

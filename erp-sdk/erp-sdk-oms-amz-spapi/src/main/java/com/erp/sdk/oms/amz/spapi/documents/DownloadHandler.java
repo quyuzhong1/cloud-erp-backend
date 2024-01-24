@@ -7,7 +7,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.rmi.ServerException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,13 +22,13 @@ import cn.hutool.json.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -54,7 +56,9 @@ public class DownloadHandler {
         String compressionAlgorithm = fileMetadata.get("compressionAlgorithm");
         // 报告内容类型
         MediaType mediaType = checkAndParseMediaTypeFromFileMetadata(filePath, fileMetadata);
-        Charset charset = mediaType.charset();
+        //        Charset charset = mediaType.charset();
+        Charset charset = mediaType.getCharset();
+//        Charset charset = StandardCharsets.ISO_8859_1;
 
         Closeable closeThis = null;
         BufferedReader reader = null;
@@ -69,13 +73,16 @@ public class DownloadHandler {
 
             // This example assumes that the download content has a charset in the content-type header, e.g.
             // text/plain; charset=UTF-8
-            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+            if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
                 InputStreamReader inputStreamReader;
                 if (null == charset){
                     inputStreamReader = new InputStreamReader(inputStream);
                 } else {
                     inputStreamReader = new InputStreamReader(inputStream, charset);
                 }
+                // fastDFS保存过的文件统一UTF-8
+//                inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                 closeThis = inputStreamReader;
                 reader = new BufferedReader(inputStreamReader);
                 closeThis = reader;
@@ -109,8 +116,10 @@ public class DownloadHandler {
 
         try (ResponseBody responseBody = response.body()) {
             String mediaTypeHeader = response.header("Content-Type");
-            MediaType mediaType = MediaType.parse(mediaTypeHeader);
-            Charset charset = mediaType.charset();
+//            MediaType mediaType = MediaType.parse(mediaTypeHeader);
+            //        Charset charset = mediaType.charset();
+            MediaType mediaType = MediaType.parseMediaType(mediaTypeHeader);
+            Charset charset = mediaType.getCharset();
             if (charset == null && StringUtils.isBlank(compressionAlgorithm)) {
                 throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
             }
@@ -121,13 +130,37 @@ public class DownloadHandler {
             nameValuePair.put("reportDocumentId", reportDocumentId);
             nameValuePair.put("recordType", recordType);
 
-            try (InputStream inputStream = responseBody.byteStream()) {
-                if (null == inputStream) {
-                    String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
-                    throw new ServerException(msg);
+            if (null == charset){
+                // 无字符集
+                try (InputStream inputStream = responseBody.byteStream()) {
+                    if (null == inputStream) {
+                        String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
+                        throw new ServerException(msg);
+                    }
+                    // 保存到FastDFS
+                    return FastDFSClientUtil.uploadFile(inputStream, fileName, nameValuePair);
                 }
-                // 保存到FastDFS
-                return FastDFSClientUtil.uploadFile(inputStream, fileName, nameValuePair);
+            } else {
+                // 有字符集
+                InputStream inputStream = null;
+                InputStreamReader inputStreamReader = null;
+                try  {
+                    inputStream = responseBody.byteStream();
+                    if (null == inputStream) {
+                        String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
+                        throw new ServerException(msg);
+                    }
+                    inputStreamReader = new InputStreamReader(inputStream, charset);
+                    // 保存到FastDFS
+                    return FastDFSClientUtil.uploadFile(inputStreamReader, charset, fileName, nameValuePair);
+                } finally {
+                    if (null != inputStream){
+                        inputStream.close();
+                    }
+                    if (null != inputStreamReader){
+                        inputStreamReader.close();
+                    }
+                }
             }
         }
     }
@@ -194,7 +227,9 @@ public class DownloadHandler {
         }
         LinkedHashMap<String, Integer> p = new LinkedHashMap<>();
         for (int k = 0; k < str.length; k++) {
-            p.put(str[k], k);
+            // 移除字段首尾""
+            String currentStr = str[k].replaceAll("^\"|\"$", "");
+            p.put(currentStr, k);
         }
         return p;
     }
@@ -206,8 +241,10 @@ public class DownloadHandler {
         Response response = sendRequest(url);
 
         try (ResponseBody responseBody = response.body()) {
-            MediaType mediaType = MediaType.parse(response.header("Content-Type"));
-            Charset charset = mediaType.charset();
+//            MediaType mediaType = MediaType.parse(response.header("Content-Type"));
+//            Charset charset = mediaType.charset();
+            MediaType mediaType = MediaType.parseMediaType(response.header("Content-Type"));
+            Charset charset = mediaType.getCharset();
             if (charset == null) {
                 throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
             }
@@ -224,7 +261,8 @@ public class DownloadHandler {
 
                 // This example assumes that the download content has a charset in the content-type header, e.g.
                 // text/plain; charset=UTF-8
-                if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+//                if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+                if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
                     InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
                     closeThis = inputStreamReader;
 
@@ -256,7 +294,8 @@ public class DownloadHandler {
 
         // 报告内容类型
         MediaType mediaType = checkAndParseMediaTypeFromFileMetadata(filePath, fileMetadata);
-        Charset charset = mediaType.charset();
+//        Charset charset = mediaType.charset();
+        Charset charset = mediaType.getCharset();
         BufferedReader reader = null;
         try {
             if ("GZIP".equalsIgnoreCase(fileMetadata.get("compressionAlgorithm"))) {
@@ -267,7 +306,8 @@ public class DownloadHandler {
 
             // This example assumes that the download content has a charset in the content-type header, e.g.
             // text/plain; charset=UTF-8
-            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+            if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
                 InputStreamReader inputStreamReader;
                 if (null == charset){
                     inputStreamReader = new InputStreamReader(inputStream);
@@ -312,8 +352,10 @@ public class DownloadHandler {
         if (StringUtils.isBlank(mediaTypeStr)) {
             throw new IllegalArgumentException(StrUtil.format("Content-Type为空：filePath={}", filePath));
         } else {
-            mediaType = MediaType.parse(mediaTypeStr);
-            Charset charset = mediaType.charset();
+//            mediaType = MediaType.parse(mediaTypeStr);
+//            Charset charset = mediaType.charset();
+            mediaType = MediaType.parseMediaType(mediaTypeStr);
+            Charset charset = mediaType.getCharset();
             if (charset == null && StringUtils.isBlank(compressionAlgorithm)) {
                 throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
             }
@@ -380,7 +422,7 @@ public class DownloadHandler {
         if (StringUtils.isEmpty(val)) {
             return "";
         }
-        return val;
+        // 移除首尾""
+        return val.replaceAll("^\"|\"$", "");
     }
-
 }

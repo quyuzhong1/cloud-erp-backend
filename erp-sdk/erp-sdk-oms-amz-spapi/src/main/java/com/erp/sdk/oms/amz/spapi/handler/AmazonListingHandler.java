@@ -21,6 +21,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
@@ -65,28 +66,28 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
-        // 亚马逊商品(从已下载的mongo获取)
-        List<?> genericMongoDataList = data.getMongoDataList();
-        if (CollectionUtils.isEmpty(genericMongoDataList)) {
+        // 亚马逊商品(从已下载的获取)
+        List<?> genericDataList = data.getSourceList();
+        if (CollectionUtils.isEmpty(genericDataList)) {
             return Collections.emptyList();
         }
 
-        Object mongoData = data.getMongoDataList().stream().findFirst().orElse(null);
-        if (!(mongoData instanceof ReportListingMongoDTO)) {
-            throw new ServiceException("mongoDataList类型异常:error=" + genericMongoDataList.getClass().toGenericString());
+        Object sourceData = data.getSourceList().stream().findFirst().orElse(null);
+        if (!(sourceData instanceof ReportListingCsvEntity)) {
+            throw new ServiceException("mongoDataList类型异常:error=" + genericDataList.getClass().toGenericString());
         }
-        List<ReportListingMongoDTO> mongoDataList = (List<ReportListingMongoDTO>) genericMongoDataList;
+        List<ReportListingCsvEntity> sourceDataList = (List<ReportListingCsvEntity>) genericDataList;
         // 过滤异常数据
-        mongoDataList = mongoDataList.stream()
+        sourceDataList = sourceDataList.stream()
                 .filter(e -> StringUtils.isNotBlank(e.getSellerSku()) && StringUtils.isNotBlank(e.getAsin1()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(mongoDataList)){
+        if (CollectionUtils.isEmpty(sourceDataList)){
             return Collections.emptyList();
         }
 
         // 返回下载源数据
-        return mongoDataList.stream()
-                .map(e -> SdkListingConverter.INSTANCE.mongoDtoToListingDto(e, data.getShopId()))
+        return sourceDataList.stream()
+                .map(e -> SdkListingConverter.INSTANCE.mongoDtoToListingDto(e, data.getShopId(), data.getUpdateTime()))
                 .collect(Collectors.toList());
 
     }
