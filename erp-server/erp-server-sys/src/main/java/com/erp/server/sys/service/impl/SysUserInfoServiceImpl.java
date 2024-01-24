@@ -1207,6 +1207,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(userInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }
+        //强制退出账号
+
         //产生一个6位数的随机码
         String salt = RandomStringUtils.randomAlphabetic(10);
         //加密后的密码
@@ -1216,6 +1218,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getPassword, encryptPassword)
                 .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
+        redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         return flag;
     }
 
