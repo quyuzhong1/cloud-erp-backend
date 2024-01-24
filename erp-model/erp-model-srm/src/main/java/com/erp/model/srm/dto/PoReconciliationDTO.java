@@ -141,12 +141,12 @@ public class PoReconciliationDTO implements Serializable {
         /**
          * 供方对账人【可排序】
          */
-        private String supplierReconciliationUserName;
+        private String supplierConfirmUserName;
 
         /**
          * 采方对账人【可排序】
          */
-        private String purchaseReconciliationUserName;
+        private String purchaseConfirmUserName;
 
         /**
          * 生成对账日期【可排序】
