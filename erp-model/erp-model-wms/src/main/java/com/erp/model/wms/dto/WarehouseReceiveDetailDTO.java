@@ -53,6 +53,10 @@ public class WarehouseReceiveDetailDTO {
          * 采购订单明细表id
          */
         private String purchaseOrderDetailId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     /**

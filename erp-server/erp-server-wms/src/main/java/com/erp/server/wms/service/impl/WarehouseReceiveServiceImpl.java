@@ -27,6 +27,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -306,6 +307,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         warehouseReceiveEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         warehouseReceiveEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
+        warehouseReceiveEntity.setSourceId(dto.getSourceId());
+        warehouseReceiveEntity.setSourceType(dto.getSourceType());
         //保存主表信息
         this.save(warehouseReceiveEntity);
 
@@ -387,6 +390,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         viewDTO.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
+
+        //查询发货单
+        DeliveryOrderEntity deliveryOrderEntity = srmDeliveryOrderFeign.listByIds(Collections.singletonList(warehouseReceiveEntity.getSourceId())).stream().findFirst().orElse(new DeliveryOrderEntity());
+        viewDTO.setDeliveryCode(deliveryOrderEntity.getCode());
 
         //创库保存详情表的集合
         List<WarehouseReceiveDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
