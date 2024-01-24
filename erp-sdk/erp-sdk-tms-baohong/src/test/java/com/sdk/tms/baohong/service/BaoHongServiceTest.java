@@ -49,18 +49,19 @@ public class BaoHongServiceTest {
 
     @Test
     public void getCreateOrder(){
+
         CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
                 .oabCountry("CN")
-                .smCode("ZY-DARAZ-BS")
+                .smCode("TY-DHL")
                 .orderProduct(Arrays.asList(
                         ProductDeatil.builder()
                                 .productSku("484654-6")
                                 .opQuantity(1)
                                 .build()
                 ))
-                .trackingNumber("123456789")
+                .trackingNumber("123456781011")
                 .oabName("wj")
-                .referenceNo("wj20240123")
+                .referenceNo("wj202401211")
                 .deliveryAddress("深圳龙岗坂田")
                 .oabStreetAddress1("深圳龙岗坂田")
                 .build();
@@ -93,6 +94,14 @@ public class BaoHongServiceTest {
         String json = JSONObject.toJSONString(receivingInfo);
 
         BaoHongResponse<String> response = baoHongService.createReceiving(receivingInfo);
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
+
+
+    @Test
+    public void printLabel(){
+        BaoHongResponse<String> response = baoHongService.printLabel("SOE02070222806");
         System.out.println(response);
         System.out.println(response.getData());
     }

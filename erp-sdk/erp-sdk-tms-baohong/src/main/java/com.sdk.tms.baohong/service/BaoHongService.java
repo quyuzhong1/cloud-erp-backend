@@ -1,5 +1,7 @@
 package com.sdk.tms.baohong.service;
 
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn;
 import com.sdk.tms.baohong.api.order.*;
@@ -9,18 +11,18 @@ import com.sdk.tms.baohong.api.product.ProductRow;
 import com.sdk.tms.baohong.api.product.ServiceForProduct;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.utils.BaoHongUtils;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.jws.WebParam;
 import javax.xml.ws.Holder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Validated
 public class BaoHongService {
-
 
     /**
      * 获取物流产品
@@ -141,5 +143,30 @@ public class BaoHongService {
         Holder<String> asnCode = new Holder<>();
         service.createReceiving(headerRequest,receivingInfo,askHolder,messageHolder,error,asnCode);
         return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,asnCode.value);
+    }
+
+
+    /**
+     * 打印标签
+     * @return
+     */
+    public BaoHongResponse<String> printLabel(String orderCode){
+        BaoHongResponse<String> result = BaoHongUtils.getPrintLabelBase64(orderCode);
+        String base64 = result.getData();
+        // 解码Base64
+        byte[] decodedBytes = Base64.decodeBase64(base64);
+        String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
+        // 尝试解析为JSON
+        try {
+            JSONObject jsonObject = JSONObject.parseObject(jsonString);
+            //解析成功，说明接口失败，封装失败信息
+            result.setAsk("0");
+            result.setMessage(jsonObject.get("message").toString());
+            result.setData(jsonObject.get("data").toString());
+        } catch (JSONException e) {
+            // 解析失败，不是JSON格式,正常返回
+            return result;
+        }
+        return result;
     }
 }
