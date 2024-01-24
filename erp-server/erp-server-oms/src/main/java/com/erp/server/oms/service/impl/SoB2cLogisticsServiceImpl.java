@@ -293,7 +293,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setShopId(mainEntity.getShopId());
         addDTO.setShopName(mainEntity.getShopName());
         addDTO.setSalesPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
-        addDTO.setDeliveryTime(entity.getDeliveryTime().toLocalDate());
+        addDTO.setDeliveryTime(entity.getDeliveryTime());
         addDTO.setOrderTime(mainEntity.getPayTime());
         addDTO.setTransportNo(entity.getCode());
         addDTO.setDetailList(buildDetailList(entity));
