@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -56,7 +57,7 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     /**
      * 签收时间
      */
-    @TableField("sign_time")
+    @TableField(value = "sign_time" ,fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime signTime;
     /**
      * 是否需要进行物流轨迹查询
