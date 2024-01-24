@@ -253,15 +253,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         }
     }
 
-    private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {
+    private String getConfigOrderDesc(CfgSettingEntity orderCfgSettingEntity) {
         StringBuffer stringBuffer = new StringBuffer();
-        if (Objects.isNull(returnCfgSettingEntity)) {
+        if (Objects.isNull(orderCfgSettingEntity)) {
             stringBuffer.append("手工接受");
         } else {
-            ReturnConfirmDTO returnConfirmDTO = JSONUtil.toBean(returnCfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
-            Boolean enable = returnConfirmDTO.getEnable();
-            Integer duration = returnConfirmDTO.getDuration();
-            String unit = returnConfirmDTO.getUnit();
+            OrderAcceptDTO orderAcceptDTO = JSONUtil.toBean(orderCfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
+            Boolean enable = orderAcceptDTO.getEnable();
+            Integer duration = orderAcceptDTO.getDuration();
+            String unit = orderAcceptDTO.getUnit();
             if (Objects.nonNull(enable) && enable) {
                 //启用
                 stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
@@ -273,15 +273,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return stringBuffer.toString();
     }
 
-    private String getConfigOrderDesc(CfgSettingEntity orderCfgSettingEntity) {
+    private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {
         StringBuffer stringBuffer = new StringBuffer();
-        if (Objects.isNull(orderCfgSettingEntity)) {
+        if (Objects.isNull(returnCfgSettingEntity)) {
             stringBuffer.append("手工确认");
         } else {
-            OrderAcceptDTO orderAcceptDTO = JSONUtil.toBean(orderCfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
-            Boolean enable = orderAcceptDTO.getEnable();
-            Integer duration = orderAcceptDTO.getDuration();
-            String unit = orderAcceptDTO.getUnit();
+            ReturnConfirmDTO returnConfirmDTO = JSONUtil.toBean(returnCfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
+            Boolean enable = returnConfirmDTO.getEnable();
+            Integer duration = returnConfirmDTO.getDuration();
+            String unit = returnConfirmDTO.getUnit();
             if (Objects.nonNull(enable) && enable) {
                 //启用
                 stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
