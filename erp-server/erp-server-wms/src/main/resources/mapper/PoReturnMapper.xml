@@ -41,7 +41,7 @@
         pro.confirm_date
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE AND
         ${params.sqlMap.default}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -141,7 +141,7 @@
         pro.confirm_date
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE AND
 
         ${params.sqlMap.default}
 
@@ -257,7 +257,7 @@
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
-        AND pro.approve_status = 'approve'
+        AND pro.approve_status = 'approve' AND
         ${params.sqlMap.default}
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
