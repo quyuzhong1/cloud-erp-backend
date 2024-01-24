@@ -651,14 +651,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             if (Objects.nonNull(deliveryTime)) {
                 if(!isSign){
                     long daysBetween = ChronoUnit.DAYS.between(deliveryTime, now);
-                    if (daysBetween > 0) {
-                        transportDays = Math.toIntExact(daysBetween);
+                    if (daysBetween >= 0) {
+                        transportDays = Math.toIntExact(daysBetween)+1;
                     }
                 }else{
                     if(Objects.nonNull(signTime)){
                         long daysBetween = ChronoUnit.DAYS.between(deliveryTime, signTime);
-                        if (daysBetween > 0) {
-                            transportDays = Math.toIntExact(daysBetween);
+                        if (daysBetween >= 0) {
+                            transportDays = Math.toIntExact(daysBetween)+1;
                         }
                     }
                 }
