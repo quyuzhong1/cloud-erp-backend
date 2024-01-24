@@ -23,6 +23,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
@@ -198,6 +199,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         // 数据填充处理
         fillOne(data, transferDeclareDetailEntities);
         return data;
+    }
+
+    @Override
+    public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
+        List<TransferDeclareDetailDTO.ViewDTO> viewDTOS = transferDeclareDetailService.viewDetailList(dto);
+        return viewDTOS;
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

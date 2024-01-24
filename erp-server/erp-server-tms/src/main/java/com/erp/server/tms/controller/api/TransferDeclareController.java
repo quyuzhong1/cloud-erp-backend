@@ -100,11 +100,11 @@ public class TransferDeclareController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "中转报关表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:transferDeclare:update",
-        serviceClass = TransferDeclareService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:update",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
         transferDeclareService.update(dto);
         return success();
@@ -129,16 +129,17 @@ public class TransferDeclareController extends BaseController {
     }
 
 
-    @GetMapping("/viewDetailList")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:transferDeclare:view",
-            serviceClass = TransferDeclareService.class,
-            keyIdName = "id")
-    @LogViewService
-    public ApiResult<TransferDeclareDetailDTO.ViewDTO> viewDetailList(@RequestBody @Validated PagingDTO<TransferDeclareDTO.ViewDetailParamDTO> dto) {
-//        return success(transferDeclareService.viewDetailList(id));
-        return null;
+    /**
+     * 详情明细高级查询
+     * @Author Luo_WG
+     * @Date 2024/1/24 10:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>>
+     **/
+    @PostMapping("/viewDetailList")
+    public ApiResult<List<TransferDeclareDetailDTO.ViewDTO>> viewDetailList(@RequestBody @Validated TransferDeclareDTO.ViewDetailParamDTO dto) {
+        List<TransferDeclareDetailDTO.ViewDTO> result = transferDeclareService.viewDetailList(dto);
+        return success(result);
     }
 
 }

@@ -400,6 +400,21 @@ public class TransferDeclareDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDetailParamDTO {
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "mainId不能为空")
+        private String mainId;
 
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
+
+        /**
+         * 物流渠道id
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        private List<String> logisticsChannelIdList;
     }
 }

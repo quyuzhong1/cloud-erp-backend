@@ -86,6 +86,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
     }
 
+    @Override
+    public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
+        return baseMapper.viewDetailList(dto);
+    }
 
     /**
     * 新增修改处理数据

@@ -62,6 +62,10 @@
         auth_time AS authTime
         FROM transfer_logistics_supplier ls
         WHERE is_deleted=FALSE
+        <!--tab-->
+        <if test="params.tabFlag!=null and params.tabFlag!=''">
+            AND ls.auth_status = #{params.tabFlag}
+        </if>
         <if test="params.name !=null and params.name!='' ">
             AND ls.supplier_name ILIKE concat('%',#{params.name}::text,'%')
         </if>

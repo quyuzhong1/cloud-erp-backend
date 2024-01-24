@@ -48,6 +48,11 @@ public class TransferLogisticsSupplierDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * tab
+         * 接口地址：/tms/drop/down/dict/list?key=transferLogisticsAuthStatus
+         */
+        private String tabFlag;
 
         /**
          * 物流商
@@ -55,16 +60,19 @@ public class TransferLogisticsSupplierDTO implements Serializable {
         private String name;
         /**
          * 授权状态集合
+         * 接口地址：/tms/drop/down/dict/list?key=transferLogisticsAuthStatus
          */
         private List<String> authStatusList;
 
         /**
          * 启用状态集合
+         *
          */
         private List<Boolean> disabledList;
 
         /**
          * 创建人
+         * 接口地址：/plm/common/findUserList
          */
         private List<String> createUserIdList;
 
@@ -124,6 +132,11 @@ public class TransferLogisticsSupplierDTO implements Serializable {
          * 授权状态名
          */
         private String authStatusName;
+
+        /**
+         * 最新授权时间
+         */
+        private LocalDateTime authTime;
 
         /**
          * 创建人

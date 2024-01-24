@@ -44,4 +44,13 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return java.util.List<com.erp.model.tms.entity.TransferDeclareDetailEntity>
      **/
     List<TransferDeclareDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 详情明细高级查询
+     * @Author Luo_WG
+     * @Date 2024/1/24 10:15
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>
+     **/
+    List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto);
 }

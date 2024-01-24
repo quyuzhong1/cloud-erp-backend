@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -70,4 +71,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return com.erp.model.tms.dto.TransferDeclareDTO.ViewDTO
      **/
     TransferDeclareDTO.ViewDTO view(String id);
+
+    /**
+     * 详情明细高级查询
+     * @Author Luo_WG
+     * @Date 2024/1/24 10:15
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>
+     **/
+    List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto);
 }
