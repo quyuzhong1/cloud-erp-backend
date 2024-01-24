@@ -53,11 +53,6 @@ public class PoReconciliationDetailController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliationDetail:paging",
-            tableAlias = "prd"
-    )
     @WebAdvanceQuery(handler = PoReconciliationDetailQueryHandler.class)
     public ApiResult<PagingVO<PoReconciliationDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto) {
         return success(poReconciliationDetailService.paging(dto));
@@ -72,11 +67,6 @@ public class PoReconciliationDetailController extends BaseController {
      * @param response
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliationDetail:paging",
-            tableAlias = "prd"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
