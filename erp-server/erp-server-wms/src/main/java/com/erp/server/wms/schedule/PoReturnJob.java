@@ -49,23 +49,14 @@ public class PoReturnJob {
      * @Date 2024/1/12 14:46
      * @return com.xxl.job.core.biz.model.ReturnT<java.lang.String>
      **/
-    @XxlJob("poReturnConfirmJob")
-    public ReturnT<String> poReturnConfirmJob() {
-        List<PoReturnEntity> entityList = poReturnService.listByApproceAndWaitConfirm();
-        List<String> supplierIds = entityList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
-
-        List<CfgSettingEntity> cfgSettingEntities = srmCfgSettingFeign.listByKeyAndSupplier(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode(), supplierIds);
-        for (CfgSettingEntity cfgSettingEntity : cfgSettingEntities) {
-            ReturnConfirmDTO returnConfirm = BeanUtil.toBean(cfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
-            //如果启用
-           /* if (returnConfirm.getSelectState() == 1) {
-                //获取超时时间，查询是否需要自定确认
-                returnConfirm.getDuration();
-
-                returnConfirm.getUnit();
-            }*/
-        }
-
+    @XxlJob("poReturnAutoConfirmJob")
+    public ReturnT<String> poReturnAutoConfirmJob() {
+        XxlJobHelper.log("=====采购退货单自动确认 开始任务=====");
+        long start = System.currentTimeMillis();
+        poReturnService.poReturnAutoConfirm();
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====采购退货单自动确认 结束任务=====");
         return ReturnT.SUCCESS;
     }
 }

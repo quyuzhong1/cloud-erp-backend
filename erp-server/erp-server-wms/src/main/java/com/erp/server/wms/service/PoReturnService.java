@@ -364,4 +364,12 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
 
 
     PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+    /**
+     * 退货单定时器自动确认
+     * @Author Luo_WG
+     * @Date 2024/1/24 12:40
+     * @return void
+     **/
+    void poReturnAutoConfirm();
 }

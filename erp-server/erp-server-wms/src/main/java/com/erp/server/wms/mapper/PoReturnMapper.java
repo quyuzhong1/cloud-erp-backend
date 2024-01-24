@@ -3,6 +3,8 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
@@ -67,4 +69,13 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam);
 
     List<PurchaseReturnStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+    /**
+     * 查询需要自动确认的退货单
+     * @Author Luo_WG
+     * @Date 2024/1/24 12:43
+     * @param list
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>
+     **/
+    List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
 }

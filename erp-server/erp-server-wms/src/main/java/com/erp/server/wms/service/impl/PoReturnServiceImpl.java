@@ -27,6 +27,8 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -39,6 +41,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -143,6 +146,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Autowired
     private WarehouseReceiveService warehouseReceiveService;
+
+    @Autowired
+    private SrmCfgSettingFeign srmCfgSettingFeign;
 
     @Value("${companyCode}")
     private String companyCode;
@@ -2209,5 +2215,24 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         PurchaseReturnStatisticsDTO.ResponseDTO responseDTO = new PurchaseReturnStatisticsDTO.ResponseDTO();
         responseDTO.setStatisticsMonthDTOList(baseMapper.statisticsBySupplier(returnRequestDTO));
         return responseDTO;
+    }
+
+    @Override
+    public void poReturnAutoConfirm() {
+        //查询规则设置
+        List<CfgSettingDTO.ViewDTO> list = srmCfgSettingFeign.listByKey(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode());
+        if (CollectionUtils.isEmpty(list)) {
+            log.warn("未找到存在采购退货单设置的供应商！");
+            return;
+        }
+        List<String> poReturnIds = baseMapper.listPoReturnAutoConfirm(list);
+        if (CollectionUtils.isEmpty(poReturnIds)) {
+            return;
+        }
+
+        lambdaUpdate().in(PoReturnEntity::getId, poReturnIds)
+                .set(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.CONFIRM.getCode())
+                .set(PoReturnEntity::getConfirmDate, LocalDate.now())
+                .update(new PoReturnEntity());
     }
 }

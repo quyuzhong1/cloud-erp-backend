@@ -1203,39 +1203,19 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if(StringUtils.isEmpty(pwd)){
             throw new ServiceException(ApiError.ERROR_9015);
         }
-//        SysUserInfoEntity userInfoEntity = this.getById(uid);
-//        if (StringUtils.isBlank(userInfoEntity.getEmail())) {
-//            throw new ServiceException(ApiError.ERROR_9044);
-//        }
-//        EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
-//        emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
-//        String num = RandomStringUtils.randomNumeric(8);
-//        String password = Md5Util.md5(pwd);
-        SysUserInfoEntity entity = new SysUserInfoEntity();
-
-        PassEntity passEntity = PassHandler.buildPassword(pwd);
-        entity.setPassword(passEntity.getPassword());
-        entity.setSalt(passEntity.getSalt());
-        entity.setNeedChangePwd(true);
+        SysUserInfoEntity userInfoEntity = this.getById(uid);
+        if (Objects.isNull(userInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+        //产生一个6位数的随机码
+        String salt = RandomStringUtils.randomAlphabetic(10);
+        //加密后的密码
+        String encryptPassword = Md5Util.md5(Md5Util.md5(pwd) + salt);
         boolean flag = lambdaUpdate()
-                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
-                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
-                .set(SysUserInfoEntity::getNeedChangePwd, entity.getNeedChangePwd())
+                .set(SysUserInfoEntity::getSalt, salt)
+                .set(SysUserInfoEntity::getPassword, encryptPassword)
+                .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
-//        if (flag) {
-//            boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
-//            if (!emailFlag) {
-//                throw new ServiceException(ApiError.ERROR_1008);
-//            }
-//            LocalDateTime localDate = LocalDateTime.now();
-//            emailVerifyCodeDTO.setVerifyCode(num);
-//            emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
-//            Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
-//            if (!sendResult) {
-//                throw new ServiceException(ApiError.ERROR_1010);
-//            }
-//            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
-//        }
         return flag;
     }
 

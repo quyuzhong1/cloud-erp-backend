@@ -328,7 +328,7 @@
         sui.mobile,
         sui.email,
         sui.is_super,
-        sui.user_state AS disabled,
+        sui.user_state AS userState,
         CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
         sui.last_login_time,
         sui.create_user_name,
