@@ -1487,6 +1487,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
+        //查询发货单
+        DeliveryOrderEntity deliveryOrderEntity = srmDeliveryOrderFeign.listByIds(Collections.singletonList(warehouseReceiveEntity.getSourceId())).stream().findFirst().orElse(new DeliveryOrderEntity());
+        viewDTO.setDeliveryCode(deliveryOrderEntity.getCode());
 
         SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(orderSupplierByOrderId.getSupplierContactId());
         if (ObjectUtils.isNotEmpty(supplierContactById)) {
