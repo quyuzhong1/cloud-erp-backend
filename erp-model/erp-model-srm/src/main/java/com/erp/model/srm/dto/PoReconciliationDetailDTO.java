@@ -125,17 +125,27 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
          * 税率【可排序】
          */
-        private String taxRate;
+        private BigDecimal taxRate;
+
+        /**
+         * 税率（%）
+         */
+        private String taxRateStr;
 
         /**
          * 含税单价【可排序】
          */
-        private String taxPrice;
+        private BigDecimal taxPrice;
 
         /**
          * 价税合计【可排序】
          */
-        private String taxAmount;
+        private BigDecimal taxAmount;
+
+        /**
+         * 币别【可排序】
+         */
+        private String currency;
 
         /**
          * 结算组织名称【可排序】
@@ -166,6 +176,11 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 是否加入账单(true是，flase否)【可排序】
          */
         private Boolean isAddAccount;
+
+        /**
+         * 是否加入账单(是，否)
+         */
+        private String isAddAccountStr;
     }
 
     /**

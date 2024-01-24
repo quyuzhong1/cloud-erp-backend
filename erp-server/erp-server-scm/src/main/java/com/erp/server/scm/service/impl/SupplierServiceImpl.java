@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -1015,8 +1016,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             view.setCurrencySymbol(viewDTO.getSymbol());
         }
         view.setPayMethodId(entity.getPayMethodId());
+        //结算方式名称
+        DictBasicEntity payMethod = dictBasicService.getById(entity.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(payMethod)) {
+            view.setPayMethodName(payMethod.getName());
+        }
+
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
+
+        //付款条件名称
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getValue(), entity.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        view.setPaymentConditionName(paymentConditionName);
         view.setCompanyAddress(entity.getCompanyAddress());
         return view;
     }

@@ -715,6 +715,11 @@ public class SupplierDTO implements Serializable {
         private String payMethodId;
 
         /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
          * 结算币种
          */
         private String payCurrency;
@@ -728,6 +733,12 @@ public class SupplierDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
 
         /**
          * 公司地址

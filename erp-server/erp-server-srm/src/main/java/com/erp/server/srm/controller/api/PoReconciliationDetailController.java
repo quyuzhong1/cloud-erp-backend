@@ -30,7 +30,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 
 /**
- * 对账单明细
+ * 对账单明细【srm】
  *
  * @author will
  * @since 2024-01-19

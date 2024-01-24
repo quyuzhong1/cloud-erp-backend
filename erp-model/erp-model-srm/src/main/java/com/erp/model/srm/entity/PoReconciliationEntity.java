@@ -80,26 +80,6 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     @TableField("currency")
     private String currency;
     /**
-    * 供方对账人id
-    */
-    @TableField("supplier_reconciliation_user_id")
-    private String supplierReconciliationUserId;
-    /**
-    * 供方对账人名称
-    */
-    @TableField("supplier_reconciliation_user_name")
-    private String supplierReconciliationUserName;
-    /**
-    * 采方对账人id
-    */
-    @TableField("purchase_reconciliation_user_id")
-    private String purchaseReconciliationUserId;
-    /**
-    * 采方对账人名称
-    */
-    @TableField("purchase_reconciliation_user_name")
-    private String purchaseReconciliationUserName;
-    /**
     * 生成对账日期
     */
     @TableField("reconciliation_date")

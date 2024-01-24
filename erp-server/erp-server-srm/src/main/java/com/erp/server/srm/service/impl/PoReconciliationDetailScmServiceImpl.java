@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BooleanEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -214,7 +216,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
 
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
+            listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
+            listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
             String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
