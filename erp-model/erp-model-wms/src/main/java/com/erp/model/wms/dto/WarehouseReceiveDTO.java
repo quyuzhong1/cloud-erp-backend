@@ -211,17 +211,6 @@ public class WarehouseReceiveDTO {
          * 采购订单编号
          */
         private String purchaseOrderCode;
-
-        /**
-         * 送货订单id
-         */
-        private String deliveryOrderId;
-
-        /**
-         * 送货订单编号
-         */
-        private String deliveryOrderCode;
-
         /**
          * 供应商id
          */
