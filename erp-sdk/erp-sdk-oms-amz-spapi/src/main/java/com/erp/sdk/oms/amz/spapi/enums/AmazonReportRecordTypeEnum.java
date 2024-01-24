@@ -50,6 +50,7 @@ public enum AmazonReportRecordTypeEnum {
     GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class),
     GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class),
     GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class),
+    GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告", true, null, null, null),
 
     ;
 

@@ -28,8 +28,8 @@ public class AmazonSpApiReportUtils {
     /**
      * 下载并转换
      */
-    public static <T> List<T> downloadAndParse(String url, Class<T> tClass, Map<String, String> columnMap, String recordType) throws IOException {
-        JSONArray jsonArray = downloadAndParse(url, columnMap, recordType);
+    public static <T> List<T> downloadFromFastDFSAndParse(String filePath, Class<T> tClass, Map<String, String> columnMap, String recordType) throws IOException {
+        JSONArray jsonArray = downloadFromFastDFSAndParse(filePath, columnMap, recordType);
         // 转换bean
         return JSONUtil.toList(jsonArray, tClass);
     }
@@ -63,25 +63,25 @@ public class AmazonSpApiReportUtils {
     /**
      * Download and optionally decompress the document retrieved from the given url.
      *
-     * @param url        the url pointing to a document
+     * @param filePath        the url pointing to a document
      * @param reportType
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public static JSONArray downloadAndParse(String url, Map<String, String> columnMap, String reportType) {
+    public static JSONArray downloadFromFastDFSAndParse(String filePath, Map<String, String> columnMap, String reportType) {
         DownloadHandler obj = new DownloadHandler();
         try {
-            return obj.downloadAndParse(url, columnMap, reportType);
+            return obj.downloadFromFastDFSAndParse(filePath, columnMap, reportType);
         } catch (Exception e) {
             //Handle exception here.
-            throw new RuntimeException("下载并解析亚马逊报告异常：url=" + url + " error="+ e.getMessage());
+            throw new RuntimeException("下载并解析亚马逊报告异常：url=" + filePath + " error="+ e.getMessage());
         }
     }
 
-    public static String downloadAndUploadFastDFS(String url, String compressionAlgorithm, String filePath) {
+    public static String downloadAndUploadFastDFS(String url, String compressionAlgorithm, String fileName, String reportDocumentId, String recordType) {
         DownloadHandler obj = new DownloadHandler();
         try {
-           return obj.downloadAndUploadFastDFS(url, compressionAlgorithm, filePath);
+           return obj.downloadAndUploadFastDFS(url, compressionAlgorithm, fileName, reportDocumentId, recordType);
         } catch (Exception e) {
             //Handle exception here.
             throw new RuntimeException("下载亚马逊报告到FastDFS异常：url=" + url + " error="+ e.getMessage());

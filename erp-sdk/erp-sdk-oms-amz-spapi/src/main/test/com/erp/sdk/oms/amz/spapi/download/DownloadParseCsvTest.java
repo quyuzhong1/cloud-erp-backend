@@ -63,7 +63,7 @@ public class DownloadParseCsvTest {
         String compressionAlgorithm = "GZIP";
         DownloadHandler obj = new DownloadHandler();
         try {
-            JSONArray download = obj.downloadAndParse(url, map, "");
+            JSONArray download = obj.downloadFromFastDFSAndParse(url, map, "");
             System.out.println(download);
         } catch (IOException | IllegalArgumentException e) {
             //Handle exception here.
@@ -72,7 +72,13 @@ public class DownloadParseCsvTest {
 
 
     public static void main4(String[] args) {
+        // 报告下载的路径
         String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T073308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=737b2b2b924fe9366f95421dde0021b7e74c387b87df41cff5a187723159d003";
+        // 配置开始的ID号
+        Long id= 1500000000000000001L;
+        // 报告的下载类型
+        String recordType = "GET_FBA_MYI_ALL_INVENTORY_DATA";
+
         Set<String> columnName = null;
         try {
             columnName = DownloadHandler.getReportTitleFromUrl(url,"");
@@ -97,8 +103,6 @@ public class DownloadParseCsvTest {
         System.out.println("每个字段驼峰信息结束=====");
 //        Long id= 1680776062189170030L;
 //        String recordType = "GET_MERCHANT_LISTINGS_DATA";
-        Long id= 1500000000000000001L;
-        String recordType = "GET_FBA_MYI_ALL_INVENTORY_DATA";
 //        Long id= 140000000000000000L;
 //        String recordType = "GET_RESERVED_INVENTORY_DATA";
 //        Long id= 130000000000000000L;
@@ -106,7 +110,7 @@ public class DownloadParseCsvTest {
 
 
         for (Map.Entry<String, String> entry : hashMap.entrySet()) {
-            String sqlStr = "INSERT INTO \"public\".\"report_column_config\"  (\"id\",\"remark\", \"column_name\", \"field_name\", \"report_type\", \"status\") VALUES  ('{}','','{}','{}', '{}', 't');";
+            String sqlStr = "INSERT INTO \"public\".\"cfg_amz_report_field\"  (\"id\",\"remark\", \"column_name\", \"field_name\", \"report_type\", \"status\") VALUES  ('{}','','{}','{}', '{}', 't');";
             String currentSql = StrUtil.format(sqlStr, id, entry.getKey(), entry.getValue(), recordType);
             System.out.println(currentSql);
             id ++;

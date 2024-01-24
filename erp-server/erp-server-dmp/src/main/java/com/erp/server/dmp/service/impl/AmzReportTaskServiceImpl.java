@@ -430,7 +430,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             throw new ServiceException("文件路径转流失败为空=" + reportInfo.getFilePath());
         }
 
-        JSONArray jsonArray = AmazonSpApiReportUtils.downloadAndParse(fullFileUrl, columnMap, entity.getReportType());
+        JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(fullFileUrl, columnMap, entity.getReportType());
         // 业务处理
 
     }

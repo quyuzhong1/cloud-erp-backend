@@ -413,7 +413,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException {
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
-        return AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
+        return AmazonSpApiReportUtils.downloadFromFastDFSAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
     }
 
     @Override
@@ -421,7 +421,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
-        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
+        List<?> cvsList = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass(), columnMap, recordTypeEnum.getRecordType());
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 

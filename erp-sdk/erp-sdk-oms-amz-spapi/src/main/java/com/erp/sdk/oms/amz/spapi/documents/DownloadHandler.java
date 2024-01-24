@@ -39,65 +39,55 @@ public class DownloadHandler {
     /**
      * Download and optionally decompress the document retrieved from the given url.
      *
-     * @param url the url pointing to a document
+     * @param filePath FastDFS文件路径
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public JSONArray downloadAndParse(String url, Map<String, String> excelConfig, String recordType) throws IOException, IllegalArgumentException {
+    public JSONArray downloadFromFastDFSAndParse(String filePath, Map<String, String> excelConfig, String recordType) throws IOException, IllegalArgumentException {
+        InputStream inputStream = FastDFSClientUtil.getInputStream(filePath);
+        if (null == inputStream) {
+            throw new ServerException("获取FastFDFS文件流失败：" + filePath);
+        }
+        // 文件元数据信息
+        Map<String, String> fileMetadata = checkAndGetFileMetadata(filePath);
+        // 报告压缩算法：GZIP或空
+        String compressionAlgorithm = fileMetadata.get("compressionAlgorithm");
+        // 报告内容类型
+        MediaType mediaType = checkAndParseMediaTypeFromFileMetadata(filePath, fileMetadata);
+        Charset charset = mediaType.charset();
 
-//        try (InputStream inputStream = FastDFSClientUtil.getInputStream(url)) {
-//            Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(url);
-//            if (!CollectionUtils.isEmpty(fileMetadata)) {
-//                throw new ServerException("文件元数据为空:url=" + url);
-//            }
-//
-//
-//            String mediaTypeStr = fileMetadata.get("Content-Type");
-//            if (StringUtils.isBlank(mediaTypeStr)) {
-//
-//            } else {
-//                MediaType mediaType = MediaType.parse(mediaTypeStr);
-//                Charset charset = mediaType.charset();
-//                if (charset == null) {
-//                    throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
-//                }
-//            }
-//
-//
-//        }
-//
-//
-//        Closeable closeThis = null;
-//        BufferedReader reader = null;
-//        try {
-//            closeThis = inputStream;
-//
-//            if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
-//                inputStream = new GZIPInputStream(inputStream);
-//                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-//                reader = new BufferedReader(inputStreamReader);
-//                closeThis = inputStream;
-//            }
-//
-//            // This example assumes that the download content has a charset in the content-type header, e.g.
-//            // text/plain; charset=UTF-8
-//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
-//                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
-//                closeThis = inputStreamReader;
-//                reader = new BufferedReader(inputStreamReader);
-//                closeThis = reader;
-//            }
-//            if (null == reader) {
-//                String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
-//                throw new ServerException(msg);
-//            }
-//            return parseToJSONArray(excelConfig, reader, recordType);
-//        } finally {
-//            if (closeThis != null) {
-//                closeThis.close();
-//            }
-//        }
-        return null;
+        Closeable closeThis = null;
+        BufferedReader reader = null;
+        try {
+            closeThis = inputStream;
+            if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
+                inputStream = new GZIPInputStream(inputStream);
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                reader = new BufferedReader(inputStreamReader);
+                closeThis = inputStream;
+            }
+
+            // This example assumes that the download content has a charset in the content-type header, e.g.
+            // text/plain; charset=UTF-8
+            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+                InputStreamReader inputStreamReader;
+                if (null == charset){
+                    inputStreamReader = new InputStreamReader(inputStream);
+                } else {
+                    inputStreamReader = new InputStreamReader(inputStream, charset);
+                }
+                closeThis = inputStreamReader;
+                reader = new BufferedReader(inputStreamReader);
+                closeThis = reader;
+            }
+            if (null == reader) {
+                String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", filePath, mediaType);
+                throw new ServerException(msg);
+            }
+            return parseToJSONArray(excelConfig, reader, recordType);
+        } finally {
+            closeThis.close();
+        }
     }
 
 
@@ -109,20 +99,27 @@ public class DownloadHandler {
      * @throws IOException              when there is an error reading the response
      * @throws IllegalArgumentException when the charset is missing
      */
-    public String downloadAndUploadFastDFS(String url, String compressionAlgorithm, String filePath) throws IOException, IllegalArgumentException {
+    public String downloadAndUploadFastDFS(String url,
+                                           String compressionAlgorithm,
+                                           String fileName,
+                                           String reportDocumentId,
+                                           String recordType
+    ) throws IOException, IllegalArgumentException {
         Response response = sendRequest(url);
 
         try (ResponseBody responseBody = response.body()) {
             String mediaTypeHeader = response.header("Content-Type");
             MediaType mediaType = MediaType.parse(mediaTypeHeader);
             Charset charset = mediaType.charset();
-            if (charset == null) {
+            if (charset == null && StringUtils.isBlank(compressionAlgorithm)) {
                 throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
             }
             // 解析文件信息
             Map<String, String> nameValuePair = new HashMap<>();
             nameValuePair.put("Content-Type", mediaTypeHeader);
             nameValuePair.put("compressionAlgorithm", compressionAlgorithm);
+            nameValuePair.put("reportDocumentId", reportDocumentId);
+            nameValuePair.put("recordType", recordType);
 
             try (InputStream inputStream = responseBody.byteStream()) {
                 if (null == inputStream) {
@@ -130,7 +127,7 @@ public class DownloadHandler {
                     throw new ServerException(msg);
                 }
                 // 保存到FastDFS
-                return FastDFSClientUtil.uploadFile(inputStream, filePath, nameValuePair);
+                return FastDFSClientUtil.uploadFile(inputStream, fileName, nameValuePair);
             }
         }
     }
@@ -245,6 +242,85 @@ public class DownloadHandler {
         }
         throw new ServerException("下载失败未找到有效mediaType, url=" + url);
     }
+
+    /**
+     * url:获取报告列名称
+     */
+    public static Set<String> getReportTitleFromFilePath(String filePath) throws Exception {
+        InputStream inputStream = FastDFSClientUtil.getInputStream(filePath);
+        if (null == inputStream) {
+            throw new ServerException("获取FastFDFS文件流失败：" + filePath);
+        }
+        // 文件元数据信息
+        Map<String, String> fileMetadata = checkAndGetFileMetadata(filePath);
+
+        // 报告内容类型
+        MediaType mediaType = checkAndParseMediaTypeFromFileMetadata(filePath, fileMetadata);
+        Charset charset = mediaType.charset();
+        BufferedReader reader = null;
+        try {
+            if ("GZIP".equalsIgnoreCase(fileMetadata.get("compressionAlgorithm"))) {
+                inputStream = new GZIPInputStream(inputStream);
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                reader = new BufferedReader(inputStreamReader);
+            }
+
+            // This example assumes that the download content has a charset in the content-type header, e.g.
+            // text/plain; charset=UTF-8
+            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+                InputStreamReader inputStreamReader;
+                if (null == charset){
+                    inputStreamReader = new InputStreamReader(inputStream);
+                } else {
+                    inputStreamReader = new InputStreamReader(inputStream, charset);
+                }
+                reader = new BufferedReader(inputStreamReader);
+            }
+            if (null == reader) {
+                String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", filePath, mediaType);
+                throw new ServerException(msg);
+            }
+            return parseToTitle(reader);
+        } finally {
+            inputStream.close();
+            if (null != reader) {
+                reader.close();
+            }
+        }
+    }
+
+    public static Map<String, String> checkAndGetFileMetadata(String filePath) throws ServerException {
+        Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(filePath);
+        if (CollectionUtils.isEmpty(fileMetadata)) {
+            throw new ServerException("文件元数据为空:filePath=" + filePath);
+        }
+        return fileMetadata;
+    }
+
+    /**
+     * 从文件原数据解析出MediaType
+     *
+     * @param filePath
+     * @param fileMetadata
+     * @return
+     */
+    private static MediaType checkAndParseMediaTypeFromFileMetadata(String filePath, Map<String, String> fileMetadata) {
+        String mediaTypeStr = fileMetadata.get("Content-Type");
+        // 报告压缩算法：GZIP或空
+        String compressionAlgorithm = fileMetadata.get("compressionAlgorithm");
+        MediaType mediaType;
+        if (StringUtils.isBlank(mediaTypeStr)) {
+            throw new IllegalArgumentException(StrUtil.format("Content-Type为空：filePath={}", filePath));
+        } else {
+            mediaType = MediaType.parse(mediaTypeStr);
+            Charset charset = mediaType.charset();
+            if (charset == null && StringUtils.isBlank(compressionAlgorithm)) {
+                throw new IllegalArgumentException(String.format("Could not parse character set from '%s'", mediaType));
+            }
+        }
+        return mediaType;
+    }
+
 
     private static Response sendRequest(String url) throws IOException {
         OkHttpClient httpclient = new OkHttpClient();

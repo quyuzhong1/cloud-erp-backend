@@ -16,6 +16,7 @@ package com.erp.server.dmp.amz;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
@@ -362,9 +363,12 @@ public class ReportsApiTest {
 
     @Test
     public void getReportDownload() throws Exception {
-//        String reportDocumentId = "amzn1.spdoc.1.4.eu.6b252e9b-54b7-4df0-86f1-15076134f63b.T1KKOFBL8G8FZF.2650";
-        String reportDocumentId = "amzn1.spdoc.1.4.eu.6e3958ce-6971-4598-ad78-a6d50e495488.T1F4UYWRDP426O.300";
-        String shopId = "1734478618723094529";
+//        String reportDocumentId = "amzn1.spdoc.1.4.eu.6e3958ce-6971-4598-ad78-a6d50e495488.T1F4UYWRDP426O.300";
+//        String shopId = "1734478618723094529";
+
+        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
+        String shopId = "1739494918432231426";
+
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -374,15 +378,40 @@ public class ReportsApiTest {
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         ReportDocument reportDocument = api.getReportDocument(reportDocumentId);
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA;
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
 
-
-        String filePath = "";
-        AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(),compressionAlgorithm, filePath);
+        String fileId = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, reportDocumentId, reportDocumentId, recordTypeEnum.getRecordType());
         System.out.println("报告下载结果");
+        // group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300
+        // GZIP
+        // group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700
+        System.out.println(fileId);
 
     }
 
+    @Test
+    public void getGzipFileMetadata() throws Exception {
+        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+        Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(filePath);
+        System.out.println(fileMetadata);
+        // {reportDocumentId=amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700, compressionAlgorithm=GZIP, recordType=GET_LEDGER_DETAIL_VIEW_DATA, Content-Type=text/plain}
+    }
+
+    @Test
+    public void downloadFromFastDFSAndParse() throws Exception {
+        //group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300
+        // GET_MERCHANT_LISTINGS_DATA
+//        String filePath = "group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300";
+        // GET_LEDGER_DETAIL_VIEW_DATA
+        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;
+        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
+        JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(filePath, configMap, recordTypeEnum.getRecordType());
+        System.out.println("下载解析后的结果------------------------------------------------------------");
+        System.out.println(jsonArray);
+        System.out.println("下载解析后的结尾------------------------------------------------------------");
+    }
 }
