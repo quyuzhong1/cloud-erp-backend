@@ -38,4 +38,12 @@ public interface PoReconciliationDetailMapper extends BaseMapper<PoReconciliatio
      * @return List<ListDTO>
      */
     List<PoReconciliationDetailDTO.ListDTO> listExport(@Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
+    /**
+     * @description: 根据对账单查询对账明细详情
+     * @author Will
+     * @date: 2024/1/23 15:51
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<PoReconciliationDetailDTO.ListDTO> listDetail(@Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
 }

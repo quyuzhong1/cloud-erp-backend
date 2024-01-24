@@ -99,5 +99,18 @@
         </where>
     </select>
 
+    <!-- 列表查询统计 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        SELECT
+        count(pr.id)
+        FROM  po_reconciliation pr
+        WHERE
+        ${params.sqlMap.default}
+        and pr.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+
 
 </mapper>

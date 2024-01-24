@@ -8,6 +8,7 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
+import com.erp.server.srm.service.PoReconciliationScmService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -47,7 +48,6 @@ public class PoReconciliationController extends BaseController {
     @Resource
     private PoReconciliationService poReconciliationService;
 
-
     /**
      * 分页查询
      * @author Will
@@ -56,14 +56,21 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:paging",
-            tableAlias = "pr"
-    )
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public ApiResult<PagingVO<PoReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
         return success(poReconciliationService.paging(dto));
+    }
+
+    /**
+     * 获取状态统计
+     * @author Will
+     * @date: 2024/1/23 15:59
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<PoReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(poReconciliationService.tabList(dto));
     }
 
     /**
@@ -75,14 +82,35 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "采购对账单修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:update",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
         poReconciliationService.update(dto);
         return success();
+    }
+
+    /**
+     * 查看详情（对账单主表）
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/viewMain")
+    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestParam("id") String id) {
+        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationService.viewMain(id);
+        return success(viewDTO);
+    }
+
+    /**
+     * 查看详情（对账单明细）
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/viewDetail")
+    public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
+        List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationService.viewDetail(dto);
+        return success(list);
     }
 
 
@@ -94,11 +122,6 @@ public class PoReconciliationController extends BaseController {
      * @param response
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:paging",
-            tableAlias = "pr"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
@@ -116,11 +139,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认对账")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:confirm",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "ids")
     public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -151,11 +169,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/cancelConfirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "取消确认")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:cancelConfirm",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "ids")
     public ApiResult<?> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

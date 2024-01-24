@@ -7,6 +7,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,6 +16,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
@@ -63,6 +65,23 @@ public class PoReconciliationScmController extends BaseController {
     }
 
     /**
+     * 获取状态统计
+     * @author Will
+     * @date: 2024/1/23 15:59
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:poReconciliation:scm:paging",
+            tableAlias = "pr"
+    )
+    public ApiResult<List<PoReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(poReconciliationScmService.tabList(dto));
+    }
+
+    /**
      * 修改
      * @author will
      * @date:  2024-01-19
@@ -76,7 +95,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:update",
             serviceClass = PoReconciliationService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.ScmUpdateDTO dto) {
         poReconciliationScmService.update(dto);
         return success();
     }
@@ -99,6 +118,18 @@ public class PoReconciliationScmController extends BaseController {
         return success(viewDTO);
     }
 
+    /**
+     * 查看详情（对账单明细）
+     * @author Will
+     * @date: 2024/1/23 15:08
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/viewDetail")
+    public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
+        List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationScmService.viewDetail(dto);
+        return success(list);
+    }
 
     /**
      * 导出

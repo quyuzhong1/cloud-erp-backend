@@ -49,6 +49,33 @@ public class PoReconciliationDTO implements Serializable {
 
     }
 
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型 ,(toBeSupplierConfirm待供方确认（srm待我确认）,toBePurchaseConfirm待采方确认（scm待我确认）,confirm已确认,received已收单据)
+         */
+        private String tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+
     /**
      * 分页列表
      */
@@ -237,9 +264,26 @@ public class PoReconciliationDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
 
 
+        /**
+         * 明细id集合
+         */
+        @NotEmpty(message = "明细id集合不能为空")
+        private List<String> detailIdList;
+
+        /**
+         * 对账开始日期
+         */
+        @NotNull(message = "对账开始日期不能为空")
+        private LocalDate startDate;
+
+        /**
+         * 对账结束日期
+         */
+        @NotNull(message = "对账结束日期不能为空")
+        private LocalDate endDate;
     }
 
     /**
@@ -272,14 +316,38 @@ public class PoReconciliationDTO implements Serializable {
         private List<PoReconciliationDetailDTO.UpdateDTO> detailList;
     }
 
+
+    /**
+     * 修改
+     */
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class ScmUpdateDTO {
 
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
 
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
 
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
 
+        /**
+         * 明细修改
+         */
+        @NotEmpty(message = "对账明细不能为空")
+        private List<PoReconciliationDetailDTO.ScmUpdateDTO> detailList;
     }
+
+
 
 
 }

@@ -37,7 +37,7 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
     * @param mainId
     * @return
     */
-    Boolean update(List<PoReconciliationDetailDTO.UpdateDTO> detailList,String mainId);
+    Boolean update(List<PoReconciliationDetailDTO.ScmUpdateDTO> detailList,String mainId);
 
     /**
      * @description: 分页查询
@@ -55,4 +55,20 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param response
      */
     void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2024/1/23 15:50
+     * @param dto
+     * @return List<ViewDTO>
+     */
+    List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
+    /**
+     * @description: 生成对账单
+     * @author Will
+     * @date: 2024/1/23 18:04
+     * @param dto
+     * @return Boolean
+     */
+    Boolean generatePoReconciliation(PoReconciliationDetailDTO.GeneratePoReconciliationDTO dto);
 }

@@ -37,15 +37,28 @@ public enum PoReconciliationEnum {
     }
 
     @Getter
-    public enum SrmTabFlagEnum implements EnumMessage {
+    public enum TabFlagEnum implements EnumMessage {
         TO_BE_SUPPLIER_CONFIRM("toBeSupplierConfirm", "待供方确认"),
-        TO_BE_CONFIRM("toBeConfirm", "待我确认"),
+        TO_BE_CONFIRM("toBePurchaseConfirm", "待采方确认"),
         CONFIRM("confirm", "已确认"),
         RECEIVED("received", "已收单据"),
         ;
         private final String code;
         private final String name;
-        SrmTabFlagEnum(String code, String name) {
+        TabFlagEnum(String code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
+
+    @Getter
+    public enum GenerateTypeEnum implements EnumMessage {
+        CREATE_NEW("createNew", "新生成对账单"),
+        SELECT_OLD("selectOld", "选择已有对账单"),
+        ;
+        private final String code;
+        private final String name;
+        GenerateTypeEnum(String code, String name) {
             this.code = code;
             this.name = name;
         }

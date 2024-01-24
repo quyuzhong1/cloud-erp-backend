@@ -3,12 +3,15 @@ package com.erp.server.srm.service;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -36,7 +39,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
     * @param dto
     * @return
     */
-    Boolean update(PoReconciliationDTO.UpdateDTO dto);
+    Boolean update(PoReconciliationDTO.ScmUpdateDTO dto);
 
     /**
      * @description: 分页查询
@@ -88,11 +91,27 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
     BatchResultDTO receive(String id);
 
     /**
-     * @description: 查看详情
+     * @description: 查看详情(主表)
      * @author Will
      * @date: 2024/1/23 15:08
      * @param id
      * @return ViewDTO
      */
     PoReconciliationDTO.ViewDTO viewMain(String id);
+    /**
+     * @description: 查看详情(详情)
+     * @author Will
+     * @date: 2024/1/23 15:48
+     * @param dto
+     * @return List<ViewDTO>
+     */
+    List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
+    /**
+     * @description: 获取状态统计
+     * @author Will
+     * @date: 2024/1/23 15:59
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

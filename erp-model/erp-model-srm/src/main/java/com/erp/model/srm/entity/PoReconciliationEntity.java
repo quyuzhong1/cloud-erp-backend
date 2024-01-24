@@ -43,12 +43,12 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     * 对账开始日期
     */
     @TableField("start_date")
-    private LocalDateTime startDate;
+    private LocalDate startDate;
     /**
     * 对账结束日期
     */
     @TableField("end_date")
-    private LocalDateTime endDate;
+    private LocalDate endDate;
     /**
     * 结算组织id
     */
