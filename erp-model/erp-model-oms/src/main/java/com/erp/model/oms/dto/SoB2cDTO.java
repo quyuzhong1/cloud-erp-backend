@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.stringtemplate.v4.ST;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1904,5 +1905,34 @@ public class SoB2cDTO implements Serializable {
          * 取值：SoB2cAbnormalTypeEnum
          */
         private String abnormalType;
+    }
+
+
+    /**
+     * 中转报关
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TransferDeclareDTO{
+
+        /**
+         * 销售订单
+         */
+        @Size(min = 1 ,message = "销售订单不能为空")
+        private List<String> ids;
+
+        /**
+         * 报关物流商id  来源 http://172.16.100.11:3002/project/128/interface/api/28035  id
+         */
+        @NotBlank(message = "报关商不能为空")
+        private String transferLogisticsSupplierId;
+
+
+        /**
+         * 报关物流商渠道id http://172.16.100.11:3002/project/128/interface/api/28035  children.id
+         */
+        @NotBlank(message = "报关商渠道不能为空")
+        private String transferLogisticsChannelId;
+
     }
 }

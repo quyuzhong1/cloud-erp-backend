@@ -641,5 +641,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      * @create 2024-01-20 15:47
      */
-    BatchResultDTO transferDeclare(String id);
+    BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
 }
