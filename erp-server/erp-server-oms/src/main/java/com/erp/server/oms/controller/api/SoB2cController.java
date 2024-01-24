@@ -825,12 +825,12 @@ public class SoB2cController extends BaseController {
      * @create 2024-01-20 15:27
      */
     @PostMapping("/transferDeclare")
-    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody BaseIdsDTO.IdsDTO dto){
+    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.transferDeclare(id);
+                result = soB2cService.transferDeclare(id,dto.getTransferLogisticsSupplierId(),dto.getTransferLogisticsChannelId());
             } catch (Exception e) {
                 log.error("b2c订单中转失败:{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);

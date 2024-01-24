@@ -3457,7 +3457,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public BatchResultDTO transferDeclare(String id) {
+    public BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
