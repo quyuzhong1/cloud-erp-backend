@@ -82,6 +82,13 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("register_result")
     private String registerResult;
 
+
+    /**
+     * 运输状态是否是api 更新 true 是  false 不是
+     */
+    @TableField("is_api_update")
+    private Boolean isApiUpdate;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String TRACK_STATUS = "track_status";

@@ -352,7 +352,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
         List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
-        List<LogisticsAddressEntity> deliverList=addressList.stream().filter(a->deliverType.equals(a.getType())).collect(Collectors.toList());
+        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> deliverType.equals(a.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
@@ -403,12 +403,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                 int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
-                if(maxCustoms<0){
+                if (maxCustoms < 0) {
                     productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
                 int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
-                if(minCustoms<0){
+                if (minCustoms < 0) {
                     productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
 
@@ -639,7 +639,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         for (LogisticsBillDTO.PagingVO item : list) {
             //是否签收
-            Boolean isSign=signCode.equals(item.getTrackStatus());
+            Boolean isSign = signCode.equals(item.getTrackStatus());
             String salesPlatform = item.getSalesPlatform();
             PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(salesPlatform);
             String salesPlatformName = Objects.nonNull(salesPlatformEnum) ? salesPlatformEnum.getDesc() : "";
@@ -649,20 +649,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             Integer transportDays = 0;
             LocalDateTime signTime = item.getSignTime();
             if (Objects.nonNull(deliveryTime)) {
-                if(!isSign){
-                    long daysBetween = ChronoUnit.DAYS.between(deliveryTime, now);
-                    if (daysBetween >= 0) {
-                        transportDays = Math.toIntExact(daysBetween)+1;
-                    }
-                }else{
-                    if(Objects.nonNull(signTime)){
-                        long daysBetween = ChronoUnit.DAYS.between(deliveryTime, signTime);
-                        if (daysBetween >= 0) {
-                            transportDays = Math.toIntExact(daysBetween)+1;
-                        }
+                LocalDateTime compareTime = now;
+                //如果是签收成功状态
+                if (isSign) {
+                    if (Objects.nonNull(signTime)) {
+                        compareTime = signTime;
                     }
                 }
+                long daysBetween = ChronoUnit.DAYS.between(deliveryTime, compareTime);
+                if (daysBetween >= 0) {
+                    transportDays = Math.toIntExact(daysBetween) + 1;
+                }
             }
+
             item.setTransportDays(transportDays);
             String trackStatus = item.getTrackStatus();
             String trackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
@@ -703,7 +702,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
             }
             //销售订单重量单位转成kg
-            BigDecimal actualWeight = MathUtil.divide(soB2cLogisticsList.get(0).getWeight(), new BigDecimal(1000),4);
+            BigDecimal actualWeight = MathUtil.divide(soB2cLogisticsList.get(0).getWeight(), new BigDecimal(1000), 4);
             addDTO.setActualWeight(actualWeight);
 
             //存在模板时计算体积重
@@ -745,10 +744,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 //重量转成模板单位传入计算运费
                 if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
                     //kg
-                    weight = MathUtil.multiply(weight,new BigDecimal(1000));
+                    weight = MathUtil.multiply(weight, new BigDecimal(1000));
                 }
-                ShippingCalculationDTO.ViewDTO  viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule,logisticsChannelEntity, weight,
-                        length,width,height);
+                ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, logisticsChannelEntity, weight,
+                        length, width, height);
                 addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
             }
         }

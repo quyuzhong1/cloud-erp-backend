@@ -130,7 +130,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             LogisticsTrackDTO.ListDTO item = resultList.get(i);
             if (i == 0) {
                 item.setIsLatest(Boolean.TRUE);
-            }else{
+            } else {
                 item.setIsLatest(Boolean.FALSE);
 
             }
@@ -170,10 +170,11 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
             detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
             detailByTrackNo.setTrackTime(LocalDateTime.now());
+            detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
             if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
                 //TODO 同步订单状态
-                detailByTrackNo.setSignTime(LocalDateTime.now());
-            }else{
+                detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
+            } else {
                 detailByTrackNo.setSignTime(null);
             }
             logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
