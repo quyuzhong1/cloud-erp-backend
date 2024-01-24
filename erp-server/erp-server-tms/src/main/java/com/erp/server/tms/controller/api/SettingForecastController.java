@@ -66,7 +66,7 @@ public class SettingForecastController extends BaseController {
     @PostMapping("/checkIsUpdate")
     public ApiResult checkIsUpdate(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
         Boolean result = settingForecastService.checkIsUpdate(list);
-        return result ? success() : failure();
+        return success(result);
     }
 
 
