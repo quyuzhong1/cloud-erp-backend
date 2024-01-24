@@ -149,15 +149,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>(), skuIdList);
-
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
-
-        //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, historyList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -300,14 +291,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         BeanMapper.copy(dto, purchasePrice);
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds, skuIdList);
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(), skuIdList);
-        //检查sku 区间报价
-        List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, historyList);
-
         //编号
         String code = purchasePrice.getCode();
         purchasePrice.setCode(code);
