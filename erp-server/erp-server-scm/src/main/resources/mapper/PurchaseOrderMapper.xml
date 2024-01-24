@@ -556,13 +556,13 @@
              po.is_deleted = false and po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm' and
             <foreach collection="list" item="item" separator="or" open="(" close=")">
                 <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'H'">
-                     (now() - INTERVAL concat(#{item.duration},'hour')  > po.approve_time and po.supplier_id = #{item.supplierId})
+                     (now() - make_interval(hours => #{item.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
                 <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'M'">
-                    (now() - INTERVAL concat(#{item.duration},'min')  > po.approve_time and po.supplier_id = #{item.supplierId})
+                    (now() - make_interval(mins => #{item.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
                 <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'S'">
-                    (now() - INTERVAL concat(#{item.duration},'sec')  > po.approve_time and po.supplier_id = #{item.supplierId})
+                    (now() - make_interval(secs => #{item.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
             </foreach>
         </where>
