@@ -20,9 +20,6 @@ import java.util.stream.Collectors;
 public class SupplierUserQueryHandler extends AbstractQueryHandler {
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private SupplierRefUserService supplierRefUserService;
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
