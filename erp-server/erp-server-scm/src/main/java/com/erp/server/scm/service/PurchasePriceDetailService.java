@@ -26,17 +26,6 @@ import java.util.List;
  */
 public interface PurchasePriceDetailService extends SuperService<PurchasePriceDetailEntity> {
 
-     
-    /**
-     *  检查sku 区间报价
-     * @author yl
-     * @date 2023-03-24 14:01
-     * @param purchasePriceDetailList 参数的
-     * @param  supplierPriceDetailList  供应商已有的
-     * @return void
-     */
-    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList);
-
     
     /**
      * 添加明细
@@ -156,9 +145,9 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @author yl
      * @date 2023-04-06 9:37
      * @param supplierId
-     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.ViewDTO>
      */
-    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
 
     /**
      * 查询供应商的

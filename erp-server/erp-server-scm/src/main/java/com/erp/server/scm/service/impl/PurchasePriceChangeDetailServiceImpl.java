@@ -67,154 +67,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
 
-    /**
-     * 检查区间报价是否重叠
-     *
-     * @param purchasePriceChangeDetailList
-     * @return void
-     * @author yl
-     * @date 2023-03-28 12:07
-     */
-    @Override
-    public void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
-
-        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
-
-            //价格为零的 sku no
-            List<String> priceZeroSkuIdList = purchasePriceChangeDetailList.stream().filter(p -> BigDecimal.ZERO.compareTo(p.getTaxPrice()) == 0).map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(priceZeroSkuIdList);
-            //不为空的时候
-            if (CollectionUtils.isNotEmpty(skuVOList)) {
-                String priceZeroSkuNo = skuVOList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO, priceZeroSkuNo);
-            }
-
-
-            //这个是检查的
-            List<PurchasePriceChangeDetailDTO.AddDTO> checkList = new ArrayList<>(10);
-            checkList.addAll(purchasePriceChangeDetailList);
-
-            //检查区间
-            for (PurchasePriceChangeDetailDTO.AddDTO item : checkList) {
-                Integer min = item.getMinQty();
-                Integer max = item.getMaxQty();
-                if (min != null) {
-                    if (max == null) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
-                    }
-                }
-                if (max != null) {
-                    if (min == null) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
-                    }
-                }
-                //当两个都不为空的时候
-                if (min != null && max != null) {
-                    if (min.equals(max)) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
-                    }
-                    if (min > max) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_SIZE);
-                    }
-                }
-
-            }
-
-
-            //以sku 分组
-            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
-            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
-
-                //对应的报价
-                List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
-                //查询是否有无区间的
-                long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
-                //表示有无区间的
-                if (noInterval > 1) {
-                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
-                } else {
-                    //已最小值排序
-                    skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
-                    //没有无区间 就要检查又没有不同区间的
-                    List<Integer> intervalList = new ArrayList<>(10);
-                    for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
-                        if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                            intervalList.add(interval.getMinQty());
-                            intervalList.add(interval.getMaxQty());
-                        }
-                    }
-                    //判断是否是按顺序的
-                    boolean isSortedResult = isSorted(intervalList);
-                    //当不是的时候
-                    if (!isSortedResult) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
-                    }
-                }
-            }
-
-
-            /**
-             * 查询到
-             * 采购价目表的明细
-             * 因为变更 也不能有区间重复的
-             */
-            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
-            checkList.addAll(list);
-            //以sku 分组
-            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> supplierMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
-            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
-                //对应的报价
-                List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
-                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
-
-                //没有无区间 就要检查又没有不同区间的
-                List<Integer> intervalList = new ArrayList<>(10);
-                for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
-                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.add(interval.getMinQty());
-                        intervalList.add(interval.getMaxQty());
-                    }
-                }
-                //判断是否是按顺序的
-                boolean isSortedResult = isSorted(intervalList);
-                //当不是的时候
-                if (!isSortedResult) {
-                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
-                }
-            }
-
-            List<PurchasePriceChangeDetailDTO.AddDTO> historyFlagList = BeanMapper.copyList(historyList, PurchasePriceChangeDetailDTO.AddDTO.class);
-
-
-            checkList = new ArrayList<>(10);
-            checkList.addAll(purchasePriceChangeDetailList);
-            checkList.addAll(historyFlagList);
-            //以sku 分组
-            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> historyMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
-            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : historyMap.entrySet()) {
-                //对应的报价
-                List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
-                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
-
-                //没有无区间 就要检查又没有不同区间的
-                List<Integer> intervalList = new ArrayList<>(10);
-                for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
-                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.add(interval.getMinQty());
-                        intervalList.add(interval.getMaxQty());
-                    }
-                }
-                //判断是否是按顺序的
-                boolean isSortedResult = isSorted(intervalList);
-                //当不是的时候
-                if (!isSortedResult) {
-                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
-                }
-            }
-        }
-
-    }
-
 
     /**
      * 根据变更表id 获取明细
@@ -309,8 +161,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
         List<PurchasePriceChangeDetailEntity> addList = BeanMapper.copyList(purchasePriceChangeDetailList, PurchasePriceChangeDetailEntity.class);
-        //数据验证
-        checkPriceChangeDetail(addList);
         List<String> skuIds = addList.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         for (PurchasePriceChangeDetailEntity item : addList) {
@@ -329,6 +179,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setTaxRate(rate);
             }
         }
+        //数据验证
+        checkPriceChangeDetail(addList);
         this.saveBatch(addList);
     }
 
@@ -577,25 +429,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
 
     /**
-     * 判断是否按顺序排序
-     *
-     * @param list
-     * @return boolean
-     * @author yl
-     * @date 2023-03-24 14:28
-     */
-    private boolean isSorted(List<Integer> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (int i = 0; i < list.size() - 1; i++) {
-                if (list.get(i) > list.get(i + 1)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    /**
      * @description: 数据验证
      * @author Will
      * @date: 2024/1/15 17:41
@@ -606,8 +439,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
         for (PurchasePriceChangeDetailEntity entity : list) {
-            //检验失效时间需要大于生效时间
-            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getExpireDate())) {
+            //检验失效时间需要大于等于生效时间
+            if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
             }
         }

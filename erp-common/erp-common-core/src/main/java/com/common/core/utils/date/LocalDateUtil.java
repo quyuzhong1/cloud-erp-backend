@@ -478,11 +478,12 @@ public class LocalDateUtil {
     }
 
     /**
-     * 检查两个时间段是否有时间重叠
+     * 检查两个时间段是否有时间重叠,不包括时间一样的数据
      */
     public static boolean isOverlap (LocalDate realStartDate, LocalDate realEndDate,
                                       LocalDate startDate, LocalDate endDate) {
-        return realStartDate.compareTo(endDate) <=0 && startDate.compareTo(realEndDate) <= 0;
+        return (realStartDate.compareTo(endDate) <=0 && startDate.compareTo(realEndDate) <= 0)
+                && !(realStartDate.compareTo(startDate) == 0 && realEndDate.compareTo(endDate) == 0);
     }
 
     public static LocalDateTime getStartDateTimeOfYear(int year) {
