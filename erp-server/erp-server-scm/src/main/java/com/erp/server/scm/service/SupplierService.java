@@ -187,7 +187,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-29 14:50
      */
-    void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
+    void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response);
 
 
     /**

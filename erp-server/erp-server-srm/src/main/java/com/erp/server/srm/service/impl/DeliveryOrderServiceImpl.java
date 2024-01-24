@@ -14,6 +14,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -339,6 +340,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 checkPurchaseOrderDetail(addDeliveryDTO,detailEntity);
                 //发货单明细新增
                 addDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
+                dtos.add(BatchResultDTO.success(mainId,addDeliveryDTO.getSkuNo(), OperationTypeEnum.SUBMIT));
             }catch (Exception e){
                 dtos.add(BatchResultDTO.fail(mainId,addDeliveryDTO.getSkuNo(),e.getMessage()));
             }

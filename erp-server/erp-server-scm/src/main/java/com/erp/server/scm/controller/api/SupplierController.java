@@ -314,7 +314,8 @@ public class SupplierController extends BaseController {
             menuCode = "scm:supplier:paging",
             tableAlias = "supplier"
     )
-    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = SupplierQueryHandler.class)
+    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.PagingParamDTO dto, HttpServletResponse response) {
         supplierService.exportSupplier(dto, response);
         return success();
     }

@@ -151,6 +151,7 @@ public class SupplierUserController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商协作用户")
     @PostMapping("/exportSupplier")
+    @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
         dto.setIsSuper(true);
         dto.setUserType(UserTypeEnum.SRM.code);

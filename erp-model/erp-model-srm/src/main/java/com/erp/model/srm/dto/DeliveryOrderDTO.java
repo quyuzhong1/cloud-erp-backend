@@ -629,7 +629,7 @@ public class DeliveryOrderDTO implements Serializable {
          * 预计到货日期
          */
         @NotNull(message = "预计到货日期不能为空")
-        private LocalDateTime expectDeliveryDate;
+        private LocalDate expectDeliveryDate;
         /**
          * 送货数量
          */

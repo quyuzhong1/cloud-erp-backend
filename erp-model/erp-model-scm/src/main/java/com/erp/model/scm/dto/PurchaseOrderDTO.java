@@ -154,12 +154,12 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
-         * 计划交期 [可排序]
+         * 计划交期 [可排序] 预计交货日期
          */
         private String planDeliveryDate;
 
         /**
-         * 交货仓库名称
+         * 交货仓库名称（目的仓库）
          */
         private String deliveryWarehouseName;
 

@@ -838,7 +838,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-29 14:50
      */
     @Override
-    public void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<SupplierDTO.PagingViewDTO> list = baseMapper.getExportSupplier(dto);
         List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
         if (CollectionUtils.isNotEmpty(list)) {

@@ -335,19 +335,21 @@
         sui.create_time
         FROM sys_user_info sui
         LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
-        WHERE delete_state=1 AND user_account not in ('admin')
-        <if test="params.state !=null">
-            AND sui.user_state=#{params.state}
-        </if>
-        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
-        </if>
-        <if test="params.startTime!=null">
-            AND last_login_time &gt;=#{params.startTime}
-        </if>
-        <if test="params.endTime!=null">
-            AND last_login_time &lt;=#{params.endTime}
-        </if>
+        WHERE
+        ${params.sqlMap.default}
+        AND delete_state=1 AND user_account not in ('admin')
+<!--        <if test="params.state !=null">-->
+<!--            AND sui.user_state=#{params.state}-->
+<!--        </if>-->
+<!--        <if test="params.searchKeyword !=null and params.searchKeyword!=''">-->
+<!--            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')-->
+<!--        </if>-->
+<!--        <if test="params.startTime!=null">-->
+<!--            AND last_login_time &gt;=#{params.startTime}-->
+<!--        </if>-->
+<!--        <if test="params.endTime!=null">-->
+<!--            AND last_login_time &lt;=#{params.endTime}-->
+<!--        </if>-->
         <if test="params.userType != null and params.userType != ''">
             AND sui.user_type = #{params.userType}
         </if>

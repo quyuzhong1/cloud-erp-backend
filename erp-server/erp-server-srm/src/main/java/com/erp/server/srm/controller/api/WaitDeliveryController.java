@@ -117,7 +117,6 @@ public class WaitDeliveryController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/generateDeliveryOrder")
-    @Idempotent
     @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
     public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
         List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
