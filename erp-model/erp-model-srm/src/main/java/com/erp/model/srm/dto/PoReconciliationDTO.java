@@ -94,7 +94,7 @@ public class PoReconciliationDTO implements Serializable {
         private String code;
 
         /**
-         * 对账状态【可排序】
+         * 对账状态【可排序】,/srm/dict/drop/down?key=poReconciliationStatus
          */
         private String status;
 
@@ -187,7 +187,7 @@ public class PoReconciliationDTO implements Serializable {
         private String code;
 
         /**
-        * 对账状态
+        * 对账状态,/srm/dict/drop/down?key=poReconciliationStatus
         */
         private String status;
 
@@ -197,7 +197,7 @@ public class PoReconciliationDTO implements Serializable {
         private String statusName;
 
         /**
-        * 结算组织id
+        * 结算组织id,/api/sys/company/list
         */
         private String settleOrgId;
 
