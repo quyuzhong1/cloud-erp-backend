@@ -156,7 +156,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
 
 
     /**
-     * SRM协同
+     * SRM协同 true 禁用  false 启用
      */
     @TableField("srm_disabled")
     private Boolean srmDisabled;
