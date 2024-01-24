@@ -36,7 +36,7 @@ public class SupplierQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
-            if (SupplierTabEnum.TO_ME_CHECK_TASK.getCode().equalsIgnoreCase(field)) {
+            if (SupplierTabEnum.TO_ME_CHECK_TASK.getCode().equals(value)) {
                 List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode());
                 if (CollectionUtils.isNotEmpty(businessIds)) {
                     super.buildDefaultDTO("id", businessIds);
@@ -46,10 +46,10 @@ public class SupplierQueryHandler extends AbstractQueryHandler {
                 }
 
             }
-            if (SupplierTabEnum.APPROVE.getCode().equalsIgnoreCase(field)) {
+            if (SupplierTabEnum.APPROVE.getCode().equals(value)) {
                 super.buildDefaultDTO("approve_status", SupplierTabEnum.APPROVE.getCode());
             }
-            if (SupplierTabEnum.REJECT.getCode().equalsIgnoreCase(field)) {
+            if (SupplierTabEnum.REJECT.getCode().equals(value)) {
                 super.buildDefaultDTO("approve_status", SupplierTabEnum.REJECT.getCode());
             }
         }

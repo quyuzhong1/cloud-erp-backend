@@ -885,9 +885,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 exportExcel.setName(item.getName());
                 exportExcel.setCode(item.getCode());
                 //禁用状态 true 禁用
-                boolean disabled = item.getDisabled();
+                boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
                 exportExcel.setEnableStatus(disabled ? "停用" : "启用");
-                boolean srmDisabled = item.getSrmDisabled();
+                boolean srmDisabled = Objects.nonNull(item.getSrmDisabled()) ? item.getSrmDisabled() : true;
                 exportExcel.setSrmDisabled(srmDisabled ? "停用" : "启用");
                 SupplierConfigVO supplierConfigVO = configVOMap.get(id);
                 if (Objects.nonNull(supplierConfigVO)){
