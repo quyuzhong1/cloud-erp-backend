@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 截单设置 服务类
@@ -18,19 +20,15 @@ public interface TransferDeclareDeadlineSettingService extends SuperService<Tran
     * 新增
     * @author Luo_WG
     * @date: 2024-01-24
-    * @param dto
-    * @return
+    * @param dtoList
     */
-    BaseResultDTO.AddDTO add(TransferDeclareDeadlineSettingDTO.AddDTO dto);
+    void add(List<TransferDeclareDeadlineSettingDTO.AddDTO> dtoList);
 
     /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2024-01-24
-    * @param dto
-    * @return
-    */
-    Boolean update(TransferDeclareDeadlineSettingDTO.UpdateDTO dto);
-
-
+     * 详情
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:13
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO.ViewDTO>
+     **/
+    List<TransferDeclareDeadlineSettingDTO.ViewDTO> view();
 }

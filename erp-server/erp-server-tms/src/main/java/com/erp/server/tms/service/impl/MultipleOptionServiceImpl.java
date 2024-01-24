@@ -6,6 +6,7 @@ import com.erp.server.tms.mapper.MultipleOptionMapper;
 import com.erp.server.tms.service.MultipleOptionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -59,5 +60,13 @@ public class MultipleOptionServiceImpl extends SuperServiceImpl<MultipleOptionMa
                 .set(MultipleOptionEntity::getIsDeleted, Boolean.TRUE)
                 .in(MultipleOptionEntity::getMainId, mainIds)
                 .update();
+    }
+
+    @Override
+    public List<MultipleOptionEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(MultipleOptionEntity::getMainId, mainIds).list();
     }
 }

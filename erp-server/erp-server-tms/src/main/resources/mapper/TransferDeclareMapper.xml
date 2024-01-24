@@ -127,6 +127,17 @@
             AND td.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > td.create_time
         </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        td.create_time desc
     </select>
 
     <!--tab页数量-->
@@ -159,5 +170,105 @@
                 #{transferStatus}
             </foreach>
         </if>
+    </select>
+
+    <!--导出excel查询-->
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
+        SELECT
+        td.id,
+        tdd.id AS detailId,
+        td.code AS code,
+        td.plan_transfer_date AS planTransferDate,
+        td.upload_status AS uploadStatus,
+        td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
+        td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,
+        td.transfer_channel_name AS transferChannelName,
+        td.package_qty_total AS packageQtyTotal,
+        td.package_weight_total AS packageWeightTotal,
+        td.weight_unit AS weight_Unit,
+        tdd.so_code AS soCode,
+        tdd.logistics_channel_name AS logisticsChannelName,
+        tdd.tracking_no AS trackingNo,
+        tdd.outstock_status AS outstockStatus,
+        tdd.transfer_status AS transferStatus,
+        td.failure_reason AS failureReason,
+        td.create_user_name AS createUserName,
+        td.create_time AS createTime,
+        FROM transfer_declare_detail tdd
+        INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
+        WHERE td.is_deleted = FALSE
+        <!--单据编号-->
+        <if test="params.code!=null and params.code!='' ">
+            AND td.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+        <!--销售单号-->
+        <if test="params.soCode!=null and params.soCode!='' ">
+            AND tdd.so_code ILIKE concat('%',#{params.soCode}::text,'%')
+        </if>
+        <!--物流渠道id-->
+        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
+            and tdd.logistics_channel_id in
+            <foreach collection="params.logisticsChannelIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--发货物流商id-->
+        <if test="params.deliveryLogisticsSupplierIdList != null and params.deliveryLogisticsSupplierIdList.size > 0">
+            and td.delivery_logistics_supplier_id in
+            <foreach collection="params.deliveryLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--中转物流商id-->
+        <if test="params.transferLogisticsSupplierIdList != null and params.transferLogisticsSupplierIdList.size > 0">
+            and td.transfer_logistics_supplier_id in
+            <foreach collection="params.transferLogisticsSupplierIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--上传状态-->
+        <if test="params.uploadStatusList != null and params.uploadStatusList.size > 0">
+            and td.upload_status in
+            <foreach collection="params.uploadStatusList" item="uploadStatus" open="(" separator="," close=")">
+                #{uploadStatus}
+            </foreach>
+        </if>
+        <!--出库状态-->
+        <if test="params.outstockStatusList != null and params.outstockStatusList.size > 0">
+            and tdd.outstock_status in
+            <foreach collection="params.outstockStatusList" item="outstockStatus" open="(" separator="," close=")">
+                #{outstockStatus}
+            </foreach>
+        </if>
+        <!--中转状态-->
+        <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
+            and tdd.transfer_status in
+            <foreach collection="params.transferStatusList" item="transferStatus" open="(" separator="," close=")">
+                #{transferStatus}
+            </foreach>
+        </if>
+        <!--创建人id-->
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND td.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <!--创建时间-->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND td.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > td.create_time
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        td.create_time desc
     </select>
 </mapper>

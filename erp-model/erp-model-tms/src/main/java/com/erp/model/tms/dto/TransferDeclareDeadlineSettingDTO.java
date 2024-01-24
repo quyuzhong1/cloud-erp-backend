@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -37,6 +38,11 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
         private String  id;
 
         /**
+         * 中转物流商id
+         */
+        private List<String> transferLogisticsSupplierIdList;
+
+        /**
         * 截单时间
         */
         private LocalDateTime deadlineTime;
@@ -55,23 +61,15 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
+         * 主键id
+         */
         private String id;
 
+        /**
+         * 中转物流商id
+         */
+        private List<String> transferLogisticsSupplierIdList;
     }
 
     @Data

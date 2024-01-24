@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -48,4 +50,13 @@ public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity>
      * @return java.lang.Integer
      **/
     Integer listTransferStatusCount(@Param("params")TransferDeclareDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     * 导出excel查询
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:48
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
+     **/
+    List<TransferDeclareDTO.ListDTO> listExportExcel(TransferDeclareDTO.PagingParamDTO dto);
 }

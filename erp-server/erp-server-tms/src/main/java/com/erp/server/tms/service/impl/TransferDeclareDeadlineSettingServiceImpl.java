@@ -2,14 +2,20 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.MultipleOptionConstants;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TransferDeclareDeadlineSettingEntity;
+import com.erp.model.tms.dto.MultipleOptionDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.entity.*;
 import com.erp.server.tms.mapper.TransferDeclareDeadlineSettingMapper;
+import com.erp.server.tms.service.MultipleOptionService;
 import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +23,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -34,64 +42,63 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private MultipleOptionService multipleOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(TransferDeclareDeadlineSettingDTO.AddDTO addDTO) {
-        TransferDeclareDeadlineSettingEntity transferDeclareDeadlineSettingEntity = new TransferDeclareDeadlineSettingEntity();
-        BeanMapperUtils.copy(addDTO, transferDeclareDeadlineSettingEntity);
+    public void add(List<TransferDeclareDeadlineSettingDTO.AddDTO> addList) {
 
-        // 数据处理
-        handleData(transferDeclareDeadlineSettingEntity);
+        //原明细数据
+        List<TransferDeclareDeadlineSettingEntity> oldList = this.list();
 
-        log.info("开始新增截单设置");
-        boolean save = super.save(transferDeclareDeadlineSettingEntity);
-        if(!save) {
-            throw new ServiceException("截单设置保存失败");
+        //比对是否有删除的数据，有就删除
+        List<String> deleteIds = getDeleteIds(addList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            //删除关联表
+            multipleOptionService.deleteByMainIds(deleteIds);
+            //删除原配置
+            this.removeByIds(deleteIds);
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "截单设置" , transferDeclareDeadlineSettingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, transferDeclareDeadlineSettingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        //组装数据，保存
+        for (TransferDeclareDeadlineSettingDTO.AddDTO addDTO : addList) {
+            TransferDeclareDeadlineSettingEntity entity = new TransferDeclareDeadlineSettingEntity();
+            entity.setDeadlineTime(addDTO.getDeadlineTime());
+            entity.setGenerateTime(addDTO.getGenerateTime());
 
-        return new BaseResultDTO.AddDTO(transferDeclareDeadlineSettingEntity.getId(), transferDeclareDeadlineSettingEntity.getId());
+            //保存
+            this.saveOrUpdate(entity);
+
+            //保存下拉多选的中转服务商
+            MultipleOptionDTO.AddDTO optionDTO = new MultipleOptionDTO.AddDTO();
+            optionDTO.setMainId(entity.getId());
+            optionDTO.setType(MultipleOptionConstants.TRANSFER_DECLARE_DEADLINE_SETTING);
+            optionDTO.setRefIdList(addDTO.getTransferLogisticsSupplierIdList());
+            multipleOptionService.add(optionDTO);
+
+        }
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(TransferDeclareDeadlineSettingDTO.UpdateDTO updateDTO) {
-        TransferDeclareDeadlineSettingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "截单设置"));
-        TransferDeclareDeadlineSettingEntity transferDeclareDeadlineSettingEntity =  BeanMapperUtils.map(TransferDeclareDeadlineSettingEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(transferDeclareDeadlineSettingEntity);
-        log.info("编辑 开始修改截单设置数据，id：【{}】", old.getId());
-        boolean save = super.updateById(transferDeclareDeadlineSettingEntity);
-        if(!save) {
-            throw new ServiceException("截单设置保存失败");
+    public List<TransferDeclareDeadlineSettingDTO.ViewDTO> view() {
+        List<TransferDeclareDeadlineSettingEntity> list = this.list();
+        List<String> ids = list.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<MultipleOptionEntity> optionEntityList = multipleOptionService.listByMainIds(ids);
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> viewDTOList = BeanMapper.copyList(list, TransferDeclareDeadlineSettingDTO.ViewDTO.class);
+        for (TransferDeclareDeadlineSettingDTO.ViewDTO viewDTO : viewDTOList) {
+            List<String> deliveryLogisticsSupplierIdList = optionEntityList.stream().filter(req -> viewDTO.getId().equals(req.getMainId())).map(req -> req.getRefId()).distinct().collect(Collectors.toList());
+            viewDTO.setTransferLogisticsSupplierIdList(deliveryLogisticsSupplierIdList);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录截单设置日志数据，id：【{}】", transferDeclareDeadlineSettingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), transferDeclareDeadlineSettingEntity.getId(), "截单设置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, transferDeclareDeadlineSettingEntity, null, transferDeclareDeadlineSettingEntity.getId(), msg);
-        return Boolean.TRUE;
+        return viewDTOList;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(TransferDeclareDeadlineSettingEntity transferDeclareDeadlineSettingEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<String> getDeleteIds(List<TransferDeclareDeadlineSettingDTO.AddDTO> newList, List<TransferDeclareDeadlineSettingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(TransferDeclareDeadlineSettingDTO.AddDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(TransferDeclareDeadlineSettingEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 }

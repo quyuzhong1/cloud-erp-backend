@@ -5,12 +5,16 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OtherOutstockDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -163,11 +167,67 @@ public class TransferDeclareController extends BaseController {
      * @Date 2024/1/24 17:31
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO.ViewDTO>>
      **/
-    @PostMapping("/forcastSettingView")
+    @GetMapping("/forcastSettingView")
     public ApiResult<List<TransferDeclareGenerationSettingDTO.ViewDTO>> forcastSettingView() {
         List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList = transferDeclareService.forcastSettingView();
         return success(viewDTOList);
     }
 
+    /**
+     * 截单设置
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/deadlineSetting")
+    public ApiResult deadlineSetting(@RequestBody @Validated ValidList<TransferDeclareDeadlineSettingDTO.AddDTO> dto) {
+        Boolean flag = transferDeclareService.deadlineSetting(dto.getList());
+        return flag ? success() : failure();
+    }
 
+    /**
+     * 截单设置-详情（设置后第二次点击调用）
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:54
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/deadlineSettingView")
+    public ApiResult<List<TransferDeclareDeadlineSettingDTO.ViewDTO>> deadlineSettingView() {
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> viewDTOS = transferDeclareService.deadlineSettingView();
+        return success(viewDTOS);
+    }
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = transferDeclareService.delete(dto.getIds());
+        return flag ? success() : failure();
+    }
+
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:43
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:TransferDeclareService:paging",
+            tableAlias = "td"
+    )
+    public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = transferDeclareService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
 }

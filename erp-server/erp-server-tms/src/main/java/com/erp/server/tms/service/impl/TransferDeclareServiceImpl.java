@@ -15,7 +15,10 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.SoB2cTabEnum;
@@ -46,19 +49,21 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import org.mapstruct.ap.shaded.freemarker.template.utility.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
 
 /**
@@ -85,9 +90,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Autowired
     private TransferDeclareGenerationSettingService transferDeclareGenerationSettingService;
     @Autowired
-    private TransferLogisticsChannelService transferLogisticsChannelService;
-    @Autowired
-    private TransferLogisticsSupplierService transferLogisticsSupplierService;
+    private TransferDeclareDeadlineSettingService transferDeclareDeadlineSettingService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -227,6 +230,55 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView() {
         return transferDeclareGenerationSettingService.forcastSettingView();
+    }
+
+    @Override
+    public Boolean deadlineSetting(List<TransferDeclareDeadlineSettingDTO.AddDTO> dto) {
+        transferDeclareDeadlineSettingService.add(dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TransferDeclareDeadlineSettingDTO.ViewDTO> deadlineSettingView() {
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> view = transferDeclareDeadlineSettingService.view();
+        return view;
+    }
+
+    @Override
+    public Boolean delete(List<String> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        //上传成功不能删除
+        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+        long count = transferDeclareEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getUploadStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
+        }
+
+        return this.removeByIds(ids);
+    }
+
+    @Override
+    public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<TransferDeclareDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        fillList(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/transferDeclare.xlsx";
+        String name = "中转报关单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

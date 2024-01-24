@@ -902,6 +902,7 @@ public enum ApiError implements Serializable {
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
     NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
+    UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
 
     /**
      * OMS 错误
