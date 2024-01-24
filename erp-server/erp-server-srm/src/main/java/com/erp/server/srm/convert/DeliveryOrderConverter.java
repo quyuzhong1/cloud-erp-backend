@@ -48,6 +48,6 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "deliveryQty", source = "addDeliveryDTO.planDeliveryQty")
     @Mapping(target = "isUrgent", source = "detailEntity.isUrgent")
     @Mapping(target = "orderQty", source = "detailEntity.purchaseQty")
-    @Mapping(target = "planDeliveryDate", source = "detailEntity.planDeliveryDate")
+    @Mapping(target = "planDeliveryDate", source = "addDeliveryDTO.expectDeliveryDate")
     DeliveryOrderDetailEntity purchaseOrderDetailToDeliveryOrderDetail(String mainId, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity);
 }
