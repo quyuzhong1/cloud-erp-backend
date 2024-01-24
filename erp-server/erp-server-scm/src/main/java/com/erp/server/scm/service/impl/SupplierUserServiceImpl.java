@@ -332,6 +332,10 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
         List<String> errorMsgList = new ArrayList<>();
+        if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())){
+            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
+            return errorMsgList;
+        }
         //供应商是否存在
         List<SupplierEntity> supplierEntityList = supplierService.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));
         if (CollectionUtils.isNotEmpty(supplierEntityList)){
