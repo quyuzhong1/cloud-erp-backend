@@ -741,7 +741,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
             }
         }
-        addDTO.setCurrency(currency);
+        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         logisticsBillCostService.add(addDTO);
     }
