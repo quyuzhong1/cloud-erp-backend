@@ -247,6 +247,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkUserInfo(sysUserInfoDTO);
         entity.setRealName(sysUserInfoDTO.getRealName());
         entity.setMobile(sysUserInfoDTO.getMobile());
+        entity.setUserAccount(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
         entity.setEmail(sysUserInfoDTO.getEmail());
         List<String> roleIds = sysUserInfoDTO.getRoleIdList();
@@ -271,12 +272,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
-        //用户名
-        String userName = entity.getUserName();
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         entity.setRealName(sysUserInfoDTO.getRealName());
         entity.setMobile(sysUserInfoDTO.getMobile());
+        entity.setUserAccount(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
         entity.setEmail(sysUserInfoDTO.getEmail());
         return this.updateById(entity);
