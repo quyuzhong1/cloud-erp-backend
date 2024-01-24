@@ -129,7 +129,7 @@ public class TransferDeclareController extends BaseController {
     }
 
 
-    @GetMapping("/view")
+    @GetMapping("/viewDetailList")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:transferDeclare:view",
