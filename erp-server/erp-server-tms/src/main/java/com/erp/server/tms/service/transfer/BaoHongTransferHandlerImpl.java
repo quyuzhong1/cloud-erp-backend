@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @TransferLogisticsPlatformType(LogisticsPlatformEnum.BAO_HONG)
-public class baoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler {
+public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler {
     @Resource
     private BaoHongService baoHongService;
 
