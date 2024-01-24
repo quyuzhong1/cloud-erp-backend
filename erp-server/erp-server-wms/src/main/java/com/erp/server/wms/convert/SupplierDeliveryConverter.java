@@ -19,6 +19,8 @@ public interface SupplierDeliveryConverter {
     SupplierDeliveryConverter INSTANCE = Mappers.getMapper(SupplierDeliveryConverter.class);
 
     @Mappings({
+            @Mapping(target = "sourceId", source = "deliveryOrderEntity.id"),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.wms.enums.PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode())"),
             @Mapping(target = "purchaseOrderId", source = "deliveryOrderEntity.sourceId"),
             @Mapping(target = "purchaseOrderCode", source = "deliveryOrderEntity.sourceCode"),
             @Mapping(target = "receiveUserId", source = "deliveryOrderEntity.receiveUserId"),
@@ -33,6 +35,7 @@ public interface SupplierDeliveryConverter {
             @Mapping(target = "receiveQty", source = "receiveQty"),
             @Mapping(target = "exceedQty", source = "giftReceiveQty"),
             @Mapping(target = "purchaseOrderDetailId", source = "sourceDetailId"),
+            @Mapping(target = "sourceDetailId", source = "id"),
     })
     WarehouseReceiveDetailDTO.AddDTO deliveryDetailToReceiveConvert(DeliveryOrderDetailEntity detailEntity);
     List<WarehouseReceiveDetailDTO.AddDTO> deliveryDetailToReceiveConvert(List<DeliveryOrderDetailEntity> detailEntityGroupList);

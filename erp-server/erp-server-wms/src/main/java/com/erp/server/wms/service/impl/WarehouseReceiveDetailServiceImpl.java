@@ -114,6 +114,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setCreateUserName(dto.getCreateUserId());
             warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
             warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
+            warehouseReceiveDetailEntity.setSourceDetailId(addDTO.getSourceDetailId());
 
           /*  Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
