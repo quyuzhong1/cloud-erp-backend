@@ -619,7 +619,6 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * 采购数量/订单数量[可排序]
          */
-        @NotNull(message = "采购数量不能为空")
         private Integer purchaseQty;
         /**
          * 未交货数量/待交货量
