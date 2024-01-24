@@ -19,15 +19,6 @@ import java.util.List;
 public interface PoReconciliationDetailService extends SuperService<PoReconciliationDetailEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-01-19
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(PoReconciliationDetailDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-01-19

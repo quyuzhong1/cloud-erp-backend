@@ -11,10 +11,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -99,6 +96,11 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 确认日期【可排序】
          */
         private LocalDate confirmDate;
+
+        /**
+         * SKUId【可排序】
+         */
+        private String skuId;
 
         /**
          * SKU【可排序】
@@ -239,6 +241,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
         * 送货数量
         */
         private Integer deliveryQty;
@@ -279,14 +286,29 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String settleDict;
 
         /**
+         * 结算方式名称
+         */
+        private String settleDictName;
+
+        /**
         * 付款条件
         */
         private String paymentCondition;
 
         /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
         * 业务状态
         */
         private String businessStatus;
+
+        /**
+         * 业务状态名称
+         */
+        private String businessStatusName;
 
         /**
         * 供方备注
@@ -343,8 +365,27 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 供方备注
          */
         private String supplierRemark;
-
     }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ScmUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 采方备注
+         */
+        private String purchaseRemark;
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -527,6 +568,34 @@ public class PoReconciliationDetailDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class GeneratePoReconciliationDTO {
+
+        /**
+         * 选择明细id集合
+         */
+        @NotEmpty(message = "选择明细id集合不能未空")
+        private List<String> detailIdList;
+
+        /**
+         * 对账账单类型，/srm/dict/drop/down?type=poReconciliationGenerateType
+         */
+        @NotBlank(message = "对账单账单不能为空")
+        private String generateType;
+
+        /**
+         * 对账周期
+         */
+        private List<LocalDate> reconciliationDateList;
+
+        /**
+         * 对账单id
+         */
+        private String id;
+    }
+
 
 
 }

@@ -31,4 +31,14 @@ public enum ConfirmStatusEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+    public static String getNameByCode(String code) {
+        ConfirmStatusEnum[] stateEnums = values();
+        for (ConfirmStatusEnum stateEnum : stateEnums) {
+            if (stateEnum.getCode().equals(code) ) {
+                return stateEnum.getName();
+            }
+        }
+        return "";
+    }
 }
