@@ -8,6 +8,8 @@ import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
 import com.sdk.tms.baohong.api.order.GetShippingMethodListResponse;
+import com.sdk.tms.baohong.api.order.SmRow;
+import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,8 +54,7 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
             ThirdWarehouseContext.setAuthMap(authObjMap);
 
 //            GetShippingMethodListResponse response = baoHongService.authorization("");
-            GetShippingMethodListResponse response = null;
-
+            BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
             return "1".equals(response.getAsk()) ? success("授权成功") : failure("授权失败:" + response.getMessage());
         } catch (Exception e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
