@@ -754,6 +754,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setSettleOrgId(entity.getReturnOrgId());
             addDTO.setSettleOrgName(entity.getReturnOrgName());
             addDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
             addList.add(addDTO);
         }
         srmPoReconciliationFeign.add(addList);

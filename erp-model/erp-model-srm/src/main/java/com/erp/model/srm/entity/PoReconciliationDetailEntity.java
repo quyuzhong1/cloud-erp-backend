@@ -168,6 +168,13 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("is_add_account")
     private Boolean isAddAccount;
 
+    /**
+     * 退货来源类型
+     */
+    @TableField("return_source_type")
+    private Boolean returnSourceType;
+
+
 
     public static final String SUPPLIER_ID = "supplier_id";
 

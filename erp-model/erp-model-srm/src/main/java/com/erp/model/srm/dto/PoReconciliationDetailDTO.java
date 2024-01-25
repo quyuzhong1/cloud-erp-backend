@@ -73,6 +73,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 退货类型【可排序】
+         */
+        private String returnSourceType;
+
+        /**
          * 单据类型名称
          */
         private String sourceTypeName;
@@ -567,6 +572,10 @@ public class PoReconciliationDetailDTO implements Serializable {
         @Size(max = 32,message = "币别最大长度不能超过32位")
         private String currency;
 
+        /**
+         * 退货来源
+         */
+        private String returnSourceType;
     }
 
     @Data
