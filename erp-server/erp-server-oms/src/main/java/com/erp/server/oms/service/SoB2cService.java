@@ -11,10 +11,11 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -643,4 +644,32 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-20 15:47
      */
     BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
+
+    /**
+     * 根据物流商查询待中转的订单
+     * @Author Luo_WG
+     * @Date 2024/1/25 18:53
+     * @param deliveryLogisticsSupplierId 物流服务商id
+     * @return
+     **/
+    List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId);
+
+    /**
+     * 根据报关设置生成报关单信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     **/
+    List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(TransferDeclareGenerationSettingDTO.ViewDTO dto);
+
+    /**
+     * 更改订单的中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
+     * @param soIds 订单id
+     * @param status 中转状态
+     * @return java.lang.Boolean
+     **/
+    Boolean updateTransferStatusBatch(List<String> soIds, String status);
 }

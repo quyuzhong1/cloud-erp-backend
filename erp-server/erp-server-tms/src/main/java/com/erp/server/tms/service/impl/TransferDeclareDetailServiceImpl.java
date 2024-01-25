@@ -6,10 +6,12 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.LogisticsChannelService;
@@ -43,6 +45,8 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     private CommonService commonService;
     @Autowired
     private LogisticsChannelService logisticsChannelService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -60,6 +64,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
         }
+
+        //更新订单中转状态
+        List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
     }
 
     /**

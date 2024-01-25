@@ -139,11 +139,6 @@ public class TransferDeclareDetailDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
-        * 物流渠道中文
-        */
-        private String logisticsChannelName;
-
-        /**
         * 物流跟踪号
         */
         private String trackNo;

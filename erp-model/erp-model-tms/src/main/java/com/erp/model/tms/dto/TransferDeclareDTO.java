@@ -140,11 +140,6 @@ public class TransferDeclareDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 预计中转日期
-        */
-        private LocalDate planTransferDate;
-
-        /**
         * 发货物流商id
         */
         @NotBlank(message = "发货物流商id不能为空")

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -104,4 +105,13 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList")List<String> soIdList);
 
     List<SoB2cEntity> listWarehouseIsEmpty(@Param("idList") List<String> soIdList);
+
+    /**
+     * 根据渠道id查询需要生成中转报关单的数据
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:11
+     * @param channelIds
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.AddDTO>
+     **/
+    List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(@Param("channelIds") List<String> channelIds);
 }

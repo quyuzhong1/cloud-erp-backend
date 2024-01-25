@@ -5,13 +5,13 @@ import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -429,4 +429,28 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateTransferStatus(dto);
     }
 
+    /**
+     * 根据报关设置生成报关单信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     **/
+    @PostMapping("/generateTransferDeclareView")
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated TransferDeclareGenerationSettingDTO.ViewDTO dto) {
+        return soB2cService.generateTransferDeclareView(dto);
+    }
+
+    /**
+     * 更改订单的中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
+     * @param soIds 订单id
+     * @param status 中转状态
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateTransferStatusBatch")
+    public Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status) {
+        return soB2cService.updateTransferStatusBatch(soIds, status);
+    }
 }

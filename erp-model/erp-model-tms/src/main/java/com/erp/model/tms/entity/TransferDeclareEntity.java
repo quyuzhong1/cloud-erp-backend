@@ -81,11 +81,6 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     */
     @TableField("package_total_weight")
     private BigDecimal packageTotalWeight;
-    /**
-    * 包裹重量单位
-    */
-    @TableField("weight_unit")
-    private String weightUnit;
 
 
     public static final String CODE = "code";
@@ -109,8 +104,6 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     public static final String PACKAGE_TOTAL_QTY = "package_total_qty";
 
     public static final String PACKAGE_TOTAL_WEIGHT = "package_total_weight";
-
-    public static final String WEIGHT_UNIT = "weight_unit";
 
     @Override
     public Serializable pkVal() {

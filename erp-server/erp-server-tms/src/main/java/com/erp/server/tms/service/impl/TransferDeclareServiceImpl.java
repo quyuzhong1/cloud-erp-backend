@@ -30,6 +30,7 @@ import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -76,6 +77,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
     @Autowired
     private TransferLogisticsChannelService transferLogisticsChannelService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -287,8 +290,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void declareAutoGenerationJob() {
         LocalTime localTime = LocalTime.now();
-        // 查询启动日期
-
         //报关设置信息
         List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView = transferDeclareGenerationSettingService.forcastSettingView();
 
@@ -300,14 +301,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
                 continue;
             }
+
             //如果当前时间等于生效时间，根据报关设置生成报关单
-
             TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
-
-
+            List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
+            for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
+                this.add(addDTO);
+            }
         }
-
-
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

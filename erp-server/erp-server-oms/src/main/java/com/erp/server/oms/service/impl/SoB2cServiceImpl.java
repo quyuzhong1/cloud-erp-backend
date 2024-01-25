@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -4586,6 +4585,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .update();
     }
 
+    @Override
+    public List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId) {
+        List<BaseIdDTO.CodeDTO> codeDTOS = logisticsFeign.listBySupplierId(deliveryLogisticsSupplierId);
+        List<String> channelIds = codeDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailDTO.AddDTO> addDTOList = baseMapper.listByLogisticsSupplier(channelIds);
+        return addDTOList;
+    }
+
+    @Override
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(TransferDeclareGenerationSettingDTO.ViewDTO viewDTO) {
+        List<TransferDeclareDTO.AddDTO> tdAddList = new ArrayList<>();
+        List<String> deliveryLogisticsSupplierIdList = viewDTO.getDeliveryLogisticsSupplierIdList();
+        for (String deliveryLogisticsSupplierId : deliveryLogisticsSupplierIdList) {
+            TransferDeclareDTO.AddDTO tdAdd = new TransferDeclareDTO.AddDTO();
+            tdAdd.setDeliveryLogisticsSupplierId(deliveryLogisticsSupplierId);
+            tdAdd.setTransferLogisticsSupplierId(viewDTO.getTransferLogisticsSupplierId());
+            tdAdd.setTransferChannelId(viewDTO.getTransferChannelId());
+            List<TransferDeclareDetailDTO.AddDTO> detailList = this.listByLogisticsSupplier(deliveryLogisticsSupplierId);
+            tdAdd.setDetailList(detailList);
+            tdAddList.add(tdAdd);
+        }
+        return tdAddList;
+    }
+
+    @Override
+    public Boolean updateTransferStatusBatch(List<String> soIds, String status) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Boolean.FALSE;
+        }
+
+        return this.lambdaUpdate()
+                .set(SoB2cEntity::getTransferStatus, status)
+                .in(SoB2cEntity::getId, soIds)
+                .update(new SoB2cEntity());
+    }
 
     /**
      * 查询店铺权限设置
