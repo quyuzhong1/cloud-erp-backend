@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -201,6 +202,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -2368,6 +2370,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         params.setPermissionSql(pagingDTO.getPermissionSql());
 
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -2411,10 +2414,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
-                if (obj.getDeliveryCycle() <= 0){
+                if (obj.getDeliveryCycle() < 0){
                     obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
                     deliveryCycleFlag = true;
-                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 0){
+                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()>= 0){
                     obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
                     deliveryCycleFlag = true;
                 }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){

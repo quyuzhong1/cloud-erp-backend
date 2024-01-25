@@ -4,6 +4,7 @@ import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.SortParamDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -19,6 +20,7 @@ import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,6 +80,12 @@ public class WaitDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         dto.getParams().setSupplierId(userService.getSupplierId());
+        if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
+            SortParamDTO sortParamDTO = new SortParamDTO();
+            sortParamDTO.setField("pod.plan_delivery_date");
+            sortParamDTO.setSort(" ASC");
+            dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
+        }
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmWaitDeliveryPaging(dto);
         return success(pagingVO);
     }

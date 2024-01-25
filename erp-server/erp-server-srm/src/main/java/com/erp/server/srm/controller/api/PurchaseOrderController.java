@@ -3,6 +3,7 @@ package com.erp.server.srm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.SortParamDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -15,6 +16,7 @@ import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.OrderConfirmQueryHandler;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 采购订单管理
@@ -68,6 +71,12 @@ public class PurchaseOrderController extends BaseController {
     @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
         dto.getParams().setSupplierId(userService.getSupplierId());
+        if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
+            SortParamDTO sortParamDTO = new SortParamDTO();
+            sortParamDTO.setField("po.approve_time");
+            sortParamDTO.setSort("DESC");
+            dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
+        }
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmOrderConfirmPaging(dto);
         return success(pagingVO);
     }
