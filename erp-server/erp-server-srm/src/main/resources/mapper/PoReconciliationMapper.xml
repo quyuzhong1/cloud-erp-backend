@@ -40,6 +40,7 @@
         pr.start_date as startDate,
         pr.end_date as endDate,
         pr.settle_org_Name as settleOrgName,
+        pr.supplier_id as supplierId,
         pr.supplier_name as supplierName,
         pr.amount,
         pr.currency,

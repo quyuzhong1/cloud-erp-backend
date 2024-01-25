@@ -28,6 +28,7 @@ import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.CfgSettingDTO;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -42,6 +43,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
+import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -149,6 +151,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Autowired
     private SrmCfgSettingFeign srmCfgSettingFeign;
+
+    @Autowired
+    private SrmPoReconciliationFeign srmPoReconciliationFeign;
 
     @Value("${companyCode}")
     private String companyCode;
@@ -685,6 +690,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(poReturnEntityList);
+            //审核通过生成对账明细
+            autoAddPoReconciliationDetail(poReturnEntityList);
             // 更新库存信息
             updateInventoryTransCore(poReturnEntityList);
             //审核通过发送金蝶
@@ -701,6 +708,50 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 新增对账单
+     * @author Will
+     * @date: 2024/1/25 9:59
+     * @param poReturnEntityList
+     */
+    private void autoAddPoReconciliationDetail ( List<PoReturnEntity> poReturnEntityList) {
+        if (CollectionUtils.isEmpty(poReturnEntityList)) {
+            return;
+        }
+        List<String> ids = poReturnEntityList.stream().map(PoReturnEntity::getId).collect(Collectors.toList());
+        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(poReturnDetailList)) {
+            throw new ServiceException(ApiError.ERROR_99008);
+        }
+        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
+            PoReturnEntity entity = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), poReturnDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_99008);
+            }
+            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
+            addDTO.setPoId(entity.getPurchaseOrderId());
+            addDTO.setPoCode(entity.getPurchaseOrderCode());
+            addDTO.setSupplierId(entity.getSupplierId());
+            addDTO.setSupplierName(entity.getSupplierName());
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setSourceDetailId(poReturnDetailEntity.getId());
+            addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+            addDTO.setBusinessStatus(entity.getConfirmStatus());
+            addDTO.setConfirmDate(entity.getConfirmDate());
+            addDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            addDTO.setReceiveQty(poReturnDetailEntity.getReturnQty() * -1);
+            addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());
+            addDTO.setTaxAmount(MathUtil.multiply(addDTO.getTaxPrice(),addDTO.getReceiveQty()));
+            addDTO.setSettleOrgId(entity.getReturnOrgId());
+            addDTO.setSettleOrgName(entity.getReturnOrgName());
+            addDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            addList.add(addDTO);
+        }
+        srmPoReconciliationFeign.add(addList);
     }
 
     /**

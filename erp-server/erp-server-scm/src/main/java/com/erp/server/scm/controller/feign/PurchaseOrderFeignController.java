@@ -95,6 +95,18 @@ public class PurchaseOrderFeignController {
         return purchaseOrderSupplierService.getByPurchaseOrderId(id);
     }
 
+    /**
+     * @description: 根据采购订单id集合查询供应商
+     * @author Will
+     * @date: 2024/1/25 10:15
+     * @param idList
+     * @return List<PurchaseOrderSupplierEntity>
+     */
+    @PostMapping("/listOrderSupplierByOrderIdList")
+    public List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(@RequestBody List<String> idList) {
+        return purchaseOrderSupplierService.listOrderSupplierByOrderIdList(idList);
+    }
+
 
     /**
      * 根据采购订单id 获取供应商仓库信息

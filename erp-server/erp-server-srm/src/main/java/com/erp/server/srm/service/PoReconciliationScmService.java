@@ -114,4 +114,12 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return List<TabListDTO>
      */
     List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * @description: 导出对账单
+     * @author Will
+     * @date: 2024/1/25 10:45
+     * @param dto
+     * @param response
+     */
+    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
 }
