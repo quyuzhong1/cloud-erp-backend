@@ -1,10 +1,13 @@
 package com.erp.server.srm.query;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.PoReconciliationService;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,17 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+
+        //查询待对账明细
+        if("sourceType".equals(field)){
+            if (SourceTypeEnum.DELIVERY_ORDER.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.DELIVERY_ORDER.getCode());
+            }
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.PO_RETURN.getCode());
+                super.buildDefaultDTO("prd.return_source_type", value);
+            }
+        }
 
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){
