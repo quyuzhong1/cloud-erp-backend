@@ -16,20 +16,13 @@ import javax.annotation.Resource;
  * @date 2024年01月08日 9:54
  */
 @Component
-public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
+public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private PoReconciliationService poReconciliationService;
 
-    @Resource
-    private CommonService commonService;
-
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-
-        SupplierEntity supplierEntity = commonService.getSupplierEntity();
-        //默认查询当前登录人的绑定的供应商数据
-        super.buildDefaultDTO("pr.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
 
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){

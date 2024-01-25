@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -1329,6 +1330,42 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         return this.lambdaQuery().eq(SupplierEntity::getPurchaseUserId, purchaseUserId)
                 .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).list();
+    }
+
+    @Override
+    public List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SupplierDTO.SupplierDefaultDTO> list = new ArrayList<>();
+
+        List<SupplierEntity> supplierList = this.listByIds(supplierIdList);
+        if (CollectionUtils.isEmpty(supplierList)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //联系人
+        List<SupplierContactEntity> supplierContractList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+
+        //账号
+        List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listBySupplierIdList(supplierIdList);
+
+        for (SupplierEntity supplierEntity : supplierList) {
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = new SupplierDTO.SupplierDefaultDTO();
+            supplierDefaultDTO.setSupplierId(supplierEntity.getId());
+            supplierDefaultDTO.setSupplierEntity(supplierEntity);
+            //联系人
+            if (CollectionUtils.isNotEmpty(supplierContractList)) {
+                SupplierContactEntity supplierContactEntity = supplierContractList.stream().filter(obj -> StrUtil.equals(supplierEntity.getId(), obj.getSupplierId())).findFirst().orElse(null);
+                supplierDefaultDTO.setSupplierContactEntity(supplierContactEntity);
+            }
+            //账号
+            if (CollectionUtils.isNotEmpty(supplierAccountList)) {
+                SupplierAccountEntity accountEntity = supplierAccountList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                supplierDefaultDTO.setAccountEntity(accountEntity);
+            }
+            list.add(supplierDefaultDTO);
+        }
+        return list;
     }
 
     private void getRejectCount(List<SupplierTabCountDTO> dtos) {

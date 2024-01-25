@@ -8,6 +8,9 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -779,6 +782,31 @@ public class SupplierDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierDefaultDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商信息
+         */
+        private SupplierEntity supplierEntity;
+
+        /**
+         * 联系人信息
+         */
+        private SupplierContactEntity supplierContactEntity;
+
+        /**
+         * 账户信息
+         */
+        private SupplierAccountEntity accountEntity;
     }
 
 }

@@ -19,6 +19,7 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
+import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "wms:poReconciliation:scm:paging",
             tableAlias = "pr"
     )
-    @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
+    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
     public ApiResult<PagingVO<PoReconciliationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
         return success(poReconciliationScmService.paging(dto));
     }
@@ -145,7 +146,7 @@ public class PoReconciliationScmController extends BaseController {
             tableAlias = "pr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
-    @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
+    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
     public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         poReconciliationScmService.exportList(dto, response);
     }

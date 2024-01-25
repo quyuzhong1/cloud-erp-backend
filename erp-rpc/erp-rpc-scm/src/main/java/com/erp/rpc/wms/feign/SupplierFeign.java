@@ -62,4 +62,14 @@ public interface SupplierFeign {
 
     @GetMapping("/feign/supplier/getSupplierById")
     SupplierEntity getSupplierById(@RequestParam("id") String id);
+
+    /**
+     * @description: 根据供应商id集合查询默认数据
+     * @author Will
+     * @date: 2024/1/24 18:36
+     * @param supplierIdList
+     * @return List<SupplierDefaultDTO>
+     */
+    @PostMapping("/feign/supplier/listDefaultBySupplierIdList")
+    List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(@RequestBody List<String> supplierIdList);
 }

@@ -20,7 +20,11 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -35,6 +39,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -79,6 +84,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     @Autowired
     private SysDictFeign sysDictFeign;
 
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -197,9 +204,46 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         return resultList;
     }
 
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/1/24 18:08
+     * @param list
+     * @return List<ExportDTO>
+     */
+    private PoReconciliationDetailDTO.ExportDTO fillExportList(List<PoReconciliationDetailDTO.ListDTO> list) {
+        //数据处理
+        fillList(list);
+        PoReconciliationDetailDTO.ExportDTO exportDTO = new PoReconciliationDetailDTO.ExportDTO();
+        List<String> supplierIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultList = supplierFeign.listDefaultBySupplierIdList(supplierIdList);
+        //供应商
+        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
+        SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
+        if (ObjectUtils.isNotEmpty(supplierEntity)) {
+            exportDTO.setSupplierName(supplierEntity.getName());
+        }
+
+        //联系人
+        SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
+        if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
+            exportDTO.setContactName(supplierContactEntity.getPerson());
+            exportDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+        }
+        //账号信息
+        SupplierAccountEntity accountEntity = supplierDefaultDTO.getAccountEntity();
+        if (ObjectUtils.isNotEmpty(accountEntity)) {
+            exportDTO.setBankName(accountEntity.getBankName());
+            exportDTO.setPayee(accountEntity.getPayee());
+            exportDTO.setBankSubbranch(accountEntity.getBankSubbranch());
+            exportDTO.setBankAccount(accountEntity.getBankAccount());
+        }
+        return exportDTO;
+    }
+
 
     /**
-     * 分页查询、导出 数据处理
+     * 分页查询、 数据处理
      */
     private void fillList(List<PoReconciliationDetailDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
