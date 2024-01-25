@@ -87,4 +87,19 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
 
      */
     void fillList(List<PoReconciliationDetailDTO.ListDTO> list);
+    /**
+     * @description: 根据来源明细id集合查询
+     * @author Will
+     * @date: 2024/1/25 16:58
+     * @param sourceDetailIdList
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(List<String> sourceDetailIdList);
+    /**
+     * @description: 根据来源明细id集合删除
+     * @author Will
+     * @date: 2024/1/25 17:02
+     * @param sourceDetailIdList
+     */
+    void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList);
 }
