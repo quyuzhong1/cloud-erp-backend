@@ -601,7 +601,7 @@ public enum ApiError implements Serializable {
     ERROR_USER_NOT_REL_SUPPLIER(98102,"用户未关联供应商"),
     ERROR_USER_NOT_REL_OTHER_SUPPLIER(98051,"只能导入当前供应商用户"),
     ERROR_EMPTY_SUPPLIER(98052,"供应商名称不能为空"),
-    ERROR__SUPPLIER_UN_APPROVE(98053,"供应商未审核"),
+    ERROR_SUPPLIER_UN_APPROVE(98053,"供应商未审核"),
     ERROR_SUPPLIER_DISABLE(98054,"供应商未启用"),
     ERROR_SUPPLIER_SRM_DISABLE(98055,"供应商未协同"),
 

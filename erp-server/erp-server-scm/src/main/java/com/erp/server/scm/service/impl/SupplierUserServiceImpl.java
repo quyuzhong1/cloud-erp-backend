@@ -343,7 +343,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             //供应商状态判断
             if(Objects.isNull(supplierEntity.getDisabled()) ||  supplierEntity.getDisabled()){
-                errorMsgList.add(ApiError.ERROR__SUPPLIER_UN_APPROVE.msg);
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.msg);
                 return errorMsgList;
             }
             if(Objects.isNull(supplierEntity.getApproveStatus()) ||  !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
