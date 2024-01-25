@@ -71,11 +71,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     @Transactional(rollbackFor = Exception.class)
     public void handlerCreateReportTask(String groupId, List<ShopInfoEntity> shopList, Integer size, OffsetDateTime currentDateTime, List<AmzReportScheduleEntity> scheduleEntityList, Map<String, List<CfgAmzReportTypeEntity>> reportTypeConfigMap, Map<String, CfgAmzReportTypeEntity> reportTypeMap) {
         List<String> shopIds = shopList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(scheduleEntityList)) {
-            log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
-            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
-            return;
-        }
+
         // 过滤获取当前店铺执行的任务
         List<AmzReportScheduleEntity> currentScheduleEntityList = scheduleEntityList.stream().filter(e -> shopIds.contains(e.getShopId())).collect(Collectors.toList());
         if (CollectionUtil.isEmpty(currentScheduleEntityList)) {

@@ -175,6 +175,14 @@ public class PullAmzReportJob {
         Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
         Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
 
+        List<AmzReportScheduleEntity> scheduleEntityList = tuple.get(2);
+        if (CollectionUtil.isEmpty(scheduleEntityList)) {
+            List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+            log.info("[创建【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
+            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
+            return ReturnT.SUCCESS;
+        }
+
         // 当前时间
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -224,6 +232,14 @@ public class PullAmzReportJob {
         // 任务基础参数
         Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
         Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
+
+        List<AmzReportScheduleEntity> scheduleEntityList = tuple.get(2);
+        if (CollectionUtil.isEmpty(scheduleEntityList)) {
+            List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+            log.info("[检查最新【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
+            XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的店铺报告计划={}", JSONUtil.toJsonStr(shopIds));
+            return ReturnT.SUCCESS;
+        }
 
         XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  开始,预计分组线程数量={}", taskGroupMap.size());
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);

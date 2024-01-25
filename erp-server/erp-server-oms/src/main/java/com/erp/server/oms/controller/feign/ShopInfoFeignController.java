@@ -127,7 +127,7 @@ public class ShopInfoFeignController extends BaseController {
     /**
      * 查询指定或所有店铺
      */
-    @PostMapping("feign/shop/listByParams")
+    @PostMapping("/listByParams")
     public List<ShopInfoEntity> listByParams(@RequestBody ShopInfoDTO.ListParamDTO dto){
         return shopInfoService.listByParams(dto);
     }
