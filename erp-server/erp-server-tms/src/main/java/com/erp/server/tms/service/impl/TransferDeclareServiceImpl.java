@@ -281,6 +281,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean upload(List<String> ids) {
+        //上传单据到保宏
+        return null;
+    }
+
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         if (ObjectUtil.isEmpty(data)) {
             return;
@@ -337,8 +343,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             listDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(listDTO.getOutstockStatus()));
             //中转状态中文
             listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
-            //上传状态中文
-            listDTO.setUploadStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadStatus()));
+            //上传状态（批次）中文
+            listDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadBatchStatus()));
+            //上传状态（订单）中文
+            listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
         }
     }
 

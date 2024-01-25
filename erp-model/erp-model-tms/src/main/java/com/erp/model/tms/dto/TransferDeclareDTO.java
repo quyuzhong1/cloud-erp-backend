@@ -217,6 +217,11 @@ public class TransferDeclareDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 详情表id（用于导出excel）
+         */
+        private List<String> detailIdList;
+
+        /**
          * tabFlag
          * 来源：/tms/drop/down/dict/list/key=TransferDeclareTabFlag
          */
@@ -301,13 +306,13 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String planTransferDate;
         /**
-         * 上传状态
+         * 上传状态(批次)
          */
-        private String uploadStatus;
+        private String uploadBatchStatus;
         /**
-         * 上传状态中文
+         * 上传状态（批次）中文
          */
-        private String uploadStatusName;
+        private String uploadBatchStatusName;
         /**
          * 发货物流商中文
          */
@@ -323,11 +328,11 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 包裹总数量
          */
-        private String packageQtyTotal;
+        private String packageTotalQty;
         /**
          * 包裹总重量
          */
-        private String packageWeightTotal;
+        private String packageTotalWeight;
         /**
          * 重量单位
          */
@@ -344,6 +349,14 @@ public class TransferDeclareDTO implements Serializable {
          * 物流跟踪号
          */
         private String trackingNo;
+        /**
+         * 上传状态(订单)
+         */
+        private String uploadOrderStatus;
+        /**
+         * 上传状态(订单)中文
+         */
+        private String uploadOrderStatusName;
         /**
          * 出库状态
          */

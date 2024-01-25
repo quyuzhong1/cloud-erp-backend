@@ -47,21 +47,22 @@
             tdd.id AS detailId,
             td.code AS code,
             td.plan_transfer_date AS planTransferDate,
-            td.upload_status AS uploadStatus,
+            td.upload_status AS uploadBatchStatus,
             td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
             td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,
             td.transfer_channel_name AS transferChannelName,
-            td.package_qty_total AS packageQtyTotal,
-            td.package_weight_total AS packageWeightTotal,
+            td.package_total_qty AS packageTotalQty,
+            td.package_total_weight AS packageTotalWeight,
             td.weight_unit AS weight_Unit,
             tdd.so_code AS soCode,
+            tdd.upload_status AS uploadOrderStatus,
             tdd.logistics_channel_name AS logisticsChannelName,
             tdd.tracking_no AS trackingNo,
             tdd.outstock_status AS outstockStatus,
             tdd.transfer_status AS transferStatus,
             td.failure_reason AS failureReason,
             td.create_user_name AS createUserName,
-            td.create_time AS createTime,
+            td.create_time AS createTime
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
@@ -175,28 +176,36 @@
     <!--导出excel查询-->
     <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
         SELECT
-        td.id,
-        tdd.id AS detailId,
-        td.code AS code,
-        td.plan_transfer_date AS planTransferDate,
-        td.upload_status AS uploadStatus,
-        td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
-        td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,
-        td.transfer_channel_name AS transferChannelName,
-        td.package_qty_total AS packageQtyTotal,
-        td.package_weight_total AS packageWeightTotal,
-        td.weight_unit AS weight_Unit,
-        tdd.so_code AS soCode,
-        tdd.logistics_channel_name AS logisticsChannelName,
-        tdd.tracking_no AS trackingNo,
-        tdd.outstock_status AS outstockStatus,
-        tdd.transfer_status AS transferStatus,
-        td.failure_reason AS failureReason,
-        td.create_user_name AS createUserName,
-        td.create_time AS createTime,
+            td.id,
+            tdd.id AS detailId,
+            td.code AS code,
+            td.plan_transfer_date AS planTransferDate,
+            td.upload_status AS uploadBatchStatus,
+            td.delivery_logistics_supplier_name AS deliveryLogisticsSupplierName,
+            td.transfer_logistics_supplier_name AS transferLogisticsSupplierName,
+            td.transfer_channel_name AS transferChannelName,
+            td.package_total_qty AS packageTotalQty,
+            td.package_total_weight AS packageTotalWeight,
+            td.weight_unit AS weight_Unit,
+            tdd.so_code AS soCode,
+            tdd.upload_status AS uploadOrderStatus,
+            tdd.logistics_channel_name AS logisticsChannelName,
+            tdd.tracking_no AS trackingNo,
+            tdd.outstock_status AS outstockStatus,
+            tdd.transfer_status AS transferStatus,
+            td.failure_reason AS failureReason,
+            td.create_user_name AS createUserName,
+            td.create_time AS createTime
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
+        <!--详情id-->
+        <if test="params.detailIdList != null and params.detailIdList.size > 0">
+            and tdd.id in
+            <foreach collection="params.detailIdList" item="detailId" open="(" close=")" separator=",">
+                #{detailId}
+            </foreach>
+        </if>
         <!--单据编号-->
         <if test="params.code!=null and params.code!='' ">
             AND td.code ILIKE concat('%',#{params.code}::text,'%')

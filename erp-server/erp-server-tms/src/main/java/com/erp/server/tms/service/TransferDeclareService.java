@@ -137,4 +137,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return java.lang.Boolean
      **/
     Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 上传
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:55
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean upload(List<String> ids);
 }

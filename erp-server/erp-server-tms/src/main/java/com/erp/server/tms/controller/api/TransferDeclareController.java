@@ -210,7 +210,6 @@ public class TransferDeclareController extends BaseController {
         return flag ? success() : failure();
     }
 
-
     /**
      * 导出
      * @Author Luo_WG
@@ -228,6 +227,25 @@ public class TransferDeclareController extends BaseController {
     )
     public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = transferDeclareService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 上传
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/upload")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:TransferDeclareService:upload",
+            tableAlias = "td"
+    )
+    public ApiResult upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = transferDeclareService.upload(dto.getIds());
         return flag == true ? success() : failure();
     }
 }
