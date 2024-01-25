@@ -27,7 +27,7 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
 
-        //查询待对账明细
+        //单据类型
         if("sourceType".equals(field)){
             if (SourceTypeEnum.DELIVERY_ORDER.getCode().equals(value)) {
                 super.buildDefaultDTO("prd.source_type",SourceTypeEnum.DELIVERY_ORDER.getCode());

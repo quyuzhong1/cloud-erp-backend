@@ -172,7 +172,7 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
      * 退货来源类型
      */
     @TableField("return_source_type")
-    private Boolean returnSourceType;
+    private String returnSourceType;
 
 
 
