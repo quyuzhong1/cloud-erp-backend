@@ -68,10 +68,14 @@ public class SupplierUserController extends BaseController {
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());
         List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getParams().getSupplierId()));
-        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-            List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-            dto.getParams().setUserIds(userIds);
+        if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
+            return success(new PagingVO<>());
         }
+        List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(userIds)) {
+            return success(new PagingVO<>());
+        }
+        dto.getParams().setUserIds(userIds);
         return supplierUserFeign.page(dto);
     }
 
@@ -165,10 +169,14 @@ public class SupplierUserController extends BaseController {
         dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierId(userService.getSupplierId());
-        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(userService.getSupplierId()));
-        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-            dto.setUserIds(userIds);
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getSupplierId()));
+        if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
+            dto.setUserIds(Collections.singletonList("-1"));
+        }else {
+            List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(userIds)) {
+                dto.setUserIds(Collections.singletonList("-1"));
+            }
         }
         userService.exportSupplier(dto, response);
         return success();
