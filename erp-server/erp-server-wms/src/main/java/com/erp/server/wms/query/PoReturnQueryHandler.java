@@ -50,6 +50,8 @@ public class PoReturnQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("pro.confirm_status", PoReturnConfirmStatusEnum.WAIT_CONFIRM.getCode());
                 super.buildDefaultDTO("pro.unusual_handle_user_id", postIdStr);
             }
+
+            return super.getSplicingSQL();
         }
         return null;
     }

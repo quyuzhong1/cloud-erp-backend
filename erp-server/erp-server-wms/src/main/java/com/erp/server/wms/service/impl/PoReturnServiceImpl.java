@@ -165,9 +165,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> paging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        if (CollectionUtils.isNotEmpty(pagingParamDTO.getParams().getApproveStatusList())) {
-            pagingParamDTO.getParams().setInvalidStatus(Boolean.FALSE);
-        }
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         //明细数据
         List<PurchaseReturnOrderDTO.PagingViewDTO> records = pageData.getRecords();
