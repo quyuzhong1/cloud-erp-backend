@@ -32,8 +32,6 @@ public class SysUserInfoDTO implements Serializable {
     @Size(min = 1,max = 25,message = "用户名最大长度为25,最小长度为1")
     private String userName;
 
-    @NotBlank(message = "真实名不能为空")
-    @Size(min = 1,max = 25,message = "真实名最大长度为25,最小长度为1")
     private String realName;
 
     @Size(min = 3,max = 50, message = "邮箱最大50字符,最小长度为3")
