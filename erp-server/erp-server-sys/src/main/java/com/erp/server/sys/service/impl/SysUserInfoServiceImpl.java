@@ -308,7 +308,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
-
+        vo.setIsSupper(entity.getIsSuper());
         //判断是否是超级管理员登录
         SysUserDTO sysUserDTO = adminLogin(vo);
         if (sysUserDTO != null) {
