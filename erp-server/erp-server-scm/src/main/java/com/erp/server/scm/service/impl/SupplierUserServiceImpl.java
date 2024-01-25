@@ -16,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierRefUserDTO;
 import com.erp.model.scm.dto.excel.SupplierUserImportExcelDTO;
@@ -336,6 +337,10 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())){
             errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
             return errorMsgList;
+        }
+        List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
+        if (CollectionUtils.isNotEmpty(msgList)){
+            return msgList;
         }
         //供应商是否存在
         List<SupplierEntity> supplierEntityList = supplierService.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));

@@ -39,7 +39,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "手机号码", index = 2)
-    @FieldValid(fieldName = "手机号码",formatPattern = FieldFormatPatternTypeEnum.MOBILE)
+    @FieldValid(fieldName = "手机号码",formatPattern = FieldFormatPatternTypeEnum.MOBILE,maxLength = 20)
     private String mobile;
 
 
@@ -48,7 +48,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "邮箱", index = 3)
-    @FieldValid(fieldName = "邮箱",formatPattern = FieldFormatPatternTypeEnum.MAILBOX)
+    @FieldValid(fieldName = "邮箱",formatPattern = FieldFormatPatternTypeEnum.MAILBOX,maxLength = 30)
     private String email;
 
     /**
