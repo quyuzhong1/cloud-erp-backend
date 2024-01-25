@@ -69,14 +69,13 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
-        dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());
         List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getParams().getSupplierId()));
         if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
             return success(new PagingVO<>());
         }
-        List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+        List<String> userIds = supplierRefUserVOS.stream().filter(e-> e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(userIds)) {
             return success(new PagingVO<>());
         }
@@ -116,7 +115,6 @@ public class SupplierUserController extends BaseController {
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
             throw new ServiceException(ApiError.NO_PERMISSION);
         }
-        sysUserInfoDTO.setIsSuper(true);
         supplierUserFeign.updateSrm(sysUserInfoDTO);
         return success();
     }
