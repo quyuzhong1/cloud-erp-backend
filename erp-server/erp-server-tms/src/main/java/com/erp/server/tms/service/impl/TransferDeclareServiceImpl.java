@@ -283,7 +283,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public Boolean upload(List<String> ids) {
-        //上传单据到保宏
+        // TODO 上传单据到保宏
         return null;
     }
 
