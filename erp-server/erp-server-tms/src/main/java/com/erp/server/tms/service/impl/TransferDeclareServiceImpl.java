@@ -293,20 +293,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //报关设置信息
         List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView = transferDeclareGenerationSettingService.forcastSettingView();
 
-/*
         //截单设置信息
         List<TransferDeclareDeadlineSettingDTO.ViewDTO> deadlineSettingView = transferDeclareDeadlineSettingService.view();
-        for (TransferDeclareDeadlineSettingEntity transferDeclareDeadlineSettingEntity : declareDeadlineSettingEntityList) {
+        for (TransferDeclareDeadlineSettingDTO.ViewDTO deadlineSetting : deadlineSettingView) {
             //生效时间
-            LocalTime generateTime = transferDeclareDeadlineSettingEntity.getGenerateTime();
+            LocalTime generateTime = deadlineSetting.getGenerateTime();
             if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
                 continue;
             }
             //如果当前时间等于生效时间，根据报关设置生成报关单
 
-            generationSettingEntityList.stream().filter(req -> transferDeclareDeadlineSettingEntity.get.equals(req.get))
+            TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
 
-        }*/
+
+        }
+
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
