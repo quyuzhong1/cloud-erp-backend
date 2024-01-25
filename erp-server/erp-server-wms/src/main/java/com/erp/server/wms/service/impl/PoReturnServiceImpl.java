@@ -357,12 +357,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         poReturnEntity.setSupplierId(dto.getSupplierId());
         if (StringUtils.isNotBlank(dto.getSupplierId())) {
             SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
-            poReturnEntity.setSupplierName(supplierEntity.getName());
+            if(ObjectUtil.isNotEmpty(supplierEntity)) {
+                poReturnEntity.setSupplierName(supplierEntity.getName());
+            }
         }
         poReturnEntity.setSupplierContactId(dto.getSupplierContactId());
         if (StringUtils.isNotBlank(dto.getSupplierContactId())) {
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
-            poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
+            if (ObjectUtil.isNotEmpty(supplierContactById)) {
+                poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
+            }
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         poReturnEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
