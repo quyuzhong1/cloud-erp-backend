@@ -9,12 +9,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -33,29 +38,21 @@ import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsBillDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 物流单 服务实现类
@@ -194,24 +191,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<String> sourceIds = addDTOList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> billEntityList = this.listBySourceIds(sourceIds);
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
-            LogisticsBillEntity saveEntity = new LogisticsBillEntity();
-            BeanMapper.copy(addDTO, saveEntity);
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
-                saveEntity.setId(logisticsBillEntity.getId());
+                logisticsBillDetailService.removeByMainIds(Arrays.asList(logisticsBillEntity.getId()));
+                LogisticsBillDTO.UpdateDTO updateDTO = new LogisticsBillDTO.UpdateDTO();
+                BeanMapper.copy(addDTO, updateDTO);
+                updateDTO.setId(logisticsBillEntity.getId());
+                this.update(updateDTO);
+            } else {
+                this.add(addDTO);
             }
-            this.saveOrUpdate(saveEntity);
-            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
-            List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
-            List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
-            for (LogisticsBillDetailDTO.AddDTO dto : detailList) {
-                LogisticsBillDetailEntity saveDetailEntity = new LogisticsBillDetailEntity();
-                saveDetailEntity.setMainId(saveEntity.getId());
-                saveDetailEntity.setTrackNo(dto.getTrackNo());
-                saveDetailEntity.setTrackStatus(dto.getTrackStatus() == null ? "" : dto.getTrackStatus());
-                detailEntityList.add(saveDetailEntity);
-            }
-            logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
         }
         return Boolean.TRUE;
     }

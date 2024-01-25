@@ -1107,11 +1107,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate);
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode());
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate);
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode());
             }
 
 
@@ -1166,11 +1166,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate);
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode());
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate);
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode());
             }
         }
     }
@@ -1457,7 +1457,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate) {
+    public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate, String transferDirection){
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(shopEntity.getWarehouseId()));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1477,7 +1477,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //默认调出日期：当前日期
         addDTO.setBillDate(billDate);
         //默认调拨方向：普通
-        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        addDTO.setTransferDirection(transferDirection);
         //调入组织
         addDTO.setInOrgId(inWarehouse.getOrgId());
         //调出组织
@@ -1621,8 +1621,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate){
-        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate);
+    public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection){
+        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection);
         if (StringUtils.isNotBlank(transferOutId)) {
             //提交
             transferInfoService.submit(Arrays.asList(transferOutId));
