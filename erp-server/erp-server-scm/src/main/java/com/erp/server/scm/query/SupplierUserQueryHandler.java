@@ -1,5 +1,7 @@
 package com.erp.server.scm.query;
 
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.vo.SupplierRefUserVO;
 import com.erp.server.scm.service.CommonService;
@@ -29,7 +31,12 @@ public class SupplierUserQueryHandler extends AbstractQueryHandler {
             if(value instanceof String){
                 ids.add((String) value);
             }else if (value instanceof List){
-                ids.addAll((List<String>)value);
+                for (String s : (List<String>) value) {
+                    String[] split = s.split(",");
+                    for (String p :split) {
+                        ids.add(p);
+                    }
+                }
             }
             if (CollectionUtils.isEmpty(ids)){
                 return this.getQueryEmptySql();
@@ -39,7 +46,11 @@ public class SupplierUserQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(userIds)){
-                    super.buildDefaultDTO("sui.uid", userIds);
+                    if (compareCodeSplicingValueSql.startsWith("not in") || compareCodeSplicingValueSql.startsWith("!=")){
+                        super.buildSplicingSQLDTO("sui.uid", QueryConditionEnum.NOT_IN_LIST, userIds, QueryDataTypeEnum.STRING);
+                    }else {
+                        super.buildDefaultDTO("sui.uid", userIds);
+                    }
                 }else {
                     return this.getQueryEmptySql();
                 }

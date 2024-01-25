@@ -104,6 +104,6 @@ public interface SupplierUserFeign {
      * @param uids
      * @return
      */
-    @PostMapping("/feign/supplierUser/getSupplierRefByUids")
-    List<SupplierRefUserVO> getSupplierRefByUids(@RequestBody List<String> uids);
+    @PostMapping("/feign/supplierUser/getSupplierRefBySupplierIds")
+    List<SupplierRefUserVO> getSupplierRefBySupplierIds(@RequestBody List<String> uids);
 }

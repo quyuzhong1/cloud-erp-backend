@@ -23,4 +23,6 @@ public interface SupplierRefUserMapper extends BaseMapper<SupplierRefUserEntity>
     List<SupplierRefUserVO> getUserIdsBySupplierIds(@Param("supplierIds") List<String> supplierIds, @Param("isSuper") Boolean isSuper);
 
     List<SupplierRefUserVO> getSupplierRefByUids(@Param("uids") List<String> uids);
+
+    List<SupplierRefUserVO> getSupplierRefBySupplierIds(@Param("supplierIds") List<String> supplierIds);
 }

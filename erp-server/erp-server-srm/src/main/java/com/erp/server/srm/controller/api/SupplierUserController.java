@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -66,9 +67,9 @@ public class SupplierUserController extends BaseController {
         dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());
-        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getParams().getSupplierId()));
         if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
             dto.getParams().setUserIds(userIds);
         }
         return supplierUserFeign.page(dto);
@@ -164,7 +165,7 @@ public class SupplierUserController extends BaseController {
         dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierId(userService.getSupplierId());
-        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(userService.getSupplierId()));
         if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
             List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
             dto.setUserIds(userIds);

@@ -26,6 +26,10 @@ public class SupplierRefUserVO implements Serializable {
      */
     private String supplierId;
     /**
+     * 是否是管理员
+     */
+    private Boolean isSuper;
+    /**
      * 采购员名称
      */
     private String purchaseUserName;
