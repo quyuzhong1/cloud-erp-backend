@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalTime;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -50,7 +51,7 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
         /**
         * 生成时间
         */
-        private LocalDateTime generateTime;
+        private LocalTime generateTime;
 
 
     }
@@ -82,9 +83,9 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
         private LocalDateTime deadlineTime;
 
         /**
-        * 生成时间
+        * 生成时间（时：分）例如：12:30
         */
-        private LocalDateTime generateTime;
+        private LocalTime generateTime;
 
 
     }

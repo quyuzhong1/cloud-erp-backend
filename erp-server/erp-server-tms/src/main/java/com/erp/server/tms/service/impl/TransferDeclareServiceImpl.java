@@ -27,10 +27,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
-import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
@@ -57,6 +54,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -285,6 +283,30 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     public Boolean upload(List<String> ids) {
         // TODO 上传单据到保宏
         return null;
+    }
+
+    @Override
+    public void declareAutoGenerationJob() {
+        LocalTime localTime = LocalTime.now();
+        // 查询启动日期
+
+        //报关设置信息
+        List<TransferDeclareGenerationSettingDTO.ViewDTO> forcastSettingView = transferDeclareGenerationSettingService.forcastSettingView();
+
+/*
+        //截单设置信息
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> deadlineSettingView = transferDeclareDeadlineSettingService.view();
+        for (TransferDeclareDeadlineSettingEntity transferDeclareDeadlineSettingEntity : declareDeadlineSettingEntityList) {
+            //生效时间
+            LocalTime generateTime = transferDeclareDeadlineSettingEntity.getGenerateTime();
+            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
+                continue;
+            }
+            //如果当前时间等于生效时间，根据报关设置生成报关单
+
+            generationSettingEntityList.stream().filter(req -> transferDeclareDeadlineSettingEntity.get.equals(req.get))
+
+        }*/
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

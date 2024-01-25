@@ -75,6 +75,11 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     */
     @TableField("transfer_status")
     private String transferStatus;
+    /**
+     * 失败原因
+     */
+    @TableField("failure_reason")
+    private String failureReason;
 
 
     public static final String MAIN_ID = "main_id";

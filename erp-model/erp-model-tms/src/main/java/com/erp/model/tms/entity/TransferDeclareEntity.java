@@ -86,11 +86,6 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     */
     @TableField("weight_unit")
     private String weightUnit;
-    /**
-    * 失败原因
-    */
-    @TableField("failure_reason")
-    private String failureReason;
 
 
     public static final String CODE = "code";

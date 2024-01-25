@@ -5,6 +5,8 @@ import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -31,10 +33,10 @@ public class TransferDeclareDeadlineSettingEntity extends BaseEntity<TransferDec
     @TableField("deadline_time")
     private LocalDateTime deadlineTime;
     /**
-    * 生成时间
+    * 生成时间（时：分） 例：12:30
     */
     @TableField("generate_time")
-    private LocalDateTime generateTime;
+    private LocalTime generateTime;
 
 
     public static final String DEADLINE_TIME = "deadline_time";

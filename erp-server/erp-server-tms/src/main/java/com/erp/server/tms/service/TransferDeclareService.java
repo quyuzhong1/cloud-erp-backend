@@ -146,4 +146,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return java.lang.Boolean
      **/
     Boolean upload(List<String> ids);
+
+    /**
+     * 报关设置自动生成-定时器调用
+     * @Author Luo_WG
+     * @Date 2024/1/25 14:52
+     * @return void
+     **/
+    void declareAutoGenerationJob();
+
 }
