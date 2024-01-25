@@ -81,4 +81,16 @@ public class SupplierFeignController extends BaseController {
     public SupplierEntity getSupplierById(@RequestParam("id") String id) {
         return supplierService.getById(id);
     }
+
+    /**
+     * @description: 根据供应商id集合查询
+     * @author Will
+     * @date: 2024/1/24 18:38
+     * @param supplierIdList
+     * @return List<SupplierDefaultDTO>
+     */
+    @PostMapping("/listDefaultBySupplierIdList")
+    public List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(@RequestBody List<String> supplierIdList) {
+        return supplierService.listDefaultBySupplierIdList(supplierIdList);
+    }
 }

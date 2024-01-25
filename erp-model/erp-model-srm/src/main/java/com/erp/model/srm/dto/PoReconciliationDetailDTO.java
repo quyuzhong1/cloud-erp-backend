@@ -78,6 +78,12 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceTypeName;
 
         /**
+         * 供应商Id【可排序】
+         */
+        private String supplierId;
+
+
+        /**
          * 供应商名称【可排序】
          */
         private String supplierName;
@@ -181,6 +187,49 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 是否加入账单(是，否)
          */
         private String isAddAccountStr;
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  {
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 联系人
+         */
+        private String contactName;
+
+        /**
+         * 联系方式
+         */
+        private String contactTelNumber;
+
+        /**
+         * 收款银行
+         */
+        private String bankName;
+
+        /**
+         * 开户行
+         */
+        private String bankSubbranch;
+
+        /**
+         * 账户名称
+         */
+        private String payee;
+
+        /**
+         * 收款账号
+         */
+        private String bankAccount;
     }
 
     /**

@@ -318,4 +318,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     List<SupplierTabCountDTO> getTabCount();
 
     List<SupplierEntity> listByPurchaseUserId(String purchaseUserId);
+    /**
+     * @description: 根据供应商id集合查询
+     * @author Will
+     * @date: 2024/1/24 18:38
+     * @param supplierIdList
+     * @return List<SupplierDefaultDTO>
+     */
+    List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
 }

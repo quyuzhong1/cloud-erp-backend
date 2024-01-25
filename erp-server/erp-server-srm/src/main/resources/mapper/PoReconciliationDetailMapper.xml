@@ -44,6 +44,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         prd.id,
+        prd.supplier_id as supplierId,
         prd.supplier_name as supplierName,
         prd.main_id as mainId,
         prd.source_code as sourceCode,
