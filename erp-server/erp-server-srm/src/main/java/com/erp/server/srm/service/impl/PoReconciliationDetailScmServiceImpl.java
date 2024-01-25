@@ -332,10 +332,33 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             listDTO.setCurrencySymbol(currencySymbol);
-
+            listDTO.setUnitName("Pcs");
+            listDTO.setQty(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? listDTO.getReceiveQty() : listDTO.getDeliveryQty());
             //备注
-            listDTO.setRemark(StrUtil.format("{},{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
+            listDTO.setRemark(StrUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
         }
+    }
+
+    @Override
+    public List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(List<String> sourceDetailIdList) {
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).list();
+    }
+
+    @Override
+    public void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList) {
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = listDetailBySourceDetailIdList(sourceDetailIdList);
+        if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
+            return;
+        }
+        String codes = poReconciliationDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getMainId()))
+                .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_DELETE,codes);
+        }
+        lambdaUpdate().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).remove();
     }
 
     /**
