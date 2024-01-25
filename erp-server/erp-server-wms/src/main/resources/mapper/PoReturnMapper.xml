@@ -41,8 +41,8 @@
         pro.confirm_date
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE AND
-        ${params.sqlMap.default}
+        WHERE ${params.sqlMap.default}
+        pro.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -141,10 +141,9 @@
         pro.confirm_date
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE AND
-
+        WHERE
         ${params.sqlMap.default}
-
+        pro.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -256,9 +255,10 @@
             pro.source_type AS sourceType
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE
-        AND pro.approve_status = 'approve' AND
-        ${params.sqlMap.default}
+        WHERE ${params.sqlMap.default}
+        pro.is_deleted = FALSE
+        AND pro.approve_status = 'approve'
+
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
