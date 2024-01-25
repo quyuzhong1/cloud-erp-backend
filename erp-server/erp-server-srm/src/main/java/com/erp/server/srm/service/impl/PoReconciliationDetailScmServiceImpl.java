@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BooleanEnum;
@@ -18,13 +19,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -34,14 +34,17 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -87,24 +90,91 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     @Autowired
     private SupplierFeign supplierFeign;
 
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(PoReconciliationDetailDTO.AddDTO addDTO) {
-        PoReconciliationDetailEntity poReconciliationDetailEntity = new PoReconciliationDetailEntity();
-        BeanMapperUtils.copy(addDTO, poReconciliationDetailEntity);
+    public BaseResultDTO.AddDTO add(List<PoReconciliationDetailDTO.AddDTO> addList) {
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = BeanMapperUtils.copyList(PoReconciliationDetailEntity.class, addList);
 
-
+        //新增数据处理
+        handleAddData(poReconciliationDetailList);
+        
         log.info("开始新增采购对账单明细");
-        boolean save = super.save(poReconciliationDetailEntity);
+        boolean save = super.saveBatch(poReconciliationDetailList);
         if(!save) {
             throw new ServiceException("采购对账单明细保存失败");
         }
+        return new BaseResultDTO.AddDTO(poReconciliationDetailList.get(0).getId(), poReconciliationDetailList.get(0).getId());
+    }
+    
+    private void handleAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+        if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
+            return;
+        }
+        List<String> skuIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "采购对账单明细" , poReconciliationDetailEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationDetailEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(poReconciliationDetailEntity.getId(), poReconciliationDetailEntity.getId());
+        //采购供应商
+        List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).collect(Collectors.toList());
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = scmTaskFeign.listOrderSupplierByOrderIdList(poIdList);
+
+        //结算方式
+        List<String> payMethodIdList = purchaseOrderSupplierList.stream().map(PurchaseOrderSupplierEntity::getPayMethodId).collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(payMethodIdList);
+        //组织
+        List<String> orgIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSettleOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        //采购订单
+        List<String> poDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(poDetailIdList);
+
+        //价目表信息
+        List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
+        for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
+            //sku
+            String skuNo = productDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+            detailEntity.setSkuNo(skuNo);
+            //供应商
+            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPoId()))
+                    .findFirst().orElse(null);
+            detailEntity.setPaymentCondition(supplierEntity.getPaymentCondition());
+            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), supplierEntity.getPayMethodId()))
+                    .map(DictBasicEntity::getValue).findFirst().orElse("");
+            detailEntity.setSettleDict(settleDict);
+
+            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            detailEntity.setSettleOrgName(orgName);
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(detailEntity.getSourceType())) {
+                //报价信息单价
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
+                        StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
+                        && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
+                        && detailEntity.getReceiveQty() > obj.getMinQty()
+                        && obj.getMaxQty() >= detailEntity.getReceiveQty()
+                ).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
+                }
+                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+            } else {
+                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(poDetailEntity)) {
+                    detailEntity.setTaxPrice(poDetailEntity.getTaxPrice());
+                    detailEntity.setTaxRate(poDetailEntity.getTaxRate());
+                }
+                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getDeliveryQty()));
+            }
+        }
     }
 
     /**
@@ -157,6 +227,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         return this.updateBatchById(poReconciliationDetailList);
     }
 
+    @Override
+    public List<PoReconciliationDetailEntity> listMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(PoReconciliationDetailEntity::getMainId,mainIdList).list();
+    }
+
 
     @Override
     public PagingVO<PoReconciliationDetailDTO.ListDTO> paging(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> pagingParamDTO) {
@@ -204,48 +282,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         return resultList;
     }
 
-    /**
-     * @description: 导出
-     * @author Will
-     * @date: 2024/1/24 18:08
-     * @param list
-     * @return List<ExportDTO>
-     */
-    private PoReconciliationDetailDTO.ExportDTO fillExportList(List<PoReconciliationDetailDTO.ListDTO> list) {
-        //数据处理
-        fillList(list);
-        PoReconciliationDetailDTO.ExportDTO exportDTO = new PoReconciliationDetailDTO.ExportDTO();
-        List<String> supplierIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList());
-        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultList = supplierFeign.listDefaultBySupplierIdList(supplierIdList);
-        //供应商
-        SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
-        SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
-        if (ObjectUtils.isNotEmpty(supplierEntity)) {
-            exportDTO.setSupplierName(supplierEntity.getName());
-        }
 
-        //联系人
-        SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
-        if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
-            exportDTO.setContactName(supplierContactEntity.getPerson());
-            exportDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
-        }
-        //账号信息
-        SupplierAccountEntity accountEntity = supplierDefaultDTO.getAccountEntity();
-        if (ObjectUtils.isNotEmpty(accountEntity)) {
-            exportDTO.setBankName(accountEntity.getBankName());
-            exportDTO.setPayee(accountEntity.getPayee());
-            exportDTO.setBankSubbranch(accountEntity.getBankSubbranch());
-            exportDTO.setBankAccount(accountEntity.getBankAccount());
-        }
-        return exportDTO;
-    }
 
 
     /**
      * 分页查询、 数据处理
      */
-    private void fillList(List<PoReconciliationDetailDTO.ListDTO> list) {
+    @Override
+    public void fillList(List<PoReconciliationDetailDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -258,6 +302,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         //付款条件
         List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+
+        //币种信息
+        List<String> currencyIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
@@ -278,6 +326,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getValue(), listDTO.getPaymentCondition())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setPaymentConditionName(paymentConditionName);
+
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
+
+            //备注
+            listDTO.setRemark(StrUtil.format("{},{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
         }
     }
 

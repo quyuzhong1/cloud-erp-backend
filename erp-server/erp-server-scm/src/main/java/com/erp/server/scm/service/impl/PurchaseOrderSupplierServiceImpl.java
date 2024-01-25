@@ -171,6 +171,14 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
 
     }
 
+    @Override
+    public List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, idList).list();
+    }
+
     /**
      * 同步id对应名称
      */

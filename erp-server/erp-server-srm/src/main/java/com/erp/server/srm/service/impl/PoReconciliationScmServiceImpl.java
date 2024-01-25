@@ -27,6 +27,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.AttachmentDTO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -34,7 +38,10 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.*;
@@ -81,6 +88,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Autowired
     private PoReconciliationQueryHandler poReconciliationQueryHandler;
 
+    @Autowired
+    private SupplierFeign supplierFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -159,6 +171,64 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> supplierIdList = list.stream().map(PoReconciliationDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList());
+        //供应商信息
+        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultList = supplierFeign.listDefaultBySupplierIdList(supplierIdList);
+
+        //对账明细
+        List<String> mainIdList = list.stream().map(PoReconciliationDTO.ListDTO::getId).collect(Collectors.toList());
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(mainIdList);
+
+        for (PoReconciliationDTO.ListDTO listDTO : list) {
+            PoReconciliationDTO.ExportDTO exportDTO = new PoReconciliationDTO.ExportDTO();
+            //供应商
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
+            SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
+            if (ObjectUtils.isNotEmpty(supplierEntity)) {
+                exportDTO.setSupplierName(supplierEntity.getName());
+            }
+            //联系人
+            SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
+            if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
+                exportDTO.setContactName(supplierContactEntity.getPerson());
+                exportDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+            }
+            //账号信息
+            SupplierAccountEntity accountEntity = supplierDefaultDTO.getAccountEntity();
+            if (ObjectUtils.isNotEmpty(accountEntity)) {
+                exportDTO.setBankName(accountEntity.getBankName());
+                exportDTO.setPayee(accountEntity.getPayee());
+                exportDTO.setBankSubbranch(accountEntity.getBankSubbranch());
+                exportDTO.setBankAccount(accountEntity.getBankAccount());
+            }
+            //明细
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
+            List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
+            poReconciliationDetailScmService.fillList(detailDTOList);
+
+            // 导出数据
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/exportPoReconciliation.xlsx";
+            String name = "对账单导出";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date).append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list,exportDTO, response, sb.toString(), excelPath);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.ERROR_1015);
+            }
+        }
+    }
+
+    @Override
     public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if(CollUtil.isEmpty(list)) {
@@ -169,7 +239,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/poReconciliation.xlsx";
-        String name = "对账单导出";
+        String name = "对账单Excel导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
@@ -329,11 +399,20 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollUtil.isEmpty(list)) {
             return;
         }
+
+        //币种信息
+        List<String> currencyIdList = list.stream().map(PoReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         for (PoReconciliationDTO.ListDTO listDTO : list) {
             //业务状态
             listDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(listDTO.getStatus()));
             //对账周期
             listDTO.setCycle(StrUtil.format("{}-{}",LocalDateTimeUtil.format(listDTO.getStartDate(), DateTimeFormatter.ofPattern("yy.MM.dd")),LocalDateTimeUtil.format(listDTO.getEndDate(), DateTimeFormatter.ofPattern("yy.MM.dd"))));
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
         }
     }
 

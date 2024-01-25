@@ -108,6 +108,11 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationScmService.exportPoReconciliation(dto,response);
+    }
+
+    @Override
     public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         poReconciliationScmService.exportList(dto,response);
     }

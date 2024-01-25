@@ -24,9 +24,7 @@ public class PoReconciliationQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        SupplierEntity supplierEntity = commonService.getSupplierEntity();
-        //默认查询当前登录人的绑定的供应商数据
-        super.buildDefaultDTO("pr.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
+
 
         //选项卡
         if("tab".equals(field)){

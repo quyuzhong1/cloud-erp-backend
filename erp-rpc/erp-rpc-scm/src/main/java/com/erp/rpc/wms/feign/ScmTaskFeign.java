@@ -61,6 +61,16 @@ public interface ScmTaskFeign {
     PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id);
 
     /**
+     * @description: 根据采购订单id集合查询供应商
+     * @author Will
+     * @date: 2024/1/25 10:15
+     * @param idList
+     * @return List<PurchaseOrderSupplierEntity>
+     */
+    @PostMapping("feign/purchaseOrder/listOrderSupplierByOrderIdList")
+    List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(@RequestBody List<String> idList);
+
+    /**
      * 根据采购订单详情id查询详情信息
      * @Author Luo_WG
      * @Date 2023/4/13 11:20

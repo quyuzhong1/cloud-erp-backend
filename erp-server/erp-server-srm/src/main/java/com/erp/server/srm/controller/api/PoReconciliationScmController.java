@@ -151,7 +151,19 @@ public class PoReconciliationScmController extends BaseController {
         poReconciliationScmService.exportList(dto, response);
     }
 
-
+    /**
+     * 导出对账单
+     * @author Will
+     * @date: 2024/1/20 12:03
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPoReconciliation")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账单数据")
+    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
+    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationScmService.exportPoReconciliation(dto, response);
+    }
 
     /**
      * 采方确认

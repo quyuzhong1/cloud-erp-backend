@@ -777,6 +777,7 @@ public class PurchaseReturnOrderDTO {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
     }
 
     /**
