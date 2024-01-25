@@ -1,14 +1,12 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -65,7 +63,7 @@ public class TransferDeclareDetailDTO implements Serializable {
         /**
         * 物流跟踪号
         */
-        private String trackingNo;
+        private String trackNo;
 
         /**
         * 包裹重量
@@ -143,29 +141,21 @@ public class TransferDeclareDetailDTO implements Serializable {
         /**
         * 物流渠道中文
         */
-        @NotBlank(message = "物流渠道中文不能为空")
-        @Size(max = 255,message = "物流渠道中文最大长度不能超过255位")
         private String logisticsChannelName;
 
         /**
         * 物流跟踪号
         */
-        @NotBlank(message = "物流跟踪号不能为空")
-        @Size(max = 255,message = "物流跟踪号最大长度不能超过255位")
-        private String trackingNo;
+        private String trackNo;
 
         /**
         * 包裹重量
         */
-        @NotNull(message = "包裹重量不能为空")
-        @Digits(integer = 6, fraction = 4, message = "包裹重量整数位不能超过6位，小数位不能超过4位")
         private BigDecimal packageWeight;
 
         /**
         * 包裹重量单位
         */
-        @NotBlank(message = "包裹重量单位不能为空")
-        @Size(max = 10,message = "包裹重量单位最大长度不能超过10位")
         private String weightUnit;
 
     }

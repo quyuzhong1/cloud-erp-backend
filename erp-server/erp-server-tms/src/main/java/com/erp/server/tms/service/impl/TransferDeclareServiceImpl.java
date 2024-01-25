@@ -3,66 +3,47 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.MultipleOptionConstants;
-import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.validator.ValidList;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.enums.SoB2cTabEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.time.LocalTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.*;
 
 /**
  * <p>
@@ -89,6 +70,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferDeclareGenerationSettingService transferDeclareGenerationSettingService;
     @Autowired
     private TransferDeclareDeadlineSettingService transferDeclareDeadlineSettingService;
+    @Autowired
+    private LogisticsSupplierService logisticsSupplierService;
+    @Autowired
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
+    @Autowired
+    private TransferLogisticsChannelService transferLogisticsChannelService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -148,6 +135,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         TransferDeclareEntity transferDeclareEntity = new TransferDeclareEntity();
         BeanMapperUtils.copy(addDTO, transferDeclareEntity);
 
+        //包裹总重量
+        BigDecimal packageTotalWeight = addDTO.getDetailList().stream().map(req -> req.getPackageWeight()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        transferDeclareEntity.setPackageTotalWeight(packageTotalWeight);
+        //包裹总数量
+        transferDeclareEntity.setPackageTotalQty(addDTO.getDetailList().size());
+
         // 数据处理
         handleData(transferDeclareEntity);
 
@@ -178,6 +171,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         TransferDeclareEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转报关单"));
         TransferDeclareEntity transferDeclareEntity =  BeanMapperUtils.map(TransferDeclareEntity.class, updateDTO);
+
+        //包裹总重量
+        BigDecimal packageTotalWeight = updateDTO.getDetailList().stream().map(req -> req.getPackageWeight()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        transferDeclareEntity.setPackageTotalWeight(packageTotalWeight);
+        //包裹总数量
+        transferDeclareEntity.setPackageTotalQty(updateDTO.getDetailList().size());
 
         // 数据处理
         handleData(transferDeclareEntity);
@@ -308,6 +307,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
         }
 
+
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
@@ -377,6 +377,18 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
-    // TODO 验证数据 & 数据赋值
+        //发货物流商名称
+        LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
+        transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
+        //中转物流商名称
+        TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());
+        transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
+
+        //中转物流渠道名称
+        TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
+        transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
+
+
     }
 }

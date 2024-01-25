@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;

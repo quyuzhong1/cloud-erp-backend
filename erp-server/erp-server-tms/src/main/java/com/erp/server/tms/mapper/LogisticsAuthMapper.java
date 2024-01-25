@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -20,4 +22,6 @@ import org.apache.ibatis.annotations.Param;
 public interface LogisticsAuthMapper extends BaseMapper<LogisticsAuthEntity> {
 
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(@Param("channelId") String channelId);
+
+    List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@Param("channelIds") List<String> channelIds);
 }
