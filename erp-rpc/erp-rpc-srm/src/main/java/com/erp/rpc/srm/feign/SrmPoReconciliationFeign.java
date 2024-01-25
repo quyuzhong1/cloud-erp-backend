@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.CfgSettingEntity;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -31,4 +32,22 @@ public interface SrmPoReconciliationFeign {
     @PostMapping("/feign/poReconciliation/add")
     void add(@RequestBody @Validated List<PoReconciliationDetailDTO.AddDTO> addList);
 
+    /**
+     * @description: 根据来源明细id集合删除对账明细
+     * @author Will
+     * @date: 2024/1/25 17:17
+     * @param sourceDetailIdList
+     */
+    @PostMapping("/feign/poReconciliation/deleteDetailBySourceDetailIdList")
+    void deleteDetailBySourceDetailIdList(@RequestBody @Validated List<String> sourceDetailIdList);
+
+    /**
+     * @description: 根据来源明细id集合查询对账明细
+     * @author Will
+     * @date: 2024/1/25 17:17
+     * @param sourceDetailIdList
+     * @return List<PoReconciliationDetailEntity>
+     */
+    @PostMapping("/feign/poReconciliation/listDetailBySourceDetailIdList")
+    List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(@RequestBody @Validated List<String> sourceDetailIdList);
 }

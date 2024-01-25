@@ -795,6 +795,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
             }
         }
+        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(ids);
+        List<String> poReturnDetailIdList = poReturnDetailList.stream().map(PoReturnDetailEntity::getId).collect(Collectors.toList());
+        //对账单删除
+        srmPoReconciliationFeign.deleteDetailBySourceDetailIdList(poReturnDetailIdList);
+
         //TODO 待加审核流程
 
         //查询退货配置

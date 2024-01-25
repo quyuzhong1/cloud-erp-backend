@@ -29,17 +29,17 @@ public class PoReconciliationScmQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         //待供方确认
-        if(PoReconciliationEnum.TabFlagEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(value)){
+        if(PoReconciliationEnum.ScmTabFlagEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(value)){
             super.buildDefaultDTO("pr.status", PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode());
         }
         //待采方确认
-        if(PoReconciliationEnum.TabFlagEnum.TO_BE_CONFIRM.getCode().equals(value)){
+        if(PoReconciliationEnum.ScmTabFlagEnum.TO_BE_CONFIRM.getCode().equals(value)){
             super.buildDefaultDTO("pr.status", PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode());
         }
-        if(PoReconciliationEnum.TabFlagEnum.CONFIRM.getCode().equals(value)){
+        if(PoReconciliationEnum.ScmTabFlagEnum.CONFIRM.getCode().equals(value)){
             super.buildDefaultDTO("pr.status", PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode());
         }
-        if(PoReconciliationEnum.TabFlagEnum.RECEIVED.getCode().equals(value)){
+        if(PoReconciliationEnum.ScmTabFlagEnum.RECEIVED.getCode().equals(value)){
             super.buildDefaultDTO("pr.status", PoReconciliationEnum.PoReconciliationStatusEnum.RECEIVED.getCode());
         }
         return super.getSplicingSQL();

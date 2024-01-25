@@ -24,6 +24,7 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
+import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -71,6 +72,9 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Autowired
     private PoReconciliationScmService poReconciliationScmService;
 
+    @Autowired
+    private PoReconciliationQueryHandler poReconciliationQueryHandler;
+
     /**
     * 修改
     */
@@ -94,7 +98,23 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
 
     @Override
     public List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO param) {
-        return poReconciliationScmService.tabList(param);
+        PoReconciliationDTO.PagingParamDTO searchParam = new PoReconciliationDTO.PagingParamDTO();
+        PoReconciliationEnum.TabFlagEnum[] values =  PoReconciliationEnum.TabFlagEnum.values();
+        List<PoReconciliationDTO.TabListDTO> list = new ArrayList<>();
+        for (PoReconciliationEnum.TabFlagEnum item : values) {
+            searchParam.setPermissionSql(param.getPermissionSql());
+            PoReconciliationDTO.TabListDTO resultDTO = new PoReconciliationDTO.TabListDTO();
+            String tabSql = poReconciliationQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParam.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParam);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
@@ -124,7 +144,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //待供方确认
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CONFIRM);
         }
         log.info("开始供应商确认，id = {}",id);
@@ -134,7 +154,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
                 .set(PoReconciliationEntity::getSupplierConfirmDate, LocalDate.now())
                 .set(PoReconciliationEntity::getSupplierConfirmUserId, userInfo.getUid())
                 .set(PoReconciliationEntity::getSupplierConfirmUserName, userInfo.getUserName())
-                .update(new PoReconciliationEntity());
+                .update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -145,7 +165,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //待采方确认
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
         }
         log.info("开始取消确认，id = {}",id);
@@ -154,7 +174,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
                 .set(PoReconciliationEntity::getSupplierConfirmDate, null)
                 .set(PoReconciliationEntity::getSupplierConfirmUserId, "")
                 .set(PoReconciliationEntity::getSupplierConfirmUserName, "")
-                .update(new PoReconciliationEntity());
+                .update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 

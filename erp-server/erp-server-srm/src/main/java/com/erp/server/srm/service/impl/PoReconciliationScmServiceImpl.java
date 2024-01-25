@@ -45,6 +45,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
+import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +88,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     private PoReconciliationDetailScmService poReconciliationDetailScmService;
 
     @Autowired
-    private PoReconciliationQueryHandler poReconciliationQueryHandler;
+    private PoReconciliationScmQueryHandler poReconciliationScmQueryHandler;
 
     @Autowired
     private SupplierFeign supplierFeign;
@@ -153,12 +154,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Override
     public List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO param) {
         PoReconciliationDTO.PagingParamDTO searchParam = new PoReconciliationDTO.PagingParamDTO();
-        PoReconciliationEnum.TabFlagEnum[] values =  PoReconciliationEnum.TabFlagEnum.values();
+        PoReconciliationEnum.ScmTabFlagEnum[] values =  PoReconciliationEnum.ScmTabFlagEnum.values();
         List<PoReconciliationDTO.TabListDTO> list = new ArrayList<>();
-        for (PoReconciliationEnum.TabFlagEnum item : values) {
+        for (PoReconciliationEnum.ScmTabFlagEnum item : values) {
             searchParam.setPermissionSql(param.getPermissionSql());
             PoReconciliationDTO.TabListDTO resultDTO = new PoReconciliationDTO.TabListDTO();
-            String tabSql = poReconciliationQueryHandler.getTabSql(item.getCode());
+            String tabSql = poReconciliationScmQueryHandler.getTabSql(item.getCode());
             HashMap<String,String> map = new HashMap<>();
             map.put("default",tabSql);
             searchParam.setSqlMap(map);
@@ -268,7 +269,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //待供方确认
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
         }
         log.info("开始采购方确认，id = {}",id);
@@ -278,7 +279,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmDate, LocalDate.now())
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId, userInfo.getUid())
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
-                .update(new PoReconciliationEntity());
+                .update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -289,8 +290,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //待采方确认/确认已完结
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())
-                || PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())
+                && !PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_SCM_CANCEL_CONFIRM);
         }
         log.info("开始取消确认，id = {}",id);
@@ -302,7 +303,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmDate,null)
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId,"")
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName,"")
-                .update(new PoReconciliationEntity());
+                .update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 
