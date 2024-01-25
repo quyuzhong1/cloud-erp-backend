@@ -260,6 +260,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         soOutstock.setId(id);
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
+        soOutstock.setBillDate(LocalDate.now());
         //tob 保存数据修改
         handleSaveOrUpdateDbByB2b(soOutstock, soCustomer);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
@@ -314,8 +315,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99002);
         }
         soOutstock.setWarehouseName(warehouse.getName());
-        // 出库日期
-        soOutstock.setBillDate(LocalDate.now());
+
     }
 
 
@@ -1294,6 +1294,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String orderType = soOutstock.getOrderType();
         String b2c = OrderTypeEnum.B2C.getCode();
         Boolean isB2c = b2c.equals(orderType);
+        if(isB2c){
+           throw new ServiceException("B2C订单不允许修改出库单");
+        }
         List<SoDetailEntity> soDetailList = Collections.emptyList();
         if (!isB2c) {
             //销售订单详情集合
@@ -1315,7 +1318,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         BeanMapper.copy(soOutstock, old);
 
         String soId = dto.getSoId();
-        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+        SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
@@ -1363,29 +1366,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
         // 出库日期
         soOutstock.setBillDate(billDate);
-        soOutstock.setSoCode(soInfo.getCode());
-        soOutstock.setCustomerId(soInfo.getCustomerId());
-        soOutstock.setOrderType(soInfo.getOrderType());
-        soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
-        soOutstock.setWarehouseOrgName(soInfo.getWarehouseOrgName());
-        soOutstock.setSalesDeptId(soInfo.getSalesDeptId());
-
-        //仓库id
-        String warehouseId = dto.getWarehouseId();
-        //仓管员
-        String warehouseKeeperId = dto.getWarehouseKeeperId();
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
-            //用户信息
-            FindUserDTO userInfo = sysUserFeign.getUserByUserId(warehouseKeeperId);
-            if (userInfo != null) {
-                soOutstock.setWarehouseKeeperName(userInfo.getUserName());
-            }
-        }
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
-        if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        soOutstock.setWarehouseName(warehouse.getName());
+        handleSaveOrUpdateDbByB2b(soOutstock,soInfo);
         Boolean updateResult = this.updateById(soOutstock);
         if (updateResult) {
             /**
