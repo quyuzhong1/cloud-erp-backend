@@ -46,7 +46,7 @@ public class SupplierUserQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
                 List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(userIds)){
-                    if (compareCodeSplicingValueSql.startsWith("not in") || compareCodeSplicingValueSql.startsWith("!=")){
+                    if (compareCodeSplicingValueSql.startsWith("not") || compareCodeSplicingValueSql.startsWith("!=") ){
                         super.buildSplicingSQLDTO("sui.uid", QueryConditionEnum.NOT_IN_LIST, userIds, QueryDataTypeEnum.STRING);
                     }else {
                         super.buildDefaultDTO("sui.uid", userIds);
