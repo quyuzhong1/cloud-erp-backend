@@ -186,16 +186,17 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/export")
     @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
-        dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierId(userService.getSupplierId());
         List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getSupplierId()));
         if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
             dto.setUserIds(Collections.singletonList("-1"));
         }else {
-            List<String> userIds = supplierRefUserVOS.stream().filter(e-> Objects.nonNull(e.getIsSuper()) && !e.getIsSuper() && e.getSupplierId().equals(dto.getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            List<String> userIds = supplierRefUserVOS.stream().filter(e-> e.getSupplierId().equals(dto.getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(userIds)) {
                 dto.setUserIds(Collections.singletonList("-1"));
+            }else {
+                dto.setUserIds(userIds);
             }
         }
         userService.exportSupplier(dto, response);
