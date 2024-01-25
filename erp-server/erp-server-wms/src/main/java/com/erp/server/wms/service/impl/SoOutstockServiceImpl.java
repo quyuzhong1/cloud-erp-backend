@@ -281,8 +281,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param soOutstock
      */
     private void handleSaveOrUpdateDbByB2b(SoOutstockEntity soOutstock, SoInfoDTO.CustomerDTO soCustomer ) {
-        soOutstock.setSoCode(soOutstock.getCode());
-        soOutstock.setCustomerId(soOutstock.getCustomerId());
+        soOutstock.setSoCode(soCustomer.getCode());
+        soOutstock.setCustomerId(soCustomer.getCustomerId());
         soOutstock.setCustomerName(soCustomer.getCustomerName());
         soOutstock.setOrderType(soCustomer.getOrderType());
         soOutstock.setSalesDeptId(soCustomer.getSalesDeptId());
