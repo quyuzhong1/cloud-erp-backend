@@ -164,6 +164,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String currency;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 结算组织名称【可排序】
          */
         private String settleOrgName;
@@ -492,6 +497,12 @@ public class PoReconciliationDetailDTO implements Serializable {
         */
         @Size(max = 19,message = "采购订单id最大长度不能超过19位")
         private String poId;
+
+        /**
+         * 采购订单详情id
+         */
+        @Size(max = 19,message = "采购订单id最大长度不能超过19位")
+        private String podId;
 
         /**
         * 确认日期

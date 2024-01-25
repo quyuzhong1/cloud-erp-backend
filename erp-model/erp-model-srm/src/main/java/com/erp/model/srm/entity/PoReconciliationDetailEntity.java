@@ -71,6 +71,12 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     */
     @TableField("po_id")
     private String poId;
+
+    /**
+     * 采购订单详情id
+     */
+    @TableField("po_detail_id")
+    private String poDetailId;
     /**
     * 确认日期
     */

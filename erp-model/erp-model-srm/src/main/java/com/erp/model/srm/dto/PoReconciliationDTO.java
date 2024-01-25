@@ -144,6 +144,11 @@ public class PoReconciliationDTO implements Serializable {
         private String currency;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 供方对账人【可排序】
          */
         private String supplierConfirmUserName;

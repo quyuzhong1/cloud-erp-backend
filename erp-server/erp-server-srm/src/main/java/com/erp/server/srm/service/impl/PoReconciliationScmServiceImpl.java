@@ -38,7 +38,9 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
@@ -89,7 +91,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Autowired
     private SupplierFeign supplierFeign;
 
-
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -396,11 +399,20 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollUtil.isEmpty(list)) {
             return;
         }
+
+        //币种信息
+        List<String> currencyIdList = list.stream().map(PoReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         for (PoReconciliationDTO.ListDTO listDTO : list) {
             //业务状态
             listDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(listDTO.getStatus()));
             //对账周期
             listDTO.setCycle(StrUtil.format("{}-{}",LocalDateTimeUtil.format(listDTO.getStartDate(), DateTimeFormatter.ofPattern("yy.MM.dd")),LocalDateTimeUtil.format(listDTO.getEndDate(), DateTimeFormatter.ofPattern("yy.MM.dd"))));
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
         }
     }
 

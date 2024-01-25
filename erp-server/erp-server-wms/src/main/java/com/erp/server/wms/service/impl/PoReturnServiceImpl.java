@@ -734,6 +734,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             addDTO.setPoId(entity.getPurchaseOrderId());
             addDTO.setPoCode(entity.getPurchaseOrderCode());
+            addDTO.setPodId(poReturnDetailEntity.getPurchaseOrderDetailId());
             addDTO.setSupplierId(entity.getSupplierId());
             addDTO.setSupplierName(entity.getSupplierName());
             addDTO.setSourceId(entity.getId());
