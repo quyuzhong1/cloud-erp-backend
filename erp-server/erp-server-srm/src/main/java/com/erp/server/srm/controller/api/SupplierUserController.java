@@ -4,12 +4,14 @@ package com.erp.server.srm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -22,6 +24,7 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.query.SupplierUserQueryHandler;
+import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -53,6 +56,8 @@ public class SupplierUserController extends BaseController {
     private SupplierUserFeign supplierUserFeign;
     @Resource
     private UserService userService;
+    @Resource
+    private CommonService commonService;
     @Resource
     private SupplierFeign supplierFeign;
 
@@ -107,6 +112,10 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         sysUserInfoDTO.setIsSuper(true);
         supplierUserFeign.updateSrm(sysUserInfoDTO);
         return success();
@@ -137,6 +146,10 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/remove")
     public ApiResult remove(@RequestParam("uid") String uid) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.remove(uid);
     }
 
@@ -147,6 +160,10 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.updateState(stateDTO);
     }
 
@@ -158,6 +175,10 @@ public class SupplierUserController extends BaseController {
      */
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.changePassword(uid,pwd);
     }
     /**
