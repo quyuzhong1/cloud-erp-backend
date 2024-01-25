@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.TabFlagEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -214,6 +215,17 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
             poReconciliationDetailScmService.fillList(detailDTOList);
 
+            //出货小计
+            BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.DELIVERY_ORDER.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            exportDTO.setTotalDeliveryAmount(totalDeliveryAmount);
+            //退料小计
+            BigDecimal totalReceiveAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            exportDTO.setTotalReceiveAmount(totalReceiveAmount);
+            //合计
+            exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount,totalReceiveAmount));
+
             // 导出数据
             StringBuffer sb = new StringBuffer();
             String excelPath = "excel/exportPoReconciliation.xlsx";
@@ -221,7 +233,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date).append(name);
             try {
-                new ExcelPrintUtils().patchExport(list,exportDTO, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
                 throw new ServiceException(ApiError.ERROR_1015);
             }
