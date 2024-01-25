@@ -219,6 +219,35 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("sales_dept_id")
     private String salesDeptId;
 
+
+    /**
+     * 销售组织id
+     */
+    @TableField("sales_org_id")
+    private String salesOrgId;
+
+
+    /**
+     * 销售组织名
+     */
+    @TableField("sales_org_name")
+    private String salesOrgName;
+
+
+    /**
+     * 客户名
+     */
+    @TableField("customer_name")
+    private String customerName;
+
+    /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
+
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

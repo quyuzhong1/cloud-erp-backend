@@ -4089,6 +4089,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单");
         }
         SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
+        SoB2cReceiverEntity soB2cReceiver = soB2cReceiverService.getByMainId(id);
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
@@ -4108,8 +4109,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
+        dto.setCustomerName(shopInfoEntity.getName());
         dto.setSellerId(chargeId);
         dto.setSellerName(shopInfoEntity.getChargeName());
+        if (Objects.nonNull(soB2cReceiver)) {
+            dto.setCountry(soB2cReceiver.getCountry());
+        }
         SysDepartmentUserNumberDTO deptUser = null;
         if (!StringUtil.isEmpty(chargeId)) {
             deptUser = sysUserFeign.getDeptByUserId(chargeId);
@@ -4117,6 +4122,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(deptUser)) {
             dto.setSalesDeptId(deptUser.getDepartmentId());
         }
+        dto.setSalesOrgId(entity.getOrgId());
+        dto.setSalesOrgName(entity.getOrgName());
         if (Objects.nonNull(soB2cLogistics)) {
             //渠道id
             String logisticsChannelId = soB2cLogistics.getLogisticsChannelId();
@@ -4146,16 +4153,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setWarehouseName(detailList.get(0).getWarehouseName());
         dto.setWarehouseOrgId(detailList.get(0).getWarehouseOrgId());
         List<String> soDetailIdList = detailList.stream().map(SoB2cDetailDTO.OutstockDTO::getSoDetailId).collect(Collectors.toList());
-        /**
-         * 发货详情
-         */
-        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryFeign.listBySoDetailIds(soDetailIdList);
-        for (SoB2cDetailDTO.OutstockDTO item : detailList) {
-            String soDetailId = item.getSoDetailId();
-            String sourceDetailId = soB2cDeliveryDetailList.stream().filter(s -> s.getSourceDetailId().equals(soDetailId)).
-                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
-            item.setSourceDetailId(sourceDetailId);
-        }
+
         List<SoOutstockDetailDTO.AddDTO> wantDetailList = B2cOrderConverter.INSTANCE.convertOutstockDetail(detailList);
         dto.setDetailList(wantDetailList);
         return dto;

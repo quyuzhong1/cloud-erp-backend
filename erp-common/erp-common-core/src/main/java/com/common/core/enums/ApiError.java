@@ -900,7 +900,7 @@ public enum ApiError implements Serializable {
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
-
+    B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
