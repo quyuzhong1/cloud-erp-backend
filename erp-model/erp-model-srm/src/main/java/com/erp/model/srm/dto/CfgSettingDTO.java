@@ -28,6 +28,7 @@ public class CfgSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ViewDTO extends CommonDTO{
 
         /**
@@ -54,6 +55,7 @@ public class CfgSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class CommonDTO {
         /**
          * 订单接受配置

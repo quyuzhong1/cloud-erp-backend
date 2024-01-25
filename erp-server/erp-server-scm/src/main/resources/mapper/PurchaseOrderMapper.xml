@@ -555,13 +555,13 @@
         <where>
              po.is_deleted = false and po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm' and
             <foreach collection="list" item="item" separator="or" open="(" close=")">
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'H'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit = 'H'.toString()">
                      (now() - make_interval(hours => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'M'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'M'.toString()">
                     (now() - make_interval(mins => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'S'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'S'.toString()">
                     (now() - make_interval(secs => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
             </foreach>
