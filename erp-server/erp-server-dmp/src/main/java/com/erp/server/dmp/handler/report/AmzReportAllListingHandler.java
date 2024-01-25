@@ -1,11 +1,14 @@
 package com.erp.server.dmp.handler.report;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -30,7 +34,7 @@ public class AmzReportAllListingHandler extends AmzReportBusinessHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void businessHandler(AmzReportTaskEntity taskEntity, JSONArray jsonArray) {
+    public void businessHandler(AmzReportTaskEntity taskEntity, AmzReportInfoEntity reportInfo, JSONArray jsonArray) {
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setShopId(taskEntity.getShopId());
         jobTaskDTO.setShopName(taskEntity.getShopId());
@@ -41,7 +45,9 @@ public class AmzReportAllListingHandler extends AmzReportBusinessHandler {
         jobTaskDTO.setStatus(3);
         jobTaskDTO.setRetryTimes(0);
         jobTaskDTO.setCreateTime(LocalDateTime.now());
-        jobTaskDTO.setUpdateTime(taskEntity.getReqDataEndTime());
+        // 转换时间
+        LocalDateTime parseTime = LocalDateTimeUtil.parse(taskEntity.getReqDataEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        jobTaskDTO.setUpdateTime(DateUtil.utcSamePlus8(parseTime));
 
         jobTaskDTO.setPlatformApiId(taskEntity.getReportId());
         jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());

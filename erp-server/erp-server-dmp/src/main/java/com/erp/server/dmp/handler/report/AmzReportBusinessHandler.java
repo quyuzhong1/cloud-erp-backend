@@ -1,6 +1,7 @@
 package com.erp.server.dmp.handler.report;
 
 import cn.hutool.json.JSONArray;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 
 /**
@@ -19,5 +20,5 @@ public abstract class AmzReportBusinessHandler {
      * @date 2024/1/24
      *
      */
-    public abstract void businessHandler(AmzReportTaskEntity taskEntity, JSONArray jsonArray);
+    public abstract void businessHandler(AmzReportTaskEntity taskEntity, AmzReportInfoEntity reportInfo, JSONArray jsonArray);
 }

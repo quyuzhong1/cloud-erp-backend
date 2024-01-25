@@ -426,11 +426,12 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         if (StringUtils.isBlank(reportInfo.getFilePath())){
             throw new ServiceException("解析失败, 文件路径为空=" + reportInfo.getFilePath());
         }
+        entity.setReqDataEndTime(reportInfo.getDataEndTime());
         // 从FastDFS下载后解析
         JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(fullFileUrl, columnMap, entity.getReportType());
         // 业务处理
         AmzReportHandlerFactory.createHandler(reportInfo.getReportType())
-                .businessHandler(entity, jsonArray);
+                .businessHandler(entity, reportInfo, jsonArray);
     }
 
 

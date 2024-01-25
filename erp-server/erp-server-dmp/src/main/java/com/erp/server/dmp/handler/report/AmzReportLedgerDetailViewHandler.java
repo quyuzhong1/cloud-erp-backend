@@ -1,6 +1,7 @@
 package com.erp.server.dmp.handler.report;
 
 import cn.hutool.json.JSONArray;
+import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,7 @@ public class AmzReportLedgerDetailViewHandler extends AmzReportBusinessHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void businessHandler(AmzReportTaskEntity taskEntity, JSONArray jsonArray) {
+    public void businessHandler(AmzReportTaskEntity taskEntity, AmzReportInfoEntity reportInfo, JSONArray jsonArray) {
 
     }
 }

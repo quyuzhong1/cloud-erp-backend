@@ -77,22 +77,6 @@ public interface AmzReportHandleService {
     public List<?> handleDownloadAndParse(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws IOException ;
 
     /**
-     * 库存管理报告保存或更新
-     *
-     * @Author Jim
-     * @since 2023-11-22
-     **/
-    void saveOrUpdateAllReportFbaMyiAllInventory(ReportInfoMongoDTO mongoDTO, List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList);
-
-    /**
-     * 库存预留报告保存或更新
-     *
-     * @Author Jim
-     * @since 2023-11-22
-     **/
-    void saveOrUpdateAllReportReserved(ReportInfoMongoDTO mongoDTO, List<ReportReservedMongoDTO> reportReservedMongoDTOList);
-
-    /**
      * 库存状态报告保存或更新
      *
      * @Author Jim

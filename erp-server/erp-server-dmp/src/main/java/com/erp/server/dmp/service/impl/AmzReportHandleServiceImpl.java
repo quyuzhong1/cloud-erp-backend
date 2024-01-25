@@ -410,97 +410,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
-    public void saveOrUpdateAllReportFbaMyiAllInventory(ReportInfoMongoDTO mongoDTO, List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList) {
-        // 报告保存已处理
-        mongoDTO.setReportHandleStatus(1);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
-        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-
-        // TODO 优化效率
-        // 查询当前店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
-        // 查询SKU绑定的信息
-        List<String> sellerSkuList = fbaMyiAllInventoryMongoDTOList
-                .stream()
-                .map(ReportFbaMyiAllInventoryMongoDTO::getSku)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
-        if (!CollectionUtils.isEmpty(sellerSkuList)) {
-            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-            paramDTO.setPlatformSkuNoList(sellerSkuList);
-            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setMatchResult(true);
-            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
-                    .stream()
-                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
-        } else {
-            listingInfoMap = new HashMap<>();
-        }
-
-        // 转换实体
-        List<FbaInventoryEntity> fbaInventoryEntityList = fbaMyiAllInventoryMongoDTOList
-                .stream()
-                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportFbaMyiAllInventoryToEntity(e,
-                        shopInfoEntity,
-                        listingInfoMap.get(e.getSku())))
-                .collect(Collectors.toList());
-
-        // 保存到WMS
-        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
-
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
-    public void saveOrUpdateAllReportReserved(ReportInfoMongoDTO mongoDTO, List<ReportReservedMongoDTO> reportReservedMongoDTOList) {
-        // 报告保存已处理
-        mongoDTO.setReportHandleStatus(1);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
-        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-
-        // TODO 优化效率
-        // 查询当前店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
-
-        // 查询SKU绑定的信息
-        List<String> sellerSkuList = reportReservedMongoDTOList
-                .stream()
-                .map(ReportReservedMongoDTO::getSku)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
-        if (!CollectionUtils.isEmpty(sellerSkuList)) {
-            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-            paramDTO.setPlatformSkuNoList(sellerSkuList);
-            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setMatchResult(true);
-            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
-                    .stream()
-                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
-        } else {
-            listingInfoMap = new HashMap<>();
-        }
-
-        // 转换实体
-        List<FbaInventoryEntity> fbaInventoryEntityList = reportReservedMongoDTOList
-                .stream()
-                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportReservedToEntity(e,
-                        shopInfoEntity,
-                        listingInfoMap.get(e.getSku())))
-                .collect(Collectors.toList());
-
-        // 保存到WMS
-        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -511,40 +420,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
 
-        // TODO 优化效率
-        // 查询当前店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
-        // 查询SKU绑定的信息
-        List<String> sellerSkuList = planningMongoDTOList
-                .stream()
-                .map(ReportFbaInventoryPlanningMongoDTO::getSku)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
-        if (!CollectionUtils.isEmpty(sellerSkuList)) {
-            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-            paramDTO.setPlatformSkuNoList(sellerSkuList);
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
-            paramDTO.setMatchResult(true);
-            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
-                    .stream()
-                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
-        } else {
-            listingInfoMap = new HashMap<>();
-        }
 
-        // 转换实体
-        List<FbaInventoryEntity> fbaInventoryEntityList = planningMongoDTOList
-                .stream()
-                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportFbaInventoryPlanningToEntity(e,
-                        shopInfoEntity,
-                        listingInfoMap.get(e.getSku())))
-                .collect(Collectors.toList());
-
-        // 保存到WMS
-        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
     }
 
     @Override

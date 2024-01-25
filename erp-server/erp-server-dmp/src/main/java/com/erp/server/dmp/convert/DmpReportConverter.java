@@ -73,7 +73,7 @@ public interface DmpReportConverter {
     ReportInfoMongoDTO updateReportInfoMongoDTO(ReportInfoMongoDTO mongoDTO, ReportDocument reportDocument, Report report);
 
 
-    @Mappings({
+    @Mappings(value = {
             @Mapping(target = "mainId", source = "entity.id"),
             @Mapping(target = "shopId", source = "entity.shopId"),
             @Mapping(target = "reportType", source = "entity.reportType"),
@@ -81,10 +81,10 @@ public interface DmpReportConverter {
             @Mapping(target = "marketplaceIds", source = "entity.marketplaceIds"),
             @Mapping(target = "reqDataStartTime", source = "reqDataStartTime"),
             @Mapping(target = "reqDataEndTime", source = "reqDataEndTime"),
-            @Mapping(target = "reportId", source = ""),
+            @Mapping(target = "reportId", constant = ""),
             @Mapping(target = "status", constant = "created"),
             @Mapping(target = "statusDesc", constant = "待请求/创建报表(第一步)"),
-            @Mapping(target = "groupId", source= "groupId"),
+            @Mapping(target = "groupId", source = "groupId"),
     })
     AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, String reqDataStartTime, String reqDataEndTime, String groupId);
 
