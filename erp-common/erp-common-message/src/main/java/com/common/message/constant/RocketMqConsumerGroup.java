@@ -272,4 +272,8 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_AMZ_REPORT_PARSE = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_parse_consumer";
 
+    /**
+     * 亚马逊直接查询报告
+     */
+    public static final String SYNC_AMZ_REPORT_DIRECT_QUERY = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_direct_query_consumer";
 }

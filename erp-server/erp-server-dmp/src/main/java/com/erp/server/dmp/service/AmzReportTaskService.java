@@ -91,6 +91,14 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
     void consumerReportParse(String reportRedissonKey, AmzReportTaskEntity entity);
 
     /**
+     * 消费报告直接查询
+     *
+     * @author Jim
+     * @date: 2024-01-25
+     */
+    void consumerReportDirectQuery(String reportRedissonKey, AmzReportTaskEntity entity);
+
+    /**
      * 查询未完成或终止的任务
      *
      * @author Jim
@@ -114,4 +122,24 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-20
      */
     void updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime);
+
+
+    /**
+     * 处理检查报告任务
+     * (3-获取报告阶段)
+     *
+     * @author Jim
+     * @date: 2024-01-25
+     */
+    void handlerCheckReport(String groupId, List<ShopInfoEntity> shopList, Integer size, OffsetDateTime currentDateTime, List<AmzReportScheduleEntity> scheduleEntityList, Map<String, List<CfgAmzReportTypeEntity>> reportTypeConfigMap, Map<String, CfgAmzReportTypeEntity> reportTypeMap);
+
+
+    /**
+     * 处理报告待获取任务记录
+     * (3-获取报告阶段)
+     *
+     * @author Jim
+     * @date: 2024-01-25
+     */
+    void checkTask(String reportRedissonKey, String groupId, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap);
 }

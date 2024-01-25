@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -9,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
@@ -35,6 +37,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -47,6 +50,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -154,60 +158,23 @@ public class PullAmzReportJob {
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
         // 查询报告类型配置
-        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive();
+        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(ReportScheduleSubscribedTypeEnum.MANUAL.getCode());
         if (CollectionUtils.isEmpty(reportTypeConfigList)) {
             XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] amazonReportJob 任务结束,未找到需执行报告类型配置");
             return ReturnT.SUCCESS;
         }
-        // 报告类型配置Map
-        Map<String, CfgAmzReportTypeEntity> reportTypeMap = reportTypeConfigList.stream().collect(Collectors.toMap(CfgAmzReportTypeEntity::getReportType, Function.identity()));
-
-        // 报告类型根据配置分组为Map
-        Map<String, List<CfgAmzReportTypeEntity>> reportTypeConfigMap = reportTypeConfigList.stream().collect(Collectors.groupingBy(CfgAmzReportTypeEntity::getReportGroup));
-
         // 查询指定或所有已授权店铺
-        ShopInfoDTO.ListParamDTO listParamDTO = new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), jobParamDTO.getShopIdList());
-        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(listParamDTO);
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(
+                new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), jobParamDTO.getShopIdList())
+        );
         if (CollectionUtils.isEmpty(shopInfoEntityList)) {
             XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] amazonReportJob 任务结束,未找到需执行的任务记录");
             return ReturnT.SUCCESS;
         }
-        List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
-        List<String> recordTypeList = reportTypeConfigList.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
-        // (任务参数优选)
-        if (!CollectionUtils.isEmpty(jobParamDTO.getRecordTypeList())) {
-            recordTypeList = jobParamDTO.getRecordTypeList();
-        }
-        if (!CollectionUtils.isEmpty(jobParamDTO.getShopIdList())) {
-            shopIds = jobParamDTO.getShopIdList();
-        }
-        LocalDateTime minTime = LocalDateTime.now(ZoneId.systemDefault());
-        if (null != jobParamDTO.getIgnoreNextReportCreationTime()) {
-            if (jobParamDTO.getIgnoreNextReportCreationTime()) {
-                minTime = null;
-            }
-        }
+        // 任务基础参数
+        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
+        Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
 
-        // 查询所有待请求的计划任务
-        List<AmzReportScheduleEntity> reportScheduleEntityList = amzReportScheduleService.listByParams(
-                ReportScheduleSubscribedStatusEnum.ALREADY.getCode(),
-                ReportScheduleCancelStatusEnum.NONE.getCode(),
-                ReportScheduleSubscribedTypeEnum.MANUAL.getCode(),
-                recordTypeList,
-                shopIds,
-                minTime
-        );
-
-        String platform = PlatformDictEnum.AMAZON.getCode();
-        // 根据groupId分组店铺
-        Map<String, List<ShopInfoEntity>> taskGroupMap = shopInfoEntityList.stream()
-                // 平台类型:sellerId:请求的端点区域
-                .collect(Collectors.groupingBy(e ->
-                        StrUtil.format("{}:{}:{}",
-                                platform,
-                                e.getPlatformShopCode(),
-                                AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getEndpointsEnum().name())
-                ));
         // 当前时间
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -217,9 +184,9 @@ public class PullAmzReportJob {
                     value,
                     jobParamDTO.getSize(),
                     currentDateTime,
-                    reportScheduleEntityList,
-                    reportTypeConfigMap,
-                    reportTypeMap
+                    tuple.get(2),
+                    tuple.get(1),
+                    tuple.get(0)
             );
             log.info("[创建【亚马逊报告】亚马逊-ERP] amazonReportJob 当前线程执行完毕,group={}", key);
             XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] amazonReportJob 当前线程执行完毕");
@@ -237,28 +204,40 @@ public class PullAmzReportJob {
     public ReturnT<String> amazonCheckReportJob() {
         // 执行参数
         String jobParamStr = XxlJobHelper.getJobParam();
-        AmazonJobParamDTO.ReportBaseDTO jobParamDTO = AmazonJobParamDTO.ReportBaseDTO.init(jobParamStr);
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr);
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
-        // 查询指定或所有已授权店铺
-        ShopInfoDTO.ListParamDTO listParamDTO = new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), jobParamDTO.getShopIdList());
-        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(listParamDTO);
-        if (CollectionUtils.isEmpty(shopInfoEntityList)) {
-            XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  任务结束,未找到需执行的任务记录");
+        // 查询报告类型配置
+        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(ReportScheduleSubscribedTypeEnum.QUERY.getCode());
+        if (CollectionUtils.isEmpty(reportTypeConfigList)) {
+            XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] amazonCheckReportJob 任务结束,未找到需执行报告类型配置");
             return ReturnT.SUCCESS;
         }
-        // 根据groupId分组店铺id
-        Map<String, List<ShopInfoEntity>> taskGroupMap = shopInfoEntityList.stream().collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode));
+        // 查询指定或所有已授权店铺
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(
+                new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), jobParamDTO.getShopIdList())
+        );
+        if (CollectionUtils.isEmpty(shopInfoEntityList)) {
+            XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] amazonCheckReportJob 任务结束,未找到需执行的任务记录");
+            return ReturnT.SUCCESS;
+        }
+        // 任务基础参数
+        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
+        Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
 
         XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  开始,预计分组线程数量={}", taskGroupMap.size());
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
         CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
-                .map(entry -> CompletableFuture.runAsync(() -> {
+                .map(entry -> CompletableFuture.runAsync(()-> {
                     // 异步任务的逻辑
-                    String key = entry.getKey();
-                    List<ShopInfoEntity> value = entry.getValue();
-                    handlerCheckReport(key, value, jobParamDTO, currentDateTime);
+                    amzReportTaskService.handlerCheckReport(entry.getKey(),
+                            entry.getValue(),
+                            jobParamDTO.getSize(),
+                            currentDateTime,
+                            tuple.get(2),
+                            tuple.get(1),
+                            tuple.get(0));
                     log.info("[检查最新【亚马逊报告】亚马逊-ERP]  当前线程执行完毕");
                     XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  当前线程执行完毕");
                 })).toArray(CompletableFuture[]::new));
@@ -267,9 +246,28 @@ public class PullAmzReportJob {
         return ReturnT.SUCCESS;
     }
 
-    private void handlerCheckReport(String sellerId, List<ShopInfoEntity> value, AmazonJobParamDTO.ReportBaseDTO jobParamDTO, OffsetDateTime currentDateTime) {
+    private Tuple convertTuple(List<CfgAmzReportTypeEntity> reportTypeConfigList, List<ShopInfoEntity> shopInfoEntityList, AmazonJobParamDTO.ReportJobDTO jobParamDTO) {
+        // 报告类型配置Map
+        Map<String, CfgAmzReportTypeEntity> reportTypeMap = reportTypeConfigList.stream().collect(Collectors.toMap(CfgAmzReportTypeEntity::getReportType, Function.identity()));
+        // 报告类型根据配置分组为Map
+        Map<String, List<CfgAmzReportTypeEntity>> reportTypeConfigMap = reportTypeConfigList.stream().collect(Collectors.groupingBy(CfgAmzReportTypeEntity::getReportGroup));
+        // 查询所有待请求的计划任务
+        List<AmzReportScheduleEntity> reportScheduleEntityList = amzReportScheduleService.findActionList(shopInfoEntityList, reportTypeConfigList, jobParamDTO);
 
+        String platform = PlatformDictEnum.AMAZON.getCode();
+        // 根据groupId分组店铺
+        Map<String, List<ShopInfoEntity>> taskGroupMap = shopInfoEntityList.stream()
+                // 平台类型:sellerId:请求的端点区域
+                .collect(Collectors.groupingBy(e ->
+                        StrUtil.format("{}:{}:{}",
+                                platform,
+                                e.getPlatformShopCode(),
+                                AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getEndpointsEnum().name())
+                ));
+        return new Tuple(reportTypeMap, reportTypeConfigMap, reportScheduleEntityList ,taskGroupMap);
     }
+
+
 
 
 //    /**

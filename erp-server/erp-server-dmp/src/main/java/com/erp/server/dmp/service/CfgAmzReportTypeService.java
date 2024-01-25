@@ -4,6 +4,7 @@ import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.CfgAmzReportTypeDTO;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ public interface CfgAmzReportTypeService extends SuperService<CfgAmzReportTypeEn
      * @Author Jim
      * @since 2024-01-19
      **/
-    List<CfgAmzReportTypeEntity> findActive();
+    List<CfgAmzReportTypeEntity> findActive(String subscribedType);
 
     /**
      * 查询有效报告类型配置map

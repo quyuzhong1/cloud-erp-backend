@@ -467,6 +467,11 @@ public enum RocketMqTagEnum {
      */
     AMZ_REPORT_PARSE_TAG(8004, RocketMqTagEnum.AMZ_REPORT,"amz_report_parse_tag"),
 
+    /**
+     * 亚马逊不创建直接查询报告Tag
+     */
+    AMZ_REPORT_DIRECT_QUERY_TAG(8005, RocketMqTagEnum.AMZ_REPORT,"amz_report_direct_query_tag"),
+
 
 
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------

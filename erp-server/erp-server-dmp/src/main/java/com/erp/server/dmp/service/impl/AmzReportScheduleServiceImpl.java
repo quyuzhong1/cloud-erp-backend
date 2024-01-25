@@ -4,12 +4,14 @@ package com.erp.server.dmp.service.impl;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.server.dmp.mapper.AmzReportScheduleMapper;
@@ -64,7 +66,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
     public Boolean addReportSchedule(DmpSyncReportScheduleDTO dto) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(dto.getDictCountryCode());
         // 查询报告类型配置
-        List<CfgAmzReportTypeEntity> reportTypeConfiglist = cfgAmzReportTypeService.findActive();
+        List<CfgAmzReportTypeEntity> reportTypeConfiglist = cfgAmzReportTypeService.findActive(null);
         if (CollectionUtils.isEmpty(reportTypeConfiglist)) {
             return true;
         }
@@ -153,5 +155,31 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         if (!this.updateById(reportSchedule)) {
             throw new ServiceException("[reportSchedule] 更新失败");
         }
+    }
+
+    @Override
+    public List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO) {
+        List<String> shopIds =  shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        // (任务参数优选)
+        List<String> recordTypeList;
+        // (任务参数优选)
+        if (!CollectionUtils.isEmpty(jobParamDTO.getRecordTypeList())) {
+            recordTypeList = jobParamDTO.getRecordTypeList();
+        } else {
+            recordTypeList = reportTypeConfigList.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
+        }
+        LocalDateTime minTime = LocalDateTime.now(ZoneId.systemDefault());
+        if (null != jobParamDTO.getIgnoreNextReportCreationTime() && jobParamDTO.getIgnoreNextReportCreationTime()) {
+            minTime = null;
+        }
+
+        return this.listByParams(
+                ReportScheduleSubscribedStatusEnum.ALREADY.getCode(),
+                ReportScheduleCancelStatusEnum.NONE.getCode(),
+                ReportScheduleSubscribedTypeEnum.MANUAL.getCode(),
+                recordTypeList,
+                shopIds,
+                minTime
+        );
     }
 }

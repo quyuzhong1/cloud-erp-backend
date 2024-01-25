@@ -55,12 +55,12 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
      * 请求参数数据开始时间
      */
     @TableField("req_data_start_time")
-    private LocalDateTime reqDataStartTime;
+    private String reqDataStartTime;
     /**
      * 请求参数数据结束时间
      */
     @TableField("req_data_end_time")
-    private LocalDateTime reqDataEndTime;
+    private String reqDataEndTime;
     /**
      * 报告请求时间(第一步)
      */

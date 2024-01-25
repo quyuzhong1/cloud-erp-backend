@@ -313,11 +313,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(taskEntity.getReportType());
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
-        if (null != taskEntity.getReqDataStartTime()){
-            body.setDataStartTime(taskEntity.getReqDataStartTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        if (StringUtils.isNotBlank(taskEntity.getReqDataStartTime())){
+            body.setDataStartTime(taskEntity.getReqDataStartTime());
         }
-        if (null != taskEntity.getReqDataEndTime()){
-            body.setDataEndTime(taskEntity.getReqDataEndTime().atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        if (StringUtils.isNotBlank(taskEntity.getReqDataEndTime())){
+            body.setDataEndTime(taskEntity.getReqDataEndTime());
         }
         ApiResponse<CreateReportResponse> reportWithHttpInfo;
         try {
@@ -641,6 +641,44 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportWithHttpInfo);
+        return report;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Report directQueryAmzReportInfo(AmzReportTaskEntity taskEntity) {
+        // 店铺信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(taskEntity.getShopId());
+        // 市场信息
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS;
+        // 默认请求速率配置
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getGroupId(), requestTypeRateLimiterEnum.getBusinessTypeName());
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+
+        // 请求亚马逊接口
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+
+        ApiResponse<GetReportsResponse> reportsWithHttpInfo;
+        Report report;
+        try {
+            List<String> reportTypes = Collections.singletonList(taskEntity.getReportType());
+            List<String> processingStatuses = Collections.singletonList(Report.ProcessingStatusEnum.DONE.getValue());
+            Integer pageSize = 1;
+            String createdSince = null;
+            String createdUntil = null;
+            String nextToken = null;
+            List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+            ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+            reportsWithHttpInfo = api.getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
+            ReportList reportList = reportsWithHttpInfo.getData().getReports();
+            report = reportList.stream().findFirst().orElse(null);
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+        // 检查和缓存响应的速率到redis
+        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportsWithHttpInfo);
         return report;
     }
 

@@ -318,17 +318,4 @@ public class JmsConsumerTest {
                 "}");
         jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
     }
-
-    @Test
-    public void check() {
-        String shopId = "1720261566995107842";
-        String reportId = "125730019696";
-
-
-        ReportListingMongoDTO mongoDTO = new ReportListingMongoDTO();
-        mongoDTO.setReportId(reportId);
-        List<ReportListingMongoDTO> mongoData = mongoService.findMongoData(mongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingMongoDTO.class);
-
-        amzReportHandleService.pullBusinessHandler(shopId, reportId, mongoData);
-    }
 }

@@ -81,12 +81,12 @@ public interface DmpReportConverter {
             @Mapping(target = "marketplaceIds", source = "entity.marketplaceIds"),
             @Mapping(target = "reqDataStartTime", source = "reqDataStartTime"),
             @Mapping(target = "reqDataEndTime", source = "reqDataEndTime"),
-            @Mapping(target = "reportId", source = "reqDataEndTime"),
+            @Mapping(target = "reportId", source = ""),
             @Mapping(target = "status", constant = "created"),
             @Mapping(target = "statusDesc", constant = "待请求/创建报表(第一步)"),
             @Mapping(target = "groupId", source= "groupId"),
     })
-    AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, LocalDateTime reqDataStartTime, LocalDateTime reqDataEndTime, String groupId);
+    AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, String reqDataStartTime, String reqDataEndTime, String groupId);
 
 
     @Mappings({
@@ -109,4 +109,20 @@ public interface DmpReportConverter {
             @Mapping(target = "processingStatus", expression = "java(report.getProcessingStatus().getValue())"),
     })
     AmzReportInfoEntity newReportInfoEntity(Report report, AmzReportTaskEntity taskEntity, String createdMethod);
+
+
+    @Mappings({
+            @Mapping(target = "mainId", source = "entity.id"),
+            @Mapping(target = "shopId", source = "entity.shopId"),
+            @Mapping(target = "reportType", source = "entity.reportType"),
+            @Mapping(target = "reportTypeName", source = "entity.reportTypeName"),
+            @Mapping(target = "marketplaceIds", source = "entity.marketplaceIds"),
+            @Mapping(target = "reqDataStartTime", source = "reqDataStartTime"),
+            @Mapping(target = "reqDataEndTime", source = "reqDataEndTime"),
+            @Mapping(target = "reportId", source = "reqDataEndTime"),
+            @Mapping(target = "status", constant = "direct_query"),
+            @Mapping(target = "statusDesc", constant = "直接获取报表(第一步/第二步)"),
+            @Mapping(target = "groupId", source= "groupId"),
+    })
+    AmzReportTaskEntity initDirectQueryTask(AmzReportScheduleEntity entity, String reqDataStartTime, String reqDataEndTime, String groupId);
 }

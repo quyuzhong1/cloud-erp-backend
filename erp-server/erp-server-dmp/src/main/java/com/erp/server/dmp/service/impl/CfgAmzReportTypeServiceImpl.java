@@ -7,6 +7,7 @@ import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.server.dmp.mapper.CfgAmzReportTypeMapper;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -28,16 +29,16 @@ import java.util.stream.Collectors;
 public class CfgAmzReportTypeServiceImpl extends SuperServiceImpl<CfgAmzReportTypeMapper, CfgAmzReportTypeEntity> implements CfgAmzReportTypeService {
 
     @Override
-    public List<CfgAmzReportTypeEntity> findActive() {
+    public List<CfgAmzReportTypeEntity> findActive(String subscribedType) {
         return this.lambdaQuery()
                 .eq(CfgAmzReportTypeEntity::getDisabled, false)
-                .eq(CfgAmzReportTypeEntity::getSubscribedType, ReportScheduleSubscribedTypeEnum.MANUAL.getCode())
+                .eq(StringUtils.isNotBlank(subscribedType), CfgAmzReportTypeEntity::getSubscribedType, subscribedType)
                 .list();
     }
 
     @Override
     public Map<String, List<CfgAmzReportTypeEntity>> mapByReportGroup() {
-        List<CfgAmzReportTypeEntity> list = this.findActive();
+        List<CfgAmzReportTypeEntity> list = this.findActive(null);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyMap();
         }

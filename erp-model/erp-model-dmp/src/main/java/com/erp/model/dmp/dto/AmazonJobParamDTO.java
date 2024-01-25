@@ -3,6 +3,8 @@ package com.erp.model.dmp.dto;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 亚马逊 任务参数 DTO

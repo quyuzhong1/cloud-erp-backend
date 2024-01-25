@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.MessageModel;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.python.antlr.ast.Str;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +39,7 @@ public class MQConsumerAmzReportService {
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_create_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_CREATE, messageModel = MessageModel.BROADCASTING)
-    public class ConsumeAmzReportCreate implements RocketMQListener<AmzReportTaskEntity> {
+    public class ConsumerAmzReportCreate implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
@@ -64,7 +63,7 @@ public class MQConsumerAmzReportService {
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_query_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_QUERY, messageModel = MessageModel.BROADCASTING)
-    public class ConsumeAmzReportQuery implements RocketMQListener<AmzReportTaskEntity> {
+    public class ConsumerAmzReportQuery implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
@@ -88,7 +87,7 @@ public class MQConsumerAmzReportService {
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_download_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DOWNLOAD, messageModel = MessageModel.BROADCASTING)
-    public class ConsumeAmzReportDownload implements RocketMQListener<AmzReportTaskEntity> {
+    public class ConsumerAmzReportDownload implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
@@ -112,7 +111,7 @@ public class MQConsumerAmzReportService {
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_parse_tag",
             consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_PARSE, messageModel = MessageModel.BROADCASTING)
-    public class ConsumeAmzReportParse implements RocketMQListener<AmzReportTaskEntity> {
+    public class ConsumerAmzReportParse implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
         public void onMessage(AmzReportTaskEntity entity) {
@@ -129,5 +128,28 @@ public class MQConsumerAmzReportService {
         }
     }
 
-
+    /**
+     * 报告步骤4
+     * 报告解析消费处理
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
+            selectorExpression = "amz_report_direct_query_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DIRECT_QUERY, messageModel = MessageModel.BROADCASTING)
+    public class ConsumeAmzReportDirectQuery implements RocketMQListener<AmzReportTaskEntity> {
+        @Override
+        @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
+        public void onMessage(AmzReportTaskEntity entity) {
+            try {
+                log.info("步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                // 当前分组报告处理中锁key
+                String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
+                // 报告解析处理
+                amzReportTaskService.consumerReportDirectQuery(reportRedissonKey, entity);
+            } catch (Exception e) {
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), null, entity.getQueryRetryCount() + 1, null, null);
+                throw e;
+            }
+        }
+    }
 }

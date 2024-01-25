@@ -126,6 +126,14 @@ public interface AmzReportHandleService {
     Report queryAmzReportInfo(AmzReportTaskEntity taskEntity);
 
     /**
+     * 直接查询亚马逊最新报告
+     *
+     * @Author Jim
+     * @since 2024-01-25
+     **/
+    Report directQueryAmzReportInfo(AmzReportTaskEntity entity);
+
+    /**
      *
      * 获取报告文档
      *
@@ -133,5 +141,4 @@ public interface AmzReportHandleService {
      * @since 2024-01-20
      **/
     ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity entity);
-
 }

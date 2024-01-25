@@ -20,13 +20,14 @@ import java.util.List;
 public enum AmzReportTaskStatusEnum {
 
     CREATED("created", "待请求/创建报表(第一步)"),
-    QUERY("query","待获取列表(第二步)"),
+    QUERY("query","待获取报告(第二步)"),
     DOWNLOAD("download","待下载数据(第三步)"),
     PARSE("parse","待解析(第四步)"),
     FINISH("finish","已完成"),
     STOP("stop","系统终止"),
-    MANUAL_STOP("manual_stop","人工终止"),
-
+    MANUAL_STOP("manualStop","人工终止"),
+    EXIST_STOP("existStop","最新报告已有终止"),
+    DIRECT_QUERY("direct_query","直接获取报表(第一步/第二步)"),
     ;
 
     /**

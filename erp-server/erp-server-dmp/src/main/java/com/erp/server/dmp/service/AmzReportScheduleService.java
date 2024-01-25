@@ -1,10 +1,13 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -75,4 +78,12 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @date: 2024-01-20
      */
     void updateNextTime(String mainId);
+
+    /**
+     * 根据任务参数查询执行的计划任务
+     *
+     * @author Jim
+     * @date: 2024-01-25
+     */
+    List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO);
 }
