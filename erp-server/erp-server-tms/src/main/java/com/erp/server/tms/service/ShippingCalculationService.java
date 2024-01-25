@@ -6,6 +6,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -53,6 +54,22 @@ public interface ShippingCalculationService {
      */
     ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
             , BigDecimal weight);
+
+    /**
+     * @description: 最终运费
+     * @author Will
+     * @date: 2024/1/20 15:31
+     * @param entity
+     * @param shippingTemplateRule
+     * @param channelEntity
+     * @param weight
+     * @param length
+     * @param width
+     * @param height
+     * @return ViewDTO
+     */
+    ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule, LogisticsChannelEntity channelEntity
+            , BigDecimal weight, BigDecimal length, BigDecimal width, BigDecimal height);
     /**
      * @description: 运费
      * @author Will

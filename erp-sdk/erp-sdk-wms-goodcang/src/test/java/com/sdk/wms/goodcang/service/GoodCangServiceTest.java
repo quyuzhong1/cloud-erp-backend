@@ -198,6 +198,12 @@ public class GoodCangServiceTest {
     }
 
     @Test
+    public void getOutboundCodeTest() {
+        GoodCangResponse<String> response = goodCangService.getOutboundCode("XSDS24012000006");
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
+    @Test
     public void cancelOutboundBillTest() {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-005",null);
         System.out.println(response);
