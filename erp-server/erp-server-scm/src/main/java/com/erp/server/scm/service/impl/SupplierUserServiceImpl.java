@@ -8,6 +8,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -340,16 +341,33 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         List<SupplierEntity> supplierEntityList = supplierService.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));
         if (CollectionUtils.isNotEmpty(supplierEntityList)){
             SupplierEntity supplierEntity = supplierEntityList.get(0);
+            //供应商状态判断
+            if(Objects.isNull(supplierEntity.getDisabled()) ||  supplierEntity.getDisabled()){
+                errorMsgList.add(ApiError.ERROR__SUPPLIER_UN_APPROVE.msg);
+                return errorMsgList;
+            }
+            if(Objects.isNull(supplierEntity.getApproveStatus()) ||  !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.msg);
+                return errorMsgList;
+            }
+            if(Objects.isNull(supplierEntity.getSrmDisabled()) ||  supplierEntity.getSrmDisabled()){
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.msg);
+                return errorMsgList;
+            }
+            supplierEntity.getApproveStatus();
+            supplierEntity.getDisabled();
             refUserEntity.setSupplierId(supplierEntity.getId());
             refUserEntity.setDisabled(false);
             refUserEntity.setIsSuper(true);
         }else {
             errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)){
             errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
+            return errorMsgList;
         }
         return errorMsgList;
     }
