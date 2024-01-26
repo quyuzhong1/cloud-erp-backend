@@ -865,9 +865,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //获取供应商配置
             List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
             Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
-
-
-
             //最新审核人
             ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
             list.forEach(obj -> {
