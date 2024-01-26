@@ -79,4 +79,13 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
 
 
+    /**
+     * 确认收货
+     */
+    Boolean confirmReceiveStatus(List<String> ids);
+
+    /**
+     * 反确认收货
+     */
+    Boolean unConfirmReceiveStatus(List<String> ids);
 }

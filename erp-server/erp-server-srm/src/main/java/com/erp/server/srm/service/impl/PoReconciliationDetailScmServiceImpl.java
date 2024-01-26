@@ -36,6 +36,7 @@ import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -49,6 +50,7 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -127,12 +129,33 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         handleUpdateData (list,mainId);
 
+        //原明细数据被删除的需要清除mainId
+        List<PoReconciliationDetailEntity> oldList = this.listMainIdList(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<PoReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(deleteIds)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deleteList)) {
+                deleteList.stream().forEach(obj -> obj.setMainId(""));
+                list.addAll(deleteList);
+            }
+        }
+
         log.info("编辑 开始修改采购对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("采购对账单明细保存失败");
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<PoReconciliationDetailEntity> newList, List<PoReconciliationDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override
@@ -245,7 +268,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
-            listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
+            listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
@@ -398,7 +421,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         //价目表信息
         List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
             //sku

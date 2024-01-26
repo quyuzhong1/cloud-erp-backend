@@ -2294,4 +2294,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .set(PoReturnEntity::getConfirmDate, LocalDate.now())
                 .update(new PoReturnEntity());
     }
+
+    @Override
+    public PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO) {
+        return  PurchaseReturnStatisticsDTO.StatusDTO.builder()
+                .count(lambdaQuery().eq(PoReturnEntity::getSupplierId, returnRequestDTO.getSurpplierId())
+                        .eq(PoReturnEntity::getConfirmStatus, returnRequestDTO.getConfirmStatus()).count())
+                .build();
+    }
 }

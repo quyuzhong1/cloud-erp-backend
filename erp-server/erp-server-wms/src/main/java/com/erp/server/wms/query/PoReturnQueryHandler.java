@@ -1,6 +1,7 @@
 package com.erp.server.wms.query;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -12,6 +13,7 @@ import com.erp.server.wms.service.CommonService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,16 +36,20 @@ public class PoReturnQueryHandler extends AbstractQueryHandler {
         }
         if("tab".equals(field)){
             if (PoReturnStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
-                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.WAIT_SUBMIT.getCode());
+                super.buildDefaultDTO("pro.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                super.buildDefaultDTO("pro.invalid_status", Arrays.asList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
             }
             if (PoReturnStatusEnum.TO_BE_APPROVE.getCode().equals(value)) {
-                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.TO_BE_APPROVE.getCode());
+                super.buildDefaultDTO("pro.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
+                super.buildDefaultDTO("pro.invalid_status", Arrays.asList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
             }
             if (PoReturnStatusEnum.APPROVE.getCode().equals(value)) {
-                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.APPROVE.getCode());
+                super.buildDefaultDTO("pro.approve_status", ApproveStatusEnum.APPROVE.getCode());
+                super.buildDefaultDTO("pro.invalid_status", Arrays.asList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
             }
             if (PoReturnStatusEnum.REJECT.getCode().equals(value)) {
-                super.buildDefaultDTO("pro.approve_status", PoReturnStatusEnum.REJECT.getCode());
+                super.buildDefaultDTO("pro.approve_status", ApproveStatusEnum.REJECT.getCode());
+                super.buildDefaultDTO("pro.invalid_status", Arrays.asList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
             }
             if (PoReturnStatusEnum.WAIT_FOR_ME_HANDLE.getCode().equals(value)) {
                 LoginUser userInfo = commonService.getUserInfo();

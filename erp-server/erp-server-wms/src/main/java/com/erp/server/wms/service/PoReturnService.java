@@ -372,4 +372,6 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return void
      **/
     void poReturnAutoConfirm();
+
+    PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }

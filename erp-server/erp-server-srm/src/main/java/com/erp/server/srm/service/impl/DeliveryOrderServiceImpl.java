@@ -18,6 +18,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -39,6 +40,7 @@ import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -50,6 +52,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -478,6 +481,32 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         return dtos;
     }
 
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean confirmReceiveStatus(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return true;
+        }
+        this.lambdaUpdate()
+                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
+                .in(DeliveryOrderEntity::getId,ids)
+                .update();
+        return true;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean unConfirmReceiveStatus(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return true;
+        }
+        this.lambdaUpdate()
+                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
+                .in(DeliveryOrderEntity::getId,ids)
+                .update();
+        return true;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DeliveryOrderDTO.AddDTO addDTO) {
@@ -554,7 +583,17 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 新增修改处理数据
      */
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
-
+        if(!isUpdate){
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryOrderEntity.getToWarehouseId()));
+            if(CollectionUtils.isEmpty(warehouseList)){
+                throw new ServiceException("仓库信息为空");
+            }
+            WarehouseDTO.UpdateDTO warehouseInfo = warehouseList.get(0);
+            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
+            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
+            deliveryOrderEntity.setReceivePhone(warehouseInfo.getContactTelNumber());
+            deliveryOrderEntity.setReceiveAddress(warehouseInfo.getAddress());
+        }
     }
 
 }

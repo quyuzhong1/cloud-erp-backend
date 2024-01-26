@@ -389,6 +389,15 @@ public class PurchaseOrderFeignController {
         return purchaseOrderService.statisticsBySupplier(requestDTO);
     }
 
+
+    /**
+     * 统计采购订单
+     */
+    @PostMapping("/statisticsExecutionStatus")
+    public PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        return purchaseOrderService.statisticsExecutionStatus(requestDTO);
+    }
+
     /**
      * srm订单确认列表统计
      * @author zdy

@@ -25,7 +25,6 @@ public class PoReconciliationQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
 
-
         //选项卡
         if("tab".equals(field)){
             return getTabSql(value);
@@ -41,6 +40,11 @@ public class PoReconciliationQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     public String getTabSql (Object value) {
+
+        SupplierEntity supplierEntity = commonService.getSupplierEntity();
+        //默认查询当前登录人的绑定的供应商数据
+        super.buildDefaultDTO("pr.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
+
         //待供方确认
         if(PoReconciliationEnum.TabFlagEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(value)){
             super.buildDefaultDTO("pr.status", PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode());

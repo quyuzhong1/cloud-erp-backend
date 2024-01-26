@@ -2472,6 +2472,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return listDTOS;
     }
 
+    @Override
+    public PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        PurchaseStatisticsDTO.StatusDTO responseDTO = new PurchaseStatisticsDTO.StatusDTO();
+        responseDTO.setCount(baseMapper.statisticsExecutionStatus(requestDTO));
+        return responseDTO;
+    }
+
     private List<PurchaseOrderDTO.ListDTO> listByDetailIds(List<String> purchaseDetailIds) {
         if (CollectionUtils.isEmpty(purchaseDetailIds)){
             return Collections.emptyList();

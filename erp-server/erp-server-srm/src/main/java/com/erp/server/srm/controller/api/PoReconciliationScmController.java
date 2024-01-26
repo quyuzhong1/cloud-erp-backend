@@ -4,10 +4,7 @@ package com.erp.server.srm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -18,6 +15,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.server.srm.query.PoReconciliationDetailScmQueryHandler;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
@@ -105,7 +103,7 @@ public class PoReconciliationScmController extends BaseController {
      * 查看详情（对账单主表）
      * @author Will
      * @date: 2024/1/23 15:08
-     * @param id
+     * @param dto
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewMain")
@@ -114,8 +112,8 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:viewMain",
             serviceClass = PoReconciliationService.class,
             keyIdName = "id")
-    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestParam("id") String id) {
-        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationScmService.viewMain(id);
+    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestBody BaseIdDTO dto) {
+        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationScmService.viewMain(dto.getId());
         return success(viewDTO);
     }
 
@@ -127,6 +125,7 @@ public class PoReconciliationScmController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewDetail")
+    @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
     public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
         List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationScmService.viewDetail(dto);
         return success(list);

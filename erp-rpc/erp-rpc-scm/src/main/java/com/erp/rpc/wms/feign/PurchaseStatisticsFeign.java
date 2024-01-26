@@ -16,4 +16,10 @@ public interface PurchaseStatisticsFeign {
      **/
     @PostMapping("feign/purchaseOrder/statisticsBySupplier")
     PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    /**
+     * 统计执行状态
+     **/
+    @PostMapping("feign/purchaseOrder/statisticsExecutionStatus")
+    PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO);
 }
