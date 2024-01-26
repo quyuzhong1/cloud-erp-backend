@@ -23,6 +23,7 @@ public class SupplierPoReturnQueryHandler extends AbstractQueryHandler {
             if (PoReturnConfirmStatusEnum.CONFIRM.getCode().equals(value)) {
                 super.buildDefaultDTO("pro.confirm_status", PoReturnConfirmStatusEnum.CONFIRM.getCode());
             }
+            return super.getSplicingSQL();
         }
         return null;
     }

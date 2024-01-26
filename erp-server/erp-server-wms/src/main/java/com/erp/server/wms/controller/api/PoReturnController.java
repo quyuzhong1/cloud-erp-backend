@@ -305,8 +305,8 @@ public class PoReturnController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:paging",
-            tableAlias = "po")
+            menuCode = "scm:purchaseReturnOrder:paging",
+            tableAlias = "pro")
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = poReturnService.exportExcel(dto, response);
         return flag ? success() : failure();
