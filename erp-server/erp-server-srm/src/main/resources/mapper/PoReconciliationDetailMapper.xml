@@ -75,6 +75,9 @@
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false
+            <if test="params.supplierId != null and params.supplierId != ''">
+                and prd.supplier_id = #{params.supplierId}
+            </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -96,6 +99,9 @@
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false
+            <if test="params.supplierId != null and params.supplierId != ''">
+                and prd.supplier_id = #{params.supplierId}
+            </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
