@@ -274,6 +274,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+
+        /**
         * 采购订单编码
         */
         private String poCode;
@@ -398,7 +403,10 @@ public class PoReconciliationDetailDTO implements Serializable {
         */
         private Boolean isAddAccount;
 
-
+        /**
+         * 是否加入账单(是，否)
+         */
+        private String isAddAccountStr;
     }
 
     /**

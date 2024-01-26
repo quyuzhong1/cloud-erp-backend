@@ -245,7 +245,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
-            listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
+            listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
