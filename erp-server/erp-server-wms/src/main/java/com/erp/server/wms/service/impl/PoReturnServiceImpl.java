@@ -750,9 +750,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setSkuId(poReturnDetailEntity.getSkuId());
             addDTO.setReceiveQty(poReturnDetailEntity.getReturnQty() * -1);
             addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());
-            addDTO.setTaxAmount(MathUtil.multiply(addDTO.getTaxPrice(),addDTO.getReceiveQty()));
             addDTO.setSettleOrgId(entity.getReturnOrgId());
-            addDTO.setSettleOrgName(entity.getReturnOrgName());
             addDTO.setCurrency(poReturnDetailEntity.getCurrency());
             ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                     ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;

@@ -2,22 +2,29 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.entity.DeliveryOrderEntity;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.srm.mapper.DeliveryOrderDetailMapper;
-import com.erp.server.srm.service.CommonService;
-import com.erp.server.srm.service.DeliveryOrderDetailService;
-import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +56,16 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DeliveryOrderService deliveryOrderService;
+
+    @Resource
+    private PoReconciliationDetailScmService poReconciliationDetailScmService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+
     @Transactional(rollbackFor = Exception.class)
     public void add(List<DeliveryOrderDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
@@ -65,6 +82,11 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     @Override
     public List<DeliveryOrderDetailEntity> listByMainId(String mainId) {
         return this.lambdaQuery().eq(DeliveryOrderDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public List<DeliveryOrderDetailEntity> listByMainIdList(List<String> mainIdList) {
+        return this.lambdaQuery().in(DeliveryOrderDetailEntity::getMainId, mainIdList).list();
     }
 
     /**
@@ -144,6 +166,27 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         return this.lambdaQuery().in(DeliveryOrderDetailEntity::getSourceDetailId, purchaseDetailIds).list();
     }
 
+    @Override
+    public void deliveryOrderConfirm(List<String> idList) {
+        if(CollectionUtils.isEmpty(idList)){
+            return ;
+        }
+        //TODO 收货单确认，反确认
+
+        //收货单确认生成对账明细
+        addPoReconciliationDetail(idList);
+    }
+
+    @Override
+    public void deliveryOrderUnConfirm(List<String> idList) {
+        if(CollectionUtils.isEmpty(idList)){
+            return ;
+        }
+        //TODO 收货单确认，反确认
+
+        //收货单反确认删除对账明细
+        removePoReconciliationDetail(idList);
+    }
 
     /**
     * 新增修改处理数据
@@ -155,5 +198,87 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), addPairList, "编辑操作");
         }
+    }
+
+    /**
+     * @description: 添加对账明细
+     * @author Will
+     * @date: 2024/1/26 9:24
+     * @param idList
+     */
+    private void addPoReconciliationDetail (List<String> idList) {
+        if (CollectionUtils.isNotEmpty(idList)) {
+            return;
+        }
+        //送货单
+        List<DeliveryOrderEntity> deliveryOrderList = deliveryOrderService.listByIds(idList);
+
+        //送货明细
+        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = this.listByMainIdList(deliveryOrderIdList);
+
+        //采购订单
+        List<String> sourceIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getSourceId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(sourceIdList);
+
+        //添加信息
+        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (DeliveryOrderDetailEntity detailEntity :deliveryOrderDetailList) {
+            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
+            //送货单主表
+            DeliveryOrderEntity deliveryOrderEntity = deliveryOrderList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(deliveryOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
+            }
+
+            addDTO.setPoId(deliveryOrderEntity.getSourceId());
+            addDTO.setPoCode(deliveryOrderEntity.getSourceCode());
+            addDTO.setPodId(detailEntity.getSourceDetailId());
+            addDTO.setSupplierId(deliveryOrderEntity.getSupplierId());
+            addDTO.setSourceId(deliveryOrderEntity.getId());
+            addDTO.setSourceDetailId(detailEntity.getId());
+            addDTO.setSourceCode(deliveryOrderEntity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.DELIVERY_ORDER.getCode());
+            addDTO.setConfirmDate(deliveryOrderEntity.getConfirmReceiveDate());
+            addDTO.setSkuId(detailEntity.getSkuId());
+            addDTO.setDeliveryQty(detailEntity.getDeliveryQty());
+            addDTO.setReceiveQty(detailEntity.getReceiveQty());
+            addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
+
+            //采购订单
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> StrUtil.equals(deliveryOrderEntity.getSourceId(), obj.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            addDTO.setSettleOrgId(purchaseOrderEntity.getPurchaseOrgId());
+
+            addList.add(addDTO);
+        }
+        poReconciliationDetailScmService.add(addList);
+    }
+
+    /**
+     * @description: 添加对账明细
+     * @author Will
+     * @date: 2024/1/26 9:24
+     * @param idList
+     */
+    private void removePoReconciliationDetail (List<String> idList) {
+        if (CollectionUtils.isNotEmpty(idList)) {
+            return;
+        }
+        //送货单
+        List<DeliveryOrderEntity> deliveryOrderList = deliveryOrderService.listByIds(idList);
+        if (CollectionUtils.isEmpty(deliveryOrderList)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
+        }
+        //送货明细
+        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = this.listByMainIdList(deliveryOrderIdList);
+        if (CollectionUtils.isEmpty(deliveryOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST);
+        }
+        List<String> detailIdList = deliveryOrderDetailList.stream().map(DeliveryOrderDetailEntity::getId).collect(Collectors.toList());
+        poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(detailIdList);
     }
 }
