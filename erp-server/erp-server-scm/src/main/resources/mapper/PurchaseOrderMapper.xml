@@ -675,14 +675,4 @@
             </if>
         </where>
     </select>
-    <select id="statisticsExecutionStatus" resultType="java.lang.Integer">
-        select  count(distinct pod.purchase_order_id)
-        from purchase_order po
-        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
-        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
-        where pos.supplier_id = #{params.supplierId}
-        and pod.execution_status = #{params.executionStatus}
-        and po.is_deleted = false
-          and pod.is_deleted = false
-    </select>
 </mapper>

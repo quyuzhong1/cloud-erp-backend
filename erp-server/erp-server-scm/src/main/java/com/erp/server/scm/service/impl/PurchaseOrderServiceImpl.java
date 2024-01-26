@@ -2475,7 +2475,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     public PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO) {
         PurchaseStatisticsDTO.StatusDTO responseDTO = new PurchaseStatisticsDTO.StatusDTO();
-        responseDTO.setCount(baseMapper.statisticsExecutionStatus(requestDTO));
+        PurchaseOrderSrmDTO.SearchParamDTO params = new PurchaseOrderSrmDTO.SearchParamDTO();
+        params.setSupplierId(requestDTO.getSupplierId());
+        params.setExecutionStatus(requestDTO.getExecutionStatus());
+        params.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+        responseDTO.setCount(baseMapper.srmPurchaseOrderCount(params));
         return responseDTO;
     }
 

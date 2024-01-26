@@ -179,5 +179,4 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
 
     List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
 
-    Integer statisticsExecutionStatus(@Param("params")PurchaseStatisticsDTO.RequestDTO requestDTO);
 }

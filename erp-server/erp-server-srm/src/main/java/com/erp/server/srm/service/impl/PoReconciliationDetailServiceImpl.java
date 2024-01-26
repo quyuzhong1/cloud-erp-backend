@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,6 +15,7 @@ import com.common.business.enums.TabFlagEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
@@ -61,6 +63,10 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
 
     @Autowired
     private PoReconciliationDetailScmService poReconciliationDetailScmService;
+
+    @Autowired
+    private CommonService commonService;
+
     /**
     * 修改
     */
@@ -85,11 +91,17 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
 
     @Override
     public PagingVO<PoReconciliationDetailDTO.ListDTO> paging(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> pagingParamDTO) {
+        //默认查询当前登录人的绑定的供应商数据
+        SupplierEntity supplierEntity = commonService.getSupplierEntity();
+        pagingParamDTO.getParams().setSupplierId(supplierEntity.getId());
         return poReconciliationDetailScmService.paging(pagingParamDTO);
     }
 
     @Override
     public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
+        //默认查询当前登录人的绑定的供应商数据
+        SupplierEntity supplierEntity = commonService.getSupplierEntity();
+        dto.setSupplierId(supplierEntity.getId());
         poReconciliationDetailScmService.exportList(dto,response);
     }
 
