@@ -125,7 +125,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    @CacheEvict(cacheNames = "cache:scm:supplierUser", key = "#sysUserInfoDTO.uid")
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
@@ -154,7 +153,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:scm:supplierUser",key = "#uid")
     public SupplierUserInfoVO getById(String uid) {
         SupplierUserInfoVO vo = new SupplierUserInfoVO();
         SysUserInfoEntity userInfoEntity = userInfoFeign.info(uid);
@@ -177,7 +175,6 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    @CacheEvict(cacheNames = "cache:scm:supplierUser", key = "#uid")
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult deleteById(String uid) {
