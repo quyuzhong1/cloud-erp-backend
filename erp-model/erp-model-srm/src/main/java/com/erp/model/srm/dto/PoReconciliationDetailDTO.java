@@ -384,6 +384,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String currency;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
         * 汇率
         */
         private BigDecimal exchangeRate;

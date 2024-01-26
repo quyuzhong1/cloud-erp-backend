@@ -97,6 +97,12 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
     private String warehouseLocation;
 
     /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_detail_id")
+    private String syncKingdeeDetailId;
+
+    /**
      * 审核状态
      */
     @TableField(exist = false)

@@ -91,12 +91,12 @@ public class PoReconciliationController extends BaseController {
      * 查看详情（对账单主表）
      * @author Will
      * @date: 2024/1/23 15:08
-     * @param id
+     * @param dto
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewMain")
-    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestParam("id") String id) {
-        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationService.viewMain(id);
+    public ApiResult<PoReconciliationDTO.ViewDTO> viewMain(@RequestBody BaseIdDTO dto) {
+        PoReconciliationDTO.ViewDTO viewDTO = poReconciliationService.viewMain(dto.getId());
         return success(viewDTO);
     }
 

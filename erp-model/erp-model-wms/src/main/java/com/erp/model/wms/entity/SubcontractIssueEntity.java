@@ -93,6 +93,11 @@ public class SubcontractIssueEntity extends BaseEntity<SubcontractIssueEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
     public static final String CODE = "code";
 
