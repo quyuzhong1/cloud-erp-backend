@@ -537,13 +537,6 @@
                 ${params.permissionSql}
             </if>
         </where>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        po.id desc,pod.id asc
     </select>
 
     <select id="listPurchaseOrderAutoConfirm" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
@@ -555,13 +548,13 @@
         <where>
              po.is_deleted = false and po.approve_status = 'approve' and pod.execution_status = 'toBeConfirm' and
             <foreach collection="list" item="item" separator="or" open="(" close=")">
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'H'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit = 'H'.toString()">
                      (now() - make_interval(hours => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'M'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'M'.toString()">
                     (now() - make_interval(mins => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
-                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'S'">
+                <if test="item.orderAcceptDTO.unit != null and item.orderAcceptDTO.unit == 'S'.toString()">
                     (now() - make_interval(secs => #{item.orderAcceptDTO.duration}::int )  > po.approve_time and pos.supplier_id = #{item.supplierId})
                 </if>
             </foreach>
@@ -629,8 +622,8 @@
     </select>
     <select id="srmWaitDeliveryCount" resultType="com.erp.model.scm.dto.PurchaseOrderSrmDTO$WaitDeliveryCountDTO">
         SELECT
-            SUM (CASE WHEN date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <![CDATA[ <= ]]> 0 THEN 1 ELSE 0 END ) AS expiredCount,
-            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 0  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 7 THEN 1 ELSE 0 END ) as almostOverdueCount,
+            SUM (CASE WHEN date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <![CDATA[ < ]]> 0 THEN 1 ELSE 0 END ) AS expiredCount,
+            SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) >= 0  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 7 THEN 1 ELSE 0 END ) as almostOverdueCount,
             SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 30 THEN 1 ELSE 0 END ) as inOneMonthCount,
             SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 30  and date_part('day', now()::timestamp - pod.plan_delivery_date::timestamp) <![CDATA[ <= ]]> 60 THEN 1 ELSE 0 END ) as inTwoMonthCount,
             SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 60 THEN 1 ELSE 0 END ) as twoMonthLaterCount

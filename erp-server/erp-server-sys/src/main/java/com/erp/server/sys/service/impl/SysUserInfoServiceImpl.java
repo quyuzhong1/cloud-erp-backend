@@ -279,6 +279,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         entity.setUserAccount(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
         entity.setEmail(sysUserInfoDTO.getEmail());
+        if (Objects.nonNull(sysUserInfoDTO.getUserState())){
+            entity.setUserState(sysUserInfoDTO.getUserState());
+        }
         return this.updateById(entity);
     }
 
@@ -308,7 +311,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
-
+        vo.setIsSupper(entity.getIsSuper());
         //判断是否是超级管理员登录
         SysUserDTO sysUserDTO = adminLogin(vo);
         if (sysUserDTO != null) {
@@ -1207,6 +1210,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(userInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }
+        //强制退出账号
+
         //产生一个6位数的随机码
         String salt = RandomStringUtils.randomAlphabetic(10);
         //加密后的密码
@@ -1216,6 +1221,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getPassword, encryptPassword)
                 .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
+        redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         return flag;
     }
 

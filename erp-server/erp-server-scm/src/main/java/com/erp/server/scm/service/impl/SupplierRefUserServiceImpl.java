@@ -121,6 +121,12 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
         return baseMapper.getSupplierRefByUids(uids);
     }
 
+    @Override
+    public List<SupplierRefUserVO> getSupplierRefBySupplierIds(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) return Collections.emptyList();
+        return baseMapper.getSupplierRefBySupplierIds(supplierIds);
+    }
+
 
     /**
      * 新增修改处理数据

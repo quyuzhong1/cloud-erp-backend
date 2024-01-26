@@ -12,6 +12,8 @@ import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.server.scm.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.python.antlr.ast.If;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -62,49 +64,33 @@ public class SupplierQueryHandler extends AbstractQueryHandler {
         if ("returnConfirmRule".equals(field)) {
             //通过获取srm中供应商配置进行筛选符合条件数据
             List<CfgSettingDTO.ViewDTO> viewDTOS = srmCfgSettingFeign.listByKey(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode());
-            if (value instanceof Boolean) {
-                List<ReturnConfirmDTO> returnConfirmDTOS = viewDTOS.stream().map(CfgSettingDTO.ViewDTO::getReturnConfirmDTO).collect(Collectors.toList());
-                List<String> supplierIds = returnConfirmDTOS.stream().map(ReturnConfirmDTO::getSupplierId).collect(Collectors.toList());
-                Boolean returnConfirmRule = (Boolean) value;
-                //启用退货规则
-                if (returnConfirmRule) {
-                    if (CollectionUtils.isNotEmpty(supplierIds)){
-                        super.buildDefaultDTO("id", supplierIds);
-                    }else {
-                        super.getQueryEmptySql();
-                    }
-                } else {
-                    if (CollectionUtils.isNotEmpty(supplierIds)){
-                        super.buildSplicingSQLDTO("id", QueryConditionEnum.NOT_IN_LIST,supplierIds, QueryDataTypeEnum.STRING);
-                    }else {
-                        super.getQueryAllSql();
-                    }
-                }
-            }
+            List<ReturnConfirmDTO> returnConfirmDTOS = viewDTOS.stream().map(CfgSettingDTO.ViewDTO::getReturnConfirmDTO).collect(Collectors.toList());
+            List<String> supplierIds = returnConfirmDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(ReturnConfirmDTO::getSupplierId).collect(Collectors.toList());
+            buildRuleSql(supplierIds,value);
         }
         if ("orderAcceptRule".equals(field)) {
             //通过获取srm中供应商配置进行筛选符合条件数据
             List<CfgSettingDTO.ViewDTO> viewDTOS = srmCfgSettingFeign.listByKey(ConfigKeyEnum.ORDER_AUTO_ACCEPT.getCode());
-            if (value instanceof Boolean) {
-                List<OrderAcceptDTO> orderAcceptDTOS = viewDTOS.stream().map(CfgSettingDTO.ViewDTO::getOrderAcceptDTO).collect(Collectors.toList());
-                List<String> supplierIds = orderAcceptDTOS.stream().map(OrderAcceptDTO::getSupplierId).collect(Collectors.toList());
-                Boolean orderAcceptRule = (Boolean) value;
-                //启用退货规则
-                if (orderAcceptRule) {
-                    if (CollectionUtils.isNotEmpty(supplierIds)){
-                        super.buildDefaultDTO("id", supplierIds);
-                    }else {
-                        super.getQueryEmptySql();
-                    }
-                } else {
-                    if (CollectionUtils.isNotEmpty(supplierIds)){
-                        super.buildSplicingSQLDTO("id", QueryConditionEnum.NOT_IN_LIST,supplierIds, QueryDataTypeEnum.STRING);
-                    }else {
-                        super.getQueryAllSql();
-                    }
-                }
-            }
+            List<OrderAcceptDTO> orderAcceptDTOS = viewDTOS.stream().map(CfgSettingDTO.ViewDTO::getOrderAcceptDTO).collect(Collectors.toList());
+            List<String> supplierIds = orderAcceptDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(OrderAcceptDTO::getSupplierId).collect(Collectors.toList());
+            buildRuleSql(supplierIds,value);
         }
         return null;
+    }
+
+    private void buildRuleSql(List<String> supplierIds,Object value){
+        Boolean aTrue = value.equals("true");
+        //启用退货规则
+        if (aTrue) {
+            if (CollectionUtils.isNotEmpty(supplierIds)) {
+                super.buildDefaultDTO("id", supplierIds);
+            } else {
+                super.getQueryEmptySql();
+            }
+        } else {
+            if (CollectionUtils.isNotEmpty(supplierIds)) {
+                super.buildSplicingSQLDTO("id", QueryConditionEnum.NOT_IN_LIST, supplierIds, QueryDataTypeEnum.STRING);
+            }
+        }
     }
 }

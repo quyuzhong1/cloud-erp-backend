@@ -30,6 +30,9 @@ public class OrderConfirmQueryHandler extends AbstractQueryHandler {
             if(ExecutionStatusEnum.DELIVERY.getCode().equals(value)){
                 return " po.approve_status = 'approve' and pod.execution_status = 'delivery'";
             }
+            if(ExecutionStatusEnum.FINISH.getCode().equals(value)){
+                return " po.approve_status = 'approve' and pod.execution_status = 'finish'";
+            }
             if(ExecutionStatusEnum.CLOSED.getCode().equals(value)){
                 return " po.approve_status = 'approve' and pod.execution_status = 'closed'";
             }

@@ -86,4 +86,12 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @return void
      */
     void checkIsRefSupplier(List<String> supplierIds);
+    /**
+     * @description: 根据采购订单id集合查询供应商
+     * @author Will
+     * @date: 2024/1/25 10:16
+     * @param idList
+     * @return List<PurchaseOrderSupplierEntity>
+     */
+    List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(List<String> idList);
 }

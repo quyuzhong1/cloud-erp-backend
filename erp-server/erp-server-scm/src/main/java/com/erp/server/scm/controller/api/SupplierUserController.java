@@ -70,6 +70,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setIsSuper(true);
         sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
+        sysUserInfoDTO.setRealName(sysUserInfoDTO.getUserName());
         supplierUserService.add(sysUserInfoDTO);
         return success();
     }

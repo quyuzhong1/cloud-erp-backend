@@ -24,30 +24,35 @@ public class WaitDeliveryQueryHandler extends AbstractQueryHandler {
                 return " pod.execution_status in ('confirm','delivery') ";
             }
             if(WaitDeliveryCycleEnum.EXPIRED.getCode().equals(value)){
-                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 0";
+                return "pod.execution_status in ('confirm','delivery') and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) < 0";
             }
             if(WaitDeliveryCycleEnum.ALMOST_OVERDUE.getCode().equals(value)){
-                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 0 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 7";
+                return "pod.execution_status in ('confirm','delivery') and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) >= 0 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 7";
             }
             if(WaitDeliveryCycleEnum.IN_ONE_MONTH.getCode().equals(value)){
-                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 30";
+                return "pod.execution_status in ('confirm','delivery') and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 30";
             }
             if(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode().equals(value)){
-                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 30 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 60";
+                return "pod.execution_status in ('confirm','delivery') and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 30 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 60";
             }
             if(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode().equals(value)){
-                return " date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 60 ";
+                return "pod.execution_status in ('confirm','delivery') and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 60 ";
             }
         }
         if ("deliveryCycle".equals(field)){
             List<String> deliveryCycle = new ArrayList<>();
-            if (value instanceof String){
+            if(value instanceof String){
                 deliveryCycle.add((String) value);
             }else if (value instanceof List){
-                deliveryCycle.addAll((Collection<? extends String>) value);
+                for (String s : (List<String>) value) {
+                    String[] split = s.split(",");
+                    for (String p :split) {
+                        deliveryCycle.add(p);
+                    }
+                }
             }
             if (CollectionUtils.isEmpty(deliveryCycle)){
-                return null;
+                return this.getQueryAllSql();
             }
             StringBuffer sb = new StringBuffer();
             sb.append("(");
@@ -56,9 +61,9 @@ public class WaitDeliveryQueryHandler extends AbstractQueryHandler {
                     sb.append(" or ");
                 }
                 if (WaitDeliveryCycleEnum.EXPIRED.getCode().equals(deliveryCycle.get(i))){
-                    sb.append(" (date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 0) ");
+                    sb.append(" (date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) < 0) ");
                 }else if(WaitDeliveryCycleEnum.ALMOST_OVERDUE.getCode().equals(deliveryCycle.get(i))){
-                    sb.append(" (date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 0 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 7)");
+                    sb.append(" (date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) >= 0 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 7)");
                 }else if(WaitDeliveryCycleEnum.IN_ONE_MONTH.getCode().equals(deliveryCycle.get(i))){
                     sb.append(" (date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) > 7 and date_part('day', pod.plan_delivery_date::timestamp - now()::timestamp) <= 30)");
                 }else if(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode().equals(deliveryCycle.get(i))){

@@ -37,4 +37,9 @@ public class SysLoginUserVO implements Serializable {
      * 是否需要修改密码
      */
     private Boolean needChangePwd;
+
+    /**
+     * 是否是超级管理员
+     */
+    private Boolean isSupper;
 }

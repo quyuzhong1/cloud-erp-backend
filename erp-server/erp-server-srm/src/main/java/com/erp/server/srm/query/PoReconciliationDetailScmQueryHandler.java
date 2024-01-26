@@ -1,10 +1,13 @@
 package com.erp.server.srm.query;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.PoReconciliationService;
 import org.springframework.stereotype.Component;
@@ -16,20 +19,24 @@ import javax.annotation.Resource;
  * @date 2024年01月08日 9:54
  */
 @Component
-public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
+public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private PoReconciliationService poReconciliationService;
 
-    @Resource
-    private CommonService commonService;
-
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
 
-        SupplierEntity supplierEntity = commonService.getSupplierEntity();
-        //默认查询当前登录人的绑定的供应商数据
-        super.buildDefaultDTO("pr.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
+        //单据类型
+        if("sourceType".equals(field)){
+            if (SourceTypeEnum.DELIVERY_ORDER.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.DELIVERY_ORDER.getCode());
+            }
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.PO_RETURN.getCode());
+                super.buildDefaultDTO("prd.return_source_type", value);
+            }
+        }
 
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){

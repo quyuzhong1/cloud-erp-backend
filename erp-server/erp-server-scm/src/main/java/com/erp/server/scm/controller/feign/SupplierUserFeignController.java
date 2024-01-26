@@ -146,11 +146,11 @@ public class SupplierUserFeignController extends BaseController {
 
     /**
      * 根据用户获取供应商信息
-     * @param uids
+     * @param supplierIds
      * @return
      */
-    @PostMapping("/getSupplierRefByUids")
-    public List<SupplierRefUserVO> getSupplierRefByUids(@RequestBody List<String> uids){
-        return supplierRefUserService.getSupplierRefByUids(uids);
+    @PostMapping("/getSupplierRefBySupplierIds")
+    public List<SupplierRefUserVO> getSupplierRefBySupplierIds(@RequestBody List<String> supplierIds){
+        return supplierRefUserService.getSupplierRefBySupplierIds(supplierIds);
     }
 }

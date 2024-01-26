@@ -69,6 +69,7 @@ public class LoginAuthService {
             sysLoginUserVO.setBindingState(info.getBindingState());
             sysLoginUserVO.setUserId(info.getUid());
             sysLoginUserVO.setNeedChangePwd(info.getNeedChangePwd());
+            sysLoginUserVO.setIsSupper(info.getIsSupper());
 
             return ApiResult.success(sysLoginUserVO);
         }

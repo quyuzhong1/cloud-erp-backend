@@ -58,6 +58,7 @@
         sru.id as refId,
         sru.uid,
         sru.supplier_id,
+        sru.is_super,
         s.purchase_user_name AS purchaseUserName,
         s.name AS supplierName
         FROM
@@ -68,6 +69,25 @@
             AND sru.uid IN
             <foreach collection="uids" item="uid" open="(" separator="," close=")">
                 #{uid}
+            </foreach>
+        </if>
+    </select>
+    <select id="getSupplierRefBySupplierIds" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+        SELECT
+        sru.id as refId,
+        sru.uid,
+        sru.supplier_id,
+        sru.is_super,
+        s.purchase_user_name AS purchaseUserName,
+        s.name AS supplierName
+        FROM
+        supplier_ref_user sru
+        left join supplier s on s.id = sru.supplier_id
+        WHERE sru.is_deleted = FALSE
+        <if test="supplierIds!=null and supplierIds.size>0">
+            AND s.id IN
+            <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+                #{supplierId}
             </foreach>
         </if>
     </select>

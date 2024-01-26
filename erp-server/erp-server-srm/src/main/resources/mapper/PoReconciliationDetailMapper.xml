@@ -44,10 +44,12 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         prd.id,
+        prd.supplier_id as supplierId,
         prd.supplier_name as supplierName,
         prd.main_id as mainId,
         prd.source_code as sourceCode,
         prd.source_type as sourceType,
+        prd.return_source_type as returnSourceType,
         prd.po_code as poCode,
         prd.confirm_date as confirmDate,
         prd.sku_id as skuId,

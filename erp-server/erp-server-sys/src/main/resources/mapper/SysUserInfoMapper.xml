@@ -321,7 +321,7 @@
             </foreach>
         </if>
         </where>
-        ORDER BY sui.update_time DESC
+        ORDER BY sui.create_time DESC
     </select>
     <select id="srmList" resultType="com.erp.model.sys.vo.SupplierUserVO">
         SELECT
@@ -368,7 +368,7 @@
             </foreach>
         </if>
         </where>
-        ORDER BY sui.update_time DESC
+        ORDER BY sui.create_time DESC
     </select>
 
 

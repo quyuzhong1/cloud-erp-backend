@@ -31,6 +31,7 @@ public class DropDownListController extends BaseController {
      * 获取对应字典数据
      * cfgSetting  系统配置
      * poReconciliationStatus 采购对账状态
+     * poReconciliationSourceType 对账明细来源类型
      * @return
      */
     @GetMapping("/dict/list")

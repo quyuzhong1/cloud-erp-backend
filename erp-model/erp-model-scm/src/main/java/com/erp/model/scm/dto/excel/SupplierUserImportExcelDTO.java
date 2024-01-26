@@ -23,14 +23,14 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "供应商名称", index = 0)
-    @FieldValid(fieldName = "供应商名称",maxLength = 100)
+    @FieldValid(fieldName = "供应商名称",maxLength = 50)
     private String supplierName;
     /**
      * 用户名
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "用户名", index = 1)
-    @FieldValid(fieldName = "用户名",isNotBlank = true,maxLength =50 )
+    @FieldValid(fieldName = "用户名",isNotBlank = true,maxLength = 50 )
     private String userName;
 
 
@@ -39,7 +39,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "手机号码", index = 2)
-    @FieldValid(fieldName = "手机号码",formatPattern = FieldFormatPatternTypeEnum.MOBILE)
+    @FieldValid(fieldName = "手机号码",formatPattern = FieldFormatPatternTypeEnum.MOBILE,maxLength = 20)
     private String mobile;
 
 
@@ -48,7 +48,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "邮箱", index = 3)
-    @FieldValid(fieldName = "邮箱",formatPattern = FieldFormatPatternTypeEnum.MAILBOX)
+    @FieldValid(fieldName = "邮箱",formatPattern = FieldFormatPatternTypeEnum.MAILBOX,maxLength = 30)
     private String email;
 
     /**

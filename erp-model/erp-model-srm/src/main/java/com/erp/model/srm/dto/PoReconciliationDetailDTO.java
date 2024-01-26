@@ -73,9 +73,20 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 退货类型【可排序】
+         */
+        private String returnSourceType;
+
+        /**
          * 单据类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * 供应商Id【可排序】
+         */
+        private String supplierId;
+
 
         /**
          * 供应商名称【可排序】
@@ -115,12 +126,22 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
          * 送货数量【可排序】
          */
-        private String deliveryQty;
+        private Integer deliveryQty;
 
         /**
          * 收货数量【可排序】
          */
-        private String receiveQty;
+        private Integer receiveQty;
+
+        /**
+         * 数量（根据单据显示对应数量）
+         */
+        private Integer qty;
+
+        /**
+         * 单位
+         */
+        private String unitName;
 
         /**
          * 税率【可排序】
@@ -146,6 +167,11 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 币别【可排序】
          */
         private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
          * 结算组织名称【可排序】
@@ -181,7 +207,24 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 是否加入账单(是，否)
          */
         private String isAddAccountStr;
+
+        /**
+         * 供应商备注
+         */
+        private String supplierRemark;
+
+        /**
+         * 采购备注
+         */
+        private String purchaseRemark;
+
+        /**
+         * 供应商备注 + 采购备注
+         */
+        private String remark;
     }
+
+
 
     /**
     * 详情
@@ -421,13 +464,6 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String supplierName;
 
         /**
-        * 对账单Id
-        */
-        @NotBlank(message = "对账单Id不能为空")
-        @Size(max = 19,message = "对账单Id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 来源明细id
         */
         @NotBlank(message = "来源明细id不能为空")
@@ -458,16 +494,20 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
         * 采购订单编码
         */
-        @NotBlank(message = "采购订单编码不能为空")
         @Size(max = 32,message = "采购订单编码最大长度不能超过32位")
         private String poCode;
 
         /**
         * 采购订单id
         */
-        @NotBlank(message = "采购订单id不能为空")
         @Size(max = 19,message = "采购订单id最大长度不能超过19位")
         private String poId;
+
+        /**
+         * 采购订单详情id
+         */
+        @Size(max = 19,message = "采购订单id最大长度不能超过19位")
+        private String podId;
 
         /**
         * 确认日期
@@ -477,26 +517,18 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
         * skuId
         */
+        @NotBlank(message = "SKUid不能为空")
         private String skuId;
 
         /**
         * 送货数量
         */
-        @NotNull(message = "送货数量不能为空")
         private Integer deliveryQty;
 
         /**
         * 收货数量
         */
-        @NotNull(message = "收货数量不能为空")
         private Integer receiveQty;
-
-        /**
-        * 税率
-        */
-        @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal taxRate;
 
         /**
         * 含税单价
@@ -527,39 +559,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String settleOrgName;
 
         /**
-        * 结算方式
-        */
-        @NotBlank(message = "结算方式不能为空")
-        @Size(max = 32,message = "结算方式最大长度不能超过32位")
-        private String settleDict;
-
-        /**
-        * 付款条件
-        */
-        @NotBlank(message = "付款条件不能为空")
-        @Size(max = 32,message = "付款条件最大长度不能超过32位")
-        private String paymentCondition;
-
-        /**
         * 业务状态
         */
         @NotBlank(message = "业务状态不能为空")
         @Size(max = 32,message = "业务状态最大长度不能超过32位")
         private String businessStatus;
-
-        /**
-        * 供方备注
-        */
-        @NotBlank(message = "供方备注不能为空")
-        @Size(max = 255,message = "供方备注最大长度不能超过255位")
-        private String supplierRemark;
-
-        /**
-        * 采方备注
-        */
-        @NotBlank(message = "采方备注不能为空")
-        @Size(max = 255,message = "采方备注最大长度不能超过255位")
-        private String purchaseRemark;
 
         /**
         * 币别
@@ -569,19 +573,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String currency;
 
         /**
-        * 汇率
-        */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal exchangeRate;
-
-        /**
-        * 是否加入账单
-        */
-        @NotNull(message = "是否加入账单不能为空")
-        private Boolean isAddAccount;
-
-
+         * 退货来源
+         */
+        private String returnSourceType;
     }
 
     @Data

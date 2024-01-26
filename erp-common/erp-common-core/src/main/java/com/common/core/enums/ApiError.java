@@ -601,6 +601,9 @@ public enum ApiError implements Serializable {
     ERROR_USER_NOT_REL_SUPPLIER(98102,"用户未关联供应商"),
     ERROR_USER_NOT_REL_OTHER_SUPPLIER(98051,"只能导入当前供应商用户"),
     ERROR_EMPTY_SUPPLIER(98052,"供应商名称不能为空"),
+    ERROR_SUPPLIER_UN_APPROVE(98053,"供应商未审核"),
+    ERROR_SUPPLIER_DISABLE(98054,"供应商未启用"),
+    ERROR_SUPPLIER_SRM_DISABLE(98055,"供应商未协同"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),
@@ -1164,7 +1167,7 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_HAS_GENERATE(96010,"单据单号【{}】已生成对账单"),
     ERROR_PO_RECONCILIATION_NOT_GENERATE(96011,"单据单号【{}】非已确认不支持生成对账单"),
     ERROR_PO_RECONCILIATION_DATE(96012,"对账开始时间不能大于结束时间"),
-
+    ERROR_PO_RECONCILIATION_DETAIL_DELETE(96013,"单据【{}】已对账不支持删除对账明细"),
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),

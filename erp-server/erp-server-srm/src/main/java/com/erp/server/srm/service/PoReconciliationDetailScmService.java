@@ -24,10 +24,10 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
     * 新增
     * @author will
     * @date: 2024-01-19
-    * @param dto
+    * @param addList
     * @return
     */
-    BaseResultDTO.AddDTO add(PoReconciliationDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(List<PoReconciliationDetailDTO.AddDTO> addList);
 
     /**
     * 修改
@@ -71,4 +71,35 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return Boolean
      */
     Boolean generatePoReconciliation(PoReconciliationDetailDTO.GeneratePoReconciliationDTO dto);
+    /**
+     * @description: 根据组表id集合查询
+     * @author Will
+     * @date: 2024/1/25 11:41
+     * @param mainIdList 
+     * @return List<PoReconciliationDetailEntity> 
+     */
+    List<PoReconciliationDetailEntity> listMainIdList(List<String> mainIdList);
+    /**
+     * @description: 分页格式化
+     * @author Will
+     * @date: 2024/1/25 11:44
+     * @param list
+
+     */
+    void fillList(List<PoReconciliationDetailDTO.ListDTO> list);
+    /**
+     * @description: 根据来源明细id集合查询
+     * @author Will
+     * @date: 2024/1/25 16:58
+     * @param sourceDetailIdList
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(List<String> sourceDetailIdList);
+    /**
+     * @description: 根据来源明细id集合删除
+     * @author Will
+     * @date: 2024/1/25 17:02
+     * @param sourceDetailIdList
+     */
+    void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList);
 }

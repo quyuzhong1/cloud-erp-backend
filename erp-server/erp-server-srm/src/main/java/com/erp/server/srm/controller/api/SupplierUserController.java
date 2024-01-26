@@ -4,12 +4,14 @@ package com.erp.server.srm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -22,6 +24,7 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.SupplierUserFeign;
 import com.erp.server.srm.query.SupplierUserQueryHandler;
+import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +57,8 @@ public class SupplierUserController extends BaseController {
     @Resource
     private UserService userService;
     @Resource
+    private CommonService commonService;
+    @Resource
     private SupplierFeign supplierFeign;
 
     /**
@@ -63,14 +69,17 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult<PagingVO<SupplierUserVO>> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
-        dto.getParams().setIsSuper(false);
         dto.getParams().setUserType(UserTypeEnum.SRM.code);
         dto.getParams().setSupplierId(userService.getSupplierId());
-        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
-        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-            dto.getParams().setUserIds(userIds);
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getParams().getSupplierId()));
+        if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
+            return success(new PagingVO<>());
         }
+        List<String> userIds = supplierRefUserVOS.stream().filter(e-> e.getSupplierId().equals(dto.getParams().getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(userIds)) {
+            return success(new PagingVO<>());
+        }
+        dto.getParams().setUserIds(userIds);
         return supplierUserFeign.page(dto);
     }
 
@@ -102,7 +111,10 @@ public class SupplierUserController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商协同用户")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
-        sysUserInfoDTO.setIsSuper(true);
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         supplierUserFeign.updateSrm(sysUserInfoDTO);
         return success();
     }
@@ -132,6 +144,10 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/remove")
     public ApiResult remove(@RequestParam("uid") String uid) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.remove(uid);
     }
 
@@ -142,6 +158,10 @@ public class SupplierUserController extends BaseController {
      */
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.updateState(stateDTO);
     }
 
@@ -153,6 +173,10 @@ public class SupplierUserController extends BaseController {
      */
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
+            throw new ServiceException(ApiError.NO_PERMISSION);
+        }
         return supplierUserFeign.changePassword(uid,pwd);
     }
     /**
@@ -160,14 +184,20 @@ public class SupplierUserController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM用户")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = SupplierUserQueryHandler.class)
     public ApiResult exportSupplier(@RequestBody UserPagingSearchDTO dto, HttpServletResponse response) {
-        dto.setIsSuper(false);
         dto.setUserType(UserTypeEnum.SRM.code);
         dto.setSupplierId(userService.getSupplierId());
-        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefByUids(Collections.singletonList(userService.getSupplierId()));
-        if (CollectionUtils.isNotEmpty(supplierRefUserVOS)) {
-            List<String> userIds = supplierRefUserVOS.stream().map(SupplierRefUserVO::getUid).collect(Collectors.toList());
-            dto.setUserIds(userIds);
+        List<SupplierRefUserVO> supplierRefUserVOS = supplierUserFeign.getSupplierRefBySupplierIds(Collections.singletonList(dto.getSupplierId()));
+        if (CollectionUtils.isEmpty(supplierRefUserVOS)) {
+            dto.setUserIds(Collections.singletonList("-1"));
+        }else {
+            List<String> userIds = supplierRefUserVOS.stream().filter(e-> e.getSupplierId().equals(dto.getSupplierId())).map(SupplierRefUserVO::getUid).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(userIds)) {
+                dto.setUserIds(Collections.singletonList("-1"));
+            }else {
+                dto.setUserIds(userIds);
+            }
         }
         userService.exportSupplier(dto, response);
         return success();

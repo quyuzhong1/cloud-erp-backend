@@ -49,7 +49,10 @@ public class SysUserDTO implements Serializable {
     private String token;
 
     private String headIcon;
-
+    /**
+     * 是否是超级管理员
+     */
+    private Boolean isSupper;
 
     //全局 菜单的列表 后面还会改
     private List<SysMenuVO> overallMenuList;
