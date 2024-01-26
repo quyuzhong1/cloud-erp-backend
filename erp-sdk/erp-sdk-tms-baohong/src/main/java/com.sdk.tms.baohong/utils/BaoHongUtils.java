@@ -1,6 +1,10 @@
 package com.sdk.tms.baohong.utils;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.map.MapUtil;
+import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.business.threadlocal.TransferLogisticsContext;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn_Service;
@@ -28,29 +32,41 @@ import java.util.Map;
  */
 public class BaoHongUtils {
 
-    private static final String printUrl = "http://exwms.globex.cn/default/print-order-api/print-order";
+    private static final String PRINT_URL = "http://exwms.globex.cn/default/print-order-api/print-order";
 
     public static HeaderRequest getOrderHeader(){
+        Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
+        if(MapUtil.isEmpty(authMap)){
+            throw new ServiceException("授权信息为空");
+        }
         HeaderRequest headerRequest = new HeaderRequest();
-        headerRequest.setAppKey("98f8fd9bb9edfa770bc0a31b8203fc3");
-        headerRequest.setAppToken("BAAC60E49804C53A");
-        headerRequest.setCustomerCode("E0207");
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
     public static com.sdk.tms.baohong.api.product.HeaderRequest getProductHeader(){
+        Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
+        if(MapUtil.isEmpty(authMap)){
+            throw new ServiceException("授权信息为空");
+        }
         com.sdk.tms.baohong.api.product.HeaderRequest headerRequest = new com.sdk.tms.baohong.api.product.HeaderRequest();
-        headerRequest.setAppKey("98f8fd9bb9edfa770bc0a317b8203fc3");
-        headerRequest.setAppToken("BAAC60E49804C53A");
-        headerRequest.setCustomerCode("E0207");
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
     public static com.sdk.tms.baohong.api.asn.HeaderRequest getAsnHeader(){
+        Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
+        if(MapUtil.isEmpty(authMap)){
+            throw new ServiceException("授权信息为空");
+        }
         com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = new com.sdk.tms.baohong.api.asn.HeaderRequest();
-        headerRequest.setAppKey("98f8fd9bb9edfa770bc0a317b8203fc3");
-        headerRequest.setAppToken("BAAC60E49804C53A");
-        headerRequest.setCustomerCode("E0207");
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
@@ -86,16 +102,20 @@ public class BaoHongUtils {
     }
 
     public static BaoHongResponse<String> getPrintLabelBase64(String orderCode) {
+        Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
+        if(MapUtil.isEmpty(authMap)){
+            throw new ServiceException("授权信息为空");
+        }
         BaoHongResponse<String> result = new BaoHongResponse<>();
         Map<String, Object> paramsMap = new HashMap<>();
-        paramsMap.put("customerCode","E0207");
-        paramsMap.put("appKey","98f8fd9bb9edfa770bc0a317b8203fc3");
-        paramsMap.put("appToken","BAAC60E49804C53A");
+        paramsMap.put("customerCode",authMap.get("customerCode"));
+        paramsMap.put("appKey",authMap.get("appKey"));
+        paramsMap.put("appToken",authMap.get("appToken"));
         Map<String,String> dataMap = new HashMap<>();
         dataMap.put("orderCode",orderCode);
         paramsMap.put("data",dataMap);
         Map<String,String> headerMap = new HashMap<>();
-        Call call = OkHttpUtils.createPostJsonCall(printUrl,paramsMap,headerMap);
+        Call call = OkHttpUtils.createPostJsonCall(PRINT_URL,paramsMap,headerMap);
         String base64String = null;
         try (Response response = call.execute()) {
             // 检查响应是否成功

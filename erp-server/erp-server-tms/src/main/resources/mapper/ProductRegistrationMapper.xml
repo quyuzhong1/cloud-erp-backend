@@ -16,7 +16,7 @@
        <result column="sku_no" property="skuNo" />
        <result column="declare_platform" property="declarePlatform" />
        <result column="remark" property="remark" />
-       <result column="is_registration" property="isRegistration" />
+       <result column="status" property="status" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -30,7 +30,7 @@
         update_time,
         version,
         is_deleted,
-        sku_id, sku_no, declare_platform, remark, is_registration
+        sku_id, sku_no, declare_platform, remark, status
     </sql>
 
 

@@ -1,6 +1,8 @@
 package com.sdk.tms.baohong.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.business.threadlocal.TransferLogisticsContext;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ReceivingItemsType;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
@@ -17,7 +19,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= BaoHongService.class)
@@ -25,6 +30,17 @@ public class BaoHongServiceTest {
 
     @Resource
     private BaoHongService baoHongService;
+
+    public BaoHongServiceTest(){
+        Map<String,String> authMap = new HashMap<>();
+        //a39ab99c1437c991ec07fad4e1f78f8f
+        authMap.put("appToken","BAAC60E49804C53A");
+        //f7e4102f9b0b983e58bed3140dc22f1a
+        authMap.put("appKey","98f8fd9bb9edfa770bc0a317b8203fc3");
+        authMap.put("customerCode","E0207");
+        TransferLogisticsContext.setAuthMap(authMap);
+    }
+
 
     @Test
     public void getShippingMethodListTest(){
@@ -36,7 +52,6 @@ public class BaoHongServiceTest {
     @Test
     public void getAllProductInfo(){
         BaoHongResponse<List<DataRow>> response = baoHongService.getAllProductInfo();
-        System.out.println(response);
         System.out.println(response.getData());
     }
 

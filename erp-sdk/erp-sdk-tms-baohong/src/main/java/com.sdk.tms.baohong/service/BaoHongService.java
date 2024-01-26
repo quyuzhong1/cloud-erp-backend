@@ -109,10 +109,30 @@ public class BaoHongService {
         Holder<Integer> pageSizeHolder = new Holder<>();
         Holder<Integer> totalHolder = new Holder<>();
         Holder<List<DataRow>> dataList = new Holder<>();
-        pageHolder.value = 1;
-        pageSizeHolder.value = 100;
-        service.getProductList(headerRequest,pageHolder,pageSizeHolder,askHolder,messageHolder,totalHolder,dataList);
-        return BaoHongUtils.buildBaseResponse(askHolder,messageHolder,dataList.value);
+        BaoHongResponse<List<DataRow>> response = new BaoHongResponse<>();
+        List<DataRow> dataRowList = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            pageHolder.value = page;
+            pageSizeHolder.value = 500;
+            service.getProductList(headerRequest,pageHolder,pageSizeHolder,askHolder,messageHolder,totalHolder,dataList);
+            if(askHolder.value.equals("0")){
+                if(messageHolder.value.equals("无数据")){
+                    break;
+                }
+                response.setAsk(askHolder.value);
+                response.setMessage(messageHolder.value);
+                return response;
+            }
+            dataRowList.addAll(dataList.value);
+            if (dataList.value.size() < 500) {
+                break;
+            }
+            page++;
+        }
+        response.setAsk("1");
+        response.setData(dataRowList);
+        return response;
     }
 
     /**

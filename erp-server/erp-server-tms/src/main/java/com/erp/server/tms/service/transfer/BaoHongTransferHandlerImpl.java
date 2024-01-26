@@ -8,9 +8,12 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
 import com.sdk.tms.baohong.api.order.SmRow;
+import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,25 +37,6 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     @Resource
     private BaoHongService baoHongService;
 
-
-    @Override
-    public ApiResult authorization(Map<String, String> authMap) {
-        try {
-            Map<String, Object> authObjMap = authMap.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            ThirdWarehouseContext.setAuthMap(authObjMap);
-
-            BaoHongResponse<List<SmRow>> shippingMethodList = baoHongService.getShippingMethodList();
-            if ("0".equals(shippingMethodList.getAsk())) {
-                return failure("授权失败:" + shippingMethodList.getMessage());
-            } else {
-                return success("授权成功");
-            }
-        } catch (Exception e) {
-            return failure(getPlatForm().getName() + ":" + e.getMessage());
-        }
-    }
-
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.BAO_HONG;
@@ -60,7 +44,23 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
 
     @Override
     protected ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList() {
-        return null;
+        BaoHongResponse<List<SmRow>> baoHongResponse = baoHongService.getShippingMethodList();
+        if(isFailure(baoHongResponse)){
+            return failure(baoHongResponse.getMessage());
+        }
+        List<TransferLogisticsChannelEntity> transferLogisticsChannelEntityList = BaoHongConverter.INSTANCE.transferLogisticsChannelConvert(baoHongResponse.getData());
+        return success(transferLogisticsChannelEntityList);
+    }
+
+
+    @Override
+    protected ApiResult<List<ProductRegistrationEntity>> getAllProductInfo() {
+        BaoHongResponse<List<DataRow>> baoHongResponse = baoHongService.getAllProductInfo();
+        if(isFailure(baoHongResponse)){
+            return failure(baoHongResponse.getMessage());
+        }
+        List<ProductRegistrationEntity> transferLogisticsChannelEntityList = BaoHongConverter.INSTANCE.productRegistrationConvert(baoHongResponse.getData());
+        return success(transferLogisticsChannelEntityList);
     }
 
     @Override
@@ -74,11 +74,6 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     }
 
     @Override
-    protected ApiResult<List<TransferLogisticsProductDTO>> getAllProductInfo() {
-        return null;
-    }
-
-    @Override
     protected ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq) {
         return null;
     }
@@ -86,5 +81,13 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     @Override
     protected ApiResult<String> printLabel(String orderCode) {
         return null;
+    }
+
+    private boolean isSuccess(BaoHongResponse<?> response){
+        return response.getAsk().equals("1");
+    }
+
+    private boolean isFailure(BaoHongResponse<?> response){
+        return response.getAsk().equals("0");
     }
 }
