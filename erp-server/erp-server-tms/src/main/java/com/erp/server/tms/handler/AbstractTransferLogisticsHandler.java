@@ -1,103 +1,107 @@
 package com.erp.server.tms.handler;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.*;
-import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.*;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
-import com.erp.server.tms.service.LogisticsAuthService;
-import com.erp.server.tms.service.LogisticsService;
+import com.common.core.enums.ApiError;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.tms.service.TransferLogisticsService;
-import io.seata.common.util.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author zdy
- * @ClassName AbstractLogisticsHandler
- * @description: 抽象类 封装公共方法
- * @date 2023年11月03日
- * @version: 1.0
- */
+@Slf4j
+@Service
 public abstract class AbstractTransferLogisticsHandler extends BaseController implements TransferLogisticsService {
 
-    @Resource
-    private LogisticsAuthService logisticsAuthService;
-    @Resource
-    private LogisticsAuthFieldService logisticsAuthFieldService;
-
-    //对于一些公共方法可以进行封装
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        Map<String, String> map = new HashMap<>();
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (StringUtils.isNoneBlank(authId)) {
-            map.put("id", authId);
-            LogisticsAuthEntity authEntity = logisticsAuthService.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
-            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
-        return map;
-    }
-
-    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
-        List<Map<String, String>> mapList = new ArrayList<>();
-        List<LogisticsAuthEntity> authEntityList = logisticsAuthService.lambdaQuery()
-                .eq(LogisticsAuthEntity::getLogisticsPlatform, platform).list();
-        if (CollectionUtils.isNotEmpty(authEntityList)) {
-            authEntityList.forEach(logisticsAuthEntity -> {
-                Map<String, String> map = new HashMap<>();
-                List<LogisticsAuthFieldEntity> fieldEntities = null;
-                map.put("id", logisticsAuthEntity.getId());
-                map.put("logisticsPlatform", logisticsAuthEntity.getLogisticsPlatform());
-                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
-                if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                    fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                        map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                    });
-                    mapList.add(map);
-                }
-            });
-        }
-        return mapList;
-    }
-
-    /**
-     * 渠道查询
-     *
-     * @param chanelQueryVO
-     * @return
-     */
-    public ApiResult<List<TransferLogisticsChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
-    }
-
-    /**
-     * 判断是否授权成功
-     *
-     * @param authMap
-     * @return
-     */
-    public ApiResult authorization(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
-    }
-
-    /**
-     * 获取平台标识
-     *
-     * @return
-     */
+    @Override
     public LogisticsPlatformEnum getPlatForm() {
         return null;
+    }
+
+    @Override
+    public Boolean authorize(Map<String, String> authConfig, String authId) {
+        return null;
+    }
+
+    @Override
+    public ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList(String authId) {
+        return null;
+    }
+
+    @Override
+    public ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq, String authId) {
+        return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,createOrderReq.getReferenceNo());
+    }
+
+    @Override
+    public ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode, String authId) {
+        return handleAndRemoveContext(() -> getOrderByCode(orderCode), authId, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,orderCode);
+    }
+
+    @Override
+    public ApiResult<List<TransferLogisticsProductDTO>> getAllProductInfo(String authId) {
+        return null;
+    }
+
+    @Override
+    public ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq, String authId) {
+        return null;
+    }
+
+    @Override
+    public ApiResult<String> printLabel(String orderCode, String authId) {
+        return null;
+    }
+
+    protected abstract ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList();
+
+    protected abstract ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq);
+
+    protected abstract ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode);
+
+    protected abstract ApiResult<List<TransferLogisticsProductDTO>> getAllProductInfo();
+
+    protected abstract ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq);
+
+    protected abstract ApiResult<String> printLabel(String orderCode);
+
+    private <T> ApiResult<T> handleAndRemoveContext(Handler<T> handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
+        try {
+            //设置授权信息
+//            handleAuthInfo(authId);
+            //执行逻辑
+            ApiResult<T> result = handler.handle();
+            ThirdWarehouseContext.setMsg(result.getMsg());
+            //记录日志
+//            pushOperateLog(businessType,result.getCode(),erpBusinessCode);
+            return result;
+        } catch (Exception e){
+            log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
+            ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
+//            pushOperateLog(businessType,2000,erpBusinessCode);
+            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
+        } finally {
+            // remove thread-local
+            ThirdWarehouseContext.remove();
+        }
+    }
+
+    @FunctionalInterface
+    private interface Handler<T> {
+        ApiResult<T> handle();
     }
 }
