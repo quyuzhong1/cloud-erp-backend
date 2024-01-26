@@ -331,7 +331,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //确认待完结
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_RECEIVE);
         }
         log.info("开始单据签收，id = {}",id);
