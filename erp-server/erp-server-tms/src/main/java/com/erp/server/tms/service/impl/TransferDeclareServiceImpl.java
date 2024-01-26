@@ -326,7 +326,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 continue;
             }
 
-            TransferLogisticsCreateOrderReq build = TransferLogisticsCreateOrderReq.builder()
+            TransferLogisticsCreateOrderReq.builder()
                     .deliveryCode("").build();
 
 
