@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -114,4 +115,14 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.AddDTO>
      **/
     List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(@Param("channelIds") List<String> channelIds);
+
+
+     /**
+      * @description
+      * @param code
+      * @return
+      * @date 2024-01-26 15:51
+      * @author Lambda
+      */
+    PackageDTO.ScanResultDTO packageScanByCode(@Param("code") String code);
 }
