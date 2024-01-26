@@ -38,7 +38,7 @@ public class MQConsumerAmzReportService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_create_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_CREATE, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_CREATE)
     public class ConsumerAmzReportCreate implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
@@ -62,7 +62,7 @@ public class MQConsumerAmzReportService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_query_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_QUERY, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_QUERY)
     public class ConsumerAmzReportQuery implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
@@ -86,7 +86,7 @@ public class MQConsumerAmzReportService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_download_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DOWNLOAD, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DOWNLOAD)
     public class ConsumerAmzReportDownload implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
@@ -110,7 +110,7 @@ public class MQConsumerAmzReportService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_parse_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_PARSE, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_PARSE)
     public class ConsumerAmzReportParse implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
@@ -135,7 +135,7 @@ public class MQConsumerAmzReportService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
             selectorExpression = "amz_report_direct_query_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DIRECT_QUERY, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_AMZ_REPORT_DIRECT_QUERY)
     public class ConsumeAmzReportDirectQuery implements RocketMQListener<AmzReportTaskEntity> {
         @Override
         @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)

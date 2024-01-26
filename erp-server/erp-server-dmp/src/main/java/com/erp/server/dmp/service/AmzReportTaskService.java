@@ -121,7 +121,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-20
      */
-    void updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime);
+    AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime);
 
 
     /**

@@ -200,12 +200,15 @@ public class ReportsApiTest {
         // 亚马逊物流管理库存{"reportId":"724464019664"}
 //        String reportId = "724464019664";
 //        String reportId = "727635019669";
-        String reportId = "1964678019738";
+//        String reportId = "1964678019738";
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
 //        String reportId = "724480019664";
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
 //        String reportId = "724489019664";
-        String shopId = "1735512178565320710";
+//        String shopId = "1735512178565320710";
+
+        String reportId = "483700019747";
+        String shopId = "1735479610549735425";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {

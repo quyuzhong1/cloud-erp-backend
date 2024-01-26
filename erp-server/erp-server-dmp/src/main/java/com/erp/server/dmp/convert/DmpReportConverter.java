@@ -85,15 +85,17 @@ public interface DmpReportConverter {
             @Mapping(target = "status", constant = "created"),
             @Mapping(target = "statusDesc", constant = "待请求/创建报表(第一步)"),
             @Mapping(target = "groupId", source = "groupId"),
+            @Mapping(target = "id", expression = "java(null)"),
     })
     AmzReportTaskEntity initScheduleEntityToTask(AmzReportScheduleEntity entity, String reqDataStartTime, String reqDataEndTime, String groupId);
 
 
     @Mappings({
+            @Mapping(target = "id", expression = "java(null)"),
             @Mapping(target = "mainId", source = "taskEntity.id"),
             @Mapping(target = "shopId", source = "taskEntity.shopId"),
             @Mapping(target = "createTime", expression = "java(java.time.LocalDateTime.now())"),
-            @Mapping(target = "reportDocumentId", constant = ""),
+            @Mapping(target = "reportDocumentId", source = "report.reportDocumentId"),
             @Mapping(target = "reportUrl", constant = ""),
             @Mapping(target = "handleStatus", constant = "0"),
             @Mapping(target = "cancelStatus", constant = "0"),
