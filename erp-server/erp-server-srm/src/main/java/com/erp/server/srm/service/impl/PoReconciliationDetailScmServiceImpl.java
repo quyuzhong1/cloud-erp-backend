@@ -134,6 +134,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<PoReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(deleteIds)).collect(Collectors.toList());
+            //操作日志
+            List<PoReconciliationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
+            //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
                 deleteList.stream().forEach(obj -> obj.setMainId(""));
                 list.addAll(deleteList);
@@ -489,6 +494,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
+        //新增不需要添加新增SKU的日志
+        List<PoReconciliationDetailEntity> addList = list.stream().filter(obj -> StrUtil.isBlank(obj.getMainId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(), addPairList, "编辑操作");
+        }
         for (PoReconciliationDetailEntity entity : list) {
             //添加日志
             PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
@@ -500,21 +511,9 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     || !StrUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
-
-            if (StrUtil.isBlank(old.getMainId())) {
-                String content = StrUtil.format("新增了一条SKU【{}】", old.getSkuNo());
-                operateLogService.addModuleOperateLog(content, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId, "编辑操作");
-            } else {
-                operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
-            }
             entity.setMainId(mainId);
-        }
-
-        //新增不需要添加新增SKU的日志
-        List<PoReconciliationDetailEntity> addList = list.stream().filter(obj -> StrUtil.isBlank(obj.getMainId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(), addPairList, "编辑操作");
+            //操作日志
+            operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
         }
     }
 }

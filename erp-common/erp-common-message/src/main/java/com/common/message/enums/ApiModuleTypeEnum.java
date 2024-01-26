@@ -42,7 +42,7 @@ public enum ApiModuleTypeEnum {
     PURCHASE_CHANGE(31, "purchaseChange", "采购变更单","scm"),
 
     PO_RECEIVE(32, "poReceive", "采购收货单","wms"),
-
+    SUBCONTRACT_ISSUE(33, "subcontractIssue", "委外发料单","wms"),
 
     ;
     private Integer code;
