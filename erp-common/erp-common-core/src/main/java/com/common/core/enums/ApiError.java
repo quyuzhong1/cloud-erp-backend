@@ -1168,6 +1168,11 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_NOT_GENERATE(96011,"单据单号【{}】非已确认不支持生成对账单"),
     ERROR_PO_RECONCILIATION_DATE(96012,"对账开始时间不能大于结束时间"),
     ERROR_PO_RECONCILIATION_DETAIL_DELETE(96013,"单据【{}】已对账不支持删除对账明细"),
+    ERROR_DELIVERY_ORDER_NOT_EXIST(96014,"送货单不存在"),
+    ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST(96015,"送货单明细不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
+
+
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),

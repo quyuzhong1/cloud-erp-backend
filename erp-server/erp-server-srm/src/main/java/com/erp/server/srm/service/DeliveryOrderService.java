@@ -77,4 +77,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
      * @return
      */
     List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
+
+
 }

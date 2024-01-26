@@ -26,6 +26,14 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     void add(List<DeliveryOrderDetailDTO.AddDTO> dto, String mainId);
 
     List<DeliveryOrderDetailEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据主表id集合查询
+     * @author Will
+     * @date: 2024/1/26 9:50
+     * @param mainIdList
+     * @return List<DeliveryOrderDetailEntity>
+     */
+    List<DeliveryOrderDetailEntity> listByMainIdList(List<String> mainIdList);
 
     /**
     * 修改
@@ -42,4 +50,20 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
     Map<String,List<DeliveryOrderDetailDTO.PrintDTO>> mapPrintByMainIds(List<String> mainIds);
 
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds);
+
+    /**
+     * @description: 送货单确认
+     * @author Will
+     * @date: 2024/1/26 9:52
+     * @param idList
+     */
+    void deliveryOrderConfirm(List<String> idList);
+
+    /**
+     * @description: 送货单反确认
+     * @author Will
+     * @date: 2024/1/26 9:52
+     * @param idList
+     */
+    void deliveryOrderUnConfirm(List<String> idList);
 }

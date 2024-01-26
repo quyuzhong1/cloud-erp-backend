@@ -89,9 +89,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private SysDictFeign sysDictFeign;
 
     @Autowired
-    private SupplierFeign supplierFeign;
-
-    @Autowired
     private ScmTaskFeign scmTaskFeign;
 
     @Autowired
@@ -103,6 +100,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public BaseResultDTO.AddDTO add(List<PoReconciliationDetailDTO.AddDTO> addList) {
         List<PoReconciliationDetailEntity> poReconciliationDetailList = BeanMapperUtils.copyList(PoReconciliationDetailEntity.class, addList);
 
+        //新增数据验证
+        checkAddData(poReconciliationDetailList);
         //新增数据处理
         handleAddData(poReconciliationDetailList);
         
@@ -113,70 +112,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         return new BaseResultDTO.AddDTO(poReconciliationDetailList.get(0).getId(), poReconciliationDetailList.get(0).getId());
     }
-    
-    private void handleAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
-        if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
-            return;
-        }
-        List<String> skuIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
 
-        //采购供应商
-        List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).collect(Collectors.toList());
-        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = scmTaskFeign.listOrderSupplierByOrderIdList(poIdList);
-
-        //结算方式
-        List<String> payMethodIdList = purchaseOrderSupplierList.stream().map(PurchaseOrderSupplierEntity::getPayMethodId).collect(Collectors.toList());
-        List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(payMethodIdList);
-        //组织
-        List<String> orgIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSettleOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
-        //采购订单
-        List<String> poDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(poDetailIdList);
-
-        //价目表信息
-        List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-
-        for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
-            //sku
-            String skuNo = productDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
-            detailEntity.setSkuNo(skuNo);
-            //供应商
-            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPoId()))
-                    .findFirst().orElse(null);
-            detailEntity.setPaymentCondition(supplierEntity.getPaymentCondition());
-            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), supplierEntity.getPayMethodId()))
-                    .map(DictBasicEntity::getValue).findFirst().orElse("");
-            detailEntity.setSettleDict(settleDict);
-
-            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            detailEntity.setSettleOrgName(orgName);
-            if (SourceTypeEnum.PO_RETURN.getCode().equals(detailEntity.getSourceType())) {
-                //报价信息单价
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
-                        StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
-                        && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
-                        && detailEntity.getReceiveQty() > obj.getMinQty()
-                        && obj.getMaxQty() >= detailEntity.getReceiveQty()
-                ).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                    detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
-                }
-                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
-            } else {
-                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(poDetailEntity)) {
-                    detailEntity.setTaxPrice(poDetailEntity.getTaxPrice());
-                    detailEntity.setTaxRate(poDetailEntity.getTaxRate());
-                }
-                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getDeliveryQty()));
-            }
-        }
-    }
 
     /**
     * 修改
@@ -411,6 +347,100 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             obj.setMainId(poReconciliationEntity.getId());
             obj.setIsAddAccount(Boolean.TRUE);
         });
+    }
+
+    /**
+     * @description: 新增数据验证
+     * @author Will
+     * @date: 2024/1/26 10:06
+     * @param poReconciliationDetailList
+     */
+    private void checkAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+        if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
+            return;
+        }
+        List<String> sourceDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PoReconciliationDetailEntity> oldDetailList = this.listDetailBySourceDetailIdList(sourceDetailIdList);
+
+        if (CollectionUtils.isNotEmpty(oldDetailList)) {
+            String codes = oldDetailList.stream().map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE,codes);
+        }
+    }
+
+    /**
+     * @description: 新增数据处理
+     * @author Will
+     * @date: 2024/1/26 9:56
+     * @param poReconciliationDetailList
+     */
+    private void handleAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+        if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
+            return;
+        }
+        List<String> skuIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
+
+        //采购供应商
+        List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).collect(Collectors.toList());
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = scmTaskFeign.listOrderSupplierByOrderIdList(poIdList);
+
+        //结算方式
+        List<String> payMethodIdList = purchaseOrderSupplierList.stream().map(PurchaseOrderSupplierEntity::getPayMethodId).collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(payMethodIdList);
+        //组织
+        List<String> orgIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSettleOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        //采购订单明细
+        List<String> poDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(poDetailIdList);
+
+        //价目表信息
+        List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
+        for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
+            //sku
+            String skuNo = productDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+            detailEntity.setSkuNo(skuNo);
+            //供应商
+            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPoId()))
+                    .findFirst().orElse(new PurchaseOrderSupplierEntity());
+            //供应商名称
+            detailEntity.setSupplierName(StrUtil.isBlank(detailEntity.getSupplierName()) ? supplierEntity.getSupplierName() : detailEntity.getSupplierName());
+            //付款条件
+            detailEntity.setPaymentCondition(supplierEntity.getPaymentCondition());
+            //结算方式
+            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), supplierEntity.getPayMethodId()))
+                    .map(DictBasicEntity::getValue).findFirst().orElse("");
+            detailEntity.setSettleDict(settleDict);
+            //组织名称
+            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            detailEntity.setSettleOrgName(orgName);
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(detailEntity.getSourceType())) {
+                //报价信息单价
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
+                        StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
+                                && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
+                                && detailEntity.getReceiveQty() > obj.getMinQty()
+                                && obj.getMaxQty() >= detailEntity.getReceiveQty()
+                ).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
+                }
+                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+            } else {
+                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(poDetailEntity)) {
+                    detailEntity.setTaxPrice(poDetailEntity.getTaxPrice());
+                    detailEntity.setTaxRate(poDetailEntity.getTaxRate());
+                    detailEntity.setCurrency(poDetailEntity.getCurrency());
+                }
+                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+            }
+        }
     }
 
     /**

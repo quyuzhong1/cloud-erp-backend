@@ -533,30 +533,14 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
         * 含税单价
         */
-        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal taxPrice;
 
         /**
-        * 价税合计
-        */
-        @NotNull(message = "价税合计不能为空")
-        @Digits(integer = 12, fraction = 4, message = "价税合计整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal taxAmount;
-
-        /**
         * 结算组织id
         */
-        @NotBlank(message = "结算组织id不能为空")
         @Size(max = 19,message = "结算组织id最大长度不能超过19位")
         private String settleOrgId;
-
-        /**
-        * 结算组织名称
-        */
-        @NotBlank(message = "结算组织名称不能为空")
-        @Size(max = 100,message = "结算组织名称最大长度不能超过100位")
-        private String settleOrgName;
 
         /**
         * 业务状态
@@ -568,7 +552,6 @@ public class PoReconciliationDetailDTO implements Serializable {
         /**
         * 币别
         */
-        @NotBlank(message = "币别不能为空")
         @Size(max = 32,message = "币别最大长度不能超过32位")
         private String currency;
 
