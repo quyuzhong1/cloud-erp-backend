@@ -311,6 +311,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
     }
 
+    @Override
+    public TransferDeclareEntity getBySoId(String soId) {
+        return null;
+    }
+
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         if (ObjectUtil.isEmpty(data)) {
             return;

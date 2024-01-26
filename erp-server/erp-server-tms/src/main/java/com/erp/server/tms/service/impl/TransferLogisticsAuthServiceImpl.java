@@ -4,36 +4,33 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.TransferLogisticsAuthDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.entity.TransferLogisticsAuthFieldEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
-import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferLogisticsAuthMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
 import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferLogisticsAuthDTO;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -259,22 +256,17 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     public Map<String, String> getTransferLogisticsAuthConfig(String authId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<TransferLogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
-            TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
-            return service.getLogisticsAuthConfig(authId);
-        }else {
-            if (StringUtils.isNoneBlank(authId)) {
-                map.put("id", authId);
-                TransferLogisticsAuthEntity authEntity = this.getById(authId);
-                if (Objects.isNull(authEntity)) return null;
-                map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-                fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
-            }
-            if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                });
-            }
+        if (StringUtils.isNoneBlank(authId)) {
+            map.put("id", authId);
+            TransferLogisticsAuthEntity authEntity = this.getById(authId);
+            if (Objects.isNull(authEntity)) return null;
+            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+            fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
+        }
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
         }
         return map;
     }
@@ -312,22 +304,18 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     public Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<TransferLogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
-            TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
-            return service.getLogisticsAuthConfig(authId);
-        }else {
-            if (StringUtils.isNoneBlank(authId)) {
-                map.put("id", authId);
-                TransferLogisticsAuthEntity authEntity = this.getById(authId);
-                if (Objects.isNull(authEntity)) return null;
-                map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-                fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
-            }
-            if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                });
-            }
+
+        if (StringUtils.isNoneBlank(authId)) {
+            map.put("id", authId);
+            TransferLogisticsAuthEntity authEntity = this.getById(authId);
+            if (Objects.isNull(authEntity)) return null;
+            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+            fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
+        }
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
         }
         return map;
     }

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface TransferLogisticsService {
-
     /**
      * 获取平台标识
      */
@@ -21,7 +20,7 @@ public interface TransferLogisticsService {
     /**
      * 服务商授权
      */
-    Boolean authorize(Map<String, String> authConfig,String authId);
+    ApiResult authorization(Map<String, String> authConfig);
 
     /**
      * 获取物流产品
