@@ -88,6 +88,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //遍历生成采购收货单
         generateReceiveDTOMap.forEach((key,value)->{
+            DeliveryOrderDTO.GenerateReceiveDTO firstDTO = value.get(0);
             BatchResultDTO resultDTO = new BatchResultDTO();
             resultDTOList.add(resultDTO);
             DeliveryOrderEntity deliveryOrderEntity = deliveryOrderMap.get(key);
@@ -119,8 +120,17 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             WarehouseReceiveDTO.AddDTO addDTO = SupplierDeliveryConverter.INSTANCE.deliveryToReceiveConvert(deliveryOrderEntity,detailEntityGroupList);
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
             addDTO.setGenerateByDelivery(true);
+            if(StringUtils.isNotBlank(firstDTO.getReceiveDeptId())){
+                addDTO.setReceiveDeptId(firstDTO.getReceiveDeptId());
+            }
+            if(StringUtils.isNotBlank(firstDTO.getReceiveUserId())){
+                addDTO.setReceiveUserId(firstDTO.getReceiveUserId());
+            }
+            if(Objects.nonNull(firstDTO.getBillDate())){
+                addDTO.setBillDate(firstDTO.getBillDate());
+            }
             String id = warehouseReceiveService.add(addDTO);
-            if(value.get(0).isAutoSubmit()){
+            if(firstDTO.isAutoSubmit()){
                 if(!warehouseReceiveService.submit(Collections.singletonList(id))){
                     throw new ServiceException("提交审核失败");
                 }

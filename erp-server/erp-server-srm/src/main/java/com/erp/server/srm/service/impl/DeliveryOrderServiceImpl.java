@@ -500,6 +500,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
+        //判断是否关联对账单，有关联无法反审核
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
                 .in(DeliveryOrderEntity::getId,ids)

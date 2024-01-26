@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author lrp
  * @since 2024-01-12
-*/
+ */
 @Data
 @NoArgsConstructor
 public class DeliveryOrderDTO implements Serializable {
@@ -72,7 +72,7 @@ public class DeliveryOrderDTO implements Serializable {
         List<GenerateReceiveDTO> generateReceiveDTOList;
     }
 
-        /**
+    /**
      * 下推收货单列表查询DTO
      */
     @Data
@@ -104,6 +104,22 @@ public class DeliveryOrderDTO implements Serializable {
         private Integer giftReceiveQty;
 
         private boolean autoSubmit;
+
+        /**
+         * 收货人id
+         */
+        private String receiveUserId;
+
+        /**
+         * 收货人部门id
+         */
+        private String receiveDeptId;
+
+        /**
+         * 收货日期
+         */
+        private LocalDate billDate;
+
     }
 
     /**
@@ -272,6 +288,7 @@ public class DeliveryOrderDTO implements Serializable {
 
         private Integer count;
     }
+
     /**
      * 列表
      */
@@ -433,7 +450,7 @@ public class DeliveryOrderDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
 
         /**
          * 供应商IdList
@@ -442,20 +459,20 @@ public class DeliveryOrderDTO implements Serializable {
     }
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 送货单号
-        */
+         * 送货单号
+         */
         private String code;
 
         /**
@@ -469,8 +486,8 @@ public class DeliveryOrderDTO implements Serializable {
         private String receiptStatusName;
 
         /**
-        * 供应商id
-        */
+         * 供应商id
+         */
         private String supplierId;
 
         /**
@@ -480,13 +497,13 @@ public class DeliveryOrderDTO implements Serializable {
 
 
         /**
-        * 来源id(采购订单id)
-        */
+         * 来源id(采购订单id)
+         */
         private String sourceId;
 
         /**
-        * 收货单号
-        */
+         * 收货单号
+         */
         private String receiveCode;
 
         /**
@@ -500,8 +517,8 @@ public class DeliveryOrderDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         /**
-        * 订单号
-        */
+         * 订单号
+         */
         private String sourceCode;
 
         /**
@@ -520,18 +537,18 @@ public class DeliveryOrderDTO implements Serializable {
         private String toWarehouseName;
 
         /**
-        * 客户名称
-        */
+         * 客户名称
+         */
         private String customerName;
 
         /**
-        * 联系人id
-        */
+         * 联系人id
+         */
         private String contactId;
 
         /**
-        * 目的仓id
-        */
+         * 目的仓id
+         */
         private String toWarehouseId;
 
         /**
@@ -556,8 +573,8 @@ public class DeliveryOrderDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -639,15 +656,15 @@ public class DeliveryOrderDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -668,109 +685,109 @@ public class DeliveryOrderDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 供应商id
-        */
+         * 供应商id
+         */
         @NotBlank(message = "供应商id不能为空")
-        @Size(max = 19,message = "供应商id最大长度不能超过19位")
+        @Size(max = 19, message = "供应商id最大长度不能超过19位")
         private String supplierId;
 
         /**
-        * 来源id
-        */
+         * 来源id
+         */
         @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        @Size(max = 19, message = "来源id最大长度不能超过19位")
         private String sourceId;
 
         /**
-        * 预计到达日期
-        */
+         * 预计到达日期
+         */
         private LocalDate planDeliveryDate;
 
         /**
-        * 收货单号
-        */
+         * 收货单号
+         */
         private String receiveCode;
 
         /**
-        * 来源订单号
-        */
+         * 来源订单号
+         */
         @NotBlank(message = "来源订单号不能为空")
-        @Size(max = 50,message = "来源订单号最大长度不能超过50位")
+        @Size(max = 50, message = "来源订单号最大长度不能超过50位")
         private String sourceCode;
 
         /**
-        * 客户名称
-        */
+         * 客户名称
+         */
         private String customerName;
 
         /**
-        * 联系人id
-        */
+         * 联系人id
+         */
         private String contactId;
 
         /**
-        * 联系人name
-        */
+         * 联系人name
+         */
         private String contactName;
 
         /**
-        * 目的仓id
-        */
+         * 目的仓id
+         */
         @NotBlank(message = "目的仓id不能为空")
-        @Size(max = 19,message = "目的仓id最大长度不能超过19位")
+        @Size(max = 19, message = "目的仓id最大长度不能超过19位")
         private String toWarehouseId;
 
         /**
-        * 目的仓名称
-        */
+         * 目的仓名称
+         */
         @NotBlank(message = "目的仓名称不能为空")
-        @Size(max = 50,message = "目的仓名称最大长度不能超过50位")
+        @Size(max = 50, message = "目的仓名称最大长度不能超过50位")
         private String toWarehouseName;
 
         /**
-        * 打印日期
-        */
+         * 打印日期
+         */
         private LocalDate printDate;
 
         /**
-        * 确认收货日期
-        */
+         * 确认收货日期
+         */
         private LocalDate confirmReceiveDate;
 
         /**
-        * 收货员id
-        */
+         * 收货员id
+         */
         private String receiveUserId;
 
         /**
-        * 收货员名
-        */
+         * 收货员名
+         */
         private String receiveUserName;
 
         /**
-        * 收货电话
-        */
+         * 收货电话
+         */
         private String receivePhone;
 
         /**
-        * 收货地址
-        */
+         * 收货地址
+         */
         private String receiveAddress;
 
         /**
-        * 来源类型  {@link DeliveryOrderEnum.SourceTypeEnum}
-        */
+         * 来源类型  {@link DeliveryOrderEnum.SourceTypeEnum}
+         */
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
         /**
-        * 收货状态 {@link DeliveryOrderEnum.ReceiptStatusEnum}
-        */
+         * 收货状态 {@link DeliveryOrderEnum.ReceiptStatusEnum}
+         */
         private String receiptStatus;
 
         /**
-        * 是否打印
-        */
+         * 是否打印
+         */
         private Boolean isPrint;
 
 
@@ -792,7 +809,6 @@ public class DeliveryOrderDTO implements Serializable {
          * 1个月内  inOneMonth
          * 2个月内  inTwoMonth
          * 2个月以后  twoMonthLater
-         *
          */
         private String type;
         /**
