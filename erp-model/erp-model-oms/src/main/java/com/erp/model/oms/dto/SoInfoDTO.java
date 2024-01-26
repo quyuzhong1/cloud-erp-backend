@@ -1582,6 +1582,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String orderType;
 
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
         private String code;
 
         private Boolean invalidStatus;

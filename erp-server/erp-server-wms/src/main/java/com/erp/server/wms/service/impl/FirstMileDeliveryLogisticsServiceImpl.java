@@ -185,7 +185,7 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
             addDTO.setOutstockCode("");
             addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel()==null?"":deliveryLogisticsSave.getLogisticsChannel());
             if (deliveryLogisticsSave.getDeliveryTime() != null) {
-                addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime().toLocalDate());
+                addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime());
             }
             List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
             FbaShipmentEntity entity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(firstMileDeliveryEntity.getSourceId())).findFirst().orElse(new FbaShipmentEntity());
