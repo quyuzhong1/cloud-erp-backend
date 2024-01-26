@@ -79,7 +79,7 @@ public class SupplierQueryHandler extends AbstractQueryHandler {
     }
 
     private void buildRuleSql(List<String> supplierIds,Object value){
-        Boolean aTrue = value.equals("true");
+        Boolean aTrue = value.equals(true);
         //启用退货规则
         if (aTrue) {
             if (CollectionUtils.isNotEmpty(supplierIds)) {

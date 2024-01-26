@@ -43,6 +43,10 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
     }
 
     /**
