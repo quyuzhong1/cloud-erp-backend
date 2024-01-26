@@ -307,7 +307,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     }
 
     @Override
-    public void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList) {
+    public void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList,boolean isFromDisApprove) {
         List<PoReconciliationDetailEntity> poReconciliationDetailList = listDetailBySourceDetailIdList(sourceDetailIdList);
         if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
             return;
@@ -315,7 +315,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         String codes = poReconciliationDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getMainId()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_DELETE,codes);
+            if(isFromDisApprove){
+                throw new ServiceException(ApiError.ERROR_PO_RECEIVE_DISAPPROVE_FAILURE,codes);
+            }else{
+                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_DELETE,codes);
+            }
         }
         lambdaUpdate().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).remove();
     }

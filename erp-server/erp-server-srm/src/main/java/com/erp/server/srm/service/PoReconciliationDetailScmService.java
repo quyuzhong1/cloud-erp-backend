@@ -101,5 +101,5 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @date: 2024/1/25 17:02
      * @param sourceDetailIdList
      */
-    void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList);
+    void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList,boolean isFromDisApprove);
 }
