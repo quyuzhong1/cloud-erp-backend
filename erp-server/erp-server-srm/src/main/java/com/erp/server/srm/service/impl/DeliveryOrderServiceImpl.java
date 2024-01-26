@@ -432,7 +432,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 .last("limit 1")
                 .one();
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
-        SupplierEntity supplier = commonService.getSupplierEntity();
+        SupplierEntity supplier = supplierFeign.getSupplierById(entity.getSupplierId());
+        if(Objects.isNull(supplier)){
+            throw new ServiceException(ApiError.ERROR_96001);
+        }
         if(!supplier.getId().equals(entity.getSupplierId())){
             throw new ServiceException(ApiError.ERROR_96002);
         }
