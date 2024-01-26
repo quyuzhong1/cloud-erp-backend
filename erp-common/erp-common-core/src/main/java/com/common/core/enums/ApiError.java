@@ -1073,6 +1073,7 @@ public enum ApiError implements Serializable {
     ERROR_WAIT_SHIPPED_TRANSFER(92125,"只有待发货的订单才能中转报关"),
     ERROR_WAIT_TRANSFER(92126,"仅可操作待中转订单的单据"),
     ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
+    ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     /**
      * TMS 错误
      * 从94000 开始

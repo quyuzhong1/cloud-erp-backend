@@ -781,6 +781,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(logisticsChannel)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
             }
+            //长宽高校验
+            checkLength(soB2cLogisticsEntity, logisticsChannel);
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
             //物流信息更新
             soB2cLogisticsService.updateById(soB2cLogisticsEntity);
@@ -829,6 +831,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getName(), updateDTO.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
+    }
+
+    /**
+     * 根据数据进行校验长宽高
+     * @param soB2cLogisticsEntity
+     * @param logisticsChannel
+     */
+    private void checkLength(SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelEntity logisticsChannel) {
+        //默认为cm
+        BigDecimal maxLength = logisticsChannel.getMaxLength();
+        if (logisticsChannel.getLengthUnit().equals("m")){
+            maxLength = maxLength.multiply(BigDecimal.valueOf(100));
+        }
+        BigDecimal maxWidth = logisticsChannel.getMaxWidth();
+        if (logisticsChannel.getWidthUnit().equals("m")){
+            maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
+        }
+        BigDecimal maxHeight = logisticsChannel.getMaxHeight();
+        if (logisticsChannel.getHeightUnit().equals("m")){
+            maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
+        }
+        if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
+                soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
+                soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0){
+            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(),soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
+            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】",maxLength,maxWidth,maxHeight);
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH,orderDesc,logisticsDesc);
+        }
     }
 
     @Override
