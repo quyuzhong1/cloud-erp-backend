@@ -126,6 +126,36 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("weight_unit")
     private String weightUnit;
     /**
+     * 长度上限
+     */
+    @TableField("max_length")
+    private BigDecimal maxLength;
+    /**
+     * 长度单位
+     */
+    @TableField("length_unit")
+    private String lengthUnit;
+    /**
+     * 宽度上限
+     */
+    @TableField("max_width")
+    private BigDecimal maxWidth;
+    /**
+     * 宽度单位
+     */
+    @TableField("width_unit")
+    private String widthUnit;
+    /**
+     * 高度上限
+     */
+    @TableField("max_height")
+    private BigDecimal maxHeight;
+    /**
+     * 高度单位
+     */
+    @TableField("height_unit")
+    private String heightUnit;
+    /**
     * 税费模式
     */
     @TableField("tax_model")

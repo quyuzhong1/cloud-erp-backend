@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -246,7 +247,30 @@ public class LogisticsChannelDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
-
+        /**
+         * 长度上限
+         */
+        private BigDecimal maxLength;
+        /**
+         * 长度单位
+         */
+        private String lengthUnit;
+        /**
+         * 宽度上限
+         */
+        private BigDecimal maxWidth;
+        /**
+         * 宽度单位
+         */
+        private String widthUnit;
+        /**
+         * 高度上限
+         */
+        private BigDecimal maxHeight;
+        /**
+         * 高度单位
+         */
+        private String heightUnit;
         /**
          * 税费模式
          */
@@ -465,6 +489,37 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotBlank(message = "重量单位不能为空")
         private String weightUnit;
+
+        /**
+         * 长度上限
+         */
+        private BigDecimal maxLength;
+        /**
+         * 长度单位
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=lengthUnit
+         */
+        @NotBlank(message = "长度单位不能为空")
+        private String lengthUnit;
+        /**
+         * 宽度上限
+         */
+        private BigDecimal maxWidth;
+        /**
+         * 宽度单位
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=widthUnit
+         */
+        @NotBlank(message = "宽度单位不能为空")
+        private String widthUnit;
+        /**
+         * 高度上限
+         */
+        private BigDecimal maxHeight;
+        /**
+         * 高度单位
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=heightUnit
+         */
+        @NotBlank(message = "高度单位不能为空")
+        private String heightUnit;
 
         /**
          * 税费模式
