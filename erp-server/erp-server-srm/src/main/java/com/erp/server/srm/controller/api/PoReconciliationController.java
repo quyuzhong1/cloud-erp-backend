@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.server.srm.query.PoReconciliationDetailQueryHandler;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +109,7 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewDetail")
+    @WebAdvanceQuery(handler = PoReconciliationDetailQueryHandler.class)
     public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
         List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationService.viewDetail(dto);
         return success(list);

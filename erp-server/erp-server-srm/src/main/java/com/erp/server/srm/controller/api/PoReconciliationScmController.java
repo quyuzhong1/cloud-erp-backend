@@ -15,6 +15,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.server.srm.query.PoReconciliationDetailScmQueryHandler;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
@@ -124,6 +125,7 @@ public class PoReconciliationScmController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/viewDetail")
+    @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
     public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
         List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationScmService.viewDetail(dto);
         return success(list);
