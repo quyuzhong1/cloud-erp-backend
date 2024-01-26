@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.AliexpressDeliveryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.AliexpressDeliveryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="platform_code" property="platformCode" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="track_no" property="trackNo" />
+       <result column="trade_create_time" property="tradeCreateTime" />
+       <result column="out_bound_time" property="outBoundTime" />
+       <result column="warehouse_name" property="warehouseName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_code, so_id, so_code, shop_id, shop_name, track_no, trade_create_time, out_bound_time, warehouse_name
+    </sql>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.AliexpressDeliveryDTO$ListDTO">
+        SELECT
+            ad.id,
+            ad.platform_code AS platformCode,
+            ad.so_id AS soId,
+            ad.so_code AS soCode,
+            ad.shop_id AS shopId,
+            ad.shop_name AS shopName,
+            ad.track_no AS trackNo,
+            ad.trade_create_time AS tradeCreateTime,
+            ad.out_bound_time AS outBoundTime,
+            ad.warehouse_name AS warehouseName
+        FROM aliexpress_delivery ad
+        WHERE ad.is_deleted = FALSE
+        <!--平台订单号-->
+        <if test="params.platformCode != null and params.platformCode != ''">
+            and  ad.platform_code ILIKE concat('%',#{params.platformCode}::text,'%')
+        </if>
+        <!--销售单编号-->
+        <if test="params.soCode != null and params.soCode != ''">
+            and  ad.so_code ILIKE concat('%',#{params.soCode}::text,'%')
+        </if>
+        <!--店铺-->
+        <if test="params.shopIdList !=null and params.shopIdList.size > 0">
+            and bty.shop_id in
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <!--物流跟踪号-->
+        <if test="params.trackNo != null and params.trackNo != ''">
+            and  ad.track_no concat('%',#{params.trackNo}::text,'%')
+        </if>
+        <!--平台发货仓库-->
+        <if test="params.warehouseName != null and params.warehouseName != ''">
+            and  ad.warehouse_name concat('%',#{params.warehouseName}::text,'%')
+        </if>
+        <!--订单创建时间-->
+        <if test="params.tradeCreateTimeList != null and params.tradeCreateTimeList.size > 0">
+            and ad.trade_create_time >= #{params.tradeCreateTimeList[0]}
+            and (#{params.tradeCreateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.trade_create_time
+        </if>
+        <!--订单出库时间-->
+        <if test="params.outBoundTimeList != null and params.outBoundTimeList.size > 0">
+            and ad.out_bound_time >= #{params.outBoundTimeList[0]}
+            and (#{params.outBoundTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.out_bound_time
+        </if>
+    </select>
+
+    <!--导出excel-->
+    <select id="listExportExcel" resultType="com.erp.model.wms.dto.AliexpressDeliveryDTO$ListDTO">
+        SELECT
+            ad.id,
+            ad.platform_code AS platformCode,
+            ad.so_id AS soId,
+            ad.so_code AS soCode,
+            ad.shop_id AS shopId,
+            ad.shop_name AS shopName,
+            ad.track_no AS trackNo,
+            ad.trade_create_time AS tradeCreateTime,
+            ad.out_bound_time AS outBoundTime,
+            ad.warehouse_name AS warehouseName
+        FROM aliexpress_delivery ad
+        WHERE ad.is_deleted = FALSE
+        <!--ids-->
+        <if test="params.ids != null and params.ids != ''">
+            and ad.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
+        <!--平台订单号-->
+        <if test="params.platformCode != null and params.platformCode != ''">
+            and  ad.platform_code ILIKE concat('%',#{params.platformCode}::text,'%')
+        </if>
+        <!--销售单编号-->
+        <if test="params.soCode != null and params.soCode != ''">
+            and  ad.so_code ILIKE concat('%',#{params.soCode}::text,'%')
+        </if>
+        <!--店铺-->
+        <if test="params.shopIdList !=null and params.shopIdList.size > 0">
+            and bty.shop_id in
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <!--物流跟踪号-->
+        <if test="params.trackNo != null and params.trackNo != ''">
+            and  ad.track_no concat('%',#{params.trackNo}::text,'%')
+        </if>
+        <!--平台发货仓库-->
+        <if test="params.warehouseName != null and params.warehouseName != ''">
+            and  ad.warehouse_name concat('%',#{params.warehouseName}::text,'%')
+        </if>
+        <!--订单创建时间-->
+        <if test="params.tradeCreateTimeList != null and params.tradeCreateTimeList.size > 0">
+            and ad.trade_create_time >= #{params.tradeCreateTimeList[0]}
+            and (#{params.tradeCreateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.trade_create_time
+        </if>
+        <!--订单出库时间-->
+        <if test="params.outBoundTimeList != null and params.outBoundTimeList.size > 0">
+            and ad.out_bound_time >= #{params.outBoundTimeList[0]}
+            and (#{params.outBoundTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ad.out_bound_time
+        </if>
+    </select>
+</mapper>

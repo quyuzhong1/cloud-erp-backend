@@ -1,0 +1,102 @@
+package com.erp.server.wms.service.impl;
+
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.wms.dto.AliexpressDeliveryDTO;
+import com.erp.model.wms.entity.AliexpressDeliveryEntity;
+import com.erp.server.wms.mapper.AliexpressDeliveryMapper;
+import com.erp.server.wms.service.AliexpressDeliveryService;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * <p>
+ * 速卖通发货单 服务实现类
+ * </p>
+ *
+ * @author Luo_WG
+ * @since 2024-01-26
+ */
+@Slf4j
+@Service
+public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDeliveryMapper, AliexpressDeliveryEntity> implements AliexpressDeliveryService {
+    @Autowired
+    private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void add(AliexpressDeliveryDTO.AddDTO addDTO) {
+        AliexpressDeliveryEntity aliexpressDeliveryEntity = new AliexpressDeliveryEntity();
+        BeanMapperUtils.copy(addDTO, aliexpressDeliveryEntity);
+
+        // 数据处理
+        handleData(aliexpressDeliveryEntity);
+
+        log.info("开始新增速卖通发货单");
+        boolean save = super.save(aliexpressDeliveryEntity);
+        if(!save) {
+            throw new ServiceException("速卖通发货单保存失败");
+        }
+    }
+
+    @Override
+    public PagingVO<AliexpressDeliveryDTO.ListDTO> paging(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<AliexpressDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response) {
+        List<AliexpressDeliveryDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/aliexpressDeliveryExport.xlsx";
+        String name = "中转报关单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(AliexpressDeliveryEntity aliexpressDeliveryEntity) {
+
+    }
+}

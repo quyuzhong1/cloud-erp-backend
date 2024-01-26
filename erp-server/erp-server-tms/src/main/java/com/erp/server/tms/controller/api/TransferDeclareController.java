@@ -53,7 +53,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "oms:transferDeclare:paging",
+            menuCode = "tms:transferDeclare:paging",
             tableAlias = "td"
     )
     public ApiResult<PagingVO<TransferDeclareDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
@@ -71,7 +71,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "oms:transferDeclare:paging",
+            menuCode = "tms:transferDeclare:paging",
             tableAlias = "td"
     )
     public ApiResult<List<TransferDeclareDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -121,7 +121,7 @@ public class TransferDeclareController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:transferDeclare:view",
+            menuCode = "tms:transferDeclare:view",
             serviceClass = TransferDeclareService.class,
             keyIdName = "id")
     @LogViewService
@@ -217,7 +217,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:paging",
+            menuCode = "tms:TransferDeclareService:paging",
             tableAlias = "td"
     )
     public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
