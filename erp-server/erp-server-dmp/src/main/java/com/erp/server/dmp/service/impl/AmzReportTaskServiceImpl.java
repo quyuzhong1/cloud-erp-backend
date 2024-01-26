@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -66,6 +67,8 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     private AmzReportScheduleService amzReportScheduleService;
     @Resource
     private CfgAmzReportFieldService cfgAmzReportFieldService;
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -173,7 +176,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 RocketMqTagEnum.AMZ_REPORT_CREATE_TAG.getName(),
                 newTaskEntity,
                 StrUtil.format("{}_{}", newTaskEntity.getId(), newTaskEntity.getStatus()),
-                1);
+                reportTypeConfig.getCreatedDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -230,7 +233,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     RocketMqTagEnum.AMZ_REPORT_QUERY_TAG.getName(),
                     entity,
                     StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
-                    1);
+                    recordTypeConfig.getQueryDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -256,7 +259,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     RocketMqTagEnum.AMZ_REPORT_CREATE_TAG.getName(),
                     newEntity,
                     StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
-                    1);
+                    recordTypeConfig.getCreatedDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -273,7 +276,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     RocketMqTagEnum.AMZ_REPORT_DOWNLOAD_TAG.getName(),
                     newEntity,
                     StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
-                    1);
+                    recordTypeConfig.getDownloadDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -288,6 +291,12 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
         if (hasFinishOrStop) {
             log.warn("步骤1:报告创建消费结束:任务已完成或终止, id={}", entity.getId());
+            // 检查缓存是否已删除
+            String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), entity.getStatus());
+            Object reportIdObj = redisUtil.get(key);
+            if (null != reportIdObj) {
+                redisUtil.del(key);
+            }
             return;
         }
 
@@ -319,11 +328,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         amzReportScheduleService.updateNextTime(entity.getMainId());
 
         // 请求创建报告
-//        String reportId = amzReportHandleService.createAmzReport(entity);
-        String reportId = "483700019747";
-        if (null == this.getById(entity.getId())){
-            return;
-        }
+        String reportId = amzReportHandleService.createAmzReport(entity);
 
         // 更新任务状态
         AmzReportTaskEntity newEntity = this.updateStatus(reportId, entity, AmzReportTaskStatusEnum.QUERY, LocalDateTime.now(), null, null, null);
@@ -334,7 +339,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 RocketMqTagEnum.AMZ_REPORT_QUERY_TAG.getName(),
                 newEntity,
                 StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
-                1);
+                config.getQueryDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -354,6 +359,11 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         if (!AmzReportTaskStatusEnum.DOWNLOAD.getCode().equalsIgnoreCase(entity.getStatus())) {
             String msg = StrUtil.format("任务状态非download:id={}, status={}", entity.getId(), entity.getStatus());
             throw new ServiceException(msg);
+        }
+        // 查询报告类型配置
+        CfgAmzReportTypeEntity config = cfgAmzReportTypeService.getByRecordType(entity.getReportType());
+        if (null == config) {
+            throw new ServiceException("未找到报告类型配置：recordType=" + entity.getReportType());
         }
         // 查询当前已有的报告信息
         AmzReportInfoEntity reportInfo = amzReportInfoService.getByReportId(entity.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
@@ -386,7 +396,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 RocketMqTagEnum.AMZ_REPORT_PARSE_TAG.getName(),
                 newEntity,
                 StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
-                1);
+                config.getParseDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送报告解析MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -411,7 +421,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         if (null == reportInfo) {
             throw new ServiceException("数据异常:未找到成功的报告信息: report=" + entity.getReportId());
         }
-
         // 查询报告配置map<报告列表名, mongo保存字段名>
         Map<String, String> columnMap = cfgAmzReportFieldService.mayByReportType(entity.getReportType());
         if (columnMap.isEmpty()) {
@@ -432,6 +441,13 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 业务处理
         AmzReportHandlerFactory.createHandler(reportInfo.getReportType())
                 .businessHandler(newEntity, reportInfo, jsonArray);
+
+        // 检查缓存是否已删除
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.CREATED.getCode());
+        Object reportIdObj = redisUtil.get(key);
+        if (null != reportIdObj) {
+            redisUtil.del(key);
+        }
     }
 
 
@@ -452,22 +468,23 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             String msg = StrUtil.format("任务状态非direct_query:id={}, status={}", entity.getId(), entity.getStatus());
             throw new ServiceException(msg);
         }
+        // 查询最新成功的报告
         Report report = amzReportHandleService.directQueryAmzReportInfo(entity);
         Report.ProcessingStatusEnum processingStatus = report.getProcessingStatus();
 
-        // 处理中, 重推队列等待
-        if (Report.ProcessingStatusEnum.IN_PROGRESS.equals(processingStatus) || Report.ProcessingStatusEnum.IN_QUEUE.equals(processingStatus)) {
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
-                    RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
-                    RocketMqTagEnum.AMZ_REPORT_DIRECT_QUERY_TAG.getName(),
-                    entity,
-                    StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
-                    1);
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送查询报告直接待获取记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
+        // 查询结果异常
+        if (!Report.ProcessingStatusEnum.DONE.equals(processingStatus)) {
+            log.warn("报告结果异常：响应的报告非完成：{}", JSONUtil.toJsonStr(report));
             return;
         }
+        // 检查报告是否已存在
+        AmzReportInfoEntity reportInfo = amzReportInfoService.getByReportId(report.getReportId(), null);
+        if (null != reportInfo){
+            // 更新待下载状态
+            this.updateStatus(report.getReportId(), entity, AmzReportTaskStatusEnum.EXIST_STOP, null, LocalDateTime.now(), null, null);
+            return;
+        }
+
         // 报告创建方式
         AmzReportCreatedMethodEnum createdMethodEnum = AmzReportCreatedMethodEnum.getBySubscribedType(recordTypeConfig.getSubscribedType());
 
@@ -477,38 +494,19 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             throw new ServiceException("保存报告信息失败");
         }
 
-        // 报告创建失败
-        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus)) {
-            // 创建失败设置为待请求重新推送
-            this.updateStatus("", entity, AmzReportTaskStatusEnum.CREATED, LocalDateTime.now(), null, null, null);
-
-            // 处理中, 重推队列等待
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
-                    RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
-                    RocketMqTagEnum.AMZ_REPORT_CREATE_TAG.getName(),
-                    entity,
-                    StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
-                    1);
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-            return;
-        }
         // 报告创建成功
-        if (Report.ProcessingStatusEnum.DONE.equals(processingStatus)) {
-            // 更新待下载状态
-            this.updateStatus(report.getReportId(), entity, AmzReportTaskStatusEnum.DOWNLOAD, null, LocalDateTime.now(), null, null);
+        // 更新待下载状态
+        AmzReportTaskEntity newEntity = this.updateStatus(report.getReportId(), entity, AmzReportTaskStatusEnum.DOWNLOAD, null, LocalDateTime.now(), null, null);
 
-            // 添加到延时队列3末端
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
-                    RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
-                    RocketMqTagEnum.AMZ_REPORT_DOWNLOAD_TAG.getName(),
-                    entity,
-                    StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
-                    1);
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
+        // 添加到延时队列3末端
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
+                RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
+                RocketMqTagEnum.AMZ_REPORT_DOWNLOAD_TAG.getName(),
+                newEntity,
+                StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
+                recordTypeConfig.getDownloadDelayLevel());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("直接查询发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 
@@ -540,11 +538,11 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity,
-                             AmzReportTaskStatusEnum statusEnum,
-                             LocalDateTime reportCreatedTime,
-                             LocalDateTime reportQueryTime,
-                             LocalDateTime reportDownloadTime,
-                             LocalDateTime reportParseTime) {
+                                            AmzReportTaskStatusEnum statusEnum,
+                                            LocalDateTime reportCreatedTime,
+                                            LocalDateTime reportQueryTime,
+                                            LocalDateTime reportDownloadTime,
+                                            LocalDateTime reportParseTime) {
         AmzReportTaskEntity oldEntity = this.getByIdOpt(entity.getId())
                 .orElseThrow(() -> new ServiceException("未找到任务记录id" + entity.getId()));
 
@@ -553,16 +551,16 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
         oldEntity.setStatus(statusEnum.getCode());
         oldEntity.setStatusDesc(statusEnum.getName());
-        if (null != reportCreatedTime){
+        if (null != reportCreatedTime) {
             oldEntity.setReportCreatedTime(reportCreatedTime);
         }
-        if (null != reportQueryTime){
+        if (null != reportQueryTime) {
             oldEntity.setReportQueryTime(reportQueryTime);
         }
-        if (null != reportDownloadTime){
+        if (null != reportDownloadTime) {
             oldEntity.setReportDownloadTime(reportDownloadTime);
         }
-        if (null != reportParseTime){
+        if (null != reportParseTime) {
             oldEntity.setReportParseTime(reportParseTime);
         }
         boolean update = this.updateById(oldEntity);
@@ -683,7 +681,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 RocketMqTagEnum.AMZ_REPORT_DIRECT_QUERY_TAG.getName(),
                 newTaskEntity,
                 StrUtil.format("{}_{}", newTaskEntity.getId(), newTaskEntity.getStatus()),
-                1);
+                reportTypeConfig.getDirectQueryDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送报告直接查询MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }

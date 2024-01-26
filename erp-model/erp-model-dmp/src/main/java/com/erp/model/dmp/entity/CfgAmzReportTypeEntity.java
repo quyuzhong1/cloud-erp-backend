@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
 
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -69,6 +70,31 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
      */
     @TableField("period")
     private String period;
+    /**
+     * 请求创建报告队列延时等级
+     */
+    @TableField("created_delay_level")
+    private Integer createdDelayLevel;
+    /**
+     * 查询报告队列延时等级
+     */
+    @TableField("query_delay_level")
+    private Integer queryDelayLevel;
+    /**
+     * 下载报告队列延时等级
+     */
+    @TableField("download_delay_level")
+    private Integer downloadDelayLevel;
+    /**
+     * 解析报告队列延时等级
+     */
+    @TableField("parse_delay_level")
+    private Integer parseDelayLevel;
+    /**
+     * 直接查询报告队列延时等级
+     */
+    @TableField("direct_query_delay_level")
+    private Integer directQueryDelayLevel;
 
 
     public static final String REPORT_TYPE = "report_type";

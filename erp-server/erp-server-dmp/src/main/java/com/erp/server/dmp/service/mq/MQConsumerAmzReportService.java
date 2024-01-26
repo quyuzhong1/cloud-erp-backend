@@ -10,7 +10,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.server.dmp.service.AmzReportTaskService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.MessageModel;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
@@ -43,7 +42,7 @@ public class MQConsumerAmzReportService {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("步骤1:报告创建消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.info("【亚马逊报告】步骤1:报告创建消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告创建处理
@@ -67,7 +66,7 @@ public class MQConsumerAmzReportService {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("步骤2:报告查询消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.info("【亚马逊报告】步骤2:报告查询消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告查询处理
@@ -91,7 +90,7 @@ public class MQConsumerAmzReportService {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("步骤3:报告下载消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.info("【亚马逊报告】步骤3:报告下载消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告下载处理
@@ -116,7 +115,7 @@ public class MQConsumerAmzReportService {
         @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.info("【亚马逊报告】步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告解析处理
@@ -141,7 +140,7 @@ public class MQConsumerAmzReportService {
         @DataIdempotent(keyIdName = "entity.redissonKey", waitTime = 120)
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.info("【亚马逊报告】步骤4：报告解析消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告解析处理

@@ -6,6 +6,7 @@ import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.server.dmp.mapper.AmzReportInfoMapper;
 import com.erp.server.dmp.service.AmzReportInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 /**
  * <p>
@@ -23,7 +24,7 @@ public class AmzReportInfoServiceImpl extends SuperServiceImpl<AmzReportInfoMapp
     public AmzReportInfoEntity getByReportId(String reportId, String processingStatus) {
         return lambdaQuery()
                 .eq(AmzReportInfoEntity::getReportId, reportId)
-                .eq(AmzReportInfoEntity::getProcessingStatus, processingStatus)
+                .eq(StringUtils.isNotBlank(processingStatus), AmzReportInfoEntity::getProcessingStatus, processingStatus)
                 .last("LIMIT 1")
                 .one();
     }

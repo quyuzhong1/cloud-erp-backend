@@ -110,6 +110,11 @@ public interface RedisCacheConstants {
     String AMZ_REPORT_HANDLE_PREFIX = "amz_report_handle:{}:{}";
 
     /**
+     * 亚马逊报告同类型处理中:amzReportTaskId:status
+     */
+    String AMZ_REPORT_RESULT_PREFIX = "amz_report_result:{}:{}";
+
+    /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型
      */
     String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";

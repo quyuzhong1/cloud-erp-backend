@@ -285,6 +285,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createAmzReport(AmzReportTaskEntity taskEntity){
+        // 从缓存获取(已完成或结束删除)
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, taskEntity.getId(), taskEntity.getStatus());
+        Object reportIdObj = redisUtil.get(key);
+        if (null != reportIdObj){
+            return (String) reportIdObj;
+        }
         // 校验MarketplaceId
         String[] marketplaceSplit = taskEntity.getMarketplaceIds().split(",");
         if (marketplaceSplit.length == 0) {
@@ -332,6 +338,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         if (null == reportId) {
             throw new ServiceException("请求亚马逊创建报告失败：body=" + JSONUtil.toJsonStr(reportResponse));
         }
+        // 设置到缓存(已完成或结束删除)
+        redisUtil.set(key, reportId);
         return reportId;
     }
 

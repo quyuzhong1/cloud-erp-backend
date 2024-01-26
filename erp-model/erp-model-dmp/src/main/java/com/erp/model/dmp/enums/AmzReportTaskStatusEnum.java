@@ -50,7 +50,8 @@ public enum AmzReportTaskStatusEnum {
                 AmzReportTaskStatusEnum.CREATED.getCode(),
                 AmzReportTaskStatusEnum.QUERY.getCode(),
                 AmzReportTaskStatusEnum.DOWNLOAD.getCode(),
-                AmzReportTaskStatusEnum.PARSE.getCode()
+                AmzReportTaskStatusEnum.PARSE.getCode(),
+                AmzReportTaskStatusEnum.DIRECT_QUERY.getCode()
         );
     }
 }
