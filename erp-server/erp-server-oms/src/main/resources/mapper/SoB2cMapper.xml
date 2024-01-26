@@ -712,7 +712,7 @@
          WHERE sb.is_deleted = FALSE
          AND (sb.code = #{code}
                   OR
-              #{code} = ANY(string_to_array(sbl.track_no,','))
+              #{code} = ANY(string_to_array(sbl.code,','))
              )
     </select>
 </mapper>

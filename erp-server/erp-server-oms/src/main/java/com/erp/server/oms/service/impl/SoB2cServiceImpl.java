@@ -4701,9 +4701,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PackageDTO.ScanResultDTO packageScan(String code) {
         PackageDTO.ScanResultDTO scanResult = baseMapper.packageScanByCode(code);
-        if(Objects.isNull(scanResult)){
-             throw new ServiceException("未找到对应单号");
+        if (Objects.isNull(scanResult)) {
+            throw new ServiceException("未找到对应单号");
         }
+        String packageStatus = scanResult.getPackageStatus();
+        String already= PackageStatusEnum.ALREADY.getCode();
+        if(already.equals(packageStatus)){
+            throw new ServiceException("订单单号已组包完成，无法重复组包");
+        }
+        String billStatus = scanResult.getBillStatus();
+        //待发货
+        String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        if (!waitShipped.equals(billStatus)) {
+            throw new ServiceException("仅待发货的可操作组包");
+        }
+
         scanResult.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         //物流渠道id
         String logisticsChannelId = scanResult.getLogisticsChannelId();
@@ -4717,6 +4729,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         }
         return scanResult;
+    }
+
+
+    @Override
+    public PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto) {
+        return null;
     }
 
     /**

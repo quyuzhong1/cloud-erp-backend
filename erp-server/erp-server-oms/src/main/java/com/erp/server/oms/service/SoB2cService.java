@@ -683,4 +683,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-26 15:26
      */
     PackageDTO.ScanResultDTO packageScan(String code);
+    /**
+     * 组包分页
+     * @description
+     * @param dto
+     * @return
+     * @date 2024-01-26 18:40
+     * @author Lambda
+     */
+    PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto);
 }
