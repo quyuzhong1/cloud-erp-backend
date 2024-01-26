@@ -398,7 +398,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         //价目表信息
         List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
             //sku
