@@ -40,6 +40,7 @@ public class MultipleOptionServiceImpl extends SuperServiceImpl<MultipleOptionMa
             multipleOptionEntity.setMainId(addDTO.getMainId());
             multipleOptionEntity.setType(addDTO.getType());
             multipleOptionEntity.setRefId(refId);
+            list.add(multipleOptionEntity);
         }
 
         //批量新增

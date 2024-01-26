@@ -90,7 +90,6 @@ public class PackageDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class PagingParamDTO{
 
     }
