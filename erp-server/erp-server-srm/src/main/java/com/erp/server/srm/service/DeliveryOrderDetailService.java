@@ -51,19 +51,4 @@ public interface DeliveryOrderDetailService extends SuperService<DeliveryOrderDe
 
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(List<String> purchaseDetailIds);
 
-    /**
-     * @description: 送货单确认
-     * @author Will
-     * @date: 2024/1/26 9:52
-     * @param idList
-     */
-    void deliveryOrderConfirm(List<String> idList);
-
-    /**
-     * @description: 送货单反确认
-     * @author Will
-     * @date: 2024/1/26 9:52
-     * @param idList
-     */
-    void deliveryOrderUnConfirm(List<String> idList);
 }

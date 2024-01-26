@@ -55,6 +55,6 @@ public class SrmPoReconciliationFeignController extends BaseController {
      */
     @PostMapping("/deleteDetailBySourceDetailIdList")
     public void deleteDetailBySourceDetailIdList(@RequestBody  List<String> sourceDetailIdList) {
-         poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(sourceDetailIdList);
+         poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(sourceDetailIdList,false);
     }
 }

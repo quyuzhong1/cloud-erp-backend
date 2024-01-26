@@ -1171,6 +1171,7 @@ public enum ApiError implements Serializable {
     ERROR_DELIVERY_ORDER_NOT_EXIST(96014,"送货单不存在"),
     ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST(96015,"送货单明细不存在"),
     ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
+    ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
 
 
 

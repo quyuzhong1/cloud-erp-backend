@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -36,17 +38,21 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
@@ -100,6 +106,11 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private PoReconciliationDetailScmService poReconciliationDetailScmService;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -487,6 +498,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
+        //收货单确认生成对账明细
+        this.addPoReconciliationDetail(ids);
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
                 .in(DeliveryOrderEntity::getId,ids)
@@ -500,11 +513,14 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
-        //判断是否关联对账单，有关联无法反审核
+        //收货单反确认删除对账明细
+        removePoReconciliationDetail(ids);
+
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
                 .in(DeliveryOrderEntity::getId,ids)
                 .update();
+
         return true;
     }
 
@@ -597,4 +613,85 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
     }
 
+    /**
+     * @description: 添加对账明细
+     * @author Will
+     * @date: 2024/1/26 9:24
+     * @param idList
+     */
+    private void addPoReconciliationDetail (List<String> idList) {
+        if (CollectionUtils.isNotEmpty(idList)) {
+            return;
+        }
+        //送货单
+        List<DeliveryOrderEntity> deliveryOrderList = this.listByIds(idList);
+
+        //送货明细
+        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listByMainIdList(deliveryOrderIdList);
+
+        //采购订单
+        List<String> sourceIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getSourceId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(sourceIdList);
+
+        //添加信息
+        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (DeliveryOrderDetailEntity detailEntity :deliveryOrderDetailList) {
+            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
+            //送货单主表
+            DeliveryOrderEntity deliveryOrderEntity = deliveryOrderList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(deliveryOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
+            }
+
+            addDTO.setPoId(deliveryOrderEntity.getSourceId());
+            addDTO.setPoCode(deliveryOrderEntity.getSourceCode());
+            addDTO.setPodId(detailEntity.getSourceDetailId());
+            addDTO.setSupplierId(deliveryOrderEntity.getSupplierId());
+            addDTO.setSourceId(deliveryOrderEntity.getId());
+            addDTO.setSourceDetailId(detailEntity.getId());
+            addDTO.setSourceCode(deliveryOrderEntity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.DELIVERY_ORDER.getCode());
+            addDTO.setConfirmDate(deliveryOrderEntity.getConfirmReceiveDate());
+            addDTO.setSkuId(detailEntity.getSkuId());
+            addDTO.setDeliveryQty(detailEntity.getDeliveryQty());
+            addDTO.setReceiveQty(detailEntity.getReceiveQty());
+            addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
+
+            //采购订单
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> StrUtil.equals(deliveryOrderEntity.getSourceId(), obj.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            addDTO.setSettleOrgId(purchaseOrderEntity.getPurchaseOrgId());
+
+            addList.add(addDTO);
+        }
+        poReconciliationDetailScmService.add(addList);
+    }
+
+    /**
+     * @description: 添加对账明细
+     * @author Will
+     * @date: 2024/1/26 9:24
+     * @param idList
+     */
+    private void removePoReconciliationDetail (List<String> idList) {
+        if (CollectionUtils.isNotEmpty(idList)) {
+            return;
+        }
+        //送货单
+        List<DeliveryOrderEntity> deliveryOrderList = this.listByIds(idList);
+        if (CollectionUtils.isEmpty(deliveryOrderList)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
+        }
+        //送货明细
+        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listByMainIdList(deliveryOrderIdList);
+        if (CollectionUtils.isEmpty(deliveryOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST);
+        }
+        List<String> detailIdList = deliveryOrderDetailList.stream().map(DeliveryOrderDetailEntity::getId).collect(Collectors.toList());
+        poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(detailIdList,true);
+    }
 }
