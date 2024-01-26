@@ -1,21 +1,17 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.cglib.core.Local;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -136,17 +132,12 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 详情
          */
-        private List<TransferDeclareDetailDTO.AddDTO> detailList;
+        private List<TransferDeclareDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 预计中转日期
-        */
-        private LocalDate planTransferDate;
 
         /**
         * 发货物流商id
@@ -156,13 +147,6 @@ public class TransferDeclareDTO implements Serializable {
         private String deliveryLogisticsSupplierId;
 
         /**
-        * 发货物流商中文
-        */
-        @NotBlank(message = "发货物流商中文不能为空")
-        @Size(max = 255,message = "发货物流商中文最大长度不能超过255位")
-        private String deliveryLogisticsSupplierName;
-
-        /**
         * 中转物流商id
         */
         @NotBlank(message = "中转物流商id不能为空")
@@ -170,47 +154,11 @@ public class TransferDeclareDTO implements Serializable {
         private String transferLogisticsSupplierId;
 
         /**
-        * 中转物流服务商
-        */
-        @NotBlank(message = "中转物流服务商不能为空")
-        @Size(max = 255,message = "中转物流服务商最大长度不能超过255位")
-        private String transferLogisticsSupplierName;
-
-        /**
         * 中转渠道id
         */
         @NotBlank(message = "中转渠道id不能为空")
         @Size(max = 19,message = "中转渠道id最大长度不能超过19位")
         private String transferChannelId;
-
-        /**
-        * 中转渠道中文
-        */
-        @NotBlank(message = "中转渠道中文不能为空")
-        @Size(max = 255,message = "中转渠道中文最大长度不能超过255位")
-        private String transferChannelName;
-
-        /**
-        * 包裹总数量
-        */
-        @NotNull(message = "包裹总数量不能为空")
-        private Integer packageTotalQty;
-
-        /**
-        * 包裹总重量
-        */
-        @NotNull(message = "包裹总重量不能为空")
-        @Digits(integer = 6, fraction = 4, message = "包裹总重量整数位不能超过6位，小数位不能超过4位")
-        private BigDecimal packageTotalWeight;
-
-        /**
-        * 包裹重量单位
-        */
-        @NotBlank(message = "包裹重量单位不能为空")
-        @Size(max = 30,message = "包裹重量单位最大长度不能超过30位")
-        private String weightUnit;
-
-
     }
 
     /**
@@ -219,6 +167,11 @@ public class TransferDeclareDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 详情表id（用于导出excel）
+         */
+        private List<String> detailIdList;
+
         /**
          * tabFlag
          * 来源：/tms/drop/down/dict/list/key=TransferDeclareTabFlag
@@ -304,13 +257,13 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String planTransferDate;
         /**
-         * 上传状态
+         * 上传状态(批次)
          */
-        private String uploadStatus;
+        private String uploadBatchStatus;
         /**
-         * 上传状态中文
+         * 上传状态（批次）中文
          */
-        private String uploadStatusName;
+        private String uploadBatchStatusName;
         /**
          * 发货物流商中文
          */
@@ -326,11 +279,11 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 包裹总数量
          */
-        private String packageQtyTotal;
+        private String packageTotalQty;
         /**
          * 包裹总重量
          */
-        private String packageWeightTotal;
+        private String packageTotalWeight;
         /**
          * 重量单位
          */
@@ -346,7 +299,15 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private String trackingNo;
+        private String trackNo;
+        /**
+         * 上传状态(订单)
+         */
+        private String uploadOrderStatus;
+        /**
+         * 上传状态(订单)中文
+         */
+        private String uploadOrderStatusName;
         /**
          * 出库状态
          */
@@ -409,12 +370,37 @@ public class TransferDeclareDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private String trackingNo;
+        private String trackNo;
 
         /**
          * 物流渠道id
          * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
          */
         private List<String> logisticsChannelIdList;
+    }
+
+    /**
+     * 预报设置入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForcastSettingParamDTO {
+        /**
+         * 主键id（报关设置id）
+         */
+        private String id;
+
+        /**
+         * 发货物流商id
+         */
+        @NotEmpty(message = "发货物流商id不能为空")
+        private List<String> deliveryLogisticsSupplierIdList;
+
+        /**
+         * 中转物流商/中转渠道Id
+         */
+        @NotBlank(message = "中转渠道Id不能为空")
+        private String transferChannelId;
+
     }
 }

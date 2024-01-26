@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -146,6 +147,14 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     public LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId) {
         return baseMapper.getAuthByChannelId(channelId);
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(List<String> channelIdList) {
+        if (CollectionUtil.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listAuthChannelView(channelIdList);
     }
 
     @Override

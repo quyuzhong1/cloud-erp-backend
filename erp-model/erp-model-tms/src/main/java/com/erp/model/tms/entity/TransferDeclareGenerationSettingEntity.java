@@ -1,9 +1,7 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
@@ -14,43 +12,19 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 中转报关表
+ * 预报设置-自动生成
  * </p>
  *
  * @author Luo_WG
- * @since 2024-01-19
+ * @since 2024-01-24
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("transfer_declare")
-public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
+@TableName("transfer_declare_generation_setting")
+public class TransferDeclareGenerationSettingEntity extends BaseEntity<TransferDeclareGenerationSettingEntity> {
 
-    /**
-    * 单据编号
-    */
-    @TableField("code")
-    private String code;
-    /**
-    * 预计中转日期
-    */
-    @TableField("plan_transfer_date")
-    private LocalDate planTransferDate;
-    /**
-    * 上传状态
-    */
-    @TableField("upload_status")
-    private String uploadStatus;
-    /**
-    * 发货物流商id
-    */
-    @TableField("delivery_logistics_supplier_id")
-    private String deliveryLogisticsSupplierId;
-    /**
-    * 发货物流商中文
-    */
-    @TableField("delivery_logistics_supplier_name")
-    private String deliveryLogisticsSupplierName;
+
     /**
     * 中转物流商id
     */
@@ -71,23 +45,7 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     */
     @TableField("transfer_channel_name")
     private String transferChannelName;
-    /**
-    * 包裹总数量
-    */
-    @TableField("package_total_qty")
-    private Integer packageTotalQty;
-    /**
-    * 包裹总重量
-    */
-    @TableField("package_total_weight")
-    private BigDecimal packageTotalWeight;
 
-
-    public static final String CODE = "code";
-
-    public static final String PLAN_TRANSFER_DATE = "plan_transfer_date";
-
-    public static final String UPLOAD_STATUS = "upload_status";
 
     public static final String DELIVERY_LOGISTICS_SUPPLIER_ID = "delivery_logistics_supplier_id";
 
@@ -100,10 +58,6 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     public static final String TRANSFER_CHANNEL_ID = "transfer_channel_id";
 
     public static final String TRANSFER_CHANNEL_NAME = "transfer_channel_name";
-
-    public static final String PACKAGE_TOTAL_QTY = "package_total_qty";
-
-    public static final String PACKAGE_TOTAL_WEIGHT = "package_total_weight";
 
     @Override
     public Serializable pkVal() {

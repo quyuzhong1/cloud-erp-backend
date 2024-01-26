@@ -49,10 +49,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.wms.dto.*;
@@ -3457,7 +3454,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public BatchResultDTO transferDeclare(String id) {
+    public BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -4588,6 +4585,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .update();
     }
 
+    @Override
+    public List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId) {
+        List<BaseIdDTO.CodeDTO> codeDTOS = logisticsFeign.listBySupplierId(deliveryLogisticsSupplierId);
+        List<String> channelIds = codeDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailDTO.AddDTO> addDTOList = baseMapper.listByLogisticsSupplier(channelIds);
+        return addDTOList;
+    }
+
+    @Override
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(TransferDeclareGenerationSettingDTO.ViewDTO viewDTO) {
+        List<TransferDeclareDTO.AddDTO> tdAddList = new ArrayList<>();
+        List<String> deliveryLogisticsSupplierIdList = viewDTO.getDeliveryLogisticsSupplierIdList();
+        for (String deliveryLogisticsSupplierId : deliveryLogisticsSupplierIdList) {
+            TransferDeclareDTO.AddDTO tdAdd = new TransferDeclareDTO.AddDTO();
+            tdAdd.setDeliveryLogisticsSupplierId(deliveryLogisticsSupplierId);
+            tdAdd.setTransferLogisticsSupplierId(viewDTO.getTransferLogisticsSupplierId());
+            tdAdd.setTransferChannelId(viewDTO.getTransferChannelId());
+            List<TransferDeclareDetailDTO.AddDTO> detailList = this.listByLogisticsSupplier(deliveryLogisticsSupplierId);
+            tdAdd.setDetailList(detailList);
+            tdAddList.add(tdAdd);
+        }
+        return tdAddList;
+    }
+
+    @Override
+    public Boolean updateTransferStatusBatch(List<String> soIds, String status) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Boolean.FALSE;
+        }
+
+        return this.lambdaUpdate()
+                .set(SoB2cEntity::getTransferStatus, status)
+                .in(SoB2cEntity::getId, soIds)
+                .update(new SoB2cEntity());
+    }
 
     /**
      * 查询店铺权限设置

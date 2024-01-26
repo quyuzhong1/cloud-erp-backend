@@ -2,36 +2,32 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.RuleConditionEntity;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
-import com.erp.server.tms.service.TransferDeclareDetailService;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 中转报关详情 服务实现类
@@ -47,6 +43,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -55,7 +55,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = BeanMapper.copyList(addDTO.getDetailList(), TransferDeclareDetailEntity.class);
 
         // 数据处理
-        handleData(transferDeclareDetailEntities, mainId, Boolean.FALSE);
+        handleData(transferDeclareDetailEntities, mainId);
 
         //批量新增
         boolean save = this.saveBatch(transferDeclareDetailEntities);
@@ -64,18 +64,22 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
         }
+
+        //更新订单中转状态
+        List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(TransferDeclareDTO.UpdateDTO updateDTO, String mainId) {
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = BeanMapper.copyList(updateDTO.getDetailList(), TransferDeclareDetailEntity.class);
 
         // 数据处理
-        handleData(transferDeclareDetailEntities, mainId, Boolean.TRUE);
+        handleData(transferDeclareDetailEntities, mainId);
 
         //批量新增
         boolean save = this.saveOrUpdateBatch(transferDeclareDetailEntities);
@@ -91,12 +95,30 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return baseMapper.viewDetailList(dto);
     }
 
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(List<TransferDeclareDetailEntity> list, String mainId, Boolean isUpdate) {
 
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(List<TransferDeclareDetailEntity> list, String mainId) {
+        List<String> logisticsChannelIds = list.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
+        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
+
+        //查询渠道信息
+        if (CollectionUtil.isNotEmpty(logisticsChannelIds)) {
+            logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
+        }
+
+        for (TransferDeclareDetailEntity transferDeclareDetailEntity : list) {
+            transferDeclareDetailEntity.setMainId(mainId);
+
+            //渠道名称
+            LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(channelEntity)) {
+                transferDeclareDetailEntity.setLogisticsChannelName(channelEntity.getName());
+            }
+        }
     }
+
 
 
     public List<TransferDeclareDetailEntity> listByMainIds(List<String> mainIds) {
