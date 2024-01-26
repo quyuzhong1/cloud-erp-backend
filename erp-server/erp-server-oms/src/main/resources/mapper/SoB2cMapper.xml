@@ -695,4 +695,24 @@
             </foreach>
         </if>
     </select>
+
+    <!--查询组包扫描的数据 根据code-->
+    <select id="packageScanByCode" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
+         SELECT
+           sb.id AS soId,
+           sb.code AS soCode,
+           sb.bill_status AS billStatus,
+           sb.package_status AS packageStatus,
+           sbl.logistics_channel_id AS logisticsChannelId,
+           sbl.track_no AS trackNo,
+           sbl.weight AS weight
+         FROM so_b2c sb
+         LEFT JOIN so_b2c_logistics sbl
+         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+         WHERE sb.is_deleted = FALSE
+         AND (sb.code = #{code}
+                  OR
+              #{code} = ANY(string_to_array(sbl.track_no,','))
+             )
+    </select>
 </mapper>

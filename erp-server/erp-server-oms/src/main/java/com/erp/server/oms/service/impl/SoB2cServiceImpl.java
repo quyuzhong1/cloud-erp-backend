@@ -77,6 +77,7 @@ import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
+import io.seata.core.protocol.ResultCode;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -836,29 +837,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 根据数据进行校验长宽高
+     *
      * @param soB2cLogisticsEntity
      * @param logisticsChannel
      */
     private void checkLength(SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelEntity logisticsChannel) {
         //默认为cm
         BigDecimal maxLength = logisticsChannel.getMaxLength();
-        if (logisticsChannel.getLengthUnit().equals("m")){
+        if (logisticsChannel.getLengthUnit().equals("m")) {
             maxLength = maxLength.multiply(BigDecimal.valueOf(100));
         }
         BigDecimal maxWidth = logisticsChannel.getMaxWidth();
-        if (logisticsChannel.getWidthUnit().equals("m")){
+        if (logisticsChannel.getWidthUnit().equals("m")) {
             maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
         }
         BigDecimal maxHeight = logisticsChannel.getMaxHeight();
-        if (logisticsChannel.getHeightUnit().equals("m")){
+        if (logisticsChannel.getHeightUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
         if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
                 soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
-                soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0){
-            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(),soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
-            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】",maxLength,maxWidth,maxHeight);
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH,orderDesc,logisticsDesc);
+                soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
+            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
+            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH, orderDesc, logisticsDesc);
         }
     }
 
@@ -3522,7 +3524,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.updateById(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
         }
-      return   BatchResultDTO.fail(entity.getId(), entity.getCode(), "失败");
+        return BatchResultDTO.fail(entity.getId(), entity.getCode(), "失败");
     }
 
     /**
@@ -3538,14 +3540,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String unit = UnitEnum.WeightUnitEnum.G.getCode();
         if (Objects.nonNull(logisticsEntity)) {
             String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
-            if(StringUtils.isNotBlank(logisticsChannelId)){
+            if (StringUtils.isNotBlank(logisticsChannelId)) {
                 LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
                 if (Objects.nonNull(channelEntity)) {
                     addDTO.setDeliveryLogisticsSupplierId(channelEntity.getMainId());
                 }
             }
         }
-        TransferDeclareDetailDTO.AddDTO  detailAddDTO = new TransferDeclareDetailDTO.AddDTO();
+        TransferDeclareDetailDTO.AddDTO detailAddDTO = new TransferDeclareDetailDTO.AddDTO();
         detailAddDTO.setSoCode(entity.getCode());
         detailAddDTO.setSoId(entity.getId());
         detailAddDTO.setWeightUnit(unit);
@@ -4694,6 +4696,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getTransferStatus, status)
                 .in(SoB2cEntity::getId, soIds)
                 .update(new SoB2cEntity());
+    }
+
+    @Override
+    public PackageDTO.ScanResultDTO packageScan(String code) {
+        PackageDTO.ScanResultDTO scanResult = baseMapper.packageScanByCode(code);
+        if(Objects.isNull(scanResult)){
+             throw new ServiceException("未找到对应单号");
+        }
+        scanResult.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
+        //物流渠道id
+        String logisticsChannelId = scanResult.getLogisticsChannelId();
+        if (StringUtils.isNotBlank(logisticsChannelId)) {
+            LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
+            if (Objects.nonNull(baseDTO)) {
+                scanResult.setLogisticsChannelName(baseDTO.getName());
+                scanResult.setLogisticsSupplierId(baseDTO.getLogisticsSupplierId());
+                scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+            }
+
+        }
+        return scanResult;
     }
 
     /**

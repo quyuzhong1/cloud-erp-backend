@@ -6,6 +6,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
@@ -672,4 +673,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateTransferStatusBatch(List<String> soIds, String status);
+
+    
+    /** 
+     * @description
+     * @param code
+     * @return 
+     * @author Lambda
+     * @create 2024-01-26 15:26
+     */
+    PackageDTO.ScanResultDTO packageScan(String code);
 }

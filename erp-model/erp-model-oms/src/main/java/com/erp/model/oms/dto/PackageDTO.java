@@ -1,0 +1,87 @@
+package com.erp.model.oms.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+/**
+ * @author Lambda
+ * @Classname PackageDTO
+ * @Description TODO
+ * @Date 2024-01-26 14:45
+ * @Created by yl
+ */
+@Data
+@NoArgsConstructor
+public class PackageDTO implements Serializable {
+
+
+    /**
+     * 扫描结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ScanResultDTO {
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+        /**
+         * 销售订单code
+         */
+        private String soCode;
+
+        /**
+         * 包裹重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 渠道物流商
+         */
+        private String logisticsSupplierId;
+        /**
+         * 渠道物流商名
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 组包状态
+         */
+        private String packageStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+
+
+    }
+}
