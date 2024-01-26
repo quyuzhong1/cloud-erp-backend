@@ -226,7 +226,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 throw new ServiceException("发货单更新失败");
             }
             soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+
+
         }
         this.saveViewDTO(entity.getId(),viewDTO);
         return viewDTO;
