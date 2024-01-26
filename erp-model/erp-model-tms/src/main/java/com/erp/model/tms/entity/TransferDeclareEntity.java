@@ -1,15 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -37,7 +37,7 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     @TableField("plan_transfer_date")
     private LocalDate planTransferDate;
     /**
-    * 上传状态
+    * 上传状态（批次）
     */
     @TableField("upload_status")
     private String uploadStatus;

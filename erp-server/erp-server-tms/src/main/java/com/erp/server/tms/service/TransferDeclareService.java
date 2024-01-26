@@ -1,13 +1,16 @@
 package com.erp.server.tms.service;
-import com.common.business.validator.ValidList;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.TransferDeclareDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -139,13 +142,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
-     * 上传
+     * 上传报关
      * @Author Luo_WG
-     * @Date 2024/1/25 9:55
-     * @param ids
-     * @return java.lang.Boolean
+     * @Date 2024/1/26 15:03
+     * @param id
+     * @return java.util.List<BatchResultDTO>
      **/
-    Boolean upload(List<String> ids);
+    List<BatchResultDTO> upload(String id);
 
     /**
      * 报关设置自动生成-定时器调用

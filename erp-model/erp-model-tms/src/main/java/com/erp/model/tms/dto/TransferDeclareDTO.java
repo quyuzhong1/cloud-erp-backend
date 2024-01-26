@@ -205,7 +205,7 @@ public class TransferDeclareDTO implements Serializable {
 
         /**
          * 发货物流商id
-         * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
+         * 地址：http://172.16.100.11:3002/project/128/interface/api/26440
          */
         private List<String> deliveryLogisticsSupplierIdList;
 
@@ -217,7 +217,7 @@ public class TransferDeclareDTO implements Serializable {
 
         /**
          * 上传状态
-         * 来源：/tms/drop/down/dict/list/key=transferUploadStatus
+         * 来源：/tms/drop/down/dict/list/key=transferDeclareUploadStatus
          */
         private List<String> uploadStatusList;
 

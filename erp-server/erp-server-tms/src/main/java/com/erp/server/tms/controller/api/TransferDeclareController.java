@@ -1,36 +1,31 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.oms.dto.CustomerDTO;
-import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TransferDeclareService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.server.tms.service.TransferDeclareService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -231,7 +226,7 @@ public class TransferDeclareController extends BaseController {
     }
 
     /**
-     * 上传
+     * 上传报关
      * @Author Luo_WG
      * @Date 2024/1/25 9:54
      * @param dto
@@ -244,8 +239,25 @@ public class TransferDeclareController extends BaseController {
             menuCode = "wms:TransferDeclareService:upload",
             tableAlias = "td"
     )
-    public ApiResult upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferDeclareService.upload(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            List<BatchResultDTO> result = new ArrayList<>();
+            try {
+                result = transferDeclareService.upload(id);
+            } catch (Exception e) {
+                log.error("上传报关单失败{}", e);
+                TransferDeclareEntity entity = transferDeclareService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
+                    resultDTOS.addAll(result);
+                    continue;
+                }
+                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+            resultDTOS.addAll(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

@@ -9,9 +9,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -20,11 +22,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -47,6 +51,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -296,35 +301,39 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
-    public Boolean upload(List<String> ids) {
-        // TODO 上传单据到保宏
-/*        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
-        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).collect(Collectors.toList());
-        List<TransferLogisticsSupplierEntity> transferLogisticsSupplierEntities = transferLogisticsSupplierService.listByIds(transferLogisticsSupplierIds);
+    public List<BatchResultDTO> upload(String id) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        TransferDeclareEntity transferDeclareEntity = this.getById(id);
 
-        transferLogisticsAuthService.getByMainId()
-        for (TransferDeclareEntity transferDeclareEntity : transferDeclareEntities) {
+        //查询单据需要上传的订单（待上传，上传失败）状态的订单
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
+        List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
+                .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getUploadStatus())
+                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getUploadStatus())
+        ).collect(Collectors.toList());
 
-            TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getId())).findFirst().orElse(null);
+        //查询报关单包含的订单信息
+        List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
 
-            TransferLogisticsService service = transferLogisticsRegistry.getHandler(transferLogisticsSupplierEntity.get);
+        //查询授权信息
+        TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
+
+        for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
+            TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             if (Objects.isNull(service)){
-                return ApiResult.error(-1,"功能未开发");
+                resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
+                continue;
             }
-            Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
-            if (io.seata.common.util.CollectionUtils.isEmpty(authConfig)){
-                return ApiResult.error(-1,"未找到配置信息");
-            }
-            ApiResult authorization = service.authorization(authConfig);
-            return authorization;
-        }*/
 
+            TransferLogisticsCreateOrderReq build = TransferLogisticsCreateOrderReq.builder()
+                    .deliveryCode("").build();
+
+
+//            service.createOrder(authEntity.getId());
+        }
 
         return null;
-    }
-
-    private void listWaitUpload () {
-
     }
 
     @Override

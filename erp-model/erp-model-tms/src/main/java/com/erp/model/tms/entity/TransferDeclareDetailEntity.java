@@ -76,6 +76,11 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     @TableField("transfer_status")
     private String transferStatus;
     /**
+     * 上传状态（订单）
+     */
+    @TableField("upload_status")
+    private String uploadStatus;
+    /**
      * 失败原因
      */
     @TableField("failure_reason")
