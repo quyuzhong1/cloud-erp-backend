@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
@@ -95,7 +96,7 @@ public class SoB2cController extends BaseController {
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
         Boolean isPass = orderRuleResult.getIsPass();
         //todo 可以优化
-        if (ruleMatch && isPass) {
+        if (ruleMatch && isPass && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform())) {
             //仓库规则
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
@@ -175,7 +176,7 @@ public class SoB2cController extends BaseController {
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-                    if (approveStatus.equals(entity.getApproveStatus())) {
+                    if (approveStatus.equals(entity.getApproveStatus()) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
                         //仓库规则
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
