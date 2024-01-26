@@ -29,6 +29,7 @@ import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeSubcontractIssueService;
 import com.erp.server.wms.mapper.SubcontractIssueMapper;
 import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.service.*;
@@ -112,6 +113,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Autowired
     private SubcontractIssueQueryHandler subcontractIssueQueryHandler;
 
+    @Autowired
+    private SyncKingdeeSubcontractIssueService syncKingdeeSubcontractIssueService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -312,6 +315,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        //推送金蝶
+        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "反审核操作");
@@ -320,6 +326,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
@@ -334,6 +341,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //删除明细
         subcontractIssueDetailService.deleteByMainId(id);
 
+        //推送金蝶
+        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DELETE.getCode());
         // 删除日志数据
         log.info("删除 开始删除委外发料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
@@ -344,6 +353,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     * 作废
     */
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
@@ -357,6 +367,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             .set(SubcontractIssueEntity::getInvalidRemark, remark)
             .update();
 
+        //推送金蝶
+        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_INVALID.getCode());
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "作废操作");
@@ -401,6 +413,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // 审核完成自动发料
 
+        //推送金蝶
+        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 

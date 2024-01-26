@@ -47,6 +47,19 @@ public class SubcontractIssueEntity extends BaseEntity<SubcontractIssueEntity> {
     */
     @TableField("date")
     private LocalDate date;
+
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
+    /**
+     * 供应商名称
+     */
+    @TableField("supplier_name")
+    private String supplierName;
+
     /**
     * 来源id
     */
