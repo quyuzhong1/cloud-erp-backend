@@ -39,6 +39,7 @@ import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -554,7 +555,17 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 新增修改处理数据
      */
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
-
+        if(!isUpdate){
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryOrderEntity.getToWarehouseId()));
+            if(CollectionUtils.isEmpty(warehouseList)){
+                throw new ServiceException("仓库信息为空");
+            }
+            WarehouseDTO.UpdateDTO warehouseInfo = warehouseList.get(0);
+            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
+            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
+            deliveryOrderEntity.setReceivePhone(warehouseInfo.getContactTelNumber());
+            deliveryOrderEntity.setReceiveAddress(warehouseInfo.getAddress());
+        }
     }
 
 }
