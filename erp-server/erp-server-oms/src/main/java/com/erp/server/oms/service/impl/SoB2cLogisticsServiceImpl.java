@@ -167,6 +167,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateLogisticsCode(String mainId,  String transportNo, String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            trackNo = transportNo;
+        }
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
