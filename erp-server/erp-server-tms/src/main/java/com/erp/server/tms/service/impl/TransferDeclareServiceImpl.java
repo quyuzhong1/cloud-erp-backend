@@ -31,6 +31,7 @@ import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -80,6 +81,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferLogisticsChannelService transferLogisticsChannelService;
     @Autowired
     private SoB2cFeign soB2cFeign;
+    @Autowired
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+    @Autowired
+    private TransferLogisticsAuthService transferLogisticsAuthService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -293,7 +298,33 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public Boolean upload(List<String> ids) {
         // TODO 上传单据到保宏
+/*        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).collect(Collectors.toList());
+        List<TransferLogisticsSupplierEntity> transferLogisticsSupplierEntities = transferLogisticsSupplierService.listByIds(transferLogisticsSupplierIds);
+
+        transferLogisticsAuthService.getByMainId()
+        for (TransferDeclareEntity transferDeclareEntity : transferDeclareEntities) {
+
+            TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getId())).findFirst().orElse(null);
+
+            TransferLogisticsService service = transferLogisticsRegistry.getHandler(transferLogisticsSupplierEntity.get);
+            if (Objects.isNull(service)){
+                return ApiResult.error(-1,"功能未开发");
+            }
+            Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
+            if (io.seata.common.util.CollectionUtils.isEmpty(authConfig)){
+                return ApiResult.error(-1,"未找到配置信息");
+            }
+            ApiResult authorization = service.authorization(authConfig);
+            return authorization;
+        }*/
+
+
         return null;
+    }
+
+    private void listWaitUpload () {
+
     }
 
     @Override
