@@ -49,7 +49,7 @@ public class MQConsumerAmzReportService {
                 // 报告创建处理
                 amzReportTaskService.consumerReportCreate(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), entity.getCreatedRetryCount() + 1, null, null, null);
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), entity.getCreatedRetryCount() + 1, null, null, null);
                 throw e;
             }
         }
@@ -73,7 +73,7 @@ public class MQConsumerAmzReportService {
                 // 报告查询处理
                 amzReportTaskService.consumerReportQuery(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), entity.getCreatedRetryCount() + 1, null, null, null);
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
                 throw e;
             }
         }
@@ -97,7 +97,7 @@ public class MQConsumerAmzReportService {
                 // 报告下载处理
                 amzReportTaskService.consumerReportDownload(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), entity.getCreatedRetryCount() + 1, null, null, null);
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000),  null, null,entity.getDownloadRetryCount() + 1, null);
                 throw e;
             }
         }
@@ -122,7 +122,7 @@ public class MQConsumerAmzReportService {
                 // 报告解析处理
                 amzReportTaskService.consumerReportParse(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), entity.getCreatedRetryCount() + 1, null, null, null);
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, null, null, entity.getParseRetryCount() + 1);
                 throw e;
             }
         }
@@ -147,7 +147,7 @@ public class MQConsumerAmzReportService {
                 // 报告解析处理
                 amzReportTaskService.consumerReportDirectQuery(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 1000), null, entity.getQueryRetryCount() + 1, null, null);
+                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
                 throw e;
             }
         }
