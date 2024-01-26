@@ -19,11 +19,13 @@ import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
+import com.erp.server.wms.kingdee.SyncKingdeeSubcontractIssueService;
 import com.erp.server.wms.service.OtherInstockDetailService;
 import com.erp.server.wms.service.SubcontractIssueService;
 import com.erp.server.wms.service.WarehouseService;
@@ -43,7 +45,7 @@ import java.util.*;
  */
 @Slf4j
 @Service
-public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeOtherInstockService {
+public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcontractIssueService {
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -62,7 +64,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeOtherI
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(OtherInstockEntity entity, String operate) {
+    public void syncDataToKingdee(SubcontractIssueEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -91,7 +93,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeOtherI
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (OtherInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (SubcontractIssueEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
