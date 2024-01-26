@@ -31,9 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -121,6 +120,11 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
             addDTO.setGenerateByDelivery(true);
             String id = warehouseReceiveService.add(addDTO);
+            if(value.get(0).isAutoSubmit()){
+                if(!warehouseReceiveService.submit(Collections.singletonList(id))){
+                    throw new ServiceException("提交审核失败");
+                }
+            }
             //回写送货单的 收货单号 receive_user_id receive_user_name receipt_status 明细的 收货数量  赠品收货数量
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveService.getById(id);
             deliveryOrderEntity.setReceiveCode(warehouseReceiveEntity.getCode());

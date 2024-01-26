@@ -103,6 +103,7 @@ public class DeliveryOrderDTO implements Serializable {
         @NotNull(message = "赠品收货数量不能为空")
         private Integer giftReceiveQty;
 
+        private boolean autoSubmit;
     }
 
     /**

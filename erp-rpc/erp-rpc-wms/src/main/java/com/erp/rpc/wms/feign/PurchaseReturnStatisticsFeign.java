@@ -9,4 +9,8 @@ public interface PurchaseReturnStatisticsFeign {
 
     @PostMapping("feign/purchaseReturnStatistics/statisticsBySupplier")
     PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+
+    @PostMapping("feign/purchaseReturnStatistics/returnStatusCountBySupplier")
+    PurchaseReturnStatisticsDTO.ResponseDTO returnStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }
