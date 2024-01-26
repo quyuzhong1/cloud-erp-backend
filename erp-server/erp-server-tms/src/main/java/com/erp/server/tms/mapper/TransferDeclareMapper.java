@@ -59,4 +59,14 @@ public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity>
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
      **/
     List<TransferDeclareDTO.ListDTO> listExportExcel(@Param("params")TransferDeclareDTO.PagingParamDTO dto);
+
+
+    /**
+     * @description
+     * @param soId
+     * @author Lambda
+     * @return
+     * @create 2024-01-26 9:38
+     */
+    TransferDeclareEntity getBySoId(@Param("soId") String soId);
 }

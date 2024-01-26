@@ -12,10 +12,6 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.tms.service.TransferLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +29,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     }
 
     @Override
-    public Boolean authorize(Map<String, String> authConfig, String authId) {
+    public ApiResult authorization(Map<String, String> authConfig) {
         return null;
     }
 
