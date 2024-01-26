@@ -29,7 +29,7 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
 
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         //默认查询当前登录人的绑定的供应商数据
-        super.buildDefaultDTO("pr.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
+        super.buildDefaultDTO("prd.supplier_id", ObjectUtil.isEmpty(supplierEntity) ? "" : supplierEntity.getId());
 
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){
