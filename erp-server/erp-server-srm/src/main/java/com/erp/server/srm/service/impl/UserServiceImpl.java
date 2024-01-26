@@ -3,6 +3,7 @@ package com.erp.server.srm.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
@@ -184,28 +185,49 @@ public class UserServiceImpl implements UserService {
             }
         }
     }
-    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
+
+    private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO, SupplierRefUserEntity refUserEntity) {
+
         List<String> errorMsgList = new ArrayList<>();
+        if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())) {
+            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
+            return errorMsgList;
+        }
+        List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            return msgList;
+        }
         //供应商是否存在
         List<SupplierEntity> supplierEntityList = scmTaskFeign.listBySupplierByNames(Collections.singletonList(excelDTO.getSupplierName().trim()));
-        if (CollectionUtils.isNotEmpty(supplierEntityList)){
+        if (CollectionUtils.isNotEmpty(supplierEntityList)) {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
-            String supplierId = this.getSupplierId();
-            if (!supplierId.equalsIgnoreCase(supplierEntity.getId())){
-                //只能导入当前供应商用户
-                errorMsgList.add(ApiError.ERROR_USER_NOT_REL_OTHER_SUPPLIER.msg);
-            }else {
-                refUserEntity.setSupplierId(supplierId);
-                refUserEntity.setDisabled(false);
-                refUserEntity.setIsSuper(false);
+            //供应商状态判断
+            if (Objects.isNull(supplierEntity.getDisabled()) || supplierEntity.getDisabled()) {
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.msg);
+                return errorMsgList;
             }
-        }else {
+            if (Objects.isNull(supplierEntity.getApproveStatus()) || !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.msg);
+                return errorMsgList;
+            }
+            if (Objects.isNull(supplierEntity.getSrmDisabled()) || supplierEntity.getSrmDisabled()) {
+                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.msg);
+                return errorMsgList;
+            }
+            supplierEntity.getApproveStatus();
+            supplierEntity.getDisabled();
+            refUserEntity.setSupplierId(supplierEntity.getId());
+            refUserEntity.setDisabled(false);
+            refUserEntity.setIsSuper(true);
+        } else {
             errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
-        if (Objects.isNull(user)){
+        if (Objects.isNull(user)) {
             errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
+            return errorMsgList;
         }
         return errorMsgList;
     }
