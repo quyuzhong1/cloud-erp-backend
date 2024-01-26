@@ -176,6 +176,7 @@ public class SupplierDeliveryOrderController extends BaseController {
      */
     @PostMapping("/generateReceive")
     public ApiResult<List<BatchResultDTO>> generateReceive(@RequestBody @Validated DeliveryOrderDTO.GenerateDTO dto) {
-        return success(service.generateReceive(dto));
+        List<BatchResultDTO> batchResultDTOList = service.generateReceive(dto);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess)?success(batchResultDTOList):failure(batchResultDTOList);
     }
 }
