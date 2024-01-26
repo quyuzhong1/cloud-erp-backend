@@ -6,9 +6,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.dto.PurchaseStatisticsDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.srm.dto.HomePageDTO;
+import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.PurchaseReturnStatisticsFeign;
 import com.erp.rpc.wms.feign.PurchaseStatisticsFeign;
@@ -17,6 +20,7 @@ import com.erp.server.srm.convert.HomePageConverter;
 import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.HomePageService;
+import com.erp.server.srm.service.PoReconciliationService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -53,6 +57,9 @@ public class HomePageServiceImpl implements HomePageService {
     @Resource
     private PurchaseReturnStatisticsFeign purchaseReturnStatisticsFeign;
 
+    @Resource
+    private PoReconciliationService poReconciliationService;
+
     @Override
     public HomePageDTO.AccountInfoDTO getAccountInfo() {
         LoginUser loginUser = commonService.getUserInfo();
@@ -75,11 +82,17 @@ public class HomePageServiceImpl implements HomePageService {
     @Override
     public HomePageDTO.ToDoItems getToDoItems() {
         SupplierEntity supplier = commonService.getSupplierEntity();
-
-        //TODO:还有三个数量
+        PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO = new PurchaseReturnStatisticsDTO.RequestDTO();
+        returnRequestDTO.setSurpplierId(supplier.getId());
+        returnRequestDTO.setConfirmStatus(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus());
+        PurchaseStatisticsDTO.RequestDTO requestDTO = new PurchaseStatisticsDTO.RequestDTO();
+        requestDTO.setSupplierId(supplier.getId());
+        requestDTO.setExecutionStatus(ExecutionStatusEnum.TO_BE_CONFIRM.getCode());
         return HomePageDTO.ToDoItems.builder()
+                .waitConfirmOrderCount(purchaseStatisticsFeign.statisticsExecutionStatus(requestDTO).getCount())
                 .waitPrintDeliveryCount(deliveryOrderService.countByPrint(supplier.getId(),false))
-//                .waitConfirmReturnCount(deliveryOrderService.countByReceiveStatus(supplier.getId(), DeliveryOrderConfirmStatusEnum.WAIT_CONFIRM.getCode()))
+                .waitConfirmReturnCount(purchaseReturnStatisticsFeign.confirmStatusCountBySupplier(returnRequestDTO).getCount())
+                .ConfirmingReconciliationCount(poReconciliationService.countByStatus(supplier.getId(), PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode()))
                 .build();
     }
 
@@ -88,7 +101,7 @@ public class HomePageServiceImpl implements HomePageService {
         SupplierEntity supplier = commonService.getSupplierEntity();
         //采购数据
         PurchaseStatisticsDTO.RequestDTO purchaseRequestDTO = PurchaseStatisticsDTO.RequestDTO.builder()
-                .surpplierId(supplier.getId())
+                .supplierId(supplier.getId())
                 .startTime(LocalDateUtil.getStartDateTimeOfYear(Integer.parseInt(year)))
                 .endTime(LocalDateUtil.getEndDateTimeOfYear(Integer.parseInt(year)))
                 .build();

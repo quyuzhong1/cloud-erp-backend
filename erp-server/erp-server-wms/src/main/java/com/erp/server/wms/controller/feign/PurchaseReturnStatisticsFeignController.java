@@ -25,4 +25,10 @@ public class PurchaseReturnStatisticsFeignController extends BaseController {
     public PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(@RequestBody PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO){
         return poReturnService.statisticsBySupplier(returnRequestDTO);
     }
+
+
+    @PostMapping("/confirmStatusCountBySupplier")
+    public PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(@RequestBody PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO){
+        return poReturnService.confirmStatusCountBySupplier(returnRequestDTO);
+    }
 }

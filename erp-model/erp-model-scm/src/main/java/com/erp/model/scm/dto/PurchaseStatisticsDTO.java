@@ -25,7 +25,12 @@ public class PurchaseStatisticsDTO implements Serializable {
          * 供应商Id
          */
         @NotBlank(message = "供应商Id不能为空")
-        private String surpplierId;
+        private String supplierId;
+
+        /**
+         * 执行状态
+         */
+        private String executionStatus;
 
         /**
          * 开始时间
@@ -45,6 +50,12 @@ public class PurchaseStatisticsDTO implements Serializable {
          * 按月份统计
          */
         private List<StatisticsMonthDTO> statisticsMonthDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StatusDTO {
+        private Integer count;
     }
 
 

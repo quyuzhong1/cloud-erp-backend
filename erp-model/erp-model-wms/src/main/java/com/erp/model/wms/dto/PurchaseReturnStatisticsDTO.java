@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,11 @@ public class PurchaseReturnStatisticsDTO implements Serializable {
         private String surpplierId;
 
         /**
+         * 确认状态
+         */
+        private String confirmStatus;
+
+        /**
          * 开始时间
          */
         private LocalDateTime startTime;
@@ -47,6 +53,14 @@ public class PurchaseReturnStatisticsDTO implements Serializable {
         private List<StatisticsMonthDTO> statisticsMonthDTOList;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StatusDTO {
+
+        private Integer count;
+    }
 
     @Data
     @NoArgsConstructor

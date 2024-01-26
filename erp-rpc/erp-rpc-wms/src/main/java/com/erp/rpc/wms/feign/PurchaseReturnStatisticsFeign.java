@@ -11,6 +11,6 @@ public interface PurchaseReturnStatisticsFeign {
     PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 
 
-    @PostMapping("feign/purchaseReturnStatistics/returnStatusCountBySupplier")
-    PurchaseReturnStatisticsDTO.ResponseDTO returnStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+    @PostMapping("feign/purchaseReturnStatistics/confirmStatusCountBySupplier")
+    PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }

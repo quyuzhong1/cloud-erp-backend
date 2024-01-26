@@ -92,4 +92,6 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @param response
      */
     void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    Integer countByStatus(String supplierId, String status);
 }

@@ -22,6 +22,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
@@ -130,6 +132,12 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Override
     public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         poReconciliationScmService.exportPoReconciliation(dto,response);
+    }
+
+    @Override
+    public Integer countByStatus(String supplierId, String status) {
+        return  lambdaQuery().eq(PoReconciliationEntity::getSupplierId, supplierId)
+                .eq(PoReconciliationEntity::getStatus, status).count();
     }
 
     @Override
