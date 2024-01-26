@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -63,6 +64,18 @@ public class PlatformProductDTO extends UniqueDto {
      * 产品包装信息
      */
     private String productPacking;
+    /**
+     * 长度
+     */
+    private BigDecimal length;
+    /**
+     * 宽度
+     */
+    private BigDecimal width;
+    /**
+     * 高度
+     */
+    private BigDecimal height;
 
     /**
      * 类型 platform 平台  warehouse 仓库

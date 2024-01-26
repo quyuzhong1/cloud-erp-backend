@@ -15,6 +15,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -88,6 +89,15 @@ public class PlatformShopeeGlobalListingDTO extends CleanBaseDTO {
                 .setShopId(dto.getShopId())
                 //平台最后修改时间
                 .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
+        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageLength())){
+            productDTO.setLength(BigDecimal.valueOf(itemInfo.getDimension().getPackageLength()));
+        }
+        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageWidth())){
+            productDTO.setWidth(BigDecimal.valueOf(itemInfo.getDimension().getPackageWidth()));
+        }
+        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageHeight())){
+            productDTO.setHeight(BigDecimal.valueOf(itemInfo.getDimension().getPackageHeight()));
+        }
         productDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
         return productDTO;
     }
@@ -118,7 +128,7 @@ public class PlatformShopeeGlobalListingDTO extends CleanBaseDTO {
         if (Objects.isNull(dimension)) {
             return "";
         }
-        return StrUtil.format("长度:{};宽度:{};高度:{};重量:{};", dimension.getPackage_length(), dimension.getPackage_width(), dimension.getPackage_height(), weight);
+        return StrUtil.format("长度:{};宽度:{};高度:{};重量:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight(), weight);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,7 +19,10 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = false)
 public class Dimension implements Serializable {
 
-    private int package_length;
-    private int package_width;
-    private int package_height;
+    @JSONField(name = "package_length")
+    private Long packageLength;
+    @JSONField(name = "package_width")
+    private Long packageWidth;
+    @JSONField(name = "package_height")
+    private Long packageHeight;
 }
