@@ -176,4 +176,13 @@ public class DeliveryOrderFeginController extends BaseController {
     public Boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList){
         return detailService.updateBatchById(detailEntityGroupList);
     }
+
+    /**
+     * 确认收货
+     */
+    @PostMapping("/confirmReceiveStatus")
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean confirmReceiveStatus(@RequestBody List<String> ids){
+        return deliveryOrderService.confirmReceiveStatus(ids);
+    }
 }

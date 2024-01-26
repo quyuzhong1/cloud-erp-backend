@@ -39,10 +39,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PdaQclStatusEnum;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
-import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -574,6 +571,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
             //修改到货状态
             poReturnService.updateArrivalState(purchaseOrderIds);
+            //修改发货单确认状态
+            List<String> deliveryOrderIds = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getSourceId).distinct().collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(deliveryOrderIds)){
+                srmDeliveryOrderFeign.confirmReceiveStatus(deliveryOrderIds);
+            }
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())

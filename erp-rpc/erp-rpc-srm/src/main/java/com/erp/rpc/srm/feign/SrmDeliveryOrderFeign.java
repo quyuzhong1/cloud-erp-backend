@@ -58,8 +58,11 @@ public interface SrmDeliveryOrderFeign {
     List<DeliveryOrderDetailEntity> listDetailByIds(@RequestBody List<String> detailIds);
 
     @PostMapping("/feign/deliveryOrder/updateDeliveryOrder")
-    boolean updateDeliveryOrder(@RequestBody DeliveryOrderEntity deliveryOrderEntity);
+    Boolean updateDeliveryOrder(@RequestBody DeliveryOrderEntity deliveryOrderEntity);
 
     @PostMapping("/feign/deliveryOrder/updateDeliveryDetail")
-    boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList);
+    Boolean updateDeliveryDetail(@RequestBody List<DeliveryOrderDetailEntity> detailEntityGroupList);
+
+    @PostMapping("/feign/deliveryOrder/confirmReceiveStatus")
+    Boolean confirmReceiveStatus(@RequestBody List<String> ids);
 }

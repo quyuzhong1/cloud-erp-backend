@@ -18,6 +18,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -477,6 +478,18 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode(),WaitDeliveryCycleEnum.IN_TWO_MONTH.getName(),waitDeliveryCountDTO.getInTwoMonthCount()));
         dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode(),WaitDeliveryCycleEnum.TWO_MONTH_LATER.getName(),waitDeliveryCountDTO.getTwoMonthLaterCount()));
         return dtos;
+    }
+
+    @Override
+    public Boolean confirmReceiveStatus(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return true;
+        }
+        this.lambdaUpdate()
+                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
+                .in(BaseEntity::getId,ids)
+                .update();
+        return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
