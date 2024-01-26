@@ -41,8 +41,10 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -59,6 +61,7 @@ import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -128,6 +131,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -227,10 +233,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
         if (Objects.nonNull(soB2cEntity)) {
-            String waitTransfer = TransferStatusEnum.WAIT.getCode();
-            String transferStatus = soB2cEntity.getTransferStatus();
-            if (waitTransfer.equals(transferStatus)) {
-                throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+            TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(soB2cEntity.getId());
+            if (Objects.nonNull(transferDeclare)) {
+                String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                String uploadStatus = transferDeclare.getUploadStatus();
+                if (uploadSuccess.equals(uploadStatus)) {
+                    throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                }
             }
         }
 

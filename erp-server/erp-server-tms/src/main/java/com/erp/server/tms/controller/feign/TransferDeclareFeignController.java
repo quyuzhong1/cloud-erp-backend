@@ -3,12 +3,10 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -31,5 +29,17 @@ public class TransferDeclareFeignController {
     @PostMapping("/add")
     public BaseResultDTO.AddDTO add(@RequestBody TransferDeclareDTO.AddDTO dto) {
         return transferDeclareService.add(dto);
+    }
+
+    /**
+     * @description 根据销售订单id 获取中转报关信息
+     * @param soId 销售订单id
+     * @author Lambda
+     * @return
+     * @create 2024-01-26 9:25
+     */
+    @GetMapping("/getBySoId")
+    public TransferDeclareEntity getBySoId(@RequestParam("soId") String soId){
+        return transferDeclareService.getBySoId(soId);
     }
 }

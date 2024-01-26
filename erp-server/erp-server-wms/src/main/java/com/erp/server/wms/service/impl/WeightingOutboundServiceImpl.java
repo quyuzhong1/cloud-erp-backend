@@ -9,9 +9,12 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +49,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private TransferDeclareFeign  transferDeclareFeign;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WeightingOutboundDTO.ViewDTO scan(WeightingOutboundDTO.ScanDTO dto) {
@@ -58,11 +64,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         if (isAutoDelivery && entity.getIsWeigh()) {
             String sourceId = entity.getSourceId();
             if (StringUtils.isNotBlank(sourceId)) {
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
-                if (Objects.nonNull(soB2cEntity)) {
-                    String waitTransfer = TransferStatusEnum.WAIT.getCode();
-                    String transferStatus = soB2cEntity.getTransferStatus();
-                    if (waitTransfer.equals(transferStatus)) {
+                TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
+                if (Objects.nonNull(transferDeclare)) {
+                    String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                    String uploadStatus = transferDeclare.getUploadStatus();
+                    if (uploadSuccess.equals(uploadStatus)) {
                         throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                     }
                 }

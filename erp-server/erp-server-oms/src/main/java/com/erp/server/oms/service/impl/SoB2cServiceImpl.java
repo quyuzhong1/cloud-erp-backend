@@ -68,10 +68,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.tms.feign.ForecastFeign;
-import com.erp.rpc.tms.feign.LogisticsAuthFeign;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.*;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -233,6 +230,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private ForecastFeign forecastFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
 
 
     @Override
@@ -3454,7 +3454,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO transferDeclare(String id, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -3477,9 +3479,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!alreadyPackage.equals(packageStatus)) {
             throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
         }
-
+        //组织添加中转报关单数据
+        TransferDeclareDTO.AddDTO addDTO = buildAddTransferDeclare(entity);
+        addDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
+        addDTO.setTransferChannelId(transferLogisticsChannelId);
         //TODO  调用tms feign 生成中转报关单
-        return null;
+        BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
+        if (StringUtils.isNotBlank(result.getId())) {
+            entity.setTransferStatus(TransferStatusEnum.ALREADY.getCode());
+            this.updateById(entity);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
+        }
+      return   BatchResultDTO.fail(entity.getId(), entity.getCode(), "失败");
+    }
+
+    /**
+     * 组装中转报关的数据
+     *
+     * @param entity
+     * @return
+     */
+    private TransferDeclareDTO.AddDTO buildAddTransferDeclare(SoB2cEntity entity) {
+        TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
+        List<TransferDeclareDetailDTO.AddDTO> detailList = new ArrayList<>(1);
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        String unit = UnitEnum.WeightUnitEnum.G.getCode();
+        if (Objects.nonNull(logisticsEntity)) {
+            String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
+            if(StringUtils.isNotBlank(logisticsChannelId)){
+                LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
+                if (Objects.nonNull(channelEntity)) {
+                    addDTO.setDeliveryLogisticsSupplierId(channelEntity.getMainId());
+                }
+            }
+        }
+        TransferDeclareDetailDTO.AddDTO  detailAddDTO = new TransferDeclareDetailDTO.AddDTO();
+        detailAddDTO.setSoCode(entity.getCode());
+        detailAddDTO.setSoId(entity.getId());
+        detailAddDTO.setWeightUnit(unit);
+        detailAddDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
+        detailAddDTO.setPackageWeight(logisticsEntity.getWeight());
+        detailAddDTO.setTrackNo(logisticsEntity.getTrackNo());
+        detailList.add(detailAddDTO);
+        addDTO.setDetailList(detailList);
+        return addDTO;
     }
 
     /**

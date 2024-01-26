@@ -155,4 +155,12 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      **/
     void declareAutoGenerationJob();
 
+    /**
+     * @description 根据销售订单id 获取中转报关信息
+     * @param soId 销售订单id
+     * @author Lambda
+     * @return
+     * @create 2024-01-26 9:25
+     */
+    TransferDeclareEntity getBySoId(String soId);
 }

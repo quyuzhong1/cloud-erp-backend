@@ -281,4 +281,9 @@
         </if>
         td.create_time desc
     </select>
+    <!--根据销售订单查询-->
+    <select id="getBySoId" resultType="com.erp.model.tms.entity.TransferDeclareEntity">
+            SELECT  * FROM    transfer_declare
+            WHERE is_deleted = FALSE AND id=(SELECT main_id FROM  transfer_declare_detail WHERE is_deleted = FALSE AND so_id = #{soId} LIMIT 1);
+    </select>
 </mapper>
