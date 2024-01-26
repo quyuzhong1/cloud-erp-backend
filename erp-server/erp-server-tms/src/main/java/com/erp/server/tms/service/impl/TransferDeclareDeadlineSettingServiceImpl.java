@@ -1,32 +1,33 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.MultipleOptionConstants;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.dto.MultipleOptionDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.tms.entity.*;
-import com.erp.server.tms.mapper.TransferDeclareDeadlineSettingMapper;
-import com.erp.server.tms.service.MultipleOptionService;
-import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.tms.dto.MultipleOptionDTO;
+import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
+import com.erp.model.tms.entity.MultipleOptionEntity;
+import com.erp.model.tms.entity.TransferDeclareDeadlineSettingEntity;
+import com.erp.server.tms.mapper.TransferDeclareDeadlineSettingMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.MultipleOptionService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 截单设置 服务实现类
@@ -49,6 +50,8 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(List<TransferDeclareDeadlineSettingDTO.AddDTO> addList) {
+        //校验选择的中转服务商是否重复
+        checkDuplicationSupplier(addList);
 
         //原明细数据
         List<TransferDeclareDeadlineSettingEntity> oldList = this.list();
@@ -64,6 +67,10 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
 
         //组装数据，保存
         for (TransferDeclareDeadlineSettingDTO.AddDTO addDTO : addList) {
+            if (addDTO.getGenerateTime().isAfter(addDTO.getDeadlineTime())) {
+                throw new ServiceException(ApiError.GENERATE_TIME_GT_DEADLINE_TIME);
+            }
+
             TransferDeclareDeadlineSettingEntity entity = new TransferDeclareDeadlineSettingEntity();
             entity.setDeadlineTime(addDTO.getDeadlineTime());
             entity.setGenerateTime(addDTO.getGenerateTime());
@@ -78,6 +85,24 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
             optionDTO.setRefIdList(addDTO.getTransferLogisticsSupplierIdList());
             multipleOptionService.add(optionDTO);
 
+        }
+    }
+
+    /**
+     * 校验中转服务商是否重复
+     * @Author Luo_WG
+     * @Date 2024/1/26 11:16
+     * @param addDTOList
+     * @return void
+     **/
+    private void checkDuplicationSupplier(List<TransferDeclareDeadlineSettingDTO.AddDTO> addDTOList) {
+        List<String> transferLogisticsSupplierIdList = new ArrayList<>();
+        for (TransferDeclareDeadlineSettingDTO.AddDTO addDTO : addDTOList) {
+            transferLogisticsSupplierIdList.addAll(addDTO.getTransferLogisticsSupplierIdList());
+        }
+        Set<String> set = new HashSet<>(transferLogisticsSupplierIdList);
+        if (set.size() != transferLogisticsSupplierIdList.size()) {
+            throw new ServiceException(ApiError.TRANSFER_DELIVERY_LOGISTICS_SUPPLIER);
         }
     }
 

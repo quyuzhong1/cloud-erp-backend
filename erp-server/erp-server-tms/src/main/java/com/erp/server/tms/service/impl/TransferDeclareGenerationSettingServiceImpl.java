@@ -1,25 +1,33 @@
 package com.erp.server.tms.service.impl;
 
 import com.common.business.constant.MultipleOptionConstants;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.tms.dto.MultipleOptionDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.MultipleOptionEntity;
 import com.erp.model.tms.entity.TransferDeclareGenerationSettingEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.server.tms.mapper.TransferDeclareGenerationSettingMapper;
-import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.tms.service.MultipleOptionService;
+import com.erp.server.tms.service.TransferDeclareGenerationSettingService;
+import com.erp.server.tms.service.TransferLogisticsChannelService;
+import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import java.util.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +52,8 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void save(List<TransferDeclareGenerationSettingDTO.AddDTO> addDTOList) {
+        //校验选择的发货物流商是否重复
+        checkDuplicationSupplier(addDTOList);
 
         //原明细数据
         List<TransferDeclareGenerationSettingEntity> oldList = this.list();
@@ -59,6 +69,7 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
 
         //组装数据，保存
         for (TransferDeclareGenerationSettingDTO.AddDTO addDTO : addDTOList) {
+
             TransferDeclareGenerationSettingEntity entity = new TransferDeclareGenerationSettingEntity();
             TransferLogisticsChannelEntity channelEntity = transferLogisticsChannelService.getById(addDTO.getTransferChannelId());
             entity.setTransferChannelId(channelEntity.getId());
@@ -77,6 +88,24 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
             optionDTO.setRefIdList(addDTO.getDeliveryLogisticsSupplierIdList());
             multipleOptionService.add(optionDTO);
 
+        }
+    }
+
+    /**
+     * 校验中转服务商是否重复
+     * @Author Luo_WG
+     * @Date 2024/1/26 11:16
+     * @param addDTOList
+     * @return void
+     **/
+    private void checkDuplicationSupplier(List<TransferDeclareGenerationSettingDTO.AddDTO> addDTOList) {
+        List<String> deliveryLogisticsSupplierIdList = new ArrayList<>();
+        for (TransferDeclareGenerationSettingDTO.AddDTO addDTO : addDTOList) {
+            deliveryLogisticsSupplierIdList.addAll(addDTO.getDeliveryLogisticsSupplierIdList());
+        }
+        Set<String> set = new HashSet<>(deliveryLogisticsSupplierIdList);
+        if (set.size() != deliveryLogisticsSupplierIdList.size()) {
+            throw new ServiceException(ApiError.DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER);
         }
     }
 

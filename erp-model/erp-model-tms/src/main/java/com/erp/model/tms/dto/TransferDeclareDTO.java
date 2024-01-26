@@ -6,11 +6,13 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,6 +114,12 @@ public class TransferDeclareDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 生效日期（无就传当前时间LocalTime.now()）
+         */
+        @NotNull(message = "生成日期不能为空")
+        private LocalTime generateTime;
+
+        /**
          * 详情
          */
         private List<TransferDeclareDetailDTO.AddDTO> detailList;
@@ -160,6 +168,7 @@ public class TransferDeclareDTO implements Serializable {
         @NotBlank(message = "中转渠道id不能为空")
         @Size(max = 19,message = "中转渠道id最大长度不能超过19位")
         private String transferChannelId;
+
     }
 
     /**

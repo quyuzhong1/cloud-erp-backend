@@ -1,16 +1,14 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.LocalTime;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalTime;
 
 
 /**
@@ -28,10 +26,10 @@ import com.common.business.enums.ApproveStatusEnum;
 public class TransferDeclareDeadlineSettingEntity extends BaseEntity<TransferDeclareDeadlineSettingEntity> {
 
     /**
-    * 截单时间
+    * 截单时间（时：分） 例：12:30
     */
     @TableField("deadline_time")
-    private LocalDateTime deadlineTime;
+    private LocalTime deadlineTime;
     /**
     * 生成时间（时：分） 例：12:30
     */

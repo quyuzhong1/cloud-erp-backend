@@ -31,6 +31,7 @@ import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -43,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -79,6 +81,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferLogisticsChannelService transferLogisticsChannelService;
     @Autowired
     private SoB2cFeign soB2cFeign;
+    @Autowired
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+    @Autowired
+    private TransferLogisticsAuthService transferLogisticsAuthService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -130,7 +136,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         return result;
     }
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -143,6 +148,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         transferDeclareEntity.setPackageTotalWeight(packageTotalWeight);
         //包裹总数量
         transferDeclareEntity.setPackageTotalQty(addDTO.getDetailList().size());
+
+        //设置预计中转日期
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> view = transferDeclareDeadlineSettingService.view();
+        TransferDeclareDeadlineSettingDTO.ViewDTO viewDTO = view.stream().filter(req -> req.getTransferLogisticsSupplierIdList().contains(transferDeclareEntity.getTransferLogisticsSupplierId())).findFirst().orElse(null);
+        if (viewDTO.getDeadlineTime().isAfter(addDTO.getGenerateTime())) {
+            transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
+        } else {
+            transferDeclareEntity.setPlanTransferDate(LocalDate.now());
+        }
 
         // 数据处理
         handleData(transferDeclareEntity);
@@ -284,7 +298,33 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public Boolean upload(List<String> ids) {
         // TODO 上传单据到保宏
+/*        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).collect(Collectors.toList());
+        List<TransferLogisticsSupplierEntity> transferLogisticsSupplierEntities = transferLogisticsSupplierService.listByIds(transferLogisticsSupplierIds);
+
+        transferLogisticsAuthService.getByMainId()
+        for (TransferDeclareEntity transferDeclareEntity : transferDeclareEntities) {
+
+            TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getId())).findFirst().orElse(null);
+
+            TransferLogisticsService service = transferLogisticsRegistry.getHandler(transferLogisticsSupplierEntity.get);
+            if (Objects.isNull(service)){
+                return ApiResult.error(-1,"功能未开发");
+            }
+            Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
+            if (io.seata.common.util.CollectionUtils.isEmpty(authConfig)){
+                return ApiResult.error(-1,"未找到配置信息");
+            }
+            ApiResult authorization = service.authorization(authConfig);
+            return authorization;
+        }*/
+
+
         return null;
+    }
+
+    private void listWaitUpload () {
+
     }
 
     @Override
@@ -306,6 +346,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
             List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
             for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
+                addDTO.setGenerateTime(generateTime);
                 this.add(addDTO);
             }
         }
@@ -383,6 +424,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
+
+
         //发货物流商名称
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
         transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());

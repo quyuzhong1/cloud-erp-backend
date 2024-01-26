@@ -1,15 +1,11 @@
 package com.erp.model.tms.dto;
 
-import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -44,12 +40,12 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
         private List<String> transferLogisticsSupplierIdList;
 
         /**
-        * 截单时间
+        * 截单时间（时：分）例如：12:30
         */
-        private LocalDateTime deadlineTime;
+        private LocalTime deadlineTime;
 
         /**
-        * 生成时间
+        * 生成时间（时：分）例如：12:30
         */
         private LocalTime generateTime;
 
@@ -78,9 +74,9 @@ public class TransferDeclareDeadlineSettingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 截单时间
+        * 截单时间（时：分）例如：12:30
         */
-        private LocalDateTime deadlineTime;
+        private LocalTime deadlineTime;
 
         /**
         * 生成时间（时：分）例如：12:30
