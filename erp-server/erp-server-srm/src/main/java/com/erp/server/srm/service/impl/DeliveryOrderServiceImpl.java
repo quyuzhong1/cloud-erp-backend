@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -231,7 +232,11 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Transactional(rollbackFor = Exception.class)
     public boolean confirmPrint(List<String> ids) {
         List<DeliveryOrderEntity> entityList = this.lambdaQuery().in(DeliveryOrderEntity::getId, ids).list();
-        entityList.forEach(v->v.setIsPrint(true));
+        entityList.forEach(v->{
+            v.setIsPrint(true);
+            v.setPrintDate(LocalDate.now());
+        });
+
         if(!this.updateBatchById(entityList)){
             throw new ServiceException("更新打印状态失败");
         }
