@@ -83,7 +83,7 @@ public class WaitDeliveryController extends BaseController {
         if (CollectionUtils.isEmpty(dto.getParams().getSortList())){
             SortParamDTO sortParamDTO = new SortParamDTO();
             sortParamDTO.setField("pod.plan_delivery_date");
-            sortParamDTO.setSort(" ASC");
+            sortParamDTO.setSort("ASC");
             dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
         }
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmWaitDeliveryPaging(dto);
