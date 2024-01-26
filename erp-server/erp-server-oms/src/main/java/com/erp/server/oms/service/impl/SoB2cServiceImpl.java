@@ -96,6 +96,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -3513,6 +3514,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         TransferDeclareDTO.AddDTO addDTO = buildAddTransferDeclare(entity);
         addDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
         addDTO.setTransferChannelId(transferLogisticsChannelId);
+        addDTO.setGenerateTime(LocalTime.now());
         //TODO  调用tms feign 生成中转报关单
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
         if (StringUtils.isNotBlank(result.getId())) {
