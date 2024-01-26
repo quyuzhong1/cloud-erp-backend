@@ -73,6 +73,7 @@ public class WaitDeliveryQueryHandler extends AbstractQueryHandler {
                 }
             }
             sb.append(")");
+            return sb.toString();
         }
         return null;
     }
