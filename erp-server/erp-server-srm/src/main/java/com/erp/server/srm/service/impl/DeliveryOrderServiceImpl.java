@@ -489,7 +489,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
-                .in(BaseEntity::getId,ids)
+                .in(DeliveryOrderEntity::getId,ids)
                 .update();
         return true;
     }
@@ -502,7 +502,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
-                .in(BaseEntity::getId,ids)
+                .in(DeliveryOrderEntity::getId,ids)
                 .update();
         return true;
     }
