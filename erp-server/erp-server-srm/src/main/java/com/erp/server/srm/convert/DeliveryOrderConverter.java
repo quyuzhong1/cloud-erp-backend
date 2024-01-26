@@ -35,7 +35,6 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "toWarehouseId", source = "purchaseOrderEntity.deliveryWarehouseId")
     @Mapping(target = "toWarehouseName", source = "purchaseOrderEntity.deliveryWarehouseName")
     @Mapping(target = "sourceType", constant = "purchase")
-    @Mapping(target = "receiptStatus", constant = "waitConfirmed")
     @Mapping(target = "planDeliveryDate", source = "addDeliveryDTO.expectDeliveryDate")
     DeliveryOrderEntity purchaseOrderToDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO);
 
