@@ -853,9 +853,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //提交发货
                 submitDelivery(id);
             }
-            //更新销售订单异常信息
-            entity.setAbnormalType("");
-            this.updateById(entity);
+
+            this.lambdaUpdate().eq(SoB2cEntity::getId,id).
+                    set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             //操作日志
             String msg = "获取物流单号【{}】";
             operateLogService.addModuleOperateLog(StrUtil.format(msg, transportNo), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
@@ -1191,7 +1191,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
         createOutboundReq.setItems(itemList);
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
-        log.info("第三方仓下单结果:{}",JSONUtil.toJsonStr(apiResult));
+        log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
@@ -1294,13 +1294,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     *
-     * @Author Luo_WG
-     * @Date 2024/1/19 11:23
-     * @param id 拦截单id
-     * @param soB2cEntity 订单信息
+     * @param id           拦截单id
+     * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
      * @return com.common.business.dto.base.BatchResultDTO
+     * @Author Luo_WG
+     * @Date 2024/1/19 11:23
      **/
     private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
@@ -3486,7 +3485,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/24 14:55
      */
-    private Boolean updateBillStatus(String id, SoB2cBillStatusEnum soB2cBillStatusEnum) {
+    public Boolean updateBillStatus(String id, SoB2cBillStatusEnum soB2cBillStatusEnum) {
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getBillStatus, soB2cBillStatusEnum.getCode())
                 .update(new SoB2cEntity());
@@ -4438,10 +4437,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 拦截打标识，冻结订单
-     * @Author Luo_WG
-     * @Date 2024/1/17 18:54
+     *
      * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
      **/
     @Override
     public Boolean updateIntercept(SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
