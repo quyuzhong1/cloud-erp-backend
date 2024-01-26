@@ -72,7 +72,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
         GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
         if(response.getMessage().contains("参考号重复")){
-            return ApiResult.success();
+            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
+            return success(orderCode.getData());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }

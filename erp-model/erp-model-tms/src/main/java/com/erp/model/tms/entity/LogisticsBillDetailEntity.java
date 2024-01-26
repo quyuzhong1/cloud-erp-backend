@@ -1,5 +1,6 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -51,6 +52,13 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
      */
     @TableField("track_time")
     private LocalDateTime trackTime;
+
+
+    /**
+     * 签收时间
+     */
+    @TableField(value = "sign_time" ,fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime signTime;
     /**
      * 是否需要进行物流轨迹查询
      */
@@ -74,6 +82,13 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
      */
     @TableField("register_result")
     private String registerResult;
+
+
+    /**
+     * 运输状态是否是api 更新 true 是  false 不是
+     */
+    @TableField("is_api_update")
+    private Boolean isApiUpdate;
 
     public static final String MAIN_ID = "main_id";
 

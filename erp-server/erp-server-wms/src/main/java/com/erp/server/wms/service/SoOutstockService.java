@@ -365,6 +365,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     /**
      * 生成B2C销售出库单
+     * @Author Luo_WG
+     * @Date 2024/1/19 17:18
+     * @param generateB2cDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
+
+    /**
+     * 生成B2C销售出库单
      * @author yl
      * @date 2023-12-11 16:16
      * @param soB2cCode 销售订单cdode

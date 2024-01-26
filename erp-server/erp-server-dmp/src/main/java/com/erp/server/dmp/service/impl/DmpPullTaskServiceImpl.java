@@ -646,7 +646,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         List<SoDetailEntity> soDetailEntities;
         DmpOrderInfoEntity dmpOrderInfoEntity;
         BigDecimal exchangeRate;
-        entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate().atStartOfDay() : null);
+        entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate() : null);
         try {
             if (StringUtils.isNotEmpty(soOutstockEntity.getSoId())) {
                 soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());

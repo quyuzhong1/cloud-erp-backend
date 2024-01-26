@@ -228,8 +228,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
         String finalWarehouseId = warehouseId;
+        OmsPlatformEnum finalPlatformEnum1 = platformEnum;
         ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.stream()
-                .filter(e-> e.getHasMappingAll() || e.getWarehouseId().equalsIgnoreCase(finalWarehouseId))
+                .filter(e-> (null != finalPlatformEnum1 && e.getHasMappingAll() && finalPlatformEnum1.getCode().equalsIgnoreCase(e.getPlatform())) || e.getWarehouseId().equalsIgnoreCase(finalWarehouseId))
                 .findFirst().orElse(null);
 
         if (null != platformEnum && null == currentSkuMapping){

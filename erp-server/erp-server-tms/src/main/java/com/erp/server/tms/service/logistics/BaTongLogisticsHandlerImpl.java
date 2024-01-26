@@ -19,6 +19,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
 import com.erp.tms.batong.model.label.request.AdditionalInfo;
 import com.erp.tms.batong.model.label.request.ConfigInfo;
@@ -26,6 +27,7 @@ import com.erp.tms.batong.model.label.request.LabelRequest;
 import com.erp.tms.batong.model.label.request.ListOrder;
 import com.erp.tms.batong.model.label.response.LabelResponse;
 import com.erp.tms.batong.model.order.request.*;
+import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import com.erp.tms.batong.service.BaTongService;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
@@ -66,7 +68,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         orderRequest.setReferenceNo(logisticsOrder.getDeliveryNo());
         orderRequest.setShippingMethod(logisticsOrder.getLogisticsChannelEntity().getCode());
         ParceInfoVO parceInfoVO = logisticsOrder.getParceInfoVO();
-
+        Boolean success = true;
         //总重量 单位g
         Integer totalWeight = parceInfoVO.getTotalWeight();
         if (Objects.isNull(totalWeight)) {
@@ -76,22 +78,41 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         orderRequest.setOrderPieces("1");
         orderRequest.setCargoType("W");
         //发货人信息
-        Shipper shipper=LogisticsOrderConverter.INSTANCE.orderShippingByBaTong(logisticsOrder);
+        Shipper shipper = LogisticsOrderConverter.INSTANCE.orderShippingByBaTong(logisticsOrder);
         orderRequest.setShipper(shipper);
 
         //收货人信息
-        Consignee consignee=LogisticsOrderConverter.INSTANCE.orderConsigneeByBaTong(logisticsOrder);
+        Consignee consignee = LogisticsOrderConverter.INSTANCE.orderConsigneeByBaTong(logisticsOrder);
         orderRequest.setConsignee(consignee);
-        List<LogisticsProductVO> logisticsProductList=logisticsOrder.getLogisticsProductVOList();
+        List<LogisticsProductVO> logisticsProductList = logisticsOrder.getLogisticsProductVOList();
         //报关信息
-        List<Invoice> invoiceList=LogisticsOrderConverter.INSTANCE.orderInvoiceByBaTong(logisticsProductList);
+        List<Invoice> invoiceList = LogisticsOrderConverter.INSTANCE.orderInvoiceByBaTong(logisticsProductList);
         orderRequest.setInvoiceList(invoiceList);
 
         //商品信息
-        CargoVolume cargoVolume=LogisticsOrderConverter.INSTANCE.orderCargoVolumeByBaTong(parceInfoVO);
-        List<CargoVolume> cargoVolumeList=Arrays.asList(cargoVolume);
+        CargoVolume cargoVolume = LogisticsOrderConverter.INSTANCE.orderCargoVolumeByBaTong(parceInfoVO);
+        List<CargoVolume> cargoVolumeList = Arrays.asList(cargoVolume);
         orderRequest.setCargoVolumeList(cargoVolumeList);
-        return null;
+        try {
+            OrderResponse orderResponse = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
+
+            responseVO = LogisticsOrderResponseVO.builder()
+                    .transportNo(orderResponse.getShippingMethodNo())
+                    .trackNo(orderResponse.getShippingMethodNo())
+                    .deliveryNo(logisticsOrder.getDeliveryNo())
+                    .build();
+            logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                    logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+        } catch (Exception e) {
+            log.error("巴通创建订单异常：{}", e.getMessage());
+            logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                    logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(e));
+            success = false;
+        }
+
+        return success ? success(responseVO) : failure(responseVO);
 
     }
 
@@ -283,6 +304,29 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return "2";
         }
         return "1";
-
     }
+
+
+    /**
+     * 授权判断
+     *
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap) {
+        try {
+            baTongService.listShippingMethod(authMap);
+            return success();
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+
+        }
+    }
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.BaTong;
+    }
+
+
 }

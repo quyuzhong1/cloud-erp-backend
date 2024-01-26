@@ -163,4 +163,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2023-12-29 10:37
      */
     BatchResultDTO delivery(String id, String deliveryType);
+
+    /**
+     * 生成销售出库单
+     * @description
+     * @param entity
+     * @author Lambda
+     * @return
+     * @create 2024-01-26 10:17
+     */
+    void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
 }

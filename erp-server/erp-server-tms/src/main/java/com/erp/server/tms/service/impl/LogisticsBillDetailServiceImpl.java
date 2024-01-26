@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,6 +118,18 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         LogisticsBillDetailEntity detailEntity = this.getById(id);
         if (Objects.isNull(detailEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "自发货物流单详情");
+        }
+        String signCode = LogisticTrackStatusEnum.SIGN.getCode();
+        String dbTrackStatus=detailEntity.getTrackStatus();
+        if (signCode.equals(dbTrackStatus) && detailEntity.getIsApiUpdate()) {
+            throw new ServiceException(ApiError.ERROR_NOT_UPDATE_TRACK_STATUS);
+        }
+        detailEntity.setIsApiUpdate(Boolean.FALSE);
+        //表示签收
+        if (signCode.equals(trackStatus)) {
+            detailEntity.setSignTime(LocalDateTime.now());
+        } else {
+            detailEntity.setSignTime(null);
         }
         String oldTrackStatus = detailEntity.getTrackStatus();
         String oldTrackStatusName = LogisticTrackStatusEnum.getName(oldTrackStatus);
