@@ -802,7 +802,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         // 更新库存数据，回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
+        //修改发货单确认状态
+        List<String> deliveryOrderIds = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getSourceId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deliveryOrderIds)){
+            srmDeliveryOrderFeign.unConfirmReceiveStatus(deliveryOrderIds);
+        }
         //审核通过发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 

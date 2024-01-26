@@ -181,8 +181,16 @@ public class DeliveryOrderFeginController extends BaseController {
      * 确认收货
      */
     @PostMapping("/confirmReceiveStatus")
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean confirmReceiveStatus(@RequestBody List<String> ids){
         return deliveryOrderService.confirmReceiveStatus(ids);
+    }
+
+
+    /**
+     * 反确认收货
+     */
+    @PostMapping("/unConfirmReceiveStatus")
+    public Boolean unConfirmReceiveStatus(@RequestBody List<String> ids){
+        return deliveryOrderService.unConfirmReceiveStatus(ids);
     }
 }

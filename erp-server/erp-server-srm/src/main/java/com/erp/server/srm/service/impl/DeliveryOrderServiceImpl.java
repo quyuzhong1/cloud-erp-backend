@@ -52,6 +52,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -481,12 +482,26 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean confirmReceiveStatus(List<String> ids) {
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
+                .in(BaseEntity::getId,ids)
+                .update();
+        return true;
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean unConfirmReceiveStatus(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return true;
+        }
+        this.lambdaUpdate()
+                .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
                 .in(BaseEntity::getId,ids)
                 .update();
         return true;
