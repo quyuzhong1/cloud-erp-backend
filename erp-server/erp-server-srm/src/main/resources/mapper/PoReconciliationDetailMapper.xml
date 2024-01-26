@@ -66,8 +66,7 @@
         prd.supplier_remark as supplierRemark,
         prd.purchase_remark as purchaseRemark,
         prd.currency,
-        prd.is_add_account as isAddAccount,
-
+        prd.is_add_account as isAddAccount
     </sql>
 
     <!-- 分页查询 -->
