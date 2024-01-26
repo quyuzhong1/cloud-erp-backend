@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -165,7 +166,6 @@ public class TransferDeclareDTO implements Serializable {
      * 列表查询入参
      */
     @Data
-    @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
          * 详情表id（用于导出excel）
@@ -232,6 +232,19 @@ public class TransferDeclareDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+
+
+        public PagingParamDTO() {
+            this.detailIdList = new ArrayList<>();
+            this.logisticsChannelIdList = new ArrayList<>();
+            this.deliveryLogisticsSupplierIdList = new ArrayList<>();
+            this.transferLogisticsSupplierIdList = new ArrayList<>();
+            this.uploadStatusList = new ArrayList<>();
+            this.outstockStatusList = new ArrayList<>();
+            this.transferStatusList = new ArrayList<>();
+            this.createUserIdList = new ArrayList<>();
+            this.createTimeList = new ArrayList<>();
+        }
     }
 
     /**

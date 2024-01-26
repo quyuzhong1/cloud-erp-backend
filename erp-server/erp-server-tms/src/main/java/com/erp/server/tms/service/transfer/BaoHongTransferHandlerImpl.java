@@ -4,12 +4,14 @@ import com.common.business.annotation.TransferLogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
 import com.sdk.tms.baohong.api.order.GetShippingMethodListResponse;
-import com.sdk.tms.baohong.api.order.SmRow;
-import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,43 +30,42 @@ import java.util.stream.Collectors;
 @Component
 @TransferLogisticsPlatformType(LogisticsPlatformEnum.BAO_HONG)
 public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler {
+
     @Resource
     private BaoHongService baoHongService;
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        return super.getLogisticsAuthConfig(authId);
-    }
-
-    @Override
-    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
-        return super.getLogisticsAuthConfigByPlatform(platform);
-    }
-
-    @Override
-    public ApiResult<List<TransferLogisticsChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return super.getChannel(chanelQueryVO);
-    }
-
-    @Override
-    public ApiResult authorization(Map<String, String> authMap) {
-        try {
-            Map<String, Object> authObjMap = authMap.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            ThirdWarehouseContext.setAuthMap(authObjMap);
-
-//            GetShippingMethodListResponse response = baoHongService.authorization("");
-            BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
-            return "1".equals(response.getAsk()) ? success("授权成功") : failure("授权失败:" + response.getMessage());
-        } catch (Exception e) {
-            return failure(getPlatForm().getName() + ":" + e.getMessage());
-        }
-    }
-
-    @Override
     public LogisticsPlatformEnum getPlatForm() {
-        return super.getPlatForm();
+        return LogisticsPlatformEnum.BAO_HONG;
     }
 
+    @Override
+    protected ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList() {
+        return null;
+    }
 
+    @Override
+    protected ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq) {
+        return null;
+    }
+
+    @Override
+    protected ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode) {
+        return null;
+    }
+
+    @Override
+    protected ApiResult<List<TransferLogisticsProductDTO>> getAllProductInfo() {
+        return null;
+    }
+
+    @Override
+    protected ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq) {
+        return null;
+    }
+
+    @Override
+    protected ApiResult<String> printLabel(String orderCode) {
+        return null;
+    }
 }
