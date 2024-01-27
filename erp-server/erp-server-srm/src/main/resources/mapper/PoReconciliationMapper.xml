@@ -109,5 +109,18 @@
         </if>
     </select>
 
-
+    <select id="viewToBeSupplierConfirm"
+            resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$AddPoReconciliationViewDTO">
+        select
+            <include refid="Base_Column_List" />
+        from po_reconciliation pr
+        <where>
+             pr.is_deleted = false and pr.status = 'toBeSupplierConfirm'
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY pr.id desc
+        </where>
+    </select>
 </mapper>

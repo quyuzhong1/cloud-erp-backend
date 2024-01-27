@@ -17,6 +17,7 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PoTableFlagEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -125,6 +126,11 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity subcontractIssueEntity = new SubcontractIssueEntity();
         BeanMapperUtils.copy(addDTO, subcontractIssueEntity);
 
+        //验证供应商是否一致
+        List<SubcontractIssueDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
+        checkSupplier(subcontractIssueEntity,sourceDetailIdList);
+
         // 数据处理
         handleData(subcontractIssueEntity);
 
@@ -137,13 +143,14 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException("委外发料单保存失败");
         }
         //新增明细
-        subcontractIssueDetailService.add(addDTO.getDetailList(),subcontractIssueEntity.getId());
+        subcontractIssueDetailService.add(detailList,subcontractIssueEntity.getId());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(subcontractIssueEntity.getId(), code);
     }
+
 
     /**
     * 修改
@@ -158,6 +165,11 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException(ApiError.ERROR_1029);
         }
         SubcontractIssueEntity subcontractIssueEntity =  BeanMapperUtils.map(SubcontractIssueEntity.class, updateDTO);
+
+        //验证供应商是否一致
+        List<SubcontractIssueDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
+        List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
+        checkSupplier(subcontractIssueEntity,sourceDetailIdList);
 
         // 数据处理
         handleData(subcontractIssueEntity);
@@ -477,7 +489,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             detailListDTO.setSpuNo(skuVO.getSpuNo());
             detailListDTO.setStatusName(ProductDetailStatusEnum.getName(skuVO.getStatus()));
             detailListDTO.setImagesUrl(skuVO.getSkuImagesUrl());
-
+            detailListDTO.setSupplierId(parentDetailEntity.getSupplierId());
+            detailListDTO.setSupplierName(parentDetailEntity.getSupplierName());
             List<SubcontractOrderDetailEntity> childEntityList = childList.stream().filter(obj -> obj.getParentId().equals(parentDetailEntity.getId())).collect(Collectors.toList());
             List<SubcontractIssueDetailDTO.ListSourceDetailDTO> detailList = new ArrayList<>();
             for (SubcontractOrderDetailEntity  childDetailEntity : childEntityList) {
@@ -754,6 +767,10 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException(ApiError.ERROR_98073);
         }
         subcontractIssueEntity.setSourceCode(subcontractOrderList.get(0).getCode());
+
+        //供应商
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(subcontractIssueEntity.getSupplierId());
+        subcontractIssueEntity.setSupplierName(supplierEntity.getName());
     }
 
 
@@ -817,5 +834,31 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
         return skuInventoryTotalList;
+    }
+
+    /**
+     * @description: 检测供应商是否一致
+     * @author Will
+     * @date: 2024/1/27 14:43
+     * @param subcontractIssueEntity
+     */
+    private void checkSupplier (SubcontractIssueEntity subcontractIssueEntity,List<String> sourceDetailIdList) {
+        //委外订单下全部明细
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(subcontractIssueEntity.getSourceId()));
+        //父级id集合
+        List<String> parentIdList = subcontractOrderDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).map(SubcontractOrderDetailEntity::getParentId).collect(Collectors.toList());
+        //所有父级数据
+        List<SubcontractOrderDetailEntity> parentDetailList = subcontractOrderDetailList.stream().filter(obj -> parentIdList.contains(obj.getId())).collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(parentDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98071);
+        }
+        //录入单据父级SKU供应商需要一致
+        long count = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).distinct().count();
+        if (count > 1) {
+            String supplierNames = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierName).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF,supplierNames);
+        }
+        subcontractIssueEntity.setSupplierId(parentDetailList.get(0).getSupplierId());
+        subcontractIssueEntity.setSupplierName(parentDetailList.get(0).getSupplierName());
     }
 }

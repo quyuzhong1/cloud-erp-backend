@@ -580,6 +580,22 @@ public class PoReconciliationDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class AddPoReconciliationViewDTO {
+
+        /**
+         * 对账单id
+         */
+        private String id;
+
+        /**
+         * 对账单编号
+         */
+        private String code;
+
+    }
+
+        @Data
+    @NoArgsConstructor
     public static class GeneratePoReconciliationDTO {
 
         /**
@@ -589,7 +605,7 @@ public class PoReconciliationDetailDTO implements Serializable {
         private List<String> detailIdList;
 
         /**
-         * 对账账单类型，/srm/dict/drop/down?type=poReconciliationGenerateType
+         * 对账账单类型，/srm/drop/down/dict/list?key=poReconciliationGenerateType
          */
         @NotBlank(message = "对账单账单不能为空")
         private String generateType;

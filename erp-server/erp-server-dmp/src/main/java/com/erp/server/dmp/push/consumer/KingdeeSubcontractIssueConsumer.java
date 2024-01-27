@@ -52,7 +52,7 @@ public class KingdeeSubcontractIssueConsumer<T extends DmpSyncTaskIdDTO> extends
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "WWLL00000025"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FOwnerTypeId";
+        String fieldKeys = "FID,FSrcBillType";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 0);
         System.out.println(queryList);
 

@@ -1,6 +1,7 @@
 package com.erp.server.srm.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
@@ -47,4 +48,11 @@ public interface PoReconciliationMapper extends BaseMapper<PoReconciliationEntit
      * @return Integer
      */
     Integer tabList(@Param("params") PoReconciliationDTO.PagingParamDTO searchParam);
+    /**
+     * @description: 查询待供方确认
+     * @author Will
+     * @date: 2024/1/27 15:20
+     * @return List<AddPoReconciliationViewDTO>
+     */
+    List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO> viewToBeSupplierConfirm(@Param("params")PermissionsDTO dto);
 }

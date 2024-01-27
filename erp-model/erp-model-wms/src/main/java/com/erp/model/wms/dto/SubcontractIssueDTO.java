@@ -294,6 +294,7 @@ public class SubcontractIssueDTO implements Serializable {
          * 委外发料明细不能为空
          */
         @NotEmpty(message = "委外发料明细不能为空")
+        @Valid
         private List<SubcontractIssueDetailDTO.AddDTO> detailList;
 
     }
@@ -315,6 +316,7 @@ public class SubcontractIssueDTO implements Serializable {
          * 委外发料明细不能为空
          */
         @NotEmpty(message = "委外发料明细不能为空")
+        @Valid
         private List<SubcontractIssueDetailDTO.UpdateDTO> detailList;
 
     }
@@ -344,6 +346,12 @@ public class SubcontractIssueDTO implements Serializable {
         @NotBlank(message = "来源id不能为空")
         @Size(max = 19,message = "来源id最大长度不能超过19位")
         private String sourceId;
+
+        /**
+         * 供应商id
+         */
+        @NotNull(message = "供应商id不能为空")
+        private String supplierId;
     }
 
 
@@ -423,6 +431,16 @@ public class SubcontractIssueDTO implements Serializable {
          * 品牌
          */
         private String brandName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 委外订单明细

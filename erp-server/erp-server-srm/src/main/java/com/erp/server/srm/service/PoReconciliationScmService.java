@@ -122,4 +122,11 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @param response
      */
     void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 查询待供方确认
+     * @author Will
+     * @date: 2024/1/27 15:19
+     * @return List<AddPoReconciliationViewDTO>
+     */
+    List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO> viewToBeSupplierConfirm(PermissionsDTO dto);
 }

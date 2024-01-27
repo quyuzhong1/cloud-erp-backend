@@ -933,6 +933,7 @@ public enum ApiError implements Serializable {
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
+    ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
 
 
 

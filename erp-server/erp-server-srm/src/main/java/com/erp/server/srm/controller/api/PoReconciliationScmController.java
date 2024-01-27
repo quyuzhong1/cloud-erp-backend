@@ -303,4 +303,20 @@ public class PoReconciliationScmController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 查询待供方确认数据
+     * @author Will
+     * @date: 2024/1/27 15:15
+     * @return ApiResult<List<AddPoReconciliationViewDTO>>
+     */
+    @PostMapping("/viewToBeSupplierConfirm")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:poReconciliation:scm:paging",
+            tableAlias = "pr"
+    )
+    public ApiResult<List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO>> viewToBeSupplierConfirm(@RequestBody PermissionsDTO dto) {
+        return success(poReconciliationScmService.viewToBeSupplierConfirm(dto));
+    }
 }

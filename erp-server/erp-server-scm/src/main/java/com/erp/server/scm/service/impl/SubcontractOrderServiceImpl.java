@@ -1480,29 +1480,40 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         Boolean isApprove = CfgSettingCreateTypeEnum.AUTO_CREATE_APPROVE.getCode().equals(dto.getCreateType()) ? Boolean.TRUE : Boolean.FALSE;
         //委外明细信息
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainIds(ids);
+
         for (String id : ids) {
-            SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
-            addDTO.setSourceId(id);
-            addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
-            addDTO.setDate(LocalDate.now());
-            List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
             //委外子级sku信息
-            List<SubcontractOrderDetailEntity> childDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(id, obj.getMainId()) && StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(childDetailList)) {
+            List<SubcontractOrderDetailEntity> parentDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(id, obj.getMainId()) && StrUtil.isBlank(obj.getParentId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(parentDetailList)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
-            for (SubcontractOrderDetailEntity detailEntity : childDetailList) {
-                SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
-                addDetailDTO.setSourceDetailId(detailEntity.getId());
-                addDetailDTO.setIssueQty(detailEntity.getDeliveryQty());
-                addDetailDTO.setWarehouseId(detailEntity.getWarehouseId());
-                addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
-                detailList.add(addDetailDTO);
+            //根据父级SKU供应商分组
+            Map<String, List<SubcontractOrderDetailEntity>> map = parentDetailList.stream().collect(Collectors.groupingBy(SubcontractOrderDetailEntity::getSupplierId));
+            for (Map.Entry<String, List<SubcontractOrderDetailEntity>> entry : map.entrySet()) {
+                //相同供应商的父级SKU
+                List<SubcontractOrderDetailEntity> value = entry.getValue();
+                SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
+                addDTO.setSourceId(id);
+                addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
+                addDTO.setDate(LocalDate.now());
+                addDTO.setSupplierId(value.get(0).getSupplierId());
+                //查询子级SKU明细数据
+                List<String> parentIdList = value.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
+                List<SubcontractOrderDetailEntity> childDetailList = subcontractOrderDetailList.stream().filter(obj -> parentIdList.contains(obj.getParentId())).collect(Collectors.toList());
+                List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
+                for (SubcontractOrderDetailEntity detailEntity : childDetailList) {
+                    SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
+                    addDetailDTO.setSourceDetailId(detailEntity.getId());
+                    addDetailDTO.setIssueQty(detailEntity.getDeliveryQty());
+                    addDetailDTO.setWarehouseId(detailEntity.getWarehouseId());
+                    addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                    detailList.add(addDetailDTO);
+                }
+                addDTO.setDetailList(detailList);
+                //自动新增
+                SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
+                subcontractIssueFeign.add(autoAddDTO);
             }
-            addDTO.setDetailList(detailList);
-            //自动新增
-            SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
-            subcontractIssueFeign.add(autoAddDTO);
         }
     }
 

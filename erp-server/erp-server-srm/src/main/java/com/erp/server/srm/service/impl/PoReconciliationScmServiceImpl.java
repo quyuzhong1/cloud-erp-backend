@@ -242,6 +242,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    public List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO> viewToBeSupplierConfirm(PermissionsDTO dto) {
+        return baseMapper.viewToBeSupplierConfirm(dto);
+    }
+
+    @Override
     public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if(CollUtil.isEmpty(list)) {

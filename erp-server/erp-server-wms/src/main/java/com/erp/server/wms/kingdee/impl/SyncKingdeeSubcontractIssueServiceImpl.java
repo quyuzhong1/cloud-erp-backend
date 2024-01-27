@@ -100,8 +100,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             throw new ServiceException(ApiError.ERROR_98073);
         }
         //委外订单明细
-        List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIdList);
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(entity.getSourceId()));
 
         //委外组织
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderList.get(0).getSubcontractOrgId()));
@@ -142,7 +141,8 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             //委外主表金蝶id
             jsonObject.set("subKingdeeId", subcontractOrderList.get(0).getSyncKingdeeId());
             //委外明细金蝶id
-            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+            String parentId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), parentId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
             jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             list.add(jsonObject);
         }
