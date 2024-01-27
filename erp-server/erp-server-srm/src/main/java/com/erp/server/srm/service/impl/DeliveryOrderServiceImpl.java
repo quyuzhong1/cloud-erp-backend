@@ -211,6 +211,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             }else{
                 resultDTO.setSuccess(true);
                 deliveryOrderEntity.setIsPrint(false);
+                deliveryOrderEntity.setPrintDate(null);
                 updateList.add(deliveryOrderEntity);
             }
             resultDTOList.add(resultDTO);

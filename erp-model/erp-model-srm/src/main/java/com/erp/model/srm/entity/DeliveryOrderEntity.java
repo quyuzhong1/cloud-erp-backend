@@ -1,5 +1,6 @@
 package com.erp.model.srm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -83,7 +84,7 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     /**
     * 打印日期
     */
-    @TableField("print_date")
+    @TableField(value = "print_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate printDate;
     /**
     * 确认收货日期
