@@ -541,6 +541,7 @@
 
     <select id="listPurchaseOrderAutoConfirm" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
         select
+            po.id as id,
             pod.id as detailId
         from purchase_order po
         inner join purchase_order_detail pod on pod.is_deleted = false and po.id = pod.purchase_order_id
@@ -672,6 +673,24 @@
                 <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="getPurchaseOrder"
+            resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
+        select
+        po.id as id,
+        pod.id as detailId
+        from purchase_order po
+        inner join purchase_order_detail pod on pod.is_deleted = false and po.id = pod.purchase_order_id
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        <where>
+        po.is_deleted = false
+            <if test="status != null and status != ''">
+                and po.approve_status = #{status}
+            </if>
+            <if test="code != null and code != ''">
+                and pod.execution_status = #{code}
             </if>
         </where>
     </select>

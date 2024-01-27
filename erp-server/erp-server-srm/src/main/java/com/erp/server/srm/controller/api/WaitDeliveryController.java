@@ -18,6 +18,7 @@ import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
+import com.erp.server.srm.service.PurchaseOrderDetailService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,6 +52,8 @@ public class WaitDeliveryController extends BaseController {
     private PurchaseOrderFeign purchaseOrderFeign;
     @Resource
     private DeliveryOrderService deliveryOrderService;
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * srm待发货列表统计
@@ -62,7 +65,7 @@ public class WaitDeliveryController extends BaseController {
     public ApiResult<List<DeliveryOrderDTO.WaitDeliveryCountDTO>> srmWaitDeliveryCount() {
         PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto = new PurchaseOrderSrmDTO.WaitDeliveryParamDTO();
         dto.setSupplierId(userService.getSupplierId());
-        PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO = purchaseOrderFeign.srmWaitDeliveryCount(dto);
+        PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO = purchaseOrderDetailService.srmWaitDeliveryCount(dto);
         //数据转换
         List<DeliveryOrderDTO.WaitDeliveryCountDTO> countDTOS = deliveryOrderService.buildSrmWaitDeliveryCount(waitDeliveryCountDTO);
         return success(countDTOS);
@@ -86,7 +89,7 @@ public class WaitDeliveryController extends BaseController {
             sortParamDTO.setSort("ASC");
             dto.getParams().setSortList(Collections.singletonList(sortParamDTO));
         }
-        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderFeign.srmWaitDeliveryPaging(dto);
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderDetailService.srmWaitDeliveryPaging(dto);
         return success(pagingVO);
     }
 
@@ -114,7 +117,7 @@ public class WaitDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = WaitDeliveryQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.ListDTO> srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         dto.setSupplierId(userService.getSupplierId());
-        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderFeign.srmWaitDeliveryTotal(dto);
+        PurchaseOrderDTO.ListDTO listDTO = purchaseOrderDetailService.srmWaitDeliveryTotal(dto);
         return success(listDTO);
     }
 

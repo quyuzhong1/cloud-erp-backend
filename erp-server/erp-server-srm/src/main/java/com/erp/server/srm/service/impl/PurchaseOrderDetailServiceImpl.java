@@ -1,0 +1,280 @@
+package com.erp.server.srm.service.impl;
+
+
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
+import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.entity.PurchaseOrderDetailEntity;
+import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.server.srm.convert.PurchaseOrderConverter;
+import com.erp.server.srm.mapper.PurchaseOrderDetailMapper;
+import com.erp.server.srm.service.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import com.common.business.config.DocNoGenHelper;
+import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.srm.dto.PurchaseOrderDetailDTO;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
+/**
+ * <p>
+ * 采购订单明细表（已确认） 服务实现类
+ * </p>
+ *
+ * @author zdy
+ * @since 2024-01-27
+ */
+@Slf4j
+@Service
+public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrderDetailMapper, PurchaseOrderDetailEntity> implements PurchaseOrderDetailService {
+    @Autowired
+    private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
+    @Resource
+    private SupplierFeign supplierFeign;
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private PurchaseOrderFeign purchaseOrderFeign;
+    @Resource
+    private DeliveryOrderService deliveryOrderService;
+    @Resource
+    private DeliveryOrderDetailService deliveryOrderDetailService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(PurchaseOrderDetailDTO.AddDTO addDTO) {
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
+        BeanMapperUtils.copy(addDTO, purchaseOrderDetailEntity);
+
+        // 数据处理
+        handleData(purchaseOrderDetailEntity);
+
+        log.info("开始新增采购订单明细表（已确认）");
+        // 生成单号
+        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
+        String code = docNoGenHelper.generateCode(null);
+        purchaseOrderDetailEntity.setCode(code);
+        boolean save = super.save(purchaseOrderDetailEntity);
+        if (!save) {
+            throw new ServiceException("采购订单明细表（已确认）保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "采购订单明细表（已确认）", purchaseOrderDetailEntity.getCode());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, purchaseOrderDetailEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
+
+        return new BaseResultDTO.AddDTO(purchaseOrderDetailEntity.getId(), code);
+    }
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(PurchaseOrderDetailDTO.UpdateDTO updateDTO) {
+        PurchaseOrderDetailEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）"));
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = BeanMapperUtils.map(PurchaseOrderDetailEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(purchaseOrderDetailEntity);
+        log.info("编辑 开始修改采购订单明细表（已确认）数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(purchaseOrderDetailEntity);
+        if (!save) {
+            throw new ServiceException("采购订单明细表（已确认）保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录采购订单明细表（已确认）日志数据，单号：【{}】", purchaseOrderDetailEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), purchaseOrderDetailEntity.getCode(), "采购订单明细表（已确认）");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, purchaseOrderDetailEntity, null, purchaseOrderDetailEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void syncScmPurchaseOrderDetail(String id, List<String> detailIds, String executionStatus) {
+        if (StringUtils.isEmpty(id) || CollectionUtils.isEmpty(detailIds) || StringUtils.isEmpty(executionStatus)) {
+            return;
+        }
+        List<PurchaseOrderEntity> purchaseOrderEntities = purchaseOrderFeign.getPurchaseOrderByIds(Collections.singleton(id));
+        if (CollectionUtils.isEmpty(purchaseOrderEntities)) {
+            return;
+        }
+        List<com.erp.model.scm.entity.PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderFeign.getPurchaseOrderDetailByIds(detailIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            return;
+        }
+        PurchaseOrderSupplierEntity orderSupplierEntity = supplierFeign.getSupplierByOrderId(id);
+        purchaseOrderDetailList.forEach(purchaseOrderDetailEntity -> {
+            PurchaseOrderDetailEntity newEntity = PurchaseOrderConverter.INSTANCE.scmPurchaseOrderToSrmPurchaseOrderDetail(purchaseOrderEntities.get(0), purchaseOrderDetailEntity, orderSupplierEntity);
+            PurchaseOrderDetailEntity oldEntity = this.getBySrmDetailId(purchaseOrderDetailEntity.getId());
+            if (Objects.isNull(oldEntity)){
+                this.save(newEntity);
+            }else {
+                newEntity.setId(oldEntity.getId());
+                this.updateById(newEntity);
+            }
+        });
+    }
+
+    private PurchaseOrderDetailEntity getBySrmDetailId(String detailId){
+        List<PurchaseOrderDetailEntity> list = this.lambdaQuery().eq(PurchaseOrderDetailEntity::getPurchaseOrderDetailId, detailId).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }else {
+            return null;
+        }
+    }
+    @Override
+    public void removeBySrmOrderIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId, ids).remove();
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(PurchaseOrderDetailEntity purchaseOrderDetailEntity) {
+        // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
+        return baseMapper.srmWaitDeliveryCount(dto.getSupplierId());
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
+        List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //重新赋值待发货字段逻辑
+        doWaitDeliveryPurchaseOrder(records);
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO pagingDTO) {
+        PurchaseOrderDTO.ListDTO dto = new PurchaseOrderDTO.ListDTO();
+        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(pagingDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return countPurchaseOrder(dto, list);
+        }
+        //数据赋值处理
+        doWaitDeliveryPurchaseOrder(list);
+        //汇总
+        return countPurchaseOrder(dto, list);
+    }
+
+    private void doWaitDeliveryPurchaseOrder(List<PurchaseOrderDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 采购订单明细id集合
+        List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        //送货信息
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = deliveryOrderDetailService.listDetailByDetailSourceIds(podIds);
+
+        records.forEach(obj -> {
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setReceiveQty(receiveQty);
+            //已送货数量
+            Integer waitReceiveQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(DeliveryOrderDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            obj.setWaitReceiveQty(waitReceiveQty);
+            //待交货量
+            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
+
+            //交货周期
+            Boolean deliveryCycleFlag = false;
+            if(Objects.nonNull(obj.getDeliveryCycle())){
+                if (obj.getDeliveryCycle() < 0){
+                    obj.setDeliveryCycleName(String.format("已超期%s天", obj.getDeliveryCycle() * -1));
+                    deliveryCycleFlag = true;
+                }else if (7 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()>= 0){
+                    obj.setDeliveryCycleName(String.format("%s天后超期", obj.getDeliveryCycle()));
+                    deliveryCycleFlag = true;
+                }else if (30 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 7){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_ONE_MONTH.getName());
+                }else if (60 >= obj.getDeliveryCycle() && obj.getDeliveryCycle()> 30){
+                    obj.setDeliveryCycleName(WaitDeliveryCycleEnum.IN_TWO_MONTH.getName());
+                }else if (obj.getDeliveryCycle()> 60){
+                    obj.setDeliveryCycleName("2个月以上");
+                }
+            }
+            obj.setDeliveryCycleFlag(deliveryCycleFlag);
+        });
+    }
+
+    private PurchaseOrderDTO.ListDTO countPurchaseOrder(PurchaseOrderDTO.ListDTO dto, List<PurchaseOrderDTO.ListDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            dto.setPurchaseQty(MathUtil.ZERO);
+            dto.setReceiveQty(MathUtil.ZERO);
+            dto.setDeliveryQty(MathUtil.ZERO);
+            dto.setWaitReceiveQty(MathUtil.ZERO);
+            dto.setStockInQty(MathUtil.ZERO);
+            dto.setReturnQty(MathUtil.ZERO);
+            return dto;
+        }
+        dto.setPurchaseQty(list.stream().filter(e -> Objects.nonNull(e.getPurchaseQty())).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
+        dto.setReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
+        dto.setWaitReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getWaitReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitReceiveQty).sum());
+        dto.setDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
+        dto.setStockInQty(list.stream().filter(e -> Objects.nonNull(e.getStockInQty())).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
+        dto.setReturnQty(list.stream().filter(e -> Objects.nonNull(e.getReturnQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
+        return dto;
+    }
+}

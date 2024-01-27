@@ -449,4 +449,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
 
     PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    /**
+     * 同步已审核 已确认订单到srm
+     */
+    void syncConfirmOrder();
 }

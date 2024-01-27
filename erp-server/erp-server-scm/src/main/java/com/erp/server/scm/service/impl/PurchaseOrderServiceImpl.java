@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -922,6 +923,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //同步到WMS
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
+        if (CollectionUtils.isNotEmpty(ids)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("ids",ids);
+            jsonObject.putOpt("executionStatus","invalid");
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        }
         return Boolean.TRUE;
     }
 
@@ -2282,6 +2290,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
 
         purchaseOrderDetailService.purchaseOrderConfirm(detailIdList, ExecutionStatusEnum.CONFIRM,"", ConfirmTypeEnum.MANUAL);
+        if (CollectionUtils.isNotEmpty(detailIdList)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("id",id);
+            jsonObject.putOpt("detailIds",detailIdList);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -2350,6 +2366,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //采购订单明细id集合
         List<String> detailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         purchaseOrderDetailService.purchaseOrderConfirm(detailIdList,typeEnum,dto.getRemark(),confirmTypeEnum);
+        if(typeEnum.equals(ExecutionStatusEnum.CONFIRM)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("id",entity.getId());
+            jsonObject.putOpt("detailIds",detailIdList);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -2367,6 +2391,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<String> detailIdList = purchaseOrderList.stream().map(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getDetailId).collect(Collectors.toList());
         purchaseOrderDetailService.purchaseOrderAutoConfirm(detailIdList);
+        if (CollectionUtils.isNotEmpty(detailIdList)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("id",purchaseOrderList.get(0).getId());
+            jsonObject.putOpt("detailIds",detailIdList);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+
+        }
     }
 
     @Override
@@ -2491,6 +2524,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         params.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
         responseDTO.setCount(baseMapper.srmPurchaseOrderCount(params));
         return responseDTO;
+    }
+
+    @Override
+    public void syncConfirmOrder() {
+        List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list = baseMapper.getPurchaseOrder(ApproveStatusEnum.APPROVE.getStatus(),ExecutionStatusEnum.CONFIRM.getCode());
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        Map<String, List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>> collect = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getId));
+        for (String id:collect.keySet()) {
+            List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list1 = collect.get(id);
+            List<String> detailIdList = list1.stream().map(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getDetailId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(detailIdList)){
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.putOpt("id",id);
+                jsonObject.putOpt("detailIds",detailIdList);
+                jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
+                //同步scm 确认订单 到 srm
+                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+            }
+        }
     }
 
     private List<PurchaseOrderDTO.ListDTO> listByDetailIds(List<String> purchaseDetailIds) {

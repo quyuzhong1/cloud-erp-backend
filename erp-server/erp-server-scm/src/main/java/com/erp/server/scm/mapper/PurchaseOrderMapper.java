@@ -179,4 +179,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
 
     List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
 
+    /**
+     * 根据状态查询列表数据
+     * @param status
+     * @param code
+     * @return
+     */
+    List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> getPurchaseOrder(@Param("status")String status, @Param("code")String code);
 }

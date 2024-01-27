@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,4 +73,12 @@ public interface SupplierFeign {
      */
     @PostMapping("/feign/supplier/listDefaultBySupplierIdList")
     List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(@RequestBody List<String> supplierIdList);
+
+    /**
+     * 根据采购订单获取供应商信息
+     * @param orderId
+     * @return
+     */
+    @GetMapping("/feign/supplier/getSupplierByOrderId")
+    PurchaseOrderSupplierEntity getSupplierByOrderId(@RequestParam("orderId") String orderId);
 }

@@ -3,7 +3,9 @@ package com.erp.server.scm.controller.feign;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import java.util.Map;
 public class SupplierFeignController extends BaseController {
 
     private final SupplierService supplierService;
+    private final PurchaseOrderSupplierService purchaseOrderSupplierService;
 
     /**
      * 批量获取供应商信息
@@ -92,5 +95,15 @@ public class SupplierFeignController extends BaseController {
     @PostMapping("/listDefaultBySupplierIdList")
     public List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(@RequestBody List<String> supplierIdList) {
         return supplierService.listDefaultBySupplierIdList(supplierIdList);
+    }
+
+    /**
+     * 根据采购订单获取供应商信息
+     * @param orderId
+     * @return
+     */
+    @GetMapping("/getSupplierByOrderId")
+    PurchaseOrderSupplierEntity getSupplierByOrderId(@RequestParam("orderId") String orderId){
+        return purchaseOrderSupplierService.getByPurchaseOrderId(orderId);
     }
 }

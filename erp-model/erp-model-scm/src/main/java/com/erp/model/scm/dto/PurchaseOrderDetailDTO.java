@@ -590,7 +590,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PurchaseOrderConfirmDTO {
-
+        private String id;
         /**
          * 明细id
          */
