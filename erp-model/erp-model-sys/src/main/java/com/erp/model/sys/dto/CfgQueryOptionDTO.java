@@ -81,6 +81,10 @@ public class CfgQueryOptionDTO implements Serializable {
          */
         private Map<String,Object> props;
 
+        /**
+         * api接口类型
+         */
+        private String apiType;
 
         /**
          * 创建人
@@ -173,6 +177,10 @@ public class CfgQueryOptionDTO implements Serializable {
          * api路径
          */
         private String apiUrl;
+        /**
+         * api类型
+         */
+        private String apiType;
     }
 
     /**
@@ -254,6 +262,11 @@ public class CfgQueryOptionDTO implements Serializable {
          * 组件props参数
          */
         private Map<String,Object> props;
+
+        /**
+         * 接口类型
+         */
+        private String apiType;
 
     }
 

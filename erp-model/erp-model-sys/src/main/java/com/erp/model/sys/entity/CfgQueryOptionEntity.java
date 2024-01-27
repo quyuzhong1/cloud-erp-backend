@@ -29,7 +29,6 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     /**
     * 接口名称
-
     */
     @TableField("api_name")
     private String apiName;
@@ -74,6 +73,12 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
      */
     @TableField(value = "props", typeHandler = JacksonTypeHandler.class)
     private Map<String,Object> props;
+
+    /**
+     * 接口类型
+     */
+    @TableField("api_type")
+    private String apiType;
 
     public static final String API_NAME = "api_name";
 
