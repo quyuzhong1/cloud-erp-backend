@@ -38,7 +38,7 @@
         select <include refid="Base_Column_List"></include>
             from logistics_bill_detail
         where track_status != 'sign'
-        and is_deleted = false
+        and is_deleted = false and track_no != ''
         <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
             and track_query_mode = #{query.trackQueryMode}
         </if>
