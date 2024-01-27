@@ -257,7 +257,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取供应商信息
         SupplierEntity supplier = scmTaskFeign.getSupplierById(orderSupplierByOrderId.getSupplierId());
-        if(supplier.getSrmDisabled() && !dto.getGenerateByDelivery()){
+        if(!supplier.getSrmDisabled() && !dto.getGenerateByDelivery()){
             throw new ServiceException(ApiError.RECEIVE_SHOULD_GENERATE_BY_DELIVERY,supplier.getName());
         }
 
