@@ -366,8 +366,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .iossNo("")
                     .serialNo(soB2cEntity.getCode())
                     .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-
+                    .buyInsurance(1)
                     .build();
+
 
 
             service.createOrder(orderReq, authEntity.getId());
