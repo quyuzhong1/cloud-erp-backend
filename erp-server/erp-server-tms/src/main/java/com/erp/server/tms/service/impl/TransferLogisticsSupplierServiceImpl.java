@@ -7,37 +7,41 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.convert.TransferLogisticsSupplierConverter;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferLogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -67,6 +71,12 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
     @Autowired
     private TransferLogisticsAuthService transferLogisticsAuthService;
+
+    @Autowired
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+
+    @Autowired
+    private TransferDeclareService transferDeclareService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -160,7 +170,12 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     public BatchResultDTO delete(String id) {
         TransferLogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
-        //TODO 检查订单是否引用
+        // 检查订单是否引用
+        Boolean flag = transferDeclareService.checkExistTransferLogisticsSupplier(id);
+        if (flag) {
+            throw new ServiceException(ApiError.EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE);
+        }
+
         this.removeById(id);
 
         //删除渠道根据来源id
@@ -187,12 +202,18 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
-        // TODO 调用第三方渠道
 
-//        transferLogisticsChannelService.saveOrUpdate();
+        Integer totalSize = 0;
+        TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
+        ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authEntity.getId());
+        if (shippingMethodList.isSuccess()) {
+            shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
+            });
+            totalSize = shippingMethodList.getData().size();
+        }
 
-        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + 01 + "个渠道");
-
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + totalSize + "个渠道");
     }
 
 

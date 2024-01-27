@@ -905,6 +905,7 @@ public enum ApiError implements Serializable {
     NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
     UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
 
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1116,7 +1117,7 @@ public enum ApiError implements Serializable {
     TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
     GENERATE_TIME_GT_DEADLINE_TIME(94033,"生成时间不可晚于截单时间"),
     ERROR_NOT_UPDATE_TRACK_STATUS(94032,"该运输状态为系统更新不可修改"),
-
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94033,"被其他单据引用的中转物流商不允许删除"),
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),

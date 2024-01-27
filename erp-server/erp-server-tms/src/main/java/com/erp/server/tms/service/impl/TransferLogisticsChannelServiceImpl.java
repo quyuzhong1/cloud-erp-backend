@@ -1,36 +1,36 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.*;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.mapper.TransferLogisticsChannelMapper;
+import com.erp.server.tms.service.CommonService;
+import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TransferDeclareService;
 import com.erp.server.tms.service.TransferLogisticsChannelService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -183,6 +183,23 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         List<TransferLogisticsChannelEntity> channelList = this.listByMainIds(Arrays.asList(transferLogisticsSupplierId));
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
         return resultList;
+    }
+
+    @Override
+    public Boolean saveOrUpdateChannel(TransferLogisticsChannelEntity transferLogisticsChannelEntity) {
+        LambdaQueryWrapper<TransferLogisticsChannelEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TransferLogisticsChannelEntity::getLogisticsPlatform, transferLogisticsChannelEntity.getLogisticsPlatform());
+        queryWrapper.eq(TransferLogisticsChannelEntity::getCode, transferLogisticsChannelEntity.getCode());
+        queryWrapper.eq(TransferLogisticsChannelEntity::getIsDeleted, false);
+        queryWrapper.last("limit 1");
+        TransferLogisticsChannelEntity one  = baseMapper.selectOne(queryWrapper);
+        //检查数据是否存在
+        if (Objects.nonNull(one)){
+            transferLogisticsChannelEntity.setId(one.getId());
+            transferLogisticsChannelEntity.setUpdateTime(LocalDateTime.now());
+            return this.updateById(transferLogisticsChannelEntity);
+        }
+        return this.save(transferLogisticsChannelEntity);
     }
 
     /**
