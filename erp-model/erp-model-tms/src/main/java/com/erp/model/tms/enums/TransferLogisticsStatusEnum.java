@@ -14,7 +14,7 @@ public enum TransferLogisticsStatusEnum implements EnumMessage {
     DRAFT("draft", "草稿"),
     UNUSUAL("unusual", "异常"),
     CONFIRMED("confirmed", "已确认"),
-    SUBMITTED("Submitted", "已提交"),
+    SUBMITTED("submitted", "已提交"),
     OUTSTOCK("outstock", "已出货"),
     SIGNED("signed", "已签收"),
 

@@ -344,14 +344,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cReceiverEntity());
 
-
+            //订单物流信息
             SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
 
+            //中转渠道信息
             TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
 
 
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
-                    .trackingNumber(transferDeclareDetailEntity.getTrackNo())
+                    .trackingNumber(logisticsEntity.getCode())
                     .country(soB2cReceiverEntity.getCountry())
                     .shippingCode(transferLogisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
@@ -458,12 +459,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
         //物流商未出库
         if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(params.getTabFlag())) {
+            transferStatusList.add(TransferLogisticsStatusEnum.DELETED.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.DRAFT.getCode());
             transferStatusList.add(TransferLogisticsStatusEnum.UNUSUAL.getCode());
             transferStatusList.add(TransferLogisticsStatusEnum.CONFIRMED.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.SUBMITTED.getCode());
         }
         //物流商已出库
         if (TransferDeclareTabFlagEnum.LOGISTICS_OUTSTOCK.getCode().equals(params.getTabFlag())) {
             transferStatusList.add(TransferLogisticsStatusEnum.OUTSTOCK.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.SIGNED.getCode());
         }
 
         //上传状态
