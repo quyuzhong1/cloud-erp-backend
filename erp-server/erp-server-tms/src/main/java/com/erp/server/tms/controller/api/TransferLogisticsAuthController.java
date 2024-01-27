@@ -2,32 +2,27 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
-import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
-import com.erp.server.tms.service.LogisticsAuthService;
-import com.erp.server.tms.service.TransferLogisticsAuthFieldService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TransferLogisticsAuthService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferLogisticsAuthDTO;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.server.tms.service.TransferLogisticsAuthFieldService;
+import com.erp.server.tms.service.TransferLogisticsAuthService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +61,7 @@ public class TransferLogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = transferLogisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
+                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id);
             } else {
                 transferLogisticsAuthService.removeById(id);
                 transferLogisticsAuthFieldService.removeByAuthId(id);
@@ -112,7 +107,7 @@ public class TransferLogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = transferLogisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
+                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id);
             } else {
                 transferLogisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
                 return apiResult;

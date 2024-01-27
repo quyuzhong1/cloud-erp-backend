@@ -1,10 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 
 import java.util.List;
 
@@ -116,4 +117,13 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>
      **/
     List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String transferLogisticsSupplierId);
+
+    /**
+     * 保存新增渠道
+     * @Author Luo_WG
+     * @Date 2024/1/27 12:09
+     * @param transferLogisticsChannelEntity
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateChannel(TransferLogisticsChannelEntity transferLogisticsChannelEntity);
 }

@@ -2,8 +2,10 @@ package com.erp.server.tms.service.impl;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +33,11 @@ public class AsyncServiceImpl implements AsyncService {
     @Lazy
     @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
+    @Resource
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+    @Lazy
+    @Resource
+    private TransferLogisticsChannelService transferLogisticsChannelService;
 
     @Async("tmsExecutor")
     @Override
@@ -47,6 +54,20 @@ public class AsyncServiceImpl implements AsyncService {
             });
         } else {
             log.error("同步渠道异常：{}",channels.getMsg());
+        }
+    }
+
+    @Async("tmsTransferChannelExecutor")
+    @Override
+    public void asyncUpdateTransferLogisticsChannel(String logisticsPlatform, String authId) {
+        TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
+        ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authId);
+        if (shippingMethodList.isSuccess()) {
+            shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
+            });
+        } else {
+            log.error("同步中转物流商渠道异常：{}",shippingMethodList.getMsg());
         }
     }
 }

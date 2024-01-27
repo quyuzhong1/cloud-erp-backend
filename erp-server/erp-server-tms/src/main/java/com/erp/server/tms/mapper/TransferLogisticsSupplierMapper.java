@@ -50,4 +50,15 @@ public interface TransferLogisticsSupplierMapper extends BaseMapper<TransferLogi
      * @return java.util.List<com.erp.model.tms.dto.TransferLogisticsSupplierDTO.PagingViewDTO>
      **/
     List<TransferLogisticsSupplierDTO.PagingViewDTO> listExport(@Param("params") TransferLogisticsSupplierDTO.ExportDTO dto);
+
+
+    /**
+     * 获取所有中转商的 授权信息
+     * @description
+     * @param
+     * @return
+     * @date 2024-01-27 12:26
+     * @author Lambda
+     */
+    List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth();
 }

@@ -12,14 +12,19 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
+import com.sdk.tms.baohong.api.asn.ReceivingInfo;
+import com.sdk.tms.baohong.api.order.CreateOrderInfo;
+import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @TransferLogisticsPlatformType(LogisticsPlatformEnum.BAO_HONG)
+@Validated
 public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler {
 
     @Resource
@@ -64,23 +70,42 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     }
 
     @Override
-    protected ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq) {
-        return null;
+    protected ApiResult<String> createOrder(@Valid TransferLogisticsCreateOrderReq createOrderReq) {
+        CreateOrderInfo createOrderInfo  = BaoHongConverter.INSTANCE.createOrderConvert(createOrderReq);
+        BaoHongResponse<String> result = baoHongService.createOrder(createOrderInfo);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData());
     }
 
     @Override
     protected ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode) {
-        return null;
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode(orderCode);
+        if(isFailure(response)){
+            return failure(response.getMessage());
+        }
+        TransferLogisticsOrderDTO transferLogisticsOrderDTO =  BaoHongConverter.INSTANCE.createOrderInfoConvert(response.getData());
+        return success(transferLogisticsOrderDTO);
     }
 
     @Override
     protected ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq) {
-        return null;
+        ReceivingInfo receivingInfo  = BaoHongConverter.INSTANCE.createReceiveOrderConvert(createInboundReq);
+        BaoHongResponse<String> result = baoHongService.createReceiving(receivingInfo);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData());
     }
 
     @Override
     protected ApiResult<String> printLabel(String orderCode) {
-        return null;
+        BaoHongResponse<String> response = baoHongService.printLabel(orderCode);
+        if(isFailure(response)){
+            return failure(response.getMessage());
+        }
+        return success(response.getData());
     }
 
     private boolean isSuccess(BaoHongResponse<?> response){

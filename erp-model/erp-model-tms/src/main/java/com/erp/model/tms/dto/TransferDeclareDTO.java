@@ -103,7 +103,10 @@ public class TransferDeclareDTO implements Serializable {
         */
         private String weightUnit;
 
-
+        /**
+         * 详情
+         */
+        private List<TransferDeclareDetailDTO.ViewDTO> detailList;
     }
 
     /**

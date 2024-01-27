@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
@@ -36,7 +37,7 @@ public interface TransferLogisticsService {
 
     /**
      * 查询单个订单信息
-     * @param orderCode 入库单号
+     * @param orderCode 服务商订单号
      */
     ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode, String authId);
 
@@ -57,5 +58,7 @@ public interface TransferLogisticsService {
      * @return BASE64编码
      */
     ApiResult<String> printLabel(String orderCode, String authId);
+
+
 
 }

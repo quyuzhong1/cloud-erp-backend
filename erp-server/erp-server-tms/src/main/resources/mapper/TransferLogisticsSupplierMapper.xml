@@ -14,7 +14,6 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="supplier_id" property="supplierId" />
        <result column="supplier_name" property="supplierName" />
-       <result column="type" property="type" />
        <result column="disabled" property="disabled" />
        <result column="auth_status" property="authStatus" />
        <result column="auth_time" property="authTime" />
@@ -179,5 +178,22 @@
         </if>
         ls.create_time DESC
 
+    </select>
+
+    <!--获取所有授权信息-->
+    <select id="listAllAuth" resultType="com.erp.model.tms.dto.TransferLogisticsSupplierDTO$AuthDTO">
+          SELECT
+           tls.id,
+           tla.id AS authId,
+           tla.main_id AS mainId,
+           tls.supplier_id,
+           tls.supplier_name,
+           tls.auth_status,
+           tls.disabled,
+           tla.logistics_platform
+          FROM transfer_logistics_supplier  tls
+          INNER JOIN transfer_logistics_auth tla
+          ON tls.id = tla.main_id AND  tla.is_deleted=FALSE
+        WHERE tls.is_deleted=FALSE
     </select>
 </mapper>
