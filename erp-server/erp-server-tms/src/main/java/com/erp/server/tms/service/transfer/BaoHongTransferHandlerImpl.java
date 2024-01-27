@@ -12,14 +12,17 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
+import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @TransferLogisticsPlatformType(LogisticsPlatformEnum.BAO_HONG)
+@Validated
 public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler {
 
     @Resource
@@ -64,8 +68,13 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     }
 
     @Override
-    protected ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq) {
-        return null;
+    protected ApiResult<String> createOrder(@Valid TransferLogisticsCreateOrderReq createOrderReq) {
+        CreateOrderInfo createOrderInfo  = BaoHongConverter.INSTANCE.createOrderConvert(createOrderReq);
+        BaoHongResponse<String> result = baoHongService.createOrder(createOrderInfo);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData());
     }
 
     @Override

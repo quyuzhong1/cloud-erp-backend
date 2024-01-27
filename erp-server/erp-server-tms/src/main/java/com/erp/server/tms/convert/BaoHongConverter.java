@@ -1,10 +1,13 @@
 package com.erp.server.tms.convert;
 
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.tms.aliexpress.model.order.request.Address;
+import com.sdk.tms.baohong.api.order.CreateOrderInfo;
+import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import org.mapstruct.Mapper;
@@ -39,4 +42,35 @@ public interface BaoHongConverter {
     })
     ProductRegistrationEntity productRegistrationConvert(DataRow data);
     List<ProductRegistrationEntity> productRegistrationConvert(List<DataRow> data);
+
+
+    @Mappings({
+            @Mapping(target = "trackingNumber", source = "trackingNumber"),
+            @Mapping(target = "oabCountry", source = "country"),
+            @Mapping(target = "smCode", source = "shippingCode"),
+            @Mapping(target = "oabName", source = "name"),
+            @Mapping(target = "referenceNo", source = "referenceNo"),
+            @Mapping(target = "deliveryAddress", source = "deliveryAddress"),
+            @Mapping(target = "oabStreetAddress1", source = "streetAddress"),
+            @Mapping(target = "oabState", source = "state"),
+            @Mapping(target = "oabCity", source = "city"),
+            @Mapping(target = "oabPostcode", source = "postcode"),
+            @Mapping(target = "oabPhone", source = "phone"),
+            @Mapping(target = "orderStatus", source = "orderStatus"),
+            @Mapping(target = "iossNo", source = "iossNo"),
+            @Mapping(target = "serialNo", source = "serialNo"),
+            @Mapping(target = "grossWeight", source = "grossWeight",qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "buyInsurance", source = "buyInsurance"),
+            @Mapping(target = "orderProduct", source = "productDetailList"),
+    })
+    CreateOrderInfo createOrderConvert(TransferLogisticsCreateOrderReq createOrderReq);
+
+    @Mappings({
+            @Mapping(target = "productSku", source = "skuNo"),
+            @Mapping(target = "opQuantity", source = "qty"),
+            @Mapping(target = "productTitleEn", source = "productTitleEn"),
+            @Mapping(target = "purposeDeclaredValue", source = "purposeDeclaredValue"),
+    })
+    ProductDeatil productConvert(TransferLogisticsCreateOrderReq.ProductDetail productDetailList);
+    List<ProductDeatil> productConvert(List<TransferLogisticsCreateOrderReq.ProductDetail> productDetailList);
 }

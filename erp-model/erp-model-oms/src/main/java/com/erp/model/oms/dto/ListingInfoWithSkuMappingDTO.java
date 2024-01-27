@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -130,6 +131,18 @@ public class ListingInfoWithSkuMappingDTO {
      * 产品规格信息
      */
     private String productSpec;
+    /**
+     * 长度
+     */
+    private BigDecimal length;
+    /**
+     * 宽度
+     */
+    private BigDecimal width;
+    /**
+     * 高度
+     */
+    private BigDecimal height;
 
     /**
      * 产品包装信息

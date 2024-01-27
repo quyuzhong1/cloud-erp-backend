@@ -135,6 +135,7 @@ public class CreateOrderInfo {
      */
     @Builder.Default
     protected int orderMode = 1;
+
     protected Integer orderType;
     /**
      * 使用自有渠道
@@ -145,6 +146,7 @@ public class CreateOrderInfo {
      */
     @Builder.Default
     protected Integer channel = 1;
+
     /**
      * 服务商单号
      * channel为1时必填

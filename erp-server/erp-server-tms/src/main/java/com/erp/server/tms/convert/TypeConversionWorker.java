@@ -5,6 +5,7 @@ import io.seata.common.util.StringUtils;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -121,5 +122,13 @@ public class TypeConversionWorker {
         }else{
             return StringUtils.EMPTY;
         }
+    }
+
+    @Named("bigDecimalToStr")
+    public String bigDecimalToStr(BigDecimal number){
+        if(Objects.isNull(number)){
+            return "";
+        }
+        return number.toString();
     }
 }

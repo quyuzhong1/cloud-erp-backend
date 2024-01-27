@@ -30,14 +30,17 @@ import com.erp.server.tms.service.TransferLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
 @Service
+@Validated
 public abstract class AbstractTransferLogisticsHandler extends BaseController implements TransferLogisticsService {
 
     @Resource
@@ -79,7 +82,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq, String authId) {
-        return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,"");
+        return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,createOrderReq.getReferenceNo());
     }
 
     @Override
@@ -104,7 +107,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     protected abstract ApiResult<List<TransferLogisticsChannelEntity>> getShippingMethodList();
 
-    protected abstract ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq);
+    protected abstract ApiResult<String> createOrder(@Valid TransferLogisticsCreateOrderReq createOrderReq);
 
     protected abstract ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode);
 
