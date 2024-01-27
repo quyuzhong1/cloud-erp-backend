@@ -5,7 +5,6 @@ import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;

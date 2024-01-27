@@ -5,7 +5,6 @@ import io.seata.common.util.StringUtils;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -123,4 +122,5 @@ public class TypeConversionWorker {
             return StringUtils.EMPTY;
         }
     }
+
 }
