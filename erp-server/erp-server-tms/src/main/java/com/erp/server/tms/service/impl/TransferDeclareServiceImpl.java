@@ -19,6 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -383,6 +384,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             return;
         }
 
+        //明细信息
+        List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
+
+        //明细
+        data.setDetailList(detailList);
     }
 
     /**
