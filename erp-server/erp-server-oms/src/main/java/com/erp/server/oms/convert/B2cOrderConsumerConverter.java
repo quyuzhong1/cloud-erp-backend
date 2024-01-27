@@ -133,8 +133,11 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
             @Mapping(target = "weight", source = "allNetWeight"),
+            @Mapping(target = "length", source = "maxLength"),
+            @Mapping(target = "width", source = "maxWidth"),
+            @Mapping(target = "height", source = "totalHeight"),
     })
-    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight);
+    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight, BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight);
 
 
     @Mappings({

@@ -95,8 +95,16 @@ public class SoB2cController extends BaseController {
         //匹配成功
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
         Boolean isPass = orderRuleResult.getIsPass();
+
+
         //todo 可以优化
-        if (ruleMatch && isPass && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform())) {
+        if (ruleMatch && isPass) {
+
+            //速卖通平台仓订单不走任何规则
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
+                return success(add.getId());
+            }
+
             //仓库规则
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
@@ -176,7 +184,14 @@ public class SoB2cController extends BaseController {
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-                    if (approveStatus.equals(entity.getApproveStatus()) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
+                    if (approveStatus.equals(entity.getApproveStatus())) {
+
+                        //速卖通平台仓订单不走任何规则
+                        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
+                            resultDTOS.add(approveResult);
+                            continue;
+                        }
+
                         //仓库规则
                         SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
