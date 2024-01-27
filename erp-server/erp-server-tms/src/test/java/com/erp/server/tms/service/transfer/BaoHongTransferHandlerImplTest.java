@@ -92,7 +92,7 @@ public class BaoHongTransferHandlerImplTest {
                         .purposeDeclaredValue("1")
                         .build()))
                 .build();
-        System.out.println(thirdWarehouseService.createOrder(createOrderReq,"123"));
+        System.out.println(thirdWarehouseService.createOrder(createOrderReq,"1750367777970982913"));
     }
 
     @Test
