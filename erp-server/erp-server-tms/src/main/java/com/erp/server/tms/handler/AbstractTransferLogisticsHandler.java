@@ -79,7 +79,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq, String authId) {
-        return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,"");
+        return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,createOrderReq.getReferenceNo());
     }
 
     @Override
