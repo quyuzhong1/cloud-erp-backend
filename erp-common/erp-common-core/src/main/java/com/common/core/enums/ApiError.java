@@ -1121,7 +1121,7 @@ public enum ApiError implements Serializable {
     GENERATE_TIME_GT_DEADLINE_TIME(94033,"生成时间不可晚于截单时间"),
     ERROR_NOT_UPDATE_TRACK_STATUS(94032,"该运输状态为系统更新不可修改"),
     EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94033,"被其他单据引用的中转物流商不允许删除"),
-
+    NOT_PRODUCT_REGISTRATION(94034," 【{}】平台产品未备案，请联系财务备案"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

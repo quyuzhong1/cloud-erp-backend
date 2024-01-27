@@ -5,11 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -118,6 +121,29 @@ public class SettingForecastDTO implements Serializable {
          */
         private String transferStatus;
 
+        /**
+         * 报关平台
+         */
+        private String declarePlatform;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckRegistrationDTO{
+        /**
+         * 报关平台
+         */
+        @NotBlank(message = "报关平台不能为空")
+        private String declarePlatform;
+
+
+        /**
+         * sku no
+         */
+        @NotNull(message = "SKU不能为空")
+        @Size(min = 1,message = "至少需要一个SKU")
+        private List<String> skuNoList;
     }
 
 }

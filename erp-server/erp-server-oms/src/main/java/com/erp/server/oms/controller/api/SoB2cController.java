@@ -176,7 +176,7 @@ public class SoB2cController extends BaseController {
     @PostMapping("/approve")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds ().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
