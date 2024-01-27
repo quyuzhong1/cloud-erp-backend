@@ -35,7 +35,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, so_id, so_code, logistics_channel_id, logistics_channel_name, tracking_no, package_weight, weight_unit, outstock_status, transfer_staus
+        main_id, so_id, so_code, logistics_channel_id, logistics_channel_name, track_no, package_weight, weight_unit, outstock_status, transfer_staus
     </sql>
 
     <!--详情明细高级查询-->
@@ -47,11 +47,12 @@
             tdd.so_code,
             tdd.logistics_channel_id,
             tdd.logistics_channel_name,
-            tdd.tracking_no,
+            tdd.track_no,
             tdd.package_weight,
             tdd.weight_unit,
             tdd.outstock_status,
-            tdd.transfer_status
+            tdd.transfer_status,
+            tdd.order_upload_status
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
@@ -60,8 +61,8 @@
             and tdd.main_id = #{params.mainId}
         </if>
         <!--物流跟踪号-->
-        <if test="params.trackingNo != '' and params.trackingNo != null">
-            and tdd.tracking_no = #{params.trackingNo}
+        <if test="params.trackNo != '' and params.trackNo != null">
+            and tdd.track_no = #{params.trackNo}
         </if>
         <!--物流渠道id-->
         <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">

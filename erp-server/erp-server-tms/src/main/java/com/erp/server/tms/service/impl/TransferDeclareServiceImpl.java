@@ -389,7 +389,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         for (TransferDeclareDeadlineSettingDTO.ViewDTO deadlineSetting : deadlineSettingView) {
             //生效时间
             LocalTime generateTime = deadlineSetting.getGenerateTime();
-            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
+            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute() ) {
                 continue;
             }
 
