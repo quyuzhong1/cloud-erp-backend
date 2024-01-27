@@ -40,6 +40,7 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -363,6 +364,18 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public TransferDeclareEntity getBySoId(String soId) {
         return null;
+    }
+
+    @Override
+    public Boolean checkExistTransferLogisticsSupplier(String supplierId) {
+        if (StringUtils.isBlank(supplierId)) {
+            return Boolean.FALSE;
+        }
+        TransferDeclareEntity entity = lambdaQuery().eq(TransferDeclareEntity::getTransferLogisticsSupplierId, supplierId).last("LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

@@ -1,13 +1,11 @@
 package com.erp.server.tms.service;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferLogisticsAuthDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -91,10 +89,10 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
      * @Author Luo_WG
      * @Date 2024/1/19 11:36
      * @param logisticsPlatform
-     * @param authConfig
+     * @param authId
      * @return void
      **/
-    void syncUpdateSaleChannel(String logisticsPlatform,Map<String, String> authConfig);
+    void syncUpdateSaleChannel(String logisticsPlatform, String authId);
 
     /**
      * 根据供应商id 获取信息
