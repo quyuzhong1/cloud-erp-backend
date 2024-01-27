@@ -503,20 +503,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
-
-
         //发货物流商名称
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
-        transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
+            transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());
-        transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsSupplierEntity)) {
+            transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
+        }
         //中转物流渠道名称
         TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
-        transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
+            transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
+        }
 
     }
 }
