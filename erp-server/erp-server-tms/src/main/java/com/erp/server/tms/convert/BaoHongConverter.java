@@ -2,11 +2,14 @@ package com.erp.server.tms.convert;
 
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.tms.aliexpress.model.order.request.Address;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
+import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.ProductDeatil;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
@@ -73,4 +76,34 @@ public interface BaoHongConverter {
     })
     ProductDeatil productConvert(TransferLogisticsCreateOrderReq.ProductDetail productDetailList);
     List<ProductDeatil> productConvert(List<TransferLogisticsCreateOrderReq.ProductDetail> productDetailList);
+
+    @Mappings({
+            @Mapping(target = "referenceNo", source = "referenceNo"),
+            @Mapping(target = "orderCode", source = "orderCode"),
+            @Mapping(target = "trackingNumber", source = "trackingNumber"),
+            @Mapping(target = "orderStatusEnum", expression = "java(BaoHongConverter.orderStatusConvert(data.getOrderStatus()))"),
+    })
+    TransferLogisticsOrderDTO createOrderInfoConvert(OrderDataArr data);
+
+    static TransferLogisticsStatusEnum orderStatusConvert(String orderStatus){
+        if(orderStatus.equals("11") || orderStatus.equals("9")){
+            return TransferLogisticsStatusEnum.OUTSTOCK;
+        }
+        if(orderStatus.equals("4")){
+            return TransferLogisticsStatusEnum.SUBMITTED;
+        }
+        if(orderStatus.equals("3")){
+            return TransferLogisticsStatusEnum.UNUSUAL;
+        }
+        if(orderStatus.equals("2")){
+            return TransferLogisticsStatusEnum.CONFIRMED;
+        }
+        if(orderStatus.equals("1")){
+            return TransferLogisticsStatusEnum.DRAFT;
+        }
+        if(orderStatus.equals("0")){
+            return TransferLogisticsStatusEnum.DELETED;
+        }
+        return null;
+    }
 }

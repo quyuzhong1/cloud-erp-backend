@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto.transfer;
 
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,6 +33,6 @@ public class TransferLogisticsOrderDTO {
     /**
      * 订单状态
      */
-    private String orderStatus;
+    private TransferLogisticsStatusEnum orderStatusEnum;
 
 }

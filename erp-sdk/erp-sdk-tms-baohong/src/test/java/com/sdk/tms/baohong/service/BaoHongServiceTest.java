@@ -88,7 +88,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void getOrderByCodeTest(){
-        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222701");
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode("SOE02070222796");
         System.out.println(response);
         System.out.println(response.getData());
     }
