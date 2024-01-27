@@ -116,7 +116,7 @@ public class BaoHongServiceTest {
 
     @Test
     public void printLabel(){
-        BaoHongResponse<String> response = baoHongService.printLabel("SOE02070222806");
+        BaoHongResponse<String> response = baoHongService.printLabel("wjtestserial001");
         System.out.println(response);
         System.out.println(response.getData());
     }
