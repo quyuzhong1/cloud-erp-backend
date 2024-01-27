@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.TransferDeclareProductEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferDeclareProductDTO;
+import com.erp.model.tms.entity.TransferDeclareProductEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -31,6 +34,25 @@ public interface TransferDeclareProductService extends SuperService<TransferDecl
     * @return
     */
     Boolean update(TransferDeclareProductDTO.UpdateDTO dto);
+
+
+    /**
+     * 根据报关单详情id查询产品信息
+     * @Author Luo_WG
+     * @Date 2024/1/27 18:23
+     * @param declareDetailIds
+     * @return java.util.List<com.erp.model.tms.entity.TransferDeclareProductEntity>
+     **/
+    List<TransferDeclareProductEntity> listByDeclareDetailIds(List<String> declareDetailIds);
+
+    /**
+     * 根据报关单主表id查询产品信息
+     * @Author Luo_WG
+     * @Date 2024/1/27 18:27
+     * @param declareIds
+     * @return java.util.List<com.erp.model.tms.entity.TransferDeclareProductEntity>
+     **/
+    List<TransferDeclareProductEntity> listByDeclareIds(List<String> declareIds);
 
 
 }

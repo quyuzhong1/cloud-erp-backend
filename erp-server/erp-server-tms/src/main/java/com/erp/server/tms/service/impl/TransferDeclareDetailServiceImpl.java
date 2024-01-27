@@ -127,6 +127,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return baseMapper.viewDetailList(dto);
     }
 
+    @Override
+    public Boolean updateOrderUploadStatus(String id, String status) {
+        return lambdaUpdate().set(TransferDeclareDetailEntity::getId, id).set(TransferDeclareDetailEntity::getOrderUploadStatus, status).update();
+    }
 
     /**
      * 新增修改处理数据
