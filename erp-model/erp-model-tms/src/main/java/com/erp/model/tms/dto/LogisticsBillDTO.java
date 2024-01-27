@@ -446,7 +446,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 发货时间
          */
-        private LocalDate deliveryTime;
+        private LocalDateTime deliveryTime;
 
         /**
          * 运输单号
