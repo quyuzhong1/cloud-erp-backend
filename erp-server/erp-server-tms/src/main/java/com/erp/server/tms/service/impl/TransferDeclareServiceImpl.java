@@ -413,7 +413,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
         //明细信息
         List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
-
+        for (TransferDeclareDetailDTO.ViewDTO viewDTO : detailList) {
+            //出库状态中文
+            viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(viewDTO.getOutstockStatus()));
+            //中转状态中文
+            viewDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(viewDTO.getTransferStatus()));
+            //上传状态（订单）中文
+            viewDTO.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(viewDTO.getOrderUploadStatus()));
+        }
         //明细
         data.setDetailList(detailList);
     }

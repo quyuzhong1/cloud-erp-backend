@@ -81,14 +81,29 @@ public class TransferDeclareDetailDTO implements Serializable {
         private String outstockStatus;
 
         /**
+        * 出库状态中文
+        */
+        private String outstockStatusName;
+
+        /**
         * 中转状态
         */
         private String transferStatus;
 
         /**
+        * 中转状态中文
+        */
+        private String transferStatusName;
+
+        /**
          * 上传状态(订单)
          */
         private String orderUploadStatus;
+
+        /**
+         * 上传状态中文(订单)
+         */
+        private String orderUploadStatusName;
 
         /**
          * 失败原因
