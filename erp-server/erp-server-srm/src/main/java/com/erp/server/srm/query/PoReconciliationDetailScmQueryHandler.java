@@ -46,7 +46,7 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
                 //返回空结果
                 return this.getQueryEmptySql();
             }
-            super.buildDefaultDTO("prd.main_id",entity.getId());
+            super.buildDefaultDTO("prd.main_id","");
             super.buildDefaultDTO("prd.supplier_id",entity.getSupplierId());
             super.buildDefaultDTO("prd.settle_org_id",entity.getSettleOrgId());
             super.buildDefaultDTO("prd.business_status", ConfirmStatusEnum.CONFIRM.getCode());
