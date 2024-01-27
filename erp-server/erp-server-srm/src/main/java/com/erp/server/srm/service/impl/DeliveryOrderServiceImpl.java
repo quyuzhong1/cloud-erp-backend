@@ -435,6 +435,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO);
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
+        this.handleData(deliveryOrderEntity,false);
         this.save(deliveryOrderEntity);
         return deliveryOrderEntity;
     }
