@@ -63,6 +63,25 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     @TableField("enable_transfer_time")
     private LocalDateTime enableTransferTime;
 
+    /**
+     * 报关平台
+     */
+    @TableField("declare_platform")
+    private String declarePlatform;
+
+
+    /**
+     * 中转物流商id
+     */
+    @TableField("transfer_logistics_supplier_id")
+    private String transferLogisticsSupplierId;
+
+    /**
+     * 中转物流商名
+     */
+    @TableField("transfer_logistics_supplier_name")
+    private String transferLogisticsSupplierName;
+
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
 

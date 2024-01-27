@@ -4834,6 +4834,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
+     * 检查销售订单产品是否需要备案 且已备案
+     * @param id 销售订单id
+     */
+    @Override
+    public void checkProductRegistration(String id) {
+        SoB2cLogisticsEntity logistics = soB2cLogisticsService.getByMainId(id);
+        if (Objects.nonNull(logistics)) {
+
+        }
+
+    }
+
+    /**
      * 查询店铺权限设置
      */
     private SoB2cDTO.ShopAuthResultDTO handleShopSysUserAuth() {

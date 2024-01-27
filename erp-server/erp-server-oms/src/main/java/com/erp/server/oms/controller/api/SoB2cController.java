@@ -91,6 +91,12 @@ public class SoB2cController extends BaseController {
          */
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
+        soB2cService.checkProductRegistration(id);
+        //速卖通平台仓订单不走任何规则
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
+            return success(add.getId());
+        }
+
         SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
         //匹配成功
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
@@ -99,12 +105,6 @@ public class SoB2cController extends BaseController {
 
         //todo 可以优化
         if (ruleMatch && isPass) {
-
-            //速卖通平台仓订单不走任何规则
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
-                return success(add.getId());
-            }
-
             //仓库规则
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
