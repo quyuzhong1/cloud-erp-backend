@@ -311,8 +311,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
             if (Objects.nonNull(forecastStatus)) {
+                //中转状态
+                String transferStatus = forecastStatus.getTransferStatus();
+                //表示要中转
+                if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
+                    List<String> skuIdList=addDTO.getDetailList().stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+                    //检查是否备案
+                    checkIsSkuRegistration(skuIdList);
+                }
+
                 soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
-                soB2cEntity.setTransferStatus(forecastStatus.getTransferStatus());
+                soB2cEntity.setTransferStatus(transferStatus);
             }
         }
         boolean save = super.save(soB2cEntity);
@@ -346,6 +355,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //推送到DMP
         this.syncOrderToDmp(soB2cEntity.getId());
         return soB2cEntity;
+    }
+
+    /**
+     * 检查是否备案
+     * @param skuIdList
+     */
+    private void checkIsSkuRegistration(List<String> skuIdList) {
     }
 
 
@@ -3512,9 +3528,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER);
         }
         String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
+        String waitPackage = PackageStatusEnum.WAIT.getCode();
         //组包状态
         String packageStatus = entity.getPackageStatus();
-        if (!alreadyPackage.equals(packageStatus)) {
+        //表示强制组包了 就要去组包预报 去中转了
+        if (alreadyPackage.equals(packageStatus) || waitPackage.equals(packageStatus)) {
             throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
         }
         //组织添加中转报关单数据
