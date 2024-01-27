@@ -326,6 +326,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
+        if (ObjectUtil.isEmpty(authEntity)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+        }
 
         //查询中转渠道
         List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
@@ -347,18 +350,27 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
 
 
-            TransferLogisticsCreateOrderReq.builder()
+            TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
                     .trackingNumber(transferDeclareDetailEntity.getTrackNo())
                     .country(soB2cReceiverEntity.getCountry())
                     .shippingCode(transferLogisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
-                    .referenceNo(soB2cReceiverEntity.getReceiverName())
+                    .referenceNo(soB2cEntity.getPlatformCode())
                     .deliveryAddress(soB2cReceiverEntity.getFullAddress())
                     .streetAddress(soB2cReceiverEntity.getFullAddress())
+                    .state(soB2cReceiverEntity.getDistrictName())
+                    .city(soB2cReceiverEntity.getCityName())
+                    .postcode(soB2cReceiverEntity.getPostCode())
+                    .phone(soB2cReceiverEntity.getTelNumber())
+                    .orderStatus("2")
+                    .iossNo("")
+                    .serialNo(soB2cEntity.getCode())
+                    .grossWeight(transferDeclareDetailEntity.getPackageWeight())
+
                     .build();
 
 
-//            service.createOrder(TransferLogisticsCreateOrderReq);
+            service.createOrder(orderReq, authEntity.getId());
         }
 
         return null;
