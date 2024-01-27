@@ -504,6 +504,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         this.addPoReconciliationDetail(ids);
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
+                .set(DeliveryOrderEntity::getConfirmReceiveDate,LocalDate.now())
                 .in(DeliveryOrderEntity::getId,ids)
                 .update();
         return true;
