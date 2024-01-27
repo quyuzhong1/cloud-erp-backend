@@ -314,10 +314,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //中转状态
                 String transferStatus = forecastStatus.getTransferStatus();
                 //表示要中转
-                if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
-                    List<String> skuIdList=addDTO.getDetailList().stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
+                    List<String> skuIdList = addDTO.getDetailList().stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
                     //检查是否备案
-                    checkIsSkuRegistration(skuIdList);
+                    checkIsSkuRegistration(skuIdList, forecastStatus.getDeclarePlatform());
                 }
 
                 soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
@@ -358,10 +358,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 检查是否备案
+     * 检查产品是否备案
+     *
      * @param skuIdList
      */
-    private void checkIsSkuRegistration(List<String> skuIdList) {
+    private void checkIsSkuRegistration(List<String> skuIdList, String declarePlatform) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            List<ProductDetailDTO.ProductDTO> skuList = plmTaskFeign.listProductBySkuIds(skuIdList);
+            List<String> skuNoList = skuList.stream().map(ProductDetailDTO.ProductDTO::getSkuNo).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuNoList)) {
+                SettingForecastDTO.CheckRegistrationDTO checkRegistration = new SettingForecastDTO.CheckRegistrationDTO();
+                checkRegistration.setSkuNoList(skuNoList);
+                checkRegistration.setDeclarePlatform(declarePlatform);
+                Boolean checkResult = forecastFeign.getIsRegistrationByParam(checkRegistration);
+                if (!checkResult) {
+                    LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
+                    String platformName = Objects.nonNull(logisticsPlatformEnum) ? logisticsPlatformEnum.getName() : declarePlatform;
+                    throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION,platformName);
+                }
+            }
+
+        }
     }
 
 
@@ -971,7 +988,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 submitDelivery(id);
             }
 
-            this.lambdaUpdate().eq(SoB2cEntity::getId,id).
+            this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             //操作日志
             String msg = "获取物流单号【{}】";
@@ -4768,8 +4785,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("未找到对应单号");
         }
         String packageStatus = scanResult.getPackageStatus();
-        String already= PackageStatusEnum.ALREADY.getCode();
-        if(already.equals(packageStatus)){
+        String already = PackageStatusEnum.ALREADY.getCode();
+        if (already.equals(packageStatus)) {
             throw new ServiceException("订单单号已组包完成，无法重复组包");
         }
         String billStatus = scanResult.getBillStatus();
