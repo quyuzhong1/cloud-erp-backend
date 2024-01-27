@@ -13,4 +13,25 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TransferLogisticsOrderDTO {
+
+    /**
+     * 服务商订单号
+     */
+    private String orderCode;
+
+    /**
+     * 参考号
+     */
+    private String referenceNo;
+
+    /**
+     * 跟踪号
+     */
+    private String trackingNumber;
+
+    /**
+     * 订单状态
+     */
+    private String orderStatus;
+
 }

@@ -36,7 +36,7 @@ public interface TransferLogisticsService {
 
     /**
      * 查询单个订单信息
-     * @param orderCode 入库单号
+     * @param orderCode 服务商订单号
      */
     ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode, String authId);
 
