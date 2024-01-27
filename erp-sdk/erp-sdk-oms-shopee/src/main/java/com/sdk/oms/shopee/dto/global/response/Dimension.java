@@ -19,10 +19,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = false)
 public class Dimension implements Serializable {
 
-    @JSONField(name = "package_length")
-    private Integer packageLength;
-    @JSONField(name = "package_width")
-    private Integer packageWidth;
-    @JSONField(name = "package_height")
-    private Integer packageHeight;
+    private int package_length;
+    private int package_width;
+    private int package_height;
 }

@@ -84,15 +84,6 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setShopId(dto.getShopId());
             // 包装信息
             String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
-            if (Objects.nonNull(sourceProduct.getPackageLength())){
-                product.setLength(BigDecimal.valueOf(sourceProduct.getPackageLength()));
-            }
-            if (Objects.nonNull(sourceProduct.getPackageWidth())){
-                product.setWidth(BigDecimal.valueOf(sourceProduct.getPackageWidth()));
-            }
-            if (Objects.nonNull(sourceProduct.getPackageHeight())){
-                product.setHeight(BigDecimal.valueOf(sourceProduct.getPackageHeight()));
-            }
             product.setProductPacking(packing);
             String gmtModified = sourceProduct.getGmtModified();
             product.setPlatformUpdateTime(LocalDateUtil.parseStrToLocalTime(gmtModified));

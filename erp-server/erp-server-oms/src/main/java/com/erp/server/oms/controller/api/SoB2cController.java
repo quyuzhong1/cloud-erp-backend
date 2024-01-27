@@ -448,6 +448,32 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 校验物流尺寸
+     * @param dto
+     * @return
+     */
+    @PostMapping("/checkLogisticsSize")
+    public ApiResult<List<BatchResultDTO>> checkLogisticsSize(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.checkLogisticsSize(id, dto);
+            } catch (Exception e) {
+                log.error("B2C销售订单校验物流尺寸失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
      * 订单配货保存（前端手动配货）
      *
      * @param dto
