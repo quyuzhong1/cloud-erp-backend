@@ -1634,8 +1634,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         Tuple tuple =  this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection);
         String transferOutId = tuple.get(0);
         if (StringUtils.isNotBlank(transferOutId)) {
-            //提交
-            transferInfoService.submit(Arrays.asList(transferOutId));
             // 关账时间之前的不审核
             TransferInfoDTO.AddDTO addDTO = tuple.get(1);
             LocalDate inClosedDate = closedDateMap.get(addDTO.getInOrgId());
@@ -1650,9 +1648,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
             }
+            //提交
+            transferInfoService.submit(Collections.singletonList(transferOutId));
+
             //审核
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+            baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
             baseApproveParamDTO.setType(ApproveType.PASS);
             transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
         } else {
