@@ -307,6 +307,7 @@ public class PoReturnController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseReturnOrder:paging",
             tableAlias = "pro")
+    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = poReturnService.exportExcel(dto, response);
         return flag ? success() : failure();
