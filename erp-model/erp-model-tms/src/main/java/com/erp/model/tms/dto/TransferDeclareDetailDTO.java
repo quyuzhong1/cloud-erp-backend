@@ -85,7 +85,10 @@ public class TransferDeclareDetailDTO implements Serializable {
         */
         private String transferStatus;
 
-
+        /**
+         * 上传状态(订单)
+         */
+        private String orderUploadStatus;
     }
 
     /**

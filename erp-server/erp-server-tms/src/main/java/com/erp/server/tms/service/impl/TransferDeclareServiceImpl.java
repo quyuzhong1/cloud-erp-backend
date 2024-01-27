@@ -24,11 +24,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -309,16 +312,24 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询单据需要上传的订单（待上传，上传失败）状态的订单
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
-                .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getUploadStatus())
-                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getUploadStatus())
+                .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getOrderUploadStatus())
+                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getOrderUploadStatus())
         ).collect(Collectors.toList());
 
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
+        //订单物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        //订单客户信息
+        List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
 
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
+
+        //查询中转渠道
+        List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
+        List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByIds(logisticsChannelIds);
 
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
@@ -326,12 +337,28 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
                 continue;
             }
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getId())).findFirst().orElse(new SoB2cEntity());
 
-       /*     TransferLogisticsCreateOrderReq.builder()
-                    .deliveryCode("").build();*/
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cReceiverEntity());
 
 
-//            service.createOrder(authEntity.getId());
+            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
+
+            TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
+
+
+            TransferLogisticsCreateOrderReq.builder()
+                    .trackingNumber(transferDeclareDetailEntity.getTrackNo())
+                    .country(soB2cReceiverEntity.getCountry())
+                    .shippingCode(transferLogisticsChannelEntity.getCode())
+                    .name(soB2cReceiverEntity.getReceiverName())
+                    .referenceNo(soB2cReceiverEntity.getReceiverName())
+                    .deliveryAddress(soB2cReceiverEntity.getFullAddress())
+                    .streetAddress(soB2cReceiverEntity.getFullAddress())
+                    .build();
+
+
+//            service.createOrder(TransferLogisticsCreateOrderReq);
         }
 
         return null;
