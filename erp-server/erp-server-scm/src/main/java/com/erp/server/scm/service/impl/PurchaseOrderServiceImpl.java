@@ -580,6 +580,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //更新单据为待提交
         updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        //更新单据明细的执行状态为待确认
+        purchaseOrderDetailService.updateExecutionStatus(ids,ExecutionStatusEnum.TO_BE_CONFIRM);
+
         // 反审核更新库存数据（采购订单生成的入库预报）
         inventoryFeign.purchaseOrderUnApproveBatch(ids);
 
@@ -594,6 +597,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         return Boolean.TRUE;
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -2255,7 +2259,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98025);
         }
         //判断审核状态
-        if (StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())) {
+        if (!StrUtil.equals(ApproveStatusEnum.APPROVE.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM,entity.getCode());
         }
 

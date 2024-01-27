@@ -603,4 +603,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
         purchaseOrderConfirm(detailIdList, ExecutionStatusEnum.CONFIRM,"系统自动确认",ConfirmTypeEnum.AUTO);
     }
+
+    @Override
+    public void updateExecutionStatus(List<String> mainIdList, ExecutionStatusEnum statusEnum) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return;
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,mainIdList)
+                .set(PurchaseOrderDetailEntity::getExecutionStatus,statusEnum.getCode())
+                .update();
+    }
 }

@@ -183,4 +183,11 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param detailIdList
      */
     void purchaseOrderAutoConfirm(List<String> detailIdList);
+    /**
+     * @description: 更新执行状态
+     * @author Will
+     * @date: 2024/1/27 15:47
+     * @param mainIdList
+     */
+    void updateExecutionStatus(List<String> mainIdList,ExecutionStatusEnum statusEnum);
 }
