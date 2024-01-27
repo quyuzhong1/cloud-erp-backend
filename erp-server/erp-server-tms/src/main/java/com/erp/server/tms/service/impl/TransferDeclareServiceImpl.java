@@ -8,10 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -94,6 +91,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferLogisticsRegistry transferLogisticsRegistry;
     @Autowired
     private TransferLogisticsAuthService transferLogisticsAuthService;
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -330,9 +329,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
 
-        //查询中转渠道
+        //查询物流渠道
         List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
-        List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByIds(logisticsChannelIds);
+        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
 
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
@@ -348,13 +347,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
 
             //中转渠道信息
-            TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
-
+            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new LogisticsChannelEntity());
 
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
                     .trackingNumber(logisticsEntity.getCode())
                     .country(soB2cReceiverEntity.getCountry())
-                    .shippingCode(transferLogisticsChannelEntity.getCode())
+                    .shippingCode(logisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
                     .referenceNo(soB2cEntity.getPlatformCode())
                     .deliveryAddress(soB2cReceiverEntity.getFullAddress())
@@ -367,7 +365,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .iossNo("")
                     .serialNo(soB2cEntity.getCode())
                     .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-                    .buyInsurance(1)
+                    .buyInsurance(logisticsChannelEntity.getIsApiInsurance() ? 1 : 0)
                     .build();
 
 
@@ -389,7 +387,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         for (TransferDeclareDeadlineSettingDTO.ViewDTO deadlineSetting : deadlineSettingView) {
             //生效时间
             LocalTime generateTime = deadlineSetting.getGenerateTime();
-            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute() ) {
+            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
                 continue;
             }
 
@@ -503,20 +501,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
-
-
         //发货物流商名称
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
-        transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
+            transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());
-        transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsSupplierEntity)) {
+            transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
+        }
         //中转物流渠道名称
         TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
-        transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
+            transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
+        }
 
     }
 }

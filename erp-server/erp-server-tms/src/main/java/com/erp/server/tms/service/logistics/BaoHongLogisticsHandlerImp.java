@@ -24,10 +24,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -109,8 +106,21 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
-        return super.getLabelList(logisticsQueryVO);
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVOList) throws IOException {
+        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+        for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
+            BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
+            if(isFailure(response)){
+                return failure(response.getMessage());
+            }
+            LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
+            logisticsPrintLabelResponse.setBase64(response.getData());
+            logisticsPrintLabelResponse.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+            logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
+            logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
+            resultList.add(logisticsPrintLabelResponse);
+        }
+        return success(resultList);
     }
 
     @Override
