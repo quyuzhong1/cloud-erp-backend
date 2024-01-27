@@ -698,6 +698,8 @@ public enum ApiError implements Serializable {
     SUBMIT_IS_DELETE(98109,"只有待提交和审核不通过数据支持删除"),
     ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
     ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE(98110,"采购订单已下推采购变更单"),
+    ERROR_PURCHASE_ORDER_PUSH_DELIVERY(98110,"采购订单已下推送货单"),
+
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
     PRICE_NOT_EXIST(98112,"采购价目表不存在"),
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),

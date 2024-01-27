@@ -569,6 +569,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE);
         }
 
+        //验证与没有下推送货单
+        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
+        if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DELIVERY);
+        }
+
         //送货中、已完成、已关闭不能反审核,但是上面验证了下推收货单据则只需要验证已关闭即可
         long closeCount = purchaseOrderDetailList.stream().filter(obj -> ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus())).count();
         if (closeCount > 0) {
