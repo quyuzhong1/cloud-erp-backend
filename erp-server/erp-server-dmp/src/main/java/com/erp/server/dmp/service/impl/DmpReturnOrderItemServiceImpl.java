@@ -182,15 +182,23 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
             splitSkuDTO.setAmountAfter(itemEntity.getAmountAfter());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList);
-            for (SplitSkuDTO skuDTO : splitSkuDTOS) {
+            if (CollectionUtil.isEmpty(splitSkuDTOS)){
+                continue;
+            }
+            for (int i = 0;i < splitSkuDTOS.size(); i++) {
+                SplitSkuDTO skuDTO = splitSkuDTOS.get(i);
                 DmpReturnOrderItemEntity entity = new DmpReturnOrderItemEntity();
                 BeanMapper.copy(itemEntity, entity);
+                //仅第一条拆分数据保存原单的成本、金额、数量
+                if (i == 0) {
+                    entity.setOriginalQuantity(skuDTO.getOriginalQuantity());
+                    entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                    entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
+                }
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
-                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
-                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());
