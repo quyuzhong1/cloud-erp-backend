@@ -119,4 +119,10 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
      **/
     List<BaseChildDTO.ListChildTreeDTO> tree();
 
+    /**
+     * 获取到所有的授权信息
+     * @return
+     */
+    List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth();
+
 }

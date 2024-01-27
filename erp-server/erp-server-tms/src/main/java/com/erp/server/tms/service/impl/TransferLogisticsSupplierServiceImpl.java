@@ -266,6 +266,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     }
 
 
+    @Override
+    public List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth() {
+
+        return baseMapper.listAllAuth();
+    }
+
+
     /**
      * 填充分页数据
      *
