@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.dto.base.BaseResultDTO;
@@ -22,6 +23,7 @@ import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -557,6 +559,14 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
         }
         return add;
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(SubcontractIssueEntity::getId, businessId)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractIssueEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     @Override

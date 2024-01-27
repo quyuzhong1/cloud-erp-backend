@@ -329,6 +329,13 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         lambdaUpdate().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).remove();
     }
 
+    @Override
+    public void cleanDetailMainId(String id) {
+        lambdaUpdate().eq(PoReconciliationDetailEntity::getMainId,id)
+                .set(PoReconciliationDetailEntity::getMainId,"")
+                .update();
+    }
+
     /**
      * 新生成对账单
      */

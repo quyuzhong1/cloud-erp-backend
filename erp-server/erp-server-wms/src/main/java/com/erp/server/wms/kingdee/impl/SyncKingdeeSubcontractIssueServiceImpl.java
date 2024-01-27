@@ -19,6 +19,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
@@ -86,7 +87,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             return;
         }
         //日期
-        resultMap.put("date", entity.getDate());
+        resultMap.put("date", LocalDateTimeUtil.format(entity.getDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //委外发料明细
         List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(entity.getId()));
@@ -104,14 +105,18 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
 
         //委外组织
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderList.get(0).getSubcontractOrgId()));
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            resultMap.put("orgCode", accountingCompanyList.get(0).getCode());
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+           throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
         }
-
+        resultMap.put("orgCode", accountingCompanyList.get(0).getCode());
         //仓库
         List<String> warehouseIdList = detailList.stream().map(SubcontractIssueDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
 
+        //查询供应商信息
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
+        //供应商编码
+        resultMap.put("supplierCode", supplierEntity.getCode());
 
         List<JSONObject> list = new ArrayList<>();
         for (SubcontractIssueDetailEntity detail : detailList) {
@@ -128,6 +133,8 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
             //仓库
             jsonObject.set("warehouseCode", warehouseCode);
+            //组织
+            jsonObject.put("orgCode", accountingCompanyList.get(0).getCode());
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //委外主表编码

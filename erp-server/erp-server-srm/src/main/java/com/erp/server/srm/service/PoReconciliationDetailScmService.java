@@ -102,4 +102,11 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param sourceDetailIdList
      */
     void deleteDetailBySourceDetailIdList(List<String> sourceDetailIdList,boolean isFromDisApprove);
+    /**
+     * @description: 清除明细主表id
+     * @author Will
+     * @date: 2024/1/27 11:42
+     * @param id
+     */
+    void cleanDetailMainId(String id);
 }

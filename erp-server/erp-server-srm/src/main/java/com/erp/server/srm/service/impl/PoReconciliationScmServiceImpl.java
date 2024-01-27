@@ -314,6 +314,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
         PoReconciliationEntity entity = getById(id);
@@ -328,6 +329,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         log.info("开始删除，id = {}",id);
         //删除
         this.removeById(id);
+        //清除明细主表id
+        poReconciliationDetailScmService.cleanDetailMainId(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 

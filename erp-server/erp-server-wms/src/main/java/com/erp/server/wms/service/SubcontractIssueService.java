@@ -159,4 +159,12 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @return AddDTO
      */
     BaseResultDTO.AddDTO AutoAddDTO(SubcontractIssueDTO.AutoAddDTO dto);
+    /**
+     * @description: 根据业务id更新金蝶id
+     * @author Will
+     * @date: 2024/1/27 9:43
+     * @param businessId
+     * @param syncKingdeeId
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

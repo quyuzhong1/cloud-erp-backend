@@ -50,9 +50,9 @@ public class KingdeeSubcontractIssueConsumer<T extends DmpSyncTaskIdDTO> extends
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_PICKMTRL.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "QTRK002504"));
+        queryFilters.add(String.format("FBillNo = '%s'", "WWLL00000025"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FSTOCKSTATUSID.FNumber";
+        String fieldKeys = "FID,FOwnerTypeId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 0);
         System.out.println(queryList);
 
