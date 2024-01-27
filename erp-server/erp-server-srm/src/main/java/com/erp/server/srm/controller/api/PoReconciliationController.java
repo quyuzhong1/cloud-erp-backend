@@ -102,7 +102,7 @@ public class PoReconciliationController extends BaseController {
     }
 
     /**
-     * 查看详情（对账单明细）
+     * 查看详情（对账单明细）传reconciliationDetail，值为对账单id
      * @author Will
      * @date: 2024/1/23 15:08
      * @param dto

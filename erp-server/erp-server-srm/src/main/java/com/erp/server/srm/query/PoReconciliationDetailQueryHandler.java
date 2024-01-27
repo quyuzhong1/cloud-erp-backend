@@ -1,6 +1,7 @@
 package com.erp.server.srm.query;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
@@ -27,6 +28,28 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
 
+        //单据类型
+        if("sourceType".equals(field)){
+            if (SourceTypeEnum.DELIVERY_ORDER.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.DELIVERY_ORDER.getCode());
+            }
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(value)) {
+                super.buildDefaultDTO("prd.source_type",SourceTypeEnum.PO_RETURN.getCode());
+                super.buildDefaultDTO("prd.return_source_type", value);
+            }
+        }
+
+        //明细高级查询
+        if("reconciliationDetail".equals(field)){
+            //对账单
+            PoReconciliationEntity entity = poReconciliationService.getById(value.toString());
+            if (ObjectUtil.isEmpty(entity)) {
+                //返回空结果
+                return this.getQueryEmptySql();
+            }
+            super.buildDefaultDTO("prd.main_id",entity.getId());
+        }
+
         //查询待对账明细
         if("waitReconciliationDetail".equals(field)){
             //对账单
@@ -35,7 +58,7 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
                 //返回空结果
                 return this.getQueryEmptySql();
             }
-            super.buildDefaultDTO("prd.main_id",entity.getId());
+            super.buildDefaultDTO("prd.main_id","");
             super.buildDefaultDTO("prd.supplier_id",entity.getSupplierId());
             super.buildDefaultDTO("prd.settle_org_id",entity.getSettleOrgId());
             super.buildDefaultDTO("prd.business_status", ConfirmStatusEnum.CONFIRM.getCode());
