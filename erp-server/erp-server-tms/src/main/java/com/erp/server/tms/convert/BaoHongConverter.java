@@ -1,6 +1,8 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.mapper.BigDecimalMapperWork;
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -8,6 +10,8 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.tms.aliexpress.model.order.request.Address;
+import com.sdk.tms.baohong.api.asn.ReceivingInfo;
+import com.sdk.tms.baohong.api.asn.ReceivingItemsType;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.ProductDeatil;
@@ -25,7 +29,7 @@ import java.util.List;
  * @ClassName LogisticsLabelConverter
  * @description: 物流标签转换类
  */
-@Mapper(uses = {TypeConversionWorker.class,BooleanMapperWork.class})
+@Mapper(uses = {TypeConversionWorker.class,BooleanMapperWork.class, BigDecimalMapperWork.class})
 public interface BaoHongConverter {
 
     BaoHongConverter INSTANCE = Mappers.getMapper(BaoHongConverter.class);
@@ -106,4 +110,22 @@ public interface BaoHongConverter {
         }
         return null;
     }
+
+    @Mappings({
+            @Mapping(target = "refCode", source = "referenceCode"),
+            @Mapping(target = "isDelivery", source = "isDelivery",qualifiedByName = "boolToInteger"),
+            @Mapping(target = "packNo", source = "packQty"),
+            @Mapping(target = "roughWeight", source = "grossWeight",qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "receivingStatus", source = "receivingStatus"),
+            @Mapping(target = "receivingItems", source = "receiveItemList"),
+    })
+    ReceivingInfo createReceiveOrderConvert(TransferLogisticsCreateInboundReq createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "orderCode", source = "orderCode"),
+            @Mapping(target = "groossWeight", source = "grossWeight",qualifiedByName = "bigDecimalToStr"),
+    })
+    ReceivingItemsType  createReceiveOrderConvert(TransferLogisticsCreateInboundReq.ReceiveItem item);
+    List<ReceivingItemsType>  createReceiveOrderConvert(List<TransferLogisticsCreateInboundReq.ReceiveItem> items);
+
 }

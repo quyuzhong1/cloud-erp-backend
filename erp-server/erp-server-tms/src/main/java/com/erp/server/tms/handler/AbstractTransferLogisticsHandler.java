@@ -97,7 +97,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq, String authId) {
-        return handleAndRemoveContext(() -> createInbound(createInboundReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_INBOUND,createInboundReq.getDeliveryCode());
+        return handleAndRemoveContext(() -> createInbound(createInboundReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_INBOUND,createInboundReq.getReferenceCode());
     }
 
     @Override

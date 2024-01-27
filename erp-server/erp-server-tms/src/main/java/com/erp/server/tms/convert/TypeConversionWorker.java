@@ -123,12 +123,4 @@ public class TypeConversionWorker {
             return StringUtils.EMPTY;
         }
     }
-
-    @Named("bigDecimalToStr")
-    public String bigDecimalToStr(BigDecimal number){
-        if(Objects.isNull(number)){
-            return "";
-        }
-        return number.toString();
-    }
 }

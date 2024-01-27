@@ -12,6 +12,7 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
+import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
 import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
@@ -90,12 +91,21 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
 
     @Override
     protected ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq) {
-        return null;
+        ReceivingInfo receivingInfo  = BaoHongConverter.INSTANCE.createReceiveOrderConvert(createInboundReq);
+        BaoHongResponse<String> result = baoHongService.createReceiving(receivingInfo);
+        if(isFailure(result)){
+            return failure(result.getMessage());
+        }
+        return success(result.getData());
     }
 
     @Override
     protected ApiResult<String> printLabel(String orderCode) {
-        return null;
+        BaoHongResponse<String> response = baoHongService.printLabel(orderCode);
+        if(isFailure(response)){
+            return failure(response.getMessage());
+        }
+        return success(response.getData());
     }
 
     private boolean isSuccess(BaoHongResponse<?> response){

@@ -3,6 +3,7 @@ package com.erp.server.tms.service.transfer;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.TransferLogisticsContext;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
@@ -64,11 +65,11 @@ public class BaoHongTransferHandlerImplTest {
     @Test
     public void createOrder() {
         TransferLogisticsCreateOrderReq createOrderReq = TransferLogisticsCreateOrderReq.builder()
-                .trackingNumber("wjtest123456")
+                .trackingNumber("wjtest12345")
                 .country("CN")
                 .shippingCode("TY-DHL")
                 .name("唯迹")
-                .referenceNo("wjtest123456")
+                .referenceNo("wjtest12345")
                 .deliveryAddress("深圳龙岗")
                 .streetAddress("深圳龙岗")
                 .state("广东")
@@ -102,9 +103,22 @@ public class BaoHongTransferHandlerImplTest {
 
     @Test
     public void createInbound() {
+        TransferLogisticsCreateInboundReq transferLogisticsCreateInboundReq = TransferLogisticsCreateInboundReq.builder()
+                .referenceCode("wj20240127")
+                .isDelivery(true)
+                .packQty(1)
+                .grossWeight(new BigDecimal("10.12"))
+                .receivingStatus("2")
+                .receiveItemList(Arrays.asList(TransferLogisticsCreateInboundReq.ReceiveItem.builder()
+                                .orderCode("SOE02070222822")
+                                .grossWeight(new BigDecimal("10"))
+                        .build()))
+                .build();
+        System.out.println(thirdWarehouseService.createInbound(transferLogisticsCreateInboundReq,"1750367777970982913"));
     }
 
     @Test
     public void printLabel() {
+        System.out.println(thirdWarehouseService.printLabel("SOE02070222822","1750367777970982913"));
     }
 }
