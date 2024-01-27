@@ -36,7 +36,10 @@ public class Track123LogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public Track123LogisticsHandlerImplTest(){
-        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
+        //test
+//        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
+        //pro
+        authMap.put("clientSecret","579cf53f55694d89aef0887d81886aec");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -52,7 +55,7 @@ public class Track123LogisticsHandlerImplTest {
     public void registerLogisticsNumber(){
         List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
         LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
-                .trackNo("UJ076562757YP")
+                .trackNo("DPK212369350859")
                 .build();
         registerVOS.add(vo);
 //        LogisticsRegisterVO vo1 = LogisticsRegisterVO.builder()

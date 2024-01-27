@@ -19,15 +19,19 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -40,6 +44,7 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -307,16 +312,27 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询单据需要上传的订单（待上传，上传失败）状态的订单
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
-                .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getUploadStatus())
-                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getUploadStatus())
+                .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getOrderUploadStatus())
+                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getOrderUploadStatus())
         ).collect(Collectors.toList());
 
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
+        //订单物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        //订单客户信息
+        List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
 
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
+        if (ObjectUtil.isEmpty(authEntity)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+        }
+
+        //查询中转渠道
+        List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
+        List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByIds(logisticsChannelIds);
 
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
@@ -324,12 +340,39 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
                 continue;
             }
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getId())).findFirst().orElse(new SoB2cEntity());
 
-       /*     TransferLogisticsCreateOrderReq.builder()
-                    .deliveryCode("").build();*/
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cReceiverEntity());
+
+            //订单物流信息
+            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
+
+            //中转渠道信息
+            TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
 
 
-//            service.createOrder(authEntity.getId());
+            TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
+                    .trackingNumber(logisticsEntity.getCode())
+                    .country(soB2cReceiverEntity.getCountry())
+                    .shippingCode(transferLogisticsChannelEntity.getCode())
+                    .name(soB2cReceiverEntity.getReceiverName())
+                    .referenceNo(soB2cEntity.getPlatformCode())
+                    .deliveryAddress(soB2cReceiverEntity.getFullAddress())
+                    .streetAddress(soB2cReceiverEntity.getFullAddress())
+                    .state(soB2cReceiverEntity.getDistrictName())
+                    .city(soB2cReceiverEntity.getCityName())
+                    .postcode(soB2cReceiverEntity.getPostCode())
+                    .phone(soB2cReceiverEntity.getTelNumber())
+                    .orderStatus("2")
+                    .iossNo("")
+                    .serialNo(soB2cEntity.getCode())
+                    .grossWeight(transferDeclareDetailEntity.getPackageWeight())
+                    .buyInsurance(1)
+                    .build();
+
+
+
+            service.createOrder(orderReq, authEntity.getId());
         }
 
         return null;
@@ -365,11 +408,35 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         return null;
     }
 
+    @Override
+    public Boolean checkExistTransferLogisticsSupplier(String supplierId) {
+        if (StringUtils.isBlank(supplierId)) {
+            return Boolean.FALSE;
+        }
+        TransferDeclareEntity entity = lambdaQuery().eq(TransferDeclareEntity::getTransferLogisticsSupplierId, supplierId).last("LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
 
+        //明细信息
+        List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
+        for (TransferDeclareDetailDTO.ViewDTO viewDTO : detailList) {
+            //出库状态中文
+            viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(viewDTO.getOutstockStatus()));
+            //中转状态中文
+            viewDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(viewDTO.getTransferStatus()));
+            //上传状态（订单）中文
+            viewDTO.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(viewDTO.getOrderUploadStatus()));
+        }
+        //明细
+        data.setDetailList(detailList);
     }
 
     /**
@@ -392,12 +459,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
         //物流商未出库
         if (TransferDeclareTabFlagEnum.LOGISTICS_UN_OUTSTOCK.getCode().equals(params.getTabFlag())) {
+            transferStatusList.add(TransferLogisticsStatusEnum.DELETED.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.DRAFT.getCode());
             transferStatusList.add(TransferLogisticsStatusEnum.UNUSUAL.getCode());
             transferStatusList.add(TransferLogisticsStatusEnum.CONFIRMED.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.SUBMITTED.getCode());
         }
         //物流商已出库
         if (TransferDeclareTabFlagEnum.LOGISTICS_OUTSTOCK.getCode().equals(params.getTabFlag())) {
             transferStatusList.add(TransferLogisticsStatusEnum.OUTSTOCK.getCode());
+            transferStatusList.add(TransferLogisticsStatusEnum.SIGNED.getCode());
         }
 
         //上传状态

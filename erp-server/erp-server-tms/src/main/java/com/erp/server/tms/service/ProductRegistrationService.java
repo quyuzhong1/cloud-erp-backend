@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -41,4 +42,11 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
      * @return
      */
     List<ProductRegistrationEntity> listBySkuNoList(List<String> skuNoList);
+
+    /**
+     * 根据平台和 报关商获取备案产品 判断是否备案
+     * @param dto
+     * @return
+     */
+    Boolean getIsRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto);
 }

@@ -66,20 +66,20 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     @TableField("weight_unit")
     private String weightUnit;
     /**
-    * 出库状态
+    * 出库状态 dict_basic：type=transferOutstockStatus
     */
     @TableField("outstock_status")
     private String outstockStatus;
     /**
-    * 中转状态
+    * 中转状态 dict_basic：type=transferStatus
     */
     @TableField("transfer_status")
     private String transferStatus;
     /**
-     * 上传状态（订单）
+     * 上传状态（订单）dict_basic：type=transferDeclareUploadStatus
      */
-    @TableField("upload_status")
-    private String uploadStatus;
+    @TableField("order_upload_status")
+    private String orderUploadStatus;
     /**
      * 失败原因
      */

@@ -166,4 +166,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @create 2024-01-26 9:25
      */
     TransferDeclareEntity getBySoId(String soId);
+
+    /**
+     * 校验中转服务商是否被使用
+     * @Author Luo_WG
+     * @Date 2024/1/27 14:02
+     * @param supplierId
+     * @return java.lang.Boolean
+     **/
+    Boolean checkExistTransferLogisticsSupplier(String supplierId);
 }

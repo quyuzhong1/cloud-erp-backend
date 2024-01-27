@@ -14,7 +14,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -93,15 +92,6 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 .setProductImageUrl(imageUrl)
                 //店铺
                 .setShopId(dto.getShopId());
-        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageLength())){
-            productDTO.setLength(BigDecimal.valueOf(itemInfo.getDimension().getPackageLength()));
-        }
-        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageWidth())){
-            productDTO.setWidth(BigDecimal.valueOf(itemInfo.getDimension().getPackageWidth()));
-        }
-        if (Objects.nonNull(itemInfo.getDimension()) && Objects.nonNull(itemInfo.getDimension().getPackageHeight())){
-            productDTO.setHeight(BigDecimal.valueOf(itemInfo.getDimension().getPackageHeight()));
-        }
         //平台最后修改时间
         if (Objects.nonNull(instant)){
             productDTO.setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));

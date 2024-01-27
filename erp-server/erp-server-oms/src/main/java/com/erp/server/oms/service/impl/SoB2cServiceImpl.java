@@ -311,8 +311,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
             if (Objects.nonNull(forecastStatus)) {
+                //中转状态
+                String transferStatus = forecastStatus.getTransferStatus();
+                //表示要中转
+                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
+                    List<String> skuIdList = addDTO.getDetailList().stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+                    //检查是否备案
+                    checkIsSkuRegistration(skuIdList, forecastStatus.getDeclarePlatform());
+                }
+
                 soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
-                soB2cEntity.setTransferStatus(forecastStatus.getTransferStatus());
+                soB2cEntity.setTransferStatus(transferStatus);
             }
         }
         boolean save = super.save(soB2cEntity);
@@ -346,6 +355,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //推送到DMP
         this.syncOrderToDmp(soB2cEntity.getId());
         return soB2cEntity;
+    }
+
+    /**
+     * 检查产品是否备案
+     *
+     * @param skuIdList
+     */
+    private void checkIsSkuRegistration(List<String> skuIdList, String declarePlatform) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            List<ProductDetailDTO.ProductDTO> skuList = plmTaskFeign.listProductBySkuIds(skuIdList);
+            List<String> skuNoList = skuList.stream().map(ProductDetailDTO.ProductDTO::getSkuNo).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuNoList)) {
+                SettingForecastDTO.CheckRegistrationDTO checkRegistration = new SettingForecastDTO.CheckRegistrationDTO();
+                checkRegistration.setSkuNoList(skuNoList);
+                checkRegistration.setDeclarePlatform(declarePlatform);
+                Boolean checkResult = forecastFeign.getIsRegistrationByParam(checkRegistration);
+                if (!checkResult) {
+                    LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
+                    String platformName = Objects.nonNull(logisticsPlatformEnum) ? logisticsPlatformEnum.getName() : declarePlatform;
+                    throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION,platformName);
+                }
+            }
+
+        }
     }
 
 
@@ -782,8 +815,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(logisticsChannel)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
             }
-            //长宽高校验
-            checkLength(soB2cLogisticsEntity, logisticsChannel);
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
             //物流信息更新
             soB2cLogisticsService.updateById(soB2cLogisticsEntity);
@@ -834,6 +865,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
     }
 
+    @Override
+    public BatchResultDTO checkLogisticsSize(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+        //B2C销售订单主表信息
+        SoB2cEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        //存在的物流渠道
+        String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
+        /**
+         * 是否覆盖
+         * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
+         * 否：新选择的物流渠道和仓库只添加到物流方式和仓库为空的订单，已存在物流方式和仓库的订单不做更改
+         */
+        Boolean isCover = dto.getIsCover();
+        String logisticsChannelId = dto.getLogisticsChannelId();
+        //选择了渠道则更新
+        if (StrUtil.isNotBlank(logisticsChannelId)) {
+            if (Boolean.TRUE.equals(isCover)) {
+                soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            } else {
+                //当为空就覆盖
+                if (StringUtils.isBlank(existChannelId)) {
+                    soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+                }
+            }
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_ID_NOT_EXIST);
+        }
+        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+        if (Objects.isNull(logisticsChannel)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+        }
+        //长宽高校验
+        checkLength(soB2cLogisticsEntity, logisticsChannel);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸");
+    }
+
     /**
      * 根据数据进行校验长宽高
      *
@@ -843,15 +918,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void checkLength(SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelEntity logisticsChannel) {
         //默认为cm
         BigDecimal maxLength = logisticsChannel.getMaxLength();
-        if (logisticsChannel.getLengthUnit().equals("m")) {
+        if (logisticsChannel.getSizeUnit().equals("m")) {
             maxLength = maxLength.multiply(BigDecimal.valueOf(100));
         }
         BigDecimal maxWidth = logisticsChannel.getMaxWidth();
-        if (logisticsChannel.getWidthUnit().equals("m")) {
+        if (logisticsChannel.getSizeUnit().equals("m")) {
             maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
         }
         BigDecimal maxHeight = logisticsChannel.getMaxHeight();
-        if (logisticsChannel.getHeightUnit().equals("m")) {
+        if (logisticsChannel.getSizeUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
         if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
@@ -913,7 +988,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 submitDelivery(id);
             }
 
-            this.lambdaUpdate().eq(SoB2cEntity::getId,id).
+            this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             //操作日志
             String msg = "获取物流单号【{}】";
@@ -3512,9 +3587,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER);
         }
         String alreadyPackage = PackageStatusEnum.ALREADY.getCode();
+        String waitPackage = PackageStatusEnum.WAIT.getCode();
         //组包状态
         String packageStatus = entity.getPackageStatus();
-        if (!alreadyPackage.equals(packageStatus)) {
+        //表示强制组包了 就要去组包预报 去中转了
+        if (alreadyPackage.equals(packageStatus) || waitPackage.equals(packageStatus)) {
             throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
         }
         //组织添加中转报关单数据
@@ -4708,8 +4785,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("未找到对应单号");
         }
         String packageStatus = scanResult.getPackageStatus();
-        String already= PackageStatusEnum.ALREADY.getCode();
-        if(already.equals(packageStatus)){
+        String already = PackageStatusEnum.ALREADY.getCode();
+        if (already.equals(packageStatus)) {
             throw new ServiceException("订单单号已组包完成，无法重复组包");
         }
         String billStatus = scanResult.getBillStatus();

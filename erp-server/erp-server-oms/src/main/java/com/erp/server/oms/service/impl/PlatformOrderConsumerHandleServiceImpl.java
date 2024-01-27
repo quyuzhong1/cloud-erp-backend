@@ -218,9 +218,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal maxWidth = BigDecimal.ZERO;
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(listingInfoWithSkuMappingDTOMap.values())){
-            maxLength  = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).filter(e -> Objects.nonNull(e.getLength())).max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getLength)).orElse(new ListingInfoWithSkuMappingDTO()).getLength();
-            maxWidth = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).filter(e -> Objects.nonNull(e.getWidth())).max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getWidth)).orElse(new ListingInfoWithSkuMappingDTO()).getWidth();
-            totalHeight = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).map(ListingInfoWithSkuMappingDTO::getHeight).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            //TODO 根据sku进行计算
+//            maxLength  = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).filter(e -> Objects.nonNull(e.getLength())).max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getLength)).orElse(new ListingInfoWithSkuMappingDTO()).getLength();
+//            maxWidth = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).filter(e -> Objects.nonNull(e.getWidth())).max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getWidth)).orElse(new ListingInfoWithSkuMappingDTO()).getWidth();
+//            totalHeight = listingInfoWithSkuMappingDTOMap.values().stream().flatMap(List::stream).map(ListingInfoWithSkuMappingDTO::getHeight).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity, allNetWeight,maxLength,maxWidth,totalHeight);

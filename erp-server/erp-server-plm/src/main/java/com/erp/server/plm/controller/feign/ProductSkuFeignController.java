@@ -169,6 +169,13 @@ public class ProductSkuFeignController {
         return skuList;
     }
 
+
+    @PostMapping("/listBySkuNoList")
+    public List<ProductDetailEntity> listBySkuNoList(@RequestBody List<String> skuNoList) {
+        List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
+        return skuList;
+    }
+
     /**
      * @return List<SkuVO>
      * @description: 获取已审核sku
@@ -323,6 +330,7 @@ public class ProductSkuFeignController {
 
     /**
      * 批量修改产品信息
+     *
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
@@ -333,6 +341,7 @@ public class ProductSkuFeignController {
 
     /**
      * 批量修改产品采购信息首批下单日期
+     *
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
@@ -343,6 +352,7 @@ public class ProductSkuFeignController {
 
     /**
      * 批量修改产品销售信息上市日期
+     *
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
@@ -354,6 +364,7 @@ public class ProductSkuFeignController {
 
     /**
      * 根据skuId查询产品采购信息
+     *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
      **/
@@ -367,6 +378,7 @@ public class ProductSkuFeignController {
 
     /**
      * 根据skuId查询产品销售信息
+     *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
      **/
@@ -379,11 +391,11 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * @param skuIds
+     * @return List<ProductDTO>
      * @description: 根据skuid查询产品信息
      * @author Will
      * @date: 2023/11/16 15:16
-     * @param skuIds
-     * @return List<ProductDTO>
      */
     @PostMapping("/listProductBySkuIds")
     public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIds) {

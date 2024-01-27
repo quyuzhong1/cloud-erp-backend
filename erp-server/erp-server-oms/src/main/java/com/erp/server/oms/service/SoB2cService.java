@@ -165,6 +165,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
+
+    /**
+     * 校验物流尺寸规则
+     * @param id
+     * @param dto
+     * @return
+     */
+    BatchResultDTO checkLogisticsSize(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
     /**
      * @description: 获取物流单号
      * @author Will

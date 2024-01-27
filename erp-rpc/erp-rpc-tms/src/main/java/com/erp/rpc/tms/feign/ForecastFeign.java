@@ -1,9 +1,14 @@
 package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 /**
  * @author Lambda
@@ -24,5 +29,11 @@ public interface ForecastFeign {
     @GetMapping("/feign/settingForecast/getByLogisticsChannelId")
     SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId);
 
-
+    /**
+     * 根据平台和sku no 获取到备案产品信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/productRegistration/getIsRegistrationByParam")
+    Boolean getIsRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
 }

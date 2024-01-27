@@ -88,15 +88,15 @@ public class ReceivingInfo {
      * 是否提货：0否 1是
      */
     @XmlElement(required = true)
-    @Builder.Default
-    protected String isDelivery = "1";
+    protected String isDelivery;
 
     /**
      * 进出口口岸:
      * 5349, 深圳前海湾保税港区口岸作业区;
      * 5314, 深关邮办;
      */
-    protected String iePort;
+    @Builder.Default
+    protected String iePort = "5349";
     /**
      * 业务类型：
      * 目前固定为I211
@@ -108,7 +108,8 @@ public class ReceivingInfo {
      * 车牌号
      */
     @XmlElement(required = true)
-    protected String trafName;
+    @Builder.Default
+    protected String trafName = "AAA";
 
     /**
      * 包装种类：
@@ -121,7 +122,8 @@ public class ReceivingInfo {
      * 7其他
      */
     @XmlElement(required = true)
-    protected String wrapType;
+    @Builder.Default
+    protected String wrapType = "7";
 
     /**
      * 总件数
@@ -132,13 +134,15 @@ public class ReceivingInfo {
      * 出入港区运输方式：
      * 目前固定为Y
      */
-    protected String trafMode;
+    @Builder.Default
+    protected String trafMode = "Y";
 
     /**
      * 监管方式：
      * 1210保税电商
      */
-    protected String tradeMode;
+    @Builder.Default
+    protected String tradeMode = "1210";
 
     /**
      * 成交方式：
@@ -151,7 +155,8 @@ public class ReceivingInfo {
      * 固定值1集货
      */
     @XmlElement(required = true)
-    protected String receiveMode;
+    @Builder.Default
+    protected String receiveMode = "1";
 
     /**
      * 毛重(KG)
