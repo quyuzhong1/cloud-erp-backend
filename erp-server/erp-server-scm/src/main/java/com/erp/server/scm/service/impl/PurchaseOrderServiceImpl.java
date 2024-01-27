@@ -2528,7 +2528,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public void syncConfirmOrder() {
-        List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list = baseMapper.getPurchaseOrder(ApproveStatusEnum.APPROVE.getStatus(),ExecutionStatusEnum.CONFIRM.getCode());
+        List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list = baseMapper.getSrmPurchaseOrder();
         if (CollectionUtils.isEmpty(list)){
             return;
         }

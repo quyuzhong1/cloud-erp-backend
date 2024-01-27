@@ -676,7 +676,7 @@
             </if>
         </where>
     </select>
-    <select id="getPurchaseOrder"
+    <select id="getSrmPurchaseOrder"
             resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$PurchaseOrderConfirmDTO">
         select
         po.id as id,
@@ -684,14 +684,9 @@
         from purchase_order po
         inner join purchase_order_detail pod on pod.is_deleted = false and po.id = pod.purchase_order_id
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
-        <where>
+        where
         po.is_deleted = false
-            <if test="status != null and status != ''">
-                and po.approve_status = #{status}
-            </if>
-            <if test="code != null and code != ''">
-                and pod.execution_status = #{code}
-            </if>
-        </where>
+        and po.approve_status = 'approve'
+        and pod.execution_status in ('confirm', 'delivery')
     </select>
 </mapper>
