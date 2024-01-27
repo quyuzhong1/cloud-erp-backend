@@ -182,8 +182,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         subcontractIssueDetailService.update(updateDTO.getDetailList(),subcontractIssueEntity.getId());
 
         // 记录主单操作日志
-        log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", subcontractIssueEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), subcontractIssueEntity.getCode(), "委外发料单");
+        log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "委外发料单");
         operateLogService.addModuleOperateLogByObj(old, subcontractIssueEntity, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), msg);
         return Boolean.TRUE;
     }
