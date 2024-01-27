@@ -13,6 +13,7 @@ import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractTransferLogisticsHandler;
 import com.sdk.tms.baohong.api.order.CreateOrderInfo;
+import com.sdk.tms.baohong.api.order.OrderDataArr;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.api.product.DataRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
@@ -79,7 +80,12 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
 
     @Override
     protected ApiResult<TransferLogisticsOrderDTO> getOrderByCode(String orderCode) {
-        return null;
+        BaoHongResponse<OrderDataArr> response = baoHongService.getOrderByCode(orderCode);
+        if(isFailure(response)){
+            return failure(response.getMessage());
+        }
+        TransferLogisticsOrderDTO transferLogisticsOrderDTO =  BaoHongConverter.INSTANCE.createOrderInfoConvert(response.getData());
+        return success(transferLogisticsOrderDTO);
     }
 
     @Override

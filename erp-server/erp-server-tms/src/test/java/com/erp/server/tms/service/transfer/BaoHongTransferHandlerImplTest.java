@@ -97,6 +97,7 @@ public class BaoHongTransferHandlerImplTest {
 
     @Test
     public void getOrderByCode() {
+        System.out.println(thirdWarehouseService.getOrderByCode("SOE02070222796","1750367777970982913"));
     }
 
     @Test
