@@ -50,6 +50,12 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     @TableField("status")
     private String status;
 
+    /**
+     * 产品名
+     */
+    @TableField("product_name")
+    private String productName;
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
