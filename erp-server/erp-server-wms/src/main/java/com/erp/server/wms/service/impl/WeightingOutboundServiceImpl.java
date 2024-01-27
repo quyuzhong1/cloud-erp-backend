@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -11,6 +12,7 @@ import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -98,7 +100,9 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 throw new ServiceException("发货单更新失败");
             }
             soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+
         }
         return this.buildViewDTO(entity);
     }

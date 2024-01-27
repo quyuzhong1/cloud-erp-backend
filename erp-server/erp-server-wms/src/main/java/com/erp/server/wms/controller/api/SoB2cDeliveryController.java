@@ -49,9 +49,6 @@ public class SoB2cDeliveryController extends BaseController {
     private SoB2cDeliveryService soB2cDeliveryService;
 
     @Resource
-    private SoOutstockService soOutstockService;
-
-    @Resource
     private SoB2cFeign soB2cFeign;
 
     /**
@@ -151,11 +148,7 @@ public class SoB2cDeliveryController extends BaseController {
                 if (isManual) {
                     //生成销售出库单
                     if(isSuccess){
-                        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
-                        generateB2cDTO.setSourceId(entity.getId());
-                        generateB2cDTO.setSourceCode(entity.getCode());
-                        generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-                        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+                        soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
                 //清状态

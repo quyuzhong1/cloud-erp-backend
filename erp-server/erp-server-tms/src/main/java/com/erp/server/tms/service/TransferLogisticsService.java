@@ -6,6 +6,7 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public interface TransferLogisticsService {
     /**
      * 查询全部产品信息
      */
-    ApiResult<List<TransferLogisticsProductDTO>> getAllProductInfo(String authId);
+    ApiResult<List<ProductRegistrationEntity>> getAllProductInfo(String authId);
 
     /**
      * 创建入库单

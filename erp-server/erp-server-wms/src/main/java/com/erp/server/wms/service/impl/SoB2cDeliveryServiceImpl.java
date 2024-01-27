@@ -135,6 +135,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -753,6 +758,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         } else {
             return this.falseDelivery(id);
         }
+
+    }
+
+    @Override
+    public void generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
+        generateB2cDTO.setSourceId(entity.getId());
+        generateB2cDTO.setSourceCode(entity.getCode());
+        generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+        for (SoOutstockDetailDTO.AddDTO item : detailList) {
+            String soDetailId = item.getSoDetailId();
+            String sourceDetailId = deliveryDetailList.stream().filter(d -> d.getSourceDetailId().equals(soDetailId)).
+                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
+            item.setSourceDetailId(sourceDetailId);
+        }
+        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
 
     }
 

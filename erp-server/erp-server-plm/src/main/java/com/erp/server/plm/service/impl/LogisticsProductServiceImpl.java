@@ -203,6 +203,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             propertyName = dictList.stream().map(BasicDictEntity::getName).collect(Collectors.joining(","));
 
         }
+        String combinationDeclareType = declareInfo.getCombinationDeclareType();
+        if(StringUtils.isBlank(combinationDeclareType)){
+            declareInfo.setCombinationDeclareType(CombinationDeclareTypeEnums.SPLIT.getCode());
+        }
         //物流属性
         productBaseInfo.setLogisticsPropertyName(propertyName);
         declareInfo.setSourceCountryName(sourceCountryName);

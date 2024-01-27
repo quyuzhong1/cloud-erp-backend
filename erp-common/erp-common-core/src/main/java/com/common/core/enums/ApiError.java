@@ -901,6 +901,7 @@ public enum ApiError implements Serializable {
     ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
+    B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
     NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
     UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
 
@@ -1114,6 +1115,7 @@ public enum ApiError implements Serializable {
     DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
     TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
     GENERATE_TIME_GT_DEADLINE_TIME(94033,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94032,"该运输状态为系统更新不可修改"),
 
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),

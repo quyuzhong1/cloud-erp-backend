@@ -97,6 +97,7 @@
              lb.to_country AS toCountry,
              lbd.track_status AS trackStatus ,
              lbd.track_no AS trackNo,
+             lbd.sign_time AS signTime,
              lbd.track_query_mode AS trackQueryMode,
              lc.name AS channelName
          FROM  logistics_bill_detail lbd
@@ -208,6 +209,7 @@
             lb.to_country AS toCountry,
             lbd.track_status AS trackStatus ,
             lbd.track_no AS trackNo,
+            lbd.sign_time AS signTime,
             lbd.track_query_mode AS trackQueryMode,
             lc.name AS channelName
         FROM  logistics_bill_detail lbd

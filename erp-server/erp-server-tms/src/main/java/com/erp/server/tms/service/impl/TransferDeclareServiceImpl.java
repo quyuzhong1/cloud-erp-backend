@@ -28,7 +28,6 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -326,8 +325,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 continue;
             }
 
-            TransferLogisticsCreateOrderReq.builder()
-                    .deliveryCode("").build();
+       /*     TransferLogisticsCreateOrderReq.builder()
+                    .deliveryCode("").build();*/
 
 
 //            service.createOrder(authEntity.getId());

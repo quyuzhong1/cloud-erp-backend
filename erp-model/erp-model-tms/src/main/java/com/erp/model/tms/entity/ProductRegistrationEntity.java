@@ -45,11 +45,10 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
     @TableField("remark")
     private String remark;
     /**
-    * 是否已备案  true 已备案 fasle 未备案
-    */
-    @TableField("is_registration")
-    private Boolean isRegistration;
-
+     * 备案状态
+     */
+    @TableField("status")
+    private String status;
 
     public static final String SKU_ID = "sku_id";
 
@@ -59,7 +58,6 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
 
     public static final String REMARK = "remark";
 
-    public static final String IS_REGISTRATION = "is_registration";
 
     @Override
     public Serializable pkVal() {
