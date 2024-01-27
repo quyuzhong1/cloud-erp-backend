@@ -608,9 +608,6 @@
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
-        li.length,
-        li.width,
-        li.height,
         li.platform_fn_sku
         FROM sku_mapping sm
         INNER JOIN listing_info li

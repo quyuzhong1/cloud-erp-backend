@@ -98,21 +98,6 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("platform_fn_sku")
     private String platformFnSku;
-    /**
-     * 长度
-     */
-    @TableField("length")
-    private BigDecimal length;
-    /**
-     * 宽度
-     */
-    @TableField("width")
-    private BigDecimal width;
-    /**
-     * 高度
-     */
-    @TableField("height")
-    private BigDecimal height;
 
 
     public static final String SKU_NO = "sku_no";
