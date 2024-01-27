@@ -193,4 +193,12 @@ public class DeliveryOrderFeginController extends BaseController {
     public Boolean unConfirmReceiveStatus(@RequestBody List<String> ids){
         return deliveryOrderService.unConfirmReceiveStatus(ids);
     }
+
+    /**
+     * 取消收货
+     */
+    @PostMapping("/cancelReceive")
+    public Boolean cancelReceive(@RequestBody List<String> ids){
+        return deliveryOrderService.cancelReceive(ids);
+    }
 }

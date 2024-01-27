@@ -527,6 +527,30 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         return true;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean cancelReceive(List<String> ids) {
+        List<DeliveryOrderEntity> entityList = this.listByIds(ids);
+        if(CollectionUtils.isEmpty(entityList)){
+            return true;
+        }
+        List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainIdList(ids);
+        entityList.forEach(v->{
+            v.setReceiptStatus("");
+            v.setReceiveCode("");
+        });
+        detailEntityList.forEach(v->{
+            v.setReceiveQty(0);
+            v.setGiftReceiveQty(0);
+        });
+
+        this.updateBatchById(entityList);
+        detailService.updateBatchById(detailEntityList);
+
+        return true;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DeliveryOrderDTO.AddDTO addDTO) {

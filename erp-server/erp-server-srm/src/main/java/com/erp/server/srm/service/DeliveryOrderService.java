@@ -88,4 +88,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
      * 反确认收货
      */
     Boolean unConfirmReceiveStatus(List<String> ids);
+
+    Boolean cancelReceive(List<String> ids);
 }

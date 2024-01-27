@@ -67,5 +67,8 @@ public interface SrmDeliveryOrderFeign {
     Boolean confirmReceiveStatus(@RequestBody List<String> ids);
 
     @PostMapping("/feign/deliveryOrder/unConfirmReceiveStatus")
-    Boolean unConfirmReceiveStatus(List<String> deliveryOrderIds);
+    Boolean unConfirmReceiveStatus(@RequestBody List<String> deliveryOrderIds);
+
+    @PostMapping("/feign/deliveryOrder/cancelReceive")
+    Boolean cancelReceive(@RequestBody List<String> deliveryIds);
 }

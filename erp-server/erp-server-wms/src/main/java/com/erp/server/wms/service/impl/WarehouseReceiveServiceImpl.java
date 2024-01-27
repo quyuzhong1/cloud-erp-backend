@@ -907,6 +907,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -929,6 +930,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //审核通过发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
+        //如果是收货单下推的，删除时去掉收货单的收获状态和收货数量
+        List<String> deliveryIds = warehouseReceiveList.stream().filter(v->PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getSourceId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deliveryIds)){
+            srmDeliveryOrderFeign.cancelReceive(deliveryIds);
+        }
+
         //删除主表
         return flag;
     }
