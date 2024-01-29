@@ -2,33 +2,25 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.erp.server.tms.service.LogisticsSupplierService;
+import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TransferLogisticsSupplierService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -214,6 +206,17 @@ public class TransferLogisticsSupplierController extends BaseController {
     @GetMapping("/listAll")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
         return success(transferLogisticsSupplierService.listAll());
+    }
+
+    /**
+     * 所有已授权的中转报关服务商下拉
+     * @Author Luo_WG
+     * @Date 2024/1/29 15:34
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>>
+     **/
+    @GetMapping("/listAlreadyAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAlreadyAll(){
+        return success(transferLogisticsSupplierService.listAlreadyAll());
     }
 
     /**

@@ -245,6 +245,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     }
 
     @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAlreadyAll() {
+        List<TransferLogisticsSupplierEntity> list = lambdaQuery().eq(TransferLogisticsSupplierEntity::getAuthStatus, TransferLogisticsAuthStatusEnum.ALREADY.getCode()).list()
+        List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
+    }
+
+    @Override
     public Boolean updateDisabledBySupplierId(TransferLogisticsSupplierDTO.UpdateDisabledDTO dto) {
         return this.lambdaUpdate().eq(TransferLogisticsSupplierEntity::getSupplierId, dto.getSupplierId()).
                 set(TransferLogisticsSupplierEntity::getDisabled, dto.getDisabled()).update();
