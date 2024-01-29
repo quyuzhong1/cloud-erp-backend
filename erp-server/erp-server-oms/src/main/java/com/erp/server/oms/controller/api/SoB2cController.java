@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -37,8 +38,6 @@ public class SoB2cController extends BaseController {
     private SoB2cService soB2cService;
 
 
-
-
     /**
      * 获取状态统计
      *
@@ -51,11 +50,12 @@ public class SoB2cController extends BaseController {
 
     /**
      * 预报统计
+     *
      * @param dto
      * @return
      */
     @PostMapping("/forecastCount")
-    public ApiResult<List<SoB2cDTO.ForecastCountDTO>> forecastCount(@RequestBody PermissionsDTO dto){
+    public ApiResult<List<SoB2cDTO.ForecastCountDTO>> forecastCount(@RequestBody PermissionsDTO dto) {
         List<SoB2cDTO.ForecastCountDTO> result = soB2cService.forecastCount(dto);
         return success(result);
     }
@@ -92,10 +92,15 @@ public class SoB2cController extends BaseController {
          */
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
+        //检查是否备案并修改状态
+        soB2cService.checkProductRegistrationAndUpdate(id, "");
+
+
         //速卖通平台仓订单不走任何规则
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
             return success(add.getId());
         }
+
 
         SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
         //匹配成功
@@ -110,7 +115,8 @@ public class SoB2cController extends BaseController {
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                soB2cService.checkProductRegistration(id,"");
+                //检查是否备案并修改状态
+                soB2cService.checkProductRegistrationAndUpdate(id, "");
 
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
@@ -132,6 +138,8 @@ public class SoB2cController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
+        //检查是否备案并修改状态
+        soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
         return success();
     }
 
@@ -177,7 +185,7 @@ public class SoB2cController extends BaseController {
     @PostMapping("/approve")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds ().size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
@@ -310,6 +318,7 @@ public class SoB2cController extends BaseController {
 
     /**
      * 撤销流程
+     *
      * @param dto
      * @return
      * @description
@@ -323,12 +332,12 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO=soB2cService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("B2C销售订单撤销失败>>>>>{}",e.getMessage());
-                SoB2cEntity entity=soB2cService.getById(id);
-                if(Objects.isNull(entity)){
-                    resultDTO=BatchResultDTO.fail(id, id, "B2c销售订单不存在, 撤销流程失败");
+                resultDTO = soB2cService.cancelProcess(id);
+            } catch (Exception e) {
+                log.error("B2C销售订单撤销失败>>>>>{}", e.getMessage());
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "B2c销售订单不存在, 撤销流程失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -342,10 +351,11 @@ public class SoB2cController extends BaseController {
 
     /**
      * 反审核销售订单
-     * @description
+     *
      * @param dto
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2024-01-09 14:09
      */
     @PostMapping("/disApprove")
@@ -356,12 +366,12 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO=soB2cService.disApprove(id);
-            }catch (Exception e){
-                log.error("B2C销售订单反审核失败>>>>>{}",e.getMessage());
-                SoB2cEntity entity=soB2cService.getById(id);
-                if(Objects.isNull(entity)){
-                    resultDTO=BatchResultDTO.fail(id, id, "B2c销售订单不存在, 反审核失败");
+                resultDTO = soB2cService.disApprove(id);
+            } catch (Exception e) {
+                log.error("B2C销售订单反审核失败>>>>>{}", e.getMessage());
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "B2c销售订单不存在, 反审核失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -371,7 +381,6 @@ public class SoB2cController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
 
 
     /**
@@ -450,6 +459,7 @@ public class SoB2cController extends BaseController {
 
     /**
      * 校验物流尺寸
+     *
      * @param dto
      * @return 拆分为基础信息校验和尺寸校验 其中基础信息失败即为失败 尺寸校验失败只做展示 仍为成功
      */
@@ -880,19 +890,20 @@ public class SoB2cController extends BaseController {
 
     /**
      * 中转报关
-     * @description
+     *
      * @param dto
-     * @author Lambda
      * @return
+     * @description
+     * @author Lambda
      * @create 2024-01-20 15:27
      */
     @PostMapping("/transferDeclare")
-    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto){
+    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.transferDeclare(id,dto.getTransferLogisticsSupplierId(),dto.getTransferLogisticsChannelId());
+                result = soB2cService.transferDeclare(id, dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
             } catch (Exception e) {
                 log.error("b2c订单中转失败:{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);

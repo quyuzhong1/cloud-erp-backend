@@ -307,24 +307,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
             soB2cEntity.setCode(businessNo);
         }
-        //渠道id
-        String logisticsChannelId = addDTO.getLogisticsDTO().getLogisticsChannelId();
-        if (StringUtils.isNotBlank(logisticsChannelId)) {
-            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
-            if (Objects.nonNull(forecastStatus)) {
-                //中转状态
-                String transferStatus = forecastStatus.getTransferStatus();
-                //表示要中转
-                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
-                    List<String> skuIdList = addDTO.getDetailList().stream().map(SoB2cDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-                    //检查是否备案
-                    checkIsSkuRegistration(skuIdList, forecastStatus.getDeclarePlatform());
-                }
-
-                soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
-                soB2cEntity.setTransferStatus(transferStatus);
-            }
-        }
         boolean save = super.save(soB2cEntity);
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
@@ -400,24 +382,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         handleData(soB2cEntity, true, true);
 
         log.info("编辑 开始修改B2C销售订单表数据，单号：【{}】", old.getCode());
-
-        //渠道id
-        String logisticsChannelId = updateDTO.getLogisticsDTO().getLogisticsChannelId();
-        if (StringUtils.isNotBlank(logisticsChannelId)) {
-            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
-            if (Objects.nonNull(forecastStatus)) {
-                //中转状态
-                String transferStatus = forecastStatus.getTransferStatus();
-                //表示要中转
-                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
-                    List<String> skuIdList = updateDTO.getDetailList().stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-                    //检查是否备案
-                    checkIsSkuRegistration(skuIdList, forecastStatus.getDeclarePlatform());
-                }
-                soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
-                soB2cEntity.setTransferStatus(transferStatus);
-            }
-        }
 
         boolean save = super.updateById(soB2cEntity);
         if (!save) {
@@ -779,6 +743,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+
+
         /**
          * 是否覆盖
          * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
@@ -786,20 +752,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
+        SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
+        String packageStatus = resultDTO.getPackageStatus();
+        String transferStatus = resultDTO.getTransferStatus();
+        //未备案的sku
+        List<String> notRegistrationSkuNoList= resultDTO.getNotRegistrationSkuNoList();
+        Boolean isRegistration=CollectionUtils.isEmpty(notRegistrationSkuNoList);
+        //表示未备案
+        if(!isRegistration){
+            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION,skuStr,resultDTO.getDeclarePlatformName(),resultDTO.getLogisticsChannelName());
+        }
+        updatePackageAndTransferStatus(id,packageStatus,transferStatus,isRegistration);
+
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
-            SettingForecastDTO.ForecastStatusDTO forecastStatusDTO = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
-            if (Objects.nonNull(forecastStatusDTO)) {
-                String transferStatus = forecastStatusDTO.getTransferStatus();
-                //表示要中转
-                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
-                    List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-                    //检查是否备案
-                    checkIsSkuRegistration(skuIdList, forecastStatusDTO.getDeclarePlatform());
-                }
-                entity.setPackageStatus(forecastStatusDTO.getPackageStatus());
-                entity.setTransferStatus(transferStatus);
-            }
             if (Boolean.TRUE.equals(isCover)) {
                 //如果有物流单号 就要去取消
                 if (StringUtils.isNotBlank(code)) {
@@ -897,6 +864,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
+
+        /**
+         * 获取渠道备案结果
+         */
+        SettingForecastDTO.CheckRegistrationResultDTO resultDTO=  getCheckRegistrationResult(id,logisticsChannelId);
+        String packageStatus = resultDTO.getPackageStatus();
+        String transferStatus = resultDTO.getTransferStatus();
+        //未备案的sku
+        List<String> notRegistrationSkuNoList= resultDTO.getNotRegistrationSkuNoList();
+        //是否备案
+        Boolean isRegistration=CollectionUtils.isEmpty(notRegistrationSkuNoList);
+
+        //表示没有备案了
+        if(!isRegistration){
+            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION,skuStr,resultDTO.getDeclarePlatformName(),resultDTO.getLogisticsChannelName());
+        }
+        updatePackageAndTransferStatus(id,packageStatus,transferStatus,isRegistration);
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
@@ -4874,7 +4859,52 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param logisticsChannelId 物流渠道id
      */
     @Override
-    public SettingForecastDTO.CheckRegistrationResultDTO checkProductRegistration(String id, String logisticsChannelId) {
+    public void checkProductRegistrationAndUpdate(String id, String logisticsChannelId) {
+        SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
+        String packageStatus = resultDTO.getPackageStatus();
+        String transferStatus = resultDTO.getTransferStatus();
+        //未备案的sku
+        List<String> notRegistrationSkuNoList= resultDTO.getNotRegistrationSkuNoList();
+        Boolean isRegistration=CollectionUtils.isEmpty(notRegistrationSkuNoList);
+        updatePackageAndTransferStatus(id,packageStatus,transferStatus,isRegistration);
+        //表示备案了
+        if(!isRegistration){
+            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION,skuStr,resultDTO.getDeclarePlatformName());
+        }
+    }
+
+    /**
+     * 修改组包和中转状态
+     * @param soId
+     * @param packageStatus
+     * @param transferStatus
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus,Boolean isRegistration) {
+         this.lambdaUpdate().set(SoB2cEntity::getPackageStatus,packageStatus).
+                 set(SoB2cEntity::getTransferStatus,transferStatus).
+                 eq(SoB2cEntity::getId,soId).update(new SoB2cEntity());
+         //未备案清楚渠道
+         if(!isRegistration){
+           soB2cLogisticsService.lambdaUpdate().
+                   set(SoB2cLogisticsEntity::getLogisticsChannelId,"").
+                   set(SoB2cLogisticsEntity::getCode,"").
+                   set(SoB2cLogisticsEntity::getTrackNo,"").
+                   eq(SoB2cLogisticsEntity::getMainId,soId).
+                   update(new SoB2cLogisticsEntity());
+         }
+
+    }
+
+    /**
+     * 获取检查备案结果
+     * @param id
+     * @param logisticsChannelId
+     * @return
+     */
+    @Override
+    public SettingForecastDTO.CheckRegistrationResultDTO getCheckRegistrationResult(String id, String logisticsChannelId) {
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = new SettingForecastDTO.CheckRegistrationResultDTO();
         SoB2cEntity soB2cEntity = this.getById(id);
         if (Objects.isNull(soB2cEntity)) {
@@ -4895,9 +4925,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
         List<String> skuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        String declarePlatform="";
+        String declarePlatformName="";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId, soB2cEntity.getCreateTime());
             if (Objects.nonNull(forecastStatus)) {
+                declarePlatform = forecastStatus.getDeclarePlatform();
+                declarePlatformName = forecastStatus.getDeclarePlatformName();
                 logisticsChannelName = forecastStatus.getLogisticsChannelName();
                 //中转状态
                 transferStatus = forecastStatus.getTransferStatus();
@@ -4909,8 +4943,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
         }
+        resultDTO.setDeclarePlatform(declarePlatform);
+        resultDTO.setDeclarePlatformName(declarePlatformName);
         resultDTO.setLogisticsChannelName(logisticsChannelName);
-        resultDTO.setSkuNoList(notRegistrationSkuNoList);
+        resultDTO.setNotRegistrationSkuNoList(notRegistrationSkuNoList);
         resultDTO.setPackageStatus(packageStatus);
         resultDTO.setTransferStatus(transferStatus);
         return resultDTO;
@@ -4920,7 +4956,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list) {
         for (TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO : list) {
             this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo()).
-                    eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update(new SoB2cEntity())
+                    eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update(new SoB2cEntity());
         }
         return Boolean.TRUE;
     }

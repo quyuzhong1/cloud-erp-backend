@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -147,6 +148,11 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
             forecastStatus.setPackageStatus(packageStatus);
             forecastStatus.setTransferStatus(transferStatus);
+            String declarePlatform = entity.getDeclarePlatform();
+            forecastStatus.setDeclarePlatform(declarePlatform);
+            LogisticsPlatformEnum declarePlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
+            String declarePlatformName = Objects.nonNull(declarePlatformEnum) ? declarePlatformEnum.getName() : "";
+            forecastStatus.setDeclarePlatformName(declarePlatformName);
             return forecastStatus;
         }
 
