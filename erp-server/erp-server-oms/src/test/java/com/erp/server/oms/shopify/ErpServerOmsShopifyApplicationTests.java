@@ -177,6 +177,12 @@ public class ErpServerOmsShopifyApplicationTests {
         // [{"id":"6424810193195","shopId":"82946982187","orderId":"5484776030507","assignedLocationId":"92033024299","requestStatus":"unsubmitted","status":"closed","supportedActions":[],"destination":{"id":"6053425381675","address1":"151 O'Connor St","city":"Ottawa","company":"Snowdevil","country":"Canada","email":"karine.ruby@example.com","lastName":"","phone":"+16135550114","zip":"K2P2L8"},"lineItems":[{"id":"14363854733611","shopId":"82946982187","fulfillmentOrderId":"6424810193195","quantity":1,"lineItemId":"14266416759083","inventoryItemId":"48904852767019","fulfillableQuantity":0,"variantId":"46854120538411"}],"fulfillAt":1694484000000,"fulfillmentHolds":[],"deliveryMethod":{"id":"550833684779","methodType":"shipping"},"createdAt":1694485868000,"updatedAt":1698121790000,"assignedLocation":{"address1":"123 Main St","city":"Toronto","countryCode":"CA","locationId":"92033024299","name":"My Custom Location","phone":"555-5555","province":"Ontario","zip":"A1A 1A1"},"merchantRequests":[]}]
     }
 
+    @Test
+    public void verifyTheInstallationRequest(){
+
+        return;
+    }
+
 
     @Test
     public void givenSomeShopifyFulfillmentCreationRequestWhenCreatingShopifyFulfillmentThenCreateAndReturnFulfillmentWithFulfillmentOrderApi() throws Exception {

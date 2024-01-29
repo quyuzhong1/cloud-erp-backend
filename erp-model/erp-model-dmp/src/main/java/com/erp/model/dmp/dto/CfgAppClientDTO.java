@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.erp.model.dmp.enums.AppClientEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -176,7 +177,13 @@ public class CfgAppClientDTO implements Serializable {
         private String businessType;
 
 
-
+        public static FindDTO init(AppClientEnum appClient) {
+            FindDTO findDTO = new FindDTO();
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+            return findDTO;
+        }
     }
 
 

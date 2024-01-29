@@ -1,6 +1,7 @@
 package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
@@ -57,6 +58,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
 
     /**
      * 获取授权地址
+     *
      * @param dto
      * @return
      */
@@ -64,7 +66,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         List<ShopInfoEntity> shopInfoEntityList = dto.getShopInfoEntityList();
         ShopInfoEntity shopInfo;
-        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+        if (CollectionUtils.isEmpty(shopInfoEntityList)) {
             shopInfo = shopInfoService.getById(dto.getShopId());
         } else {
             shopInfo = shopInfoEntityList.get(0);
@@ -84,7 +86,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         // 添加到缓存
         String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, fullDomain);
         Object obj = redisUtil.get(key);
-        if (null != obj){
+        if (null != obj) {
             throw new ServiceException("正在申请授权中");
         }
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
@@ -96,6 +98,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
 
     /**
      * 授权
+     *
      * @param dto
      * @return
      */
@@ -103,85 +106,90 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         String bodyStr = "";
-        try {
-            // 二级域名
-            String secondDomain = dto.getShop();
-            if (dto.getShop().contains(ShopifyConstant.DOMAIN)) {
-                secondDomain = dto.getShop().replace(ShopifyConstant.DOMAIN, "");
-            }
-            ShopInfoEntity shopInfo = shopInfoService.getByDomain(secondDomain);
-            if (Objects.isNull(shopInfo)) {
-                throw new ServiceException("店铺不存在");
-            }
-            AppClientEnum appClient = AppClientEnum.SHOP_ACCESS_TOKEN;
-            CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-            if (Objects.isNull(cfgAppClient)) {
-                throw new ServiceException("shopify应用授权配置不存在");
-            }
-            AuthorizeDTO.FindShopAuthorizeDTO findShopAuthorize = new AuthorizeDTO.FindShopAuthorizeDTO();
-            findShopAuthorize.setAccessTokenUrl(cfgAppClient.getUrl());
-            findShopAuthorize.setClientId(cfgAppClient.getClientId());
-            findShopAuthorize.setClientSecret(cfgAppClient.getClientSecret());
-            findShopAuthorize.setCode(dto.getCode());
-            findShopAuthorize.setHmac(dto.getHmac());
-            findShopAuthorize.setHost(dto.getHost());
-            findShopAuthorize.setShop(dto.getShop());
-            findShopAuthorize.setTimestamp(dto.getTimestamp());
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
-            JSONObject jsonObject = JSONObject.parseObject(bodyStr);
-            //token
-            String accessToken = jsonObject.getOrDefault("access_token", "").toString();
-            //过期时间
-            Integer expiresIn = Integer.valueOf(jsonObject.getOrDefault("expires_in", 0).toString());
-            if (StringUtils.isBlank(accessToken)) {
-                return Boolean.FALSE;
-            }
-            String shopId = shopInfo.getId();
-            //根据店铺id 获取到授权信息
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
-            if (Objects.isNull(shopAuth)) {
-                shopAuth = new ShopAuthEntity();
-            }
-            shopAuth.setShopId(shopId);
-            shopAuth.setAccessToken(accessToken);
-            shopAuth.setToken(accessToken);
-            shopAuth.setExpiresIn(expiresIn);
-            shopAuth.setAppClientId(cfgAppClient.getId());
-            shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-            shopInfo.setAuthTime(LocalDateTime.now());
-            shopAuthService.saveOrUpdate(shopAuth);
-            boolean result = shopInfoService.updateById(shopInfo);
-            // 授权后添加任务
-            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
-            shopInfo.setIsGenTask(Boolean.TRUE);
-            shopInfoService.updateShopInfoById(shopInfo);
-            // 添加到缓存redis
-            ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, accessToken);
-
-            // platform-token:平台名称:店铺ID
-            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
-            redisUtil.set(tokenKey, shopInfoDTO);
-
-            // 删除授权缓存
-            String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, dto.getShop());
-            Object obj = redisUtil.get(key);
-            if (null != obj){
-                redisUtil.del(key);
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("店铺授权出错了===> bodyStr==>{} e==>{}", bodyStr, e);
+        // 二级域名
+        String secondDomain = dto.getShop();
+        if (dto.getShop().contains(ShopifyConstant.DOMAIN)) {
+            secondDomain = dto.getShop().replace(ShopifyConstant.DOMAIN, "");
         }
+        AppClientEnum appClient = AppClientEnum.SHOP_ACCESS_TOKEN;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("shopify应用授权配置不存在");
+        }
+        ShopInfoEntity shopInfo = shopInfoService.getByDomain(secondDomain);
+        if (Objects.isNull(shopInfo)) {
+//                throw new ServiceException("店铺不存在");
+            log.warn("不存在的店铺不请求授权：request={}", JSONUtil.toJsonStr(dto));
+            // 不存在的店铺授权显示成功
+            return true;
+        }
+        AuthorizeDTO.FindShopAuthorizeDTO findShopAuthorize = new AuthorizeDTO.FindShopAuthorizeDTO();
+        findShopAuthorize.setAccessTokenUrl(cfgAppClient.getUrl());
+        findShopAuthorize.setClientId(cfgAppClient.getClientId());
+        findShopAuthorize.setClientSecret(cfgAppClient.getClientSecret());
+        findShopAuthorize.setCode(dto.getCode());
+        findShopAuthorize.setHmac(dto.getHmac());
+        findShopAuthorize.setHost(dto.getHost());
+        findShopAuthorize.setShop(dto.getShop());
+        findShopAuthorize.setTimestamp(dto.getTimestamp());
+        try {
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
+        } catch (Exception e) {
+            throw new ServiceException("Request shopify error " + e.getMessage());
+        }
+        if (StringUtils.isBlank(bodyStr)) {
+            throw new ServiceException("Authorize timed out");
+        }
+        JSONObject jsonObject = JSONObject.parseObject(bodyStr);
+        //token
+        String accessToken = jsonObject.getOrDefault("access_token", "").toString();
+        //过期时间
+        Integer expiresIn = Integer.valueOf(jsonObject.getOrDefault("expires_in", 0).toString());
+        if (StringUtils.isBlank(accessToken)) {
+            return Boolean.FALSE;
+        }
+        String shopId = shopInfo.getId();
+        //根据店铺id 获取到授权信息
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
+        if (Objects.isNull(shopAuth)) {
+            shopAuth = new ShopAuthEntity();
+        }
+        shopAuth.setShopId(shopId);
+        shopAuth.setAccessToken(accessToken);
+        shopAuth.setToken(accessToken);
+        shopAuth.setExpiresIn(expiresIn);
+        shopAuth.setAppClientId(cfgAppClient.getId());
+        shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        shopInfo.setAuthTime(LocalDateTime.now());
+        shopAuthService.saveOrUpdate(shopAuth);
+        boolean result = shopInfoService.updateById(shopInfo);
+        // 授权后添加任务
+        dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+        shopInfo.setIsGenTask(Boolean.TRUE);
+        shopInfoService.updateShopInfoById(shopInfo);
+        // 添加到缓存redis
+        ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, accessToken);
 
-        return Boolean.FALSE;
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        redisUtil.set(tokenKey, shopInfoDTO);
+
+        // 删除授权缓存
+        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, dto.getShop());
+        Object obj = redisUtil.get(key);
+        if (null != obj) {
+            redisUtil.del(key);
+        }
+        return result;
     }
 
     /**
      * 取消授权
+     *
      * @param dto
      */
     @Override
@@ -201,7 +209,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         if (result) {
             shopAuthService.removeByShopId(shopId);
             // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }
