@@ -56,15 +56,15 @@ public class ScmJob {
     }
 
     /**
-     * 同步采购信息已审核待确认订单到srm
+     * 同步采购信息已审核已确认订单到srm
      */
     @XxlJob("syncPurchaseToSrm")
     public void syncPurchaseToSrm() {
-        XxlJobHelper.log("=====采购订单自动确认 开始任务=====");
+        XxlJobHelper.log("=====同步采购信息已审核已确认订单 开始任务=====");
         long start = System.currentTimeMillis();
         purchaseOrderService.syncConfirmOrder();
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
-        XxlJobHelper.log("=====采购订单自动确认 结束任务=====");
+        XxlJobHelper.log("=====同步采购信息已审核已确认订单 结束任务=====");
     }
 }
