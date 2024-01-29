@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @LogSystemModule("中转报关物流商feign接口")
-@RequestMapping("/feign/transferDeclare")
+@RequestMapping("/feign/transferLogistics")
 public class TransferLogisticsFeignController {
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
