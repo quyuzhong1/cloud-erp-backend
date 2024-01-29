@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,6 +50,9 @@ public class ScmDictController {
      */
     @PostMapping("/listDictByIdList")
     public List<DictBasicEntity> listDictByIdList(@RequestBody List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Collections.EMPTY_LIST;
+        }
         List<DictBasicEntity> list =  dictBasicService.listByIds(idList);
         return list;
     }
