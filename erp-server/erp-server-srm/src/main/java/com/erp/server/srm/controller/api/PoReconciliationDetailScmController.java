@@ -56,7 +56,7 @@ public class PoReconciliationDetailScmController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliationDetail:scm:paging",
+            menuCode = "srm:poReconciliationDetail:scm:paging",
             tableAlias = "prd"
     )
     @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
@@ -75,7 +75,7 @@ public class PoReconciliationDetailScmController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliationDetail:scm:paging",
+            menuCode = "srm:poReconciliationDetail:scm:paging",
             tableAlias = "prd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
@@ -94,7 +94,7 @@ public class PoReconciliationDetailScmController extends BaseController {
     @PostMapping("/generatePoReconciliation")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliationDetail:scm:generatePoReconciliation",
+            menuCode = "srm:poReconciliationDetail:scm:generatePoReconciliation",
             tableAlias = "prd"
     )
     public ApiResult<?> generatePoReconciliation(@RequestBody @Validated PoReconciliationDetailDTO.GeneratePoReconciliationDTO dto) {

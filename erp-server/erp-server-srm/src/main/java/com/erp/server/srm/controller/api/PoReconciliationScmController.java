@@ -55,7 +55,7 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:scm:paging",
+            menuCode = "srm:poReconciliation:scm:paging",
             tableAlias = "pr"
     )
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
@@ -73,7 +73,7 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:scm:paging",
+            menuCode = "srm:poReconciliation:scm:paging",
             tableAlias = "pr"
     )
     public ApiResult<List<PoReconciliationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -141,7 +141,7 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:scm:paging",
+            menuCode = "srm:poReconciliation:scm:paging",
             tableAlias = "pr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
@@ -313,7 +313,7 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/viewToBeSupplierConfirm")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:poReconciliation:scm:paging",
+            menuCode = "srm:poReconciliation:scm:paging",
             tableAlias = "pr"
     )
     public ApiResult<List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO>> viewToBeSupplierConfirm(@RequestBody PermissionsDTO dto) {
