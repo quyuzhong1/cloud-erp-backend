@@ -493,6 +493,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
 
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
+            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getMainId())).findFirst().orElse(null);
 
         }
 
