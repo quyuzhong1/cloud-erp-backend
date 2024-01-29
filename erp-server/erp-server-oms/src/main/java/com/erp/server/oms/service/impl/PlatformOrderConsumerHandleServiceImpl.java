@@ -281,13 +281,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //计算sku尺寸
             buildProductSize(bomChildrenSkuDTOS);
         }
-        Map<String, Integer> skuQty = detailList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSkuId, SoB2cDetailEntity::getQty));
         List<String> keyList = new ArrayList<>();
         keyList.add(CalculateSizeEnum.LENGTH.getCode());
         keyList.add(CalculateSizeEnum.WIDTH.getCode());
         keyList.add(CalculateSizeEnum.HEIGHT.getCode());
         List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
         if (isCombination){
+            Map<String, Integer> skuQty = detailList.stream()
+                    .filter(e -> StringUtils.isNotEmpty(e.getSkuId())).distinct()
+                    .collect(Collectors.toMap(SoB2cDetailEntity::getSkuId, SoB2cDetailEntity::getQty,Integer::sum));
             List<String> finalParentSkuIds = parentSkuIds;
             //组合时 计算需要排除存在父sku数据
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
@@ -413,24 +415,25 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
                 bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
                 bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }
-            String[] xes = productSize.split("X");
-            if (xes.length > 2){
-                bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
-            }else if (xes.length > 1){
-                bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else if (xes.length > 0){
-                bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
             }else {
-                bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                String[] xes = productSize.split("X");
+                if (xes.length > 2){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
+                }else if (xes.length > 1){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }else if (xes.length > 0){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }else {
+                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }
             }
         });
     }

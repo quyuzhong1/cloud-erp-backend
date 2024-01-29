@@ -2731,6 +2731,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             skuVO.setLength(BigDecimal.ZERO);
             skuVO.setWidth(BigDecimal.ZERO);
             skuVO.setHeight(BigDecimal.ZERO);
+            return;
         }
         String productSize = skuVO.getProductSize();
         String[] xes = productSize.split("X");

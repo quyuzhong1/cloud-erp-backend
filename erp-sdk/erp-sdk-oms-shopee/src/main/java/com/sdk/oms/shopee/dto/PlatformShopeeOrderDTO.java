@@ -312,7 +312,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(item.getItemId()+item.getItemSku());
+        detailDTO.setSourceDetailId(item.getItemId()+"_"+item.getModelId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
