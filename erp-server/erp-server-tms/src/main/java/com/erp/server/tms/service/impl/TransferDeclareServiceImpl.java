@@ -34,6 +34,7 @@ import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
+import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
@@ -323,8 +324,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> upload(String id) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getById(id);
 
         //查询单据需要上传的订单（待上传，上传失败）状态的订单
@@ -410,18 +414,28 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
             //下单
             ApiResult<String> result = service.createOrder(orderReq, authEntity.getId());
-            if (StringUtils.isNotBlank(result.getData())) {
+
+            if (result.getCode() == 200) {
+                //拿到第三方订单号，用于给订单赋值第三方平台发货单号
+                TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO = new TransferDeclareDTO.ShippingOrderDTO();
+                shippingOrderDTO.setSoId(soB2cEntity.getId());
+                shippingOrderDTO.setShippingOrderNo(result.getData());
+                shippingOrderDTOList.add(shippingOrderDTO);
+
                 //上传成功
-                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode(), result.getData(), "");
                 resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传成功"));
                 continue;
             } else {
                 //上传失败
-                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode(), "", result.getMsg());
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传失败"));
                 continue;
             }
         }
+
+        //给订单赋值第三方平台发货单号
+        soB2cFeign.updateShippingOrderNo(shippingOrderDTOList);
 
         //如果上传数量等于成功数量，修改主单据上传状态为成功
         long count = resultDTOList.stream().filter(req -> req.getSuccess()).count();
@@ -486,17 +500,18 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
         List<String> ids = detailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
-
         List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).distinct().collect(Collectors.toList());
 
         //查询授权信息
         List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
-
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
             TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getMainId())).findFirst().orElse(null);
-
+            TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
+            ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getShippingOrderNo(), authEntity.getId());
+            if (result.getCode() == 200) {
+                transferDeclareDetailService.updateTransferStatus(detailEntity.getId(), result.getData().getOrderStatusEnum().getCode());
+            }
         }
-
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

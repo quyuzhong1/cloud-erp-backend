@@ -319,4 +319,14 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateTransferStatusBatch")
     Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status);
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateShippingOrderNo")
+    Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list);
 }

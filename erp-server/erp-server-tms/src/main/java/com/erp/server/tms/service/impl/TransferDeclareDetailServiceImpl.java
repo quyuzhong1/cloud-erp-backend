@@ -129,8 +129,21 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     }
 
     @Override
-    public Boolean updateOrderUploadStatus(String id, String status) {
-        return lambdaUpdate().set(TransferDeclareDetailEntity::getId, id).set(TransferDeclareDetailEntity::getOrderUploadStatus, status).update();
+    public Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason) {
+        return lambdaUpdate()
+                .set(TransferDeclareDetailEntity::getId, id)
+                .set(TransferDeclareDetailEntity::getOrderUploadStatus, status)
+                .set(TransferDeclareDetailEntity::getShippingOrderNo, shippingOrderNo)
+                .set(TransferDeclareDetailEntity::getFailureReason, failureReason)
+                .update();
+    }
+
+    @Override
+    public Boolean updateTransferStatus(String id, String transferStatus) {
+        return lambdaUpdate()
+                .set(TransferDeclareDetailEntity::getId, id)
+                .set(TransferDeclareDetailEntity::getTransferStatus, transferStatus)
+                .update();
     }
 
     @Override
