@@ -105,6 +105,15 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
     TransferLogisticsAuthEntity getByMainId(String id, String mainId);
 
     /**
+     * 根据供应商id 获取信息
+     * @Author Luo_WG
+     * @Date 2024/1/19 11:36
+     * @param mainIds
+     * @return com.erp.model.tms.entity.TransferLogisticsAuthEntity
+     **/
+    List<TransferLogisticsAuthEntity> listByMainIds(List<String> mainIds);
+
+    /**
      * 根据id获取授权信息
      * @Author Luo_WG
      * @Date 2024/1/19 11:37

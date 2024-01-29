@@ -484,6 +484,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void getOrderByCodeJob() {
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
+        List<String> ids = detailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).distinct().collect(Collectors.toList());
+
+        //查询授权信息
+        List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
+
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
 
         }

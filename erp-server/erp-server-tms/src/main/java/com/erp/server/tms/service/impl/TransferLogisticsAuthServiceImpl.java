@@ -144,6 +144,14 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     }
 
     @Override
+    public List<TransferLogisticsAuthEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(TransferLogisticsAuthEntity::getMainId, mainIds).list();
+    }
+
+    @Override
     public TransferLogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId) {
         return baseMapper.getAuthByChannelId(channelId);
     }
