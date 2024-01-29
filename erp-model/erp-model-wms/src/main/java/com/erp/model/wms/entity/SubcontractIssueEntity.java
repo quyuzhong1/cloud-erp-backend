@@ -61,6 +61,18 @@ public class SubcontractIssueEntity extends BaseEntity<SubcontractIssueEntity> {
     private String supplierName;
 
     /**
+     * 委外订单Id
+     */
+    @TableField("subcontract_order_id")
+    private String subcontractOrderId;
+
+    /**
+     * 委外订单编码
+     */
+    @TableField("subcontract_order_code")
+    private String subcontractOrderCode;
+
+    /**
     * 来源id
     */
     @TableField("source_id")

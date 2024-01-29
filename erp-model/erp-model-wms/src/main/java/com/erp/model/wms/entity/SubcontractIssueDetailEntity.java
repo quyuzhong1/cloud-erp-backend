@@ -85,6 +85,13 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 委外订单明细id
+     */
+    @TableField("subcontract_order_detail_id")
+    private String subcontractOrderDetailId;
+
     /**
     * 来源明细id
     */

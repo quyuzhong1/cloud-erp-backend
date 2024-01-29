@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -106,6 +107,11 @@ public class SubcontractIssueDetailDTO implements Serializable {
         private String remark;
 
         /**
+         * 委外订单明细id
+         */
+        private String subcontractOrderDetailId;
+
+        /**
         * 来源明细id
         */
         private String sourceDetailId;
@@ -173,6 +179,13 @@ public class SubcontractIssueDetailDTO implements Serializable {
         @NotBlank(message = "来源明细id不能为空")
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
+
+        /**
+         * 委外订单明细id
+         */
+        @NotBlank(message = "委外订单明细id不能为空")
+        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
+        private String subcontractOrderDetailId;
 
         /**
         * 仓位

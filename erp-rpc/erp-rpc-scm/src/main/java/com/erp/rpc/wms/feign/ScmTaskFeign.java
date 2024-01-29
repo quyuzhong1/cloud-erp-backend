@@ -323,6 +323,12 @@ public interface ScmTaskFeign {
     List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
 
     /**
+     * 根据ids查询子级委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listChildSubcontractDetailByIds")
+    List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(@RequestBody List<String> parentIdList);
+
+    /**
      * 根据主表id集合查询委外订单明细
      */
     @PostMapping("feign/subcontractOrder/listSubcontractDetailByMainIds")

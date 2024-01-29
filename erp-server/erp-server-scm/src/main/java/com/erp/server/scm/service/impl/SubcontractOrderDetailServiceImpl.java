@@ -159,6 +159,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
+    public List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(List<String> parentIdList) {
+        if (CollectionUtils.isEmpty(parentIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SubcontractOrderDetailEntity::getParentId,parentIdList).list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {

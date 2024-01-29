@@ -32,6 +32,7 @@
         si.id as id,
         sid.id as detailId,
         si.code,
+        si.subcontract_order_code as subcontractOrderCode,
         si.source_code as sourceCode,
         si.approve_status as approveStatus,
         si.invalid_status as invalidStatus,

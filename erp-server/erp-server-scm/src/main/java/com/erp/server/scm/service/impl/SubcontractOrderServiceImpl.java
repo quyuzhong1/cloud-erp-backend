@@ -424,8 +424,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
             autoGeneratePo(ids);
-            //自动生成委外发料单
-            autoGenerateSubcontractIssue(ids);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
@@ -1456,65 +1454,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         entity.setSubcontractOrgName(subcontractOrgName);
     }
 
-    /**
-     * @description: 自动生成委外发料单
-     * @author Will
-     * @date: 2024/1/12 12:27
-     * @param ids
-     */
-    private void autoGenerateSubcontractIssue (List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
-        //查询系统配置
-        CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.SUBCONTRACT_ISSUE.getCode());
-        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
-            return;
-        }
-        CfgSettingValueDTO.SubcontractIssueSettingDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
-        //不自动生成
-        if (CfgSettingCreateTypeEnum.NOT_AUTO_CREATE.getCode().equals(dto.getCreateType())) {
-            return;
-        }
-        //判断是否自动审核
-        Boolean isApprove = CfgSettingCreateTypeEnum.AUTO_CREATE_APPROVE.getCode().equals(dto.getCreateType()) ? Boolean.TRUE : Boolean.FALSE;
-        //委外明细信息
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainIds(ids);
 
-        for (String id : ids) {
-            //委外子级sku信息
-            List<SubcontractOrderDetailEntity> parentDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(id, obj.getMainId()) && StrUtil.isBlank(obj.getParentId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(parentDetailList)) {
-                throw new ServiceException(ApiError.ERROR_98072);
-            }
-            //根据父级SKU供应商分组
-            Map<String, List<SubcontractOrderDetailEntity>> map = parentDetailList.stream().collect(Collectors.groupingBy(SubcontractOrderDetailEntity::getSupplierId));
-            for (Map.Entry<String, List<SubcontractOrderDetailEntity>> entry : map.entrySet()) {
-                //相同供应商的父级SKU
-                List<SubcontractOrderDetailEntity> value = entry.getValue();
-                SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
-                addDTO.setSourceId(id);
-                addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
-                addDTO.setDate(LocalDate.now());
-                addDTO.setSupplierId(value.get(0).getSupplierId());
-                //查询子级SKU明细数据
-                List<String> parentIdList = value.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
-                List<SubcontractOrderDetailEntity> childDetailList = subcontractOrderDetailList.stream().filter(obj -> parentIdList.contains(obj.getParentId())).collect(Collectors.toList());
-                List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
-                for (SubcontractOrderDetailEntity detailEntity : childDetailList) {
-                    SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
-                    addDetailDTO.setSourceDetailId(detailEntity.getId());
-                    addDetailDTO.setIssueQty(detailEntity.getDeliveryQty());
-                    addDetailDTO.setWarehouseId(detailEntity.getWarehouseId());
-                    addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
-                    detailList.add(addDetailDTO);
-                }
-                addDTO.setDetailList(detailList);
-                //自动新增
-                SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
-                subcontractIssueFeign.add(autoAddDTO);
-            }
-        }
-    }
 
 }

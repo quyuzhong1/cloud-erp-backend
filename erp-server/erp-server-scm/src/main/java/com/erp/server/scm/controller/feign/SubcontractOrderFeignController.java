@@ -44,6 +44,21 @@ public class SubcontractOrderFeignController {
     }
 
     /**
+     * @description: 根据ids查询子级委外订单明细
+     * @author Will
+     * @date: 2024/1/29 10:15
+     * @param parentIdList
+     * @return List<SubcontractOrderDetailEntity> 
+     */
+    @PostMapping("/listChildSubcontractDetailByIds")
+    public List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(@RequestBody List<String> parentIdList) {
+        if (CollectionUtils.isEmpty(parentIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return subcontractOrderDetailService.listChildSubcontractDetailByIds(parentIdList);
+    }
+    
+    /**
      * 根据主表ids查询委外订单明细
      * @author Will
      * @date: 2024/1/10 10:58

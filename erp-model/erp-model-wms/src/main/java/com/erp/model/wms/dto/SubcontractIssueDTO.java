@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -95,6 +96,11 @@ public class SubcontractIssueDTO implements Serializable {
         * 委外发料单号【可排序】
         */
         private String code;
+
+        /**
+         * 委外订单号【可排序】
+         */
+        private String subcontractOrderCode;
 
         /**
          * 来源编码（委外订单号）【可排序】
@@ -257,9 +263,30 @@ public class SubcontractIssueDTO implements Serializable {
         private String typeName;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
         * 发料日期
         */
         private LocalDate date;
+
+        /**
+         * 委外订单Id
+         */
+        private String subcontractOrderId;
+
+        /**
+         * 委外订单编码
+         */
+        private String subcontractOrderCode;
+
 
         /**
         * 来源id
@@ -338,6 +365,18 @@ public class SubcontractIssueDTO implements Serializable {
         */
         @NotNull(message = "发料日期不能为空")
         private LocalDate date;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 委外订单Id
+         */
+        @NotBlank(message = "委外订单Id不能为空")
+        @Size(max = 19,message = "委外订单Id最大长度不能超过19位")
+        private String subcontractOrderId;
 
         /**
         * 来源id
