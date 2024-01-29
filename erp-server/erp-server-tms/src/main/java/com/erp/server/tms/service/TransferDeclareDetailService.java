@@ -61,4 +61,12 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return java.lang.Boolean
      **/
     Boolean updateOrderUploadStatus(String id, String status);
+
+    /**
+     * 查询待同步中转状态的订单
+     * @Author Luo_WG
+     * @Date 2024/1/29 9:28
+     * @return java.util.List<com.erp.model.tms.entity.TransferDeclareDetailEntity>
+     **/
+    List<TransferDeclareDetailEntity> listWaitSyncTransferStatus();
 }

@@ -72,6 +72,7 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     private String outstockStatus;
     /**
     * 中转状态 dict_basic：type=transferStatus
+     * enum :TransferLogisticsStatusEnum
     */
     @TableField("transfer_status")
     private String transferStatus;

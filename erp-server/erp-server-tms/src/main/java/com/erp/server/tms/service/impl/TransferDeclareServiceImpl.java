@@ -481,6 +481,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         return lambdaUpdate().set(TransferDeclareEntity::getId, id).set(TransferDeclareEntity::getUploadStatus, status).update();
     }
 
+    @Override
+    public void getOrderByCodeJob() {
+        List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
+        for (TransferDeclareDetailEntity detailEntity : detailEntities) {
+
+        }
+
+    }
+
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         if (ObjectUtil.isEmpty(data)) {
             return;

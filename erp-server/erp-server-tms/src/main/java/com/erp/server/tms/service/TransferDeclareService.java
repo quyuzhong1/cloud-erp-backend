@@ -186,4 +186,11 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      **/
     Boolean updateUploadStatus(String id, String status);
 
+    /**
+     * 查询平台报关订单信息
+     * @Author Luo_WG
+     * @Date 2024/1/29 9:14
+     * @return void
+     **/
+    void getOrderByCodeJob();
 }

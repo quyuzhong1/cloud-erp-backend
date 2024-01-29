@@ -14,6 +14,7 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
 import com.erp.server.tms.service.CommonService;
@@ -130,6 +131,13 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Override
     public Boolean updateOrderUploadStatus(String id, String status) {
         return lambdaUpdate().set(TransferDeclareDetailEntity::getId, id).set(TransferDeclareDetailEntity::getOrderUploadStatus, status).update();
+    }
+
+    @Override
+    public List<TransferDeclareDetailEntity> listWaitSyncTransferStatus() {
+        return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
     }
 
     /**
