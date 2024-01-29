@@ -191,19 +191,33 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<String> sourceIds = addDTOList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> billEntityList = this.listBySourceIds(sourceIds);
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
+            LogisticsBillEntity saveEntity = new LogisticsBillEntity();
+            BeanMapper.copy(addDTO, saveEntity);
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
-                logisticsBillDetailService.removeByMainIds(Arrays.asList(logisticsBillEntity.getId()));
-                LogisticsBillDTO.UpdateDTO updateDTO = new LogisticsBillDTO.UpdateDTO();
-                BeanMapper.copy(addDTO, updateDTO);
-                updateDTO.setId(logisticsBillEntity.getId());
-                this.update(updateDTO);
+                saveEntity.setId(logisticsBillEntity.getId());
+                this.saveOrUpdate(saveEntity);
             } else {
-                this.add(addDTO);
+                this.save(saveEntity);
+                //新增物流费用单
+                addLogisticsBillCost(saveEntity, addDTO.getCurrency());
             }
+
+            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
+            List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+            List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
+            for (LogisticsBillDetailDTO.AddDTO dto : detailList) {
+                LogisticsBillDetailEntity saveDetailEntity = new LogisticsBillDetailEntity();
+                saveDetailEntity.setMainId(saveEntity.getId());
+                saveDetailEntity.setTrackNo(dto.getTrackNo());
+                saveDetailEntity.setTrackStatus(dto.getTrackStatus() == null ? "" : dto.getTrackStatus());
+                detailEntityList.add(saveDetailEntity);
+            }
+            logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
         }
         return Boolean.TRUE;
     }
+
 
     @Override
     public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(List<String> sourceIdList) {
@@ -743,6 +757,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
+        addDTO.setChannelId(logisticsBillEntity.getChannelId());
         logisticsBillCostService.add(addDTO);
     }
 
