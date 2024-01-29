@@ -69,7 +69,7 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @author Jim
      * @date: 2024-01-19
      */
-    List<AmzReportScheduleEntity> listByParams(String subscribedStatus, String cancelStatus, String subscribedType, List<String> recordTypeList, List<String> shopIds, LocalDateTime minTime);
+    List<AmzReportScheduleEntity> listByParams(String subscribedStatus, String cancelStatus, List<String> subscribedTypeList, List<String> recordTypeList, List<String> shopIds, LocalDateTime minTime);
 
     /**
      * 更新时间
@@ -85,5 +85,5 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @author Jim
      * @date: 2024-01-25
      */
-    List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO);
+    List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO, List<String> subscribedTypeList);
 }

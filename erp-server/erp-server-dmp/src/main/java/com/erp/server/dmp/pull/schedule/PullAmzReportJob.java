@@ -50,9 +50,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -158,7 +156,8 @@ public class PullAmzReportJob {
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
         // 查询报告类型配置
-        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(ReportScheduleSubscribedTypeEnum.MANUAL.getCode());
+        List<String> subscribedTypeList = Collections.singletonList(ReportScheduleSubscribedTypeEnum.MANUAL.getCode());
+        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(subscribedTypeList);
         if (CollectionUtils.isEmpty(reportTypeConfigList)) {
             XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] amazonReportJob 任务结束,未找到需执行报告类型配置");
             return ReturnT.SUCCESS;
@@ -172,7 +171,7 @@ public class PullAmzReportJob {
             return ReturnT.SUCCESS;
         }
         // 任务基础参数
-        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
+        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO, subscribedTypeList);
         Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
 
         List<AmzReportScheduleEntity> scheduleEntityList = tuple.get(2);
@@ -216,7 +215,8 @@ public class PullAmzReportJob {
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
         // 查询报告类型配置
-        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(ReportScheduleSubscribedTypeEnum.QUERY.getCode());
+        List<String> subscribedTypeList = Collections.singletonList(ReportScheduleSubscribedTypeEnum.QUERY.getCode());
+        List<CfgAmzReportTypeEntity> reportTypeConfigList = cfgAmzReportTypeService.findActive(subscribedTypeList);
         if (CollectionUtils.isEmpty(reportTypeConfigList)) {
             XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] amazonCheckReportJob 任务结束,未找到需执行报告类型配置");
             return ReturnT.SUCCESS;
@@ -230,7 +230,7 @@ public class PullAmzReportJob {
             return ReturnT.SUCCESS;
         }
         // 任务基础参数
-        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO);
+        Tuple tuple = this.convertTuple(reportTypeConfigList, shopInfoEntityList, jobParamDTO, subscribedTypeList);
         Map<String, List<ShopInfoEntity>> taskGroupMap = tuple.get(3);
 
         List<AmzReportScheduleEntity> scheduleEntityList = tuple.get(2);
@@ -262,13 +262,13 @@ public class PullAmzReportJob {
         return ReturnT.SUCCESS;
     }
 
-    private Tuple convertTuple(List<CfgAmzReportTypeEntity> reportTypeConfigList, List<ShopInfoEntity> shopInfoEntityList, AmazonJobParamDTO.ReportJobDTO jobParamDTO) {
+    private Tuple convertTuple(List<CfgAmzReportTypeEntity> reportTypeConfigList, List<ShopInfoEntity> shopInfoEntityList, AmazonJobParamDTO.ReportJobDTO jobParamDTO, List<String> subscribedTypeList) {
         // 报告类型配置Map
         Map<String, CfgAmzReportTypeEntity> reportTypeMap = reportTypeConfigList.stream().collect(Collectors.toMap(CfgAmzReportTypeEntity::getReportType, Function.identity()));
         // 报告类型根据配置分组为Map
         Map<String, List<CfgAmzReportTypeEntity>> reportTypeConfigMap = reportTypeConfigList.stream().collect(Collectors.groupingBy(CfgAmzReportTypeEntity::getReportGroup));
         // 查询所有待请求的计划任务
-        List<AmzReportScheduleEntity> reportScheduleEntityList = amzReportScheduleService.findActionList(shopInfoEntityList, reportTypeConfigList, jobParamDTO);
+        List<AmzReportScheduleEntity> reportScheduleEntityList = amzReportScheduleService.findActionList(shopInfoEntityList, reportTypeConfigList, jobParamDTO, subscribedTypeList);
 
         String platform = PlatformDictEnum.AMAZON.getCode();
         // 根据groupId分组店铺

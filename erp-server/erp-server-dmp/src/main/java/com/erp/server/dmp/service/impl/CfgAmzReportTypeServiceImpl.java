@@ -29,10 +29,10 @@ import java.util.stream.Collectors;
 public class CfgAmzReportTypeServiceImpl extends SuperServiceImpl<CfgAmzReportTypeMapper, CfgAmzReportTypeEntity> implements CfgAmzReportTypeService {
 
     @Override
-    public List<CfgAmzReportTypeEntity> findActive(String subscribedType) {
+    public List<CfgAmzReportTypeEntity> findActive(List<String> subscribedTypeList) {
         return this.lambdaQuery()
                 .eq(CfgAmzReportTypeEntity::getDisabled, false)
-                .eq(StringUtils.isNotBlank(subscribedType), CfgAmzReportTypeEntity::getSubscribedType, subscribedType)
+                .in(!CollectionUtils.isEmpty(subscribedTypeList), CfgAmzReportTypeEntity::getSubscribedType, subscribedTypeList)
                 .list();
     }
 

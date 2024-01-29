@@ -23,7 +23,6 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
@@ -74,12 +73,12 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         Object sourceData = data.getSourceList().stream().findFirst().orElse(null);
         if (!(sourceData instanceof ReportListingCsvEntity)) {
-            throw new ServiceException("mongoDataList类型异常:error=" + genericDataList.getClass().toGenericString());
+            throw new ServiceException("sourceData类型异常:error=" + genericDataList.getClass().toGenericString());
         }
         List<ReportListingCsvEntity> sourceDataList = (List<ReportListingCsvEntity>) genericDataList;
         // 过滤异常数据
         sourceDataList = sourceDataList.stream()
-                .filter(e -> StringUtils.isNotBlank(e.getSellerSku()) && StringUtils.isNotBlank(e.getAsin1()))
+                .filter(e -> StringUtils.isNotBlank(e.getSellerSku()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(sourceDataList)){
             return Collections.emptyList();
@@ -87,7 +86,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         // 返回下载源数据
         return sourceDataList.stream()
-                .map(e -> SdkListingConverter.INSTANCE.mongoDtoToListingDto(e, data.getShopId(), data.getUpdateTime()))
+                .map(e -> SdkListingConverter.INSTANCE.sourceDtoToListingDto(e, data.getShopId(), data.getUpdateTime()))
                 .collect(Collectors.toList());
 
     }

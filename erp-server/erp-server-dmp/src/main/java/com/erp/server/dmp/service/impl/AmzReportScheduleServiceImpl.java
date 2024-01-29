@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,7 +119,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
     }
 
     @Override
-    public List<AmzReportScheduleEntity> listByParams(String subscribedStatus, String cancelStatus, String subscribedType, List<String> recordTypeList, List<String> shopIds, LocalDateTime minTime) {
+    public List<AmzReportScheduleEntity> listByParams(String subscribedStatus, String cancelStatus, List<String> subscribedTypeList, List<String> recordTypeList, List<String> shopIds, LocalDateTime minTime) {
         return this.lambdaQuery()
                 // 已订阅
                 .eq(AmzReportScheduleEntity::getAmzReportScheduleId, "")
@@ -127,7 +128,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 // 未取消
                 .eq(AmzReportScheduleEntity::getCancelStatus, cancelStatus)
                 // 手动类型
-                .eq(AmzReportScheduleEntity::getSubscribedType, subscribedType)
+                .in(AmzReportScheduleEntity::getSubscribedType, subscribedTypeList)
                 // 指定类型
                 .in(!CollectionUtils.isEmpty(recordTypeList), AmzReportScheduleEntity::getReportType, recordTypeList)
                 // 指定店铺
@@ -158,7 +159,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
     }
 
     @Override
-    public List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO) {
+    public List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO, List<String> subscribedTypeList) {
         List<String> shopIds =  shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
         // (任务参数优选)
         List<String> recordTypeList;
@@ -176,7 +177,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         return this.listByParams(
                 ReportScheduleSubscribedStatusEnum.ALREADY.getCode(),
                 ReportScheduleCancelStatusEnum.NONE.getCode(),
-                ReportScheduleSubscribedTypeEnum.MANUAL.getCode(),
+                subscribedTypeList,
                 recordTypeList,
                 shopIds,
                 minTime

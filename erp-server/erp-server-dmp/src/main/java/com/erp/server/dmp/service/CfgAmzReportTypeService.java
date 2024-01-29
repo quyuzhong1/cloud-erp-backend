@@ -26,7 +26,7 @@ public interface CfgAmzReportTypeService extends SuperService<CfgAmzReportTypeEn
      * @Author Jim
      * @since 2024-01-19
      **/
-    List<CfgAmzReportTypeEntity> findActive(String subscribedType);
+    List<CfgAmzReportTypeEntity> findActive(List<String> subscribedTypeList);
 
     /**
      * 查询有效报告类型配置map

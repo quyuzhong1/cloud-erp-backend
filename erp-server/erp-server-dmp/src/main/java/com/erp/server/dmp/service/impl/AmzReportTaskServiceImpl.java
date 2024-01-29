@@ -548,6 +548,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
         oldEntity.setStatus(statusEnum.getCode());
         oldEntity.setStatusDesc(statusEnum.getName());
+        if (AmzReportTaskStatusEnum.FINISH.equals(statusEnum)){
+            oldEntity.setErrorMsg("");
+        }
         if (null != reportCreatedTime) {
             oldEntity.setReportCreatedTime(reportCreatedTime);
         }

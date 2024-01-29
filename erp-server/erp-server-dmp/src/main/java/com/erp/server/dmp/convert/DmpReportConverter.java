@@ -126,5 +126,5 @@ public interface DmpReportConverter {
             @Mapping(target = "statusDesc", constant = "直接获取报表(第一步/第二步)"),
             @Mapping(target = "groupId", source= "groupId"),
     })
-    AmzReportTaskEntity initDirectQueryTask(AmzReportScheduleEntity entity, String reqDataStartTime, String reqDataEndTime, String groupId);
+    AmzReportTaskEntity initDirectQueryTask(AmzReportScheduleEntity entity, String groupId, String reqDataStartTime, String reqDataEndTime);
 }
