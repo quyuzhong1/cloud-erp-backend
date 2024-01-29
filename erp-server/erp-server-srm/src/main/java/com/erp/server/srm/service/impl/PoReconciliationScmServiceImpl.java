@@ -125,8 +125,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         PoReconciliationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单"));
         //待供方确认/待采方确认
-        if (PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(old.getStatus())
-                || PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(old.getStatus())) {
+        if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(old.getStatus())
+                && !PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_UPDATE);
         }
         //添加上传附件url
