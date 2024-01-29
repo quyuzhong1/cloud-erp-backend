@@ -709,4 +709,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result);
+
+
+    /**
+     * 检查产品是否备案
+     * @description
+     * @param id 销售订单id
+     * @return
+     * @date 2024-01-27 18:14
+     * @author Lambda
+     */
+    void checkProductRegistration(String id);
 }

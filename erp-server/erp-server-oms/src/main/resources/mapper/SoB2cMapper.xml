@@ -686,7 +686,7 @@
         INNER JOIN so_b2c_logistics sbl ON sbl.main_id = sb.id AND sbl.is_deleted = FALSE
         WHERE sb.is_deleted = FALSE
         AND sb.transfer_status = 'wait'
-        AND sb.package_status = 'already'
+        AND sb.package_status = 'not'
         AND sb.bill_status = 'waitShipped'
         <if test="channelIds !=null and channelIds.size >0">
             AND sbl.logistics_channel_id IN

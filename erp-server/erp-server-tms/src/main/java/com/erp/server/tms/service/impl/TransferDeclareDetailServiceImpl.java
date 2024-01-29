@@ -4,13 +4,17 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
 import com.erp.server.tms.service.CommonService;
@@ -19,11 +23,15 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,6 +86,23 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     public void update(TransferDeclareDTO.UpdateDTO updateDTO, String mainId) {
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = BeanMapper.copyList(updateDTO.getDetailList(), TransferDeclareDetailEntity.class);
 
+        //原明细数据
+        List<TransferDeclareDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
+            long count = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
+            }
+
+            List<TransferDeclareDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSoCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个订单【%s】", ModuleTypeEnum.TRANSFER_DECLARE.getCode(), pairList, "编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
         // 数据处理
         handleData(transferDeclareDetailEntities, mainId);
 
@@ -90,11 +115,30 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         }
     }
 
+    private List<String> getDeleteIds(List<TransferDeclareDetailDTO.UpdateDTO> newList, List<TransferDeclareDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(TransferDeclareDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(TransferDeclareDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
     @Override
     public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
         return baseMapper.viewDetailList(dto);
     }
 
+    @Override
+    public Boolean updateOrderUploadStatus(String id, String status) {
+        return lambdaUpdate().set(TransferDeclareDetailEntity::getId, id).set(TransferDeclareDetailEntity::getOrderUploadStatus, status).update();
+    }
+
+    @Override
+    public List<TransferDeclareDetailEntity> listWaitSyncTransferStatus() {
+        return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
+    }
 
     /**
      * 新增修改处理数据

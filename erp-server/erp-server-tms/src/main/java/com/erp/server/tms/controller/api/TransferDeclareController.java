@@ -200,6 +200,7 @@ public class TransferDeclareController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @PostMapping(value = "/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = transferDeclareService.delete(dto.getIds());
         return flag ? success() : failure();

@@ -175,4 +175,22 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return java.lang.Boolean
      **/
     Boolean checkExistTransferLogisticsSupplier(String supplierId);
+
+    /**
+     * 修改上传状态
+     * @Author Luo_WG
+     * @Date 2024/1/27 18:45
+     * @param id
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateUploadStatus(String id, String status);
+
+    /**
+     * 查询平台报关订单信息
+     * @Author Luo_WG
+     * @Date 2024/1/29 9:14
+     * @return void
+     **/
+    void getOrderByCodeJob();
 }

@@ -16,6 +16,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -23,6 +24,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
@@ -37,7 +39,9 @@ import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.*;
@@ -94,6 +98,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TransferLogisticsRegistry transferLogisticsRegistry;
     @Autowired
     private TransferLogisticsAuthService transferLogisticsAuthService;
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
+    @Autowired
+    private TransferDeclareProductService transferDeclareProductService;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -213,6 +223,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
         // 修改明细数据（包含增删改）
         transferDeclareDetailService.update(updateDTO, transferDeclareEntity.getId());
+
+        //如果明细全部上传成功，修改主单据上传状态为上传成功
+        List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(transferDeclareEntity.getId()));
+        long count = detailEntities.stream().filter(req -> !TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).count();
+        if (count == 0) {
+            this.updateUploadStatus(transferDeclareEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+        }
+
         // 记录主单操作日志
         log.info("编辑 开始记录中转报关单日志数据，单号：【{}】", transferDeclareEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), transferDeclareEntity.getCode(), "中转报关单");
@@ -319,10 +337,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询报关单包含的订单信息
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
+
         //订单物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+
         //订单客户信息
         List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
+
+        //店铺信息
+        List<String> shopIds = soB2cEntities.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
 
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
@@ -330,31 +354,44 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
 
-        //查询中转渠道
+        //查询物流渠道
         List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
-        List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByIds(logisticsChannelIds);
+        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
 
+        //拆分的订单产品信息
+        List<TransferDeclareProductEntity> transferDeclareProductEntities = transferDeclareProductService.listByDeclareIds(Arrays.asList(id));
+
+        //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             if (Objects.isNull(service)){
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
                 continue;
             }
+            //订单信息
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getId())).findFirst().orElse(new SoB2cEntity());
 
+            //订单买家信息
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cReceiverEntity());
 
             //订单物流信息
             SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
 
-            //中转渠道信息
-            TransferLogisticsChannelEntity transferLogisticsChannelEntity = channelEntityList.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new TransferLogisticsChannelEntity());
+            //物流渠道信息
+            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new LogisticsChannelEntity());
 
+            //店铺信息
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
 
+            //组装SDK需要的下单详情信息
+            List<TransferDeclareProductEntity> declareProductEntityList = transferDeclareProductEntities.stream().filter(req -> transferDeclareDetailEntity.getId().equals(req.getDeclareDetailId())).collect(Collectors.toList());
+            List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.declareProductEntityToCreateOrderReq(declareProductEntityList);
+
+            //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
                     .trackingNumber(logisticsEntity.getCode())
                     .country(soB2cReceiverEntity.getCountry())
-                    .shippingCode(transferLogisticsChannelEntity.getCode())
+                    .shippingCode(logisticsChannelEntity.getCode())
                     .name(soB2cReceiverEntity.getReceiverName())
                     .referenceNo(soB2cEntity.getPlatformCode())
                     .deliveryAddress(soB2cReceiverEntity.getFullAddress())
@@ -364,18 +401,37 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .postcode(soB2cReceiverEntity.getPostCode())
                     .phone(soB2cReceiverEntity.getTelNumber())
                     .orderStatus("2")
-                    .iossNo("")
+                    .iossNo(logisticsChannelEntity.getIsIossPrepay() ? shopInfoEntity.getIossTaxNo() : "")
                     .serialNo(soB2cEntity.getCode())
                     .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-                    .buyInsurance(1)
+                    .buyInsurance(logisticsChannelEntity.getIsApiInsurance() ? 1 : 0)
+                    .productDetailList(productDetails)
                     .build();
 
-
-
-            service.createOrder(orderReq, authEntity.getId());
+            //下单
+            ApiResult<String> result = service.createOrder(orderReq, authEntity.getId());
+            if (StringUtils.isNotBlank(result.getData())) {
+                //上传成功
+                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传成功"));
+                continue;
+            } else {
+                //上传失败
+                transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传失败"));
+                continue;
+            }
         }
 
-        return null;
+        //如果上传数量等于成功数量，修改主单据上传状态为成功
+        long count = resultDTOList.stream().filter(req -> req.getSuccess()).count();
+        if (transferDeclareDetailList.size() == count) {
+            this.updateUploadStatus(id, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        } else {
+            this.updateUploadStatus(id, TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode());
+        }
+
+        return resultDTOList;
     }
 
     @Override
@@ -418,6 +474,28 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             return Boolean.TRUE;
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean updateUploadStatus(String id, String status) {
+        return lambdaUpdate().set(TransferDeclareEntity::getId, id).set(TransferDeclareEntity::getUploadStatus, status).update();
+    }
+
+    @Override
+    public void getOrderByCodeJob() {
+        List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
+        List<String> ids = detailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).distinct().collect(Collectors.toList());
+
+        //查询授权信息
+        List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
+
+        for (TransferDeclareDetailEntity detailEntity : detailEntities) {
+
+        }
+
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
@@ -503,20 +581,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
-
-
         //发货物流商名称
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());
-        transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
+            transferDeclareEntity.setDeliveryLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());
-        transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsSupplierEntity)) {
+            transferDeclareEntity.setTransferLogisticsSupplierName(transferLogisticsSupplierEntity.getSupplierName());
+        }
         //中转物流渠道名称
         TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
-        transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
-
+        if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
+            transferDeclareEntity.setTransferChannelName(transferLogisticsChannelEntity.getName());
+        }
 
     }
 }

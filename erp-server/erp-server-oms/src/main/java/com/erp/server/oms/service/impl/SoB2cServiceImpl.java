@@ -411,8 +411,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
             if (Objects.nonNull(forecastStatus)) {
+                //中转状态
+                String transferStatus = forecastStatus.getTransferStatus();
+                //表示要中转
+                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
+                    List<String> skuIdList = updateDTO.getDetailList().stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+                    //检查是否备案
+                    checkIsSkuRegistration(skuIdList, forecastStatus.getDeclarePlatform());
+                }
                 soB2cEntity.setPackageStatus(forecastStatus.getPackageStatus());
-                soB2cEntity.setTransferStatus(forecastStatus.getTransferStatus());
+                soB2cEntity.setTransferStatus(transferStatus);
             }
         }
 
@@ -771,6 +779,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
         //存在的物流单 code
         String code = soB2cLogisticsEntity.getCode();
+        //订单明细数据
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
         /**
          * 是否覆盖
          * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
@@ -782,8 +795,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatusDTO = forecastFeign.getByLogisticsChannelId(logisticsChannelId);
             if (Objects.nonNull(forecastStatusDTO)) {
+                String transferStatus = forecastStatusDTO.getTransferStatus();
+                //表示要中转
+                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
+                    List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+                    //检查是否备案
+                    checkIsSkuRegistration(skuIdList, forecastStatusDTO.getDeclarePlatform());
+                }
                 entity.setPackageStatus(forecastStatusDTO.getPackageStatus());
-                entity.setTransferStatus(forecastStatusDTO.getTransferStatus());
+                entity.setTransferStatus(transferStatus);
             }
             if (Boolean.TRUE.equals(isCover)) {
                 //如果有物流单号 就要去取消
@@ -825,11 +845,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(), isCover);
         }
 
-        //订单明细数据
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
-        if (CollectionUtils.isEmpty(soB2cDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-        }
+
         //无仓库明细
         List<SoB2cDetailEntity> notWarehouseList = soB2cDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).collect(Collectors.toList());
 
@@ -4837,6 +4853,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH.msg, orderDesc, logisticsDesc));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+    }
+
+    /**
+     * 检查销售订单产品是否需要备案 且已备案
+     * @param id 销售订单id
+     */
+    @Override
+    public void checkProductRegistration(String id) {
+        SoB2cLogisticsEntity logistics = soB2cLogisticsService.getByMainId(id);
+        if (Objects.nonNull(logistics)) {
+
+        }
+
     }
 
     /**

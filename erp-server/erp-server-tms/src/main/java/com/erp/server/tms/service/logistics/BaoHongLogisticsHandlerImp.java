@@ -1,38 +1,30 @@
 package com.erp.server.tms.service.logistics;
 
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.tms.aliexpress.api.IopClient;
-import com.erp.tms.aliexpress.api.IopClientImpl;
-import com.erp.tms.aliexpress.api.IopRequest;
-import com.erp.tms.aliexpress.api.IopResponse;
-import com.erp.tms.aliexpress.constants.PathConstants;
-import com.erp.tms.aliexpress.domain.Protocol;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
-import com.erp.tms.aliexpress.util.ApiException;
-import io.seata.common.util.StringUtils;
+import com.sdk.tms.baohong.api.order.SmRow;
+import com.sdk.tms.baohong.dto.response.BaoHongResponse;
+import com.sdk.tms.baohong.service.BaoHongService;
+import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +33,9 @@ import java.util.stream.Collectors;
 public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private BaoHongService baoHongService;
 
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
@@ -111,8 +106,21 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
-        return super.getLabelList(logisticsQueryVO);
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVOList) throws IOException {
+        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+        for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
+            BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
+            if(isFailure(response)){
+                return failure(response.getMessage());
+            }
+            LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
+            logisticsPrintLabelResponse.setBase64(response.getData());
+            logisticsPrintLabelResponse.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+            logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
+            logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
+            resultList.add(logisticsPrintLabelResponse);
+        }
+        return success(resultList);
     }
 
     @Override
@@ -127,21 +135,21 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult authorization(Map<String, String> authMap) {
-        return super.authorization(authMap);
+        try {
+            TransferLogisticsContext.setAuthMap(authMap);
+
+            BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
+            if (isFailure(response)) {
+                return failure("授权失败:" + response.getMessage());
+            } else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        } finally {
+            TransferLogisticsContext.remove();
+        }
     }
-
-/*    public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
-        Map<String, Object> authObjMap = authMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        ThirdWarehouseContext.setAuthMap(authObjMap);
-
-        IopClient client = new IopClientImpl(url, appKey, appSecret);
-        IopRequest request = new IopRequest();
-        request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
-        request.addApiParameter("simplify", "true");
-        IopResponse response = client.execute(request, token, Protocol.TOP);
-        return JSONObject.parseObject(response.getBody(), ChannelResult.class);
-    }*/
 
     @Override
     public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
@@ -151,5 +159,9 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.BAO_HONG;
+    }
+
+    private boolean isFailure(BaoHongResponse<?> response){
+        return response.getAsk().equals("0");
     }
 }

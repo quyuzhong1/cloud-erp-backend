@@ -125,4 +125,13 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
      */
     List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth();
 
+    /**
+     * 获取授权信息列表
+     * @description
+     * @param transferSupplierIdList
+     * @return
+     * @date 2024-01-29 9:25
+     * @author Lambda
+     */
+    List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(List<String> transferSupplierIdList);
 }

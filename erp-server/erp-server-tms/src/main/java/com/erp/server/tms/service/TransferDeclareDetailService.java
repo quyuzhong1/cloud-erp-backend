@@ -1,10 +1,8 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 
 import java.util.List;
 
@@ -53,4 +51,22 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>
      **/
     List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto);
+
+    /**
+     * 修改订单上传状态
+     * @Author Luo_WG
+     * @Date 2024/1/27 18:45
+     * @param id
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateOrderUploadStatus(String id, String status);
+
+    /**
+     * 查询待同步中转状态的订单
+     * @Author Luo_WG
+     * @Date 2024/1/29 9:28
+     * @return java.util.List<com.erp.model.tms.entity.TransferDeclareDetailEntity>
+     **/
+    List<TransferDeclareDetailEntity> listWaitSyncTransferStatus();
 }

@@ -172,6 +172,11 @@ public class TransferDeclareDTO implements Serializable {
         @Size(max = 19,message = "中转渠道id最大长度不能超过19位")
         private String transferChannelId;
 
+        /**
+        * 预计报关日期
+        */
+        private LocalDate planTransferDate;
+
     }
 
     /**
