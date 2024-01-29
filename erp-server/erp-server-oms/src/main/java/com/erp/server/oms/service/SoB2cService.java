@@ -705,10 +705,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 校验尺寸
      * @param id
      * @param dto
-     * @param result
      * @return
      */
-    BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result);
+    BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
 
     /**

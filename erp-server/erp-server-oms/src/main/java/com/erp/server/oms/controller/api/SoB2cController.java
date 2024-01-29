@@ -459,8 +459,14 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> sizeDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
+            BatchResultDTO sizeResult;
             try {
                 result = soB2cService.checkBasicLogistics(id, dto);
+                //长宽高校验
+                sizeResult = soB2cService.checkLength(id, dto);
+                if (!sizeResult.getSuccess()){
+                    sizeDTOS.add(sizeResult);
+                }
             } catch (Exception e) {
                 log.error("B2C销售订单校验物流尺寸失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -471,11 +477,7 @@ public class SoB2cController extends BaseController {
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
-            if (result.getSuccess()){
-                //长宽高校验
-                result = soB2cService.checkLength(id, dto,result);
-                sizeDTOS.add(result);
-            }
+
             resultDTOS.add(result);
         }
         if (CollectionUtils.isNotEmpty(sizeDTOS)){

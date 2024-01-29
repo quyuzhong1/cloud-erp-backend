@@ -14,6 +14,7 @@ import com.sdk.oms.shopee.dto.order.response.RecipientAddress;
 import com.sdk.oms.shopee.dto.product.response.ImageInfo;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
 import io.seata.common.util.CollectionUtils;
+import io.seata.common.util.StringUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -280,7 +281,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         detailDTO.setSkuNo("");
 
         // 平台sku编号
-        detailDTO.setPlatformSkuNo(item.getItemSku());
+        detailDTO.setPlatformSkuNo(StringUtils.isNotEmpty(item.getItemSku()) ? item.getItemSku() : item.getModelSku());
 
         // 平台产品id
         detailDTO.setPlatformSpuNo(item.getItemId().toString());
@@ -311,7 +312,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(String.valueOf(item.getItemId()));
+        detailDTO.setSourceDetailId(item.getItemId()+item.getItemSku());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id

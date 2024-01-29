@@ -920,7 +920,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "基础信息校验成功");
     }
 
     @Override
@@ -3905,7 +3905,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal itemCost = soB2cDetailList.stream().map(obj -> MathUtil.multiply(obj.getTaxCost(), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //商品金额
-        BigDecimal totalAmount = soB2cDetailList.stream().map(SoB2cDetailEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAmount = soB2cDetailList.stream().map(SoB2cDetailEntity::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //判断是否是人民币
         if (ObjectUtils.isNotEmpty(dto.getIsCny()) && dto.getIsCny()) {
@@ -4803,10 +4803,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result) {
-        if (!result.getSuccess()){
-            return result;
-        }
+    public BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         //物流信息
@@ -4850,7 +4847,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
             String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
             String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH.msg, orderDesc, logisticsDesc));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("产品尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
     }
