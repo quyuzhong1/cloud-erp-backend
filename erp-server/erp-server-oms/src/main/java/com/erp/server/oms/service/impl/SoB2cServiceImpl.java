@@ -4747,13 +4747,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto) {
-        return null;
+    public PagingVO<PackageDTO.PagingViewDTO> packagePing(PagingDTO<PackageDTO.PagingParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<PackageDTO.PagingViewDTO> pageData = this.baseMapper.packagePing(query, dto.getParams());
+        List<PackageDTO.PagingViewDTO> list = pageData.getRecords();
+        List<String> logisticsChannelIdList=list.stream().map(PackageDTO.PagingViewDTO::getLogisticsChannelId).collect(Collectors.toList());
+        List<LogisticsChannelDTO.BaseDTO> baseList= CollectionUtils.isNotEmpty(logisticsChannelIdList) ? logisticsFeign.listChannelInfoById(logisticsChannelIdList) : Collections.emptyList();
+        for(PackageDTO.PagingViewDTO item:list){
+            String logisticsChannelId = item.getLogisticsChannelId();
+            LogisticsChannelDTO.BaseDTO base = baseList.stream().filter(b -> b.getId().equals(logisticsChannelId)).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(base)) {
+                item.setLogisticsChannelName(base.getName());
+                item.setLogisticsSupplierId(base.getLogisticsSupplierId());
+                item.setLogisticsSupplierName(base.getLogisticsSupplierName());
+            }
+        }
+
+        return new PagingVO(pageData);
     }
 
     @Override
     public BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result) {
-        if (!result.getSuccess()){
+        if (!result.getSuccess()) {
             return result;
         }
         //B2C销售订单主表信息
@@ -4817,6 +4833,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        if (StringUtils.isBlank(logisticsChannelId)) {
+            SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
+            logisticsChannelId = Objects.nonNull(soB2cLogistics) ? soB2cLogistics.getLogisticsChannelId() : "";
+        }
         //渠道名称
         String logisticsChannelName = "";
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
@@ -4825,20 +4845,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         /**
          * 获取到对应的skuNo List  TODO 等接口
          */
-        String packageStatus=PackageStatusEnum.WAIT.getCode();
-        String transferStatus=TransferStatusEnum.WAIT.getCode();
+        String packageStatus = PackageStatusEnum.NOT.getCode();
+        String transferStatus = TransferStatusEnum.NOT.getCode();
         List<String> skuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId, soB2cEntity.getCreateTime());
             if (Objects.nonNull(forecastStatus)) {
                 logisticsChannelName = forecastStatus.getLogisticsChannelName();
                 //中转状态
-                 transferStatus = forecastStatus.getTransferStatus();
-                 packageStatus = forecastStatus.getPackageStatus();
+                transferStatus = forecastStatus.getTransferStatus();
+                packageStatus = forecastStatus.getPackageStatus();
                 //表示要中转
                 if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
                     //检查是否备案
-                    notRegistrationSkuNoList= listNotSkuRegistration(skuNoList, forecastStatus.getDeclarePlatform());
+                    notRegistrationSkuNoList = listNotSkuRegistration(skuNoList, forecastStatus.getDeclarePlatform());
                 }
             }
         }
@@ -4849,41 +4869,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultDTO;
     }
 
-        /**
-         * 查询店铺权限设置
-         */
-        private SoB2cDTO.ShopAuthResultDTO handleShopSysUserAuth () {
-            SoB2cDTO.ShopAuthResultDTO resultDTO = new SoB2cDTO.ShopAuthResultDTO();
-            LoginUser userInfo = commonService.getUserInfo();
-            if (ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())) {
-                return null;
-            }
-            List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(list)) {
-                return null;
-            }
-            resultDTO.setUserId(userInfo.getUid());
-            resultDTO.setAuthType(list.get(0).getAuthType());
-            return resultDTO;
+    /**
+     * 查询店铺权限设置
+     */
+    private SoB2cDTO.ShopAuthResultDTO handleShopSysUserAuth() {
+        SoB2cDTO.ShopAuthResultDTO resultDTO = new SoB2cDTO.ShopAuthResultDTO();
+        LoginUser userInfo = commonService.getUserInfo();
+        if (ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())) {
+            return null;
         }
-
-        /**
-         * 同步订单到DMP
-         */
-    private void syncOrderToDmp(String id) {
-            SoB2cDTO.ViewDTO view = this.view(id);
-            //添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(view.getId());
-            taskFeignDTO.setSourceCode(view.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_SO_B2C_ORDER_TO_DMP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.SO_B2C_TO_DMP_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(view));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
-            taskFeignDTO.setSyncOperate(view.getApproveStatus().getCode());
-            dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(list)) {
+            return null;
         }
-
+        resultDTO.setUserId(userInfo.getUid());
+        resultDTO.setAuthType(list.get(0).getAuthType());
+        return resultDTO;
     }
+
+    /**
+     * 同步订单到DMP
+     */
+    private void syncOrderToDmp(String id) {
+        SoB2cDTO.ViewDTO view = this.view(id);
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(view.getId());
+        taskFeignDTO.setSourceCode(view.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_SO_B2C_ORDER_TO_DMP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.SO_B2C_TO_DMP_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(view));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc());
+        taskFeignDTO.setSyncOperate(view.getApproveStatus().getCode());
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
+
+}

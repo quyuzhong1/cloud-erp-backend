@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -91,6 +92,11 @@ public class PackageDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO{
+
+        /**
+         * 单据状态
+         */
+        private List<String> billStatusList;
 
     }
 

@@ -700,7 +700,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-01-26 18:40
      * @author Lambda
      */
-    PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto);
+    PagingVO<PackageDTO.PagingViewDTO> packagePing(PagingDTO<PackageDTO.PagingParamDTO> dto);
 
     /**
      * 校验尺寸
