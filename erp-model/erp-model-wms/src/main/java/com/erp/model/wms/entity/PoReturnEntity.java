@@ -227,7 +227,7 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     /**
      * 退货确认日期
      */
-    @TableField("confirm_date")
+    @TableField(value = "confirm_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate confirmDate;
 
     public static final String APPROVE_STATUS = "approve_status";

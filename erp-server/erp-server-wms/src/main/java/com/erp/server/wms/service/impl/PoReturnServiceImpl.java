@@ -659,6 +659,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
                     .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
                     .set(PoReturnEntity::getConfirmStatus, confirmStatus)
+                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
                     .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
                     .in(PoReturnEntity::getId, ids)
                     .update();
@@ -816,6 +817,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .set(PoReturnEntity::getApproveUserName, "")
                 .set(PoReturnEntity::getApproveTime, null)
                 .set(PoReturnEntity::getConfirmStatus, confirmStatus)
+                .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
                 .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
                 .in(PoReturnEntity::getId, ids)
                 .update();
