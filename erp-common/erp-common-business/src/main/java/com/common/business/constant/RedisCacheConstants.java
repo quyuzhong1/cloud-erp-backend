@@ -110,9 +110,15 @@ public interface RedisCacheConstants {
     String AMZ_REPORT_HANDLE_PREFIX = "amz_report_handle:{}:{}";
 
     /**
-     * 亚马逊报告同类型处理中:amzReportTaskId:status
+     * 亚马逊创建报告缓存响应信息:amz_report_result:taskId:status
      */
     String AMZ_REPORT_RESULT_PREFIX = "amz_report_result:{}:{}";
+
+
+    /**
+     * 亚马逊报告缓存结果:amz_report_info:taskId:status
+     */
+    String AMZ_REPORT_INFO_PREFIX = "amz_report_info:{}:{}";
 
     /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型

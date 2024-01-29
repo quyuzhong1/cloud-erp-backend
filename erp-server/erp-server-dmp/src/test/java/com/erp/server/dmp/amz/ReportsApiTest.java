@@ -338,27 +338,31 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportsTest() throws Exception {
-        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_ALL_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
         List<String> processingStatuses = null;
-//        List<String> marketplaceIds = null;
-        Integer pageSize = 20;
+//        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
+        ;
+        Integer pageSize = 100;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
-        String shopId = "1735479610549735425";
+//        String shopId = "1734464159535337474";
+//        String shopId = "1734478618723094529";
+        String shopId = "1734478618731483137";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
+        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");

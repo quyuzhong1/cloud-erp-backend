@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
@@ -29,11 +28,6 @@ import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -53,7 +47,6 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
-import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
@@ -71,10 +64,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -502,6 +493,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Report queryAmzReportInfo(AmzReportTaskEntity taskEntity) {
+        // 从缓存获取(已完成或结束删除)
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
+        Object reportObj = redisUtil.get(key);
+        if (null != reportObj){
+            return JSONUtil.toBean(reportObj.toString(), Report.class);
+        }
         // 店铺信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(taskEntity.getShopId());
         // 市场信息
@@ -523,6 +520,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
+        // 设置到缓存(已完成或结束删除)
+        redisUtil.set(key, JSONUtil.toJsonStr(report));
+
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportWithHttpInfo);
         return report;
@@ -531,6 +531,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Report directQueryAmzReportInfo(AmzReportTaskEntity taskEntity) {
+        // 从缓存获取(已完成或结束删除)
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
+        Object reportObj = redisUtil.get(key);
+        if (null != reportObj){
+            return JSONUtil.toBean(reportObj.toString(), Report.class);
+        }
         // 店铺信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(taskEntity.getShopId());
         // 市场信息
@@ -554,13 +560,15 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             String createdUntil = null;
             String nextToken = null;
             List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
-            ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-            reportsWithHttpInfo = api.getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
+            reportsWithHttpInfo = reportsApi.getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
             ReportList reportList = reportsWithHttpInfo.getData().getReports();
             report = reportList.stream().findFirst().orElse(null);
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
+        // 设置到缓存(已完成或结束删除)
+        redisUtil.set(key, JSONUtil.toJsonStr(report));
+
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportsWithHttpInfo);
         return report;

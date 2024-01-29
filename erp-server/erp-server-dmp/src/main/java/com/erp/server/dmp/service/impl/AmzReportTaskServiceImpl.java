@@ -318,6 +318,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     e.setStatus(AmzReportTaskStatusEnum.STOP.getCode());
                     e.setStatusDesc(AmzReportTaskStatusEnum.STOP.getName());
                     e.setErrorMsg("新任务丢弃之前未完成或未终止任务");
+                    this.checkAndDelHistory(e);
                 });
                 if (!this.updateBatchById(historyList)) {
                     throw new ServiceException("批量更新历史任务失败");
@@ -443,11 +444,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 .businessHandler(newEntity, reportInfo, jsonArray);
 
         // 检查缓存是否已删除
-        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.CREATED.getCode());
-        Object reportIdObj = redisUtil.get(key);
-        if (null != reportIdObj) {
-            redisUtil.del(key);
-        }
+        this.checkAndDelHistory(newEntity);
     }
 
 
@@ -684,6 +681,27 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 reportTypeConfig.getDirectQueryDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送报告直接查询MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndDelHistory(AmzReportTaskEntity entity) {
+        // 检查缓存是否已删除
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.CREATED.getCode());
+        Object reportIdObj = redisUtil.get(key);
+        if (null != reportIdObj) {
+            redisUtil.del(key);
+        }
+        String queryKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.QUERY.getCode());
+        Object reportObj = redisUtil.get(queryKey);
+        if (null != reportObj) {
+            redisUtil.del(queryKey);
+        }
+        String directQueryKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, entity.getId(), AmzReportTaskStatusEnum.DIRECT_QUERY.getCode());
+        Object newReportObj = redisUtil.get(queryKey);
+        if (null != newReportObj) {
+            redisUtil.del(directQueryKey);
         }
     }
 

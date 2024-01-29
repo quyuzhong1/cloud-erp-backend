@@ -142,4 +142,12 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-25
      */
     void checkTask(String reportRedissonKey, String groupId, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap);
+
+    /**
+     * 检查和移除缓存
+     *
+     * @author Jim
+     * @date: 2024-01-29
+     */
+    void checkAndDelHistory(AmzReportTaskEntity entity);
 }
