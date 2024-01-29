@@ -209,6 +209,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authEntity.getId());
         if (shippingMethodList.isSuccess()) {
             shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                logisticsSaleChannelEntity.setMainId(id);
                 transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
             });
             totalSize = shippingMethodList.getData().size();
