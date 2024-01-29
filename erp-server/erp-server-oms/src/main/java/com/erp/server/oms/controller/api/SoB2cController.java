@@ -15,6 +15,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -450,15 +451,16 @@ public class SoB2cController extends BaseController {
     /**
      * 校验物流尺寸
      * @param dto
-     * @return
+     * @return 拆分为基础信息校验和尺寸校验 其中基础信息失败即为失败 尺寸校验失败只做展示 仍为成功
      */
     @PostMapping("/checkLogisticsSize")
     public ApiResult<List<BatchResultDTO>> checkLogisticsSize(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<BatchResultDTO> sizeDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.checkLogisticsSize(id, dto);
+                result = soB2cService.checkBasicLogistics(id, dto);
             } catch (Exception e) {
                 log.error("B2C销售订单校验物流尺寸失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -469,9 +471,25 @@ public class SoB2cController extends BaseController {
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
+            if (result.getSuccess()){
+                //长宽高校验
+                result = soB2cService.checkLength(id, dto,result);
+                sizeDTOS.add(result);
+            }
             resultDTOS.add(result);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        if (CollectionUtils.isNotEmpty(sizeDTOS)){
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)){
+                resultDTOS.addAll(sizeDTOS);
+                return success(resultDTOS);
+            }else {
+                resultDTOS.addAll(sizeDTOS);
+                return failure(resultDTOS);
+            }
+        }else {
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }
+
     }
     /**
      * 订单配货保存（前端手动配货）

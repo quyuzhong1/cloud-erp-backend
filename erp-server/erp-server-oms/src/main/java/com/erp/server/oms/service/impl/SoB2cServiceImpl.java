@@ -866,7 +866,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public BatchResultDTO checkLogisticsSize(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+    public BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -904,38 +904,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
-        //长宽高校验
-        checkLength(soB2cLogisticsEntity, logisticsChannel);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸");
-    }
-
-    /**
-     * 根据数据进行校验长宽高
-     *
-     * @param soB2cLogisticsEntity
-     * @param logisticsChannel
-     */
-    private void checkLength(SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelEntity logisticsChannel) {
-        //默认为cm
-        BigDecimal maxLength = logisticsChannel.getMaxLength();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
-            maxLength = maxLength.multiply(BigDecimal.valueOf(100));
-        }
-        BigDecimal maxWidth = logisticsChannel.getMaxWidth();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
-            maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
-        }
-        BigDecimal maxHeight = logisticsChannel.getMaxHeight();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
-            maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
-        }
-        if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
-                soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
-                soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
-            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
-            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH, orderDesc, logisticsDesc);
-        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
     }
 
     @Override
@@ -4815,6 +4784,59 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto) {
         return null;
+    }
+
+    @Override
+    public BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result) {
+        if (!result.getSuccess()){
+            return result;
+        }
+        //B2C销售订单主表信息
+        SoB2cEntity entity = this.getById(id);
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+        //存在的物流渠道
+        String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
+        /**
+         * 是否覆盖
+         * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
+         * 否：新选择的物流渠道和仓库只添加到物流方式和仓库为空的订单，已存在物流方式和仓库的订单不做更改
+         */
+        Boolean isCover = dto.getIsCover();
+        String logisticsChannelId = dto.getLogisticsChannelId();
+        //选择了渠道则更新
+        if (StrUtil.isNotBlank(logisticsChannelId)) {
+            if (Boolean.TRUE.equals(isCover)) {
+                soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+            } else {
+                //当为空就覆盖
+                if (StringUtils.isBlank(existChannelId)) {
+                    soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
+                }
+            }
+        }
+        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+        //默认为cm
+        BigDecimal maxLength = logisticsChannel.getMaxLength();
+        if (logisticsChannel.getSizeUnit().equals("m")) {
+            maxLength = maxLength.multiply(BigDecimal.valueOf(100));
+        }
+        BigDecimal maxWidth = logisticsChannel.getMaxWidth();
+        if (logisticsChannel.getSizeUnit().equals("m")) {
+            maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
+        }
+        BigDecimal maxHeight = logisticsChannel.getMaxHeight();
+        if (logisticsChannel.getSizeUnit().equals("m")) {
+            maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
+        }
+        if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
+                soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
+                soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
+            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
+            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format(ApiError.ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH.msg, orderDesc, logisticsDesc));
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
     }
 
     /**

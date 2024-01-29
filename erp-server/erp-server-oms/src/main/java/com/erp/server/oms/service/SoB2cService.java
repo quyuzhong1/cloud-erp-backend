@@ -172,7 +172,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return
      */
-    BatchResultDTO checkLogisticsSize(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
+    BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
     /**
      * @description: 获取物流单号
      * @author Will
@@ -700,4 +700,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Lambda
      */
     PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto);
+
+    /**
+     * 校验尺寸
+     * @param id
+     * @param dto
+     * @param result
+     * @return
+     */
+    BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto, BatchResultDTO result);
 }
