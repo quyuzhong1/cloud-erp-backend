@@ -89,7 +89,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流授权单", logisticsAuthEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
 
-        return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
+        return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getName());
     }
 
     /**
@@ -233,7 +233,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
      * 新增修改处理数据
      */
     private void handleData(TransferLogisticsAuthEntity transferLogisticsAuthEntity) {
-        // TODO 验证数据 & 数据赋值
+        // 验证数据 & 数据赋值
         String mainId = transferLogisticsAuthEntity.getMainId();
         TransferLogisticsSupplierEntity logisticsSupplier = transferLogisticsSupplierService.getById(mainId);
         TransferLogisticsAuthEntity authEntity = this.getByMainId(transferLogisticsAuthEntity.getId(), mainId);
