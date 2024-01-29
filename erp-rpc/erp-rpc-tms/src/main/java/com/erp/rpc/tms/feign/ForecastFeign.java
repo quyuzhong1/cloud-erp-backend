@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -27,13 +28,13 @@ public interface ForecastFeign {
      * @return
      */
     @GetMapping("/feign/settingForecast/getByLogisticsChannelId")
-    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId);
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId, @RequestParam("orderTime")LocalDateTime orderTime);
 
     /**
      * 根据平台和sku no 获取到备案产品信息
      * @param dto
      * @return
      */
-    @PostMapping("/feign/productRegistration/getIsRegistrationByParam")
-    Boolean getIsRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
+    @PostMapping("/feign/productRegistration/listNotRegistrationByParam")
+    List<String> listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
 }

@@ -86,26 +86,22 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
 
     /**
-     * 查询是否备案
+     * 查询是否备案 获取未备案的skuNo
      *
      * @param dto
      * @return
      */
     @Override
-    public Boolean getIsRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto) {
+    public List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto) {
         String declarePlatform = dto.getDeclarePlatform();
         List<String> skuNoList = dto.getSkuNoList();
         List<ProductRegistrationEntity> dbList=this.lambdaQuery().
                 eq(ProductRegistrationEntity::getDeclarePlatform,declarePlatform).
                 in(ProductRegistrationEntity::getSkuNo,skuNoList).list();
-        if(CollectionUtils.isEmpty(dbList)){
-            return Boolean.FALSE;
-        }
+         //这个是查询到的
         List<String> dbSkuNoList = dbList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
-        if(dbSkuNoList.containsAll(skuNoList)){
-            return  Boolean.TRUE;
-        }
-        return Boolean.FALSE;
+
+        return skuNoList.stream().filter(s->!dbSkuNoList.contains(s)).collect(Collectors.toList());
     }
 
 
