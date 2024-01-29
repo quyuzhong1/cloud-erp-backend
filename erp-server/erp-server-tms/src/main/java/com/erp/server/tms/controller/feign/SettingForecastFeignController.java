@@ -39,7 +39,7 @@ public class SettingForecastFeignController {
      * @return 
      * @create 2024-01-19 17:48
      */
-    @GetMapping("getByLogisticsChannelId")
+    @GetMapping("/getByLogisticsChannelId")
     public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String logisticsChannelId, @RequestParam("orderTime") LocalDateTime orderTime) {
          return settingForecastService.getByLogisticsChannelId(logisticsChannelId,orderTime);
     }

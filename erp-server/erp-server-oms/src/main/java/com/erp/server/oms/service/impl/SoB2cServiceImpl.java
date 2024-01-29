@@ -4676,6 +4676,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>());
+                checkProductRegistrationAndUpdate(id,"");
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     this.getLogisticsCode(id, autoGetTrackNo);
@@ -4882,13 +4883,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Transactional(rollbackFor = Exception.class)
     public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus,Boolean isRegistration) {
-         this.lambdaUpdate().set(SoB2cEntity::getPackageStatus,packageStatus).
-                 set(SoB2cEntity::getTransferStatus,transferStatus).
-                 eq(SoB2cEntity::getId,soId).update(new SoB2cEntity());
+        if(isRegistration){
+            this.lambdaUpdate().set(SoB2cEntity::getPackageStatus,packageStatus).
+                    set(SoB2cEntity::getTransferStatus,transferStatus).
+                    eq(SoB2cEntity::getId,soId).update(new SoB2cEntity());
+        }
+
          //未备案清楚渠道
          if(!isRegistration){
            soB2cLogisticsService.lambdaUpdate().
                    set(SoB2cLogisticsEntity::getLogisticsChannelId,"").
+                   set(SoB2cLogisticsEntity::getLogisticsChannelName,"").
                    set(SoB2cLogisticsEntity::getCode,"").
                    set(SoB2cLogisticsEntity::getTrackNo,"").
                    eq(SoB2cLogisticsEntity::getMainId,soId).
