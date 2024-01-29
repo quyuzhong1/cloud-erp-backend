@@ -616,6 +616,11 @@ public class PurchaseReturnOrderDTO {
         private String returnOrderSourceName;
 
         /**
+         * 采购订单表id
+         */
+        private String purchaseOrderId;
+
+        /**
          * 采购订单详情表id
          */
         private String purchaseOrderDetailId;
@@ -659,6 +664,17 @@ public class PurchaseReturnOrderDTO {
          * 退货确认日期
          */
         private LocalDate confirmDate;
+
+        /**
+         * 签收人
+         */
+        private String receiveUserName;
+
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
+
     }
 
     /**

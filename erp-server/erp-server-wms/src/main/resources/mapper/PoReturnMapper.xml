@@ -32,6 +32,7 @@
         prod.remark,
         prod.warehouse_location AS warehouseLocation,
         pro.source_type AS sourceType,
+        pro.purchase_order_id AS purchaseOrderId,
         prod.purchase_order_detail_id AS purchaseOrderDetailId,
         pro.confirm_status AS confirmStatus,
         pro.unusual_type,

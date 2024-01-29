@@ -188,6 +188,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         //获取采购单详情的id集合
         List<String> detailId = records.stream().map(PurchaseReturnOrderDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //获取采购单的id集合
+        List<String> purchaseOrderIds = records.stream().map(PurchaseReturnOrderDTO.PagingViewDTO::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         records.stream().forEach(record->{
 
@@ -213,7 +215,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> warehouseIds = records.stream().map(req -> req.getReturnWarehouseId()).distinct().collect(Collectors.toList());
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        //查询签收信息
+        List<WarehouseReceiveEntity> warehouseReceiveEntities = warehouseReceiveService.listByPurchaseOrderIds(purchaseOrderIds);
+        if (CollectionUtils.isNotEmpty(warehouseReceiveEntities)) {
 
+        }
         records.forEach(obj -> {
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
@@ -227,6 +233,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getReturnWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            WarehouseReceiveEntity entity = warehouseReceiveEntities.stream().filter(req -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                obj.setReceiveUserName(entity.getReceiveUserName());
+                obj.setReceiveTime(entity.getBillDate().atStartOfDay());
+            }
         });
     }
 
