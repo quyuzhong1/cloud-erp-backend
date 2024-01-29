@@ -131,6 +131,7 @@ public interface BaoHongConverter {
     @Mappings({
             @Mapping(target = "cnName", source = "smNameCn"),
             @Mapping(target = "code", source = "smCode"),
+            @Mapping(target = "logisticsPlatform", constant = "BaoHong"),
     })
     LogisticsSaleChannelEntity channelConvert(SmRow data);
     List<LogisticsSaleChannelEntity> channelConvert(List<SmRow> data);
