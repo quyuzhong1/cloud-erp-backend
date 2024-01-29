@@ -34,6 +34,7 @@ import com.erp.server.tms.mapper.TransferLogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -270,6 +271,14 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     public List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth() {
 
         return baseMapper.listAllAuth();
+    }
+
+    @Override
+    public List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(List<String> transferSupplierIdList) {
+        if(CollectionUtils.isEmpty(transferSupplierIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listAuthByMainIds(transferSupplierIdList);
     }
 
 

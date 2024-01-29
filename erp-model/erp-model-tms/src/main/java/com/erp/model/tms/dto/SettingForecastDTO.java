@@ -67,6 +67,16 @@ public class SettingForecastDTO implements Serializable {
          */
         private LocalDateTime enableTransferTime;
 
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        /**
+         * 中转物流商名
+         */
+        private String transferLogisticsSupplierName;
+
     }
 
 
@@ -99,6 +109,12 @@ public class SettingForecastDTO implements Serializable {
          * 中转时间启用时间
          */
         private LocalDateTime enableTransferTime;
+
+        /**
+         * 中转物流商id
+         */
+        @NotBlank(message = "中转物流商不能为空")
+        private String transferLogisticsSupplierId;
 
     }
 

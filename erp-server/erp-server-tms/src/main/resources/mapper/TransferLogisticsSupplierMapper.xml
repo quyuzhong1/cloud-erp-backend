@@ -196,4 +196,27 @@
           ON tls.id = tla.main_id AND  tla.is_deleted=FALSE
         WHERE tls.is_deleted=FALSE
     </select>
+
+    <!--根据主表ids 获取授权信息-->
+    <select id="listAuthByMainIds" resultType="com.erp.model.tms.dto.TransferLogisticsSupplierDTO$AuthDTO">
+        SELECT
+            tls.id,
+            tla.id AS authId,
+            tla.main_id AS mainId,
+            tls.supplier_id,
+            tls.supplier_name,
+            tls.auth_status,
+            tls.disabled,
+            tla.logistics_platform
+        FROM transfer_logistics_supplier  tls
+        INNER JOIN transfer_logistics_auth tla
+        ON tls.id = tla.main_id AND  tla.is_deleted=FALSE
+        WHERE tls.is_deleted=FALSE
+        <if test="mainIdList!=null and mainIdList.size>0">
+            AND tls.id IN
+            <foreach collection="mainIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

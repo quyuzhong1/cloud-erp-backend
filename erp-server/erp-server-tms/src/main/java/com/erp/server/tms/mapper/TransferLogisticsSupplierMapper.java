@@ -61,4 +61,11 @@ public interface TransferLogisticsSupplierMapper extends BaseMapper<TransferLogi
      * @author Lambda
      */
     List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth();
+
+    /**
+     * 根据主表信息获取到授权信息
+     * @param transferSupplierIdList
+     * @return
+     */
+    List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(@Param("mainIdList") List<String> transferSupplierIdList);
 }
