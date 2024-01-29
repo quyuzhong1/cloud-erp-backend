@@ -719,7 +719,20 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-01-27 18:14
      * @author Lambda
      */
-    SettingForecastDTO.CheckRegistrationResultDTO checkProductRegistration(String id, String logisticsChannelId);
+    void checkProductRegistrationAndUpdate(String id, String logisticsChannelId);
+
+
+    /**
+     * 检查产品是否备案
+     * @description
+     * @param id 销售订单id
+     * @return
+     * @date 2024-01-27 18:14
+     * @author Lambda
+     */
+    SettingForecastDTO.CheckRegistrationResultDTO getCheckRegistrationResult(String id, String logisticsChannelId);
+
+
 
     /**
      * 修改订单的第三方物流单号

@@ -142,6 +142,11 @@ public class SettingForecastDTO implements Serializable {
          */
         private String declarePlatform;
 
+        /**
+         * 报关平台名
+         */
+        private String declarePlatformName;
+
 
         /**
          * 渠道名称
@@ -178,11 +183,22 @@ public class SettingForecastDTO implements Serializable {
          */
         private String logisticsChannelName;
 
+        /**
+         * 报关平台名
+         */
+        private String declarePlatform;
+
+        /**
+         * 报关平台名
+         */
+        private String declarePlatformName;
+
+
 
         /**
          * sku no
          */
-        private List<String> skuNoList;
+        private List<String> notRegistrationSkuNoList;
 
         /**
          * 组包状态
