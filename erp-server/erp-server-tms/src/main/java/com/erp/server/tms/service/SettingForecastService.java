@@ -6,6 +6,7 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.common.business.service.SuperService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -67,7 +68,7 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @return 
      * @create 2024-01-19 17:51
      */
-    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId);
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId, LocalDateTime orderTime);
 
     /**
      * 检查是否修改

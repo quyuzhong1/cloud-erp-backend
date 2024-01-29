@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 
 /**
  * @author Lambda
@@ -39,8 +40,8 @@ public class SettingForecastFeignController {
      * @create 2024-01-19 17:48
      */
     @GetMapping("getByLogisticsChannelId")
-    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String logisticsChannelId) {
-         return settingForecastService.getByLogisticsChannelId(logisticsChannelId);
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String logisticsChannelId, @RequestParam("orderTime") LocalDateTime orderTime) {
+         return settingForecastService.getByLogisticsChannelId(logisticsChannelId,orderTime);
     }
 
 

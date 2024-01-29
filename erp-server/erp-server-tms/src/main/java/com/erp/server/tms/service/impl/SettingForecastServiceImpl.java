@@ -99,14 +99,16 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     }
 
     @Override
-    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId) {
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId, LocalDateTime orderTime) {
         if (StringUtils.isBlank(logisticsChannelId)) {
             return null;
         }
         SettingForecastEntity entity = baseMapper.getByLogisticsChannelId(logisticsChannelId);
 
         if (Objects.nonNull(entity)) {
-            LocalDateTime now = LocalDateTime.now();
+            if (Objects.isNull(orderTime)) {
+                orderTime = LocalDateTime.now();
+            }
             SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
             String packageStatus = PackageStatusEnum.NOT.getCode();
             String transferStatus = TransferStatusEnum.NOT.getCode();
@@ -117,7 +119,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
                 if (Objects.isNull(enablePackageTime)) {
                     packageStatus = PackageStatusEnum.WAIT.getCode();
                 } else {
-                    if (now.compareTo(enablePackageTime) > 0) {
+                    if (orderTime.compareTo(enablePackageTime) > 0) {
                         packageStatus = PackageStatusEnum.WAIT.getCode();
                     }
                 }
@@ -129,7 +131,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
                 if (Objects.isNull(enableTransferTime)) {
                     transferStatus = TransferStatusEnum.WAIT.getCode();
                 } else {
-                    if (now.compareTo(enablePackageTime) > 0) {
+                    if (orderTime.compareTo(enablePackageTime) > 0) {
                         transferStatus = TransferStatusEnum.WAIT.getCode();
                     }
                 }
@@ -191,7 +193,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
 
-        List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList): Collections.emptyList();
+        List<TransferLogisticsSupplierDTO.AuthDTO> transferLogisticsSupplierList = CollectionUtils.isNotEmpty(transferSupplierIdList) ? transferLogisticsSupplierService.listAuthByMainIds(transferSupplierIdList) : Collections.emptyList();
         for (SettingForecastEntity item : list) {
             String logisticsSupplierId = item.getLogisticsSupplierId();
             String logisticsSupplierName = logisticsSupplierList.stream().filter(l -> l.getId().equals(logisticsSupplierId)).
@@ -206,9 +208,9 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             String authStatus = authDTO.getAuthStatus();
             String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
             String supplierName = authDTO.getSupplierName();
-            String declarePlatform=authDTO.getLogisticsPlatform();
+            String declarePlatform = authDTO.getLogisticsPlatform();
             if (!already.equals(authStatus) || StringUtils.isBlank(declarePlatform)) {
-                throw new ServiceException(supplierName+" 未授权，请重新授权");
+                throw new ServiceException(supplierName + " 未授权，请重新授权");
             }
             item.setTransferLogisticsSupplierName(supplierName);
             item.setDeclarePlatform(declarePlatform);
