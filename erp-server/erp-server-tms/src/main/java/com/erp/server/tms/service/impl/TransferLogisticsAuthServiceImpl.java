@@ -302,7 +302,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     }
 
     @Override
-    public void syncUpdateSaleChannel(String logisticsPlatform, String authId) {
+    public void syncUpdateSaleChannel(String logisticsPlatform, String authId, String mainId) {
         asyncService.asyncUpdateTransferLogisticsChannel(logisticsPlatform, authId);
     }
 

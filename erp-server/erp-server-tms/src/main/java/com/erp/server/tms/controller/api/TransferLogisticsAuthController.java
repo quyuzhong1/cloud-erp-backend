@@ -66,7 +66,7 @@ public class TransferLogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = transferLogisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id);
+                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id, dto.getMainId());
             } else {
                 transferLogisticsAuthService.removeById(id);
                 transferLogisticsAuthFieldService.removeByAuthId(id);

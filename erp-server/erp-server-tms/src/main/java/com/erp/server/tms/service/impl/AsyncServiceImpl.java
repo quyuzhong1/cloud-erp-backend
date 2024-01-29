@@ -59,11 +59,12 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("tmsTransferChannelExecutor")
     @Override
-    public void asyncUpdateTransferLogisticsChannel(String logisticsPlatform, String authId) {
+    public void asyncUpdateTransferLogisticsChannel(String logisticsPlatform, String authId, String mainId) {
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
         ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authId);
         if (shippingMethodList.isSuccess()) {
             shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                logisticsSaleChannelEntity.setMainId(mainId);
                 transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
             });
         } else {
