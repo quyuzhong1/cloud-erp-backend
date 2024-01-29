@@ -2,15 +2,11 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
@@ -25,7 +21,6 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -121,6 +116,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         try {
             if (Objects.nonNull(mainEntity)) {
+
+                //速卖通平台仓订单不走任何规则
+                if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && hasPlatformWarehouse) {
+                    return;
+                }
+
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
                 if (isShipped && hasPlatformWarehouse) {
@@ -161,6 +162,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String id = mainEntity.getId();
         //是否是平台仓订单 true 是
         Boolean isPlatformWarehouseOrder = mainEntity.hasPlatformWarehouseOrder();
+
         //付款状态
         String payStatus = mainEntity.getPayStatus();
         //已付款
