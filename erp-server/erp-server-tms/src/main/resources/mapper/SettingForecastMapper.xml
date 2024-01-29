@@ -43,7 +43,7 @@
     <select id="getByLogisticsChannelId" resultType="com.erp.model.tms.entity.SettingForecastEntity">
         select
           <include refid="Base_Column_List" />
-        from t_setting_forecast
+        from setting_forecast
         WHERE logistics_supplier_id=
         (SELECT main_id FROM logistics_channel WHERE id=#{logisticsChannelId} AND is_deleted=FALSE)
         AND is_deleted=FALSE  LIMIT 1
