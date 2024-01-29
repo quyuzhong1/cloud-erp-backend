@@ -12,53 +12,47 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
-import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
-import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -89,13 +83,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private LogisticsChannelService logisticsChannelService;
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO addDTO) {
         LogisticsBillCostEntity logisticsBillCostEntity = new LogisticsBillCostEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillCostEntity);
+
+        logisticsBillCostEntity.setTransportNo(addDTO.getTransportNo());
+        logisticsBillCostEntity.setChannelId(addDTO.getChannelId());
 
         // 数据处理
         handleData(logisticsBillCostEntity);
@@ -125,6 +121,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         logisticsBillCostEntity.setActualShippingCost(updateDTO.getActualShippingCost());
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
         logisticsBillCostEntity.setCurrency(StrUtil.isBlank(old.getCurrency()) ? updateDTO.getCurrency() : old.getCurrency());
+
+        //物流单
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
+        if (ObjectUtil.isEmpty(logisticsBillEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
+        }
+        logisticsBillCostEntity.setTransportNo(logisticsBillEntity.getTransportNo());
+        logisticsBillCostEntity.setChannelId(logisticsBillEntity.getChannelId());
+
         // 数据处理
         handleData(logisticsBillCostEntity);
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
@@ -317,13 +322,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 ? entity.getActualWeight() : entity.getVolumeWeight();
         entity.setBillingWeight(billingWeight);
 
-        //物流单
-        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
-        if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
-        }
-        entity.setTransportNo(logisticsBillEntity.getTransportNo());
-        entity.setChannelId(logisticsBillEntity.getChannelId());
         //默认kg
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
     }

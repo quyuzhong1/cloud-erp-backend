@@ -15,9 +15,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferLogisticsAuthDTO;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.service.TransferLogisticsAuthFieldService;
 import com.erp.server.tms.service.TransferLogisticsAuthService;
+import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ import java.util.List;
 @LogSystemModule("中转服务商授权表")
 @RequestMapping("/transferLogisticsAuth")
 public class TransferLogisticsAuthController extends BaseController {
+
+    @Autowired
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
     @Autowired
     private TransferLogisticsAuthService transferLogisticsAuthService;
@@ -61,7 +66,7 @@ public class TransferLogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = transferLogisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id);
+                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id, dto.getMainId());
             } else {
                 transferLogisticsAuthService.removeById(id);
                 transferLogisticsAuthFieldService.removeByAuthId(id);
@@ -107,7 +112,7 @@ public class TransferLogisticsAuthController extends BaseController {
             //先进行授权是否成功鉴权
             ApiResult apiResult = transferLogisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
             if (apiResult.isSuccess()) {
-                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id);
+                transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id, dto.getMainId());
             } else {
                 transferLogisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
                 return apiResult;
@@ -135,7 +140,8 @@ public class TransferLogisticsAuthController extends BaseController {
                 log.error("物流商取消授权失败{}", e);
                 TransferLogisticsAuthEntity entity = transferLogisticsAuthService.getByMainId("",id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "中转服务商不存在, 取消授权失败");
+                    TransferLogisticsSupplierEntity supplierEntity = transferLogisticsSupplierService.getById(id);
+                    cancelResult = BatchResultDTO.fail(id, supplierEntity.getSupplierName(), "中转服务商不存在, 取消授权失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }

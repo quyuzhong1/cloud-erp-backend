@@ -90,9 +90,10 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
      * @Date 2024/1/19 11:36
      * @param logisticsPlatform
      * @param authId
+     * @param mainId
      * @return void
      **/
-    void syncUpdateSaleChannel(String logisticsPlatform, String authId);
+    void syncUpdateSaleChannel(String logisticsPlatform, String authId, String mainId);
 
     /**
      * 根据供应商id 获取信息

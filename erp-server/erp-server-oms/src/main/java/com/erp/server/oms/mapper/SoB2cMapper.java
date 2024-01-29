@@ -125,4 +125,12 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
       * @author Lambda
       */
     PackageDTO.ScanResultDTO packageScanByCode(@Param("code") String code);
+
+    /**
+     * 分拨组包 分页
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PackageDTO.PagingViewDTO> packagePing(Page query, @Param("params") PackageDTO.PagingParamDTO params);
 }

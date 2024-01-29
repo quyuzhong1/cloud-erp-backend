@@ -1,10 +1,9 @@
 package com.erp.server.tms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -100,6 +99,14 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>
      **/
     List<BaseDropDownDTO.DisabledDTO> listAll();
+
+    /**
+     * 所有已授权的中转报关服务商下拉
+     * @Author Luo_WG
+     * @Date 2024/1/29 15:34
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BaseDropDownDTO.DisabledDTO>>
+     **/
+    List<BaseDropDownDTO.DisabledDTO> listAlreadyAll();
 
     /**
      * 更改启用禁用状态

@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
@@ -699,7 +700,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-01-26 18:40
      * @author Lambda
      */
-    PagingVO<PackageDTO.PagingViewDTO> packagePing(PackageDTO.PagingParamDTO dto);
+    PagingVO<PackageDTO.PagingViewDTO> packagePing(PagingDTO<PackageDTO.PagingParamDTO> dto);
 
     /**
      * 校验尺寸
@@ -718,5 +719,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date 2024-01-27 18:14
      * @author Lambda
      */
-    void checkProductRegistration(String id);
+    SettingForecastDTO.CheckRegistrationResultDTO checkProductRegistration(String id, String logisticsChannelId);
 }

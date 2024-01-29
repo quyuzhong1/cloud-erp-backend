@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
@@ -52,7 +53,7 @@ public class PackageController extends BaseController {
      * @author Lambda
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PackageDTO.PagingViewDTO>> paging(@RequestBody PackageDTO.PagingParamDTO dto){
+    public ApiResult<PagingVO<PackageDTO.PagingViewDTO>> paging(@RequestBody PagingDTO<PackageDTO.PagingParamDTO> dto){
         PagingVO<PackageDTO.PagingViewDTO> pagingView = soB2cService.packagePing(dto);
         return success(pagingView);
     }

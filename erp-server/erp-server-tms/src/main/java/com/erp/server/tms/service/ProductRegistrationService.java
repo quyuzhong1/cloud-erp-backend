@@ -48,5 +48,5 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
      * @param dto
      * @return
      */
-    Boolean getIsRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto);
+    List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto);
 }

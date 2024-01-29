@@ -1,31 +1,33 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
+import com.common.core.enums.ApiError;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
-import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -37,37 +39,12 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     @Resource
     private BaoHongService baoHongService;
 
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
+
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.BAO_HONG_AUTHORIZE;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(appClientEnum.getPlatform());
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient = null;
-        try {
-            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        } catch (Exception e) {
-            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
-            return new HashMap<>() ;
-        }
-        if (Objects.isNull(cfgAppClient)) return new HashMap<>();
-        Map<String, String> map = new HashMap<>();
-        map.put("id", cfgAppClient.getId());
-        map.put("logisticsPlatform", getPlatForm().getCode());
-        map.put("clientSecret", cfgAppClient.getClientSecret());
-        map.put("clientId", cfgAppClient.getClientId());
-        map.put("url", cfgAppClient.getUrl());
-        map.put("orderId", "8182808069884648");
-        map.put("childOrderId","8182808069884648");
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
-//            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
-//            if (Objects.nonNull(shopAuth)) {
-//                map.put("shopId", shopAuth.getShopId());
-//                map.put("token", shopAuth.getAccessToken());
-//            }
-        }
-        return map;
+        return super.getLogisticsAuthConfig(authId);
     }
 
     @Override
@@ -107,20 +84,32 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVOList) throws IOException {
-        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
-        for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
-            BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
-            if(isFailure(response)){
-                return failure(response.getMessage());
+        try {
+            TransferLogisticsContext.setAuthMap(logisticsQueryVOList.get(0).getAuthMap());
+
+            List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+            for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
+                BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
+                if(isFailure(response)){
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                            logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
+                    return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMessage());
+                }
+                LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
+                logisticsPrintLabelResponse.setBase64(response.getData());
+                logisticsPrintLabelResponse.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+                logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
+                logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
+                resultList.add(logisticsPrintLabelResponse);
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                        logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
             }
-            LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
-            logisticsPrintLabelResponse.setBase64(response.getData());
-            logisticsPrintLabelResponse.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
-            logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
-            logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
-            resultList.add(logisticsPrintLabelResponse);
+            return success(resultList);
+        }finally {
+            TransferLogisticsContext.remove();
         }
-        return success(resultList);
     }
 
     @Override
@@ -130,7 +119,27 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return super.getChannel(chanelQueryVO);
+        try {
+            TransferLogisticsContext.setAuthMap(chanelQueryVO.getAuthMap());
+
+            BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
+            if (isFailure(response)) {
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(response));
+                return failure("授权失败:" + response.getMessage());
+            } else {
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(response));
+                List<LogisticsSaleChannelEntity> channelEntityList = BaoHongConverter.INSTANCE.channelConvert(response.getData());
+                return success(channelEntityList);
+            }
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        } finally {
+            TransferLogisticsContext.remove();
+        }
     }
 
     @Override

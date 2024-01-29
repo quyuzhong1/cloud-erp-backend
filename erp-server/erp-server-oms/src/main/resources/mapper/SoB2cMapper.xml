@@ -715,4 +715,26 @@
               #{code} = ANY(string_to_array(sbl.code,','))
              )
     </select>
+
+    <!--分拨组包 分页-->
+    <select id="packagePing" resultType="com.erp.model.oms.dto.PackageDTO$PagingViewDTO">
+        SELECT
+            sb.id AS soId,
+            sb.code AS soCode,
+            sb.bill_status AS billStatus,
+            sb.package_status AS packageStatus,
+            sbl.logistics_channel_id AS logisticsChannelId,
+            sbl.code AS trackNo,
+            sbl.weight AS weight
+        FROM so_b2c sb
+        LEFT JOIN so_b2c_logistics sbl
+        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        <if test="params.billStatusList !=null and params.billStatusList.size>0">
+          AND sb.bill_status IN
+           <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
+                  #{item}
+           </foreach>
+        </if>
+    </select>
 </mapper>

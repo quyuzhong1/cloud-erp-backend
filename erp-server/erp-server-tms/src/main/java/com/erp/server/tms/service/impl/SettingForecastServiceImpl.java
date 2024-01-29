@@ -10,10 +10,12 @@ import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.SettingForecastMapper;
+import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.SettingForecastService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -47,6 +49,9 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
+
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     @Override
     public List<SettingForecastDTO.ListDTO> listAll() {
@@ -104,12 +109,15 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             return null;
         }
         SettingForecastEntity entity = baseMapper.getByLogisticsChannelId(logisticsChannelId);
-
         if (Objects.nonNull(entity)) {
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
+            LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(logisticsChannelId);
+            if (Objects.nonNull(logisticsChannel)) {
+                forecastStatus.setLogisticsChannelName(logisticsChannel.getName());
+            }
             if (Objects.isNull(orderTime)) {
                 orderTime = LocalDateTime.now();
             }
-            SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
             String packageStatus = PackageStatusEnum.NOT.getCode();
             String transferStatus = TransferStatusEnum.NOT.getCode();
             //是否强制组包

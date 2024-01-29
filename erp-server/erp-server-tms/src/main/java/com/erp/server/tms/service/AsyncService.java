@@ -19,5 +19,5 @@ public interface AsyncService {
     /**
      * 异步拉取中转物流商渠道数据
      */
-    void asyncUpdateTransferLogisticsChannel(String logisticsPlatform, String authId);
+    void asyncUpdateTransferLogisticsChannel(String logisticsPlatform, String authId, String mainId);
 }

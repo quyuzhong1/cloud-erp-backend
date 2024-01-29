@@ -209,6 +209,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authEntity.getId());
         if (shippingMethodList.isSuccess()) {
             shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                logisticsSaleChannelEntity.setMainId(id);
                 transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
             });
             totalSize = shippingMethodList.getData().size();
@@ -240,6 +241,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<TransferLogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAlreadyAll() {
+        List<TransferLogisticsSupplierEntity> list = lambdaQuery().eq(TransferLogisticsSupplierEntity::getAuthStatus, TransferLogisticsAuthStatusEnum.ALREADY.getCode()).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
         return resultList;
     }
