@@ -5,6 +5,7 @@ import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
@@ -127,4 +128,10 @@ public interface BaoHongConverter {
     ReceivingItemsType  createReceiveOrderConvert(TransferLogisticsCreateInboundReq.ReceiveItem item);
     List<ReceivingItemsType>  createReceiveOrderConvert(List<TransferLogisticsCreateInboundReq.ReceiveItem> items);
 
+    @Mappings({
+            @Mapping(target = "cnName", source = "smNameCn"),
+            @Mapping(target = "code", source = "smCode"),
+    })
+    LogisticsSaleChannelEntity channelConvert(SmRow data);
+    List<LogisticsSaleChannelEntity> channelConvert(List<SmRow> data);
 }

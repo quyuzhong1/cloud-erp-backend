@@ -13,6 +13,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
@@ -39,35 +40,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.BAO_HONG_AUTHORIZE;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(appClientEnum.getPlatform());
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient = null;
-        try {
-            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        } catch (Exception e) {
-            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
-            return new HashMap<>() ;
-        }
-        if (Objects.isNull(cfgAppClient)) return new HashMap<>();
-        Map<String, String> map = new HashMap<>();
-        map.put("id", cfgAppClient.getId());
-        map.put("logisticsPlatform", getPlatForm().getCode());
-        map.put("clientSecret", cfgAppClient.getClientSecret());
-        map.put("clientId", cfgAppClient.getClientId());
-        map.put("url", cfgAppClient.getUrl());
-        map.put("orderId", "8182808069884648");
-        map.put("childOrderId","8182808069884648");
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
-//            ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
-//            if (Objects.nonNull(shopAuth)) {
-//                map.put("shopId", shopAuth.getShopId());
-//                map.put("token", shopAuth.getAccessToken());
-//            }
-        }
-        return map;
+        return super.getLogisticsAuthConfig(authId);
     }
 
     @Override
@@ -130,7 +103,21 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return super.getChannel(chanelQueryVO);
+        try {
+            TransferLogisticsContext.setAuthMap(chanelQueryVO.getAuthMap());
+
+            BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
+            if (isFailure(response)) {
+                return failure("授权失败:" + response.getMessage());
+            } else {
+                List<LogisticsSaleChannelEntity> channelEntityList = BaoHongConverter.INSTANCE.channelConvert(response.getData());
+                return success(channelEntityList);
+            }
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        } finally {
+            TransferLogisticsContext.remove();
+        }
     }
 
     @Override
