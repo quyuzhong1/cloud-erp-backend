@@ -142,6 +142,12 @@ public class SettingForecastDTO implements Serializable {
          */
         private String declarePlatform;
 
+
+        /**
+         * 渠道名称
+         */
+        private String LogisticsChannelName;
+
     }
 
     @Data
@@ -160,6 +166,34 @@ public class SettingForecastDTO implements Serializable {
         @NotNull(message = "SKU不能为空")
         @Size(min = 1,message = "至少需要一个SKU")
         private List<String> skuNoList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckRegistrationResultDTO{
+
+        /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+
+
+        /**
+         * sku no
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 组包状态
+         */
+        private String packageStatus;
+
+
+        /**
+         * 中转状态
+         */
+        private String transferStatus;
     }
 
 }
