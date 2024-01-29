@@ -86,6 +86,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -4867,6 +4868,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         resultDTO.setPackageStatus(packageStatus);
         resultDTO.setTransferStatus(transferStatus);
         return resultDTO;
+    }
+
+    @Override
+    public Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list) {
+        for (TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO : list) {
+            this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo()).
+                    eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update(new SoB2cEntity())
+        }
+        return Boolean.TRUE;
     }
 
     /**

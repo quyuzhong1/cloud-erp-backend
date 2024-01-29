@@ -58,9 +58,21 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @Date 2024/1/27 18:45
      * @param id
      * @param status
+     * @param shippingOrderNo 第三方服务商订单号
+     * @param failureReason 失败原因
      * @return java.lang.Boolean
      **/
-    Boolean updateOrderUploadStatus(String id, String status);
+    Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason);
+
+    /**
+     * 修改中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/27 18:45
+     * @param id
+     * @param transferStatus
+     * @return java.lang.Boolean
+     **/
+    Boolean updateTransferStatus(String id, String transferStatus);
 
     /**
      * 查询待同步中转状态的订单

@@ -453,4 +453,16 @@ public class SoB2cFeignController extends BaseController {
     public Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status) {
         return soB2cService.updateTransferStatusBatch(soIds, status);
     }
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateShippingOrderNo")
+    public Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list) {
+        return soB2cService.updateShippingOrderNo(list);
+    }
 }

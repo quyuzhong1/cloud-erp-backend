@@ -721,4 +721,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Lambda
      */
     SettingForecastDTO.CheckRegistrationResultDTO checkProductRegistration(String id, String logisticsChannelId);
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 }

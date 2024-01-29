@@ -433,4 +433,21 @@ public class TransferDeclareDTO implements Serializable {
         private String transferChannelId;
 
     }
+
+    /**
+     * 第三方中转服务商发货单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShippingOrderDTO {
+        /**
+         * 订单id
+         */
+        private String soId;
+
+        /**
+         * 第三方中转服务商的发货单号
+         */
+        private String shippingOrderNo;
+    }
 }

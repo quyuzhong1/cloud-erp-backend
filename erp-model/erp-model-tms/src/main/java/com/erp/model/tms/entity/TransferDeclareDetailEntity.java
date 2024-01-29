@@ -86,6 +86,11 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
      */
     @TableField("failure_reason")
     private String failureReason;
+    /**
+     * 第三方中转服务商的发货单号
+     */
+    @TableField("failureReason")
+    private String shippingOrderNo;
 
 
     public static final String MAIN_ID = "main_id";
