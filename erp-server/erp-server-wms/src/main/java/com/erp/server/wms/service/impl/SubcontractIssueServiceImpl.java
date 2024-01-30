@@ -139,7 +139,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         BeanMapperUtils.copy(addDTO, subcontractIssueEntity);
 
         //来源为空时（界面新增），验证供应商是否一致
-        if (StrUtil.isBlank(addDTO.getSourceType())) {
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(addDTO.getSourceType()) ||  StrUtil.isBlank(addDTO.getSourceType())) {
             List<SubcontractIssueDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
@@ -181,7 +181,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity subcontractIssueEntity =  BeanMapperUtils.map(SubcontractIssueEntity.class, updateDTO);
 
         //来源为委外时，验证供应商是否一致
-        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType())) {
+        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  StrUtil.isBlank(old.getSourceType())) {
             List<SubcontractIssueDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
@@ -806,7 +806,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         //供应商
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(subcontractIssueEntity.getSupplierId());
-        subcontractIssueEntity.setSupplierName(supplierEntity.getName());
+        if (ObjectUtil.isNotEmpty(supplierEntity)) {
+            subcontractIssueEntity.setSupplierName(supplierEntity.getName());
+        }
     }
 
 
