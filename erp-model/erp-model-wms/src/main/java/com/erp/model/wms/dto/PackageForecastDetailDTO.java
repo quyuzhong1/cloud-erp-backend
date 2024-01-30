@@ -152,6 +152,8 @@ public class PackageForecastDetailDTO implements Serializable {
         @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
+        private String logisticsChannelName;
+
 
 
         /**

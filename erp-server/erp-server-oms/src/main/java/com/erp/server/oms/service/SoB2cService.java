@@ -6,14 +6,12 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.PackageDTO;
-import com.erp.model.oms.dto.ReportDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -21,6 +19,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -742,4 +741,19 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
+
+    /**
+     * 计算产品尺寸
+     * @param bomChildrenSkuDTOS
+     */
+    void buildProductSize(List<BomChildrenSkuDTO> bomChildrenSkuDTOS);
+
+    /**
+     * 计算长度
+     * @param skuList
+     * @return
+     */
+    BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length);
+    BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width);
+    BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String Height);
 }
