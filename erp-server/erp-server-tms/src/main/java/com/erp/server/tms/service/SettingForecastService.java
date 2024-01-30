@@ -75,5 +75,5 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @param list
      * @return
      */
-    Boolean checkIsUpdate(ValidList<SettingForecastDTO.SaveOrUpdateDTO> list);
+    Boolean checkIsUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list);
 }

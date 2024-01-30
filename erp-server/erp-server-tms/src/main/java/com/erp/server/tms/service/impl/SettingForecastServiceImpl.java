@@ -162,7 +162,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     }
 
     @Override
-    public Boolean checkIsUpdate(ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
+    public Boolean checkIsUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         long count = list.stream().filter(l -> StringUtils.isBlank(l.getId())).count();
         if (count > 0) {
             return Boolean.TRUE;
@@ -193,6 +193,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         dto.setIsMustTransfer(entity.getIsMustTransfer());
         dto.setEnablePackageTime(entity.getEnablePackageTime());
         dto.setEnableTransferTime(entity.getEnableTransferTime());
+        dto.setTransferLogisticsSupplierId(entity.getTransferLogisticsSupplierId());
         return dto;
     }
 
