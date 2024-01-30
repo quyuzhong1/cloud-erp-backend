@@ -375,11 +375,15 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.eu.6e3958ce-6971-4598-ad78-a6d50e495488.T1F4UYWRDP426O.300";
 //        String shopId = "1734478618723094529";
 
-        String reportDocumentId = "amzn1.spdoc.1.4.eu.a83e1cb2-2b19-4505-9865-d22a28d06e5e.T1MT8HGFRWZRWK.300";
-        String shopId = "1735512178565320710";
+//        String reportDocumentId = "amzn1.spdoc.1.4.eu.a83e1cb2-2b19-4505-9865-d22a28d06e5e.T1MT8HGFRWZRWK.300";
+//        String shopId = "1735512178565320710";
 
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
 //        String shopId = "1739494918432231426";
+
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.2dab2b36-2509-427e-a09c-849f9aa3d2a1.T2YME8P5WMNUJ8.47700";
+        String shopId = "1734478618723094530";
+
 
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
@@ -421,7 +425,8 @@ public class ReportsApiTest {
         //group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300
         // GET_MERCHANT_LISTINGS_DATA
 //        String filePath = "group1/M00/00/57/rBBkDGWwwAGAKM66AAA9CK6hNZY.T1RW0R";
-        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
+//        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
+        String filePath = "group1/M00/00/57/rBBkDGW4nuuADoN_AAAg-IUy1xw8966.gz";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
         AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
         // GET_LEDGER_DETAIL_VIEW_DATA

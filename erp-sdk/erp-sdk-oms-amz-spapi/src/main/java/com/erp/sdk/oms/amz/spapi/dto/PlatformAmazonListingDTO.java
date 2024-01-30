@@ -5,14 +5,14 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 /**
  * 平台亚马逊产品DTO
@@ -167,15 +167,18 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         return resultDto;
     }
 
-    public static void main(String[] args) {
-        String ee = "2020-08-04 03:56:29 PDT";
-        LocalDateTime parse = LocalDateTime.parse(ee, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z", Locale.ENGLISH));
-        System.out.println(parse);
-    }
-
     public static PlatformAmazonListingDTO getByDownloadStatus() {
         PlatformAmazonListingDTO amazonListingDTO = new PlatformAmazonListingDTO();
         amazonListingDTO.setDownloadStatus(0);
         return amazonListingDTO;
+    }
+
+    /**
+     * 转换IdentifiersType
+     */
+    public AmazonIdentifiersTypeEnum convertIdentifiersType(AmazonMarketplaceEnum marketPlaceEnum) {
+
+
+        return null;
     }
 }

@@ -23,10 +23,12 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -36,8 +38,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -80,7 +81,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         sourceDataList = sourceDataList.stream()
                 .filter(e -> StringUtils.isNotBlank(e.getSellerSku()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sourceDataList)){
+        if (CollectionUtils.isEmpty(sourceDataList)) {
             return Collections.emptyList();
         }
 
@@ -111,11 +112,11 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     public PlatformAmazonListingDTO downloadDetail(PlatformAmazonListingDTO dto, JSONObject extendObj) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException("未找到对应shopId， uniqueId=" + dto.getUniqueId() + "shopId="+ shopId);
+            throw new ServiceException("未找到对应shopId， uniqueId=" + dto.getUniqueId() + "shopId=" + shopId);
         }
         String asin = dto.getAsin1();
         if (StringUtils.isBlank(asin)) {
-            throw new ServiceException("未找到对应asin， uniqueId=" + dto.getUniqueId() + "shopId="+ shopId + ", asin={}" + asin);
+            throw new ServiceException("未找到对应asin， uniqueId=" + dto.getUniqueId() + "shopId=" + shopId + ", asin={}" + asin);
         }
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
@@ -128,7 +129,6 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
 
-
         // 产品规格信息
         String productSpec;
         // 包装信息
@@ -136,14 +136,14 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         // 图片
         String imageUrl;
         try {
-             //查询商品详情
-            CatalogApi catalogApi =  CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false,  rateLimitConfig);
+            //查询商品详情
+            CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             ApiResponse<Item> itemResponse = catalogApi.getCatalogItemWithHttpInfo(asin, marketplaceIds, includedData, null);
             List<String> limitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             String rateLimitStr = limitArray.get(0);
-            if (StringUtils.isNotBlank(rateLimitStr)){
+            if (StringUtils.isNotBlank(rateLimitStr)) {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
@@ -172,4 +172,65 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         return dto;
     }
 
+    /**
+     * 根据IdentifiersType分组查询
+     */
+    public List<PlatformAmazonListingDTO> downloadDetailListByIdentifiersType(List<PlatformAmazonListingDTO> currentListingDTOList, JSONObject extendObj, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum) {
+        // 默认请求速率配置
+        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
+        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+
+        Map<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(e -> e.convertIdentifiersType(marketPlaceEnum)));
+
+        ApiResponse<Item> itemResponse = null;
+        //查询商品详情
+        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+
+        List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
+        for (Map.Entry<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> entry : listMap.entrySet()) {
+            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+            List<String> identifiers = Arrays.asList("788185949481");
+            String identifiersType = entry.getKey().getCode();
+            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
+            String locale = null;
+            String sellerId = null;
+            List<String> keywords = null;
+            List<String> brandNames = null;
+            List<String> classificationIds = null;
+            Integer pageSize = null;
+            String pageToken = null;
+            String keywordsLocale = null;
+            ApiResponse<ItemSearchResults> apiResponse;
+            try {
+                apiResponse = catalogApi.searchCatalogItemsWithHttpInfo(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
+            } catch (ApiException e) {
+                throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
+            }
+            amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, apiResponse);
+
+//            apiResponse.getData().getItems()
+//            resultList.addAll()
+        }
+
+//        Item response = itemResponse.getData();
+//
+//
+//        // 拼接产品规格信息
+//        productSpec = response.combineProductSpec(marketPlaceEnum.getMarketplaceId());
+//        // 拼接包装信息
+//        packing = response.combinePacking(marketPlaceEnum.getMarketplaceId());
+//        // 找出第一张图片信息
+//        imageUrl = response.combineImage(marketPlaceEnum.getMarketplaceId());
+//        // 源信息
+//        dto.setDetail(response);
+//
+//        // 产品规格信息
+//        dto.setProductSpec(productSpec);
+//        // 产品包装信息
+//        dto.setProductPacking(packing);
+//        // 产品图片
+//        dto.setImageUrl(imageUrl);
+        return null;
+    }
 }

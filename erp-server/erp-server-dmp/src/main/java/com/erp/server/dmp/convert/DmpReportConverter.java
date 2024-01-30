@@ -114,6 +114,7 @@ public interface DmpReportConverter {
 
 
     @Mappings({
+            @Mapping(target = "id", expression = "java(null)"),
             @Mapping(target = "mainId", source = "entity.id"),
             @Mapping(target = "shopId", source = "entity.shopId"),
             @Mapping(target = "reportType", source = "entity.reportType"),

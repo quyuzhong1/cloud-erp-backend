@@ -670,6 +670,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             // 解析时间
             reqDataStartTime = amzReportInfo.getDataEndTime();
         }
+        // 更新下次计划任务下次执行时间
+        amzReportScheduleService.updateNextTime(reportSchedule.getId());
+
         // 创建报告待请求记录
         AmzReportTaskEntity newTaskEntity = DmpReportConverter.INSTANCE.initDirectQueryTask(reportSchedule, groupId, reqDataStartTime, reqDataEndTime);
         if (!this.save(newTaskEntity)) {

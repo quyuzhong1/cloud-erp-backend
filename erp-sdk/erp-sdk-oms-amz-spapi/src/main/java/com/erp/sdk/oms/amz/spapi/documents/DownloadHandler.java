@@ -2,12 +2,9 @@ package com.erp.sdk.oms.amz.spapi.documents;// DownloadExample.java
 // This example is for use with the Selling Partner API for Reports, Version: 2021-06-30
 // and the Selling Partner API for Feeds, Version: 2021-06-30
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.rmi.ServerException;
@@ -46,8 +43,8 @@ public class DownloadHandler {
      * @throws IllegalArgumentException when the charset is missing
      */
     public JSONArray downloadFromFastDFSAndParse(String filePath, Map<String, String> excelConfig, String recordType) throws IOException, IllegalArgumentException {
-        InputStream inputStream = FastDFSClientUtil.getInputStream(filePath);
-        if (null == inputStream) {
+        byte[] fileByte = FastDFSClientUtil.getFileByte(filePath);
+        if (null == fileByte) {
             throw new ServerException("获取FastFDFS文件流失败：" + filePath);
         }
         // 文件元数据信息
@@ -63,37 +60,41 @@ public class DownloadHandler {
         Closeable closeThis = null;
         BufferedReader reader = null;
         try {
-            closeThis = inputStream;
+
             if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
-                inputStream = new GZIPInputStream(inputStream);
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(fileByte));
+                InputStreamReader inputStreamReader = new InputStreamReader(gzipInputStream);
                 reader = new BufferedReader(inputStreamReader);
-                closeThis = inputStream;
+                closeThis = gzipInputStream;
+            } else {
+                // This example assumes that the download content has a charset in the content-type header, e.g.
+                // text/plain; charset=UTF-8
+//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
+                if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(fileByte);
+                    InputStreamReader inputStreamReader;
+                    if (null == charset) {
+                        inputStreamReader = new InputStreamReader(inputStream);
+                    } else {
+                        inputStreamReader = new InputStreamReader(inputStream, charset);
+                    }
+                    // fastDFS保存过的文件统一UTF-8
+//                 inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+                    closeThis = inputStreamReader;
+                    reader = new BufferedReader(inputStreamReader);
+                    closeThis = reader;
+                }
             }
 
-            // This example assumes that the download content has a charset in the content-type header, e.g.
-            // text/plain; charset=UTF-8
-//            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
-            if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
-                InputStreamReader inputStreamReader;
-                if (null == charset){
-                    inputStreamReader = new InputStreamReader(inputStream);
-                } else {
-                    inputStreamReader = new InputStreamReader(inputStream, charset);
-                }
-                // fastDFS保存过的文件统一UTF-8
-//                inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-                closeThis = inputStreamReader;
-                reader = new BufferedReader(inputStreamReader);
-                closeThis = reader;
-            }
             if (null == reader) {
                 String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", filePath, mediaType);
                 throw new ServerException(msg);
             }
             return parseToJSONArray(excelConfig, reader, recordType);
         } finally {
-            closeThis.close();
+            if (null != closeThis) {
+                closeThis.close();
+            }
         }
     }
 
@@ -129,8 +130,19 @@ public class DownloadHandler {
             nameValuePair.put("compressionAlgorithm", compressionAlgorithm);
             nameValuePair.put("reportDocumentId", reportDocumentId);
             nameValuePair.put("recordType", recordType);
+            if ("GZIP".equalsIgnoreCase(compressionAlgorithm)) {
+                fileName = fileName.concat(".gz");
+                try (InputStream inputStream = responseBody.byteStream()) {
+                    if (null == inputStream) {
+                        String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
+                        throw new ServerException(msg);
+                    }
+                    // 保存到FastDFS
+                    return FastDFSClientUtil.uploadFile(inputStream, fileName, nameValuePair);
+                }
+            }
 
-            if (null == charset){
+            if (null == charset) {
                 // 无字符集
                 try (InputStream inputStream = responseBody.byteStream()) {
                     if (null == inputStream) {
@@ -144,7 +156,7 @@ public class DownloadHandler {
                 // 有字符集
                 InputStream inputStream = null;
                 InputStreamReader inputStreamReader = null;
-                try  {
+                try {
                     inputStream = responseBody.byteStream();
                     if (null == inputStream) {
                         String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", url, mediaType);
@@ -154,10 +166,10 @@ public class DownloadHandler {
                     // 保存到FastDFS
                     return FastDFSClientUtil.uploadFile(inputStreamReader, charset, fileName, nameValuePair);
                 } finally {
-                    if (null != inputStream){
+                    if (null != inputStream) {
                         inputStream.close();
                     }
-                    if (null != inputStreamReader){
+                    if (null != inputStreamReader) {
                         inputStreamReader.close();
                     }
                 }
@@ -227,8 +239,8 @@ public class DownloadHandler {
         }
         LinkedHashMap<String, Integer> p = new LinkedHashMap<>();
         for (int k = 0; k < str.length; k++) {
-            // 移除字段首尾""
-            String currentStr = str[k].replaceAll("^\"|\"$", "");
+            // 移除字段首尾"", 移除零宽不断空格（ZWNBSP）字符（Unicode U+FEFF）
+            String currentStr = str[k].replaceAll("^\"|\"$", "").replaceAll("\uFEFF", "");
             p.put(currentStr, k);
         }
         return p;
@@ -309,7 +321,7 @@ public class DownloadHandler {
 //            if ("text".equals(mediaType.type()) && "plain".equals(mediaType.subtype())) {
             if ("text".equals(mediaType.getType()) && "plain".equals(mediaType.getSubtype())) {
                 InputStreamReader inputStreamReader;
-                if (null == charset){
+                if (null == charset) {
                     inputStreamReader = new InputStreamReader(inputStream);
                 } else {
                     inputStreamReader = new InputStreamReader(inputStream, charset);

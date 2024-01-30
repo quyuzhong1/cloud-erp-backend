@@ -15,6 +15,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -24,7 +25,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
@@ -109,6 +110,9 @@ public class PullAmzJob {
 
     @Resource
     private CfgSettingService cfgSettingService;
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     /**
      * 拉取亚马逊任务
@@ -451,9 +455,14 @@ public class PullAmzJob {
         CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
                 .map(entry -> CompletableFuture.runAsync(() -> {
                     // 异步任务的逻辑
-                    String key = entry.getKey();
-                    List<PlatformApiTaskEntity> value = entry.getValue();
-                    handlerProductDetail(key, value, size, platform, category, business);
+                    try {
+                        String key = entry.getKey();
+                        List<PlatformApiTaskEntity> value = entry.getValue();
+                        handlerProductDetail(key, value, size, platform, category, business);
+                    } catch (Exception e) {
+                        log.info("[拉取亚马逊商品详情任务] amazonProductDetail 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));
+                        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));;
+                    }
                     log.info("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
                     XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 当前线程执行完毕");
                 })).toArray(CompletableFuture[]::new));
@@ -481,44 +490,54 @@ public class PullAmzJob {
         Map<String, List<FbaInventoryEntity>> fnSkuRelationMap = fbaInventoryEntityList
                 .stream()
                 .collect(Collectors.groupingBy(FbaInventoryEntity::getMsku));
+        // 根据shopId分组
+        Map<String, List<PlatformAmazonListingDTO>> dtoGroupList = listingEntityList.stream().collect(Collectors.groupingBy(PlatformAmazonListingDTO::getShopId));
 
-        for (PlatformAmazonListingDTO dto : listingEntityList) {
-            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
-            try {
-                // 关联FNSKU信息
-                FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(dto.getSellerSku(), Collections.emptyList())
-                        .stream()
-                        .findFirst()
-                        .orElse(null);
 
-                // 动态请求配置
-                // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
-                String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
-                JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
-                extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
-                dto.setRedissonKey(redissonKey);
-                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, extentJsonObj);
-                newDto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
-                newDto.setDownloadStatus(1);
-                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                newDto.setRedissonKey(null);
-                List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
-                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
-                log.info("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", dto.getUniqueId());
-                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", dto.getUniqueId());
-            } catch (Exception error) {
-                // 获取锁异常等重试
-                if (error instanceof InterruptedException) {
-                    XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
-                    throw new ServiceException(ApiError.ERROR_1026);
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
+        for (Map.Entry<String, List<PlatformAmazonListingDTO>> entry : dtoGroupList.entrySet()) {
+            AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(entry.getKey());
+            List<PlatformAmazonListingDTO> currentListingDTOList = entry.getValue();
+            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            // 动态请求配置
+            // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+            String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
+            JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+            extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+            // 根据IdentifiersType分组查询
+            List<PlatformAmazonListingDTO> newDtoList = amazonListingHandler.downloadDetailListByIdentifiersType(currentListingDTOList, extentJsonObj, shopInfoDTO, marketPlaceEnum);
+            for (PlatformAmazonListingDTO newDto : newDtoList) {
+                try {
+                    // 关联FNSKU信息
+                    FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(newDto.getSellerSku(), Collections.emptyList())
+                            .stream()
+                            .findFirst()
+                            .orElse(null);
+
+                    newDto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
+                    newDto.setDownloadStatus(1);
+                    newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                    newDto.setRedissonKey(null);
+                    List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
+                    businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
+                    log.info("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", newDto.getUniqueId());
+                    XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载成功，uniqueId={}", newDto.getUniqueId());
+                } catch (Exception error) {
+                    // 获取锁异常等重试
+                    if (error instanceof InterruptedException) {
+                        XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
+                        throw new ServiceException(ApiError.ERROR_1026);
+                    }
+                    XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载失败，uniqueId={}, error={}",
+                            newDto.getUniqueId(),
+                            ExceptionUtil.stacktraceToString(error, 2000));
+                    // 发送预警
+                    dmpPushTaskService.sendWarnMsg(newDto.getDmpSyncTaskId());
                 }
-                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载失败，uniqueId={}, error={}",
-                        dto.getUniqueId(),
-                        ExceptionUtil.stacktraceToString(error, 2000));
-                // 发送预警
-                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         }
+
+
     }
 
 

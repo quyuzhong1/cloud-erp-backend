@@ -175,7 +175,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 platformFbaShipmentDTO.setReceiveDTOList(saveReceiveDTO);
 
                 // 检查签收时间
-                detailListDTO.forEach(e-> {
+                detailListDTO.forEach(e -> {
                     if (e.getReceiveQty() == 0) {
                         e.setReceiveDate(null);
                     }
@@ -193,10 +193,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 // 保存或更新mongo数据
                 UniqueDto uniqueDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
                 List<? extends PlatformAmazonFbaShipmentDTO> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
-                if (CollectionUtils.isEmpty(mongoData)){
+                if (CollectionUtils.isEmpty(mongoData)) {
                     mongoService.saveMongoData(amazonShipmentDTO, tableName);
                 } else {
-                    MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
+                    MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
                     mongoService.updateMongoData(uniqueDto, mapUtil, tableName, tClass);
                 }
 
@@ -206,7 +206,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
                 log.info("手动拉取货件推送：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
                 ApiResult<?> apiResult = wmsShipmentFeign.consumerPullShipment(platformFbaShipmentDTO);
-                if (200 != apiResult.getCode()){
+                if (200 != apiResult.getCode()) {
                     throw new ServiceException("拉取货件处理失败");
                 }
                 log.info("手动拉取货件结果：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
@@ -241,7 +241,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
         // 手动订单修改
-        if (ReportScheduleSubscribedTypeEnum.MANUAL.getCode().equalsIgnoreCase(reportSchedule.getSubscribedType())){
+        if (ReportScheduleSubscribedTypeEnum.MANUAL.getCode().equalsIgnoreCase(reportSchedule.getSubscribedType())) {
             // 更新到记录
             reportSchedule.setFirstNextReportCreationTime(roundedOffsetDateTime.toLocalDateTime());
             reportSchedule.setSubscribedStatus(ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
@@ -260,7 +260,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         body.setNextReportCreationTime(formatTime);
         body.setPeriod(periodEnum);
         // 请求
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO , true, null);
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, true, null);
         // TODO 兼容已创建
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
@@ -275,11 +275,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String createAmzReport(AmzReportTaskEntity taskEntity){
+    public String createAmzReport(AmzReportTaskEntity taskEntity) {
         // 从缓存获取(已完成或结束删除)
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_RESULT_PREFIX, taskEntity.getId(), taskEntity.getStatus());
         Object reportIdObj = redisUtil.get(key);
-        if (null != reportIdObj){
+        if (null != reportIdObj) {
             return (String) reportIdObj;
         }
         // 校验MarketplaceId
@@ -310,10 +310,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(taskEntity.getReportType());
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
-        if (StringUtils.isNotBlank(taskEntity.getReqDataStartTime())){
+        if (StringUtils.isNotBlank(taskEntity.getReqDataStartTime())) {
             body.setDataStartTime(taskEntity.getReqDataStartTime());
         }
-        if (StringUtils.isNotBlank(taskEntity.getReqDataEndTime())){
+        if (StringUtils.isNotBlank(taskEntity.getReqDataEndTime())) {
             body.setDataEndTime(taskEntity.getReqDataEndTime());
         }
         ApiResponse<CreateReportResponse> reportWithHttpInfo;
@@ -340,7 +340,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     public void handlerNotifications(cn.hutool.json.JSONObject textMessageObj) throws Exception {
         log.warn("处理亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessageObj));
 //        if (BusinessCommonConstants.hasProfile("test")) {
-            // 测试环境暂时过滤
+        // 测试环境暂时过滤
 //            return;
 //        }
 
@@ -425,9 +425,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception{
-        if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())){
-            log.error("报告状态未完成：{}",JSONUtil.toJsonStr(report));
+    public void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum, Map<String, String> columnMap) throws Exception {
+        if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())) {
+            log.error("报告状态未完成：{}", JSONUtil.toJsonStr(report));
             // 未完成也更新
             ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
             List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
@@ -466,19 +466,19 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             return;
         } else {
             // 非报价计划从报告信息的主表ID 获取reportSchedule
-            if (!CollectionUtils.isEmpty(mongoData)){
+            if (!CollectionUtils.isEmpty(mongoData)) {
                 ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
                 reportScheduleEntity = reportScheduleService.getById(oldReportInfoMongoDTO.getMainId());
             }
         }
 
-        if (null == reportScheduleEntity){
+        if (null == reportScheduleEntity) {
             log.info("非系统请求的报告ID,忽略:ReportId={}", report.getReportId());
             return;
         }
 
         // 报告计划不存在, 报告记录为空忽略
-        if (CollectionUtils.isEmpty(mongoData)){
+        if (CollectionUtils.isEmpty(mongoData)) {
             return;
         }
         ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
@@ -496,7 +496,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         // 从缓存获取(已完成或结束删除)
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
         Object reportObj = redisUtil.get(key);
-        if (null != reportObj){
+        if (null != reportObj) {
             return JSONUtil.toBean(reportObj.toString(), Report.class);
         }
         // 店铺信息
@@ -530,11 +530,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Report directQueryAmzReportInfo(AmzReportTaskEntity taskEntity) {
+    public Report directQueryAmzReportInfo(AmzReportTaskEntity taskEntity){
         // 从缓存获取(已完成或结束删除)
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
         Object reportObj = redisUtil.get(key);
-        if (null != reportObj){
+        if (null != reportObj) {
             return JSONUtil.toBean(reportObj.toString(), Report.class);
         }
         // 店铺信息
@@ -564,6 +564,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             ReportList reportList = reportsWithHttpInfo.getData().getReports();
             report = reportList.stream().findFirst().orElse(null);
         } catch (ApiException e) {
+            // 检查授权异常
+
             throw new RuntimeException(e);
         }
         // 设置到缓存(已完成或结束删除)
