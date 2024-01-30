@@ -29,7 +29,7 @@ public interface AliexpressConstants {
      */
     String ORDER_DETAIL="aliexpress.trade.new.redefining.findorderbyid";
 
-    Integer pageSize=50;
+    Integer pageSize=20;
     /**
      * 产品分页的 api name
      */

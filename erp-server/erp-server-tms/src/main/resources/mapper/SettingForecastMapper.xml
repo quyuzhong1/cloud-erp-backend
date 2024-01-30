@@ -37,7 +37,10 @@
         is_must_package,
         enable_package_time,
         is_must_transfer,
-        enable_transfer_time
+        enable_transfer_time,
+        declare_platform,
+        transfer_logistics_supplier_id,
+        transfer_logistics_supplier_name
     </sql>
 
     <select id="getByLogisticsChannelId" resultType="com.erp.model.tms.entity.SettingForecastEntity">

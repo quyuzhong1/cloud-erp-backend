@@ -5173,9 +5173,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> notRegistrationSkuNoList= resultDTO.getNotRegistrationSkuNoList();
         Boolean isRegistration=CollectionUtils.isEmpty(notRegistrationSkuNoList);
         updatePackageAndTransferStatus(id,packageStatus,transferStatus,isRegistration);
-        //表示备案了
+        //表示未备案
         if(!isRegistration){
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
+            updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.PRODUCT_NOT_REGISTRATION);
             throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION,skuStr,resultDTO.getDeclarePlatformName());
         }
     }
@@ -5189,8 +5190,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus,Boolean isRegistration) {
         if(isRegistration){
+            String abnormalType = SoB2cAbnormalTypeEnum.PRODUCT_NOT_REGISTRATION.getCode();
             this.lambdaUpdate().set(SoB2cEntity::getPackageStatus,packageStatus).
                     set(SoB2cEntity::getTransferStatus,transferStatus).
+                    set(SoB2cEntity::getAbnormalType,"").
                     eq(SoB2cEntity::getId,soId).update(new SoB2cEntity());
         }
 
@@ -5238,7 +5241,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String declarePlatform="";
         String declarePlatformName="";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
-            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId, soB2cEntity.getCreateTime());
+            SettingForecastDTO.FindSettingForecastDTO findSettingForecast=new SettingForecastDTO.FindSettingForecastDTO();
+            findSettingForecast.setOrderTime(soB2cEntity.getCreateTime());
+            findSettingForecast.setLogisticsChannelId(logisticsChannelId);
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(findSettingForecast);
             if (Objects.nonNull(forecastStatus)) {
                 declarePlatform = forecastStatus.getDeclarePlatform();
                 declarePlatformName = forecastStatus.getDeclarePlatformName();

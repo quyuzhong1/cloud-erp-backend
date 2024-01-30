@@ -10,7 +10,6 @@ import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -18,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
+
 @Component
 public class AliExpressDliveryOrderService {
 
@@ -58,8 +57,9 @@ public class AliExpressDliveryOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
         paramMap.put("page_index", 5);
-        paramMap.put("page_size", 20);
+        paramMap.put("page_size", 50);
         paramMap.put("customer_order_number_list", Arrays.asList(""));
+        System.out.println();
         request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());

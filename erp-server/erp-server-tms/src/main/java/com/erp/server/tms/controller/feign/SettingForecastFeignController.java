@@ -4,10 +4,7 @@ import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.tms.service.SettingForecastService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -34,14 +31,14 @@ public class SettingForecastFeignController {
     /**
      * 根据渠道id 获取到 有效的设置
      * @description
-     * @param logisticsChannelId
+     * @param dto
      * @author Lambda
      * @return 
      * @create 2024-01-19 17:48
      */
-    @GetMapping("/getByLogisticsChannelId")
-    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String logisticsChannelId, @RequestParam("orderTime") LocalDateTime orderTime) {
-         return settingForecastService.getByLogisticsChannelId(logisticsChannelId,orderTime);
+    @PostMapping("/getByLogisticsChannelId")
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestBody SettingForecastDTO.FindSettingForecastDTO dto) {
+         return settingForecastService.getByLogisticsChannelId(dto);
     }
 
 

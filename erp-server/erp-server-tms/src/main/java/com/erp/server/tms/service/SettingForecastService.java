@@ -63,17 +63,17 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
     /**
      * 根据渠道id 获取到 有效的预报设置
      * @description
-     * @param logisticsChannelId
+     * @param
      * @author Lambda
      * @return 
      * @create 2024-01-19 17:51
      */
-    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId, LocalDateTime orderTime);
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(SettingForecastDTO.FindSettingForecastDTO dto);
 
     /**
      * 检查是否修改
      * @param list
      * @return
      */
-    Boolean checkIsUpdate(ValidList<SettingForecastDTO.SaveOrUpdateDTO> list);
+    Boolean checkIsUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list);
 }
