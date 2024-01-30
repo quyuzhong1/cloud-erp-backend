@@ -273,12 +273,11 @@ public class AliExpressOrderService {
      * @param orderIdList
      * @return void
      **/
-    public List<ErpFulfillmentForwardDtoBean> listDeliveryQuery(OrderRequest orderRequest, List<String> orderIdList) throws ApiException {
+    public List<ErpFulfillmentForwardDtoBean> listDeliveryQuery(OrderRequest orderRequest, List<String> orderIdList) {
         String appKey = orderRequest.getClientId();
         String appSecret = orderRequest.getClientSecret();
         String baseUrl = orderRequest.getBaseUrl();
         String apiName = orderRequest.getApiName();
-        Integer currentPage = orderRequest.getCurrentPage();
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName(apiName);
@@ -287,7 +286,12 @@ public class AliExpressOrderService {
         paramMap.put("customer_order_number_list", orderIdList);
         request.addApiParameter("customer_order_number_list", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
         String token = orderRequest.getToken();
-        IopResponse response = client.execute(request, token, Protocol.TOP);
+        IopResponse response = null;
+        try {
+            response = client.execute(request, token, Protocol.TOP);
+        } catch (ApiException e) {
+            log.error("查询速卖通发货单请求失败>>>>>>>{}", request.toString());
+        }
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
         JSONObject resultJsONObject = jsonObject.getJSONObject("result");
         Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);

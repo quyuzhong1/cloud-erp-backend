@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -24,7 +25,7 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
     * @param dto
     * @return
     */
-    void add(AliexpressDeliveryDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO dto);
 
     /**
      * 列表查询
