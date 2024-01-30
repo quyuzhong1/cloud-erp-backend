@@ -311,6 +311,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
         }
+        //计算物流尺寸
+        calculateSizeByAdd(addDTO.getLogisticsDTO(),addDTO.getDetailList());
         //新增物流信息
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //新增买家信息
@@ -338,6 +340,220 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //推送到DMP
         this.syncOrderToDmp(soB2cEntity.getId());
         return soB2cEntity;
+    }
+
+    /**
+     * 计算物流尺寸
+     * @param logisticsDTO
+     * @param detailList
+     */
+    private void calculateSizeByAdd(SoB2cLogisticsDTO.AddDTO logisticsDTO, List<SoB2cDetailDTO.AddDTO> detailList) {
+        if (Objects.isNull(logisticsDTO) || CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())){
+            return;//存在则不重算
+        }
+        //根据明细进行sku拆分
+        List<SplitSkuDTO> splitSkuDTOS = splitBySoDetailByAdd(detailList);
+        //拆分完成后根据拆分结果进行汇总
+        List<String> keyList = new ArrayList<>();
+        keyList.add(CalculateSizeEnum.LENGTH.getCode());
+        keyList.add(CalculateSizeEnum.WIDTH.getCode());
+        keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+        List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+        Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+        logisticsDTO.setLength(calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        logisticsDTO.setWidth(calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        logisticsDTO.setHeight(calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+    }
+
+    /**
+     * 计算物流尺寸
+     * @param logisticsDTO
+     * @param detailList
+     */
+    private void calculateSizeByUpdate(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, List<SoB2cDetailDTO.UpdateDTO> detailList) {
+        if (Objects.isNull(logisticsDTO) || CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())){
+            return;//存在则不重算
+        }
+        //根据明细进行sku拆分
+        List<SplitSkuDTO> splitSkuDTOS = splitBySoDetailByUpdate(detailList);
+        //拆分完成后根据拆分结果进行汇总
+        List<String> keyList = new ArrayList<>();
+        keyList.add(CalculateSizeEnum.LENGTH.getCode());
+        keyList.add(CalculateSizeEnum.WIDTH.getCode());
+        keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+        List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+        Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+        logisticsDTO.setLength(calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode())));
+        logisticsDTO.setWidth(calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode())));
+        logisticsDTO.setHeight(calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode())));
+    }
+
+    @Override
+    public BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length) {
+        BigDecimal maxLength;
+        //长
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(length)){
+            maxLength = skuList.stream()
+                    .map(e -> e.getLength().multiply(new BigDecimal(e.getQty())))
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        }else if (org.apache.commons.lang3.StringUtils.isNotEmpty(length) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)){
+            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }else {
+            maxLength = skuList.stream().map(SplitSkuDTO::getLength)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }
+        return maxLength;
+    }
+    @Override
+    public BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width) {
+        BigDecimal maxWidth;
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(width)){
+            maxWidth = skuList.stream().map(e -> e.getWidth().multiply(new BigDecimal(e.getQty())))
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        }else if (org.apache.commons.lang3.StringUtils.isNotEmpty(width) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(width)){
+            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }else {
+            maxWidth = skuList.stream().map(SplitSkuDTO::getWidth)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }
+        return maxWidth;
+    }
+
+    @Override
+    public BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String height) {
+        BigDecimal totalHeight;
+        //高
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MAX.getCode().equalsIgnoreCase(height)){
+            totalHeight  = skuList.stream().map(SplitSkuDTO::getHeight)
+                    .filter(Objects::nonNull)
+                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }else if (org.apache.commons.lang3.StringUtils.isNotEmpty(height) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(height)){
+            totalHeight  = skuList.stream().map(SplitSkuDTO::getHeight)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+        }else {
+            totalHeight  = skuList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQty())))
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        }
+        return totalHeight;
+    }
+
+
+    private List<SplitSkuDTO> splitBySoDetailByAdd(List<SoB2cDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)){
+            return Collections.emptyList();
+        }
+        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).filter(StrUtil::isNotEmpty).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuNos(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
+            //不存在拆分sku
+            detailList.forEach(addDTO -> {
+                SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                        .findFirst().orElse(null);
+                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                        .build());
+            });
+        }else {
+            this.buildProductSize(bomChildrenSkuDTOS);
+            detailList.forEach(addDTO -> {
+                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId())
+                                && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childrenSkuDTOS)){
+                    //不存在子sku
+                    SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                            .findFirst().orElse(null);
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .build());
+                }else {
+                    //子sku数量需要乘订单数量
+                    childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
+                        splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
+                                .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
+                                .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
+                                .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
+                                .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                                .build());
+                    });
+                }
+            });
+        }
+        return splitSkuDTOS;
+    }
+
+    private List<SplitSkuDTO> splitBySoDetailByUpdate(List<SoB2cDetailDTO.UpdateDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)){
+            return Collections.emptyList();
+        }
+        List<String> skuIds = detailList.stream().map(SoB2cDetailDTO.UpdateDTO::getSkuId).filter(StrUtil::isNotEmpty).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuNos(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
+            //不存在拆分sku
+            detailList.forEach(addDTO -> {
+                SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                        .findFirst().orElse(null);
+                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                        .build());
+            });
+        }else {
+            this.buildProductSize(bomChildrenSkuDTOS);
+            detailList.forEach(addDTO -> {
+                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId())
+                                && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childrenSkuDTOS)){
+                    //不存在子sku
+                    SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                            .findFirst().orElse(null);
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .build());
+                }else {
+                    //子sku数量需要乘订单数量
+                    childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
+                        splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
+                                .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
+                                .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
+                                .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
+                                .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                                .build());
+                    });
+                }
+            });
+        }
+        return splitSkuDTOS;
     }
 
     /**
@@ -387,7 +603,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
         }
-
+        //计算物流尺寸
+        calculateSizeByUpdate(updateDTO.getLogisticsDTO(),updateDTO.getDetailList());
         //修改物流信息
         soB2cLogisticsService.update(updateDTO.getLogisticsDTO(), soB2cEntity.getId());
         //修改买家信息
@@ -5002,5 +5219,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         taskFeignDTO.setSyncOperate(view.getApproveStatus().getCode());
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
-
+    @Override
+    public void buildProductSize(List<BomChildrenSkuDTO> bomChildrenSkuDTOS) {
+        if (CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
+            return;
+        }
+        bomChildrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
+            String productSize = bomChildrenSkuDTO.getProductSize();
+            if (org.apache.commons.lang3.StringUtils.isEmpty(productSize)){
+                bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+            }else {
+                String[] xes = productSize.split("X");
+                if (xes.length > 2){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
+                }else if (xes.length > 1){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }else if (xes.length > 0){
+                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }else {
+                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                }
+            }
+        });
+    }
 }

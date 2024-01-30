@@ -9,12 +9,15 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CalculateRuleEnum;
 import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -233,8 +236,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal maxWidth = BigDecimal.ZERO;
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
+            //拆分明细
+            List<SplitSkuDTO> splitSkuDTOS = splitBySoDetail(detailList,skuList,skuIds);
             //根据sku进行计算
-            calculateSize(detailList, skuList, skuIds, maxLength, maxWidth, totalHeight);
+            List<String> keyList = new ArrayList<>();
+            keyList.add(CalculateSizeEnum.LENGTH.getCode());
+            keyList.add(CalculateSizeEnum.WIDTH.getCode());
+            keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+            Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+            maxLength = soB2cService.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = soB2cService.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = soB2cService.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity, allNetWeight,maxLength,maxWidth,totalHeight);
@@ -261,182 +274,53 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return resultDTO;
     }
 
-    /**
-     * 计算长宽高
-     * @param detailList
-     * @param skuList
-     * @param skuIds
-     * @param maxLength
-     * @param maxWidth
-     * @param totalHeight
-     */
-    private void calculateSize(List<SoB2cDetailEntity> detailList,List<SkuVO> skuList, List<String> skuIds, BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {
-        if (CollectionUtils.isEmpty(skuIds) || CollectionUtils.isEmpty(skuList) || CollectionUtils.isEmpty(detailList)){
-            return;
+    private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuVO> skuVOList, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(detailList)){
+            return Collections.emptyList();
         }
-        Boolean isCombination = Boolean.FALSE;
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
-        List<String> parentSkuIds = null;
-        if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)){
-            isCombination = true;
-            parentSkuIds = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-            //计算sku尺寸
-            buildProductSize(bomChildrenSkuDTOS);
-        }
-        List<String> keyList = new ArrayList<>();
-        keyList.add(CalculateSizeEnum.LENGTH.getCode());
-        keyList.add(CalculateSizeEnum.WIDTH.getCode());
-        keyList.add(CalculateSizeEnum.HEIGHT.getCode());
-        List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
-        if (isCombination){
-            Map<String, Integer> skuQty = detailList.stream()
-                    .filter(e -> StringUtils.isNotEmpty(e.getSkuId())).distinct()
-                    .collect(Collectors.toMap(SoB2cDetailEntity::getSkuId, SoB2cDetailEntity::getQty,Integer::sum));
-            List<String> finalParentSkuIds = parentSkuIds;
-            //组合时 计算需要排除存在父sku数据
-            Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            String length = collect.get(CalculateSizeEnum.LENGTH.getCode());
-            if (CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(length)){
-                BigDecimal maxLength1 = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()))
-                        .map(e -> e.getLength().multiply(BigDecimal.valueOf(skuQty.get(e.getSkuId())))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal maxLength2 = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getLength()))
-                        .map(e -> e.getLength().multiply(BigDecimal.valueOf(e.getQuantity())).multiply(BigDecimal.valueOf(skuQty.get(e.getParentSkuId()))))
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                maxLength = maxLength1.add(maxLength2);
-            }else {
-                BigDecimal maxLength1  = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()) && Objects.nonNull(e.getLength()))
-                        .map(SkuVO::getLength)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                BigDecimal maxLength2  = bomChildrenSkuDTOS.stream()
-                        .map(BomChildrenSkuDTO::getLength)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                if (CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)){
-                    maxLength = maxLength1.compareTo(maxLength2) > 0 ?  maxLength2: maxLength1;
-                }else {
-                    maxLength = maxLength1.compareTo(maxLength2) > 0 ? maxLength1: maxLength2;
-                }
-            }
-            String width = collect.get(CalculateSizeEnum.WIDTH.getCode());
-            if (CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(width)){
-                BigDecimal maxWidth1 = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()))
-                        .map(e -> e.getWidth().multiply(BigDecimal.valueOf(skuQty.get(e.getSkuId())))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal maxWidth2 = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getWidth()))
-                        .map(e -> e.getWidth().multiply(BigDecimal.valueOf(e.getQuantity())).multiply(BigDecimal.valueOf(skuQty.get(e.getParentSkuId()))))
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                maxWidth = maxWidth1.add(maxWidth2);
-            }else {
-                BigDecimal maxWidth1  = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()) && Objects.nonNull(e.getWidth()))
-                        .map(SkuVO::getWidth)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                BigDecimal maxWidth2  = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getWidth)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                if (CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)){
-                    maxWidth = maxWidth1.compareTo(maxWidth2) > 0 ?  maxWidth2: maxWidth1;
-                }else {
-                    maxWidth = maxWidth1.compareTo(maxWidth2) > 0 ? maxWidth1: maxWidth2;
-                }
-            }
-            String height = collect.get(CalculateSizeEnum.HEIGHT.getCode());
-            if (CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(height)){
-                BigDecimal totalHeight1 = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()))
-                        .map(e -> e.getHeight().multiply(BigDecimal.valueOf(skuQty.get(e.getSkuId())))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal totalHeight2 = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getHeight()))
-                        .map(e -> e.getHeight().multiply(BigDecimal.valueOf(e.getQuantity())).multiply(BigDecimal.valueOf(skuQty.get(e.getParentSkuId()))))
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                totalHeight = totalHeight1.add(totalHeight2);
-            }else {
-                BigDecimal totalHeight1  = skuList.stream().filter(e -> !finalParentSkuIds.contains(e.getSkuId()) && Objects.nonNull(e.getHeight()))
-                        .map(SkuVO::getHeight)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                BigDecimal totalHeight2  = bomChildrenSkuDTOS.stream()
-                        .map(BomChildrenSkuDTO::getHeight)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                if (CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)){
-                    totalHeight = totalHeight1.compareTo(totalHeight2) > 0 ?  totalHeight2: totalHeight1;
-                }else {
-                    totalHeight = totalHeight1.compareTo(totalHeight2) > 0 ? totalHeight1: totalHeight2;
-                }
-            }
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuNos(skuIds);
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
+            //不存在拆分sku
+            detailList.forEach(addDTO -> {
+                SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                        .findFirst().orElse(null);
+                splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                        .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                        .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                        .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                        .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                        .build());
+            });
         }else {
-            Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            //长
-            String length = collect.get(CalculateSizeEnum.LENGTH.getCode());
-            if (StringUtils.isNotEmpty(length) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(length)){
-                maxLength = skuList.stream().map(SkuVO::getLength)
-                        .filter(Objects::nonNull)
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            }else if (StringUtils.isNotEmpty(length) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(length)){
-                maxLength = skuList.stream().map(SkuVO::getLength)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }else {
-                maxLength = skuList.stream().map(SkuVO::getLength)
-                        .filter(Objects::nonNull)
-                        .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }
-            //宽
-            String width = collect.get(CalculateSizeEnum.WIDTH.getCode());
-            if (StringUtils.isNotEmpty(width) && CalculateRuleEnum.SUM.getCode().equalsIgnoreCase(width)){
-                maxWidth = skuList.stream().map(SkuVO::getWidth)
-                        .filter(Objects::nonNull)
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            }else if (StringUtils.isNotEmpty(width) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(width)){
-                maxWidth = skuList.stream().map(SkuVO::getWidth)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }else {
-                maxWidth = skuList.stream().map(SkuVO::getWidth)
-                        .filter(Objects::nonNull)
-                        .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }
-            //高
-            String height = collect.get(CalculateSizeEnum.HEIGHT.getCode());
-            if (StringUtils.isNotEmpty(height) && CalculateRuleEnum.MAX.getCode().equalsIgnoreCase(height)){
-                totalHeight  = skuList.stream().map(SkuVO::getHeight)
-                        .filter(Objects::nonNull)
-                        .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }else if (StringUtils.isNotEmpty(height) && CalculateRuleEnum.MIN.getCode().equalsIgnoreCase(height)){
-                totalHeight  = skuList.stream().map(SkuVO::getHeight)
-                        .filter(Objects::nonNull)
-                        .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-            }else {
-                totalHeight  = skuList.stream().map(SkuVO::getHeight)
-                        .filter(Objects::nonNull)
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            }
-        }
-    }
-
-    private void buildProductSize(List<BomChildrenSkuDTO> bomChildrenSkuDTOS) {
-        bomChildrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-            String productSize = bomChildrenSkuDTO.getProductSize();
-            if (StringUtils.isEmpty(productSize)){
-                bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-            }else {
-                String[] xes = productSize.split("X");
-                if (xes.length > 2){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
-                }else if (xes.length > 1){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-                }else if (xes.length > 0){
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+            soB2cService.buildProductSize(bomChildrenSkuDTOS);
+            detailList.forEach(addDTO -> {
+                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId())
+                        && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childrenSkuDTOS)){
+                    //不存在子sku
+                    SkuVO skuVO = skuVOList.stream().filter(e -> StrUtil.isNotEmpty(e.getSkuId()) && StrUtil.isNotEmpty(e.getSkuNo()) && e.getSkuId().equals(addDTO.getSkuId()))
+                            .findFirst().orElse(null);
+                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
+                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
+                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? skuVO.getLength() : BigDecimal.ZERO)
+                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? skuVO.getWidth() : BigDecimal.ZERO)
+                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? skuVO.getHeight() : BigDecimal.ZERO)
+                            .build());
                 }else {
-                    bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
-                    bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
-                    bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                    //子sku数量需要乘订单数量
+                    childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
+                        splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
+                                .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
+                                .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? bomChildrenSkuDTO.getLength() : BigDecimal.ZERO)
+                                .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? bomChildrenSkuDTO.getWidth() : BigDecimal.ZERO)
+                                .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? bomChildrenSkuDTO.getHeight() : BigDecimal.ZERO)
+                                .build());
+                    });
                 }
-            }
-        });
+            });
+        }
+        return splitSkuDTOS;
     }
 }
