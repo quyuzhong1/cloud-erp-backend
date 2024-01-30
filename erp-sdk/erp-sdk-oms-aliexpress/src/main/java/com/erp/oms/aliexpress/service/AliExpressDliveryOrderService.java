@@ -13,11 +13,12 @@ import io.seata.common.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AliExpressDliveryOrderService {
 
-    public IopResponse getDelivery(Map<String, String> authMap, String orderId) throws ApiException {
+    public IopResponse getDelivery(Map<String, String> authMap, List<String> orderIds) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -29,7 +30,10 @@ public class AliExpressDliveryOrderService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
-        request.addApiParameter("customer_order_number_list", JSONObject.toJSONString(Arrays.asList(orderId)));
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("biz_type", 288000);
+        paramMap.put("customer_order_number_list", orderIds);
+        request.addApiParameter("customer_order_number_list", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         return response;
 //        return JSONObject.parseObject(response.getBody(), LabelResult.class);
@@ -49,7 +53,9 @@ public class AliExpressDliveryOrderService {
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
-        paramMap.put("customer_order_number_list", Arrays.asList("8183735967757849"));
+        paramMap.put("page_index", 5);
+        paramMap.put("page_size", 20);
+        paramMap.put("customer_order_number_list", Arrays.asList(""));
         request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
