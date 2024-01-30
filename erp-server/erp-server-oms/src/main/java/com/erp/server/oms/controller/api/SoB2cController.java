@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -917,5 +918,12 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    @GetMapping("/getSkusBySoInfo")
+    public ApiResult<List<TransferDeclareProductDTO>> getSkusBySoInfo(@RequestParam("id") String id) {
+        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getSkusBySoInfo(id);
+        return success(skusBySoInfo);
+
     }
 }

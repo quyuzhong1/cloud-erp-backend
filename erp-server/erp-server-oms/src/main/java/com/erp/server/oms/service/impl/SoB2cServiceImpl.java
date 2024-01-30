@@ -38,12 +38,15 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -64,6 +67,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -236,7 +240,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
-
+    @Resource
+    private LogisticsProductFeign logisticsProductFeign;
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -445,10 +450,93 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
         }else {
             totalHeight  = skuList.stream().map(e -> e.getHeight().multiply(new BigDecimal(e.getQty())))
-                    .filter(Objects::nonNull)
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
         return totalHeight;
+    }
+
+    @Override
+    public List<TransferDeclareProductDTO> getSkusBySoInfo(String soId) {
+        SoB2cEntity soB2cEntity = this.getById(soId);
+        if (ObjectUtils.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntities = soB2cDetailService.listByMainId(soId);
+        if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        return splitBySoDetail(soB2cDetailEntities);
+    }
+
+    private List<TransferDeclareProductDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities) {
+        if (CollectionUtils.isEmpty(soB2cDetailEntities)){
+            return Collections.emptyList();
+        }
+        List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
+        List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+//        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
+        //子sku列表
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuNos(skuIds);
+        //合并 子sku和父级sku获取 全量sku明细
+        if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)){
+            skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
+                    .collect(Collectors.toList());
+        }
+        //全量sku的产品明细
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIds);
+        //sku 产品物流信息map
+        Map<String, LogisticsProductDTO.ProductDTO> skuMap = skuInfoList.stream().collect(Collectors.toMap(LogisticsProductDTO.ProductDTO::getSkuId, Function.identity()));
+        //sku 父子 map
+        Map<String, List<BomChildrenSkuDTO>> skuChildMap = bomChildrenSkuDTOS.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        soB2cDetailEntities.forEach(soB2cDetailEntity -> {
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
+            LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
+            if(CollectionUtils.isEmpty(bomChildrenSkuDTOS1)){
+                //没有子集时
+                transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                                .skuNo(soB2cDetailEntity.getSkuNo())
+                                .soDetailId(soB2cDetailEntity.getId())
+                                .qty(soB2cDetailEntity.getQty())
+                                .declareChineseName(Objects.nonNull(productDTO)? productDTO.getDeclareChineseName(): "")
+                                .declareEnglishName(Objects.nonNull(productDTO)? productDTO.getDeclareEnglishName(): "")
+                                .declarePrice(Objects.nonNull(productDTO)? productDTO.getDestDeclarePrice(): BigDecimal.ZERO)
+                                .currency(Objects.nonNull(productDTO)? productDTO.getDestCurrency(): "")
+                        .build());
+            }else {
+                Boolean isCombination = Boolean.FALSE;
+                //检查sku是否是组合产品
+                if (Objects.nonNull(productDTO) && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productDTO.getCombinationDeclareType())){
+                    //申报类型
+                    isCombination = Boolean.TRUE;
+                }
+                if (isCombination){
+                    bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
+                        LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
+                        transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                                .skuNo(bomChildrenSkuDTO.getSkuNo())
+                                .soDetailId(soB2cDetailEntity.getId())
+                                .qty(soB2cDetailEntity.getQty()*bomChildrenSkuDTO.getQuantity())
+                                .declareChineseName(Objects.nonNull(bomProduct)? bomProduct.getDeclareChineseName(): "")
+                                .declareEnglishName(Objects.nonNull(bomProduct)? bomProduct.getDeclareEnglishName(): "")
+                                .declarePrice(Objects.nonNull(bomProduct)? bomProduct.getDestDeclarePrice(): BigDecimal.ZERO)
+                                .currency(Objects.nonNull(bomProduct)? bomProduct.getDestCurrency(): "")
+                                .build());
+                    });
+                }else {
+                    //存在bom 但是是单品时
+                    transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                            .skuNo(soB2cDetailEntity.getSkuNo())
+                            .soDetailId(soB2cDetailEntity.getId())
+                            .qty(soB2cDetailEntity.getQty())
+                            .declareChineseName(Objects.nonNull(productDTO)? productDTO.getDeclareChineseName(): "")
+                            .declareEnglishName(Objects.nonNull(productDTO)? productDTO.getDeclareEnglishName(): "")
+                            .declarePrice(Objects.nonNull(productDTO)? productDTO.getDestDeclarePrice(): BigDecimal.ZERO)
+                            .currency(Objects.nonNull(productDTO)? productDTO.getDestCurrency(): "")
+                            .build());
+                }
+            }
+        });
+        return transferDeclareProductDTOS;
     }
 
 

@@ -135,6 +135,8 @@ public class TransferDeclareProductDTO implements Serializable {
         @Size(max = 19,message = "来源明细id[中转报关单据]最大长度不能超过19位")
         private String declareDetailId;
 
+        @NotBlank(message = "产品sku编号不能为空")
+        private String skuNo;
         /**
         * 数量
         */

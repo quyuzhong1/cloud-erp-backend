@@ -10,12 +10,16 @@ import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
+@Component
 public class AliExpressDliveryOrderService {
 
     public IopResponse getDelivery(Map<String, String> authMap, List<String> orderIds) throws ApiException {

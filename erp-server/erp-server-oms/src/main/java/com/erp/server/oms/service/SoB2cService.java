@@ -756,4 +756,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length);
     BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width);
     BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String Height);
+
+    /**
+     * 根据订单拆分sku
+     */
+    List<TransferDeclareProductDTO> getSkusBySoInfo(String soId);
 }
