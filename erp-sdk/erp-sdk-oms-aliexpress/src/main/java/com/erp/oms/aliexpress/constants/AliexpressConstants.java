@@ -7,7 +7,8 @@ package com.erp.oms.aliexpress.constants;
  *@date 2023-11-22
  */
 public interface AliexpressConstants {
-    
+    String BASE_URL = "https://api-sg.aliexpress.com";
+
     String TOKEN_CREATE = "/auth/token/create";
 
     /**
@@ -55,5 +56,10 @@ public interface AliexpressConstants {
      * 海外仓表示
      */
     String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";
+
+    /**
+     * 发货单查询
+     */
+    String ALIEXPRESS_ASCP_FFO_QUERY="aliexpress.ascp.ffo.query";
 
 }
