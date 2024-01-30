@@ -72,10 +72,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
         }
-
-        //更新订单中转状态
-        List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
     }
 
     /**

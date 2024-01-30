@@ -28,6 +28,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
@@ -468,7 +469,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
             for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
                 addDTO.setGenerateTime(generateTime);
-                this.add(addDTO);
+                BaseResultDTO.AddDTO add = this.add(addDTO);
+                if (StringUtils.isNotBlank(add.getId())) {
+                    //更新订单中转状态
+                    List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+                    soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
+                }
+
             }
         }
     }
