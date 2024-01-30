@@ -308,6 +308,11 @@ public class PurchaseChangeDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 采购订单编号
+         */
+        private String purchaseOrderCode;
+
+        /**
          * 供应商信息
          */
         private PurchaseOrderSupplierDTO.UpdateDTO supplierDTO;

@@ -192,6 +192,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         }
         BeanMapperUtils.copy(entity,dto);
 
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+           throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //采购订单号
+        dto.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         //供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
