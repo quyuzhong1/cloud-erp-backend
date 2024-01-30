@@ -43,16 +43,13 @@ public class AliExpressDliveryOrderService {
         String appKey = "502978";
         String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
         String baseUrl = "https://api-sg.aliexpress.com";
-        String token = "50000700102dJA1ebaa675vRobFQLhzEilpVqRDC1mYhMxcVpF6gAq3MrxFEgC7g3YJD";
+        String token = "50000700205zwXSma1e2c8625cUveuFpAPxMtBCci0HmUhuSd9BfP4kTtgICMZMOGaag";
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
-        /**
-         * 订单类型。（AE_COMMON:普通类型,AE_TRIAL:试用类型;AE_RECHARGE:充值订单
-         */
-        paramMap.put("biz_type", 7668000);
-        paramMap.put("fulfillment_order_no", Arrays.asList(""));
+        paramMap.put("biz_type", 288000);
+        paramMap.put("customer_order_number_list", Arrays.asList("8183735967757849"));
         request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
