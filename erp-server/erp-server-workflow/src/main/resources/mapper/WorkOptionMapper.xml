@@ -87,18 +87,18 @@
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
             max(ptm.id) AS id,
-            wm.module_classify,
-            pm.business_code,
-            pm.business_name,
-            pm.business_id,
-            pm.business_key,
-            pm.create_user_id,
+            wm.module_classify as moduleClassify,
+            pm.business_code as businessCode,
+            pm.business_name as businessName,
+            pm.business_id as businessId,
+            pm.business_key as businessKey,
+            pm.create_user_id as createUserId,
             EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
-            pm.create_time,
-            pm.approve_status,
+            pm.create_time as createTime,
+            pm.approve_status as approveStatus,
             concat(wm.detail_url,pm.business_id) as detail_url,
-            wmrs.cancel_process_url,
-            wmrs.cancel_process_param
+            wmrs.cancel_process_url as cancelProcessUrl,
+            wmrs.cancel_process_param as cancelProcessParam
         FROM process_management pm
         INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
@@ -152,6 +152,12 @@
         concat(wm.detail_url,pm.business_id),
         wmrs.cancel_process_url,
         wmrs.cancel_process_param
+        <if test="params.sortList != null and params.sortList.size > 0">
+            ORDER BY
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </select>
 
 
