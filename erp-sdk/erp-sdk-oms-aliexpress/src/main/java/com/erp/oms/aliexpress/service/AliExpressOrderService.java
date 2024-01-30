@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.service;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -21,9 +22,7 @@ import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.AddressRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
-import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
-import com.erp.oms.aliexpress.dto.response.BuyerTradeAddress;
+import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -33,11 +32,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
@@ -268,6 +263,45 @@ public class AliExpressOrderService {
             return address;
         }
         return null;
+    }
+
+    /**
+     * 查询发货单
+     * @Author Luo_WG
+     * @Date 2024/1/30 14:48
+     * @param orderRequest
+     * @param orderIdList
+     * @return void
+     **/
+    public List<ErpFulfillmentForwardDtoBean> listDeliveryQuery(OrderRequest orderRequest, List<String> orderIdList) throws ApiException {
+        String appKey = orderRequest.getClientId();
+        String appSecret = orderRequest.getClientSecret();
+        String baseUrl = orderRequest.getBaseUrl();
+        String apiName = orderRequest.getApiName();
+        Integer currentPage = orderRequest.getCurrentPage();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName(apiName);
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("biz_type", 288000);
+        paramMap.put("customer_order_number_list", orderIdList);
+        request.addApiParameter("customer_order_number_list", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
+        String token = orderRequest.getToken();
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+        JSONObject resultJsONObject = jsonObject.getJSONObject("result");
+        Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+        //失败
+        if (!success) {
+            log.error("查询速卖通发货单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
+            return Collections.emptyList();
+        }
+        AliExpressAscpFfoQueryResponse result = com.alibaba.fastjson.JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
+        DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
+        if (ObjectUtil.isEmpty(dataList)) {
+            return Collections.emptyList();
+        }
+        return dataList.getErpFulfillmentForwardDto();
     }
 
     public static void main(String[] args) throws ApiException {

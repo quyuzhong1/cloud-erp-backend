@@ -91,6 +91,19 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         if (CollectionUtils.isEmpty(orderList)) {
             return Collections.emptyList();
         }
+
+        String deliveryQueryAPiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY;
+        OrderRequest deliveryRequest = OrderRequest.builder().
+                clientId(shopInfoDTO.getClientId()).
+                clientSecret(shopInfoDTO.getClientSecret()).
+                baseUrl(shopInfoDTO.getBaseUrl()).
+                apiName(deliveryQueryAPiName).
+                token(shopInfoDTO.getToken()).build();
+/*        try {
+            List<String> orderIdList = orderList.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
+            aliExpressOrderService.listDeliveryQuery(deliveryRequest, );
+        }*/
+
         return orderList.stream()
                 .map(e -> new PlatformAliExpressOrderDTO(data, e, shopInfoDTO))
                 .collect(Collectors.toList());
