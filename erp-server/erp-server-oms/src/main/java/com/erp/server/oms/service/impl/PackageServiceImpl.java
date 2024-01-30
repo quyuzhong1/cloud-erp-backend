@@ -55,7 +55,7 @@ public class PackageServiceImpl implements PackageService {
     public Boolean mergePackage(List<String> ids) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(ids);
         packageForecastFeign.add(addList);
-        return null;
+        return Boolean.TRUE;
     }
 
     /**
@@ -77,9 +77,12 @@ public class PackageServiceImpl implements PackageService {
             String logisticsChannelId = item.getLogisticsChannelId();
             LogisticsChannelDTO.BaseDTO logisticsChannel = channelList.stream().
                     filter(l -> l.getId().equals(logisticsChannelId)).findFirst().orElse(null);
-            item.setLogisticsChannelName(logisticsChannel.getName());
-            item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
-            item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
+            if(logisticsChannel!=null){
+                item.setLogisticsChannelName(logisticsChannel.getName());
+                item.setLogisticsSupplierId(logisticsChannel.getLogisticsSupplierId());
+                item.setLogisticsSupplierName(logisticsChannel.getLogisticsSupplierName());
+            }
+
         }
 
         Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).

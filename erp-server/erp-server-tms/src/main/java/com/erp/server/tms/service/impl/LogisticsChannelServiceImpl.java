@@ -426,9 +426,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
         for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
             }
         }
         return baseDTOS;

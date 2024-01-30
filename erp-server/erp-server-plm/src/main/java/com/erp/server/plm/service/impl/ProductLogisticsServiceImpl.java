@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,6 +69,8 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
         return this.saveOrUpdate(logisticsEntity);
     }
+
+
 
     /**
      * @param productLogisticsList 产品物流信息表
