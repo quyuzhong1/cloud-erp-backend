@@ -75,11 +75,7 @@ public class PackageForecastDetailEntity extends BaseEntity<PackageForecastDetai
     */
     @TableField("handover_status")
     private String handoverStatus;
-    /**
-    * 出库状态
-    */
-    @TableField("outstock_status")
-    private String outstockStatus;
+
 
 
     public static final String MAIN_ID = "main_id";
@@ -102,7 +98,7 @@ public class PackageForecastDetailEntity extends BaseEntity<PackageForecastDetai
 
     public static final String HANDOVER_STATUS = "handover_status";
 
-    public static final String OUTSTOCK_STATUS = "outstock_status";
+
 
     @Override
     public Serializable pkVal() {

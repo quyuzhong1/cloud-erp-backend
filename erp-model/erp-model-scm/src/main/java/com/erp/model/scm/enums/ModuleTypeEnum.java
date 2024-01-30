@@ -67,6 +67,7 @@ public enum ModuleTypeEnum {
     TRANSFER_LOGISTICS_CHANNEL("63", "中转报关服务商渠道"),
     TRANSFER_LOGISTICS_SUPPLIER("64", "中转报关服务商"),
     TRANSFER_DECLARE("65", "中转报关单"),
+    PACKAGE_FORECAST("66", "组包预报"),
     ;
 
 

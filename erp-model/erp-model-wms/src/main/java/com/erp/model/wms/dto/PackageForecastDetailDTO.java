@@ -152,12 +152,7 @@ public class PackageForecastDetailDTO implements Serializable {
         @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
-        /**
-        * 物流渠道名
-        */
-        @NotBlank(message = "物流渠道名不能为空")
-        @Size(max = 50,message = "物流渠道名最大长度不能超过50位")
-        private String logisticsChannelName;
+
 
         /**
         * 物流跟踪号
@@ -194,12 +189,7 @@ public class PackageForecastDetailDTO implements Serializable {
         @Size(max = 32,message = "交接状态最大长度不能超过32位")
         private String handoverStatus;
 
-        /**
-        * 出库状态
-        */
-        @NotBlank(message = "出库状态不能为空")
-        @Size(max = 32,message = "出库状态最大长度不能超过32位")
-        private String outstockStatus;
+
 
 
     }
