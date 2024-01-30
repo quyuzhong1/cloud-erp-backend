@@ -356,7 +356,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (CollectionUtils.isEmpty(detailList)){
             return Collections.emptyList();
         }
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuNos(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
         if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
             //不存在拆分sku
