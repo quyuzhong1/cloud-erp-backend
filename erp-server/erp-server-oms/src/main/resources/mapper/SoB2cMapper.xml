@@ -746,7 +746,8 @@
         sb.bill_status AS billStatus,
         sb.package_status AS packageStatus,
         sbl.logistics_channel_id AS logisticsChannelId,
-        sbl.code AS trackNo,
+        sbl.code AS transportNo,
+        sbl.track_no AS trackNo,
         sbl.weight AS weight
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl

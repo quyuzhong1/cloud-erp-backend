@@ -165,6 +165,7 @@ public class PackageForecastDTO implements Serializable {
         @NotBlank(message = "物流商id不能为空")
         private String logisticsSupplierId;
 
+        private String logisticsSupplierName;
 
 
         /**
