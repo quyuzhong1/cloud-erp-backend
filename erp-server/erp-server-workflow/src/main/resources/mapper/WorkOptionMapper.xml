@@ -49,6 +49,7 @@
             wm.module_classify AS moduleClassify,
             wm.module_code AS moduleCode,
             db.name AS moduleStatusName,
+            wmrs.module_status_field AS moduleStatusField,
             wmrs.module_status AS moduleStatus,
             wmrs.module_url AS moduleUrl,
             wmrs.module_param AS moduleParam

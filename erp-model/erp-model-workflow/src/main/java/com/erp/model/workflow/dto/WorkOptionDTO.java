@@ -153,6 +153,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleCode;
 
         /**
+         * 模块状态字段
+         */
+        private String moduleStatusField;
+
+        /**
          * 模块状态名称
          */
         private String moduleStatusName;
