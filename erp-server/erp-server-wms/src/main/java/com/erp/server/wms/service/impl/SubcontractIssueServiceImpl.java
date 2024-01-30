@@ -497,6 +497,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             detailListDTO.setSkuId(parentDetailEntity.getSkuId());
             detailListDTO.setSkuNo(parentDetailEntity.getSkuNo());
             detailListDTO.setSourceId(subcontractOrderList.get(0).getId());
+            detailListDTO.setSubcontractOrderId(subcontractOrderList.get(0).getId());
             detailListDTO.setParentSourceDetailId(parentDetailEntity.getId());
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(parentDetailEntity.getSkuId())).findFirst().orElse(null);
@@ -516,7 +517,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             for (SubcontractOrderDetailEntity  childDetailEntity : childEntityList) {
                 SubcontractIssueDetailDTO.ListSourceDetailDTO detailDTO = new SubcontractIssueDetailDTO.ListSourceDetailDTO();
                 detailDTO.setSourceId(subcontractOrderList.get(0).getId());
+                detailDTO.setSubcontractOrderId(subcontractOrderList.get(0).getId());
                 detailDTO.setSourceDetailId(childDetailEntity.getId());
+                detailDTO.setSubcontractOrderDetailId(childDetailEntity.getId());
                 detailDTO.setParentSourceDetailId(parentDetailEntity.getId());
                 detailDTO.setParentSkuId(parentDetailEntity.getSkuId());
                 detailDTO.setParentSkuNo(parentDetailEntity.getSkuNo());

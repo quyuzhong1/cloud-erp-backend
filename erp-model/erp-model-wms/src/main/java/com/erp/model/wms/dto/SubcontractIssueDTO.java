@@ -431,6 +431,11 @@ public class SubcontractIssueDTO implements Serializable {
         private String parentSourceDetailId;
 
         /**
+         * 委外订单id
+         */
+        private String subcontractOrderId;
+
+        /**
          * skuId
          */
         private String skuId;
