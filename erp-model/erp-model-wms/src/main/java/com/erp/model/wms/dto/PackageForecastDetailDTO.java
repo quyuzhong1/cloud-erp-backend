@@ -185,8 +185,6 @@ public class PackageForecastDetailDTO implements Serializable {
         /**
         * 交接状态
         */
-        @NotBlank(message = "交接状态不能为空")
-        @Size(max = 32,message = "交接状态最大长度不能超过32位")
         private String handoverStatus;
 
 

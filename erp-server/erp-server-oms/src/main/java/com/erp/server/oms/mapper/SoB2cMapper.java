@@ -133,4 +133,11 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     IPage<PackageDTO.PagingViewDTO> packagePing(Page query, @Param("params") PackageDTO.PagingParamDTO params);
+
+    /**
+     * 根据销售订单ids 获取到合并的数据
+     * @param ids
+     * @return
+     */
+    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@Param("ids")List<String> ids);
 }

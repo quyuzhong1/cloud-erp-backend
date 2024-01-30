@@ -25,7 +25,6 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @RestController
-@LogSystemModule("组包预报")
 @RequestMapping("/feign/packageForecast")
 public class PackageForecastFeignController extends BaseController {
 
@@ -39,7 +38,6 @@ public class PackageForecastFeignController extends BaseController {
      * @param list
      * @return
      */
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加组包预报")
     @PostMapping("/add")
     public Boolean add(@RequestBody @Validated ValidList<PackageForecastDTO.AddDTO> list) {
         for (PackageForecastDTO.AddDTO item : list) {
