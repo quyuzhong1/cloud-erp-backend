@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -48,7 +49,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(AliexpressDeliveryDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO addDTO) {
         AliexpressDeliveryEntity aliexpressDeliveryEntity = new AliexpressDeliveryEntity();
         BeanMapperUtils.copy(addDTO, aliexpressDeliveryEntity);
 
@@ -60,6 +61,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         if(!save) {
             throw new ServiceException("速卖通发货单保存失败");
         }
+        return new BaseResultDTO.AddDTO(aliexpressDeliveryEntity.getId(), aliexpressDeliveryEntity.getPlatformCode());
     }
 
     @Override

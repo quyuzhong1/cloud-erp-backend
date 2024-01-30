@@ -3,9 +3,9 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
@@ -14,10 +14,8 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.CalculateRuleEnum;
 import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
@@ -25,17 +23,14 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
-import com.erp.oms.aliexpress.dto.response.DataListBean;
-import com.erp.oms.aliexpress.dto.response.ErpFulfillmentForwardDtoBean;
-import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
-import com.erp.oms.aliexpress.util.ApiException;
+import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -103,7 +98,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private ShopAuthService shopAuthService;
 
     @Resource
-    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
+    private AliexpressDeliveryFeign aliexpressDeliveryFeign;
+
+    @Resource
+    private WmsWarehouseFeign warehouseFeign;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -143,7 +141,34 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
                 //速卖通平台仓订单不走任何规则
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && hasPlatformWarehouse && isShipped) {
-                    soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
+                    //如果有发货时间
+                    List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(logisticsDTOS)) {
+                        //生成销售出库单
+                        soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
+
+                        //生成速卖通发货单
+                        AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
+                        addDTO.setOutBoundTime(logisticsDTOS.get(0).getDeliveryTime());
+                        addDTO.setPlatformCode(mainEntity.getPlatformCode());
+                        addDTO.setSoId(mainEntity.getId());
+                        addDTO.setSoCode(mainEntity.getCode());
+                        addDTO.setShopId(mainEntity.getShopId());
+                        if (StringUtils.isNotBlank(mainEntity.getShopId())) {
+                            addDTO.setShopId(mainEntity.getShopId());
+                            ShopInfoEntity shopInfoEntity = shopInfoService.getById(mainEntity.getShopId());
+                            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                                addDTO.setShopName(shopInfoEntity.getName());
+                            }
+                        }
+                        addDTO.setTrackNo(logisticsDTOS.get(0).getCode());
+                        addDTO.setTradeCreateTime(dto.getOrderCreateTime());
+                        aliexpressDeliveryFeign.add(addDTO);
+                    } else {
+                        //查询速卖通仓库名称是否映射ERP仓库
+                        String warehouseName = dto.getDetails().get(0).getWarehouseName();
+
+                    }
                     return;
                 }
 
@@ -161,25 +186,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     private void test (SoB2cEntity soB2cEntity) {
-        // 1、查询速卖通发货单
-        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(soB2cEntity.getShopId());
-        IopResponse response = null;
-        try {
-            response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(soB2cEntity.getPlatformCode()));
-        } catch (ApiException e) {
-            log.error("[查询速卖通发货单失败]:入参={},订单号={}, msg={}", aliExpressCfgClientMap.toString(), soB2cEntity.getPlatformCode(), e.getMessage());
-            return;
-        }
-        AliExpressAscpFfoQueryResponse result = JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
-        DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
-        if (ObjectUtil.isEmpty(dataList)) {
-            return;
-        }
-        List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDto = dataList.getErpFulfillmentForwardDto();
-        for (ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean : erpFulfillmentForwardDto) {
-            erpFulfillmentForwardDtoBean.getSendFulfillTime();
-        }
-        return;
+
 
     }
 

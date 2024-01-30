@@ -1,7 +1,6 @@
 package com.erp.oms.aliexpress.dto;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -90,6 +89,8 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         String fl = "";
         // 订单日期
         orderDTO.setBillDate(LocalDateUtil.parseStrToLocalDate(sourceOrder.getGmtCreate()));
+        // 订单创建时间
+        orderDTO.setOrderCreateTime(LocalDateUtil.parseStrToLocalTime(sourceOrder.getGmtCreate()));
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getOrderId());
         // 销售平台
@@ -207,11 +208,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
+        String warehouseName = "";
         if (detailNotNull) {
             List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
                     filter(d -> StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(logisticInfoList)) {
                 for (LogisitcsDTO item : logisticInfoList) {
+                    warehouseName = item.getWarehouseName();
                     PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
                     logisticsDTO.setCode(item.getLogisticsNo());
                     logisticsDTO.setName(item.getLogisticsServiceName());
@@ -227,8 +230,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             }
         }
         orderDTO.setLogisticsList(orderLogisticList);
+
         // 订单明细
-        List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList());
+        List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList(), warehouseName);
         orderDTO.setDetails(details);
 
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
@@ -281,21 +285,22 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
      * 批量转明细
      *
      * @param detailList
+     * @param warehouseName
      * @return
      */
-    private static List<PlatformOrderDetailDTO> parseDetailList(List<OrderItemDetail> detailList) {
+    private static List<PlatformOrderDetailDTO> parseDetailList(List<OrderItemDetail> detailList, String warehouseName) {
         if (CollectionUtils.isEmpty(detailList)) {
             return Collections.emptyList();
         }
         return detailList.stream()
-                .map(e -> intPlatformOrderDetailDTO(e))
+                .map(e -> intPlatformOrderDetailDTO(e, warehouseName))
                 .collect(Collectors.toList());
     }
 
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(OrderItemDetail item) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(OrderItemDetail item, String warehouseName) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         // 图片URL
         detailDTO.setImageUrl(item.getProductImgUrl());
@@ -311,7 +316,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 平台sku编号
         detailDTO.setPlatformSpuNo(item.getProductId().toString());
         // 库存sku编号
-        detailDTO.setWarehouseName("");
+        detailDTO.setWarehouseName(warehouseName);
         // 仓库名称
         detailDTO.setWarehouseId("");
         Integer qty = item.getProductCount();

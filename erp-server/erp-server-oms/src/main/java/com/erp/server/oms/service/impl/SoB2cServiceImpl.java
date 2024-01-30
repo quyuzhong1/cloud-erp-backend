@@ -1060,6 +1060,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
         String transferStatus = resultDTO.getTransferStatus();
+        entity.setPackageStatus(packageStatus);
+        entity.setTransferStatus(transferStatus);
         //未备案的sku
         List<String> notRegistrationSkuNoList= resultDTO.getNotRegistrationSkuNoList();
         Boolean isRegistration=CollectionUtils.isEmpty(notRegistrationSkuNoList);
@@ -5227,9 +5229,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
             logisticsChannelId = Objects.nonNull(soB2cLogistics) ? soB2cLogistics.getLogisticsChannelId() : "";
         }
+        List<TransferDeclareProductDTO> productList = this.getSkusBySoInfo(id);
         //渠道名称
         String logisticsChannelName = "";
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+
         //不在备案列表的skuNo
         List<String> notRegistrationSkuNoList = new ArrayList<>();
         /**
@@ -5237,7 +5240,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         String packageStatus = PackageStatusEnum.NOT.getCode();
         String transferStatus = TransferStatusEnum.NOT.getCode();
-        List<String> skuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = productList.stream().map(TransferDeclareProductDTO::getSkuNo).distinct().collect(Collectors.toList());
         String declarePlatform="";
         String declarePlatformName="";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
