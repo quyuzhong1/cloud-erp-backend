@@ -176,7 +176,6 @@ public class SubcontractIssueDetailDTO implements Serializable {
         /**
         * 来源明细id
         */
-        @NotBlank(message = "来源明细id不能为空")
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
 

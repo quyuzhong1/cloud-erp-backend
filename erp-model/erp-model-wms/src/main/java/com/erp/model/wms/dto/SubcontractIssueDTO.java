@@ -382,7 +382,6 @@ public class SubcontractIssueDTO implements Serializable {
         * 来源id
         * /scm/subcontractOrder/list,get请求
         */
-        @NotBlank(message = "来源id不能为空")
         @Size(max = 19,message = "来源id最大长度不能超过19位")
         private String sourceId;
 

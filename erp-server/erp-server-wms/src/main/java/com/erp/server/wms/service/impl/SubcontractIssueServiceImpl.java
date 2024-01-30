@@ -186,7 +186,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
         }
-
+        subcontractIssueEntity.setSourceType(old.getSourceType());
         // 数据处理
         handleData(subcontractIssueEntity);
         log.info("编辑 开始修改委外发料单数据，单号：【{}】", old.getCode());
@@ -779,9 +779,11 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     * 新增修改处理数据
     */
     private void handleData(SubcontractIssueEntity subcontractIssueEntity) {
-        //页面新增时默认来源类型
-        subcontractIssueEntity.setSourceType(StrUtil.isBlank(subcontractIssueEntity.getSourceType()) ? SourceTypeEnum.SUBCONTRACT_ORDER.getCode() : subcontractIssueEntity.getSourceType());
-
+        if (StrUtil.isBlank(subcontractIssueEntity.getSourceType())) {
+            //页面新增时默认来源类型
+            subcontractIssueEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+            subcontractIssueEntity.setSourceId(subcontractIssueEntity.getSubcontractOrderId());
+        }
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(subcontractIssueEntity.getSubcontractOrderId()));
         if (CollectionUtil.isEmpty(subcontractOrderList)) {

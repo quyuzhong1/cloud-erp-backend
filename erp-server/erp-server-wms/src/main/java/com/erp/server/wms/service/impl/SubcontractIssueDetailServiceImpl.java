@@ -203,7 +203,10 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
 
         for (SubcontractIssueDetailEntity detailEntity : list) {
-
+            //来源明细id默认委外明细id
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractIssueEntity.getSourceType()) && StrUtil.isBlank(detailEntity.getSourceDetailId())) {
+                detailEntity.setSourceDetailId(detailEntity.getSubcontractOrderDetailId());
+            }
             //委外子SKU明细信息
             SubcontractOrderDetailEntity  childDetailEntity = childDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSubcontractOrderDetailId()))
                         .findFirst().orElse(null);
