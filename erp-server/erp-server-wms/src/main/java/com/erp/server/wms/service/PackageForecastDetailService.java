@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 组包预报详情 服务类
@@ -18,10 +20,11 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     * 新增
     * @author Lambda
     * @date: 2024-01-26
-    * @param dto
+    * @param mainId
+    * @param detailList
     * @return
     */
-    BaseResultDTO.AddDTO add(PackageForecastDetailDTO.AddDTO dto);
+    void add(String mainId, List<PackageForecastDetailDTO.AddDTO> detailList);
 
     /**
     * 修改

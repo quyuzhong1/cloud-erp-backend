@@ -34,6 +34,11 @@ public class PackageDTO implements Serializable {
         private String trackNo;
 
         /**
+         * 跟踪单号
+         */
+        private String transportNo;
+
+        /**
          * 销售订单id
          */
         private String soId;

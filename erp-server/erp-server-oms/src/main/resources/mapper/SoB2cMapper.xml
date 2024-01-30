@@ -737,4 +737,27 @@
            </foreach>
         </if>
     </select>
+
+
+    <select id="listMergePackageBySoIds" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
+        SELECT
+        sb.id AS soId,
+        sb.code AS soCode,
+        sb.bill_status AS billStatus,
+        sb.package_status AS packageStatus,
+        sbl.logistics_channel_id AS logisticsChannelId,
+        sbl.code AS transportNo,
+        sbl.track_no AS trackNo,
+        sbl.weight AS weight
+        FROM so_b2c sb
+        LEFT JOIN so_b2c_logistics sbl
+        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        <if test="ids !=null and ids.size>0">
+            AND sb.id IN
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

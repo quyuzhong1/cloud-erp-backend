@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -133,6 +134,8 @@ public class PackageForecastDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        List<PackageForecastDetailDTO.AddDTO> detailList;
+
 
     }
 
@@ -155,33 +158,15 @@ public class PackageForecastDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 第三方交接单号
-        */
-        @NotBlank(message = "第三方交接单号不能为空")
-        @Size(max = 32,message = "第三方交接单号最大长度不能超过32位")
-        private String handoverNo;
-
-        /**
-        * 第三方组包号
-        */
-        @NotBlank(message = "第三方组包号不能为空")
-        @Size(max = 32,message = "第三方组包号最大长度不能超过32位")
-        private String platformPackageNo;
 
         /**
         * 物流商id
         */
         @NotBlank(message = "物流商id不能为空")
-        @Size(max = 19,message = "物流商id最大长度不能超过19位")
         private String logisticsSupplierId;
 
-        /**
-        * 物流商名
-        */
-        @NotBlank(message = "物流商名不能为空")
-        @Size(max = 50,message = "物流商名最大长度不能超过50位")
         private String logisticsSupplierName;
+
 
         /**
         * 包裹总数量
@@ -210,59 +195,11 @@ public class PackageForecastDTO implements Serializable {
         @Size(max = 32,message = "运输单号最大长度不能超过32位")
         private String transportNo;
 
-        /**
-        * 上传状态
-        */
-        @NotBlank(message = "上传状态不能为空")
-        @Size(max = 32,message = "上传状态最大长度不能超过32位")
-        private String uploadStatus;
-
-        /**
-        * 打印状态
-        */
-        @NotBlank(message = "打印状态不能为空")
-        @Size(max = 32,message = "打印状态最大长度不能超过32位")
-        private String printStatus;
 
         /**
         * 组包日期
         */
         private LocalDate billDate;
-
-        /**
-        * 揽收方式
-        */
-        @NotBlank(message = "揽收方式不能为空")
-        @Size(max = 32,message = "揽收方式最大长度不能超过32位")
-        private String collectMode;
-
-        /**
-        * 揽收地址
-        */
-        @NotBlank(message = "揽收地址不能为空")
-        @Size(max = 50,message = "揽收地址最大长度不能超过50位")
-        private String collectAddress;
-
-        /**
-        * 揽收地址id logistics_address
-        */
-        @NotBlank(message = "揽收地址id logistics_address不能为空")
-        @Size(max = 19,message = "揽收地址id logistics_address最大长度不能超过19位")
-        private String collectAddressId;
-
-        /**
-        * 第三方交接状态
-        */
-        @NotBlank(message = "第三方交接状态不能为空")
-        @Size(max = 32,message = "第三方交接状态最大长度不能超过32位")
-        private String handoverStatus;
-
-        /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 100,message = "备注最大长度不能超过100位")
-        private String remark;
 
 
     }

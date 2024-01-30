@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -8,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
+import com.erp.server.oms.service.PackageService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -30,6 +32,9 @@ public class PackageController extends BaseController {
     @Resource
     private SoB2cService soB2cService;
 
+    @Resource
+    private PackageService packageService;
+
 
     /**
      * @param
@@ -45,17 +50,27 @@ public class PackageController extends BaseController {
     }
 
     /**
-     *
-     * @description
      * @param
      * @return
+     * @description
      * @date 2024-01-26 17:45
      * @author Lambda
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PackageDTO.PagingViewDTO>> paging(@RequestBody PagingDTO<PackageDTO.PagingParamDTO> dto){
+    public ApiResult<PagingVO<PackageDTO.PagingViewDTO>> paging(@RequestBody PagingDTO<PackageDTO.PagingParamDTO> dto) {
         PagingVO<PackageDTO.PagingViewDTO> pagingView = soB2cService.packagePing(dto);
         return success(pagingView);
+    }
+
+    /**
+     * 组包合并
+     *
+     * @return
+     */
+    @PostMapping("/merge")
+    public ApiResult merge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = packageService.mergePackage(dto.getIds());
+        return result ? success() : failure();
     }
 
 }
