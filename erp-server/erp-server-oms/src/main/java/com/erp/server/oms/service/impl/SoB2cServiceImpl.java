@@ -5150,7 +5150,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String declarePlatform="";
         String declarePlatformName="";
         if (StringUtils.isNotBlank(logisticsChannelId)) {
-            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(logisticsChannelId, soB2cEntity.getCreateTime());
+            SettingForecastDTO.FindSettingForecastDTO findSettingForecast=new SettingForecastDTO.FindSettingForecastDTO();
+            findSettingForecast.setOrderTime(soB2cEntity.getCreateTime());
+            findSettingForecast.setLogisticsChannelId(logisticsChannelId);
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsChannelId(findSettingForecast);
             if (Objects.nonNull(forecastStatus)) {
                 declarePlatform = forecastStatus.getDeclarePlatform();
                 declarePlatformName = forecastStatus.getDeclarePlatformName();

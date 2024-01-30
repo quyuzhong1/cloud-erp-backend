@@ -157,6 +157,16 @@ public class SettingForecastDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class FindSettingForecastDTO{
+
+        private String logisticsChannelId;
+
+        private LocalDateTime orderTime;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class CheckRegistrationDTO{
         /**
          * 报关平台

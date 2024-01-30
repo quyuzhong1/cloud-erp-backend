@@ -105,10 +105,12 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     }
 
     @Override
-    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(String logisticsChannelId, LocalDateTime orderTime) {
-        if (StringUtils.isBlank(logisticsChannelId)) {
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(SettingForecastDTO.FindSettingForecastDTO dto) {
+        if (Objects.isNull(dto)||StringUtils.isBlank(dto.getLogisticsChannelId())) {
             return null;
         }
+        String logisticsChannelId = dto.getLogisticsChannelId();
+        LocalDateTime orderTime = dto.getOrderTime();
         SettingForecastEntity entity = baseMapper.getByLogisticsChannelId(logisticsChannelId);
         if (Objects.nonNull(entity)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();

@@ -24,11 +24,11 @@ public interface ForecastFeign {
 
     /**
      * 根据渠道id 获取到对应的有效时间的预报设置信息
-     * @param logisticsChannelId
+     * @param dto
      * @return
      */
-    @GetMapping("/feign/settingForecast/getByLogisticsChannelId")
-    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestParam("logisticsChannelId") String  logisticsChannelId, @RequestParam("orderTime")LocalDateTime orderTime);
+    @PostMapping("/feign/settingForecast/getByLogisticsChannelId")
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestBody SettingForecastDTO.FindSettingForecastDTO dto);
 
     /**
      * 根据平台和sku no 获取到备案产品信息
