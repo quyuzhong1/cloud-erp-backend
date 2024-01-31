@@ -1850,7 +1850,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean mergeSave(List<String> ids) {
+    public String mergeSave(List<String> ids) {
         if (MathUtil.TWO.intValue() > ids.size()) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_SIZE);
         }
@@ -2021,7 +2021,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), soB2cEntity.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(StrUtil.format("合并到新订单【{}】", add.getCode()), ModuleTypeEnum.SO_B2C.getCode(), pairList, "合并订单");
-        return Boolean.TRUE;
+        return soId;
     }
 
 
