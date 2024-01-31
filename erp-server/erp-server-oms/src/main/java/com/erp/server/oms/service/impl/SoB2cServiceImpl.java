@@ -3919,7 +3919,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String packageStatus = entity.getPackageStatus();
         //表示强制组包了 就要去组包预报 去中转了
         if (alreadyPackage.equals(packageStatus) || waitPackage.equals(packageStatus)) {
-            throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
+            throw new ServiceException(ApiError.PACKAGE_FORECAST_TRANSFER);
         }
         //组织添加中转报关单数据
         TransferDeclareDTO.AddDTO addDTO = buildAddTransferDeclare(entity);
@@ -3929,8 +3929,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //TODO  调用tms feign 生成中转报关单
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
         if (StringUtils.isNotBlank(result.getId())) {
-            entity.setTransferStatus(TransferStatusEnum.ALREADY.getCode());
-            this.updateById(entity);
+            UpdateStateDTO.UpdateByStrStatusDTO dto=new UpdateStateDTO.UpdateByStrStatusDTO();
+            dto.setStatus(TransferStatusEnum.ALREADY.getCode());
+            dto.setIds(Arrays.asList(id));
+            this.updateTransferStatus(dto);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
         }
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), "失败");
@@ -5235,7 +5237,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //表示未备案
         if (!isRegistration) {
             String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
-            updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.PRODUCT_NOT_REGISTRATION);
             throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName());
         }
     }
@@ -5256,8 +5257,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     set(SoB2cEntity::getIsMatchLogisticsRule, Boolean.TRUE).
                     eq(SoB2cEntity::getId, soId).update(new SoB2cEntity());
         }
-
-        //未备案清楚渠道
+        //未备案清除渠道
         if (!isRegistration) {
             soB2cLogisticsService.lambdaUpdate().
                     set(SoB2cLogisticsEntity::getLogisticsChannelId, "").
@@ -5266,6 +5266,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     set(SoB2cLogisticsEntity::getTrackNo, "").
                     eq(SoB2cLogisticsEntity::getMainId, soId).
                     update(new SoB2cLogisticsEntity());
+
+            this.lambdaUpdate().eq(SoB2cEntity::getId, soId)
+                    .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.PRODUCT_NOT_REGISTRATION.getCode())
+                    .set(SoB2cEntity::getPackageStatus, PackageStatusEnum.WAIT.getCode())
+                    .set(SoB2cEntity::getTransferStatus,TransferStatusEnum.WAIT.getCode())
+                    .set(SoB2cEntity::getIsMatchLogisticsRule, Boolean.FALSE)
+                    .update(new SoB2cEntity());
         }
 
     }
