@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 组包预报表 服务类
@@ -34,4 +36,10 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     Boolean update(PackageForecastDTO.UpdateDTO dto);
 
 
+    /**
+     *
+     * @param dto
+     * @return
+     */
+    List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

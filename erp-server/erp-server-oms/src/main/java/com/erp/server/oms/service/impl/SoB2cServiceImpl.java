@@ -3871,7 +3871,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //待组包
         String waitPackageStatus = PackageStatusEnum.WAIT.getCode();
         String waitPackageStatusName = PackageStatusEnum.WAIT.getName();
-        int waitPackageCount = this.lambdaQuery().eq(SoB2cEntity::getPackageStatus, waitPackageStatus).last(sql).count();
+        int waitPackageCount = this.lambdaQuery().eq(SoB2cEntity::getPackageStatus, waitPackageStatus).
+                eq(SoB2cEntity::getInvalidStatus,Boolean.FALSE).
+                last(sql).count();
 
         packageCountDTO.setCount(waitPackageCount);
         packageCountDTO.setStatus(waitPackageStatus);
@@ -3883,8 +3885,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //待中转
         String waitTransferStatus = TransferStatusEnum.WAIT.getCode();
         String waitTransferStatusName = TransferStatusEnum.WAIT.getName();
-        int waitTransferCount = this.lambdaQuery().eq(SoB2cEntity::getTransferStatus, waitTransferStatus).last(sql).
-                count();
+        int waitTransferCount = this.lambdaQuery().eq(SoB2cEntity::getTransferStatus, waitTransferStatus).
+                eq(SoB2cEntity::getInvalidStatus,Boolean.FALSE).
+                last(sql).count();
         transferCountDTO.setCount(waitTransferCount);
         transferCountDTO.setStatus(waitTransferStatus);
         transferCountDTO.setStatusName(waitTransferStatusName);
