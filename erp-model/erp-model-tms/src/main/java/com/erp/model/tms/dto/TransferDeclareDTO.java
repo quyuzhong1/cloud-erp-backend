@@ -201,9 +201,9 @@ public class TransferDeclareDTO implements Serializable {
         private String code;
 
         /**
-         * 订单编号
+         * 销售单号
          */
-        private String soCode;
+        private List<String> soCodeList;
 
         /**
          * 物流渠道id

@@ -17,7 +17,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -25,6 +24,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WarehouseMappingFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
@@ -75,6 +75,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private SoB2cRefService soB2cRefService;
+
+    @Resource
+    private WarehouseMappingFeign warehouseMappingFeign;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -270,6 +273,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
                 .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+
+/*        //查询速卖通仓库名称是否映射ERP仓库
+        String warehouseName = dto.getDetails().get(0).getWarehouseName();
+        warehouseMappingFeign.listMappingViewByWarehouseIds()*/
 
         // 新增或更新列表
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {

@@ -165,8 +165,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                         addDTO.setTradeCreateTime(dto.getOrderCreateTime());
                         aliexpressDeliveryFeign.add(addDTO);
                     } else {
-                        //查询速卖通仓库名称是否映射ERP仓库
-                        String warehouseName = dto.getDetails().get(0).getWarehouseName();
 
                     }
                     return;

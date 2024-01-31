@@ -7,7 +7,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -127,7 +126,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Override
     public Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason) {
         return lambdaUpdate()
-                .set(TransferDeclareDetailEntity::getId, id)
+                .eq(TransferDeclareDetailEntity::getId, id)
                 .set(TransferDeclareDetailEntity::getOrderUploadStatus, status)
                 .set(TransferDeclareDetailEntity::getShippingOrderNo, shippingOrderNo)
                 .set(TransferDeclareDetailEntity::getFailureReason, failureReason)
@@ -137,7 +136,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Override
     public Boolean updateTransferStatus(String id, String transferStatus) {
         return lambdaUpdate()
-                .set(TransferDeclareDetailEntity::getId, id)
+                .eq(TransferDeclareDetailEntity::getId, id)
                 .set(TransferDeclareDetailEntity::getTransferStatus, transferStatus)
                 .update();
     }
