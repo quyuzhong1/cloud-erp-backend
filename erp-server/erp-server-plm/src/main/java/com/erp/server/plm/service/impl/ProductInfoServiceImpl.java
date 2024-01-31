@@ -515,12 +515,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //部门下人员
+       List<String> deptUserIdList =  handleDept(params.getDeptIdList());
+
         IPage pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
+    /**
+     * @description: 部门id集合
+     * @author Will
+     * @date: 2024/1/31 16:59
+     * @param deptIdList
+     * @return List<String>
+     */
+    private List<String> handleDept(List<String> deptIdList) {
+
+    return null;
+
+    }
 
     /**
      * 我的项目
