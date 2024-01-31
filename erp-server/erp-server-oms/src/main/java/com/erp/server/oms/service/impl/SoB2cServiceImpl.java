@@ -456,7 +456,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<TransferDeclareProductDTO> getSkusBySoInfo(String soId) {
+    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -5229,7 +5229,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
             logisticsChannelId = Objects.nonNull(soB2cLogistics) ? soB2cLogistics.getLogisticsChannelId() : "";
         }
-        List<TransferDeclareProductDTO> productList = this.getSkusBySoInfo(id);
+        List<TransferDeclareProductDTO> productList = this.getTransferDeclareProductBySoInfo(id);
         //渠道名称
         String logisticsChannelName = "";
 

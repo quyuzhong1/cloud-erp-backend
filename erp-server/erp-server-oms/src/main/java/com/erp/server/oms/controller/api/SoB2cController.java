@@ -920,10 +920,9 @@ public class SoB2cController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    @GetMapping("/getSkusBySoInfo")
-    public ApiResult<List<TransferDeclareProductDTO>> getSkusBySoInfo(@RequestParam("id") String id) {
-        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getSkusBySoInfo(id);
+    @GetMapping("/getTransferDeclareProductBySoInfo")
+    public ApiResult<List<TransferDeclareProductDTO>> getTransferDeclareProductBySoInfo(@RequestParam("id") String id) {
+        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
         return success(skusBySoInfo);
-
     }
 }

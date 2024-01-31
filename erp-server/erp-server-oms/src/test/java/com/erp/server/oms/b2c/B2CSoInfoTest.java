@@ -33,7 +33,7 @@ public class B2CSoInfoTest {
     @Test
     public void splitSoInfo(){
         String soId = "1751895670669832193";
-        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getSkusBySoInfo(soId);
+        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(soId);
         System.out.println(JSONUtil.parse(skusBySoInfo));
     }
 }
