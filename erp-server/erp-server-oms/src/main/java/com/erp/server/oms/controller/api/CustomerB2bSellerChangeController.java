@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 
+import java.util.List;
+
 /**
  * b2b客户销售员变更单
  *
@@ -35,6 +38,21 @@ public class CustomerB2bSellerChangeController extends BaseController {
     @Resource
     private CustomerB2bSellerChangeService customerB2bSellerChangeService;
 
+    /**
+     * 获取tabFlag
+     */
+    @GetMapping("/tabFlag")
+    public ApiResult<List<CustomerB2bSellerChangeDTO.TabFlagDTO>> tabFlag() {
+        return success(customerB2bSellerChangeService.tabFlag());
+    }
+    /**
+     * 分页
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<List<CustomerB2bSellerChangeDTO.ListDTO>> paging(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto) {
+        return success(customerB2bSellerChangeService.paging(dto));
+    }
 
     /**
     * 修改

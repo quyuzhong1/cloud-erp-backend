@@ -136,6 +136,41 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         return lambdaQuery().eq(CustomerB2bSellerChangeEntity::getMainId,mainId).list();
     }
 
+    @Override
+    public List<CustomerB2bSellerChangeDTO.ListDTO> paging(CustomerB2bSellerChangeDTO.ParamDTO dto) {
+        List<CustomerB2bSellerChangeDTO.ListDTO> listDTOList = baseMapper.paging(dto);
+        listDTOList.forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
+        return listDTOList;
+    }
+
+    @Override
+    public List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlag() {
+        List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlagDTOList = baseMapper.countByTabFlag();
+        ApproveStatusEnum[] approveStatusEnums = ApproveStatusEnum.values();
+        for(ApproveStatusEnum approveStatusEnum : approveStatusEnums){
+            CustomerB2bSellerChangeDTO.TabFlagDTO tabFlagDTO = tabFlagDTOList.stream().filter(v->v.getTabFlag().equals(approveStatusEnum.getStatus())).findFirst().orElse(null);
+            if(Objects.isNull(tabFlagDTO)){
+                CustomerB2bSellerChangeDTO.TabFlagDTO tempTabFlagDTO = new CustomerB2bSellerChangeDTO.TabFlagDTO();
+                tempTabFlagDTO.setCount(0);
+                tempTabFlagDTO.setTabFlag(approveStatusEnum.getStatus());
+                tempTabFlagDTO.setTabFlagName(approveStatusEnum.getName());
+                tabFlagDTOList.add(tempTabFlagDTO);
+            }else{
+                tabFlagDTO.setTabFlagName(approveStatusEnum.getName());
+            }
+        }
+        for(CustomerB2bSellerChangeDTO.TabFlagDTO tabFlagDTO : tabFlagDTOList){
+            if(tabFlagDTO.getTabFlag().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
+                tabFlagDTO.setTabFlagName("待审核");
+            }
+            if(tabFlagDTO.getTabFlag().equals(ApproveStatusEnum.REJECT.getCode())){
+                tabFlagDTO.setTabFlagName("不通过");
+            }
+
+        }
+        return tabFlagDTOList;
+    }
+
     /**
     * 修改
     */

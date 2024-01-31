@@ -38,6 +38,41 @@
         is_deleted,
         main_id, approve_status, origin_seller_id, origin_seller_name, change_seller_id, change_seller_name, start_date, approve_user_id, approve_user_name, approve_time, remark
     </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.CustomerB2bSellerChangeDTO$ListDTO">
+        select
+            cbs.id,
+            ci.code,
+            ci,name,
+            ci.short_name as shortName,
+            cbs.origin_seller_name as originSellerName,
+            cbs.change_seller_name as changeSellerName,
+            cbs.approve_status as approveStatus,
+            cbs.approve_user_name  as approveUserName,
+            cbs.create_user_name as createUserName,
+            cbs.create_time as createTime,
+            cbs.start_date as startDate,
+            cbs.approve_time as approveTime
+        from customer_b2b_seller_change cbs
+           inner join customer_info ci on cbs.main_id = ci.id
+        where
+        ${params.sqlMap.default}
+        and cbs.is_deleted = false
+        and ci.is_deleted = false
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cbs.create_time desc
+    </select>
+    <select id="countByTabFlag" resultType="com.erp.model.oms.dto.CustomerB2bSellerChangeDTO$TabFlagDTO">
+        select approve_status as tabFlag,
+               count(1) as count
+        from customer_b2b_seller_change
+        where is_deleted = false
+        group by approve_status
+    </select>
 
 
 </mapper>

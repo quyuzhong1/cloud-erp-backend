@@ -1,8 +1,10 @@
 package com.erp.server.oms.service;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -41,4 +43,8 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
     BatchResultDTO addAndSubmit(CustomerB2bSellerChangeDTO.AddDTO addDTO);
 
     List<CustomerB2bSellerChangeEntity> listByMainId(String mainId);
+
+    List<CustomerB2bSellerChangeDTO.ListDTO> paging(CustomerB2bSellerChangeDTO.ParamDTO dto);
+
+    List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlag();
 }

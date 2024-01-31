@@ -2,10 +2,15 @@ package com.erp.model.oms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -23,6 +28,77 @@ import javax.validation.constraints.Size;
 public class CustomerB2bSellerChangeDTO implements Serializable {
 
 
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 简称
+         */
+        private String shortName;
+
+        /**
+         * 原销售员名称
+         */
+        private String originSellerName;
+
+        /**
+         * 变更后销售员名称
+         */
+        private String changeSellerName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态中文
+         */
+        private String approveStatusName;
+
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 变更启用日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+    }
 
 
     /**
@@ -93,6 +169,39 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         private String remark;
 
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class TabFlagDTO {
+
+        /**
+         * tabFlag
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+        /**
+         * tabFlagName
+         */
+        private String tabFlagName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
