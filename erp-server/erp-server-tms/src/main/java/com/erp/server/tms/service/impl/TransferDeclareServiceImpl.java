@@ -482,7 +482,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public TransferDeclareEntity getBySoId(String soId) {
-        return null;
+        return baseMapper.getBySoId(soId);
     }
 
     @Override

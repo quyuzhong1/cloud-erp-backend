@@ -70,7 +70,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 if (Objects.nonNull(transferDeclare)) {
                     String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
                     String uploadStatus = transferDeclare.getUploadStatus();
-                    if (uploadSuccess.equals(uploadStatus)) {
+                    if (!uploadSuccess.equals(uploadStatus)) {
                         throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                     }
                 }
