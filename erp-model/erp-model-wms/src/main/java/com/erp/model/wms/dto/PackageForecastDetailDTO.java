@@ -127,8 +127,6 @@ public class PackageForecastDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
@@ -141,15 +139,13 @@ public class PackageForecastDetailDTO implements Serializable {
         /**
         * 销售订单id
         */
-        @NotBlank(message = "销售订单id不能为空")
-        @Size(max = 19,message = "销售订单id最大长度不能超过19位")
+        @NotBlank(message = "销售订单不能为空")
         private String soId;
 
         /**
         * 物流渠道id
         */
         @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
         private String logisticsChannelName;
@@ -159,15 +155,11 @@ public class PackageForecastDetailDTO implements Serializable {
         /**
         * 物流跟踪号
         */
-        @NotBlank(message = "物流跟踪号不能为空")
-        @Size(max = 32,message = "物流跟踪号最大长度不能超过32位")
         private String trackNo;
 
         /**
         * 运输单号
         */
-        @NotBlank(message = "运输单号不能为空")
-        @Size(max = 32,message = "运输单号最大长度不能超过32位")
         private String transportNo;
 
         /**

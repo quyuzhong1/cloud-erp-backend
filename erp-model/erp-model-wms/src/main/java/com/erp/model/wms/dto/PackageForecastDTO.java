@@ -191,8 +191,6 @@ public class PackageForecastDTO implements Serializable {
         /**
         * 运输单号
         */
-        @NotBlank(message = "运输单号不能为空")
-        @Size(max = 32,message = "运输单号最大长度不能超过32位")
         private String transportNo;
 
 

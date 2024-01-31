@@ -103,6 +103,8 @@ public class PackageDTO implements Serializable {
          */
         private List<String> billStatusList;
 
+        private List<String> packageStatusList;
+
     }
 
     /**
