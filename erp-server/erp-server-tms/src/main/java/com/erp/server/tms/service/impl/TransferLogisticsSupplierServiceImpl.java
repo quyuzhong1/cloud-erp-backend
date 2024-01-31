@@ -263,8 +263,17 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         List<TransferLogisticsSupplierEntity> dbList = this.list();
         List<BaseChildDTO.ListChildTreeDTO> list = TransferLogisticsSupplierConverter.INSTANCE.convertTree(dbList);
         List<TransferLogisticsChannelEntity> allChannelList = transferLogisticsChannelService.list();
+        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
+
         for (BaseChildDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
+            TransferLogisticsSupplierEntity logisticsSupplier = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsSupplier)) {
+                String authStatus = logisticsSupplier.getAuthStatus();
+                if (!already.equals(authStatus)) {
+                    item.setDisabled(Boolean.TRUE);
+                }
+            }
             List<TransferLogisticsChannelEntity> channelList = allChannelList.stream().
                     filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(TransferLogisticsChannelEntity::getDisabled)).
                     collect(Collectors.toList());
