@@ -1419,6 +1419,11 @@ public class PurchaseReturnOrderDTO {
         private String remark;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;

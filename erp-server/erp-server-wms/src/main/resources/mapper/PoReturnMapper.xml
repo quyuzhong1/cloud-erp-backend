@@ -260,6 +260,12 @@
         and pro.is_deleted = FALSE
         AND pro.approve_status = 'approve'
 
+        <!--供应商查询-->
+        <if test="params.supplierId != null and params.supplierId != ''">
+            AND pro.supplier_id = #{params.supplierId}
+        </if>
+
+
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -305,23 +311,22 @@
 
     <select id="listPoReturnAutoConfirm" resultType="java.lang.String">
         SELECT
-        prd.id AS detailId
+        pr.id
         FROM po_return pr
-        INNER JOIN po_return_detail prd ON prd.is_deleted = FALSE AND pr.id = prd.main_id
-        WHERE po.is_deleted = FALSE
-        AND po.approve_status = 'approve'
+        WHERE pr.is_deleted = FALSE
+        AND pr.approve_status = 'approve'
         AND pr.confirm_status = 'waitConfirm' AND
         <foreach collection="params" item="item" separator="or" open="(" close=")">
-            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'H'">
-                and now() - make_interval(hours => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "H"'>
+                now() - make_interval(hours => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
                 pr.supplier_id = #{item.supplierId}
             </if>
-            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'M'">
-                and now() - make_interval(mins => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "M"'>
+                now() - make_interval(mins => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
                 pr.supplier_id = #{item.supplierId}
             </if>
-            <if test="item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == 'S'">
-                and now() - make_interval(secs => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "S"'>
+                now() - make_interval(secs => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
                 pr.supplier_id = #{item.supplierId}
             </if>
         </foreach>

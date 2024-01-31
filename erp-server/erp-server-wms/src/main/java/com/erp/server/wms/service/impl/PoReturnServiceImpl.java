@@ -18,7 +18,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -26,7 +29,10 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.*;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
@@ -47,6 +53,7 @@ import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.mapper.PoReturnMapper;
@@ -154,6 +161,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Autowired
     private SrmPoReconciliationFeign srmPoReconciliationFeign;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     @Value("${companyCode}")
     private String companyCode;
@@ -2106,7 +2116,22 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData = this.baseMapper.supplierPaging(query, pagingParamDTO.getParams());
+
+        //查询登录信息
+        LoginUser loginUser = commonService.getUserInfo();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+
+        PurchaseReturnOrderDTO.SupplierPagingParamDTO params = pagingParamDTO.getParams();
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            params.setSupplierId(supplier.getId());
+        }
+
+        //分页查询
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData = this.baseMapper.supplierPaging(query, params);
         //明细数据
         List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> records = pageData.getRecords();
         //根据ids查询sku信息
@@ -2306,7 +2331,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         lambdaUpdate().in(PoReturnEntity::getId, poReturnIds)
                 .set(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.CONFIRM.getCode())
                 .set(PoReturnEntity::getConfirmDate, LocalDate.now())
-                .update(new PoReturnEntity());
+                .update();
     }
 
     @Override
