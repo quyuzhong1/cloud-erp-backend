@@ -1347,13 +1347,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
-            //有效收货数量
-            Integer hasQty = MathUtil.ZERO;
+
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
-                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                hasQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
@@ -1367,7 +1364,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已完成、已关闭订单交货数量为0
             Integer deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
                     || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
-                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - hasQty;
+                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - receiveQty;
             obj.setReceiveQty(receiveQty);
             //待交货数量
             obj.setDeliveryQty(deliveryQty);
