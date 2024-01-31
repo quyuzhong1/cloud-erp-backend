@@ -3964,7 +3964,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         detailAddDTO.setWeightUnit(unit);
         detailAddDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
         detailAddDTO.setPackageWeight(logisticsEntity.getWeight());
-        detailAddDTO.setTrackNo(logisticsEntity.getTrackNo());
+        detailAddDTO.setTrackNo(logisticsEntity.getCode());
         detailList.add(detailAddDTO);
         addDTO.setDetailList(detailList);
         return addDTO;

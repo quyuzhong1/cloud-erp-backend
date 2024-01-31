@@ -680,7 +680,7 @@
             sb.id AS soId,
             sb.code AS soCode,
             sbl.logistics_channel_id AS logisticsChannelId,
-            sbl.track_no AS trackNo,
+            sbl.code AS trackNo,
             sbl.weight AS packageWeight
         FROM so_b2c sb
         INNER JOIN so_b2c_logistics sbl ON sbl.main_id = sb.id AND sbl.is_deleted = FALSE
