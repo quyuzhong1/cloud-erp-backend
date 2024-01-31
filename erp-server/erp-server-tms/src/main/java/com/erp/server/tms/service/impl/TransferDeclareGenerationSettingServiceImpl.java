@@ -72,6 +72,7 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
 
             TransferDeclareGenerationSettingEntity entity = new TransferDeclareGenerationSettingEntity();
             TransferLogisticsChannelEntity channelEntity = transferLogisticsChannelService.getById(addDTO.getTransferChannelId());
+            entity.setId(addDTO.getId());
             entity.setTransferChannelId(channelEntity.getId());
             entity.setTransferChannelName(channelEntity.getName());
             TransferLogisticsSupplierEntity supplierEntity = transferLogisticsSupplierService.getById(channelEntity.getMainId());
