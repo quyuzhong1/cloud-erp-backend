@@ -176,7 +176,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
         }
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.countSalePriceDistribution(dto, settleRate, rangeVOS);
+        List<SalePriceDistributionVO> salePriceDistributionVOS = new ArrayList<>(rangeVOS.size());
+        rangeVOS.forEach(salesPriceRangeVO -> {
+            salePriceDistributionVOS.add(baseMapper.countSalePriceDistribution(dto, settleRate, salesPriceRangeVO));
+        });
         BigDecimal salesTotal = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSaleAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO,BigDecimal::add);
         Integer qtyTotal = salePriceDistributionVOS.stream().filter(s -> Objects.nonNull(s.getSalesQuantity())).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
             //占比计算
