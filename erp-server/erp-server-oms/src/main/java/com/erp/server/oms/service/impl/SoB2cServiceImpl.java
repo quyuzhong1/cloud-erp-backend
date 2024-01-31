@@ -1850,7 +1850,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean mergeSave(List<String> ids) {
+    public String mergeSave(List<String> ids) {
         if (MathUtil.TWO.intValue() > ids.size()) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERGE_SIZE);
         }
@@ -2021,7 +2021,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), soB2cEntity.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(StrUtil.format("合并到新订单【{}】", add.getCode()), ModuleTypeEnum.SO_B2C.getCode(), pairList, "合并订单");
-        return Boolean.TRUE;
+        return soId;
     }
 
 
@@ -3871,7 +3871,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //待组包
         String waitPackageStatus = PackageStatusEnum.WAIT.getCode();
         String waitPackageStatusName = PackageStatusEnum.WAIT.getName();
-        int waitPackageCount = this.lambdaQuery().eq(SoB2cEntity::getPackageStatus, waitPackageStatus).last(sql).count();
+        int waitPackageCount = this.lambdaQuery().eq(SoB2cEntity::getPackageStatus, waitPackageStatus).
+                eq(SoB2cEntity::getInvalidStatus,Boolean.FALSE).
+                last(sql).count();
 
         packageCountDTO.setCount(waitPackageCount);
         packageCountDTO.setStatus(waitPackageStatus);
@@ -3883,8 +3885,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //待中转
         String waitTransferStatus = TransferStatusEnum.WAIT.getCode();
         String waitTransferStatusName = TransferStatusEnum.WAIT.getName();
-        int waitTransferCount = this.lambdaQuery().eq(SoB2cEntity::getTransferStatus, waitTransferStatus).last(sql).
-                count();
+        int waitTransferCount = this.lambdaQuery().eq(SoB2cEntity::getTransferStatus, waitTransferStatus).
+                eq(SoB2cEntity::getInvalidStatus,Boolean.FALSE).
+                last(sql).count();
         transferCountDTO.setCount(waitTransferCount);
         transferCountDTO.setStatus(waitTransferStatus);
         transferCountDTO.setStatusName(waitTransferStatusName);

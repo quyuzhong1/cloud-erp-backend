@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -20,7 +19,6 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
-import com.erp.model.tms.dto.transfer.TransferLogisticsProductDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
@@ -167,8 +165,8 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.FAILED_SYNC.getCode());
         dmpPushTaskEntity.setMqTopic("");
         dmpPushTaskEntity.setMqTag("");
-        dmpPushTaskEntity.setMqData(ThirdWarehouseContext.getRequestJson());
-        dmpPushTaskEntity.setReturnMsg(ThirdWarehouseContext.getResponseJson());
+        dmpPushTaskEntity.setMqData(TransferLogisticsContext.getRequestJson());
+        dmpPushTaskEntity.setReturnMsg(TransferLogisticsContext.getMsg());
         return dmpPushTaskEntity;
     }
 
@@ -187,7 +185,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         warnMsgInfo.setTitle(StrUtil.format("物流报关商【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo(StringUtils.isEmpty(ThirdWarehouseContext.getMsg())?"":ThirdWarehouseContext.getMsg());
+        warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

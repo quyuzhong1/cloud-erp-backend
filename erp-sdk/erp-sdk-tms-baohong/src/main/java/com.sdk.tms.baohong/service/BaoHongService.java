@@ -2,6 +2,7 @@ package com.sdk.tms.baohong.service;
 
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.threadlocal.TransferLogisticsContext;
 import com.sdk.tms.baohong.api.asn.ReceivingInfo;
 import com.sdk.tms.baohong.api.asn.ServiceForAsn;
 import com.sdk.tms.baohong.api.order.*;
@@ -69,6 +70,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createOrder(CreateOrderInfo createOrderInfo){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(createOrderInfo));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
         Holder<String> askHolder = new Holder<>();
@@ -86,6 +88,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<OrderDataArr> getOrderByCode(String orderCode){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
         Holder<String> askHolder = new Holder<>();
@@ -155,6 +158,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createReceiving(ReceivingInfo receivingInfo){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(receivingInfo));
         com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = BaoHongUtils.getAsnHeader();
         ServiceForAsn service = BaoHongUtils.getAsnService();
         Holder<String> askHolder = new Holder<>();
@@ -171,6 +175,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> printLabel(String orderCode){
+        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
         BaoHongResponse<String> result = BaoHongUtils.getPrintLabelBase64(orderCode);
         String base64 = result.getData();
         // 解码Base64
@@ -189,4 +194,5 @@ public class BaoHongService {
         }
         return result;
     }
+
 }

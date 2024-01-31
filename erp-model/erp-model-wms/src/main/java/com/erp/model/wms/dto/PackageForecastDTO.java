@@ -24,6 +24,17 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class PackageForecastDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO{
+
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 
 
 

@@ -229,7 +229,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date: 2023/8/21 9:02
      * @param ids
      */
-    Boolean mergeSave(List<String> ids);
+    String mergeSave(List<String> ids);
     /**
      * @description: 取消合并
      * @author Will

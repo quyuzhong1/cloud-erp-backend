@@ -18,6 +18,7 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -691,8 +692,9 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/mergeSave")
     public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soB2cService.mergeSave(dto.getIds());
-        return flag.equals(Boolean.TRUE) ? success() : failure();
+        String soId = soB2cService.mergeSave(dto.getIds());
+        soB2cService.checkProductRegistrationAndUpdate(soId,"");
+        return StringUtils.isNotBlank(soId) ? success() : failure();
     }
 
     /**
