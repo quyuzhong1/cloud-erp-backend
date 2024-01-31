@@ -161,9 +161,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
     @Override
     public void updateBySrmOrderIds(List<String> ids,List<String> detailIds, String executionStatus) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
         if (StringUtils.isEmpty(executionStatus)){
             executionStatus = ExecutionStatusEnum.TO_BE_CONFIRM.getCode();
         }
