@@ -3,10 +3,12 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -45,4 +47,13 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
      * @return java.lang.Boolean
      **/
     Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response);
+
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2024/1/31 11:26
+     * @return java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>
+     **/
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop();
+
 }

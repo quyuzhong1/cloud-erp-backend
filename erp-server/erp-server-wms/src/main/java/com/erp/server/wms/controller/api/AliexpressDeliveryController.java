@@ -10,18 +10,16 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.server.wms.service.AliexpressDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 速卖通发货单
@@ -76,4 +74,15 @@ public class AliexpressDeliveryController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 下拉用户拥有权限的速卖通店铺
+     * @Author Luo_WG
+     * @Date 2024/1/31 11:11
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>>
+     **/
+    @GetMapping("/listUserAuthShop")
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop() {
+        return aliexpressDeliveryService.listUserAuthShop();
+    }
 }
