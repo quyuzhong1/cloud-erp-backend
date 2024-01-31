@@ -1427,7 +1427,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);
-            obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "已启用": "已停用");
+            obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "已停用": "已停用");
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
@@ -2295,6 +2295,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //同步scm 确认订单 到 srm
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
         }
+        //操作日志
+        moduleOperateLogService.addModuleOperateLog(String.format("【人工】操作【确认】采购订单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "供应商确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -2395,8 +2397,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
             //同步scm 确认订单 到 srm
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-
         }
+        //操作日志
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(detailIdList);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            return;
+        }
+        List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("【人工】操作【确认】采购订单SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "自动确认操作");
     }
 
     @Override
