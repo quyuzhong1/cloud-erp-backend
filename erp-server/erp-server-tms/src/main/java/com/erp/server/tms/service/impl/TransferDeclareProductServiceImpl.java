@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -8,7 +9,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.TransferDeclareProductDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareProductEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.mapper.TransferDeclareProductMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
@@ -20,9 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 中转报关产品 服务实现类
@@ -38,6 +43,8 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -105,6 +112,29 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
             return Collections.emptyList();
         }
         return lambdaQuery().in(TransferDeclareProductEntity::getDeclareId, declareIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
+        List<String> soIds = transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
+        Map<String, TransferDeclareDetailEntity> detailEntityMap = transferDeclareDetailEntities.stream().collect(Collectors.toMap(TransferDeclareDetailEntity::getSoId, Function.identity()));
+        List<com.erp.model.oms.dto.TransferDeclareProductDTO> productDTOS = soB2cFeign.getTransferDeclareProductBySoIds(soIds);
+        if (CollectionUtils.isNotEmpty(productDTOS)){
+            List<TransferDeclareProductEntity> productEntities = new ArrayList<>(productDTOS.size());
+            productDTOS.forEach(transferDeclareProductDTO -> {
+                TransferDeclareProductEntity entity = new TransferDeclareProductEntity();
+                BeanUtil.copyProperties(transferDeclareProductDTO, entity);
+                TransferDeclareDetailEntity transferDeclareDetailEntity = detailEntityMap.get(detailEntityMap.get(transferDeclareProductDTO.getSoId()));
+                if (Objects.nonNull(transferDeclareDetailEntity)){
+                    entity.setDeclareId(transferDeclareDetailEntity.getMainId());
+                    entity.setDeclareDetailId(transferDeclareDetailEntity.getId());
+                }
+                productEntities.add(entity);
+            });
+            return this.saveBatch(productEntities);
+        }
+        return Boolean.TRUE;
     }
 
     /**

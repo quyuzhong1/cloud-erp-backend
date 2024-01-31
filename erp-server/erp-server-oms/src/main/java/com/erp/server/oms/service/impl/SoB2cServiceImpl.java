@@ -465,16 +465,38 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        return splitBySoDetail(soB2cDetailEntities);
+        return splitBySoDetail(soB2cDetailEntities,soB2cEntity.getCode());
     }
 
-    private List<TransferDeclareProductDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities) {
+    @Override
+    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
+        List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
+        for (String soId: soIds) {
+            SoB2cEntity soB2cEntity = this.getById(soId);
+            if (ObjectUtils.isEmpty(soB2cEntity)){
+                continue;
+            }
+            List<SoB2cDetailEntity> soB2cDetailEntities = soB2cDetailService.listByMainId(soId);
+            if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
+                continue;
+            }
+            List<TransferDeclareProductDTO> productDTOS = splitBySoDetail(soB2cDetailEntities, soB2cEntity.getCode());
+            if (CollectionUtils.isNotEmpty(productDTOS)){
+                transferDeclareProductDTOS.addAll(productDTOS);
+            }
+        }
+        return transferDeclareProductDTOS;
+    }
+
+    private List<TransferDeclareProductDTO> splitBySoDetail(List<SoB2cDetailEntity> soB2cDetailEntities,String soCode) {
         if (CollectionUtils.isEmpty(soB2cDetailEntities)){
             return Collections.emptyList();
         }
         List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
         List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-//        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //合并 子sku和父级sku获取 全量sku明细
@@ -494,6 +516,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(CollectionUtils.isEmpty(bomChildrenSkuDTOS1)){
                 //没有子集时
                 transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                                .soId(soB2cDetailEntity.getMainId())
+                                .soCode(soCode)
                                 .skuNo(soB2cDetailEntity.getSkuNo())
                                 .soDetailId(soB2cDetailEntity.getId())
                                 .qty(soB2cDetailEntity.getQty())
@@ -513,6 +537,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
                         LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
                         transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                                .soId(soB2cDetailEntity.getMainId())
+                                .soCode(soCode)
                                 .skuNo(bomChildrenSkuDTO.getSkuNo())
                                 .soDetailId(soB2cDetailEntity.getId())
                                 .qty(soB2cDetailEntity.getQty()*bomChildrenSkuDTO.getQuantity())
@@ -525,6 +551,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }else {
                     //存在bom 但是是单品时
                     transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                            .soId(soB2cDetailEntity.getMainId())
+                            .soCode(soCode)
                             .skuNo(soB2cDetailEntity.getSkuNo())
                             .soDetailId(soB2cDetailEntity.getId())
                             .qty(soB2cDetailEntity.getQty())

@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TransferDeclareProductDTO implements Serializable {
 
+    private String soId;
+    private String soCode;
     /**
      * 销售订单明细id
      */

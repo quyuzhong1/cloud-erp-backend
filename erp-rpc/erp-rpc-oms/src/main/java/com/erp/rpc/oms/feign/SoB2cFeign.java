@@ -3,9 +3,11 @@ package com.erp.rpc.oms.feign;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
@@ -329,4 +331,12 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateShippingOrderNo")
     Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list);
+    /**
+     * 根据销售订单拆分sku
+     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getTransferDeclareProductBySoIds")
+    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) ;
 }

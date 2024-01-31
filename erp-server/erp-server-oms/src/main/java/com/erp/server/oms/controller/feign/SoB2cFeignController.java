@@ -5,8 +5,10 @@ import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -464,5 +466,16 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/updateShippingOrderNo")
     public Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list) {
         return soB2cService.updateShippingOrderNo(list);
+    }
+
+    /**
+     * 根据销售订单拆分sku
+     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/getTransferDeclareProductBySoIds")
+    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
+        return soB2cService.getTransferDeclareProductBySoIds(soIds);
     }
 }

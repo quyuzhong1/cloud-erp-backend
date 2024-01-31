@@ -7,20 +7,20 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareProductEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TransferDeclareDetailService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,10 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +54,8 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     private LogisticsChannelService logisticsChannelService;
     @Autowired
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private TransferDeclareProductService transferDeclareProductService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -67,7 +68,8 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveBatch(transferDeclareDetailEntities);
-
+        //拆分订单sku并新增报关明细
+        transferDeclareProductService.saveTransferDeclareProducts(transferDeclareDetailEntities);
         log.info("开始新增中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");

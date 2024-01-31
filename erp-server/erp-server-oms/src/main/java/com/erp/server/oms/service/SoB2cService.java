@@ -761,4 +761,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据订单拆分sku
      */
     List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId);
+
+    /**
+     * 根据销售订单id批量拆分
+     * @param soIds
+     * @return
+     */
+    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds);
 }
