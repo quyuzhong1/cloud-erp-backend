@@ -1,10 +1,10 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @Date 2022-07-13 17:33
  * @Created by yl
  */
+@Slf4j
 public class OkHttpUtils {
 
 
@@ -22,6 +23,29 @@ public class OkHttpUtils {
             new OkHttpClient.Builder()
                     .readTimeout(5, TimeUnit.SECONDS)       // 设置超时时间
                     .build();
+
+    private static final int RETRY_COUNT = 3;
+
+    public static final OkHttpClient retryClient = new OkHttpClient.Builder()
+                    .readTimeout(15, TimeUnit.SECONDS)
+                    .addInterceptor(chain -> {
+                        Request request = chain.request();
+                        // try the request
+                        Response response = chain.proceed(request);
+                        int tryCount = 0;
+                        while (!response.isSuccessful() && tryCount < RETRY_COUNT) {
+                            log.warn("intercept Request is not successful - " + tryCount);
+                            tryCount++;
+                            // retry the request
+                            response.close();
+                            response = chain.proceed(request);
+                        }
+                        // otherwise just pass the original response on
+                        return response;
+                    })
+                    .build();
+
+
 
 
     /**
@@ -262,7 +286,7 @@ public class OkHttpUtils {
                 .build();
         return client.newCall(request);
     }
-    private static FormBody createFormBody(Map<String, Object> params) {
+    public static FormBody createFormBody(Map<String, Object> params) {
         FormBody.Builder builder = new FormBody.Builder();
         if (params != null && params.size() > 0) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -272,7 +296,7 @@ public class OkHttpUtils {
         return builder.build();
     }
 
-    private static Headers createHeaders(Map<String, String> Headers) {
+    public static Headers createHeaders(Map<String, String> Headers) {
         Headers.Builder builder = new Headers.Builder();
         if (Headers != null && Headers.size() > 0) {
             for (Map.Entry<String, String> entry : Headers.entrySet()) {
