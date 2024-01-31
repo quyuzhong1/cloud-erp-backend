@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
+import com.erp.model.tms.enums.ProductRegistrationStatusEnum;
 import com.erp.server.tms.mapper.ProductRegistrationMapper;
 import com.erp.server.tms.service.ProductRegistrationService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -94,9 +95,11 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     @Override
     public List<String> listNotRegistrationByParam(SettingForecastDTO.CheckRegistrationDTO dto) {
         String declarePlatform = dto.getDeclarePlatform();
+        String registered = ProductRegistrationStatusEnum.REGISTERED.getCode();
         List<String> skuNoList = dto.getSkuNoList();
         List<ProductRegistrationEntity> dbList=this.lambdaQuery().
                 eq(ProductRegistrationEntity::getDeclarePlatform,declarePlatform).
+                eq(ProductRegistrationEntity::getStatus,registered).
                 in(ProductRegistrationEntity::getSkuNo,skuNoList).list();
          //这个是查询到的
         List<String> dbSkuNoList = dbList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
