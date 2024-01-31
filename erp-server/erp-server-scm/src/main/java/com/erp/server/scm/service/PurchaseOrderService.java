@@ -414,32 +414,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     void purchaseOrderAutoConfirm();
 
     /**
-     * 待发货 时间周期统计
-     * @param dto
-     * @return
-     */
-    PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
-
-    /**
-     * 待发货 分页列表
-     * @param dto
-     * @return
-     */
-    PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
-
-    /**
      * srm订单确认列表合计
      * @param dto
      * @return
      */
     PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
-
-    /**
-     * 待发货订单合计
-     * @param dto
-     * @return
-     */
-    PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
 
     /**
      * 生成送货单

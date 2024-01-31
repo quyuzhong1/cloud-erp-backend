@@ -160,11 +160,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
     }
     @Override
-    public void removeBySrmOrderIds(List<String> ids) {
+    public void updateBySrmOrderIds(List<String> ids, String executionStatus) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
-        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId, ids).remove();
+        if (StringUtils.isEmpty(executionStatus)){
+            executionStatus = ExecutionStatusEnum.TO_BE_CONFIRM.getCode();
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId, ids).set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus).update();
     }
 
 

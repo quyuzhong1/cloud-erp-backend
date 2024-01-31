@@ -601,7 +601,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //同步到WMS
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
-
+        if (CollectionUtils.isNotEmpty(ids)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("ids",ids);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.TO_BE_CONFIRM);
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        }
         return Boolean.TRUE;
     }
 
@@ -661,7 +667,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderEntity> mainList = this.getList(mainIds);
         //更新明细中的交货状态
         purchaseOrderDetailService.updateArrivalStatusByIds(ExecutionStatusEnum.CLOSED.getCode(), ids, purchaseOrderDetailList, remark);
-
+        //TODO 关闭时，更新订单明细状态
+        if (CollectionUtils.isNotEmpty(ids)){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("ids",ids);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CLOSED.getCode());
+            //同步scm 确认订单 到 srm
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        }
         // 更新库存
         updateInventoryFinish(mainList, purchaseOrderDetailList);
         //操作日志
@@ -923,13 +936,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //同步到WMS
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
-        if (CollectionUtils.isNotEmpty(ids)){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("ids",ids);
-            jsonObject.putOpt("executionStatus","invalid");
-            //同步scm 确认订单 到 srm
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-        }
         return Boolean.TRUE;
     }
 
@@ -2399,29 +2405,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
     }
 
-    @Override
-    public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
-        return baseMapper.srmWaitDeliveryCount(dto.getSupplierId());
-    }
-
-    @Override
-    public PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> pagingDTO) {
-        PurchaseOrderDTO.SrmSearchParamDTO params = pagingDTO.getParams();
-        params.setPermissionSql(pagingDTO.getPermissionSql());
-
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
-        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.srmPaging(query, params);
-        List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
-        if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
-        }
-        //数据赋值处理
-        doOpHandlePurchaseOrder(records);
-        //重新赋值待发货字段逻辑
-        doWaitDeliveryPurchaseOrder(records);
-        return new PagingVO(pageData);
-    }
 
     private void doWaitDeliveryPurchaseOrder(List<PurchaseOrderDTO.ListDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
@@ -2481,19 +2464,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //数据赋值处理
         buildPurchaseOrderCount(list);
-        //汇总
-        return countPurchaseOrder(dto, list);
-    }
-
-    @Override
-    public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO pagingDTO) {
-        PurchaseOrderDTO.ListDTO dto = new PurchaseOrderDTO.ListDTO();
-        List<PurchaseOrderDTO.ListDTO> list = this.baseMapper.srmPurchaseOrderList(pagingDTO);
-        if (CollectionUtils.isEmpty(list)) {
-            return countPurchaseOrder(dto, list);
-        }
-        //数据赋值处理
-        doWaitDeliveryPurchaseOrder(list);
         //汇总
         return countPurchaseOrder(dto, list);
     }

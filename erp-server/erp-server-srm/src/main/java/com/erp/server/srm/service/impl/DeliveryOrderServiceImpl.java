@@ -312,8 +312,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_98026.msg));
             return dtos;
         }
-        List<DeliveryOrderEntity> deliveryOrderEntityList = this.getDeliveryOrderBySourceIds(orderIds);
-
         for (Map.Entry<String, List<DeliveryOrderDTO.AddDeliveryDTO>> entry  :purchaseMap.entrySet()) {
             String orderId = entry.getKey();
             //明细记录
@@ -324,10 +322,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 continue;
             }
             try {
-                DeliveryOrderEntity deliveryOrderEntity = deliveryOrderEntityList.stream().filter(e -> e.getSourceId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
-                if (Objects.isNull(deliveryOrderEntity)){
-                    deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
-                }
+                DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
                 handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos);
             }catch (Exception e){

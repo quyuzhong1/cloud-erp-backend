@@ -40,8 +40,8 @@ public class PurchaseOrderConsumer {
                 } catch (Exception e) {
                     log.error("同步SCM采购订单{}数据到SRM异常:{}", id, e.getMessage());
                 }
-            }else if (executionStatus.equals("invalid")){
-                purchaseOrderDetailService.removeBySrmOrderIds(ids);
+            }else {
+                purchaseOrderDetailService.updateBySrmOrderIds(ids, executionStatus);
             }
         }
     }
