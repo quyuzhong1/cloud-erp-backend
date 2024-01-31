@@ -1433,7 +1433,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //srm协同
             Boolean srmDisabled = supplierList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSrmDisabled())).orElse(null);
             obj.setSrmDisabled(srmDisabled);
-            obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "已停用": "已开启");
+            obj.setSrmDisabledName(Boolean.TRUE.equals(srmDisabled)? "未开启": "已开启");
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
