@@ -173,10 +173,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //设置预计中转日期
         List<TransferDeclareDeadlineSettingDTO.ViewDTO> view = transferDeclareDeadlineSettingService.view();
         TransferDeclareDeadlineSettingDTO.ViewDTO viewDTO = view.stream().filter(req -> req.getTransferLogisticsSupplierIdList().contains(transferDeclareEntity.getTransferLogisticsSupplierId())).findFirst().orElse(null);
-        if (viewDTO.getDeadlineTime().isAfter(addDTO.getGenerateTime())) {
-            transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
-        } else {
-            transferDeclareEntity.setPlanTransferDate(LocalDate.now());
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            if (viewDTO.getDeadlineTime().isAfter(addDTO.getGenerateTime())) {
+                transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
+            } else {
+                transferDeclareEntity.setPlanTransferDate(LocalDate.now());
+            }
         }
 
         // 数据处理
