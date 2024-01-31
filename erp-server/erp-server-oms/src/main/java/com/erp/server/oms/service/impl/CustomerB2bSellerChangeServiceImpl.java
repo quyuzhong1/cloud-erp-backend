@@ -104,6 +104,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO addAndSubmit(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
         BatchResultDTO batchResultDTO = service.add(addDTO);
         if(!batchResultDTO.getSuccess()){
