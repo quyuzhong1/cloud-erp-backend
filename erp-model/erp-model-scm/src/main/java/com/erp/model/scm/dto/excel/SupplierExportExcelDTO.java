@@ -76,7 +76,7 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
-     * SRM协同 true 停用 false 开启
+     * SRM协同 true 否 false 是
      */
     @ExcelProperty(value = "SRM协同", index = 7)
     @ColumnWidth(10)

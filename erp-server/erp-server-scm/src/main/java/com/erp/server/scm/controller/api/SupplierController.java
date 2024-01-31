@@ -241,7 +241,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用SRM协同:id={id},状态值={state}(true=禁用,false=启用)")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用SRM协同:id={id},状态值={state}(true=否,false=是)")
     @PostMapping("/updateSrmStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
