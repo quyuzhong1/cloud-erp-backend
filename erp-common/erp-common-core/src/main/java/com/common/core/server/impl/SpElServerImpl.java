@@ -307,6 +307,9 @@ public class SpElServerImpl implements SpElServer {
                         case NOT_NULL:
                             content = convertToNotNullObjExpression(field);
                             break;
+                        case STARTS_WITH:
+                            content = convertToStartsWithObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -409,12 +412,24 @@ public class SpElServerImpl implements SpElServer {
         return expression.toString();
     }
 
+    /**
+     *对象表达式 以...开头
+     */
+    private String convertToStartsWithObjExpression(String field,String value) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(".startsWith");
+        expression.append("('").append(value).append("')");
+        return expression.toString();
+    }
+
+
 
     public static void main(String[] args) {
         SpElServerImpl spElServer=new SpElServerImpl();
         ExpressionParser parser = new SpelExpressionParser();
         BigDecimal ss=new BigDecimal("2");
-        String conditionExpression = "( ['packageWeightList'].contains(ss) )";
+        String conditionExpression = "( ['packageWeight'].startsWith(pa) )";
 
         List<ConditionElement> conditionList=new ArrayList<>();
         ConditionElement conditionElement=new ConditionElement();

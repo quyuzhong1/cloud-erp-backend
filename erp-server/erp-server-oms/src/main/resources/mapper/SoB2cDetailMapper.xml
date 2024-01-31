@@ -69,5 +69,38 @@
             AND  sbd.is_deleted=false
     </select>
 
+    <!-- 查询待发货数量 -->
+    <select id="listWaitDeliveryQty" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$WaitDeliveryQtyDTO">
+        select
+            sbd.sku_id as skuId,
+            sbd.warehouse_id as warehouseId,
+            sbd.warehouse_location as warehouseLocation,
+            sum(sbd.qty) as qty
+        from so_b2c_detail sbd
+        inner join so_b2c sb on sbd.main_id = sb.id and sb.is_deleted = false
+        <where>
+            sbd.is_deleted = false and sb.invalid_status = false and sb.pay_status = 'paid'
+            <if test="paramDTO.skuIdList != null and paramDTO.skuIdList.size > 0">
+                and sbd.sku_id in
+                <foreach collection="paramDTO.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramDTO.warehouseIdList != null and paramDTO.warehouseIdList.size > 0">
+                and sbd.warehouse_id in
+                <foreach collection="paramDTO.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramDTO.detailIdList != null and paramDTO.detailIdList.size > 0">
+                and sbd.id not in
+                <foreach collection="paramDTO.detailIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        group by sbd.sku_id,sbd.warehouse_id,sbd.warehouse_location
+    </select>
+
 
 </mapper>

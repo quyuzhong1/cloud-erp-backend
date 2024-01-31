@@ -2815,6 +2815,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIdList);
 
+        //即时库存数据
+        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+        List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
+
+        /**
+         *  已付款且未提交发货且未作废的订单SKU的发货数量
+         *  根据SKU、仓库、仓位查询SKU数量
+         */
+        List<String> detailIdList = detailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+        SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO = new SoB2cDetailDTO.WaitDeliveryParamDTO(skuIdList,warehouseIdList,detailIdList);
+        List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList = soB2cDetailService.listWaitDeliveryQty(paramDTO);
+
         //含税总成本
         BigDecimal totalTaxCost = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getTaxCost(), MathUtil.ZERO) > MathUtil.ZERO)
                 .map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -2836,9 +2852,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LocalDateTime payTime = soB2cEntity.getPayTime();
         String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
         map.put("payTime", payTimeStr);
+
+        //产品信息尺寸
         map.put("packageWeight", logisticsEntity.getWeight());
         map.put("packageLength", logisticsEntity.getLength());
         map.put("packageHeight", logisticsEntity.getHeight());
+        //产品尺寸(长+宽+高)
+        BigDecimal packageSize = logisticsEntity.getLength()
+                .add(logisticsEntity.getWeight())
+                .add(logisticsEntity.getHeight());
+        map.put("packageSize",packageSize);
+        //产品尺寸(长+2*宽+2*高)
+        BigDecimal packageMultiSize = logisticsEntity.getLength()
+                .add(MathUtil.multiply(logisticsEntity.getWeight(),MathUtil.TWO))
+                .add(MathUtil.multiply(logisticsEntity.getHeight(),MathUtil.TWO));
+        map.put("packageMultiSize",packageMultiSize);
+
         map.put("shop", soB2cEntity.getShopId());
         map.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
@@ -2870,6 +2899,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("orderTaxCost", totalTaxCost);
         map.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
         map.put("orderProfitRate", financialInfo.getProfitRateFlag());
+        map.put("email", receiverEntity.getEmail());
 
         List<Map<String, Object>> mapList = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity detailEntity : detailList) {
@@ -2884,6 +2914,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("packageWeight", logisticsEntity.getWeight());
             detailMap.put("packageLength", logisticsEntity.getLength());
             detailMap.put("packageHeight", logisticsEntity.getHeight());
+            //产品尺寸(长+宽+高)
+            BigDecimal detailPackageSize = logisticsEntity.getLength()
+                    .add(logisticsEntity.getWeight())
+                    .add(logisticsEntity.getHeight());
+            map.put("packageSize",detailPackageSize);
+            //产品尺寸(长+2*宽+2*高)
+            BigDecimal detailPackageMultiSize = logisticsEntity.getLength()
+                    .add(MathUtil.multiply(logisticsEntity.getWeight(),MathUtil.TWO))
+                    .add(MathUtil.multiply(logisticsEntity.getHeight(),MathUtil.TWO));
+            map.put("packageMultiSize",detailPackageMultiSize);
+
+            //可用库存
+           Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())
+                            && obj.getWarehouseId().equals(detailEntity.getWarehouseId())
+                            && obj.getWarehouseLocationId().equals(detailEntity.getWarehouseLocation())
+                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                    .orElse(MathUtil.ZERO);
+           //待发货数量
+            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId())
+                            && StrUtil.equals(obj.getWarehouseLocation(), detailEntity.getWarehouseLocation()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+            Boolean isOutStock = detailEntity.getQty() > useableQty - waitDeliveryQty ;
+            detailMap.put("isOutStock", isOutStock);
+
+
             detailMap.put("shop", soB2cEntity.getShopId());
             detailMap.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
             detailMap.put("actualShippingCost", logisticsEntity.getActualShippingCost());
@@ -2899,12 +2956,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("orderProfitRate", financialInfo.getProfitRate());
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
-            detailMap.put("deliveryWarehouseQty", warehouseCount);
-            detailMap.put("destCountry", receiverEntity.getCountry());
-            detailMap.put("destCity", receiverEntity.getCityName());
-            detailMap.put("orderTaxCost", totalTaxCost);
-            detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-            detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {

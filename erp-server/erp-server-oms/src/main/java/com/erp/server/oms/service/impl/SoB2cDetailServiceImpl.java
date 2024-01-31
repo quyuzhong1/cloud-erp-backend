@@ -461,6 +461,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     }
 
+    @Override
+    public List<SoB2cDetailDTO.WaitDeliveryQtyDTO> listWaitDeliveryQty(SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO) {
+        return baseMapper.listWaitDeliveryQty(paramDTO);
+    }
+
     /**
      * 查询需要删除的数据
      */
