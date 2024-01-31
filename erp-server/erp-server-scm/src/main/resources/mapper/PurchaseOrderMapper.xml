@@ -453,7 +453,7 @@
     </select>
 
     <select id="statisticsBySupplier" resultType="com.erp.model.scm.dto.PurchaseStatisticsDTO$StatisticsMonthDTO">
-        select EXTRACT(MONTH FROM po.purchase_date) as month,
+        select EXTRACT(MONTH FROM po.approve_time) as month,
                count(distinct po.id) as orderCount,
                sum(pod.purchase_qty) as orderSkuCount,
                sum(pod.purchase_amount) as orderMoney
@@ -462,13 +462,15 @@
                  left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         where pos.supplier_id = #{params.supplierId}
         <if test="params.startTime != null">
-            and po.purchase_date >= #{params.startTime}
+            and po.approve_time >= #{params.startTime}
         </if>
         <if test="params.endTime != null">
-            and po.purchase_date <![CDATA[ <= ]]> #{params.endTime}
+            and po.approve_time <![CDATA[ <= ]]> #{params.endTime}
         </if>
-          and po.is_deleted = false
-        group by EXTRACT(MONTH FROM po.purchase_date)
+        and pod.is_deleted = false
+        and po.approve_status = 'approve'
+        and po.is_deleted = false
+        group by EXTRACT(MONTH FROM po.approve_time)
     </select>
     <select id="srmPurchaseOrderCount" resultType="java.lang.Integer">
         select
