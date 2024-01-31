@@ -101,6 +101,12 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
         return resultList;
     }
 
+    @Override
+    public List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByDictPlatform(String dictPlatform) {
+        List<WarehouseMappingDTO.MappingViewDTO> resultList = baseMapper.listMappingViewByDictPlatform(dictPlatform);
+        return resultList;
+    }
+
     /**
     * 新增修改处理数据
     */

@@ -82,7 +82,7 @@ public class AliexpressDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>>
      **/
     @GetMapping("/listUserAuthShop")
-    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop() {
-        return aliexpressDeliveryService.listUserAuthShop();
+    public ApiResult<List<ShopSysUserAuthDTO.ViewShopDTO>> listUserAuthShop() {
+        return success(aliexpressDeliveryService.listUserAuthShop());
     }
 }

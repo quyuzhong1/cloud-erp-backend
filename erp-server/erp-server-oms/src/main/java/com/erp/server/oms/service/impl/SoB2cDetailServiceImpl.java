@@ -22,6 +22,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WarehouseMappingFeign;
@@ -274,9 +275,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
-/*        //查询速卖通仓库名称是否映射ERP仓库
-        String warehouseName = dto.getDetails().get(0).getWarehouseName();
-        warehouseMappingFeign.listMappingViewByWarehouseIds()*/
+        //查询速卖通仓库名称是否映射ERP仓库
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
 
         // 新增或更新列表
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
@@ -302,6 +302,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             } else {
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
+            }
+
+            //查询映射的仓库信息
+            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
+                saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
+                saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
             }
 
             //建议售价

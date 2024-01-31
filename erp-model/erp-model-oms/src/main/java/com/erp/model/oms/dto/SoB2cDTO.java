@@ -1735,7 +1735,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isWarehouseEmpty;
 
-
+        /**
+         * 订单仓库名称
+         */
+        private String warehouseName;
     }
 
     /**

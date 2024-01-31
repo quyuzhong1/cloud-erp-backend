@@ -50,4 +50,17 @@
         </if>
     </select>
 
+    <!--根据平台编码查询仓库映射信息-->
+    <select id="listMappingViewByDictPlatform" resultType="com.erp.model.wms.dto.WarehouseMappingDTO$MappingViewDTO">
+        SELECT
+        w.id AS warehouseId,
+        w.name AS warehouseName,
+        wm.name AS  thirdWarehouseName,
+        wm.dict_Platform AS dictPlatform
+        FROM warehouse w
+        LEFT JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
+        WHERE w.is_deleted = FALSE
+        AND wm.dict_Platform = #{dictPlatform}
+    </select>
+
 </mapper>

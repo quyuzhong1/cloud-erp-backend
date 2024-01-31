@@ -22,6 +22,16 @@ public interface WarehouseMappingFeign {
      **/
     @PostMapping("/feign/warehouseMapping/listMappingViewByIds")
     List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByWarehouseIds(@RequestBody List<String> warehouseIdList);
+
+    /**
+     * 根据平台编码查询仓库映射信息
+     * @Author Luo_WG
+     * @Date 2024/1/31 12:32
+     * @param dictPlatform
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseMappingDTO.MappingViewDTO>
+     **/
+    @PostMapping("/feign/warehouseMapping/listMappingViewByDictPlatform")
+    List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByDictPlatform(@RequestBody String dictPlatform);
 }
 
 
