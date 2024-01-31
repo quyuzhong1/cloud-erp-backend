@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -12,8 +13,10 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
+import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryMapper;
 import com.erp.server.wms.service.AliexpressDeliveryService;
 import com.erp.server.wms.service.CommonService;
@@ -25,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
@@ -45,6 +49,8 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -93,6 +99,15 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop() {
+        ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
+        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
+        return viewShopDTOList;
     }
 
     /**
