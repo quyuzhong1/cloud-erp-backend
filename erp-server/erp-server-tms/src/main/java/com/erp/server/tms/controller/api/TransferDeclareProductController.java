@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.server.tms.service.TransferDeclareDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +22,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TransferDeclareProductDTO;
 
+import java.util.Collections;
+
 /**
  * 中转报关产品
  *
@@ -34,6 +38,8 @@ public class TransferDeclareProductController extends BaseController {
 
     @Resource
     private TransferDeclareProductService transferDeclareProductService;
+    @Resource
+    private TransferDeclareDetailService transferDeclareDetailService;
 
     /**
     * 新增
@@ -67,6 +73,11 @@ public class TransferDeclareProductController extends BaseController {
         return success();
     }
 
-
+    @GetMapping("/getSkuInfo")
+    public ApiResult getSkuInfo(@RequestParam("id") String id){
+        TransferDeclareDetailEntity detail = transferDeclareDetailService.getById(id);
+        Boolean aBoolean = transferDeclareProductService.saveTransferDeclareProducts(Collections.singletonList(detail));
+        return success(aBoolean);
+    }
 
 }
