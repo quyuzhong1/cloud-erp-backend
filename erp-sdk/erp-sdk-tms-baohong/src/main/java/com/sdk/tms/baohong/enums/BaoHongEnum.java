@@ -14,9 +14,9 @@ public enum BaoHongEnum {
     @Getter
     public enum ProductStatusEnum implements EnumMessage {
 
-        DRAFT("0","草稿",ProductRegistrationStatusEnum.DRAFT),
-        REGISTERING("1","备案中",ProductRegistrationStatusEnum.REGISTERING),
-        REGISTERED("2","已备案",ProductRegistrationStatusEnum.REGISTERED),
+        DRAFT("2","草稿",ProductRegistrationStatusEnum.DRAFT),
+        REGISTERING("0","备案中",ProductRegistrationStatusEnum.REGISTERING),
+        REGISTERED("1","已备案",ProductRegistrationStatusEnum.REGISTERED),
         FREEZE("3","冻结",ProductRegistrationStatusEnum.FREEZE),
         ;
         private final String code;

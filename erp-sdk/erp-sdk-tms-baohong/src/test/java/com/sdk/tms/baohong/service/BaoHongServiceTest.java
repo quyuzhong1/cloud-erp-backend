@@ -52,12 +52,14 @@ public class BaoHongServiceTest {
     @Test
     public void getAllProductInfo(){
         BaoHongResponse<List<DataRow>> response = baoHongService.getAllProductInfo();
+        List<DataRow> dataRowList = response.getData().stream().filter(v->v.getProductSku().equals("kktwo")).collect(Collectors.toList());
+        System.out.println(dataRowList);
         System.out.println(response.getData());
     }
 
     @Test
     public void getProductInfo(){
-        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("20240120310-1");
+        BaoHongResponse<ProductRow> response = baoHongService.getProductInfo("20221121013-1");
         System.out.println(response);
         System.out.println(response.getData());
     }
