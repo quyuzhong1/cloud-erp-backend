@@ -76,4 +76,11 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @return
      */
     Boolean checkIsUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list);
+
+    /**
+     * 根据物流商查询预报设置信息
+     * @param dto
+     * @return
+     */
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(SettingForecastDTO.FindByLogisticsSupplierDTO dto);
 }

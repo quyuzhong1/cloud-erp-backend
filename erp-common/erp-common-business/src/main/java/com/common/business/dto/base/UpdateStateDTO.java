@@ -57,15 +57,14 @@ public class UpdateStateDTO implements Serializable {
 
 
     /**
-     * 单个修改状态
+     *
      * 状态为str
      */
     @Data
     @NoArgsConstructor
     public static class UpdateByStrStatusDTO {
-
-        @NotBlank(message = "id不能为空")
-        private String id;
+        @NotNull(message = "id不能为空")
+        private  List<String> ids;
         /**
          *
          */

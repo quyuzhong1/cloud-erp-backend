@@ -93,14 +93,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier() {
-        List<SettingForecastEntity> dbList = this.list();
-        List<String> dbLogisticsSupplierIdList = dbList.stream().map(SettingForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
         List<BaseDropDownDTO.DisabledDTO> list = logisticsSupplierService.listAll();
-        list.forEach(item -> {
-            if (dbLogisticsSupplierIdList.contains(item.getCode())) {
-                item.setDisabled(true);
-            }
-        });
         return list;
     }
 
@@ -183,6 +176,61 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(SettingForecastDTO.FindByLogisticsSupplierDTO dto) {
+        String logisticsSupplierId = dto.getLogisticsSupplierId();
+        if (Objects.isNull(dto)||StringUtils.isBlank(logisticsSupplierId)) {
+            return null;
+        }
+
+        LocalDateTime orderTime = dto.getOrderTime();
+        SettingForecastEntity entity = this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
+        if (Objects.nonNull(entity)) {
+            SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
+            if (Objects.isNull(orderTime)) {
+                orderTime = LocalDateTime.now();
+            }
+            String packageStatus = PackageStatusEnum.NOT.getCode();
+            String transferStatus = TransferStatusEnum.NOT.getCode();
+            //是否强制组包
+            Boolean isMustPackage = entity.getIsMustPackage();
+            LocalDateTime enablePackageTime = entity.getEnablePackageTime();
+            if (isMustPackage) {
+                if (Objects.isNull(enablePackageTime)) {
+                    packageStatus = PackageStatusEnum.WAIT.getCode();
+                } else {
+                    if (orderTime.compareTo(enablePackageTime) > 0) {
+                        packageStatus = PackageStatusEnum.WAIT.getCode();
+                    }
+                }
+            }
+            //是否强制中转
+            Boolean isMustTransfer = entity.getIsMustTransfer();
+            LocalDateTime enableTransferTime = entity.getEnableTransferTime();
+            if (isMustTransfer) {
+                if (Objects.isNull(enableTransferTime)) {
+                    transferStatus = TransferStatusEnum.WAIT.getCode();
+                } else {
+                    if (orderTime.compareTo(enablePackageTime) > 0) {
+                        transferStatus = TransferStatusEnum.WAIT.getCode();
+                    }
+                }
+            }
+
+            forecastStatus.setPackageStatus(packageStatus);
+            forecastStatus.setTransferStatus(transferStatus);
+            String declarePlatform = entity.getDeclarePlatform();
+            forecastStatus.setDeclarePlatform(declarePlatform);
+            LogisticsPlatformEnum declarePlatformEnum = LogisticsPlatformEnum.getByCode(declarePlatform);
+            String declarePlatformName = Objects.nonNull(declarePlatformEnum) ? declarePlatformEnum.getName() : "";
+            forecastStatus.setDeclarePlatformName(declarePlatformName);
+            return forecastStatus;
+        }
+
+        return null;
+
     }
 
     private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {

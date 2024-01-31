@@ -475,7 +475,7 @@ public class SoB2cController extends BaseController {
                 result = soB2cService.checkBasicLogistics(id, dto);
                 //长宽高校验
                 sizeResult = soB2cService.checkLength(id, dto);
-                if (!sizeResult.getSuccess()){
+                if (!sizeResult.getSuccess()) {
                     sizeDTOS.add(sizeResult);
                 }
             } catch (Exception e) {
@@ -491,19 +491,20 @@ public class SoB2cController extends BaseController {
 
             resultDTOS.add(result);
         }
-        if (CollectionUtils.isNotEmpty(sizeDTOS)){
-            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)){
+        if (CollectionUtils.isNotEmpty(sizeDTOS)) {
+            if (resultDTOS.stream().allMatch(BatchResultDTO::getSuccess)) {
                 resultDTOS.addAll(sizeDTOS);
                 return success(resultDTOS);
-            }else {
+            } else {
                 resultDTOS.addAll(sizeDTOS);
                 return failure(resultDTOS);
             }
-        }else {
+        } else {
             return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
 
     }
+
     /**
      * 订单配货保存（前端手动配货）
      *
@@ -777,8 +778,17 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/splitSave")
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
-        Boolean flag = soB2cService.splitSave(dto);
-        return flag.equals(Boolean.TRUE) ? success() : failure();
+        List<String> soIdList = soB2cService.splitSave(dto);
+        if (CollectionUtils.isNotEmpty(soIdList)) {
+            for (String soId : soIdList) {
+                try {
+                    soB2cService.checkProductRegistrationAndUpdate(soId, "");
+                } catch (Exception e) {
+                    log.error("拆分保存后检查商品备案失败，soId:{}，异常信息{}", soId, e);
+                }
+            }
+        }
+        return success();
     }
 
     /**
