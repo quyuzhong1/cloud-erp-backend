@@ -3919,7 +3919,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String packageStatus = entity.getPackageStatus();
         //表示强制组包了 就要去组包预报 去中转了
         if (alreadyPackage.equals(packageStatus) || waitPackage.equals(packageStatus)) {
-            throw new ServiceException(ApiError.ALREADY_PACKAGE_NOT_CAN_TRANSFER);
+            throw new ServiceException(ApiError.PACKAGE_FORECAST_TRANSFER);
         }
         //组织添加中转报关单数据
         TransferDeclareDTO.AddDTO addDTO = buildAddTransferDeclare(entity);
