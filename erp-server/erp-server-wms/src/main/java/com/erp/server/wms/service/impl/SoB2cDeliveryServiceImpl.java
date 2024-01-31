@@ -238,14 +238,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
         if (Objects.nonNull(soB2cEntity)) {
-            TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(soB2cEntity.getId());
-            if (Objects.nonNull(transferDeclare)) {
-                String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
-                String uploadStatus = transferDeclare.getUploadStatus();
-                if (uploadSuccess.equals(uploadStatus)) {
+            String transferStatus = soB2cEntity.getTransferStatus();
+            //表示要中转啊
+            if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
+                TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(soB2cEntity.getId());
+                if (Objects.nonNull(transferDeclare)) {
+                    String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                    String uploadStatus = transferDeclare.getUploadStatus();
+                    if (!uploadSuccess.equals(uploadStatus)) {
+                        throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                    }
+                }else{
                     throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                 }
             }
+
         }
 
 
