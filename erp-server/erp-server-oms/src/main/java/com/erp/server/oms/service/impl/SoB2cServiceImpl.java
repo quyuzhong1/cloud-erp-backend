@@ -5120,7 +5120,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<PackageDTO.PagingViewDTO> packagePing(PagingDTO<PackageDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<PackageDTO.PagingViewDTO> pageData = this.baseMapper.packagePing(query, dto.getParams());
+        PackageDTO.PagingParamDTO pagingParam = dto.getParams();
+        pagingParam.setBillStatusList(Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()));
+        List<String> packageStatusList = new ArrayList<>(2);
+        packageStatusList.add(PackageStatusEnum.NOT.getCode());
+        packageStatusList.add(PackageStatusEnum.WAIT.getCode());
+        pagingParam.setPackageStatusList(packageStatusList);
+        IPage<PackageDTO.PagingViewDTO> pageData = this.baseMapper.packagePing(query, pagingParam);
         List<PackageDTO.PagingViewDTO> list = pageData.getRecords();
         List<String> logisticsChannelIdList=list.stream().map(PackageDTO.PagingViewDTO::getLogisticsChannelId).collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> baseList= CollectionUtils.isNotEmpty(logisticsChannelIdList) ? logisticsFeign.listChannelInfoById(logisticsChannelIdList) : Collections.emptyList();

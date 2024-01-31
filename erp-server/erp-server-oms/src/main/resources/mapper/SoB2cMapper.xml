@@ -736,6 +736,12 @@
                   #{item}
            </foreach>
         </if>
+        <if test="params.packageStatusList !=null and params.packageStatusList.size>0">
+            AND sb.package_status IN
+            <foreach collection="params.packageStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 /**
+ * 分拨组包
  * @author Lambda
  * @Classname PackageController
  * @Description TODO
@@ -37,6 +38,7 @@ public class PackageController extends BaseController {
 
 
     /**
+     * 扫描
      * @param
      * @return
      * @description
@@ -50,6 +52,8 @@ public class PackageController extends BaseController {
     }
 
     /**
+     * 批量分包分页查询
+     *
      * @param
      * @return
      * @description

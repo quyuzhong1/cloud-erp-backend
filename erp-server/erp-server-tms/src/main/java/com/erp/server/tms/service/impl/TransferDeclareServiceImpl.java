@@ -332,11 +332,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getById(id);
 
+        if (TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())) {
+            throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_UPLOAD);
+        }
+
         //查询单据需要上传的订单（待上传，上传失败）状态的订单
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
         List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
                 .filter(req -> TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode().equals(req.getOrderUploadStatus())
-                        && TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getOrderUploadStatus())
+                        || TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode().equals(req.getOrderUploadStatus())
         ).collect(Collectors.toList());
 
         //查询报关单包含的订单信息
@@ -362,6 +366,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询物流渠道
         List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
+
+        //查询中转物流渠道
+        TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
 
         //拆分的订单产品信息
         List<TransferDeclareProductEntity> transferDeclareProductEntities = transferDeclareProductService.listByDeclareIds(Arrays.asList(id));
@@ -392,11 +399,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             List<TransferDeclareProductEntity> declareProductEntityList = transferDeclareProductEntities.stream().filter(req -> transferDeclareDetailEntity.getId().equals(req.getDeclareDetailId())).collect(Collectors.toList());
             List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.declareProductEntityToCreateOrderReq(declareProductEntityList);
 
+            String shippingCode = "";
+            if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
+                shippingCode = transferLogisticsChannelEntity.getCode();
+            }
+
             //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
                     .trackingNumber(logisticsEntity.getCode())
                     .country(soB2cReceiverEntity.getCountry())
-                    .shippingCode(logisticsChannelEntity.getCode())
+                    .shippingCode(shippingCode)
                     .name(soB2cReceiverEntity.getReceiverName())
                     .referenceNo(soB2cEntity.getPlatformCode())
                     .deliveryAddress(soB2cReceiverEntity.getFullAddress())
@@ -482,7 +494,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public TransferDeclareEntity getBySoId(String soId) {
-        return null;
+        return baseMapper.getBySoId(soId);
     }
 
     @Override
@@ -499,7 +511,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public Boolean updateUploadStatus(String id, String status) {
-        return lambdaUpdate().set(TransferDeclareEntity::getId, id).set(TransferDeclareEntity::getUploadStatus, status).update();
+        return lambdaUpdate().eq(TransferDeclareEntity::getId, id).set(TransferDeclareEntity::getUploadStatus, status).update();
     }
 
     @Override

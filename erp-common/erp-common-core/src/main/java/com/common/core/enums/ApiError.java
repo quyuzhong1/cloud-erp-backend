@@ -904,6 +904,7 @@ public enum ApiError implements Serializable {
     B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
     NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
     UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
+    UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
 
 
     /**

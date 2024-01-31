@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -91,7 +93,12 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
 
     @Override
     public List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByWarehouseIds(List<String> warehouseIdList) {
-        return null;
+        if (CollectionUtils.isEmpty(warehouseIdList)) {
+            return Collections.emptyList();
+        }
+
+        List<WarehouseMappingDTO.MappingViewDTO> resultList = baseMapper.listMappingViewByWarehouseIds(warehouseIdList);
+        return resultList;
     }
 
     /**

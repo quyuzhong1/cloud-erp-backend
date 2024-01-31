@@ -89,7 +89,7 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     /**
      * 第三方中转服务商的发货单号
      */
-    @TableField("failureReason")
+    @TableField("shipping_order_no")
     private String shippingOrderNo;
 
 

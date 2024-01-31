@@ -30,7 +30,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
+import com.erp.rpc.wms.feign.WarehouseMappingFeign;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +101,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private AliexpressDeliveryFeign aliexpressDeliveryFeign;
 
     @Resource
-    private WmsWarehouseFeign warehouseFeign;
+    private WarehouseMappingFeign warehouseMappingFeign;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -165,8 +165,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                         addDTO.setTradeCreateTime(dto.getOrderCreateTime());
                         aliexpressDeliveryFeign.add(addDTO);
                     } else {
-                        //查询速卖通仓库名称是否映射ERP仓库
-                        String warehouseName = dto.getDetails().get(0).getWarehouseName();
 
                     }
                     return;
