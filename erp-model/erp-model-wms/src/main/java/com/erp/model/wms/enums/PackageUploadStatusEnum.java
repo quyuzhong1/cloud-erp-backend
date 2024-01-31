@@ -10,9 +10,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum PackageUploadStatusEnum implements EnumMessage {
 
-    WAIT_UPLOAD("waitUpload", "待上传"),
-    UPLOAD_FAILURE("uploadFailure", "上传失败"),
-    UPLOAD_SUCCESS("uploadSuccess", "上传成功"),
+    NOT("not", "无需上传"),
+    WAIT("wait", "待上传"),
+    FAILURE("failure", "上传失败"),
+    SUCCESS("success", "上传成功"),
+    CANCEL("cancel", "上传成功"),
     ;
     /**
      * 类型

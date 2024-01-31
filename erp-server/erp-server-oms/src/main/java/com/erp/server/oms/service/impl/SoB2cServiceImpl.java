@@ -778,8 +778,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
         this.updateIntercept(interceptUpdateOrderDTO);
         //取消异常原因
-        this.updateAbnormalType(entity.getId(), "");
-
+        String abnormalType = entity.getAbnormalType();
+        String  approveReject= SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT.getCode();
+        String  manualReject= SoB2cAbnormalTypeEnum.ENUM_MANUAL_REJECT.getCode();
+        if (approveReject.equals(abnormalType) || manualReject.equals(abnormalType)) {
+            this.updateAbnormalType(entity.getId(), "");
+        }
         // 记录操作日志
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
@@ -3666,7 +3670,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
             //状态更新为配货中
-            updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
+            updateBillStatusAndMatchLogistics(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION,Boolean.TRUE);
         } else {
             updateLogisticsAbnormalType(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
         }
@@ -3674,6 +3678,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         resultDTO.setIsRuleMatch(result);
         resultDTO.setAutoGetTrackNo(autoGetTrackNo);
         return resultDTO;
+    }
+
+    /**
+     * 更新订单状态和配货单状态
+     * @param id
+     * @param soB2cBillStatusEnum
+     * @param isMatchLogisticsRule
+     */
+    public Boolean updateBillStatusAndMatchLogistics(String id, SoB2cBillStatusEnum soB2cBillStatusEnum, Boolean isMatchLogisticsRule) {
+        return lambdaUpdate().eq(SoB2cEntity::getId, id)
+                .set(SoB2cEntity::getBillStatus, soB2cBillStatusEnum.getCode())
+                .set(SoB2cEntity::getIsMatchLogisticsRule,isMatchLogisticsRule)
+                .update(new SoB2cEntity());
     }
 
     @Override
