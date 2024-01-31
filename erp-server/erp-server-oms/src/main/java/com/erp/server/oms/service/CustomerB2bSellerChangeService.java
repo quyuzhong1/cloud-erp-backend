@@ -47,4 +47,6 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
     List<CustomerB2bSellerChangeDTO.ListDTO> paging(CustomerB2bSellerChangeDTO.ParamDTO dto);
 
     List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlag();
+
+    Boolean updateAndSubmit(CustomerB2bSellerChangeDTO.UpdateDTO dto);
 }

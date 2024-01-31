@@ -219,7 +219,7 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO {
 
         /**
         * 主键id
@@ -227,6 +227,23 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 变更后销售id
+         */
+        @NotBlank(message = "变更后销售id不能为空")
+        private String changeSellerId;
+
+        /**
+         * 变更后销售名
+         */
+        @NotBlank(message = "变更后销售名不能为空")
+        private String changeSellerName;
+
+        /**
+         * 开始日期
+         */
+        @NotNull(message = "开始日期不能为空")
+        private LocalDate startDate;
     }
 
     @Data

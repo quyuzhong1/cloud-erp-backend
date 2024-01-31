@@ -171,6 +171,29 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         return tabFlagDTOList;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAndSubmit(CustomerB2bSellerChangeDTO.UpdateDTO dto) {
+        BatchResultDTO batchResultDTO = new BatchResultDTO();
+        this.update(dto);
+        //提交流程
+        CustomerB2bSellerChangeEntity entity = this.getById(dto.getId());
+        batchResultDTO = this.startProcess(entity);
+        if(!batchResultDTO.getSuccess()){
+            throw new ServiceException("提交流程失败");
+        }
+        entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+        boolean result = this.updateById(entity);
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
+        }else{
+            throw new ServiceException("更新审核状态失败");
+        }
+        return true;
+    }
+
     /**
     * 修改
     */
@@ -183,6 +206,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        //销售员信息
+        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(old.getMainId());
+        SellerDTO.ViewDTO maxStartDateEntity = sellerList.stream().max(Comparator.comparing(SellerDTO.ViewDTO::getStartDate)).orElse(null);
+        if(Objects.nonNull(maxStartDateEntity) && !updateDTO.getStartDate().isAfter(maxStartDateEntity.getStartDate())){
+            throw new ServiceException("启用时间必须晚于当前销售员开始时间");
+        }
+
         CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity =  BeanMapperUtils.map(CustomerB2bSellerChangeEntity.class, updateDTO);
 
         // 数据处理
@@ -192,13 +222,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(!save) {
             throw new ServiceException("b2b客户销售员变更单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录b2b客户销售员变更单日志数据，id：【{}】", customerB2bSellerChangeEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), customerB2bSellerChangeEntity.getId(), "b2b客户销售员变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, customerB2bSellerChangeEntity, null, customerB2bSellerChangeEntity.getId(), msg);
+        log.info("编辑 开始记录b2b客户销售员变更单日志数据，id：【{}】", customerB2bSellerChangeEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), customerB2bSellerChangeEntity.getId(), "b2b客户销售员变更单");
+        operateLogService.addModuleOperateLogByObj(old, customerB2bSellerChangeEntity, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

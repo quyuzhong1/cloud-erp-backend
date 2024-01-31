@@ -73,6 +73,24 @@ public class CustomerB2bSellerChangeController extends BaseController {
         return success();
     }
 
+    /**
+     * 修改
+     * @author lrp
+     * @date:  2024-01-31
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateAndSubmit")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "b2b客户销售员变更单修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customerB2bSellerChange:update",
+            serviceClass = CustomerB2bSellerChangeService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated CustomerB2bSellerChangeDTO.UpdateDTO dto) {
+        customerB2bSellerChangeService.updateAndSubmit(dto);
+        return success();
+    }
 
 
 }
