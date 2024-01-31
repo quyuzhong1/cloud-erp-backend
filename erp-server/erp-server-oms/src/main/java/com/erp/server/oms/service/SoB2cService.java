@@ -253,7 +253,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean splitSave(SoB2cDTO.SplitSaveDTO dto);
+    List<String> splitSave(SoB2cDTO.SplitSaveDTO dto);
     /**
      * @description: 取消合并前数据展示
      * @author Will

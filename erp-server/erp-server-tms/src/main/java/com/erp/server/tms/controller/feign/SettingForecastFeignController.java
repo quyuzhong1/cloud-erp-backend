@@ -42,4 +42,18 @@ public class SettingForecastFeignController {
     }
 
 
+    /**
+     * 根据物流商 有效的设置
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 17:48
+     */
+    @PostMapping("/getByLogisticsSupplier")
+    public SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(@RequestBody SettingForecastDTO.FindByLogisticsSupplierDTO dto) {
+        return settingForecastService.getByLogisticsSupplier(dto);
+    }
+
+
 }

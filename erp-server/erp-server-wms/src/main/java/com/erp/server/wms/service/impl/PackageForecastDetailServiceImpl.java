@@ -3,7 +3,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -38,6 +42,8 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -48,7 +54,13 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         }
         List<PackageForecastDetailEntity> detailEntityList = BeanMapperUtils.copyList(PackageForecastDetailEntity.class, detailList);
         handleDataList(mainId,detailEntityList);
-        this.saveBatch(detailEntityList);
+        Boolean result= this.saveBatch(detailEntityList);
+        if (result) {
+            UpdateStateDTO.UpdateByStrStatusDTO dto =new UpdateStateDTO.UpdateByStrStatusDTO();
+            dto.setIds(detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList()));
+            dto.setStatus(PackageStatusEnum.ALREADY.getCode());
+            soB2cFeign.updatePackageStatus(dto);
+        }
     }
 
     /**

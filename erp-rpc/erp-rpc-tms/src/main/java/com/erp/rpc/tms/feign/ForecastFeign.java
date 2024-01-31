@@ -37,4 +37,12 @@ public interface ForecastFeign {
      */
     @PostMapping("/feign/productRegistration/listNotRegistrationByParam")
     List<String> listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
+
+    /**
+     * 根据供应商id 获取到对应的有效时间的预报设置信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/settingForecast/getByLogisticsSupplier")
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(@RequestBody SettingForecastDTO.FindByLogisticsSupplierDTO dto);
 }
