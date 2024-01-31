@@ -116,25 +116,47 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean saveTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
+    public Boolean saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         List<String> soIds = transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, TransferDeclareDetailEntity> detailEntityMap = transferDeclareDetailEntities.stream().collect(Collectors.toMap(TransferDeclareDetailEntity::getSoId, Function.identity()));
         List<com.erp.model.oms.dto.TransferDeclareProductDTO> productDTOS = soB2cFeign.getTransferDeclareProductBySoIds(soIds);
-        if (CollectionUtils.isNotEmpty(productDTOS)){
-            List<TransferDeclareProductEntity> productEntities = new ArrayList<>(productDTOS.size());
-            productDTOS.forEach(transferDeclareProductDTO -> {
-                TransferDeclareProductEntity entity = new TransferDeclareProductEntity();
-                BeanUtil.copyProperties(transferDeclareProductDTO, entity);
-                TransferDeclareDetailEntity transferDeclareDetailEntity = detailEntityMap.get(transferDeclareProductDTO.getSoId());
-                if (Objects.nonNull(transferDeclareDetailEntity)){
-                    entity.setDeclareId(transferDeclareDetailEntity.getMainId());
-                    entity.setDeclareDetailId(transferDeclareDetailEntity.getId());
-                }
-                productEntities.add(entity);
-            });
-            return this.saveBatch(productEntities);
+        if (CollectionUtils.isEmpty(productDTOS)){
+            return Boolean.TRUE;
         }
+        productDTOS.forEach(transferDeclareProductDTO -> {
+            TransferDeclareProductEntity entity = new TransferDeclareProductEntity();
+            BeanUtil.copyProperties(transferDeclareProductDTO, entity);
+            TransferDeclareDetailEntity transferDeclareDetailEntity = detailEntityMap.get(transferDeclareProductDTO.getSoId());
+            if (Objects.nonNull(transferDeclareDetailEntity)){
+                entity.setDeclareId(transferDeclareDetailEntity.getMainId());
+                entity.setDeclareDetailId(transferDeclareDetailEntity.getId());
+            }
+            //检查记录是否已存在
+            saveOrUpdateProduct(entity);
+        });
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void removeByDeclareDetailIds(List<String> deleteIds) {
+        if (CollectionUtils.isNotEmpty(deleteIds)){
+            lambdaUpdate().in(TransferDeclareProductEntity::getDeclareDetailId,deleteIds).remove();
+        }
+    }
+
+    private void saveOrUpdateProduct(TransferDeclareProductEntity entity) {
+        //检查数据是否已存在
+        if (StrUtil.isNotEmpty(entity.getDeclareId()) && StrUtil.isNotEmpty(entity.getDeclareDetailId())
+                && StrUtil.isNotEmpty(entity.getSoDetailId()) && StrUtil.isNotEmpty(entity.getSkuNo())){
+            List<TransferDeclareProductEntity> list = lambdaQuery().eq(TransferDeclareProductEntity::getDeclareId, entity.getDeclareId())
+                    .eq(TransferDeclareProductEntity::getDeclareDetailId, entity.getDeclareDetailId())
+                    .eq(TransferDeclareProductEntity::getSoDetailId, entity.getSoDetailId())
+                    .eq(TransferDeclareProductEntity::getSkuNo, entity.getSkuNo()).list();
+            if (CollectionUtils.isNotEmpty(list)){
+                entity.setId(list.get(0).getId());
+            }
+        }
+        this.saveOrUpdate(entity);
     }
 
     /**

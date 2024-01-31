@@ -66,7 +66,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         //批量新增
         boolean save = this.saveBatch(transferDeclareDetailEntities);
         //拆分订单sku并新增报关明细
-        transferDeclareProductService.saveTransferDeclareProducts(transferDeclareDetailEntities);
+        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         log.info("开始新增中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
@@ -96,6 +96,8 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSoCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个订单【%s】", ModuleTypeEnum.TRANSFER_DECLARE.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
+            //删除明细对应的sku拆分记录
+            transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
         }
 
         // 数据处理
@@ -103,7 +105,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveOrUpdateBatch(transferDeclareDetailEntities);
-
+        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         log.info("开始修改中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情修改失败");
