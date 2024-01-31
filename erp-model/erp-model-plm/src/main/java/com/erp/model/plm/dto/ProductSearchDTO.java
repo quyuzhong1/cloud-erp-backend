@@ -103,6 +103,16 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<LocalDate> createTimeList;
 
+
+        /**
+         * 产品部门类型，/plm/dict/list?type=productDeptType
+         */
+        private String productDeptType;
+
+        /**
+         * 部门id集合
+         */
+        private List<String> deptIdList;
     }
 
 
