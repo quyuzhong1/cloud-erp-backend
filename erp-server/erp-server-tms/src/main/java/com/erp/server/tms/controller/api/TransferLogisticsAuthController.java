@@ -114,6 +114,7 @@ public class TransferLogisticsAuthController extends BaseController {
             if (apiResult.isSuccess()) {
                 transferLogisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(), id, dto.getMainId());
             } else {
+                transferLogisticsAuthService.removeById(id);
                 transferLogisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
                 return apiResult;
             }
