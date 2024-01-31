@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 仓库映射表
  */
-@FeignClient(name = "erp-wms", contextId = "warehouse")
+@FeignClient(name = "erp-wms", contextId = "warehouseMapping")
 public interface WarehouseMappingFeign {
 
     /**
