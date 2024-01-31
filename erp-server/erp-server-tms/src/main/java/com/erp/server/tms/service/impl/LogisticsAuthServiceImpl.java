@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -15,13 +14,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
 import io.seata.common.util.CollectionUtils;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,11 +184,16 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateLogisticsAuthStatus(String mainId, String authStatus) {
+        LogisticsAuthEntity entity = this.getDbByMainId(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+        }
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(supplierEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         supplierEntity.setAuthStatus(authStatus);
+        this.removeById(entity.getId());
         logisticsSupplierService.updateById(supplierEntity);
     }
 

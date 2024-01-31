@@ -413,7 +413,7 @@ public class SoB2cFeignController extends BaseController {
      * @return
      * @create 2024-01-19 10:57
      */
-    @PutMapping("/updatePackageStatus")
+    @PostMapping("/updatePackageStatus")
     public  Boolean updatePackageStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
         return soB2cService.updatePackageStatus(dto);
     }
@@ -426,7 +426,7 @@ public class SoB2cFeignController extends BaseController {
      * @return
      * @create 2024-01-19 10:57
      */
-    @PutMapping("/updateTransferStatus")
+    @PostMapping("/updateTransferStatus")
     public  Boolean updateTransferStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
         return soB2cService.updateTransferStatus(dto);
     }

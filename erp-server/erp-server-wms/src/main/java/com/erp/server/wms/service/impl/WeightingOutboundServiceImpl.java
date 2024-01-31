@@ -52,13 +52,13 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     private CommonService commonService;
 
     @Resource
-    private TransferDeclareFeign  transferDeclareFeign;
+    private TransferDeclareFeign transferDeclareFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WeightingOutboundDTO.ViewDTO scan(WeightingOutboundDTO.ScanDTO dto) {
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode());
-        if(Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             throw new ServiceException("单号在系统不存在");
         }
         //是否自动发货
@@ -66,40 +66,49 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         if (isAutoDelivery && entity.getIsWeigh()) {
             String sourceId = entity.getSourceId();
             if (StringUtils.isNotBlank(sourceId)) {
-                TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
-                if (Objects.nonNull(transferDeclare)) {
-                    String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
-                    String uploadStatus = transferDeclare.getUploadStatus();
-                    if (!uploadSuccess.equals(uploadStatus)) {
-                        throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+                if(Objects.nonNull(soB2cEntity)){
+                    String transferStatus = soB2cEntity.getTransferStatus();
+                    //表示要中转啊
+                    if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
+                        TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
+                        if (Objects.nonNull(transferDeclare)) {
+                            String uploadSuccess = TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                            String uploadStatus = transferDeclare.getUploadStatus();
+                            if (!uploadSuccess.equals(uploadStatus)) {
+                                throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                            }
+                        }else{
+                            throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                        }
                     }
                 }
             }
         }
 
-        if(Objects.nonNull(dto.getWeight())){
-            if(Objects.isNull(dto.getWeightUnit())){
+        if (Objects.nonNull(dto.getWeight())) {
+            if (Objects.isNull(dto.getWeightUnit())) {
                 throw new ServiceException("称重单位不能为空");
             }
-            if(Objects.isNull(EnumMessage.getNameByCode(UnitEnum.WeightUnitEnum.class,dto.getWeightUnit()))){
+            if (Objects.isNull(EnumMessage.getNameByCode(UnitEnum.WeightUnitEnum.class, dto.getWeightUnit()))) {
                 throw new ServiceException("非法称重单位");
             }
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
             entity.setIsWeigh(true);
-            if(!soB2cDeliveryService.updateById(entity)){
+            if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
         }
-        if(isAutoDelivery && entity.getIsWeigh()){
+        if (isAutoDelivery && entity.getIsWeigh()) {
             //将发货状态更新为已发货
             entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
-            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
 
             soB2cDeliveryService.generateB2cSoOutstock(entity);
 
@@ -110,13 +119,13 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     @Override
     public void reset(String id) {
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-        if(Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             throw new ServiceException("查询的发货单为空");
         }
         entity.setIsWeigh(false);
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         entity.setWeight(BigDecimal.ZERO);
-        if(!soB2cDeliveryService.updateById(entity)){
+        if (!soB2cDeliveryService.updateById(entity)) {
             throw new ServiceException("发货单更新失败");
         }
     }

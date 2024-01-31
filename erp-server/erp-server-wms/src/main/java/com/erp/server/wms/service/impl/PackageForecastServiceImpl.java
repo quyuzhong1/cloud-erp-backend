@@ -4,8 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.enums.PackageUploadStatusEnum;
+import com.erp.rpc.tms.feign.ForecastFeign;
+import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
@@ -23,6 +28,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.common.core.utils.*;
@@ -48,6 +54,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Autowired
     private PackageForecastDetailService packageForecastDetailService;
+
+    @Autowired
+    private ForecastFeign forecastFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -101,9 +110,21 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     /**
      * 新增修改处理数据
      */
-    private void handleData(PackageForecastEntity packageForecastEntity) {
-        String logisticsSupplierId = packageForecastEntity.getLogisticsSupplierId();
-
+    private void handleData(PackageForecastEntity entity) {
+        String logisticsSupplierId = entity.getLogisticsSupplierId();
+        SettingForecastDTO.FindByLogisticsSupplierDTO dto = new SettingForecastDTO.FindByLogisticsSupplierDTO();
+        dto.setOrderTime(LocalDateTime.now());
+        dto.setLogisticsSupplierId(logisticsSupplierId);
+        SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsSupplier(dto);
+        String uploadStatus = PackageUploadStatusEnum.NOT.getCode();
+        if(Objects.nonNull(forecastStatus)){
+            String packageStatus = forecastStatus.getPackageStatus();
+            //表示要组包啊
+            if (!PackageStatusEnum.NOT.getCode().equals(packageStatus)) {
+                uploadStatus = PackageUploadStatusEnum.WAIT.getCode();
+            }
+        }
+        entity.setUploadStatus(uploadStatus);
 
     }
 }

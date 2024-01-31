@@ -1125,6 +1125,8 @@ public enum ApiError implements Serializable {
     NOT_PRODUCT_REGISTRATION(94034," 【{}】 未在【{}】平台备案，请联系财务备案"),
     NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94035," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94033,"存在未停用的中转物流渠道,无法停用该物流商"),
+
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

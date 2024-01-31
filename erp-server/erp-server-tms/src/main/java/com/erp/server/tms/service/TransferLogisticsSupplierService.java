@@ -141,4 +141,11 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
      * @author Lambda
      */
     List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(List<String> transferSupplierIdList);
+
+    /**
+     * 根据物流商id 获取到对应的渠道的启用禁用列表
+     * @param supplierId
+     * @return
+     */
+    List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId);
 }
