@@ -516,8 +516,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门下人员
-       List<String> deptUserIdList =  handleDept(params.getDeptIdList());
-
+        List<String> deptUserIdList =  handleDept(params.getDeptIdList());
+        params.setDeptUserIdList(deptUserIdList);
         IPage pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -532,8 +532,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @return List<String>
      */
     private List<String> handleDept(List<String> deptIdList) {
-
-    return null;
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(deptIdList);
+        if (CollectionUtils.isEmpty(sysDepartmentUserNumberList)) {
+           return Collections.EMPTY_LIST;
+        }
+        List<String> userIdList = sysDepartmentUserNumberList.stream().map(SysDepartmentUserNumberDTO::getUserId).collect(Collectors.toList());
+        return userIdList;
 
     }
 

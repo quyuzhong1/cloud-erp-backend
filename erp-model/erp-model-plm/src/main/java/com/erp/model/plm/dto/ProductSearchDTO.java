@@ -113,6 +113,13 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 部门id集合
          */
         private List<String> deptIdList;
+
+
+        /**
+         * 部门下用户id集合
+         */
+        private List<String> deptUserIdList;
+
     }
 
 
