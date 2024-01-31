@@ -5,23 +5,18 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
-import com.erp.server.dmp.service.DmpPushTaskService;
+import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import org.springframework.stereotype.Service;
@@ -30,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +36,8 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Resource
     private PlatformApiService platformApiService;
+    @Resource
+    private AmzReportScheduleService amzReportScheduleService;
 
     /**
      * 修改任务下次执行
@@ -83,7 +79,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto) {
+    public Boolean createOrEnablePlatformTask(PlatformTaskDTO.AddDTO dto) {
         List<PlatformApiEntity> entityList = platformApiService.listByPlatform(dto.getDictPlatform());
         if (CollectionUtil.isEmpty(entityList)) {
             return Boolean.TRUE;
@@ -100,22 +96,18 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
                 .stream()
                 .filter(item -> !existApiIds.contains(item.getId()))
                 .collect(Collectors.toList());
-        // 对比当前店铺不存在的任务
-        Set<String> allApiList = entityList.stream().map(PlatformApiEntity::getId).collect(Collectors.toSet());
-        // 需要删除的任务
-        List<String> taskIds = taskEntity
-                .stream()
-                .filter(item -> !allApiList.contains(item.getPlatformApiId()))
-                .map(PlatformApiTaskEntity::getId)
-                .collect(Collectors.toList());
+        // 需要更新的任务
+        List<PlatformApiTaskEntity> updateList = taskEntity.stream().filter(PlatformApiTaskEntity::getDisabled).collect(Collectors.toList());
+
         List<PlatformApiTaskEntity> insertEntityList = notExistApiList.stream()
                 .map(task -> getPlatformApiTaskEntity(dto, task))
                 .collect(Collectors.toList());
         if (CollectionUtil.isNotEmpty(insertEntityList)) {
             this.saveBatch(insertEntityList);
         }
-        if (CollectionUtil.isNotEmpty(taskIds)) {
-            this.removeByIds(taskIds);
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            updateList.forEach(e-> e.setDisabled(false));
+            this.updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
@@ -288,5 +280,27 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
                 .eq(PlatformApiTaskEntity::getIsDeleted, Boolean.FALSE)
                 .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
                 .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO dto) {
+        if (dto.getDisabled()){
+            // 禁用
+            this.disabledPlatformTask(dto);
+            // 亚马逊取消任务计划
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                amzReportScheduleService.cancelReportSchedule(dto.getShopId());
+            }
+        } else {
+            // 启用
+            PlatformTaskDTO.AddDTO addDTO = new PlatformTaskDTO.AddDTO(dto.getShopId(), dto.getShopName(), dto.getDictPlatform(), dto.getPlatformShopCode());
+            this.createOrEnablePlatformTask(addDTO);
+            // 亚马逊启用任务计划
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                amzReportScheduleService.addOrUpdateReportSchedule(dto);
+            }
+        }
+        return true;
     }
 }

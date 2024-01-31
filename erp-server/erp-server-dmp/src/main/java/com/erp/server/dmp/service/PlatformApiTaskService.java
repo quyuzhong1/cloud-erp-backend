@@ -34,7 +34,7 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @param dto
      * @return
      */
-    Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto);
+    Boolean createOrEnablePlatformTask(PlatformTaskDTO.AddDTO dto);
 
     /**
      * 根据平台和店铺id查询任务
@@ -95,4 +95,10 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @return List<PlatformApiTaskEntity> 任务列表
      */
     List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType);
+
+    /**
+     * 更新任务禁用/启用和取消/开启报告计划
+     *
+     */
+    Boolean allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO dto);
 }

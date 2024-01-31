@@ -1,16 +1,16 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
@@ -27,8 +27,10 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -64,33 +66,66 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addReportSchedule(DmpSyncReportScheduleDTO dto) {
+    public Boolean addOrUpdateReportSchedule(PlatformTaskDTO.DisabledDTO dto) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(dto.getDictCountryCode());
         // 查询报告类型配置
         List<CfgAmzReportTypeEntity> reportTypeConfiglist = cfgAmzReportTypeService.findActive(null);
         if (CollectionUtils.isEmpty(reportTypeConfiglist)) {
             return true;
         }
+        List<String> allReportTypeList = reportTypeConfiglist.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
 
-        // 组合
-        List<AmzReportScheduleEntity> entityList = reportTypeConfiglist.stream()
-                .map(e -> new AmzReportScheduleEntity(e.getReportType(), marketplaceEnum.getMarketplaceId(),
-                        dto.getShopId(),
-                        e.getPeriod(),
-                        ""
-                ))
+        // 根据店铺id查询是否已经存在计划任务
+        List<AmzReportScheduleEntity> existEntityList = lambdaQuery()
+                .eq(AmzReportScheduleEntity::getShopId, dto.getShopId())
+                .in(AmzReportScheduleEntity::getReportType, allReportTypeList)
+                .list();
+
+        // 对比当前店铺不存在的任务
+        Set<String> existReportTypeList = existEntityList.stream().map(AmzReportScheduleEntity::getReportType).collect(Collectors.toSet());
+        // 需要添加的任务
+        List<CfgAmzReportTypeEntity> notExistReportTypeList = reportTypeConfiglist
+                .stream()
+                .filter(item -> !existReportTypeList.contains(item.getReportType()))
                 .collect(Collectors.toList());
-        if (!this.saveBatch(entityList)) {
-            throw new ServiceException("批量添加报告计划失败");
+        // 新增
+        if (CollectionUtil.isNotEmpty(notExistReportTypeList)) {
+            List<AmzReportScheduleEntity> insertEntityList = notExistReportTypeList.stream()
+                    .map(e -> new AmzReportScheduleEntity(e.getReportType(), marketplaceEnum.getMarketplaceId(),
+                            dto.getShopId(),
+                            e.getPeriod(),
+                            ""
+                    ))
+                    .collect(Collectors.toList());
+            if (!this.saveBatch(insertEntityList)) {
+                throw new ServiceException("批量添加报告计划失败");
+            }
+        }
+        // 需要更新的任务
+        if (CollectionUtil.isNotEmpty(existEntityList)) {
+            Map<String, CfgAmzReportTypeEntity> configMap = reportTypeConfiglist
+                    .stream()
+                    .collect(Collectors.toMap(CfgAmzReportTypeEntity::getReportType, Function.identity()));
+            existEntityList.forEach(e-> {
+                CfgAmzReportTypeEntity config = configMap.get(e.getReportType());
+                if (null == config){
+                    throw new ServiceException("报告数据异常：reportType=" + e.getReportType());
+                }
+                // 根据配置决定最终状态
+                e.setCancelStatus(config.getDisabled() ? ReportScheduleCancelStatusEnum.CANCEL.getCode() : ReportScheduleCancelStatusEnum.NONE.getCode());
+                e.setSubscribedStatus(config.getDisabled() ? ReportScheduleSubscribedStatusEnum.NOT.getCode() : ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
+                e.setSubscribedType(config.getSubscribedType());
+            });
+            this.updateBatchById(existEntityList);
         }
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelReportSchedule(DmpSyncReportScheduleDTO dto) {
+    public Boolean cancelReportSchedule(String shopId) {
         List<AmzReportScheduleEntity> list = lambdaQuery()
-                .eq(AmzReportScheduleEntity::getShopId, dto.getShopId())
+                .eq(AmzReportScheduleEntity::getShopId, shopId)
                 // 未取消
                 .eq(AmzReportScheduleEntity::getCancelStatus, ReportScheduleCancelStatusEnum.NONE.getCode())
                 // 查询非未订阅

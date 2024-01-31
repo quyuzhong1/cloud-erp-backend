@@ -170,7 +170,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
                 shopInfo.setAuthTime(LocalDateTime.now());
                 shopAuthService.saveOrUpdate(shopAuth);
-                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+                dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
                 shopInfo.setIsGenTask(Boolean.TRUE);
                 shopInfoService.updateById(shopInfo);
                 AliExpressShopInfoDTO shopInfoDTO=new AliExpressShopInfoDTO();
@@ -219,8 +219,15 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         Boolean result = shopInfoService.updateById(shopInfo);
         if (result) {
             shopAuthService.removeByShopId(shopId);
-            // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+//            // 删除授权
+//            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+            // 禁用启用任务和取消报告计划任务
+            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    true,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

@@ -21,14 +21,9 @@ public interface DmpReportFeign {
 
 
     /**
-     * 添加报告计划
+     * 添加或更新报告计划
      */
-    @PostMapping("/reportSchedule/add")
+    @PostMapping("/reportSchedule/addOrUpdate")
     Boolean addReportSchedule(@RequestBody DmpSyncReportScheduleDTO dto);
 
-    /**
-     * 取消报告计划
-     */
-    @PostMapping("/reportSchedule/cancel")
-    Boolean cancelReportSchedule(@RequestBody DmpSyncReportScheduleDTO dto);
 }

@@ -1,12 +1,9 @@
 package com.erp.server.dmp.service;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
-import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 
 import java.time.LocalDateTime;
@@ -39,12 +36,12 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
     AmzReportScheduleEntity getByReportScheduleId(String reportScheduleId);
 
     /**
-     * 店铺授权添加所有计划任务
+     * 店铺授权添加或启用所有计划任务
      *
      * @author Jim
      * @date: 2023-11-08
      */
-    Boolean addReportSchedule(DmpSyncReportScheduleDTO dto);
+    Boolean addOrUpdateReportSchedule(PlatformTaskDTO.DisabledDTO dto);
 
     /**
      * 店铺取消授权取消所有计划任务
@@ -52,7 +49,7 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @author Jim
      * @date: 2023-11-08
      */
-    Boolean cancelReportSchedule(DmpSyncReportScheduleDTO dto);
+    Boolean cancelReportSchedule(String shopId);
 
     /**
      * 检查和请求所有计划任务
