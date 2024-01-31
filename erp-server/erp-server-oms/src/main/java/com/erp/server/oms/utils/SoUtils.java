@@ -269,7 +269,7 @@ public class SoUtils {
         headMap.put("receiveAccountName", "收款账号");
         headMap.put("receiveMethodName", "收款方式");
         headMap.put("receiveDate", "收款日期");
-        headMap.put("tradeTermName", "贸易条款");
+        headMap.put("tradeTerm", "贸易条款");
         headMap.put("discountAmount", "折扣总额");
         headMap.put("receiverName", "收货人");
         headMap.put("telNumber", "联系电话");
