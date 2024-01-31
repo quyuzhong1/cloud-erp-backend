@@ -44,7 +44,7 @@ public class PackageForecastFeignController extends BaseController {
             try {
                 packageForecastService.add(item);
             } catch (Exception e) {
-                log.error("添加组包预报异常 {}", e);
+                log.error("添加组包预报异常 {}", e.getMessage());
             }
 
         }
