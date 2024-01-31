@@ -3848,7 +3848,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> ids = dto.getIds();
         if (CollectionUtils.isNotEmpty(ids)) {
             return this.lambdaUpdate().set(SoB2cEntity::getTransferStatus, status).
-                    eq(SoB2cEntity::getId, ids).update(new SoB2cEntity());
+                    in(SoB2cEntity::getId, ids).update(new SoB2cEntity());
         }
         return false;
     }
