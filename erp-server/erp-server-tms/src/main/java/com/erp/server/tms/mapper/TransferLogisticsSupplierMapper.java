@@ -1,11 +1,10 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -68,4 +67,13 @@ public interface TransferLogisticsSupplierMapper extends BaseMapper<TransferLogi
      * @return
      */
     List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(@Param("mainIdList") List<String> transferSupplierIdList);
+
+    /**
+     * 根据供应商id获取到 对应渠道下 启用禁用的列表
+     * @Author Luo_WG
+     * @Date 2024/1/31 17:25
+     * @param supplierId
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO.CodeDTO>
+     **/
+    List<BaseIdDTO.CodeDTO> listBySupplierId(@Param("supplierId") String supplierId);
 }

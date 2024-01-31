@@ -298,6 +298,10 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         return baseMapper.listAuthByMainIds(transferSupplierIdList);
     }
 
+    @Override
+    public List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId) {
+        return baseMapper.listBySupplierId(supplierId);
+    }
 
     /**
      * 填充分页数据
