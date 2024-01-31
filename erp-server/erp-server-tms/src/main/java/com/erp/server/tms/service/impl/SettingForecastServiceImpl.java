@@ -65,7 +65,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrUpdate(List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         List<SettingForecastEntity> dbList = this.list();
-        if (CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(list) && CollectionUtils.isNotEmpty(dbList)) {
             this.removeByIds(dbList.stream().map(SettingForecastEntity::getId).collect(Collectors.toList()));
             return true;
         }
@@ -99,7 +99,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(SettingForecastDTO.FindSettingForecastDTO dto) {
-        if (Objects.isNull(dto)||StringUtils.isBlank(dto.getLogisticsChannelId())) {
+        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getLogisticsChannelId())) {
             return null;
         }
         String logisticsChannelId = dto.getLogisticsChannelId();
@@ -161,6 +161,9 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             return Boolean.TRUE;
         }
         List<SettingForecastEntity> dbList = this.list();
+        if (dbList.size() != list.size()) {
+            return Boolean.TRUE;
+        }
         for (SettingForecastDTO.SaveOrUpdateDTO item : list) {
             String id = item.getId();
             SettingForecastEntity entity = dbList.stream().filter(l -> l.getId().equals(id)).findFirst().orElse(null);
@@ -181,7 +184,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
     @Override
     public SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(SettingForecastDTO.FindByLogisticsSupplierDTO dto) {
         String logisticsSupplierId = dto.getLogisticsSupplierId();
-        if (Objects.isNull(dto)||StringUtils.isBlank(logisticsSupplierId)) {
+        if (Objects.isNull(dto) || StringUtils.isBlank(logisticsSupplierId)) {
             return null;
         }
 
@@ -253,7 +256,10 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
      */
     private void handleData(List<SettingForecastEntity> list) {
         //物流商ids
-        List<String> logisticsSupplierIdList = list.stream().map(SettingForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
+        List<String> logisticsSupplierIdList = list.stream().map(SettingForecastEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+        if (list.size() != logisticsSupplierIdList.size()) {
+            throw new ServiceException("存在重复的物流商");
+        }
         //中转商ids
         List<String> transferSupplierIdList = list.stream().map(SettingForecastEntity::getTransferLogisticsSupplierId).collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierList = CollectionUtils.isNotEmpty(logisticsSupplierIdList) ? logisticsSupplierService.listByIds(logisticsSupplierIdList) : Collections.emptyList();
