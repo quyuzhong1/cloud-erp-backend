@@ -32,5 +32,22 @@
         warehouse_id, name, dict_platform, remark
     </sql>
 
+    <!--根据仓库id查询映射信息-->
+    <select id="listMappingViewByWarehouseIds" resultType="com.erp.model.wms.dto.WarehouseMappingDTO$MappingViewDTO">
+        SELECT
+        w.id AS warehouseId,
+        w.name AS warehouseName,
+        wm.name AS  thirdWarehouseName,
+        wm.dict_Platform AS dictPlatform
+        FROM warehouse w
+        LEFT JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
+        WHERE w.is_deleted = FALSE
+        <if test="warehouseIdList != null and warehouseIdList.size > 0">
+            and w.id in
+            <foreach collection="warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>
