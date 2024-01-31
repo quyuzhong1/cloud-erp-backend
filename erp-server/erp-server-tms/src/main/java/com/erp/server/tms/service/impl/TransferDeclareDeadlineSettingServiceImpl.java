@@ -72,6 +72,7 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
             }
 
             TransferDeclareDeadlineSettingEntity entity = new TransferDeclareDeadlineSettingEntity();
+            entity.setId(addDTO.getId());
             entity.setDeadlineTime(addDTO.getDeadlineTime());
             entity.setGenerateTime(addDTO.getGenerateTime());
 
