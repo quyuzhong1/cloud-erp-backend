@@ -49,7 +49,7 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * 根据srm采购订单id删除记录
      * @param ids
      */
-    void updateBySrmOrderIds(List<String> ids, String executionStatus);
+    void updateBySrmOrderIds(List<String> ids,List<String> detailIds, String executionStatus);
 
     /**
      * 待发货 分页列表

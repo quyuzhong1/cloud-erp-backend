@@ -160,14 +160,19 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
     }
     @Override
-    public void updateBySrmOrderIds(List<String> ids, String executionStatus) {
+    public void updateBySrmOrderIds(List<String> ids,List<String> detailIds, String executionStatus) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
         if (StringUtils.isEmpty(executionStatus)){
             executionStatus = ExecutionStatusEnum.TO_BE_CONFIRM.getCode();
         }
-        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId, ids).set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus).update();
+        if(CollectionUtils.isNotEmpty(ids)){
+            lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId, ids).set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus).update();
+        }
+        if (CollectionUtils.isNotEmpty(detailIds)){
+            lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderDetailId, detailIds).set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus).update();
+        }
     }
 
 

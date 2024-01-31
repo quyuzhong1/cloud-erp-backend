@@ -670,7 +670,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //TODO 关闭时，更新订单明细状态
         if (CollectionUtils.isNotEmpty(ids)){
             JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("ids",ids);
+            jsonObject.putOpt("detailIds",ids);
             jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CLOSED.getCode());
             //同步scm 确认订单 到 srm
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
