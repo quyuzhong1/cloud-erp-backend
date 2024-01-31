@@ -34,7 +34,7 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @param supplierId
      * @return
      */
-    PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(@Param("supplierId")String supplierId);
+    Integer srmWaitDeliveryCount(@Param("supplierId")String supplierId,@Param("code") String code);
     /**
      * 查询确认订单列表
      * @param params

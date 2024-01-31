@@ -67,8 +67,9 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
 
     /**
      * 待发货 时间周期统计
-     * @param dto
+     * @param supplierId
+     * @param code
      * @return
      */
-    PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto);
+    Integer srmWaitDeliveryCount(String supplierId,String code);
 }

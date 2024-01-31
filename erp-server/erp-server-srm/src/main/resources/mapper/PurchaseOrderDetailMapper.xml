@@ -52,21 +52,36 @@
     </sql>
 
 
-    <select id="srmWaitDeliveryCount" resultType="com.erp.model.scm.dto.PurchaseOrderSrmDTO$WaitDeliveryCountDTO">
+    <select id="srmWaitDeliveryCount" resultType="java.lang.Integer">
         SELECT
-        SUM (CASE WHEN date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ < ]]> 0 THEN 1 ELSE 0 END ) AS expiredCount,
-        SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) >= 0  and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 7 THEN 1 ELSE 0 END ) as almostOverdueCount,
-        SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 7  and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 30 THEN 1 ELSE 0 END ) as inOneMonthCount,
-        SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 30  and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 60 THEN 1 ELSE 0 END ) as inTwoMonthCount,
-        SUM ( case when date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 60 THEN 1 ELSE 0 END ) as twoMonthLaterCount
+            count(DISTINCT pod.purchase_order_id)
         from purchase_order_detail as pod
         left join ( select  dod.source_detail_id, SUM(dod.delivery_qty) qty from delivery_order_detail dod where dod.is_deleted = false GROUP BY dod.source_detail_id )
         as d on d.source_detail_id = pod.purchase_order_detail_id
         where pod.is_deleted = false and (d.qty is null or pod.purchase_qty > d.qty)
         and pod.execution_status in ('confirm','delivery')
+        <if test="code != null and code != '' and code == 'expired'">
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ < ]]> 0
+        </if>
+        <if test="code != null and code != '' and code == 'almostOverdue'">
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) >= 0
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 7
+        </if>
+        <if test="code != null and code != '' and code == 'inOneMonth'">
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 7
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 30
+        </if>
+        <if test="code != null and code != '' and code == 'inTwoMonth'">
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 30
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) <![CDATA[ <= ]]> 60
+        </if>
+        <if test="code != null and code != '' and code == 'twoMonthLater'">
+            and date_part('day', pod.plan_delivery_date::timestamp - CURRENT_DATE::timestamp) > 60
+        </if>
         <if test="supplierId != null and supplierId != ''">
             and pod.supplier_id = #{supplierId}
         </if>
+
     </select>
 
     <select id="srmPurchaseOrderList" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">

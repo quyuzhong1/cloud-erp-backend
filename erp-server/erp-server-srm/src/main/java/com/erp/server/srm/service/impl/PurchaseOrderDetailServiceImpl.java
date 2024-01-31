@@ -179,8 +179,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
-    public PurchaseOrderSrmDTO.WaitDeliveryCountDTO srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
-        return baseMapper.srmWaitDeliveryCount(dto.getSupplierId());
+    public Integer srmWaitDeliveryCount(String supplierId,String code){
+        return baseMapper.srmWaitDeliveryCount(supplierId,code);
     }
 
     @Override
