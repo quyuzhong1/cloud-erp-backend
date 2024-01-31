@@ -13,10 +13,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
+import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.CustomerAddressService;
+import com.erp.server.oms.service.CustomerB2bSellerChangeService;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -45,6 +47,9 @@ public class CustomerInfoController extends BaseController {
 
     @Resource
     private CustomerAddressService customerAddressService;
+
+    @Resource
+    private CustomerB2bSellerChangeService customerB2bSellerChangeService;
 
     /**
      * 获取 tab列表
@@ -388,5 +393,27 @@ public class CustomerInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 保存销售员变更信息
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存销售员变更信息")
+    @PostMapping(value = "addSellerChange")
+    public ApiResult<List<BatchResultDTO>> saveSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) throws IOException {
+        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAdd(addDTOList);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+
+    /**
+     * 保存并提交销售员变更信息
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "保存并提交销售员变更信息")
+    @PostMapping(value = "addAndSubmitSellerChange")
+    public ApiResult<List<BatchResultDTO>> addAndSubmitSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) throws IOException {
+        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAddAndSubmit(addDTOList);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
 
 }
