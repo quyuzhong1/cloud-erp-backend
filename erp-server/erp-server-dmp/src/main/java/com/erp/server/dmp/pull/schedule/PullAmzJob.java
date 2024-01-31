@@ -18,7 +18,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -658,5 +660,64 @@ public class PullAmzJob {
                 XxlJobHelper.log("亚马逊清洗异常：{}", e);
             }
         });
+    }
+
+    /**
+     * 检查亚马逊店铺/市场任务
+     */
+    @XxlJob("amazonCheckMarketplace")
+    public ReturnT<String> amazonCheckMarketplace() {
+        // 报表处理的开始时间
+        String jobParamStr = XxlJobHelper.getJobParam();
+        Integer size = 10;
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        XxlJobHelper.log("[检查亚马逊店铺/市场任务] 任务开始：size={}", size);
+
+        // 根据状态查询
+        ShopInfoDTO.ListParamDTO conditionDTO = new ShopInfoDTO.ListParamDTO();
+        conditionDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        conditionDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+//        conditionDTO.setPlatformStatusList(Arrays.asList(ShopPlatformStatusEnum.NONE.getCode(), ShopPlatformStatusEnum.OPEN.getCode()));
+        List<ShopInfoEntity> list = shopInfoFeign.listByParams(conditionDTO);
+
+        if (CollectionUtil.isEmpty(list)) {
+            XxlJobHelper.log("[检查亚马逊店铺/市场任务] 任务结束：亚马逊已授权店铺列表为空");
+            return ReturnT.SUCCESS;
+        }
+        // 按账号分组
+        Map<String, List<ShopInfoEntity>> listMap = list.stream().collect(Collectors.groupingBy(this::getGroupBySellerIdAndMarketPlace));
+
+        for (Map.Entry<String, List<ShopInfoEntity>> entry : listMap.entrySet()) {
+            try {
+                amzReportHandleService.checkAndUpdateShop(entry.getValue());
+                XxlJobHelper.log("[检查亚马逊店铺/市场任务] 检查结束：{}", entry.getKey());
+            } catch (Exception e) {
+                XxlJobHelper.log("[检查亚马逊店铺/市场任务]检查失败：account={},msg={}, json={}",
+                        entry.getKey(),
+                        ExceptionUtil.stacktraceToString(e,2000),
+                        JSONUtil.toJsonStr(e));
+            }
+        }
+
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 通过sellerId和marketplace分组
+     */
+    private String getGroupBySellerIdAndMarketPlace(ShopInfoEntity entity) {
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(entity.getDictCountryCode());
+        if (AmazonMarketplaceEnum.SA.equals(marketplaceEnum) ||
+            AmazonMarketplaceEnum.SG.equals(marketplaceEnum) ||
+            AmazonMarketplaceEnum.AU.equals(marketplaceEnum) ||
+            AmazonMarketplaceEnum.JP.equals(marketplaceEnum)
+        ) {
+            return StrUtil.format("{}_{}", entity.getPlatformShopCode(), marketplaceEnum.getMarketplaceId());
+        } else {
+            return StrUtil.format("{}_{}", entity.getPlatformShopCode(), marketplaceEnum.getEndpointsEnum().name());
+        }
     }
 }

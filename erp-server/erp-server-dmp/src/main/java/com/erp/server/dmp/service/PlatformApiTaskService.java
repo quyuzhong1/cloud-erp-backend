@@ -5,6 +5,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -101,4 +102,14 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      *
      */
     Boolean allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO dto);
+
+    /**
+     * 关闭店铺所有信息
+     */
+    void checkAndClosedPlatformShop(ShopInfoEntity shopInfo);
+
+    /**
+     * 关闭店铺所有信息
+     */
+    void checkAndClosedPlatformShopByShopId(String shopId);
 }

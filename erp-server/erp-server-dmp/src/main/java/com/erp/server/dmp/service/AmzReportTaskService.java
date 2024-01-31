@@ -121,7 +121,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-20
      */
-    AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime);
+    AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime, LocalDateTime completedTime);
 
 
     /**
@@ -150,4 +150,20 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-29
      */
     void checkAndDelHistory(AmzReportTaskEntity entity);
+
+    /**
+     * 亚马逊异常停止任务
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    void stopByUnAuthorized(AmzReportTaskEntity entity);
+
+    /**
+     * 亚马逊异常检查和停止任务
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    boolean checkStopByUnAuthorized(Exception exception, AmzReportTaskEntity entity);
 }

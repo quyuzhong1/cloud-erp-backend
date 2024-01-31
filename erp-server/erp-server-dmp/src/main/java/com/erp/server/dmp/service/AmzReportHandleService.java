@@ -5,6 +5,7 @@ import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
@@ -125,4 +126,13 @@ public interface AmzReportHandleService {
      * @since 2024-01-20
      **/
     ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity entity);
+
+    /**
+     * 定时任务处理
+     * 检查店铺，取消报告，取消任务
+     *
+     * @Author Jim
+     * @since 2023-12-19
+     **/
+    void checkAndUpdateShop(List<ShopInfoEntity> shopList) throws Exception ;
 }

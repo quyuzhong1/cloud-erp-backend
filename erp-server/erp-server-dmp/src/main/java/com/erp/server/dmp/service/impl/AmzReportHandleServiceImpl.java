@@ -16,6 +16,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
@@ -28,6 +29,8 @@ import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.ShopPlatformStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -35,6 +38,7 @@ import com.erp.rpc.wms.feign.WmsShipmentFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.api.SellersApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
@@ -45,11 +49,13 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
+import com.erp.sdk.oms.amz.spapi.model.sellers.GetMarketplaceParticipationsResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +113,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private AmazonSpApiRateLimitUtils amazonSpApiRateLimitUtils;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
 
 
     @Override
@@ -622,5 +630,57 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 throw new ServiceException("csv转换mongoDTO失败, error=" + e.getMessage());
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkAndUpdateShop(List<ShopInfoEntity> shopList) throws Exception {
+        if (CollectionUtils.isEmpty(shopList)){
+            return;
+        }
+        ShopInfoEntity currentShop = shopList.get(0);
+        String shopId = currentShop.getId();
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 查询账户市场信息
+        SellersApi sellersApi = SellersApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+
+        GetMarketplaceParticipationsResponse response = sellersApi.getMarketplaceParticipations();
+        // 过滤得到已开启的市场
+        List<String> existCountryCodeList = response.getPayload().stream()
+                .filter(e -> e.getParticipation().isIsParticipating() && !e.getParticipation().isHasSuspendedListings())
+                .map(e -> e.getMarketplace().getCountryCode())
+                .collect(Collectors.toList());
+        // 需要开启的店铺
+//      List<ShopInfoEntity> openShopList = new LinkedList<>();
+        // 需要关闭的店铺
+        List<ShopInfoEntity> closedShopList = new LinkedList<>();
+
+        if (CollectionUtils.isEmpty(existCountryCodeList)){
+            // 关闭所有
+            closedShopList.addAll(shopList);
+        } else {
+            // 需要关闭的店铺
+            List<ShopInfoEntity> needClosedList = shopList.stream()
+                    .filter(e -> !existCountryCodeList.contains(e.getDictCountryCode()) && !ShopPlatformStatusEnum.CLOSED.getCode().equalsIgnoreCase(e.getPlatformStatus()))
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(needClosedList)){
+                closedShopList.addAll(needClosedList);
+            }
+        }
+
+        // 取消店铺处理
+        if (!CollectionUtils.isEmpty(closedShopList)){
+            List<String> shopIds = closedShopList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            XxlJobHelper.log("[检查亚马逊店铺/市场任务] 关闭不存在的店铺：{}", shopIds);
+            for (ShopInfoEntity shopInfo : closedShopList) {
+                platformApiTaskService.checkAndClosedPlatformShop(shopInfo);
+            }
+        }
     }
 }

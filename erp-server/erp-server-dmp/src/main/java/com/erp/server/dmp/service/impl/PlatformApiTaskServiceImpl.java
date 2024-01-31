@@ -11,14 +11,19 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.ShopPlatformStatusEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
 import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +43,10 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     private PlatformApiService platformApiService;
     @Resource
     private AmzReportScheduleService amzReportScheduleService;
+    @Resource
+
+
+    private ShopInfoFeign shopInfoFeign;
 
     /**
      * 修改任务下次执行
@@ -302,5 +311,37 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
             }
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkAndClosedPlatformShop(ShopInfoEntity shopInfo) {
+        if (shopInfo.getDisabled()){
+            return;
+        }
+        shopInfo.setIsGenTask(Boolean.FALSE);
+        shopInfo.setDisabled(true);
+        shopInfo.setPlatformStatus(ShopPlatformStatusEnum.CLOSED.getCode());
+        shopInfoFeign.updateShopInfoById(shopInfo);
+
+        // 禁用启用任务和取消报告计划任务
+        this.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                shopInfo.getName(),
+                shopInfo.getDictPlatform(),
+                true,
+                shopInfo.getDictCountryCode(),
+                shopInfo.getPlatformShopCode()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkAndClosedPlatformShopByShopId(String shopId) {
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+        if (null == shopInfoEntity){
+            throw new ServiceException("店铺不存在：id=" + shopId);
+        }
+        this.checkAndClosedPlatformShop(shopInfoEntity);
     }
 }

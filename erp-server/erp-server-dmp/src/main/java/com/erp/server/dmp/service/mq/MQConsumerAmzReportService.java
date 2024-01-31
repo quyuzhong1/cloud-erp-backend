@@ -5,10 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
+import com.erp.oms.aliexpress.util.ApiException;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiExceptionUtils;
 import com.erp.server.dmp.service.AmzReportTaskService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -48,8 +52,12 @@ public class MQConsumerAmzReportService {
                 // 报告创建处理
                 amzReportTaskService.consumerReportCreate(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), entity.getCreatedRetryCount() + 1, null, null, null);
-                throw e;
+                // 检查亚马逊授权异常
+                boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
+                if (!unAuthorized){
+                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), entity.getCreatedRetryCount() + 1, null, null, null);
+                    throw e;
+                }
             }
         }
     }
@@ -72,8 +80,12 @@ public class MQConsumerAmzReportService {
                 // 报告查询处理
                 amzReportTaskService.consumerReportQuery(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
-                throw e;
+                // 检查亚马逊授权异常
+                boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
+                if (!unAuthorized){
+                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
+                    throw e;
+                }
             }
         }
     }
@@ -96,8 +108,12 @@ public class MQConsumerAmzReportService {
                 // 报告下载处理
                 amzReportTaskService.consumerReportDownload(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000),  null, null,entity.getDownloadRetryCount() + 1, null);
-                throw e;
+                // 检查亚马逊授权异常
+                boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
+                if (!unAuthorized){
+                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000),  null, null,entity.getDownloadRetryCount() + 1, null);
+                    throw e;
+                }
             }
         }
     }
@@ -146,8 +162,12 @@ public class MQConsumerAmzReportService {
                 // 报告解析处理
                 amzReportTaskService.consumerReportDirectQuery(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
-                throw e;
+                // 亚马逊授权异常
+                boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
+                if (!unAuthorized){
+                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
+                    throw e;
+                }
             }
         }
     }

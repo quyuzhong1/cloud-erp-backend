@@ -18,6 +18,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.erp.server.dmp.mapper.CfgAppClientMapper;
@@ -133,6 +134,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         if (null == shopInfo) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        if (shopInfo.getDisabled()){
+            throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
+        }
+
         // 查询已授权信息
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);

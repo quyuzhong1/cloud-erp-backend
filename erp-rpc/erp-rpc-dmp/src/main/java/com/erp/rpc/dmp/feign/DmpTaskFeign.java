@@ -250,9 +250,7 @@ public interface DmpTaskFeign {
     /**
      * 更新任务禁用/启用和取消/开启报告计划
      *
-     * @param disabledDTO
-     * @return
      */
     @PostMapping("feign/dmp/allAddOrUpdateTaskAndSchedule")
-    void allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO disabledDTO);
+    void allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
 }

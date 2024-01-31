@@ -1068,7 +1068,6 @@ public enum ApiError implements Serializable {
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
 
 
-
     /**
      * TMS 错误
      * 从94000 开始
@@ -1107,11 +1106,13 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
 
 
-
+    // 亚马逊公用异常
+    ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
+
     ERROR_end(1000000, "系统错误"),
 ;
 

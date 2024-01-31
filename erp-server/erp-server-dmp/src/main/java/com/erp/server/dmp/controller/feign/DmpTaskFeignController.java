@@ -60,8 +60,8 @@ public class DmpTaskFeignController {
      * 更新任务禁用/启用和取消/开启报告计划
      *
      */
-    @PostMapping("feign/dmp/allAddOrUpdateTaskAndSchedule")
-    public Boolean allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO dto){
+    @PostMapping("/allAddOrUpdateTaskAndSchedule")
+    public Boolean allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO dto){
         return platformApiTaskService.allAddOrUpdateTaskAndSchedule(dto);
     }
 }
