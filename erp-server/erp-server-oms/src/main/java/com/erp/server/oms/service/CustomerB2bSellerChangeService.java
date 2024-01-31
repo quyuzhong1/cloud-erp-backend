@@ -49,4 +49,12 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
     List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlag();
 
     Boolean updateAndSubmit(CustomerB2bSellerChangeDTO.UpdateDTO dto);
+
+    List<BatchResultDTO> batchSubmit(List<String> ids);
+
+    List<BatchResultDTO> batchDelete(List<String> ids);
+
+    List<BatchResultDTO> batchCancel(List<String> ids);
+
+    List<BatchResultDTO> batchApprove(List<String> ids);
 }

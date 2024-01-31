@@ -194,6 +194,136 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         return true;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchSubmit(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        for(String id : ids){
+            BatchResultDTO batchResultDTO = new BatchResultDTO();
+            resultDTOList.add(batchResultDTO);
+            //提交流程
+            CustomerB2bSellerChangeEntity entity = this.getById(id);
+            if(Objects.isNull(entity)){
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setId(id);
+                batchResultDTO.setCode(id);
+                batchResultDTO.setMsg("单据不存在");
+                continue;
+            }
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
+            batchResultDTO.setId(entity.getId());
+            batchResultDTO.setCode(customerInfoEntity.getCode());
+            if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)){
+                batchResultDTO.setMsg("只有待提交状态可以提交审核");
+                batchResultDTO.setSuccess(false);
+                continue;
+            }
+            batchResultDTO = this.startProcess(entity);
+            if(!batchResultDTO.getSuccess()){
+                continue;
+            }
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+            boolean result = this.updateById(entity);
+            if (result) {
+                //添加日志
+                String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
+                batchResultDTO.setSuccess(true);
+                batchResultDTO.setMsg("提交审核成功");
+            }else{
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setMsg("提交审核失败");
+            }
+        }
+        return resultDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchDelete(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        for(String id : ids){
+            BatchResultDTO batchResultDTO = new BatchResultDTO();
+            resultDTOList.add(batchResultDTO);
+            CustomerB2bSellerChangeEntity entity = this.getById(id);
+            if(Objects.isNull(entity)){
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setId(id);
+                batchResultDTO.setCode(id);
+                batchResultDTO.setMsg("单据不存在");
+                continue;
+            }
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
+            batchResultDTO.setId(entity.getId());
+            batchResultDTO.setCode(customerInfoEntity.getCode());
+            if(!(entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT)) ){
+                batchResultDTO.setMsg("只有待提交或不通过状态可以删除");
+                batchResultDTO.setSuccess(false);
+                continue;
+            }
+            boolean result = this.removeById(id);
+            if (result) {
+                batchResultDTO.setSuccess(true);
+                batchResultDTO.setMsg("删除成功");
+            }else{
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setMsg("删除失败");
+            }
+        }
+        return resultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> batchCancel(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        for(String id : ids){
+            BatchResultDTO batchResultDTO = new BatchResultDTO();
+            resultDTOList.add(batchResultDTO);
+            CustomerB2bSellerChangeEntity entity = this.getById(id);
+            if(Objects.isNull(entity)){
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setId(id);
+                batchResultDTO.setCode(id);
+                batchResultDTO.setMsg("单据不存在");
+                continue;
+            }
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
+            batchResultDTO.setId(entity.getId());
+            batchResultDTO.setCode(customerInfoEntity.getCode());
+            if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING) ){
+                batchResultDTO.setMsg("只有审核中可以撤销");
+                batchResultDTO.setSuccess(false);
+                continue;
+            }
+            //撤销现有流程
+            LoginUser userInfo = commonService.getUserInfo();
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(id);
+            revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+
+            entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            boolean result = this.updateById(entity);
+            if (result) {
+                //添加日志
+                String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
+                batchResultDTO.setSuccess(true);
+                batchResultDTO.setMsg("撤销成功");
+            }else{
+                batchResultDTO.setSuccess(false);
+                batchResultDTO.setMsg("撤销失败");
+            }
+        }
+        return resultDTOList;
+    }
+
+    @Override
+    public List<BatchResultDTO> batchApprove(List<String> ids) {
+        return null;
+    }
+
     /**
     * 修改
     */
