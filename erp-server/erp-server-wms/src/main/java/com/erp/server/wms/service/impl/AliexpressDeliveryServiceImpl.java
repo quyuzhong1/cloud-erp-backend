@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -59,11 +60,16 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         AliexpressDeliveryEntity aliexpressDeliveryEntity = new AliexpressDeliveryEntity();
         BeanMapperUtils.copy(addDTO, aliexpressDeliveryEntity);
 
+        AliexpressDeliveryEntity entity = this.getBySoId(addDTO.getSoId());
+        if (ObjectUtil.isNotEmpty(entity)) {
+            aliexpressDeliveryEntity.setId(entity.getId());
+        }
+
         // 数据处理
         handleData(aliexpressDeliveryEntity);
 
         log.info("开始新增速卖通发货单");
-        boolean save = super.save(aliexpressDeliveryEntity);
+        boolean save = super.saveOrUpdate(aliexpressDeliveryEntity);
         if(!save) {
             throw new ServiceException("速卖通发货单保存失败");
         }
@@ -108,6 +114,10 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
         return viewShopDTOList;
+    }
+
+    public AliexpressDeliveryEntity getBySoId(String soId) {
+        return lambdaQuery().eq(AliexpressDeliveryEntity::getSoId, soId).last("LIMIT 1").one();
     }
 
     /**
