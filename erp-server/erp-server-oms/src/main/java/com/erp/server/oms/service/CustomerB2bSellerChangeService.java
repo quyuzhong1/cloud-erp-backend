@@ -4,6 +4,7 @@ import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -56,5 +57,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     List<BatchResultDTO> batchCancel(List<String> ids);
 
-    List<BatchResultDTO> batchApprove(List<String> ids);
+    List<BatchResultDTO> batchApprove(BaseApproveParamDTO baseApproveParamDTO);
+
+    Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity );
 }

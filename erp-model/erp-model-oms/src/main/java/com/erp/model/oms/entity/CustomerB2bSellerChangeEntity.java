@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
@@ -70,12 +71,12 @@ public class CustomerB2bSellerChangeEntity extends BaseEntity<CustomerB2bSellerC
     /**
     * 审核人名称
     */
-    @TableField("approve_user_name")
+    @TableField(value = "approve_user_name",updateStrategy = FieldStrategy.IGNORED)
     private String approveUserName;
     /**
     * 审核时间
     */
-    @TableField("approve_time")
+    @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime approveTime;
     /**
     * 备注

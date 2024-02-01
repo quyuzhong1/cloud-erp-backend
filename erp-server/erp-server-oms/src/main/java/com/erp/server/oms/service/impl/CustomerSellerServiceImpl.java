@@ -227,7 +227,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSellerHistory(List<CustomerInfoEntity> list) {
+    public void batchSellerHistory(List<CustomerInfoEntity> list,LocalDate date) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -257,7 +257,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
                 String lastSellerId = lastSeller.getSellerId();
                 //不相等才更改 并且添加
                 if (!currentSellerId.equals(lastSellerId)) {
-                    lastSeller.setEndDate(nowDate);
+                    lastSeller.setEndDate(date);
                     //修改日期
                     batchSaveOrUpdateList.add(lastSeller);
                 } else {
@@ -272,7 +272,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
                 }
                 addSeller.setSellerId(item.getSellerId());
                 addSeller.setMainId(mainId);
-                addSeller.setStartDate(LocalDate.now());
+                addSeller.setStartDate(date);
                 batchSaveOrUpdateList.add(addSeller);
             }
         }
@@ -281,6 +281,15 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             this.saveOrUpdateBatch(batchSaveOrUpdateList);
         }
 
+    }
+
+    @Override
+    public CustomerSellerEntity getCurrentInfo(String mainId) {
+        List<CustomerSellerEntity> customerSellerEntityList = this.listBaseByMainId(mainId);
+        if(CollectionUtils.isEmpty(customerSellerEntityList)){
+            return null;
+        }
+        return  customerSellerEntityList.stream().max(Comparator.comparing(CustomerSellerEntity::getStartDate)).orElse(null);
     }
 
     public List<CustomerSellerEntity> listByMainIdList(List<String> mainIdList) {

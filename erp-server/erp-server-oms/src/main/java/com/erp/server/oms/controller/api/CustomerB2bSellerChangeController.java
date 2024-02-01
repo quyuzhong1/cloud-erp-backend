@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -152,7 +153,6 @@ public class CustomerB2bSellerChangeController extends BaseController {
      * 批量审核
      * @author lrp
      * @date:  2024-01-31
-     * @param dto
      * @return ApiResult
      */
     @PostMapping("/batchApprove")
@@ -162,8 +162,8 @@ public class CustomerB2bSellerChangeController extends BaseController {
             menuCode = "oms:customerB2bSellerChange:update",
             serviceClass = CustomerB2bSellerChangeService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchApprove(dto.getIds());
+    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchApprove(baseApproveParamDTO);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 }

@@ -39,6 +39,9 @@ public interface CustomerInfoConverter {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "approveStatus", expression = "java(com.common.business.enums.ApproveStatusEnum.WAIT_SUBMIT)"),
             @Mapping(target = "remark", ignore = true),
+            @Mapping(target = "approveTime", ignore = true),
+            @Mapping(target = "approveUserId", ignore = true),
+            @Mapping(target = "approveUserName", ignore = true),
     })
     CustomerB2bSellerChangeEntity toCustomerB2bSellerChangeConvert(CustomerInfoEntity customerInfoEntity, CustomerB2bSellerChangeDTO.AddDTO addDTO);
 }

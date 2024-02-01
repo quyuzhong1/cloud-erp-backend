@@ -695,7 +695,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }*/
             //批量保存销售员信息
-            customerSellerService.batchSellerHistory(list);
+            customerSellerService.batchSellerHistory(list,LocalDate.now());
 
         }
         return Boolean.TRUE;

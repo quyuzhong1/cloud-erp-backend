@@ -2,18 +2,26 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -33,7 +41,9 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -58,7 +68,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     private CommonService commonService;
 
     @Resource
-    private CustomerB2bSellerChangeService service;
+    private CustomerB2bSellerChangeServiceImpl service;
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -83,10 +93,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "已经有待提交，审核中的变更单，无法新增");
         }
         //销售员信息
-        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(addDTO.getMainId());
-        SellerDTO.ViewDTO maxStartDateEntity = sellerList.stream().max(Comparator.comparing(SellerDTO.ViewDTO::getStartDate)).orElse(null);
-        if(Objects.nonNull(maxStartDateEntity) && !addDTO.getStartDate().isAfter(maxStartDateEntity.getStartDate())){
+        CustomerSellerEntity currentSellerEntity = customerSellerService.getCurrentInfo(customerInfoEntity.getId());
+        if(Objects.nonNull(currentSellerEntity) && !addDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "启用时间必须晚于当前销售员开始时间");
+        }
+
+        if(Objects.nonNull(currentSellerEntity) && addDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "变更后的销售员与当前销售员一致");
         }
 
         CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity = CustomerInfoConverter.INSTANCE.toCustomerB2bSellerChangeConvert(customerInfoEntity,addDTO);
@@ -304,6 +317,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             workflowFeign.revokeProcess(revokeDTO);
 
             entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            entity.setApproveTime(null);
+            entity.setApproveUserName(null);
             boolean result = this.updateById(entity);
             if (result) {
                 //添加日志
@@ -320,10 +335,103 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public List<BatchResultDTO> batchApprove(List<String> ids) {
-        return null;
+    public List<BatchResultDTO> batchApprove(BaseApproveParamDTO baseApproveParamDTO) {
+        List<CustomerB2bSellerChangeEntity> entityList = listByIds(baseApproveParamDTO.getIds());
+        List<String> mainIds =entityList.stream().map(CustomerB2bSellerChangeEntity::getMainId).collect(Collectors.toList());
+        Map<String,CustomerInfoEntity> customerInfoEntityMap = customerInfoService.listByIds(mainIds).stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        for(CustomerB2bSellerChangeEntity entity : entityList){
+            CustomerInfoEntity customerInfoEntity = customerInfoEntityMap.get(entity.getMainId());
+            BatchResultDTO batchResultDTO = new BatchResultDTO();
+            resultDTOList.add(batchResultDTO);
+            if(Objects.isNull(customerInfoEntity)){
+                batchResultDTO = BatchResultDTO.fail(entity.getId(),"","客户信息已经删除");
+                batchResultDTO.setId(entity.getId());
+                batchResultDTO.setMsg("客户信息已经删除");
+                batchResultDTO.setSuccess(false);
+                continue;
+            }
+            batchResultDTO.setId(entity.getId());
+            batchResultDTO.setCode(customerInfoEntity.getCode());
+            batchResultDTO.setSuccess(true);
+            batchResultDTO.setMsg("审核成功");
+            if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
+                batchResultDTO.setMsg(ApiError.ERROR_98006.msg);
+                batchResultDTO.setSuccess(false);
+                continue;
+            }
+            //调用审核流程
+            service.approveProcess(entity, baseApproveParamDTO,batchResultDTO,customerInfoEntity);
+        }
+        return resultDTOList;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void approveProcess(CustomerB2bSellerChangeEntity entity, BaseApproveParamDTO dto,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity ) {
+        //无需流程则直接更新状态
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
+            this.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
+            return;
+        }
+
+        LoginUser userInfo = commonService.getUserInfo();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResultApi = workflowFeign.approve(approveDTO);
+        Integer code = approveResultApi.getCode();
+        if (200 != code) {
+            batchResultDTO.setSuccess(false);
+            batchResultDTO.setMsg("审核失败");
+            return;
+        }
+        ProcessManagementDTO.ApproveResultDTO approveResult = approveResultApi.getData();
+        if(ObjectUtils.isEmpty(approveResult.getIsExistProcess()) || !approveResult.getIsExistProcess()){
+            this.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
+        }
+        CustomerB2bSellerChangeEntity againEntity = this.getById(entity.getId());
+        if(againEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
+            againEntity.setRemark(dto.getComment());
+            againEntity.setApproveTime(LocalDateTime.now());
+            againEntity.setApproveUserId(userInfo.getUid());
+            againEntity.setApproveUserName(userInfo.getUserName());
+            this.updateById(againEntity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity ) {
+        LoginUser user = commonService.getUserInfo();
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        } else {
+            //审核不通过
+            entity.setApproveStatus(ApproveStatusEnum.REJECT);
+        }
+        entity.setRemark(dto.getComment());
+        entity.setApproveTime(LocalDateTime.now());
+        entity.setApproveUserId(user.getUid());
+        entity.setApproveUserName(user.getUserName());
+        Boolean result = this.updateById(entity);
+        if (!result) {
+            batchResultDTO.setSuccess(false);
+            batchResultDTO.setMsg("更新状态失败");
+            return false;
+        }
+        //审核通过更新客户表销售员信息，更新历史销售员信息
+        customerInfoEntity.setSellerId(entity.getChangeSellerId());
+        customerInfoEntity.setSellerName(entity.getChangeSellerName());
+        customerInfoService.updateById(customerInfoEntity);
+        customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
+        return true;
+    }
     /**
     * 修改
     */
@@ -337,10 +445,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             throw new ServiceException(ApiError.ERROR_1029);
         }
         //销售员信息
-        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(old.getMainId());
-        SellerDTO.ViewDTO maxStartDateEntity = sellerList.stream().max(Comparator.comparing(SellerDTO.ViewDTO::getStartDate)).orElse(null);
-        if(Objects.nonNull(maxStartDateEntity) && !updateDTO.getStartDate().isAfter(maxStartDateEntity.getStartDate())){
+        CustomerSellerEntity currentSellerEntity = customerSellerService.getCurrentInfo(old.getMainId());
+        if(Objects.nonNull(currentSellerEntity) && !updateDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
             throw new ServiceException("启用时间必须晚于当前销售员开始时间");
+        }
+        if(Objects.nonNull(currentSellerEntity) && updateDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
+            throw new ServiceException("变更后的销售员与当前销售员一致");
         }
 
         CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity =  BeanMapperUtils.map(CustomerB2bSellerChangeEntity.class, updateDTO);
@@ -404,4 +514,5 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     private void handleData(CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
 }
