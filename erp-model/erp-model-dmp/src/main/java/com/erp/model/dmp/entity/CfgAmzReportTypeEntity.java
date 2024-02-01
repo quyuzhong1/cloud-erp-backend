@@ -1,10 +1,13 @@
 package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 import jnr.ffi.annotations.In;
 import lombok.Data;
@@ -26,7 +29,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("cfg_amz_report_type")
+@TableName(value = "cfg_amz_report_type", autoResultMap = true)
 public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
 
     /**
@@ -95,6 +98,11 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
      */
     @TableField("direct_query_delay_level")
     private Integer directQueryDelayLevel;
+    /**
+     * 报告类型支持的国家/市场列表
+     */
+    @TableField(value = "country_list", typeHandler = JacksonTypeHandler.class)
+    private List<String> countryList;
 
 
     public static final String REPORT_TYPE = "report_type";

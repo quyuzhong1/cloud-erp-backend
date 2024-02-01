@@ -10,11 +10,14 @@ import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
 import com.erp.server.dmp.convert.tool.TypeConversionWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 
 /**
@@ -130,13 +133,13 @@ public interface DmpFbaInventoryConverter {
             @Mapping(target = "msku", source = "csvEntity.sku"),
             @Mapping(target = "fnSku", source = "csvEntity.fnsku"),
             // 库龄报告信息
-            @Mapping(target = "inventoryAge0To30Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge0To30Days()))"),
-            @Mapping(target = "inventoryAge31To60Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge31To60Days()))"),
-            @Mapping(target = "inventoryAge61To90Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge61To90Days()))"),
-            @Mapping(target = "inventoryAge91To180Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge91To180Days()))"),
-            @Mapping(target = "inventoryAge181To270Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge181To270Days()))"),
-            @Mapping(target = "inventoryAge271To365Days", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge271To365Days()))"),
-            @Mapping(target = "inventoryAge365PlusDays", expression = "java(null== csvEntity ? 0: java.lang.Integer.parseInt(csvEntity.getInvAge365PlusDays()))"),
+            @Mapping(target = "inventoryAge0To30Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge0To30Days()))"),
+            @Mapping(target = "inventoryAge31To60Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge31To60Days()))"),
+            @Mapping(target = "inventoryAge61To90Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge61To90Days()))"),
+            @Mapping(target = "inventoryAge91To180Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge91To180Days()))"),
+            @Mapping(target = "inventoryAge181To270Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge181To270Days()))"),
+            @Mapping(target = "inventoryAge271To365Days", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge271To365Days()))"),
+            @Mapping(target = "inventoryAge365PlusDays", expression = "java(null== csvEntity ? 0: DmpFbaInventoryConverter.checkAndGetInt(csvEntity.getInvAge365PlusDays()))"),
 
     })
     FbaInventoryEntity reportFbaInventoryPlanningToEntity(
@@ -147,5 +150,11 @@ public interface DmpFbaInventoryConverter {
             String dataEndTime
     );
 
-
+    static int checkAndGetInt(String numStr) {
+        if (StringUtils.isBlank(numStr)){
+            return 0;
+        } else {
+            return Integer.parseInt(numStr);
+        }
+    }
 }

@@ -311,7 +311,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         // 默认请求速率配置
         String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, taskEntity.getGroupId());
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
-        String rateLimitStr;
 
         // 请求亚马逊接口
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
@@ -528,9 +527,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
-        // 设置到缓存(已完成或结束删除)
-        redisUtil.set(key, JSONUtil.toJsonStr(report));
+        Report.ProcessingStatusEnum processingStatus = report.getProcessingStatus();
 
+        if (Report.ProcessingStatusEnum.DONE.equals(processingStatus)){
+            // 设置到缓存(已完成或结束删除)
+            redisUtil.set(key, JSONUtil.toJsonStr(report), 36000);
+        }
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportWithHttpInfo);
         return report;
@@ -572,12 +574,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             ReportList reportList = reportsWithHttpInfo.getData().getReports();
             report = reportList.stream().findFirst().orElse(null);
         } catch (ApiException e) {
-            // 检查授权异常
-
             throw new RuntimeException(e);
         }
-        // 设置到缓存(已完成或结束删除)
-        redisUtil.set(key, JSONUtil.toJsonStr(report));
+        if (null != report){
+            // 设置到缓存(已完成或结束删除)
+            redisUtil.set(key, JSONUtil.toJsonStr(report));
+        }
 
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, reportsWithHttpInfo);

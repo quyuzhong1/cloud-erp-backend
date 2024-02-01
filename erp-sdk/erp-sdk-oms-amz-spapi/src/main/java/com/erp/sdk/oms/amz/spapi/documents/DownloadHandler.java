@@ -4,9 +4,7 @@ package com.erp.sdk.oms.amz.spapi.documents;// DownloadExample.java
 
 import java.io.*;
 
-import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.rmi.ServerException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,7 +88,7 @@ public class DownloadHandler {
                 String msg = StrUtil.format("下载失败:无法解析获取到流:url={}, mediaType={}", filePath, mediaType);
                 throw new ServerException(msg);
             }
-            return parseToJSONArray(excelConfig, reader, recordType);
+            return parseToJSONArray(excelConfig, reader, recordType, filePath);
         } finally {
             if (null != closeThis) {
                 closeThis.close();
@@ -194,7 +192,7 @@ public class DownloadHandler {
         throw new ServerException("获取异常");
     }
 
-    private static JSONArray parseToJSONArray(Map<String, String> excelConfig, BufferedReader in, String recordType) throws IOException {
+    private static JSONArray parseToJSONArray(Map<String, String> excelConfig, BufferedReader in, String recordType, String filePath) throws IOException {
         String line;
         int k = 1;
         JSONArray jl = new JSONArray();
@@ -208,7 +206,7 @@ public class DownloadHandler {
                     if (p == null) {
                         break;
                     }
-                    r = getExcelConfig(p, excelConfig, recordType);
+                    r = getExcelConfig(p, excelConfig, recordType, filePath);
                     if (r == null) {
                         break;
                     }
@@ -391,7 +389,7 @@ public class DownloadHandler {
     }
 
 
-    private static Map<Integer, String> getExcelConfig(Map<String, Integer> p, Map<String, String> excelConfig, String recordType) {
+    private static Map<Integer, String> getExcelConfig(Map<String, Integer> p, Map<String, String> excelConfig, String recordType, String filePath) {
         Map<Integer, String> r = new HashMap<>();
         for (Map.Entry<String, Integer> entry : p.entrySet()) {
             if (excelConfig.get(entry.getKey()) != null) {
@@ -408,7 +406,7 @@ public class DownloadHandler {
         if (CollectionUtil.isEmpty(notExistKeyList)) {
             return r;
         }
-        String msg = StrUtil.format("cfg_amz_report_field报告类型【{}】存在未配置的字段：{}", recordType, notExistKeyList);
+        String msg = StrUtil.format("cfg_amz_report_field报告类型【{}】, filePath={},存在未配置的字段：{}", recordType, filePath, notExistKeyList);
         throw new ServiceException(msg);
     }
 

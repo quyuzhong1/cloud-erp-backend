@@ -19,6 +19,8 @@
        <result column="disabled" property="disabled" />
        <result column="is_full_update" property="isFullUpdate" />
        <result column="has_pre_task" property="hasPreTask" />
+       <result column="country_list"  property="countryList"
+               typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->

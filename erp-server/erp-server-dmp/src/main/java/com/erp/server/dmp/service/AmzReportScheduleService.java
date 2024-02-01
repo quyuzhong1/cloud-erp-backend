@@ -83,4 +83,12 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @date: 2024-01-25
      */
     List<AmzReportScheduleEntity> findActionList(List<ShopInfoEntity> shopInfoEntityList, List<CfgAmzReportTypeEntity> reportTypeConfigList, AmazonJobParamDTO.ReportJobDTO jobParamDTO, List<String> subscribedTypeList);
+
+    /**
+     * 通过id取消当前任务
+     *
+     * @author Jim
+     * @date: 2024-01-20
+     */
+    void cancelById(String mainId);
 }

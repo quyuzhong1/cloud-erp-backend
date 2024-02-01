@@ -27,6 +27,7 @@ public enum AmzReportTaskStatusEnum {
     STOP("stop","系统终止"),
     MANUAL_STOP("manualStop","人工终止"),
     EXIST_STOP("existStop","最新报告已有终止"),
+    NULL_STOP("nullStop","没有最新报告终止"),
     DIRECT_QUERY("direct_query","直接获取报表(第一步/第二步)"),
     ;
 

@@ -1,10 +1,8 @@
 package com.erp.server.dmp.service;
 
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.CfgAmzReportTypeDTO;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -43,4 +41,15 @@ public interface CfgAmzReportTypeService extends SuperService<CfgAmzReportTypeEn
      * @since 2024-01-19
      **/
     CfgAmzReportTypeEntity getByRecordType(String reportType);
+
+    /**
+     * 检查当前市场是否支持
+     */
+    boolean checkCountryList(CfgAmzReportTypeEntity config, String marketplace);
+
+    /**
+     * 查询配置并校验国家是否支持
+     *
+     */
+    CfgAmzReportTypeEntity checkCountryAndGetByRecordType(AmzReportTaskEntity entity);
 }

@@ -91,6 +91,7 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
         // 新增
         if (CollectionUtil.isNotEmpty(notExistReportTypeList)) {
             List<AmzReportScheduleEntity> insertEntityList = notExistReportTypeList.stream()
+                    .filter(e-> e.getCountryList().contains(marketplaceEnum.getCountryCode()))
                     .map(e -> new AmzReportScheduleEntity(e.getReportType(), marketplaceEnum.getMarketplaceId(),
                             dto.getShopId(),
                             e.getPeriod(),
@@ -111,9 +112,10 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 if (null == config){
                     throw new ServiceException("报告数据异常：reportType=" + e.getReportType());
                 }
+                boolean disabled = config.getDisabled() || !config.getCountryList().contains(marketplaceEnum.getCountryCode());
                 // 根据配置决定最终状态
-                e.setCancelStatus(config.getDisabled() ? ReportScheduleCancelStatusEnum.CANCEL.getCode() : ReportScheduleCancelStatusEnum.NONE.getCode());
-                e.setSubscribedStatus(config.getDisabled() ? ReportScheduleSubscribedStatusEnum.NOT.getCode() : ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
+                e.setCancelStatus(disabled ? ReportScheduleCancelStatusEnum.CANCEL.getCode() : ReportScheduleCancelStatusEnum.NONE.getCode());
+                e.setSubscribedStatus(disabled ? ReportScheduleSubscribedStatusEnum.NOT.getCode() : ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
                 e.setSubscribedType(config.getSubscribedType());
             });
             this.updateBatchById(existEntityList);
@@ -217,5 +219,17 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
                 shopIds,
                 minTime
         );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelById(String mainId) {
+        boolean update = lambdaUpdate()
+                .eq(AmzReportScheduleEntity::getId, mainId)
+                .set(AmzReportScheduleEntity::getCancelStatus, ReportScheduleSubscribedStatusEnum.WAIT.getCode())
+                .update();
+        if (!update){
+            log.warn("取消任务计划失败:id={}", mainId);
+        }
     }
 }

@@ -46,7 +46,7 @@ public class MQConsumerAmzReportService {
         @Override
         public void onMessage(AmzReportTaskEntity entity) {
             try {
-                log.info("【亚马逊报告】步骤1:报告创建消费处理：entity={}", JSONUtil.toJsonStr(entity));
+                log.debug("【亚马逊报告】步骤1:报告创建消费处理：entity={}", JSONUtil.toJsonStr(entity));
                 // 当前分组报告处理中锁key
                 String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
                 // 报告创建处理
@@ -55,7 +55,11 @@ public class MQConsumerAmzReportService {
                 // 检查亚马逊授权异常
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
-                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), entity.getCreatedRetryCount() + 1, null, null, null);
+                    // 记录异常信息
+                    String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, entity.getCreatedRetryCount() + 1, null, null, null);
+                    // 发送预警
+//                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     throw e;
                 }
             }

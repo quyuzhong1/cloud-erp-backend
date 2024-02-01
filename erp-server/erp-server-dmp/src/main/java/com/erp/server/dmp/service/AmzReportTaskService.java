@@ -104,7 +104,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-20
      */
-    List<AmzReportTaskEntity> findNotFinishOrStop(String shopId, String reportType);
+    List<AmzReportTaskEntity> findNotFinishOrStop(String shopId, String reportType, String id);
 
     /**
      * 更新异常信息和重试次数
@@ -121,7 +121,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-20
      */
-    AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime, LocalDateTime completedTime);
+    AmzReportTaskEntity updateStatus(String reportId, AmzReportTaskEntity entity, AmzReportTaskStatusEnum statusEnum, LocalDateTime reportCreatedTime, LocalDateTime reportQueryTime, LocalDateTime reportDownloadTime, LocalDateTime reportParseTime, LocalDateTime completedTime, Boolean addCreatedRetryCount);
 
 
     /**
@@ -157,7 +157,7 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @author Jim
      * @date: 2024-01-31
      */
-    void stopByUnAuthorized(AmzReportTaskEntity entity);
+    void stopByErrorMsg(AmzReportTaskEntity entity, String msg);
 
     /**
      * 亚马逊异常检查和停止任务
@@ -166,4 +166,20 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-31
      */
     boolean checkStopByUnAuthorized(Exception exception, AmzReportTaskEntity entity);
+
+    /**
+     * 异常发送预警
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    void sendReportWarnMsg(AmzReportTaskEntity entity, String errorMsg);
+
+    /**
+     * 检查停止预警
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    boolean checkStopAndUpdateTask(AmzReportTaskEntity entity);
 }

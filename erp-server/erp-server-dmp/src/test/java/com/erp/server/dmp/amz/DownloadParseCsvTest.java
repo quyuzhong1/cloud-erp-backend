@@ -11,14 +11,27 @@
  */
 
 
-package com.erp.sdk.oms.amz.spapi.download;
+package com.erp.server.dmp.amz;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import com.common.core.utils.StrUtils;
 import com.erp.sdk.oms.amz.spapi.documents.DownloadHandler;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.mapper.CfgAmzReportFieldMapper;
+import com.erp.server.dmp.service.CfgAmzReportFieldService;
+import jdk.nashorn.internal.ir.annotations.Reference;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.CollectionUtils;
 
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
 
@@ -26,10 +39,16 @@ import java.util.*;
 /**
  * API tests for DownloadParseCsv
  */
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class DownloadParseCsvTest {
 
+    @Resource
+    private CfgAmzReportFieldService cfgAmzReportFieldService;
 
-    public static void main(String[] args) {
+
+    public static void main2(String[] args) {
         Map<String, String> map = new HashMap<>();
         map.put("item-name", "itemName");
         map.put("item-description", "itemDescription");
@@ -71,17 +90,19 @@ public class DownloadParseCsvTest {
     }
 
 
-    public static void main4(String[] args) {
+    @Test
+    public void config() {
         // 报告下载的路径
-        String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T073308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=737b2b2b924fe9366f95421dde0021b7e74c387b87df41cff5a187723159d003";
-        // 配置开始的ID号
-        Long id= 1500000000000000001L;
+//        String url= "https://tortuga-prod-eu.s3-eu-west-1.amazonaws.com/ca512ea1-2c85-4ff3-8036-6ae79d658bb0.amzn1.tortuga.4.eu.T1HRCYGSSGU3BS?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240201T031344Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX2ZVOZFBGHMXDPXP%2F20240201%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Signature=599d2288794207eb18df8acd4e17dccbbd3c3e84822606bf90b90fd4d259295a";
+        String filePath= "group1/M00/00/58/rBBkDGW7anqAGPwdAAC0mLiMIrg.T185LI";
         // 报告的下载类型
         String recordType = "GET_FBA_MYI_ALL_INVENTORY_DATA";
+        // 是否跳过已存在的配置
+        boolean checkExistConfig = true;
 
         Set<String> columnName = null;
         try {
-            columnName = DownloadHandler.getReportTitleFromUrl(url,"");
+            columnName = DownloadHandler.getReportTitleFromFilePath(filePath);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -107,13 +128,24 @@ public class DownloadParseCsvTest {
 //        String recordType = "GET_RESERVED_INVENTORY_DATA";
 //        Long id= 130000000000000000L;
 //        String recordType = "GET_FBA_INVENTORY_PLANNING_DATA";
+        if (checkExistConfig){
+            Map<String, String> existMap = cfgAmzReportFieldService.mayByReportType(recordType);
+            if (!CollectionUtils.isEmpty(existMap)){
+                existMap.forEach((key, value1) -> {
+                    String value = hashMap.get(key);
+                    if (StringUtils.isNotBlank(value)) {
+                        hashMap.remove(key);
+                    }
+                });
+            }
+
+        }
 
 
         for (Map.Entry<String, String> entry : hashMap.entrySet()) {
-            String sqlStr = "INSERT INTO \"public\".\"cfg_amz_report_field\"  (\"id\",\"remark\", \"column_name\", \"field_name\", \"report_type\", \"status\") VALUES  ('{}','','{}','{}', '{}', 't');";
-            String currentSql = StrUtil.format(sqlStr, id, entry.getKey(), entry.getValue(), recordType);
+            String sqlStr = "INSERT INTO \"public\".\"cfg_amz_report_field\"  (\"id\",\"remark\", \"column_name\", \"field_name\", \"report_type\", \"status\") VALUES  (snow_next_id(),'','{}','{}', '{}', 't');";
+            String currentSql = StrUtil.format(sqlStr, entry.getKey(), entry.getValue(), recordType);
             System.out.println(currentSql);
-            id ++;
         }
 
     }

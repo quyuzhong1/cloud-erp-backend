@@ -122,6 +122,9 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓入库单取消接口","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓订单发货对接海外仓出库创建接口","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓出库取消接口","dmp_push_task"),
+
+    // 亚马逊相关
+    AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
     ;
 
     /**
