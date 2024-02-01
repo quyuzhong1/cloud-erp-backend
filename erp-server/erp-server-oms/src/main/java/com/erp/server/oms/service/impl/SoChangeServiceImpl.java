@@ -22,10 +22,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
@@ -967,6 +964,15 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
+            //销售变更单校验
+            List<String> idList = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+            List<SoChangeDetailEntity> soChangeDetailList = soChangeDetailService.listByMainIdList(idList);
+            if (CollectionUtils.isEmpty(soChangeDetailList)) {
+                throw new ServiceException(ApiError.ERROR_92036);
+            }
+            List<SoChangeDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SoChangeDetailDTO.UpdateDTO.class, soChangeDetailList);
+            soChangeDetailService.checkChange(updateList);
+
             //更新销售表数据
             soChangeDetailService.handleDb(list);
             //审核通过发送金蝶
