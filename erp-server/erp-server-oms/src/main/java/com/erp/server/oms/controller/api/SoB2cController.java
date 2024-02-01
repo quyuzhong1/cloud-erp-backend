@@ -117,8 +117,12 @@ public class SoB2cController extends BaseController {
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                //检查是否备案并修改状态
-                soB2cService.checkProductRegistrationAndUpdate(id, "");
+                Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
+                //表示成功
+                if(isRuleMatch){
+                    //检查是否备案并修改状态
+                    soB2cService.checkProductRegistrationAndUpdate(id, "");
+                }
 
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
@@ -208,7 +212,12 @@ public class SoB2cController extends BaseController {
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
                             SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
-                            soB2cService.checkProductRegistrationAndUpdate(id,"");
+                            //表示成功
+                            if(logisticsRuleResult.getIsRuleMatch()){
+                                //检查是否备案并修改状态
+                                soB2cService.checkProductRegistrationAndUpdate(id, "");
+                            }
+
                             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                             if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                                 soB2cService.getLogisticsCode(id, autoGetTrackNo);

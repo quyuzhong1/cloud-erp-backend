@@ -939,7 +939,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(Arrays.asList(entity.getSoId()), TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(soIds, TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
         }
         return result;
     }
