@@ -74,6 +74,15 @@ public interface DmpReportConverter {
 
 
     @Mappings(value = {
+            @Mapping(target = "id", expression = "java(null)"),
+            @Mapping(target = "createUserId", constant = ""),
+            @Mapping(target = "createUserName", constant = "system"),
+            @Mapping(target = "createTime", expression = "java(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()))"),
+            @Mapping(target = "updateUserId", constant = ""),
+            @Mapping(target = "updateUserName", constant = "system"),
+            @Mapping(target = "updateTime", expression = "java(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()))"),
+            @Mapping(target = "version", constant = "0"),
+            @Mapping(target = "isDeleted", constant = "false"),
             @Mapping(target = "mainId", source = "entity.id"),
             @Mapping(target = "shopId", source = "entity.shopId"),
             @Mapping(target = "reportType", source = "entity.reportType"),
