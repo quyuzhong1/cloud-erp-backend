@@ -185,7 +185,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         detailList.forEach(v->v.setMainId(mainId));
         //添加操作日志
         if (CollectionUtils.isNotEmpty(detailList)) {
-            String msg = StrUtil.format("用户【{}】修改sku为【%s】的送货单明细 ", commonService.getUserInfo().getUserName());
+            String msg = StrUtil.format("用户【{}】新增sku为【%s】的送货单明细 ", commonService.getUserInfo().getUserName());
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), addPairList, "编辑操作");
         }
