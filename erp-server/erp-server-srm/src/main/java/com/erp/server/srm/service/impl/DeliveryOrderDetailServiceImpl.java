@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -112,6 +113,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         Map<String,DeliveryOrderDetailDTO.UpdateDTO> updateDTOMap = updateDTOList.stream().collect(Collectors.toMap(DeliveryOrderDetailDTO.UpdateDTO::getDetailId, Function.identity()));
         for(DeliveryOrderDetailEntity deliveryOrderDetailEntity : needUpdateDetailList){
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
+            checkDelivery(deliveryOrderDetailEntity.getSourceDetailId(),deliveryOrderDetailEntity.getId(),updateDTO.getDeliveryQty(),deliveryOrderDetailEntity.getOrderQty());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
 
         }
@@ -127,6 +129,9 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         if(CollectionUtils.isEmpty(needAddDTOList)){
             return true;
         }
+        needAddDTOList.forEach(v->{
+            checkDelivery(v.getSourceDetailId(),null,v.getDeliveryQty(),v.getOrderQty());
+        });
         List<DeliveryOrderDetailEntity> list = BeanMapperUtils.copyList(DeliveryOrderDetailEntity.class, needAddDTOList);
         //处理明细数据
         handleData(list,mainId);
@@ -176,6 +181,26 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         if (CollectionUtils.isNotEmpty(detailList)) {
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * 校验送货数量是否超过可送货数量
+     * @return true:通过
+     */
+    private void checkDelivery(String sourceDetailId,String detailId,Integer deliveryQty,Integer orderQty){
+        List<DeliveryOrderDetailEntity> sameSourceDetailList = this.listDetailByDetailSourceIds(Collections.singletonList(sourceDetailId));
+        if(CollectionUtils.isEmpty(sameSourceDetailList)){
+            if(orderQty < deliveryQty){
+                throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
+            }
+        }
+        if(StringUtils.isNotBlank(detailId)){
+            sameSourceDetailList = sameSourceDetailList.stream().filter(v->!v.getId().equals(detailId)).collect(Collectors.toList());
+        }
+        Integer nowDeliveryQty = sameSourceDetailList.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
+        if(orderQty < deliveryQty + nowDeliveryQty){
+            throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
         }
     }
 }
