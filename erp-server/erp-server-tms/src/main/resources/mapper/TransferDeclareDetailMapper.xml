@@ -62,7 +62,11 @@
         </if>
         <!--物流跟踪号-->
         <if test="params.trackNo != '' and params.trackNo != null">
-            and tdd.track_no = #{params.trackNo}
+            and tdd.track_no ILIKE concat('%', #{params.trackNo}::text,'%')
+        </if>
+        <!--销售单号-->
+        <if test="params.soCode != '' and params.soCode != null">
+            and tdd.so_code ILIKE concat('%', #{params.soCode}::text,'%')
         </if>
         <!--物流渠道id-->
         <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">

@@ -407,6 +407,11 @@ public class TransferDeclareDTO implements Serializable {
         private String trackNo;
 
         /**
+         * 销售单号
+         */
+        private String soCode;
+
+        /**
          * 物流渠道id
          * 地址：http://172.16.100.11:3002/project/128/interface/api/25999
          */
