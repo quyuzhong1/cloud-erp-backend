@@ -1,7 +1,7 @@
 package com.erp.model.scm.enums;
 
 /**
- * @author Will
+ * @author zdy
  * @version 1.0
 
  * @date 2023/3/27 10:52
@@ -11,7 +11,7 @@ public enum ConfirmTypeEnum {
     //系统
     AUTO("auto", "系统"),
     //手动
-    MANUAL("manual", "手动");
+    MANUAL("manual", "人工");
 
 
     private String code;

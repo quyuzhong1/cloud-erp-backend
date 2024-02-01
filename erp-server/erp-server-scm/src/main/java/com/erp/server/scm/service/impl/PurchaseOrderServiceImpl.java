@@ -2386,6 +2386,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //同步scm 确认订单 到 srm
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
         }
+        //操作日志
+        String content = "";
+        String operate = String.format("%s确认操作", confirmTypeEnum.getName());;
+        if (typeEnum.getCode().equals(ExecutionStatusEnum.CONFIRM.getCode())){
+            content = String.format("【%s】操作【确认】采购订单【%s】【接受原因是：%s】",confirmTypeEnum.getName(),entity.getCode(),dto.getRemark());
+        }else {
+            content = String.format("【%s】操作【拒绝】采购订单【%s】【拒绝原因是：%s】",confirmTypeEnum.getName(),entity.getCode(),dto.getRemark());
+        }
+        moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), operate);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
