@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -42,4 +44,11 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
 }

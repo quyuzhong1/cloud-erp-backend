@@ -3,11 +3,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.tms.feign.ForecastFeign;
@@ -114,6 +117,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      */
     @Override
     public List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         return null;
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +57,7 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<List<PackageForecastDTO.PagingViewDTO>> tabList(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> tabList(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
         return success(pagingVO);
     }

@@ -439,12 +439,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 //上传成功
                 transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode(), result.getData(), "");
-                resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareEntity.getCode(), "订单号【"+ transferDeclareDetailEntity.getSoCode() +"】上传成功"));
+                resultDTOList.add(BatchResultDTO.success(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传成功"));
                 continue;
             } else {
                 //上传失败
                 transferDeclareDetailService.updateOrderUploadStatus(transferDeclareDetailEntity.getId(), TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode(), "", result.getMsg());
-                resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareEntity.getCode(), "订单号【"+ transferDeclareDetailEntity.getSoCode() +"】上传失败：" + result.getMsg() + ""));
+                resultDTOList.add(BatchResultDTO.fail(transferDeclareDetailEntity.getId(), transferDeclareDetailEntity.getSoCode(), "上传失败：" + result.getMsg() + ""));
                 continue;
             }
         }
