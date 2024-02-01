@@ -102,7 +102,9 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         }
         //订单明细数据校验
         String skuNos = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                 && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus()))
+                 && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                 && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
+                )
                 .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(skuNos)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
