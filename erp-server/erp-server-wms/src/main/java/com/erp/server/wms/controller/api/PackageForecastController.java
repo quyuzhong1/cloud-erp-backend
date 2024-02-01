@@ -49,18 +49,19 @@ public class PackageForecastController extends BaseController {
         return success(tabList);
     }
 
+
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2024-01-26
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "组包预报表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PackageForecastDTO.AddDTO dto) {
-        return success(packageForecastService.add(dto));
+     * 分页
+     *
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<List<PackageForecastDTO.PagingViewDTO>> tabList(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+        PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
+        return success(pagingVO);
     }
+
+
 
     /**
     * 修改

@@ -37,6 +37,123 @@ public class PackageForecastDTO implements Serializable {
     }
 
 
+    /**
+     * 分页
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 详情id
+         */
+        private String detailId;
+
+        /**
+         * 组包日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 编号
+         */
+        private String code;
+
+        /**
+         *第三方交接单号
+         */
+        private String handoverNo;
+
+        /**
+         *第三方组包号
+         */
+        private String platformPackageNo;
+
+        /**
+         *物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商
+         */
+        private String logisticsSupplierName;
+
+        /**
+         *大包运输单号
+         */
+        private String transportNo;
+
+        /**
+         * 包裹总数量
+         */
+        private Integer totalPackageQty;
+
+        /**
+         *包裹总重量
+         */
+        private BigDecimal totalPackageWeight;
+
+        /**
+         *单位
+         */
+        private String weightUnit;
+
+        /**
+         * 上传状态
+         */
+        private String uploadStatus;
+
+        /**
+         * 上传状态名
+         */
+        private String uploadStatusName;
+
+        /**
+         * 打印状态
+         */
+        private String printStatus;
+
+        /**
+         * 打印状态名
+         */
+        private String printStatusName;
+
+        /**
+         * 交接状态
+         */
+        private String handoverStatus;
+
+        /**
+         * 交接状态名
+         */
+        private String handoverStatusName;
+
+        /**
+         * 最新失败原因
+         */
+        private String remark;
+
+
+
+    }
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO{
+
+
+    }
+
+
 
     /**
     * 详情
