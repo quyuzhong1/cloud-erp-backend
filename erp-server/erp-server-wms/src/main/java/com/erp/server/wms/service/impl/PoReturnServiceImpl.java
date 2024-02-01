@@ -1194,10 +1194,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
-            //结束交货的订单无需变更到货状态
-            if (orderDetailEntity.getIsEndReceive()) {
-                continue;
-            }
 
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 

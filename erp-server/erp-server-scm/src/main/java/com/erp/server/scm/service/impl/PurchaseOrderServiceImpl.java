@@ -1365,12 +1365,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
                 stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-
             }
-            //已完成、已关闭订单交货数量为0
-            Integer deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
-                    || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
-                    ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - receiveQty;
+            /**
+             * 是否结束交货-无：【采购数量-已收数量】+退货数量[退货补货量]【执行状态按待交货量更新】
+             * 是否结束交货-有：0+退货量【执行状态变更为送货中】
+             */
+            Integer deliveryQty ;
+            if (ObjectUtils.isNotEmpty(obj.getIsEndReceive()) && obj.getIsEndReceive()) {
+                deliveryQty = replenishQty;
+            } else {
+                 deliveryQty = (ExecutionStatusEnum.FINISH.getCode().equals(obj.getExecutionStatus())
+                        || ExecutionStatusEnum.CLOSED.getCode().equals(obj.getExecutionStatus()))
+                        ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - receiveQty;
+            }
             obj.setReceiveQty(receiveQty);
             //待交货数量
             obj.setDeliveryQty(deliveryQty);
