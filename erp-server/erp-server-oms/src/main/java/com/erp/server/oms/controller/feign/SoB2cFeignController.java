@@ -5,7 +5,6 @@ import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -477,5 +476,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/getTransferDeclareProductBySoIds")
     public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
         return soB2cService.getTransferDeclareProductBySoIds(soIds);
+    }
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/updateAliExpressOrderWarehouse")
+    public Boolean updateAliExpressOrderWarehouse(@RequestBody String soId) {
+        return soB2cService.updateAliExpressOrderWarehouse(soId);
     }
 }

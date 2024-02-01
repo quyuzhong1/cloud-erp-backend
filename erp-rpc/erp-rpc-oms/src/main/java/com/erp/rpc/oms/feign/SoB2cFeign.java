@@ -3,7 +3,6 @@ package com.erp.rpc.oms.feign;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.UpdateStateDTO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
@@ -339,4 +338,14 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/getTransferDeclareProductBySoIds")
     List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) ;
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/feign/soB2c/updateAliExpressOrderWarehouse")
+    void updateAliExpressOrderWarehouse(@RequestBody String soId);
 }

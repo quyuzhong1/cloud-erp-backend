@@ -768,4 +768,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds);
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 11:09
+     * @param soId
+     * @return void
+     **/
+    Boolean updateAliExpressOrderWarehouse(String soId);
 }

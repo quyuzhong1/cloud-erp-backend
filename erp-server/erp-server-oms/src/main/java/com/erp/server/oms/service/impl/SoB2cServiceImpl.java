@@ -37,8 +37,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -80,7 +80,6 @@ import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
-import io.seata.core.protocol.ResultCode;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -91,7 +90,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -5346,6 +5344,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderDTO.getShippingOrderNo()).
                     eq(SoB2cEntity::getId, shippingOrderDTO.getSoId()).update(new SoB2cEntity());
         }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateAliExpressOrderWarehouse(String soId) {
+        //查询速卖通订单
+
         return Boolean.TRUE;
     }
 

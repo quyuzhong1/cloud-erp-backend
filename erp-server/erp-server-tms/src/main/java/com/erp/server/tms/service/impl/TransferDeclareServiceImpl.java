@@ -24,9 +24,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -349,25 +347,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<String> soIdList = transferDeclareDetailList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
 
-        //订单物流信息
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
-
         //订单客户信息
         List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cFeign.listSoB2cReceiverByMainIdList(soIdList);
-
-        //店铺信息
-        List<String> shopIds = soB2cEntities.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
 
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(authEntity)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
         }
-
-        //查询物流渠道
-        List<String> logisticsChannelIds = transferDeclareDetailList.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
-        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
 
         //查询中转物流渠道
         TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(transferDeclareEntity.getTransferChannelId());
@@ -388,15 +375,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             //订单买家信息
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cReceiverEntity());
 
-            //订单物流信息
-            SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getMainId())).findFirst().orElse(new SoB2cLogisticsEntity());
-
-            //物流渠道信息
-            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new LogisticsChannelEntity());
-
-            //店铺信息
-            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
-
             //组装SDK需要的下单详情信息
             List<TransferDeclareProductEntity> declareProductEntityList = transferDeclareProductEntities.stream().filter(req -> transferDeclareDetailEntity.getId().equals(req.getDeclareDetailId())).collect(Collectors.toList());
             List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.declareProductEntityToCreateOrderReq(declareProductEntityList);
@@ -408,7 +386,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
             //组装SDK需要的下报关单单信息
             TransferLogisticsCreateOrderReq orderReq = TransferLogisticsCreateOrderReq.builder()
-                    .trackingNumber(logisticsEntity.getCode())
+                    .trackingNumber(transferDeclareDetailEntity.getTrackNo())
                     .country(soB2cReceiverEntity.getCountry())
                     .shippingCode(shippingCode)
                     .name(soB2cReceiverEntity.getReceiverName())
@@ -420,10 +398,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                     .postcode(soB2cReceiverEntity.getPostCode())
                     .phone(soB2cReceiverEntity.getReceiverTelNumber())
                     .orderStatus("2")
-                    .iossNo(logisticsChannelEntity.getIsIossPrepay() ? shopInfoEntity.getIossTaxNo() : "")
+                    .iossNo("")
                     .serialNo("")
                     .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-                    .buyInsurance(logisticsChannelEntity.getIsApiInsurance() ? 1 : 0)
+                    .buyInsurance(0)
                     .productDetailList(productDetails)
                     .build();
 
@@ -474,22 +452,21 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         for (TransferDeclareDeadlineSettingDTO.ViewDTO deadlineSetting : deadlineSettingView) {
             //生效时间
             LocalTime generateTime = deadlineSetting.getGenerateTime();
-            if (localTime.getHour() != generateTime.getHour() && generateTime.getMinute() != localTime.getMinute()) {
-                continue;
-            }
+            if (localTime.getHour() == generateTime.getHour() && generateTime.getMinute() == localTime.getMinute()) {
 
-            //如果当前时间等于生效时间，根据报关设置生成报关单
-            TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
-            List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
-            for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
-                addDTO.setGenerateTime(generateTime);
-                BaseResultDTO.AddDTO add = this.add(addDTO);
-                if (StringUtils.isNotBlank(add.getId())) {
-                    //更新订单中转状态
-                    List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-                    soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
+                //如果当前时间等于生效时间，根据报关设置生成报关单
+                TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
+                List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
+                for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
+                    addDTO.setGenerateTime(generateTime);
+                    BaseResultDTO.AddDTO add = this.add(addDTO);
+                    if (StringUtils.isNotBlank(add.getId())) {
+                        //更新订单中转状态
+                        List<String> soIds = addDTO.getDetailList().stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+                        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.ALREADY.getCode());
+                    }
+
                 }
-
             }
         }
     }
