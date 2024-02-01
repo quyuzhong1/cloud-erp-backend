@@ -667,10 +667,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 根据报关设置生成报关单信息
      * @Author Luo_WG
      * @Date 2024/1/25 17:29
-     * @param dto
+     * @param viewDTOList
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
      **/
-    List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(TransferDeclareGenerationSettingDTO.ViewDTO dto);
+    List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList);
 
     /**
      * 更改订单的中转状态

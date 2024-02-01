@@ -434,12 +434,12 @@ public class SoB2cFeignController extends BaseController {
      * 根据报关设置生成报关单信息
      * @Author Luo_WG
      * @Date 2024/1/25 17:29
-     * @param dto
+     * @param viewDTOList
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
      **/
     @PostMapping("/generateTransferDeclareView")
-    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated TransferDeclareGenerationSettingDTO.ViewDTO dto) {
-        return soB2cService.generateTransferDeclareView(dto);
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList) {
+        return soB2cService.generateTransferDeclareView(viewDTOList);
     }
 
     /**

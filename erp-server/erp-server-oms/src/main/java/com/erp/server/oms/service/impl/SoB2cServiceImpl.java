@@ -5130,20 +5130,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(TransferDeclareGenerationSettingDTO.ViewDTO viewDTO) {
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList) {
         List<TransferDeclareDTO.AddDTO> tdAddList = new ArrayList<>();
-        List<String> deliveryLogisticsSupplierIdList = viewDTO.getDeliveryLogisticsSupplierIdList();
-        for (String deliveryLogisticsSupplierId : deliveryLogisticsSupplierIdList) {
-            TransferDeclareDTO.AddDTO tdAdd = new TransferDeclareDTO.AddDTO();
-            tdAdd.setDeliveryLogisticsSupplierId(deliveryLogisticsSupplierId);
-            tdAdd.setTransferLogisticsSupplierId(viewDTO.getTransferLogisticsSupplierId());
-            tdAdd.setTransferChannelId(viewDTO.getTransferChannelId());
-            List<TransferDeclareDetailDTO.AddDTO> detailList = this.listByLogisticsSupplier(deliveryLogisticsSupplierId);
-            if (CollectionUtils.isEmpty(detailList)) {
-                continue;
+        for (TransferDeclareGenerationSettingDTO.ViewDTO viewDTO : viewDTOList) {
+            List<String> deliveryLogisticsSupplierIdList = viewDTO.getDeliveryLogisticsSupplierIdList();
+            for (String deliveryLogisticsSupplierId : deliveryLogisticsSupplierIdList) {
+                TransferDeclareDTO.AddDTO tdAdd = new TransferDeclareDTO.AddDTO();
+                tdAdd.setDeliveryLogisticsSupplierId(deliveryLogisticsSupplierId);
+                tdAdd.setTransferLogisticsSupplierId(viewDTO.getTransferLogisticsSupplierId());
+                tdAdd.setTransferChannelId(viewDTO.getTransferChannelId());
+                List<TransferDeclareDetailDTO.AddDTO> detailList = this.listByLogisticsSupplier(deliveryLogisticsSupplierId);
+                if (CollectionUtils.isEmpty(detailList)) {
+                    continue;
+                }
+                tdAdd.setDetailList(detailList);
+                tdAddList.add(tdAdd);
             }
-            tdAdd.setDetailList(detailList);
-            tdAddList.add(tdAdd);
         }
         return tdAddList;
     }

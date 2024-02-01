@@ -474,8 +474,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (localTime.getHour() == generateTime.getHour() && generateTime.getMinute() == localTime.getMinute()) {
 
                 //如果当前时间等于生效时间，根据报关设置生成报关单
-                TransferDeclareGenerationSettingDTO.ViewDTO viewDTO = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).findFirst().orElse(null);
-                List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTO);
+                List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList = forcastSettingView.stream().filter(req -> deadlineSetting.getTransferLogisticsSupplierIdList().contains(req.getTransferLogisticsSupplierId())).collect(Collectors.toList());
+                List<TransferDeclareDTO.AddDTO> addDTOList = soB2cFeign.generateTransferDeclareView(viewDTOList);
                 for (TransferDeclareDTO.AddDTO addDTO : addDTOList) {
                     addDTO.setGenerateTime(generateTime);
                     BaseResultDTO.AddDTO add = this.add(addDTO);
