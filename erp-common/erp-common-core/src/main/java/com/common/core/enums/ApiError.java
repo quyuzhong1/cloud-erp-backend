@@ -1073,12 +1073,12 @@ public enum ApiError implements Serializable {
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
-    ERROR_WAIT_SHIPPED_TRANSFER(92125,"只有待发货的订单才能中转报关"),
-    ERROR_WAIT_TRANSFER(92126,"仅可操作待中转订单的单据"),
+    ERROR_WAIT_SHIPPED_TRANSFER(92125,"销售单【{}】 不属于待发货的订单 不能进行中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于待中转的订单,不能进行中转报关"),
     ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
-    PACKAGE_FORECAST_TRANSFER(92130,"订单关联强制组包，请在组包预报页面操作中转报关"),
+    PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
 
     /**
      * TMS 错误

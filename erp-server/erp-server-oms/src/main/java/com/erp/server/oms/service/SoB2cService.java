@@ -647,12 +647,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 中转报关
      * @description
-     * @param id
+     * @param ids
      * @author Lambda
      * @return
      * @create 2024-01-20 15:47
      */
-    BatchResultDTO transferDeclare(String id,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
+    Boolean transferDeclare(List<String> ids,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
 
     /**
      * 根据物流商查询待中转的订单

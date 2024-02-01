@@ -140,6 +140,13 @@ public class PackageForecastDTO implements Serializable {
         private String remark;
 
 
+        private String soId;
+
+        private String soCode;
+
+        private String soType;
+
+
 
     }
 

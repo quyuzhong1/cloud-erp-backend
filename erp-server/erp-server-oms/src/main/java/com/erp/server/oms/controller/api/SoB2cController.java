@@ -911,24 +911,10 @@ public class SoB2cController extends BaseController {
      * @create 2024-01-20 15:27
      */
     @PostMapping("/transferDeclare")
-    public ApiResult<List<BatchResultDTO>> transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cService.transferDeclare(id, dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
-            } catch (Exception e) {
-                log.error("b2c订单中转失败:{}", e.getMessage());
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 订单中转失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    public ApiResult  transferDeclare(@RequestBody SoB2cDTO.TransferDeclareDTO dto) {
+
+       Boolean result= soB2cService.transferDeclare(dto.getIds(), dto.getTransferLogisticsSupplierId(), dto.getTransferLogisticsChannelId());
+       return result ? success() : failure();
+
     }
 }
