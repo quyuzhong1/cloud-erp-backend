@@ -83,12 +83,12 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关申报价
+         * 出口申报价
          */
         private BigDecimal declarePrice;
 
         /**
-         * 报关申报价币种
+         * 出口申报价币种
          */
         private String declareCurrency;
 
@@ -563,17 +563,17 @@ public class LogisticsProductDTO {
 
 
         /**
-         * 报关申报价
+         * 出口申报价
          */
         private BigDecimal declarePrice;
 
         /**
-         * 报关申报价币种
+         * 出口申报价币种
          */
         private String declareCurrency;
 
         /**
-         * 报关申报价币种符号
+         * 出口申报价币种符号
          */
         private String declareCurrencySymbol;
 
