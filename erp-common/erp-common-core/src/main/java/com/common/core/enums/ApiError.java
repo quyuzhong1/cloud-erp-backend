@@ -496,7 +496,13 @@ public enum ApiError implements Serializable {
     ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
     ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
-
+    ERROR_PRODUCT_PACK_NOT_EXIST(95260,"SKU【{}】产品包装信息不能为空"),
+    ERROR_PRODUCT_SIZE_NOT_EXIST(95261,"SKU【{}】包装尺寸不能为空"),
+    ERROR_BOX_SIZE_NOT_EXIST(95262,"SKU【{}】箱规不能为空"),
+    ERROR_GROSS_WEIGHT_NOT_EXIST(95263,"SKU【{}】毛重不能为空"),
+    ERROR_BOX_WEIGHT_NOT_EXIST(95264,"SKU【{}】单箱重量不能为空"),
+    ERROR_NET_WEIGHT_NOT_EXIST(95265,"SKU【{}】净重不能为空"),
+    ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱重量不能为空"),
     /**
      * TMS 错误
      * 从96000 开始

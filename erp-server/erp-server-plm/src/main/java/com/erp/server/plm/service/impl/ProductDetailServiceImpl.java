@@ -3549,19 +3549,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
-        List<ProductDetailEntity> deliveryNoticeEntityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(deliveryNoticeEntityList)) {
+        List<ProductDetailEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //判断是否是审核中的状态
-        long count = deliveryNoticeEntityList.stream().filter(entity ->
+        long count = entityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
                         || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
         ).count();
 
-        if (count != deliveryNoticeEntityList.size()) {
+        if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
+        //校验字段是否必填
+        checkApproveField(entityList);
+
         LoginUser userInfo = commonService.getUserInfo();
         //TODO 待加审核流程
 
@@ -3570,7 +3573,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
 
             //workflowFeign.taskPass(approveProcess);
-            deliveryNoticeEntityList.forEach(obj -> {
+            entityList.forEach(obj -> {
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
@@ -3581,7 +3584,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见
             List<ProductDetailCommentEntity> commentEntityList = new ArrayList<>();
-            deliveryNoticeEntityList.forEach(obj -> {
+            entityList.forEach(obj -> {
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "]操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_NO_PASS.getName() + "]，原因：" + baseApproveParamDTO.getComment()));
                 //新增审核不通过意见
@@ -4035,4 +4038,66 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         return flag;
     }
+
+    /**
+     * @description: 审核必填字段校验
+     * @author Will
+     * @date: 2024/2/1 10:14
+     * @param entityList
+     */
+    private void checkApproveField(List<ProductDetailEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        //产品信息
+        List<String> productIdList = entityList.stream().map(ProductDetailEntity::getProductId).collect(Collectors.toList());
+        List<ProductInfoEntity> productInfoList = productInfoService.listByIds(productIdList);
+
+        //包装信息
+        List<String> skuIdList = entityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<ProductPackEntity> productPackList = productPackService.listBySkuIdList(skuIdList);
+
+        for (ProductDetailEntity detailEntity : entityList) {
+            //SPU信息
+            ProductInfoEntity productInfo = productInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getProductId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(productInfo)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            if (!StrUtil.equals(SaleMethodEnum.GOODS.getName(),productInfo.getSaleMethod())) {
+                continue;
+            }
+            /**
+             * 当产品销售方式为商品时，包装尺寸、箱规 、毛重、单箱重量、净重、单箱数量不能为空
+             */
+            ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(productPackEntity)) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //包装尺寸
+            if (StrUtil.isBlank(productPackEntity.getProductSize())) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //箱规
+            if (StrUtil.isBlank(productPackEntity.getBoxSize())) {
+                throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //毛重
+            if (MathUtil.compareTo(productPackEntity.getGrossWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //单箱重量
+            if (MathUtil.compareTo(productPackEntity.getBoxWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //净重
+            if (MathUtil.compareTo(productPackEntity.getNetWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_NET_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
+            }
+            //单箱数量
+            if (MathUtil.compareTo(productPackEntity.getBoxQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_BOX_QTY_NOT_EXIST,detailEntity.getSkuNo());
+            }
+        }
+    }
+
 }
