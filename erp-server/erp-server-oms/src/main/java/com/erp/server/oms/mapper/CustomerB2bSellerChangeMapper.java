@@ -1,5 +1,9 @@
 package com.erp.server.oms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -20,7 +24,9 @@ import java.util.List;
 @Mapper
 public interface CustomerB2bSellerChangeMapper extends BaseMapper<CustomerB2bSellerChangeEntity> {
 
-    List<CustomerB2bSellerChangeDTO.ListDTO> paging(@Param("params") CustomerB2bSellerChangeDTO.ParamDTO dto);
-
     List<CustomerB2bSellerChangeDTO.TabFlagDTO> countByTabFlag();
+
+    IPage<CustomerB2bSellerChangeDTO.ListDTO> paging(Page query, @Param("params")CustomerB2bSellerChangeDTO.ParamDTO dto);
+
+    List<CustomerB2bSellerExcelDTO> export(@Param("params") CustomerB2bSellerChangeDTO.ParamDTO dto);
 }

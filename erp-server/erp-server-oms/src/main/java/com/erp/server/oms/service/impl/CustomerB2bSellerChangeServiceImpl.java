@@ -2,54 +2,54 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
-import com.common.business.validator.ValidList;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
-import com.erp.model.oms.dto.SellerDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.mapper.CustomerB2bSellerChangeMapper;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -150,10 +150,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public List<CustomerB2bSellerChangeDTO.ListDTO> paging(CustomerB2bSellerChangeDTO.ParamDTO dto) {
-        List<CustomerB2bSellerChangeDTO.ListDTO> listDTOList = baseMapper.paging(dto);
-        listDTOList.forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
-        return listDTOList;
+    public PagingVO<CustomerB2bSellerChangeDTO.ListDTO> paging(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<CustomerB2bSellerChangeDTO.ListDTO> listDTOList = baseMapper.paging(query,dto.getParams());
+        listDTOList.getRecords().forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
+        return new PagingVO<>(listDTOList);
     }
 
     @Override
@@ -432,6 +433,18 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
         return true;
     }
+
+    @Override
+    public void export(CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response) {
+        List<CustomerB2bSellerExcelDTO> list = this.baseMapper.export(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        list.forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
+        // 数据处理
+        ExcelUtil.export("客户b2b销售变更单","客户b2b销售变更单",list,CustomerB2bSellerExcelDTO.class,response);
+    }
+
     /**
     * 修改
     */

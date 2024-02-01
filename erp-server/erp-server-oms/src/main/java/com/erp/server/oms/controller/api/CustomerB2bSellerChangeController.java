@@ -6,7 +6,9 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -19,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -48,7 +51,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<List<CustomerB2bSellerChangeDTO.ListDTO>> paging(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto) {
+    public ApiResult<PagingVO<CustomerB2bSellerChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
         return success(customerB2bSellerChangeService.paging(dto));
     }
 
@@ -165,5 +168,18 @@ public class CustomerB2bSellerChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchApprove(baseApproveParamDTO);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 导出
+     * @author lrp
+     * @date:  2024-01-31
+     * @return ApiResult
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public ApiResult export(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response) {
+         customerB2bSellerChangeService.export(dto,response);
+        return success();
     }
 }

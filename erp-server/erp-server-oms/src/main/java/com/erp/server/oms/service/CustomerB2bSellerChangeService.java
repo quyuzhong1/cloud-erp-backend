@@ -1,12 +1,15 @@
 package com.erp.server.oms.service;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import org.apache.ibatis.annotations.Param;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -45,7 +48,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     List<CustomerB2bSellerChangeEntity> listByMainId(String mainId);
 
-    List<CustomerB2bSellerChangeDTO.ListDTO> paging(CustomerB2bSellerChangeDTO.ParamDTO dto);
+    PagingVO<CustomerB2bSellerChangeDTO.ListDTO> paging(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto);
 
     List<CustomerB2bSellerChangeDTO.TabFlagDTO> tabFlag();
 
@@ -60,4 +63,6 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
     List<BatchResultDTO> batchApprove(BaseApproveParamDTO baseApproveParamDTO);
 
     Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity );
+
+    void export(CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response);
 }

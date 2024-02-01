@@ -73,6 +73,27 @@
         where is_deleted = false
         group by approve_status
     </select>
+    <select id="export" resultType="com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO">
+        select
+            cbs.id,
+            ci.code,
+            ci,name,
+            ci.short_name as shortName,
+            cbs.origin_seller_name as originSellerName,
+            cbs.change_seller_name as changeSellerName,
+            cbs.approve_status as approveStatus,
+            cbs.approve_user_name  as approveUserName,
+            cbs.create_user_name as createUserName,
+            cbs.create_time as createTime,
+            cbs.start_date as startDate,
+            cbs.approve_time as approveTime
+        from customer_b2b_seller_change cbs
+                 inner join customer_info ci on cbs.main_id = ci.id
+        where
+            ${params.sqlMap.default}
+          and cbs.is_deleted = false
+          and ci.is_deleted = false
+    </select>
 
 
 </mapper>
