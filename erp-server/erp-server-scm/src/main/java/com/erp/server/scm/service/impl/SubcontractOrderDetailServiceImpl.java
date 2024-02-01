@@ -113,6 +113,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
+
         this.saveBatch(resultList);
         //标记SKU
         List<String> skuIds = resultList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
@@ -333,28 +334,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> warehouseIds = new ArrayList<>();
         //供应商Ids
         List<String> supplierIds = new ArrayList<>();
-        newList.forEach(obj -> {
-
-            parentSkuIds.add(obj.getSkuId());
-
-            allSkuIds.add(obj.getSkuId());
-            List<String> skuIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-            allSkuIds.addAll(skuIdList);
-
-            warehouseIds.add(obj.getWarehouseId());
-            List<String> warehouseIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
-            warehouseIds.addAll(warehouseIdList);
-
-
-            //供应商信息
-            if (StringUtils.isNotEmpty(obj.getSupplierId())) {
-                supplierIds.add(obj.getSupplierId());
-            }
-            List<String> supplierIdList = obj.getChildList().stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(supplierIdList)) {
-                supplierIds.addAll(supplierIdList);
-            }
-        });
+        //id集合赋值
+        handleIdList (newList,parentSkuIds,allSkuIds,warehouseIds,supplierIds);
 
         //申请单下推数量校验
         List<String> sourceDetailIds = newList.stream().filter(obj->StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
@@ -366,6 +347,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             sourceDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
             //委外明细信息
             refDetailList = this.listBySourceDetailIds(sourceDetailIds);
+        }
+
+        //委外订单
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
+        if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98073);
         }
 
         //BOM信息
@@ -408,7 +395,6 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,skuVO.getSkuNo(),applyQty - pushdownQty)));
                 }
             }
-
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
@@ -428,8 +414,15 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setBomHistoryId(bomChildrenSkuDTO.getBomHistoryId());
             //仓库名称
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                detailEntity.setWarehouseName(warehouseName);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(updateDTO)) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                //仓库组织匹配校验
+                if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
+                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG,updateDTO.getName(),subcontractOrderEntity.getSubcontractOrgName());
+                }
+                detailEntity.setWarehouseName(updateDTO.getName());
             }
             //供应商名称
             if (CollectionUtils.isNotEmpty(supplierList)) {
@@ -455,9 +448,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 childEntity.setSkuNo(childSkuVO.getSkuNo());
                 childEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
                 //仓库名称
-                if (CollectionUtils.isNotEmpty(warehouseList)) {
-                    String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    childEntity.setWarehouseName(warehouseName);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(updateDTO)) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                //仓库组织匹配校验
+                if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
+                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG,updateDTO.getName(),subcontractOrderEntity.getSubcontractOrgName());
                 }
                 //供应商名称
                 if (CollectionUtils.isNotEmpty(supplierList)) {
@@ -484,6 +481,41 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), addPairList, "编辑操作");
         }
         return resultList;
+    }
+
+
+    /**
+     * @description: id集合赋值
+     * @author Will
+     * @date: 2024/2/1 12:01
+     * @param newList
+     * @param parentSkuIds
+     * @param allSkuIds
+     * @param warehouseIds
+     * @param supplierIds
+     */
+    private void handleIdList (List<SubcontractOrderDetailEntity> newList,List<String> parentSkuIds,
+                               List<String> allSkuIds,List<String> warehouseIds,List<String> supplierIds) {
+        for (SubcontractOrderDetailEntity obj : newList) {
+            parentSkuIds.add(obj.getSkuId());
+
+            allSkuIds.add(obj.getSkuId());
+            List<String> skuIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+            allSkuIds.addAll(skuIdList);
+
+            warehouseIds.add(obj.getWarehouseId());
+            List<String> warehouseIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
+            warehouseIds.addAll(warehouseIdList);
+
+            //供应商信息
+            if (StringUtils.isNotEmpty(obj.getSupplierId())) {
+                supplierIds.add(obj.getSupplierId());
+            }
+            List<String> supplierIdList = obj.getChildList().stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(supplierIdList)) {
+                supplierIds.addAll(supplierIdList);
+            }
+        }
     }
 
     /**
