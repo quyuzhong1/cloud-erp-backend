@@ -25,7 +25,7 @@ public class TransferDeclareJob {
      * 报关设置自动生成-定时器调用
      * @return
      */
-    @XxlJob("TransferDeclareJob")
+    @XxlJob("declareAutoGenerationJob")
     public ReturnT declareAutoGenerationJob() {
         XxlJobHelper.log("====开始自动生成报关单====");
         transferDeclareService.declareAutoGenerationJob();

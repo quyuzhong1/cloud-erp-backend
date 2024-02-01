@@ -148,7 +148,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(TransferLogisticsAuthEntity::getMainId, mainIds).list();
+        return this.lambdaQuery().in(TransferLogisticsAuthEntity::getMainId, mainIds).list();
     }
 
     @Override

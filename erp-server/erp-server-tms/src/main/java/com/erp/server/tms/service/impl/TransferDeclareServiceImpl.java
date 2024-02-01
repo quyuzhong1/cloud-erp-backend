@@ -526,7 +526,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询授权信息
         List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
-            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getMainId())).findFirst().orElse(null);
+            TransferDeclareEntity transferDeclareEntity = transferDeclareEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getId())).findFirst().orElse(new TransferDeclareEntity());
+            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getMainId())).findFirst().orElse(new TransferLogisticsAuthEntity());
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getShippingOrderNo(), authEntity.getId());
             if (result.getCode() == 200) {

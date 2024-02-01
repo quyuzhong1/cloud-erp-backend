@@ -52,6 +52,13 @@
             ad.warehouse_name AS warehouseName
         FROM aliexpress_delivery ad
         WHERE ad.is_deleted = FALSE
+        <!--ids-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND ad.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
         <!--平台订单号-->
         <if test="params.platformCode != null and params.platformCode != ''">
             and  ad.platform_code ILIKE concat('%',#{params.platformCode}::text,'%')
