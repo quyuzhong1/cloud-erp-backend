@@ -5120,6 +5120,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId) {
         List<BaseIdDTO.CodeDTO> codeDTOS = logisticsFeign.listBySupplierId(deliveryLogisticsSupplierId);
         List<String> channelIds = codeDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(channelIds)) {
+            return Collections.emptyList();
+        }
         List<TransferDeclareDetailDTO.AddDTO> addDTOList = baseMapper.listByLogisticsSupplier(channelIds);
         return addDTOList;
     }
@@ -5134,6 +5137,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             tdAdd.setTransferLogisticsSupplierId(viewDTO.getTransferLogisticsSupplierId());
             tdAdd.setTransferChannelId(viewDTO.getTransferChannelId());
             List<TransferDeclareDetailDTO.AddDTO> detailList = this.listByLogisticsSupplier(deliveryLogisticsSupplierId);
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
             tdAdd.setDetailList(detailList);
             tdAddList.add(tdAdd);
         }
