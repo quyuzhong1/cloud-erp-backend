@@ -486,7 +486,7 @@ public class SoB2cFeignController extends BaseController {
      * @return void
      **/
     @PostMapping("/updateAliExpressOrderWarehouse")
-    public Boolean updateAliExpressOrderWarehouse(@RequestBody String soId) {
-        return soB2cService.updateAliExpressOrderWarehouse(soId);
+    public Boolean updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId) {
+        return soB2cService.updateAliExpressOrderWarehouse(soId, shopId);
     }
 }

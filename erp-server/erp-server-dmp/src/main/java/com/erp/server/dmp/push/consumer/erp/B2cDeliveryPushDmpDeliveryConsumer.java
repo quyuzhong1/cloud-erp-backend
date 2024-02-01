@@ -58,8 +58,7 @@ public class B2cDeliveryPushDmpDeliveryConsumer extends AbstractPlatformConsumer
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        DmpSyncMqDTO dto = JSONUtil.toBean(ext.toString(), DmpSyncMqDTO.class);
-        SoB2cDeliveryDTO.ViewDTO viewDTO = JSONObject.parseObject(dto.getMqData(), SoB2cDeliveryDTO.ViewDTO.class);
+        SoB2cDeliveryDTO.ViewDTO viewDTO = JSONUtil.toBean(ext.toString(), SoB2cDeliveryDTO.ViewDTO.class);
         this.cleanOrderField(viewDTO);
         return ApiResult.success();
     }

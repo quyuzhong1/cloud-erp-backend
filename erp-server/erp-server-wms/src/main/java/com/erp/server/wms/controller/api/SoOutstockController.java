@@ -298,7 +298,7 @@ public class SoOutstockController extends BaseController {
 
                 //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
                 if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
-                    soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId());
+                    soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
                 }
 
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);

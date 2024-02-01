@@ -776,5 +776,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soId
      * @return void
      **/
-    Boolean updateAliExpressOrderWarehouse(String soId);
+    Boolean updateAliExpressOrderWarehouse(String soId, String shopId);
 }

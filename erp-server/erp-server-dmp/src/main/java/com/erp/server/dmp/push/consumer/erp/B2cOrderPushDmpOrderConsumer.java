@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer.erp;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -55,8 +54,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        DmpSyncMqDTO dto = JSONUtil.toBean(ext.toString(), DmpSyncMqDTO.class);
-        SoB2cDTO.ViewDTO viewDTO = JSONObject.parseObject(dto.getMqData(), SoB2cDTO.ViewDTO.class);
+        SoB2cDTO.ViewDTO viewDTO = JSONUtil.toBean(ext.toString(), SoB2cDTO.ViewDTO.class);
         this.cleanOrderField(viewDTO);
         return ApiResult.success();
     }

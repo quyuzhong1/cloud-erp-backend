@@ -68,7 +68,9 @@ import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
@@ -247,6 +249,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private AliExpressDliveryOrderService aliExpressDliveryOrderService;
+
+    @Resource
+    private WarehouseMappingFeign warehouseMappingFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5380,10 +5385,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean updateAliExpressOrderWarehouse(String soId) {
-/*        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(String shopId);
+    public Boolean updateAliExpressOrderWarehouse(String soId, String shopId) {
+        SoB2cEntity entity = this.getById(soId);
+        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(shopId);
+
+        //查询速卖通仓库名称是否映射ERP仓库
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(entity.getDictPlatform());
+
         //查询速卖通订单
-        aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, )*/
+        try {
+            IopResponse response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(entity.getPlatformCode()));
+
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("result");
+            Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+            //失败
+            if (!success) {
+                log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
+
+            }
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
 
         return Boolean.TRUE;
     }

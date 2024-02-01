@@ -347,5 +347,5 @@ public interface SoB2cFeign {
      * @return void
      **/
     @PostMapping("/feign/soB2c/updateAliExpressOrderWarehouse")
-    void updateAliExpressOrderWarehouse(@RequestBody String soId);
+    void updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId);
 }

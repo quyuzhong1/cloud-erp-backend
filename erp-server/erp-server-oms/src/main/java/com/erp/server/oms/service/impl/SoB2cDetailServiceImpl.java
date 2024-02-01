@@ -309,6 +309,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
                 saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
                 saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
+                saveOrUpdateEntity.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
+                saveOrUpdateEntity.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
             }
 
             //建议售价

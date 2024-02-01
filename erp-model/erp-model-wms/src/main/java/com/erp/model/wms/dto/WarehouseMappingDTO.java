@@ -133,6 +133,14 @@ public class WarehouseMappingDTO implements Serializable {
          */
         private String warehouseName;
         /**
+         * ERP仓库组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * ERP仓库组织名称
+         */
+        private String warehouseOrgName;
+        /**
          * 第三方平台仓库名称
          */
         private String thirdWarehouseName;

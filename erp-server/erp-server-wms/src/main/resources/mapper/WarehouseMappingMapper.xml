@@ -37,6 +37,7 @@
         SELECT
         w.id AS warehouseId,
         w.name AS warehouseName,
+        w.org_id AS warehouseOrgId,
         wm.name AS  thirdWarehouseName,
         wm.dict_Platform AS dictPlatform
         FROM warehouse w
@@ -55,8 +56,9 @@
         SELECT
         w.id AS warehouseId,
         w.name AS warehouseName,
+        w.org_id AS warehouseOrgId,
         wm.name AS  thirdWarehouseName,
-        wm.dict_Platform AS dictPlatform
+        wm.dict_Platform AS dictPlatform,
         FROM warehouse w
         LEFT JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
         WHERE w.is_deleted = FALSE

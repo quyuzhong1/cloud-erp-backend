@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -10,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseMappingMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
@@ -23,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 仓库映射第三方平台表 服务实现类
@@ -38,6 +43,8 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -96,14 +103,34 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
         if (CollectionUtils.isEmpty(warehouseIdList)) {
             return Collections.emptyList();
         }
-
         List<WarehouseMappingDTO.MappingViewDTO> resultList = baseMapper.listMappingViewByWarehouseIds(warehouseIdList);
+
+        //组织信息
+        List<String> orgIds = resultList.stream().map(req -> req.getWarehouseOrgId()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        for (WarehouseMappingDTO.MappingViewDTO mappingViewDTO : resultList) {
+            BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewDTO.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(codeDTO)) {
+                mappingViewDTO.setWarehouseOrgName(codeDTO.getName());
+            }
+        }
         return resultList;
     }
 
     @Override
     public List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByDictPlatform(String dictPlatform) {
         List<WarehouseMappingDTO.MappingViewDTO> resultList = baseMapper.listMappingViewByDictPlatform(dictPlatform);
+
+        //组织信息
+        List<String> orgIds = resultList.stream().map(req -> req.getWarehouseOrgId()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        for (WarehouseMappingDTO.MappingViewDTO mappingViewDTO : resultList) {
+            BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewDTO.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(codeDTO)) {
+                mappingViewDTO.setWarehouseOrgName(codeDTO.getName());
+            }
+        }
+
         return resultList;
     }
 
