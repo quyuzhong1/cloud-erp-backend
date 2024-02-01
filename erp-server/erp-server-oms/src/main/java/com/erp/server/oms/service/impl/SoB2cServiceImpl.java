@@ -5384,9 +5384,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId) {
-        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(String shopId);
+/*        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(String shopId);
         //查询速卖通订单
-        aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, )
+        aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, )*/
 
         return Boolean.TRUE;
     }
