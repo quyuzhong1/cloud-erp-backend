@@ -1084,12 +1084,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
         //存在的物流单 code
         String code = soB2cLogisticsEntity.getCode();
-        //订单明细数据
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
-        if (CollectionUtils.isEmpty(soB2cDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-        }
-
 
         /**
          * 是否覆盖
@@ -1154,7 +1148,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //明细仓库更新
             soB2cDetailService.updateWarehouseIdByMainId(id, dto.getWarehouseId(), isCover);
         }
-
+        //订单明细数据
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
 
         //无仓库明细
         List<SoB2cDetailEntity> notWarehouseList = soB2cDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseId())).collect(Collectors.toList());
@@ -3979,11 +3977,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         detailAddDTO.setTrackNo(item.getCode());
                         addDetailList.add(detailAddDTO);
                     }
-
-                    addDTO.setDetailList(addDetailList);
                 }
-
             }
+            addDTO.setDetailList(addDetailList);
+            transferDeclareList.add(addDTO);
         }
         //需要添加中转报关单数据
         for (TransferDeclareDTO.AddDTO item : transferDeclareList) {
