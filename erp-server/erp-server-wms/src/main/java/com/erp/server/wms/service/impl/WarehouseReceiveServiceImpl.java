@@ -893,6 +893,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
         //作废发送金蝶
 //        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
+        //如果是收货单下推的，删除时去掉收货单的收获状态和收货数量
+        List<String> deliveryIds = warehouseReceiveList.stream().filter(v->PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getSourceId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deliveryIds)){
+            srmDeliveryOrderFeign.cancelReceive(deliveryIds);
+        }
         return Boolean.TRUE;
     }
 
