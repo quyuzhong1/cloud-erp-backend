@@ -58,6 +58,18 @@ public class LogisticsFeignController {
     }
 
     /**
+     * 根据物流商id 获取到对应的渠道的启用禁用列表
+     * @Author Luo_WG
+     * @Date 2024/2/1 20:33
+     * @param logisticsSupplierIds
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO.CodeDTO>
+     **/
+    @PostMapping("/listLogisticsChannel")
+    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(@RequestBody List<String> logisticsSupplierIds) {
+        return logisticsChannelService.listLogisticsChannel(logisticsSupplierIds);
+    }
+
+    /**
      * 更改物流商状态
      * @param dto
      * @return

@@ -5120,8 +5120,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId) {
-        List<BaseIdDTO.CodeDTO> codeDTOS = logisticsFeign.listBySupplierId(deliveryLogisticsSupplierId);
-        List<String> channelIds = codeDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<LogisticsChannelDTO.ListSelectDTO> listSelectDTOS = logisticsFeign.listLogisticsChannel(Arrays.asList(deliveryLogisticsSupplierId));
+        List<String> channelIds = listSelectDTOS.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(channelIds)) {
             return Collections.emptyList();
         }
