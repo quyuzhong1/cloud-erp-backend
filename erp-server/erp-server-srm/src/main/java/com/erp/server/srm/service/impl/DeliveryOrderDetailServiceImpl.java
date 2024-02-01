@@ -104,6 +104,10 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         //处理删除的明细
         List<DeliveryOrderDetailEntity> needDeleteDetailList = oldDetailList.stream().filter(v->!existDetailIds.contains(v.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
+            needDeleteDetailList.forEach(v->{
+                String msg = StrUtil.format("用户【{}】删除sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(), v.getSkuNo());
+                operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.DELIVERY_ORDER.getCode(),v.getMainId(),"删除操作");
+            });
             if(!this.removeByIds(needDeleteDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList()))){
                 throw new ServiceException("送货单明细删除失败");
             }
@@ -112,10 +116,12 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> needUpdateDetailList = oldDetailList.stream().filter(v->existDetailIds.contains(v.getId())).collect(Collectors.toList());
         Map<String,DeliveryOrderDetailDTO.UpdateDTO> updateDTOMap = updateDTOList.stream().collect(Collectors.toMap(DeliveryOrderDetailDTO.UpdateDTO::getDetailId, Function.identity()));
         for(DeliveryOrderDetailEntity deliveryOrderDetailEntity : needUpdateDetailList){
+            DeliveryOrderDetailEntity old = ObjectUtil.cloneByStream(deliveryOrderDetailEntity);
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
             checkDelivery(deliveryOrderDetailEntity.getSourceDetailId(),deliveryOrderDetailEntity.getId(),updateDTO.getDeliveryQty(),deliveryOrderDetailEntity.getOrderQty());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
-
+            String msg = StrUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(), deliveryOrderDetailEntity.getSkuNo());
+            operateLogService.addModuleOperateLogByObj(old, deliveryOrderDetailEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getMainId(), msg);
         }
         if(CollectionUtils.isNotEmpty(needUpdateDetailList)){
             if(!this.updateBatchById(needUpdateDetailList)){
@@ -131,6 +137,8 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         }
         needAddDTOList.forEach(v->{
             checkDelivery(v.getSourceDetailId(),null,v.getDeliveryQty(),v.getOrderQty());
+            String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(), v.getSkuNo());
+            operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.DELIVERY_ORDER.getCode(),v.getMainId(),"新增操作");
         });
         List<DeliveryOrderDetailEntity> list = BeanMapperUtils.copyList(DeliveryOrderDetailEntity.class, needAddDTOList);
         //处理明细数据
