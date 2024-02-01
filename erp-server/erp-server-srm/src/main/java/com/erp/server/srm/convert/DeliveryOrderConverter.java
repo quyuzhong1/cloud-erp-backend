@@ -35,8 +35,8 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "toWarehouseId", source = "purchaseOrderEntity.deliveryWarehouseId")
     @Mapping(target = "toWarehouseName", source = "purchaseOrderEntity.deliveryWarehouseName")
     @Mapping(target = "sourceType", constant = "purchase")
-    @Mapping(target = "planDeliveryDate", source = "orderDetailEntity.planDeliveryDate")
-    DeliveryOrderEntity purchaseOrderToDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO,PurchaseOrderDetailEntity orderDetailEntity);
+    @Mapping(target = "planDeliveryDate", source = "addDeliveryDTO.expectDeliveryDate")
+    DeliveryOrderEntity purchaseOrderToDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "mainId", source = "mainId")
@@ -47,6 +47,6 @@ public interface DeliveryOrderConverter {
     @Mapping(target = "deliveryQty", source = "addDeliveryDTO.planDeliveryQty")
     @Mapping(target = "isUrgent", source = "detailEntity.isUrgent")
     @Mapping(target = "orderQty", source = "detailEntity.purchaseQty")
-    @Mapping(target = "planDeliveryDate", source = "addDeliveryDTO.expectDeliveryDate")
+    @Mapping(target = "planDeliveryDate", source = "detailEntity.planDeliveryDate")
     DeliveryOrderDetailEntity purchaseOrderDetailToDeliveryOrderDetail(String mainId, DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO, PurchaseOrderDetailEntity detailEntity);
 }

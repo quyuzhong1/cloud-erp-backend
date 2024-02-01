@@ -324,7 +324,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 continue;
             }
             try {
-                DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS,purchaseOrderDetailList);
+                DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
                 handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos);
             }catch (Exception e){
@@ -426,13 +426,12 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param deliveryDTOS
      * @return
      */
-    private DeliveryOrderEntity builderDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,List<PurchaseOrderDetailEntity> purchaseOrderDetailList) {
+    private DeliveryOrderEntity builderDeliveryOrder(PurchaseOrderEntity purchaseOrderEntity, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS) {
         DeliveryOrderDTO.AddDeliveryDTO addDeliveryDTO = deliveryDTOS.stream().filter(Objects::nonNull).findFirst().orElse(null);
         if(StringUtils.isEmpty(addDeliveryDTO.getSupplierId())){
             addDeliveryDTO.setSupplierId(userService.getSupplierId());
         }
-        PurchaseOrderDetailEntity orderDetailEntity = purchaseOrderDetailList.stream().filter(e -> e.getId().equals(addDeliveryDTO.getPurchaseDetailId())).findFirst().orElse(null);
-        DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO,orderDetailEntity);
+        DeliveryOrderEntity deliveryOrderEntity = DeliveryOrderConverter.INSTANCE.purchaseOrderToDeliveryOrder(purchaseOrderEntity,addDeliveryDTO);
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
         this.handleData(deliveryOrderEntity,false);
         this.save(deliveryOrderEntity);
