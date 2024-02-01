@@ -12,6 +12,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,8 +40,10 @@ import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
@@ -104,6 +107,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private ShopInfoFeign shopInfoFeign;
     @Autowired
     private TransferDeclareProductService transferDeclareProductService;
+    @Autowired
+    private SoOutstockFeign soOutstockFeign;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -528,12 +533,22 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        List<String> soIdList = transferDeclareDetailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIdList);
 
         //明细信息
         List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
         for (TransferDeclareDetailDTO.ViewDTO viewDTO : detailList) {
             //出库状态中文
-            viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(viewDTO.getOutstockStatus()));
+            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream()
+                    .filter(req -> req.getSoId().equals(viewDTO.getSoId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soOutstockDetailEntity)) {
+                viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+            } else {
+                viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+            }
             //中转状态中文
             viewDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(viewDTO.getTransferStatus()));
             //上传状态（订单）中文
@@ -591,9 +606,20 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
      * @param dateList
      */
     private void fillList(List<TransferDeclareDTO.ListDTO> dateList) {
+        List<String> soIdList = dateList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIdList);
+
         for (TransferDeclareDTO.ListDTO listDTO : dateList) {
             //出库状态中文
-            listDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(listDTO.getOutstockStatus()));
+            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream()
+                    .filter(req -> req.getSoId().equals(listDTO.getSoId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soOutstockDetailEntity)) {
+                listDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+            } else {
+                listDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+            }
             //中转状态中文
             listDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(listDTO.getTransferStatus()));
             //上传状态（批次）中文

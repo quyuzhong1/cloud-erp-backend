@@ -319,6 +319,10 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String weightUnit;
         /**
+         * 销售单id
+         */
+        private String soId;
+        /**
          * 销售单号
          */
         private String soCode;

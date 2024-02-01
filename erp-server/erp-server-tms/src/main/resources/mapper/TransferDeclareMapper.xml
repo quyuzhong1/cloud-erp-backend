@@ -53,6 +53,7 @@
             td.transfer_channel_name AS transferChannelName,
             td.package_total_qty AS packageTotalQty,
             td.package_total_weight AS packageTotalWeight,
+            tdd.so_id AS soId,
             tdd.so_code AS soCode,
             tdd.order_upload_status AS uploadOrderStatus,
             tdd.logistics_channel_name AS logisticsChannelName,
