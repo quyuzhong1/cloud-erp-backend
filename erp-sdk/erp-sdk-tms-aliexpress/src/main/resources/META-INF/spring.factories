@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+   com.erp.tms.aliexpress.service.AliExpressHandoverService,\
    com.erp.tms.aliexpress.service.AliExpressShipperService

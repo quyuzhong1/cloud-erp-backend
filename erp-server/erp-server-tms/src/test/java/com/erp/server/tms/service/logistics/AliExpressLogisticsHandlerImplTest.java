@@ -59,12 +59,14 @@ public class AliExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
-//        String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
-//        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
-//        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
+        String TOP_USER_KEY = "2671706312";
+        String CLIENT = "ISV-数大臣";
+        String TOKEN = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
+        String APP_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200808eDwdp7jFQ11c2502cvNseAYnXjpUBSoEaDBwCKVWDHjRmXlzLs7s2E3KQ";
+        String token = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -168,7 +170,7 @@ public class AliExpressLogisticsHandlerImplTest {
                 .deliveryNo("3028833906081879")
 //                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
-                        .addressFirst("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
+                        .streetAddress("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
                         .email("965656546@qq.con")
                         .city("Uskudar")
                         .name("tr1011044319")
@@ -269,15 +271,16 @@ public class AliExpressLogisticsHandlerImplTest {
         OrderRequest orderRequest = OrderRequest.builder().
                 clientId(authMap.get("clientId")).
                 clientSecret(authMap.get("clientSecret")).
-                startTime("2023-12-27 00:00:00").
-                endTime("2023-12-29 00:00:00").
+                startTime("2024-01-30 00:00:00").
+                endTime("2024-02-02 00:00:00").
                 baseUrl(authMap.get("url")).
                 apiName(apiName).
                 currentPage(1).
                 token(authMap.get("token")).build();
         List<AliExpressOrder > orderList = new ArrayList<>();
         aliExpressOrderService.listOrder(orderRequest, orderList);
-        System.out.println(orderList);
+        System.out.println("订单列表");
+        System.out.println(JSONObject.toJSONString(orderList));
     }
 
     /**
