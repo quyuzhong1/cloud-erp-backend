@@ -63,29 +63,26 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
         //是否自动发货
         Boolean isAutoDelivery = dto.getIsAutoDelivery();
-        if (isAutoDelivery && entity.getIsWeigh()) {
-            String sourceId = entity.getSourceId();
-            if (StringUtils.isNotBlank(sourceId)) {
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
-                if(Objects.nonNull(soB2cEntity)){
-                    String transferStatus = soB2cEntity.getTransferStatus();
-                    //表示要中转啊
-                    if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
-                        TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
-                        if (Objects.nonNull(transferDeclare)) {
-                            String uploadSuccess = TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
-                            String uploadStatus = transferDeclare.getUploadStatus();
-                            if (!uploadSuccess.equals(uploadStatus)) {
-                                throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
-                            }
-                        }else{
+        String sourceId = entity.getSourceId();
+        if (isAutoDelivery) {
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+            if (Objects.nonNull(soB2cEntity)) {
+                String transferStatus = soB2cEntity.getTransferStatus();
+                //表示要中转啊
+                if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
+                    TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
+                    if (Objects.nonNull(transferDeclare)) {
+                        String uploadSuccess = TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                        String uploadStatus = transferDeclare.getUploadStatus();
+                        if (!uploadSuccess.equals(uploadStatus)) {
                             throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                         }
+                    } else {
+                        throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                     }
                 }
             }
         }
-
         if (Objects.nonNull(dto.getWeight())) {
             if (Objects.isNull(dto.getWeightUnit())) {
                 throw new ServiceException("称重单位不能为空");
