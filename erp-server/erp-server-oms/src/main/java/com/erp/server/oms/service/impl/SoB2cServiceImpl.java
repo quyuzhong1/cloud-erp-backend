@@ -69,6 +69,9 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.oms.aliexpress.api.IopResponse;
+import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
+import com.erp.oms.aliexpress.dto.response.DataListBean;
+import com.erp.oms.aliexpress.dto.response.ErpFulfillmentForwardDtoBean;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -252,6 +255,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private WarehouseMappingFeign warehouseMappingFeign;
+
+    @Resource
+    private AliexpressDeliveryFeign aliexpressDeliveryFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5387,6 +5393,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId, String shopId) {
         SoB2cEntity entity = this.getById(soId);
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soId);
         Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(shopId);
 
         //查询速卖通仓库名称是否映射ERP仓库
@@ -5401,9 +5408,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
             //失败
             if (!success) {
-                log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-
+                log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
             }
+            AliExpressAscpFfoQueryResponse result = com.alibaba.fastjson.JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
+            DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
+            if (ObjectUtil.isNotEmpty(dataList)) {
+                List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDto = dataList.getErpFulfillmentForwardDto();
+                if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
+                    return Boolean.FALSE;
+                }
+                //查询映射的仓库信息
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> erpFulfillmentForwardDto.get(0).getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
+                    soB2cDetailService.updateWarehouseByMapping(mappingViewDTO);
+
+                    //生成速卖通发货单
+                    addAliExpressDelivery(logisticsEntity, erpFulfillmentForwardDto.get(0), entity);
+                }
+            }
+
         } catch (ApiException e) {
             e.printStackTrace();
         }
@@ -5411,6 +5434,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.TRUE;
     }
 
+
+    /**
+     * 新增速卖通发货单
+     * @param logisticsEntity
+     * @param fulfillmentForwardDtoBean
+     * @param entity
+     */
+    private void addAliExpressDelivery(SoB2cLogisticsEntity logisticsEntity, ErpFulfillmentForwardDtoBean fulfillmentForwardDtoBean ,SoB2cEntity entity) {
+        AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
+        addDTO.setOutBoundTime(logisticsEntity.getDeliveryTime());
+        addDTO.setPlatformCode(entity.getPlatformCode());
+        addDTO.setSoId(entity.getId());
+        addDTO.setSoCode(entity.getCode());
+        addDTO.setShopId(entity.getShopId());
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(entity.getShopId())) {
+            addDTO.setShopId(entity.getShopId());
+            ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                addDTO.setShopName(shopInfoEntity.getName());
+            }
+        }
+        addDTO.setTrackNo(logisticsEntity.getCode());
+        addDTO.setTradeCreateTime(LocalDateTimeUtil.of(fulfillmentForwardDtoBean.getTradeCreateTime()));
+        aliexpressDeliveryFeign.add(addDTO);
+    }
 
     /**
      * 获取速卖通平台店铺授权信息+

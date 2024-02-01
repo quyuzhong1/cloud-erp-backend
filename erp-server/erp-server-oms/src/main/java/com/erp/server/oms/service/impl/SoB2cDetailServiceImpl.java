@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
@@ -475,6 +476,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             return hasBomOutstockList;
         }
 
+    }
+
+    @Override
+    public Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO) {
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            lambdaUpdate()
+                    .set(SoB2cDetailEntity::getWarehouseId, viewDTO.getWarehouseId())
+                    .set(SoB2cDetailEntity::getWarehouseName, viewDTO.getWarehouseName())
+                    .set(SoB2cDetailEntity::getWarehouseOrgId, viewDTO.getWarehouseOrgId())
+                    .set(SoB2cDetailEntity::getWarehouseOrgName, viewDTO.getWarehouseOrgName())
+                    .update();
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**
