@@ -181,6 +181,17 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         transferDeclareProductService.removeByDeclareDetailIds(ids);
     }
 
+
+    /**
+     * 根据销售订单id查询
+     * @param soId
+     * @return
+     */
+    @Override
+    public TransferDeclareDetailEntity getBySoId(String soId) {
+        return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last("LIMIT 1").one();
+    }
+
     /**
      * 新增修改处理数据
      */
@@ -206,6 +217,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
 
 
+    @Override
     public List<TransferDeclareDetailEntity> listByMainIds(List<String> mainIds) {
         if (CollectionUtil.isEmpty(mainIds)) {
             return Collections.emptyList();

@@ -40,15 +40,15 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
 
     /**
      *
-     * @param dto
+     * @param
      * @return
      */
-    List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<PackageForecastDTO.TabListDTO> tabList();
 
     /**
      * 分页
      * @param dto
      * @return
      */
-    PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
+    PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<PackageForecastDTO.PagingParamDTO> dto);
 }

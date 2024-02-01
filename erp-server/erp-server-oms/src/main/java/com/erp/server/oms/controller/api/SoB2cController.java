@@ -208,6 +208,7 @@ public class SoB2cController extends BaseController {
                         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                         if (warehouseRuleMatch) {
                             SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, warehouseRuleResult.getMap());
+                            soB2cService.checkProductRegistrationAndUpdate(id,"");
                             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                             if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                                 soB2cService.getLogisticsCode(id, autoGetTrackNo);

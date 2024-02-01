@@ -14,7 +14,7 @@ public enum PackageUploadStatusEnum implements EnumMessage {
     WAIT("wait", "待上传"),
     FAILURE("failure", "上传失败"),
     SUCCESS("success", "上传成功"),
-    CANCEL("cancel", "上传成功"),
+    CANCEL("cancel", "已取消"),
     ;
     /**
      * 类型

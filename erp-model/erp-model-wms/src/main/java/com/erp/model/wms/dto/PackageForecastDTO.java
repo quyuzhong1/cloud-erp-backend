@@ -2,10 +2,13 @@ package com.erp.model.wms.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -28,7 +31,10 @@ public class PackageForecastDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO{
 
+
         private String tabFlag;
+
+        private String tabName;
 
         /**
          * 数量
@@ -102,7 +108,7 @@ public class PackageForecastDTO implements Serializable {
         /**
          *单位
          */
-        private String weightUnit;
+        private String totalPackageWeightUnit;
 
         /**
          * 上传状态
@@ -139,15 +145,73 @@ public class PackageForecastDTO implements Serializable {
          */
         private String remark;
 
-
+        /**
+         * 销售订单id
+         */
         private String soId;
 
+        /**
+         * 销售订单code
+         */
         private String soCode;
 
-        private String soType;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
 
 
 
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+
+
+        /**
+         * 小包运输单号
+         */
+        private String minPackageTransportNo;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+
+        /**
+         * 小包交接状态
+         */
+        private String minPackageHandoverStatus;
+
+
+        /**
+         * 小包交接状态名
+         *
+         */
+        private String minPackageHandoverStatusName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -155,7 +219,9 @@ public class PackageForecastDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO{
+    public static class PagingParamDTO extends SortDTO {
+
+        private String tabFlag;
 
 
     }

@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -112,16 +114,42 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     /**
      * tab 列表
-     * @param dto
+     * @param
      * @return
      */
     @Override
-    public List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return null;
+    public List<PackageForecastDTO.TabListDTO> tabList() {
+        List<PackageForecastDTO.TabListDTO> resultList = new ArrayList<>(5);
+        List<PackageForecastDTO.TabListDTO> tabListList = baseMapper.tabList();
+        PackageForecastDTO.TabListDTO all=new PackageForecastDTO.TabListDTO();
+        all.setTabFlag("all");
+        all.setTabName("全部");
+        Integer allCount = tabListList.stream().mapToInt(PackageForecastDTO.TabListDTO::getCount).sum();
+        all.setCount(allCount);
+        resultList.add(all);
+        PackageUploadStatusEnum cancel = PackageUploadStatusEnum.CANCEL;
+        for (PackageUploadStatusEnum item : PackageUploadStatusEnum.values()) {
+            if(!cancel.equals(item)){
+                PackageForecastDTO.TabListDTO tabDTO = new PackageForecastDTO.TabListDTO();
+                String tabCode = item.getCode();
+                tabDTO.setTabFlag(item.getCode());
+                tabDTO.setTabName(item.getName());
+                Integer count= tabListList.stream().filter(t->tabCode.equals(t.getTabFlag())).
+                        map(PackageForecastDTO.TabListDTO::getCount).findFirst().orElse(0);
+                tabDTO.setCount(count);
+                resultList.add(tabDTO);
+            }
+        }
+        return resultList;
     }
 
     @Override
-    public PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    public PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
+        PackageForecastDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params );
+
         return null;
     }
 

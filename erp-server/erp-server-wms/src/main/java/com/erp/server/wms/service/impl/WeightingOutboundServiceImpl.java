@@ -10,6 +10,8 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -70,10 +72,10 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 String transferStatus = soB2cEntity.getTransferStatus();
                 //表示要中转啊
                 if (!TransferStatusEnum.NOT.getCode().equals(transferStatus)) {
-                    TransferDeclareEntity transferDeclare = transferDeclareFeign.getBySoId(sourceId);
-                    if (Objects.nonNull(transferDeclare)) {
+                    TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareFeign.getBySoId(sourceId);
+                    if (Objects.nonNull(transferDeclareDetailEntity)) {
                         String uploadSuccess = TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
-                        String uploadStatus = transferDeclare.getUploadStatus();
+                        String uploadStatus = transferDeclareDetailEntity.getOrderUploadStatus();
                         if (!uploadSuccess.equals(uploadStatus)) {
                             throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
                         }

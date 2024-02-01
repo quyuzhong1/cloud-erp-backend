@@ -3,7 +3,9 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,9 @@ public class TransferDeclareFeignController {
 
     @Resource
     private TransferDeclareService transferDeclareService;
+
+    @Resource
+    private TransferDeclareDetailService transferDeclareDetailService;
 
     /**
      * 新增中转报关单
@@ -39,7 +44,7 @@ public class TransferDeclareFeignController {
      * @create 2024-01-26 9:25
      */
     @GetMapping("/getBySoId")
-    public TransferDeclareEntity getBySoId(@RequestParam("soId") String soId){
-        return transferDeclareService.getBySoId(soId);
+    public TransferDeclareDetailEntity getBySoId(@RequestParam("soId") String soId){
+        return transferDeclareDetailService.getBySoId(soId);
     }
 }

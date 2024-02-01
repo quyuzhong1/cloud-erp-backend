@@ -44,9 +44,9 @@ public class PackageForecastController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/tabList")
-    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList(dto);
+    @GetMapping("/tabList")
+    public ApiResult<List<PackageForecastDTO.TabListDTO>> tabList() {
+        List<PackageForecastDTO.TabListDTO> tabList = packageForecastService.tabList();
         return success(tabList);
     }
 
@@ -57,7 +57,7 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
         return success(pagingVO);
     }

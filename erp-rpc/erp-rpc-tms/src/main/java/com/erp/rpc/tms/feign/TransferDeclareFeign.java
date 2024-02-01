@@ -2,6 +2,7 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,5 +31,5 @@ public interface TransferDeclareFeign {
      * @create 2024-01-26 9:25
      */
     @GetMapping("/feign/transferDeclare/getBySoId")
-    TransferDeclareEntity getBySoId(@RequestParam("soId") String soId);
+    TransferDeclareDetailEntity  getBySoId(@RequestParam("soId") String soId);
 }

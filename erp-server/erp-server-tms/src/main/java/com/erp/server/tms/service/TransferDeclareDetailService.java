@@ -90,4 +90,11 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return void
      **/
     void deleteByMainIds(List<String> mainIds);
+
+    /**
+     * 根据销售订单id获取
+     * @param soId
+     * @return
+     */
+    TransferDeclareDetailEntity getBySoId(String soId);
 }
