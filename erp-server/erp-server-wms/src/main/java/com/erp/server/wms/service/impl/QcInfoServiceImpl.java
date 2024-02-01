@@ -32,6 +32,7 @@ import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -245,6 +246,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (StringUtils.isNotBlank(purchaseOrderId)) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
@@ -252,6 +261,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
+
         }
         String sourceDetailId = dto.getSourceDetailId();
         bill.setSourceDetailId(sourceDetailId);
@@ -566,6 +576,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
@@ -987,6 +1005,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
