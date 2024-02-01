@@ -97,4 +97,14 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return
      */
     TransferDeclareDetailEntity getBySoId(String soId);
+
+    /**
+     * 修改出库状态
+     * @Author Luo_WG
+     * @Date 2024/2/1 18:39
+     * @param soIdList
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateOutstockStatus(List<String> soIdList, String status);
 }

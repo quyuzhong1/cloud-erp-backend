@@ -3,12 +3,13 @@ package com.erp.rpc.tms.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @FeignClient(name = "erp-tms", contextId = "transferDeclare")
 public interface TransferDeclareFeign {
@@ -32,4 +33,15 @@ public interface TransferDeclareFeign {
      */
     @GetMapping("/feign/transferDeclare/getBySoId")
     TransferDeclareDetailEntity  getBySoId(@RequestParam("soId") String soId);
+
+    /**
+     * 修改出库状态
+     * @Author Luo_WG
+     * @Date 2024/2/1 18:39
+     * @param soIdList
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
+    Boolean updateOutstockStatus(@RequestParam("soIdList") List<String> soIdList, @RequestParam("status") String status);
 }

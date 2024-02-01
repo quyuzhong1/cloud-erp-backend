@@ -40,7 +40,7 @@ import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -537,17 +537,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             return;
         }
         List<String> soIdList = transferDeclareDetailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIdList);
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
 
         //明细信息
         List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
         for (TransferDeclareDetailDTO.ViewDTO viewDTO : detailList) {
             //出库状态中文
-            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream()
+            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
                     .filter(req -> req.getSoId().equals(viewDTO.getSoId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
                     .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockDetailEntity)) {
+            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
                 viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
             } else {
                 viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
@@ -610,15 +610,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
      */
     private void fillList(List<TransferDeclareDTO.ListDTO> dateList) {
         List<String> soIdList = dateList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIdList);
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
 
         for (TransferDeclareDTO.ListDTO listDTO : dateList) {
             //出库状态中文
-            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream()
+            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
                     .filter(req -> req.getSoId().equals(listDTO.getSoId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
                     .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockDetailEntity)) {
+            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
                 listDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
             } else {
                 listDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());

@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -15,7 +16,10 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
+import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -55,6 +59,8 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     private SoB2cFeign soB2cFeign;
     @Resource
     private TransferDeclareProductService transferDeclareProductService;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -192,6 +198,18 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last("LIMIT 1").one();
     }
 
+    @Override
+    public Boolean updateOutstockStatus(List<String> soIdList, String status) {
+        if (CollectionUtils.isEmpty(soIdList)) {
+            return Boolean.FALSE;
+        }
+
+        return lambdaUpdate()
+                .set(TransferDeclareDetailEntity::getOutstockStatus, status)
+                .in(TransferDeclareDetailEntity::getSoId, soIdList)
+                .update();
+    }
+
     /**
      * 新增修改处理数据
      */
@@ -204,8 +222,21 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
         }
 
+        List<String> soIds = list.stream().map(req -> req.getSoId()).collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
+
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : list) {
             transferDeclareDetailEntity.setMainId(mainId);
+            //出库状态中文
+            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
+                    .filter(req -> req.getSoId().equals(transferDeclareDetailEntity.getSoId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
+            } else {
+                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            }
 
             //渠道名称
             LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
