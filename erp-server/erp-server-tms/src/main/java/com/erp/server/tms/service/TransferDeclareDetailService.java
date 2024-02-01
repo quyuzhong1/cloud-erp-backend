@@ -81,4 +81,13 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @return java.util.List<com.erp.model.tms.entity.TransferDeclareDetailEntity>
      **/
     List<TransferDeclareDetailEntity> listWaitSyncTransferStatus();
+
+    /**
+     * 根据主标id删除详情
+     * @Author Luo_WG
+     * @Date 2024/2/1 14:21
+     * @param mainIds
+     * @return void
+     **/
+    void deleteByMainIds(List<String> mainIds);
 }

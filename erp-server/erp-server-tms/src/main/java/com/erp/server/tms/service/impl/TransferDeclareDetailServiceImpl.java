@@ -28,8 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +100,10 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             this.removeByIds(deleteIds);
             //删除明细对应的sku拆分记录
             transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
+
+            //修改订单中转状态为待中转
+            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+            soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
         }
 
         // 数据处理
@@ -148,6 +154,31 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
+    }
+
+    @Override
+    public void deleteByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return;
+        }
+
+        //校验有上传成功的单据不能删除
+        List<TransferDeclareDetailEntity> detailEntities = this.listByMainIds(mainIds);
+        List<String> soCodeList = detailEntities.stream().filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus())).map(req -> req.getSoCode()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(soCodeList)) {
+            throw new ServiceException(ApiError.ORDER_UPLOAD_SUCCESS_NOT_DELETE, soCodeList.get(0));
+        }
+
+        //删除明细
+        lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();
+
+        //修改订单中转状态为待中转
+        List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        soB2cFeign.updateTransferStatusBatch(soIds, TransferStatusEnum.WAIT.getCode());
+
+        //删除明细对应的sku拆分记录
+        List<String> ids = detailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        transferDeclareProductService.removeByDeclareDetailIds(ids);
     }
 
     /**

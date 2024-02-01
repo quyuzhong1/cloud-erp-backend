@@ -202,11 +202,11 @@
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         WHERE td.is_deleted = FALSE
-        <!--详情id-->
-        <if test="params.detailIdList != null and params.detailIdList.size > 0">
-            and tdd.id in
-            <foreach collection="params.detailIdList" item="detailId" open="(" close=")" separator=",">
-                #{detailId}
+        <!--id-->
+        <if test="params.ids != null and params.ids.size > 0">
+            and td.id in
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
             </foreach>
         </if>
         <!--单据编号-->
@@ -214,8 +214,11 @@
             AND td.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <!--销售单号-->
-        <if test="params.soCode!=null and params.soCode!='' ">
-            AND tdd.so_code ILIKE concat('%',#{params.soCode}::text,'%')
+        <if test="params.soCodeList != null and params.soCodeList.size != ''">
+            and tdd.so_code in
+            <foreach collection="params.soCodeList" item="soCode" open="(" close=")" separator=",">
+                #{soCode}
+            </foreach>
         </if>
         <!--物流渠道id-->
         <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">

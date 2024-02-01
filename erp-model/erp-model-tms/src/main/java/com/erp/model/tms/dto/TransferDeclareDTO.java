@@ -185,9 +185,9 @@ public class TransferDeclareDTO implements Serializable {
     @Data
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 详情表id（用于导出excel）
+         * ids
          */
-        private List<String> detailIdList;
+        private List<String> ids;
 
         /**
          * tabFlag
@@ -252,7 +252,7 @@ public class TransferDeclareDTO implements Serializable {
 
 
         public PagingParamDTO() {
-            this.detailIdList = new ArrayList<>();
+            this.ids = new ArrayList<>();
             this.logisticsChannelIdList = new ArrayList<>();
             this.deliveryLogisticsSupplierIdList = new ArrayList<>();
             this.transferLogisticsSupplierIdList = new ArrayList<>();

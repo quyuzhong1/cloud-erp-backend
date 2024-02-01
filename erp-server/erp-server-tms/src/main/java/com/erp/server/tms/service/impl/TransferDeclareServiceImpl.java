@@ -308,6 +308,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
         }
 
+        //删除详情
+        transferDeclareDetailService.deleteByMainIds(ids);
+
         return this.removeByIds(ids);
     }
 
