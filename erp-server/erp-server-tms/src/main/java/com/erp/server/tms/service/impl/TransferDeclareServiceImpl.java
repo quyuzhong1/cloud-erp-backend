@@ -173,9 +173,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         TransferDeclareDeadlineSettingDTO.ViewDTO viewDTO = view.stream().filter(req -> req.getTransferLogisticsSupplierIdList().contains(transferDeclareEntity.getTransferLogisticsSupplierId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(viewDTO)) {
             if (viewDTO.getDeadlineTime().isAfter(addDTO.getGenerateTime())) {
-                transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
-            } else {
                 transferDeclareEntity.setPlanTransferDate(LocalDate.now());
+            } else {
+                transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
             }
         }
 

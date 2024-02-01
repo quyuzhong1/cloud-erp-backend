@@ -35,6 +35,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
@@ -65,6 +68,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
@@ -240,6 +244,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
+
+    @Resource
+    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5377,9 +5384,45 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId) {
+        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(String shopId);
         //查询速卖通订单
+        aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, )
 
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 获取速卖通平台店铺授权信息+
+     * @param shopId
+     * @return
+     */
+    private Map<String, String> getAliExpressCfgClientMap(String shopId) {
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        } catch (Exception e) {
+            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
+            return new HashMap<>();
+        }
+        if (Objects.isNull(cfgAppClient)) return new HashMap<>();
+        Map<String, String> map = new HashMap<>();
+        map.put("clientSecret", cfgAppClient.getClientSecret());
+        map.put("clientId", cfgAppClient.getClientId());
+        map.put("url", cfgAppClient.getUrl());
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(shopId)) {
+            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
+            if (Objects.nonNull(shopAuth)) {
+                map.put("shopId", shopAuth.getShopId());
+                map.put("token", shopAuth.getAccessToken());
+            }
+        }
+        return map;
     }
 
     /**
