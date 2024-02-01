@@ -137,8 +137,6 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         }
         needAddDTOList.forEach(v->{
             checkDelivery(v.getSourceDetailId(),null,v.getDeliveryQty(),v.getOrderQty());
-            String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(), v.getSkuNo());
-            operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.DELIVERY_ORDER.getCode(),v.getMainId(),"新增操作");
         });
         List<DeliveryOrderDetailEntity> list = BeanMapperUtils.copyList(DeliveryOrderDetailEntity.class, needAddDTOList);
         //处理明细数据
@@ -187,8 +185,9 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         detailList.forEach(v->v.setMainId(mainId));
         //添加操作日志
         if (CollectionUtils.isNotEmpty(detailList)) {
+            String msg = StrUtil.format("用户【{}】修改sku为【%s】的送货单明细 ", commonService.getUserInfo().getUserName());
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), addPairList, "编辑操作");
         }
     }
 
