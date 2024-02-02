@@ -154,10 +154,16 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
     private String saleMethod;
 
     /**
-     * 关联产品id
+     * 关联skuid
      */
-    @TableField("relevance_product_id")
-    private String relevanceProductId;
+    @TableField("iterate_ref_sku_id")
+    private String iterateRefSkuId;
+
+    /**
+     * 关联skuNo
+     */
+    @TableField("iterate_ref_sku_no")
+    private String iterateRefSkuNo;
 
     /**
      * 等级id
@@ -176,12 +182,6 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
      */
     @TableField("approval_time")
     private Date approvalTime;
-
-    /**
-     * 产品版本号
-     */
-    @TableField("product_version")
-    private Integer productVersion;
 
     /**
      * 委托开发成本

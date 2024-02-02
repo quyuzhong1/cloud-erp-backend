@@ -154,9 +154,6 @@
             <if test="approvalTime != null">
                 approval_time = #{approvalTime,jdbcType=TIMESTAMP},
             </if>
-            <if test="productVersion != null">
-                product_version = #{productVersion,jdbcType=SMALLINT},
-            </if>
             <if test="entrustedDevelopCost != null">
                 entrusted_develop_cost = #{entrustedDevelopCost,jdbcType=NUMERIC},
             </if>
@@ -415,13 +412,6 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.approvalTime != null">
                         when id = #{item.id,jdbcType=VARCHAR} then #{item.approvalTime,jdbcType=TIMESTAMP}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="product_version = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.productVersion != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.productVersion,jdbcType=SMALLINT}
                     </if>
                 </foreach>
             </trim>

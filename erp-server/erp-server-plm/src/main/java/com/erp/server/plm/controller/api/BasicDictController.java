@@ -68,7 +68,7 @@ public class BasicDictController extends BaseController {
      * 新增产品 产品属性，产品等级，品牌 列表
      * @author yl
      * @date 2022-10-11 14:34
-     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家, productDeptType 产品部门类型
+     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家, productDeptType 产品部门类型, productType 产品部门类型
      * @return com.common.core.vo.ApiResult
      */
     @GetMapping("/list")

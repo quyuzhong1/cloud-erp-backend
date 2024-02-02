@@ -503,6 +503,9 @@ public enum ApiError implements Serializable {
     ERROR_BOX_WEIGHT_NOT_EXIST(95264,"SKU【{}】单箱重量不能为空"),
     ERROR_NET_WEIGHT_NOT_EXIST(95265,"SKU【{}】净重不能为空"),
     ERROR_BOX_QTY_NOT_EXIST(95266,"SKU【{}】单箱重量不能为空"),
+    ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST(95267,"迭代产品不能为空"),
+
+
     /**
      * TMS 错误
      * 从96000 开始

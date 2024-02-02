@@ -278,15 +278,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setUpdateUserId(loginUser.getUid());
             entity.setUpdateUserName(loginUser.getUserName());
         }
-        if (entity.getType().intValue() == 1) {
-            entity.setProductVersion(1);
-        } else {
-            //查询关联产品版本
-            ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
-            if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-                entity.setProductVersion(productInfoEntity.getProductVersion().intValue() + 1);
-                dto.setRelevanceProductName(productInfoEntity.getName());
+        if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(entity.getType())) {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getIterateRefSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
             }
+            entity.setIterateRefSkuId(productDetailEntity.getId());
+            entity.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+        } else {
+            entity.setIterateRefSkuId("");
+            entity.setIterateRefSkuNo("");
         }
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
@@ -1110,6 +1111,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
+
+        //判断是否是迭代产品
+        if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(productInfoEntity.getType())) {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(productInfoEntity.getIterateRefSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
+            }
+            productInfoEntity.setIterateRefSkuId(productDetailEntity.getId());
+            productInfoEntity.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+        } else {
+            productInfoEntity.setIterateRefSkuId("");
+            productInfoEntity.setIterateRefSkuNo("");
+        }
+
         this.saveOrUpdate(productInfoEntity);
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
