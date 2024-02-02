@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.RedisService;
@@ -268,10 +269,11 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         }
 
         // 报告创建失败
-        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus)) {
+        if (Report.ProcessingStatusEnum.FATAL.equals(processingStatus) || Report.ProcessingStatusEnum.CANCELLED.equals(processingStatus)) {
             // 检查是否停止:并更新状态
             boolean stop = this.checkStopAndUpdateTask(entity);
             if (stop){
+                log.warn("亚马逊查询报告消费:因触发停止规则结束,taskId={}", entity.getId());
                 return;
             }
 
@@ -831,7 +833,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         String checkCountStr = configMap.getOrDefault(SettingEnum.AMAZON_REPORT_CHECK_COUNT, "2");
         int checkCount = Integer.parseInt(checkCountStr);
         // 任务停止次数
-        String stopCountStr = configMap.getOrDefault(SettingEnum.AMAZON_REPORT_STOP_COUNT, "3");
+        String stopCountStr = configMap.getOrDefault(SettingEnum.AMAZON_REPORT_STOP_COUNT, "4");
         int stopCount = Integer.parseInt(stopCountStr);
         // 符合检查历史的失败次数
         if (entity.getCreatedRetryCount() >= checkCount && entity.getCreatedRetryCount() <= stopCount){
@@ -843,6 +845,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 this.stopByErrorMsg(entity, StrUtil.format("超过配置的最大创建检查失败{}次数停止,并且亚马逊无历史成功报告停止", stopCount));
                 // 停止计划任务
                 amzReportScheduleService.cancelById(entity.getMainId());
+                return true;
             }
         }
         // 符合任务停止次数
@@ -852,6 +855,40 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void retryTask(AmzReportTaskEntity entity) {
+        if (!AmzReportTaskStatusEnum.notFinishOrStopList().contains(entity.getStatus())){
+            log.info("[重试【亚马逊报告】任务] 当前任务执行完毕, taskId={},非运行中状态:{}", entity.getId(), entity.getStatus());
+            XxlJobHelper.log("[重试【亚马逊报告】任务] 当前任务执行完毕, taskId={},非运行中状态:{}", entity.getId(), entity.getStatus());
+            return;
+        }
+        // 当前分组报告处理中锁key
+        String reportRedissonKey = StrUtil.format(RedisCacheConstants.AMZ_REPORT_HANDLE_PREFIX, entity.getShopId(), entity.getReportType());
+
+        AmzReportTaskStatusEnum taskStatusEnum = AmzReportTaskStatusEnum.getByCode(entity.getStatus());
+        switch (taskStatusEnum) {
+            case CREATED:
+                // 报告创建处理
+                this.consumerReportCreate(reportRedissonKey, entity);
+                return;
+            case QUERY:
+                // 报告查询处理
+                this.consumerReportQuery(reportRedissonKey, entity);
+                return ;
+            case DOWNLOAD:
+                this.consumerReportDownload(reportRedissonKey, entity);
+                return ;
+            case PARSE:
+                this.consumerReportParse(reportRedissonKey, entity);
+                return ;
+            case DIRECT_QUERY:
+                this.consumerReportDirectQuery(reportRedissonKey, entity);
+                return ;
+            default:
+        }
+
     }
 
 

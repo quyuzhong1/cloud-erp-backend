@@ -349,12 +349,14 @@ public class ReportsApiTest {
     public void getReportsTest() throws Exception {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_ALL_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
-        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
+        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
-        List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
+//        List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
+        List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
         ;
         Integer pageSize = 10;
@@ -365,7 +367,7 @@ public class ReportsApiTest {
 //        String shopId = "1734478618723094529";
 //        String shopId = "1734478618731483137";
 //        String shopId = "1738050804738166786";
-        String shopId = "1736965724921925634";
+        String shopId = "1736965724917731330";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -449,21 +451,5 @@ public class ReportsApiTest {
         System.out.println("下载解析后的结果------------------------------------------------------------");
         System.out.println(jsonArray);
         System.out.println("下载解析后的结尾------------------------------------------------------------");
-    }
-
-    @Test
-    public void viewMsg() {
-        try {
-            DefaultMQPullConsumer consumer = new DefaultMQPullConsumer("dev-jim-sync_amz_report_query_consumer");
-            consumer.setNamesrvAddr("72.16.100.12:8180");
-            consumer.start();
-
-            MessageExt messageExt = consumer.viewMessage("7F000001AB1861E4705B045E6A6E010D");
-            System.out.println(JSONUtil.toJsonStr(messageExt));
-
-            consumer.shutdown();
-        } catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

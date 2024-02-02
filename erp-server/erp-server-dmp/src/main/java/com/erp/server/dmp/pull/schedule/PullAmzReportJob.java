@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -9,7 +10,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
+import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
+import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
@@ -31,6 +34,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -236,7 +240,7 @@ public class PullAmzReportJob {
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
         CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
-                .map(entry -> CompletableFuture.runAsync(()-> {
+                .map(entry -> CompletableFuture.runAsync(() -> {
                     // 异步任务的逻辑
                     amzReportTaskService.handlerCheckReport(entry.getKey(),
                             entry.getValue(),
@@ -271,47 +275,63 @@ public class PullAmzReportJob {
                                 e.getPlatformShopCode(),
                                 AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getEndpointsEnum().name())
                 ));
-        return new Tuple(reportTypeMap, reportTypeConfigMap, reportScheduleEntityList ,taskGroupMap);
+        return new Tuple(reportTypeMap, reportTypeConfigMap, reportScheduleEntityList, taskGroupMap);
     }
 
 
+    /**
+     * 重试【亚马逊报告】任务
+     */
+    @XxlJob("amazonReportRetry")
+    public ReturnT<String> amazonReportRetry() {
+        int size = 10;
+        List<String> taskIdList = new ArrayList<>();
+        List<String> recordTypeList = new ArrayList<>();
+        List<String> shopIdsList = new ArrayList<>();
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StringUtils.isNotBlank(jobParamStr)) {
+            JSONObject jsonObject = JSONObject.parseObject(jobParamStr);
+            size = jsonObject.getInteger("size");
+            String taskIdStr = jsonObject.getString("taskIdList");
+            if (StringUtils.isNotBlank(taskIdStr)) {
+                taskIdList = JSONUtil.toList(taskIdStr, String.class);
+            }
+            String recordTypeStr = jsonObject.getString("recordTypeList");
+            if (StringUtils.isNotBlank(recordTypeStr)) {
+                recordTypeList = JSONUtil.toList(recordTypeStr, String.class);
+            }
+            String shopIdsListStr = jsonObject.getString("shopIdsList");
+            if (StringUtils.isNotBlank(shopIdsListStr)) {
+                shopIdsList = JSONUtil.toList(shopIdsListStr, String.class);
+            }
+        }
+        XxlJobHelper.log("[重试【亚马逊报告】任务] 任务开始 当前执行参数:size={}," +
+                " taskIdList={}, recordTypeList={}, shopIds={}", size, taskIdList, recordTypeList, shopIdsList);
 
-
-//    /**
-//     * 拉取亚马逊报表任务
-//     */
-//    @XxlJob("amazonReportDownload")
-//    public ReturnT<String> reportDownload() {
-//        // 报表处理的开始时间
-//        String jobParamStr = XxlJobHelper.getJobParam();
-//        Integer size = 10;
-//        if (StrUtil.isNotBlank(jobParamStr)) {
-//            JSONObject jobParam = JSON.parseObject(jobParamStr);
-//            size = jobParam.getInteger("size");
-//        }
-//        XxlJobHelper.log("[拉取亚马逊报表任务] 任务开始：size={}", size);
-//
-//        // 根据状态查询未下载数据
-//        ReportInfoMongoDTO orderMongoDTO = ReportInfoMongoDTO.getByNotCheckDownload();
-//        List<ReportInfoMongoDTO> reportInfoMongoDTOList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-//
-//        if (CollectionUtil.isEmpty(reportInfoMongoDTOList)) {
-//            XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束：亚马逊已授权店铺列表为空");
-//            return ReturnT.SUCCESS;
-//        }
-//
-//        reportInfoMongoDTOList.forEach(mongoDTO -> {
-//            try {
-//                amzReportHandleService.checkAndDownload(mongoDTO);
-//            } catch (Exception e) {
-//                XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：reportId={},msg={}, json={}",
-//                        mongoDTO.getReportId(),
-//                        ExceptionUtil.stacktraceToString(e, 2000),
-//                        JSONUtil.toJsonStr(e)
-//                );
-//            }
-//        });
-//        XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束");
-//        return ReturnT.SUCCESS;
-//    }
+        List<AmzReportTaskEntity> taskEntityList;
+        if (CollectionUtils.isEmpty(taskIdList)) {
+            taskEntityList = amzReportTaskService.listByIds(taskIdList);
+        } else {
+            taskEntityList = amzReportTaskService.lambdaQuery()
+                    .in(!CollectionUtils.isEmpty(recordTypeList), AmzReportTaskEntity::getReportType, recordTypeList)
+                    .in(!CollectionUtils.isEmpty(shopIdsList), AmzReportTaskEntity::getShopId, shopIdsList)
+                    .in(AmzReportTaskEntity::getStatus, AmzReportTaskStatusEnum.notFinishOrStopList())
+                    .last(" LIMIT 1 ")
+                    .list();
+        }
+        if (CollectionUtils.isEmpty(taskEntityList)) {
+            XxlJobHelper.log("[重试【亚马逊报告】任务] 所有任务执行完毕, 无需要重试的任务");
+            return ReturnT.SUCCESS;
+        }
+        for (AmzReportTaskEntity entity : taskEntityList) {
+            try {
+                amzReportTaskService.retryTask(entity);
+                XxlJobHelper.log("[重试【亚马逊报告】任务] 当前任务重试成功, taskId={}", entity.getId());
+            } catch (Exception e) {
+                XxlJobHelper.log("[重试【亚马逊报告】任务] 当前任务重试失败, taskId={}, error={}", entity.getId(), ExceptionUtil.stacktraceToString(e, 2000));
+            }
+        }
+        XxlJobHelper.log("[重试【亚马逊报告】任务] 所有任务执行完毕");
+        return ReturnT.SUCCESS;
+    }
 }

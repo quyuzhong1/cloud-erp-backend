@@ -182,4 +182,12 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-31
      */
     boolean checkStopAndUpdateTask(AmzReportTaskEntity entity);
+
+    /**
+     * 报告重试任务
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    void retryTask(AmzReportTaskEntity taskEntity);
 }

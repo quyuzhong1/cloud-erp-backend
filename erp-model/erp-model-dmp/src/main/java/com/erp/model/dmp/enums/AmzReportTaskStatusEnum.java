@@ -55,4 +55,10 @@ public enum AmzReportTaskStatusEnum {
                 AmzReportTaskStatusEnum.DIRECT_QUERY.getCode()
         );
     }
+
+    public static AmzReportTaskStatusEnum getByCode(String Code) {
+        return Arrays.stream(AmzReportTaskStatusEnum.values())
+                .filter(r -> r.getCode().equalsIgnoreCase(Code))
+                .findFirst().orElse(null);
+    }
 }
