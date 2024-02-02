@@ -377,6 +377,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderDetailEntity deliveryOrderDetailEntity = DeliveryOrderConverter.INSTANCE
                 .purchaseOrderDetailToDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
         detailService.save(deliveryOrderDetailEntity);
+        String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", commonService.getUserInfo().getUserName(),deliveryOrderDetailEntity.getSkuNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getId(), "新增操作");
     }
 
     /**
@@ -439,6 +441,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
         this.handleData(deliveryOrderEntity,false);
         this.save(deliveryOrderEntity);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "送货单", deliveryOrderEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), "新增操作");
         return deliveryOrderEntity;
     }
 
