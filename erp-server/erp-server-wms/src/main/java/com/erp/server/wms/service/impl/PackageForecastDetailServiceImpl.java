@@ -102,7 +102,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         //销售订单id
         List<String> soIdList=deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
-
+        //forecastFeign.getByLogisticsSupplier();
 
 
 
