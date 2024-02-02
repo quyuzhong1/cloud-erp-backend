@@ -328,6 +328,11 @@ public class PoReconciliationDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 税率（%）
+         */
+        private String taxRateStr;
+
+        /**
         * 含税单价
         */
         private BigDecimal taxPrice;

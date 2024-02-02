@@ -344,6 +344,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        Map<String, List<PoReconciliationDetailEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat(obj.getSettleOrgId())));
+        for (Map.Entry<String, List<PoReconciliationDetailEntity>> entry : map.entrySet()) {
+            List<PoReconciliationDetailEntity> value = entry.getValue();
+
+        }
     }
 
     /**
