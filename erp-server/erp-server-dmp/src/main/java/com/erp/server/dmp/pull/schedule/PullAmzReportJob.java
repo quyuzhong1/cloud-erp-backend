@@ -1,16 +1,12 @@
 package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SubcontractTypeEnum;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
@@ -23,9 +19,7 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
@@ -37,7 +31,6 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -46,9 +39,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -152,7 +143,7 @@ public class PullAmzReportJob {
     public ReturnT<String> amazonReportJob() {
         // 执行参数
         String jobParamStr = XxlJobHelper.getJobParam();
-        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr);
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 1);
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
         // 查询报告类型配置
@@ -211,7 +202,7 @@ public class PullAmzReportJob {
     public ReturnT<String> amazonCheckReportJob() {
         // 执行参数
         String jobParamStr = XxlJobHelper.getJobParam();
-        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr);
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 10);
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP]  任务开始 当前执行参数={}", JSONUtil.toJsonStr(jobParamDTO));
         // 查询报告类型配置

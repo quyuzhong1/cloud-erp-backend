@@ -18,6 +18,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
@@ -29,6 +30,12 @@ import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.service.CfgAmzReportFieldService;
 import com.erp.server.dmp.service.CfgAppClientService;
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -55,6 +62,8 @@ public class ReportsApiTest {
     private CfgAppClientService cfgAppClientService;
     @Resource
     private CfgAmzReportFieldService cfgAmzReportFieldService;
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
 
 
     /**
@@ -440,5 +449,21 @@ public class ReportsApiTest {
         System.out.println("下载解析后的结果------------------------------------------------------------");
         System.out.println(jsonArray);
         System.out.println("下载解析后的结尾------------------------------------------------------------");
+    }
+
+    @Test
+    public void viewMsg() {
+        try {
+            DefaultMQPullConsumer consumer = new DefaultMQPullConsumer("dev-jim-sync_amz_report_query_consumer");
+            consumer.setNamesrvAddr("72.16.100.12:8180");
+            consumer.start();
+
+            MessageExt messageExt = consumer.viewMessage("7F000001AB1861E4705B045E6A6E010D");
+            System.out.println(JSONUtil.toJsonStr(messageExt));
+
+            consumer.shutdown();
+        } catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -3,8 +3,6 @@ package com.erp.model.dmp.dto;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.entity.AmzReportScheduleEntity;
-import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 亚马逊 任务参数 DTO
@@ -98,15 +95,15 @@ public class AmazonJobParamDTO {
         private Boolean ignoreNextReportCreationTime;
 
 
-        public ReportJobDTO() {
-            super.size = 10;
+        public ReportJobDTO(int defaultSize) {
+            super.size = defaultSize;
             super.shopIdList = Collections.emptyList();
             super.recordTypeList = Collections.emptyList();
             this.ignoreNextReportCreationTime = false;
         }
 
-        public static ReportJobDTO init(String jobParamStr) {
-            ReportJobDTO reportJobDTO = new ReportJobDTO();
+        public static ReportJobDTO init(String jobParamStr, int defaultSize) {
+            ReportJobDTO reportJobDTO = new ReportJobDTO(defaultSize);
             if (StringUtils.isBlank(jobParamStr)) {
                 return reportJobDTO;
             }
