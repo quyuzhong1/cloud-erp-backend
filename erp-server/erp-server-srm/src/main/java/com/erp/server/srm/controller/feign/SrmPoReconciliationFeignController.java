@@ -57,4 +57,15 @@ public class SrmPoReconciliationFeignController extends BaseController {
     public void deleteDetailBySourceDetailIdList(@RequestBody  List<String> sourceDetailIdList) {
          poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(sourceDetailIdList,false);
     }
+
+    /**
+     * 更新业务状态
+     * @author Will
+     * @date: 2024/2/2 17:33
+     * @param statusDTO
+     */
+    @PostMapping("/updateBusinessStatusBySourceIdList")
+    public void updateBusinessStatusBySourceIdList(@RequestBody @Validated PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO) {
+        poReconciliationDetailScmService.updateBusinessStatusBySourceIdList(statusDTO);
+    }
 }

@@ -3,6 +3,9 @@ package com.erp.server.srm.schedule;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.MapUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
@@ -54,12 +57,20 @@ public class PoReconciliationJob {
         CfgSettingValueDTO.PoReconciliationSettingDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
         //自然月生成
         if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getReconciliationType())) {
-            LocalDate startDate = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endDate = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+            int dayOfMonth = LocalDate.now().getDayOfMonth();
+            if (dayOfMonth != MathUtil.ONE.intValue()) {
+                return ReturnT.SUCCESS;
+            }
+            LocalDate startDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         } else {
-            LocalDate startDate = LocalDateUtil.parseStrToLocalDate(dto.getEndDate());
-            LocalDate endDate = startDate.plusMonths(1);
+            int dayOfMonth = LocalDate.now().getDayOfMonth();
+            if (dayOfMonth != Integer.valueOf(dto.getEndDate()).intValue() ) {
+                return ReturnT.SUCCESS;
+            }
+            LocalDate endDate = LocalDate.now().minusDays(1);
+            LocalDate startDate = endDate.minusMonths(1);
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         }
         XxlJobHelper.log("====结束生成对账单====");

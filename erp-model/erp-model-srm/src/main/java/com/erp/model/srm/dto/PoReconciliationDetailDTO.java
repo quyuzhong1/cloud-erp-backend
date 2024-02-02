@@ -529,7 +529,7 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 采购订单详情id
          */
         @Size(max = 19,message = "采购订单id最大长度不能超过19位")
-        private String podId;
+        private String poDetailId;
 
         /**
         * 确认日期
@@ -626,6 +626,24 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String id;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateBusinessStatusDTO {
+
+        /**
+         * 来源id集合
+         */
+        @NotEmpty(message = "来源id集合不能为空")
+        private List<String> sourceIdList;
+
+        /**
+         * 业务状态
+         */
+        @NotBlank(message = "业务状态不能为空")
+        private String businessStatus;
+
+    }
 
 
 }

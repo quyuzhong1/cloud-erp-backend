@@ -356,6 +356,17 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
     }
 
+    @Override
+    public void updateBusinessStatusBySourceIdList(PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO) {
+        List<String> sourceIdList = statusDTO.getSourceIdList();
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return;
+        }
+        lambdaUpdate().in(PoReconciliationDetailEntity::getSourceId,sourceIdList)
+                .set(PoReconciliationDetailEntity::getBusinessStatus,statusDTO.getBusinessStatus())
+                .update();
+    }
+
     /**
      * 新生成对账单
      */

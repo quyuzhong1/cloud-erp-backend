@@ -353,7 +353,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
                 .set(PoReconciliationEntity::getStatus, PoReconciliationEnum.PoReconciliationStatusEnum.RECEIVED.getCode())
                 .set(PoReconciliationEntity::getReceiveDate, LocalDate.now())
-                .update(new PoReconciliationEntity());
+                .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", commonService.getUserInfo().getUserName(), entity.getCode(), "对账单");
@@ -403,11 +403,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
         }
-        long supplierCount = detailList.stream().map(PoReconciliationDetailEntity::getSupplierId).count();
+        long supplierCount = detailList.stream().map(PoReconciliationDetailEntity::getSupplierId).distinct().count();
         if (supplierCount > 1) {
             throw new ServiceException("对账明细供应商不一致");
         }
-        long settleOrgCount = detailList.stream().map(PoReconciliationDetailEntity::getSettleOrgId).count();
+        long settleOrgCount = detailList.stream().map(PoReconciliationDetailEntity::getSettleOrgId).distinct().count();
         if (settleOrgCount > 1) {
             throw new ServiceException("对账明细结算组织不一致");
         }

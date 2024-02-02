@@ -118,4 +118,11 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param endDate
      */
     void autoGeneratePoReconciliation(LocalDate startDate, LocalDate endDate);
+    /**
+     * @description: 更新业务状态
+     * @author Will
+     * @date: 2024/2/2 17:33
+     * @param statusDTO
+     */
+    void updateBusinessStatusBySourceIdList(PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO);
 }

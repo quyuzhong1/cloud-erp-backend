@@ -678,7 +678,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
             addDTO.setPoId(deliveryOrderEntity.getSourceId());
             addDTO.setPoCode(deliveryOrderEntity.getSourceCode());
-            addDTO.setPodId(detailEntity.getSourceDetailId());
+            addDTO.setPoDetailId(detailEntity.getSourceDetailId());
             addDTO.setSupplierId(deliveryOrderEntity.getSupplierId());
             addDTO.setSourceId(deliveryOrderEntity.getId());
             addDTO.setSourceDetailId(detailEntity.getId());

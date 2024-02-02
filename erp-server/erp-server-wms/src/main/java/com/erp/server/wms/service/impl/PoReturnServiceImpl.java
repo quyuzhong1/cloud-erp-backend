@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.enums.ConfigKeyEnum;
+import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -746,7 +747,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             addDTO.setPoId(entity.getPurchaseOrderId());
             addDTO.setPoCode(entity.getPurchaseOrderCode());
-            addDTO.setPodId(poReturnDetailEntity.getPurchaseOrderDetailId());
+            addDTO.setPoDetailId(poReturnDetailEntity.getPurchaseOrderDetailId());
             addDTO.setSupplierId(entity.getSupplierId());
             addDTO.setSupplierName(entity.getSupplierName());
             addDTO.setSourceId(entity.getId());
@@ -2168,6 +2169,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO returnConfirm(String id) {
         PoReturnEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -2189,6 +2191,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .set(PoReturnEntity::getConfirmDate, LocalDate.now())
                 .eq(PoReturnEntity::getId, id)
                 .update();
+
+        //更新对账明细的状态
+        PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO = new PoReconciliationDetailDTO.UpdateBusinessStatusDTO(Arrays.asList(id), ConfirmStatusEnum.CONFIRM.getCode());
+        srmPoReconciliationFeign.updateBusinessStatusBySourceIdList(statusDTO);
 
         //操作日志
         String msg = StrUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", commonService.getUserInfo().getUserName(), entity.getCode(), "退货确认");
@@ -2307,6 +2313,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void poReturnAutoConfirm() {
         //查询规则设置
         List<CfgSettingDTO.ViewDTO> list = srmCfgSettingFeign.listByKey(ConfigKeyEnum.RETURN_AUTO_CONFIRM.getCode());
@@ -2323,6 +2330,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .set(PoReturnEntity::getConfirmStatus, PoReturnConfirmStatusEnum.CONFIRM.getCode())
                 .set(PoReturnEntity::getConfirmDate, LocalDate.now())
                 .update();
+
+        //更新对账明细的状态
+        PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO = new PoReconciliationDetailDTO.UpdateBusinessStatusDTO(poReturnIds, ConfirmStatusEnum.CONFIRM.getCode());
+        srmPoReconciliationFeign.updateBusinessStatusBySourceIdList(statusDTO);
     }
 
     @Override

@@ -50,4 +50,13 @@ public interface SrmPoReconciliationFeign {
      */
     @PostMapping("/feign/poReconciliation/listDetailBySourceDetailIdList")
     List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(@RequestBody @Validated List<String> sourceDetailIdList);
+
+    /**
+     * @description: 更新业务状态
+     * @author Will
+     * @date: 2024/2/2 17:32
+     * @param statusDTO
+     */
+    @PostMapping("/feign/poReconciliation/updateBusinessStatusBySourceIdList")
+    void updateBusinessStatusBySourceIdList(@RequestBody @Validated PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO);
 }
