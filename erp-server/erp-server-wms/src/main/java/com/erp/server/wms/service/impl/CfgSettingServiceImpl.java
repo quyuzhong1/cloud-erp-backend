@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -21,6 +22,8 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Case;
 import org.springframework.stereotype.Service;
@@ -90,6 +93,17 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         CfgSettingEntity entity = baseMapper.getByKey(key);
         return entity;
     }
+
+    @Override
+    public CfgSettingValueDTO.PoReturnSettingDTO getPoReturnSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PO_RETURN.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return new CfgSettingValueDTO.PoReturnSettingDTO();
+        }
+        CfgSettingValueDTO.PoReturnSettingDTO dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
+        return dto;
+    }
+
 
     /**
     * 新增修改处理数据

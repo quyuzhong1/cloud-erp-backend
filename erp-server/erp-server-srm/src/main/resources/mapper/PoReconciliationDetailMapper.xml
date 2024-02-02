@@ -145,7 +145,7 @@
         from
         po_reconciliation_detail prd
         <where>
-            prd.is_deleted = false and prd.business_status = 'confirm'
+            prd.is_deleted = false and prd.business_status = 'confirm' and prd.is_add_account = true
             and prd.confirm_date >= #{startDate}
             and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.confirm_date
         </where>

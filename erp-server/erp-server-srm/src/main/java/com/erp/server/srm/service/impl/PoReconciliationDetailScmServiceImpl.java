@@ -347,7 +347,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         Map<String, List<PoReconciliationDetailEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat(obj.getSettleOrgId())));
         for (Map.Entry<String, List<PoReconciliationDetailEntity>> entry : map.entrySet()) {
             List<PoReconciliationDetailEntity> value = entry.getValue();
-
+            PoReconciliationDTO.AddDTO addDTO = new PoReconciliationDTO.AddDTO();
+            addDTO.setStartDate(startDate);
+            addDTO.setEndDate(endDate);
+            List<String> detailIdList = value.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+            addDTO.setDetailIdList(detailIdList);
+            poReconciliationScmService.add(addDTO);
         }
     }
 

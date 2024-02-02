@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.erp.model.wms.dto.CfgSettingValueDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -61,5 +62,14 @@ public class CfgSettingController extends BaseController {
         return success(view);
     }
 
-
+    /**
+     * 查询采购退货配置
+     * @author Will
+     * @date: 2024/2/2 15:56
+     * @return ApiResult<PoReturnSettingDTO>
+     */
+    @GetMapping("/getPoReturnSetting")
+    public ApiResult<CfgSettingValueDTO.PoReturnSettingDTO> getPoReturnSetting() {
+        return success(cfgSettingService.getPoReturnSetting());
+    }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.srm.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
@@ -57,9 +58,8 @@ public class PoReconciliationJob {
             LocalDate endDate = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         } else {
-            LocalDate localDate = LocalDateUtil.parseStrToLocalDate(dto.getEndDate());
-            LocalDate startDate = localDate.with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endDate = localDate.with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate startDate = LocalDateUtil.parseStrToLocalDate(dto.getEndDate());
+            LocalDate endDate = startDate.plusMonths(1);
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         }
         XxlJobHelper.log("====结束生成对账单====");
