@@ -1,9 +1,6 @@
 package com.erp.model.tms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
@@ -48,7 +45,7 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     /**
      * 组包启用时间
      */
-    @TableField("enable_package_time")
+    @TableField( value= "enable_package_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime enablePackageTime;
 
     /**
@@ -60,7 +57,7 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
     /**
      * 中转时间启用时间
      */
-    @TableField("enable_transfer_time")
+    @TableField( value = "enable_transfer_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime enableTransferTime;
 
     /**
