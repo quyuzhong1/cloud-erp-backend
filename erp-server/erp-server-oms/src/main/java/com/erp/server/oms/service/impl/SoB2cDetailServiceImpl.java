@@ -284,6 +284,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
 
         // 新增或更新列表
+        List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -310,7 +311,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
 
             //查询映射的仓库信息
-            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
                 saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
                 saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
