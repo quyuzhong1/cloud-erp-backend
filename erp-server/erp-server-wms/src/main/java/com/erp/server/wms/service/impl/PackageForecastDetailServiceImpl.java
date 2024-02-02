@@ -4,9 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -15,6 +19,7 @@ import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,8 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 组包预报详情 服务实现类
@@ -39,15 +46,16 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageForecastDetailMapper, PackageForecastDetailEntity> implements PackageForecastDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
-    @Autowired
+
+    @Resource
     private SoB2cFeign soB2cFeign;
 
-    @Autowired
+    @Resource
     private SoOutstockService soOutstockService;
+
+    @Resource
+    private ForecastFeign forecastFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -57,10 +65,10 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             return;
         }
         List<PackageForecastDetailEntity> detailEntityList = BeanMapperUtils.copyList(PackageForecastDetailEntity.class, detailList);
-        handleDataList(mainId,detailEntityList);
-        Boolean result= this.saveBatch(detailEntityList);
+        handleDataList(mainId, detailEntityList);
+        Boolean result = this.saveBatch(detailEntityList);
         if (result) {
-            UpdateStateDTO.UpdateByStrStatusDTO dto =new UpdateStateDTO.UpdateByStrStatusDTO();
+            UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
             dto.setIds(detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList()));
             dto.setStatus(PackageStatusEnum.ALREADY.getCode());
             soB2cFeign.updatePackageStatus(dto);
@@ -69,6 +77,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
 
     /**
      * 处理数据
+     *
      * @param mainId
      * @param detailEntityList
      */
@@ -83,44 +92,47 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(PackageForecastDetailDTO.UpdateDTO updateDTO) {
-        PackageForecastDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报详情"));
-        PackageForecastDetailEntity packageForecastDetailEntity = BeanMapperUtils.map(PackageForecastDetailEntity.class, updateDTO);
+    public Boolean update(String mainId,String logisticsSupplierId, List<String> detailIdList) {
+        List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
+        List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
+        //删除的信息
+        List<PackageForecastDetailEntity> deleteList=dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
+        //删除的id
+        List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
+        //销售订单id
+        List<String> soIdList=deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
-        // 数据处理
-        handleData(packageForecastDetailEntity);
-        log.info("编辑 开始修改组包预报详情数据，id：【{}】", old.getId());
-        boolean save = super.updateById(packageForecastDetailEntity);
-        if (!save) {
-            throw new ServiceException("组包预报详情保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-        log.info("编辑 开始记录组包预报详情日志数据，id：【{}】", packageForecastDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), packageForecastDetailEntity.getId(), "组包预报详情");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, packageForecastDetailEntity, null, packageForecastDetailEntity.getId(), msg);
+
+
+
         return Boolean.TRUE;
     }
-
 
 
     @Override
     public List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id) {
         List<PackageForecastDetailEntity> detailList = this.listDbByMainId(id);
-        List<PackageForecastDetailDTO.ViewDTO> resultList=BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class,detailList);
+        List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
         List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(soIdList)) {
-
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIdList);
+        for (PackageForecastDetailDTO.ViewDTO item : resultList) {
+            String soId = item.getSoId();
+            ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+                    map(SoOutstockEntity::getApproveStatus).findFirst().orElse(null);
+            item.setOutstockStatusName("未出库");
+            if (Objects.nonNull(approveStatus)) {
+                if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+                    item.setOutstockStatusName("已出库");
+                }
+            }
         }
 
         return resultList;
     }
 
 
-    public List<PackageForecastDetailEntity>  listDbByMainId(String id) {
+    public List<PackageForecastDetailEntity> listDbByMainId(String id) {
         return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, id).list();
     }
 

@@ -170,6 +170,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
                 .in(SoOutstockEntity::getSoId, soIds).list();
     }
