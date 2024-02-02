@@ -693,6 +693,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         });
                     }
                 }
+                poReturnEntity.setConfirmStatus(confirmStatus);
+                poReturnEntity.setConfirmDate(LocalDate.now());
             }
 
 
