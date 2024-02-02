@@ -252,11 +252,15 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         entityList.forEach(v->{
             v.setIsPrint(true);
             v.setPrintDate(LocalDate.now());
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】打印【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "送货单", v.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), v.getId(), "打印操作");
         });
 
         if(!this.updateBatchById(entityList)){
             throw new ServiceException("更新打印状态失败");
         }
+
         return true;
     }
 
