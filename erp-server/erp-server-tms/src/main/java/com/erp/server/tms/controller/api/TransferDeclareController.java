@@ -1,0 +1,264 @@
+package com.erp.server.tms.controller.api;
+
+
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.entity.TransferDeclareEntity;
+import com.erp.server.tms.service.TransferDeclareService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 中转报关表
+ *
+ * @author Luo_WG
+ * @since 2024-01-19
+ */
+@Slf4j
+@RestController
+@LogSystemModule("中转报关表")
+@RequestMapping("/transferDeclare")
+public class TransferDeclareController extends BaseController {
+
+    @Resource
+    private TransferDeclareService transferDeclareService;
+
+    /**
+     * 分页列表查询
+     * @Author Luo_WG
+     * @Date 2024/1/20 14:50
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>>
+     **/
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:paging",
+            tableAlias = "td"
+    )
+    public ApiResult<PagingVO<TransferDeclareDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
+        PagingVO<TransferDeclareDTO.ListDTO> pagingVO = transferDeclareService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 分页列表tab页
+     * @Author Luo_WG
+     * @Date 2024/1/20 16:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.TabListDTO>>
+     **/
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:paging",
+            tableAlias = "td"
+    )
+    public ApiResult<List<TransferDeclareDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<TransferDeclareDTO.TabListDTO> tabList = transferDeclareService.tabList(dto);
+        return success(tabList);
+    }
+
+    /**
+    * 新增
+    * @author Luo_WG
+    * @date:  2024-01-19
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "中转报关表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated TransferDeclareDTO.AddDTO dto) {
+        return success(transferDeclareService.add(dto));
+    }
+
+    /**
+    * 修改
+    * @author Luo_WG
+    * @date:  2024-01-19
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "中转报关表修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:update",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
+        transferDeclareService.update(dto);
+        return success();
+    }
+
+    /**
+     * 详情
+     * @Author Luo_WG
+     * @Date 2024/1/23 18:07
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.tms.dto.TransferDeclareDTO.ViewDTO>
+     **/
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:view",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<TransferDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(transferDeclareService.view(id));
+    }
+
+
+    /**
+     * 详情明细高级查询
+     * @Author Luo_WG
+     * @Date 2024/1/24 10:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.ViewDTO>>
+     **/
+    @PostMapping("/viewDetailList")
+    public ApiResult<List<TransferDeclareDetailDTO.ViewDTO>> viewDetailList(@RequestBody @Validated TransferDeclareDTO.ViewDetailParamDTO dto) {
+        List<TransferDeclareDetailDTO.ViewDTO> result = transferDeclareService.viewDetailList(dto);
+        return success(result);
+    }
+
+    /**
+     * 报关设置
+     * @Author Luo_WG
+     * @Date 2024/1/24 15:39
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/forcastSetting")
+    public ApiResult forcastSetting(@RequestBody @Validated ValidList<TransferDeclareGenerationSettingDTO.AddDTO> dto) {
+        Boolean flag = transferDeclareService.forcastSetting(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 报关设置-详情（设置后第二次点击调用）
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:31
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO.ViewDTO>>
+     **/
+    @GetMapping("/forcastSettingView")
+    public ApiResult<List<TransferDeclareGenerationSettingDTO.ViewDTO>> forcastSettingView() {
+        List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList = transferDeclareService.forcastSettingView();
+        return success(viewDTOList);
+    }
+
+    /**
+     * 截单设置
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/deadlineSetting")
+    public ApiResult deadlineSetting(@RequestBody @Validated ValidList<TransferDeclareDeadlineSettingDTO.AddDTO> dto) {
+        Boolean flag = transferDeclareService.deadlineSetting(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 截单设置-详情（设置后第二次点击调用）
+     * @Author Luo_WG
+     * @Date 2024/1/24 17:54
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/deadlineSettingView")
+    public ApiResult<List<TransferDeclareDeadlineSettingDTO.ViewDTO>> deadlineSettingView() {
+        List<TransferDeclareDeadlineSettingDTO.ViewDTO> viewDTOS = transferDeclareService.deadlineSettingView();
+        return success(viewDTOS);
+    }
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = transferDeclareService.delete(dto.getIds());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2024/1/24 18:43
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:TransferDeclareService:paging",
+            tableAlias = "td"
+    )
+    public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = transferDeclareService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 上传报关
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:54
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/upload")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:TransferDeclareService:upload",
+            tableAlias = "td"
+    )
+    public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            List<BatchResultDTO> result = new ArrayList<>();
+            try {
+                result = transferDeclareService.upload(id);
+            } catch (Exception e) {
+                log.error("上传报关单失败{}", e);
+                TransferDeclareEntity entity = transferDeclareService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
+                    resultDTOS.addAll(result);
+                    continue;
+                }
+                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+            resultDTOS.addAll(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+}

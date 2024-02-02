@@ -670,7 +670,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : dataList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
-            listSkuDTO.setProductSkuId(skuVO.getSkuId());
+            listSkuDTO.setProductSkuId(StringUtils.isBlank(skuVO.getSkuId()) ? "" : skuVO.getSkuId());
             listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());

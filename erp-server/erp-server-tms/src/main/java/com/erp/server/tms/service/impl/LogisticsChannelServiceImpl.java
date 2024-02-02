@@ -400,7 +400,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.BaseDTO getInfoById(String channelId) {
         LogisticsChannelEntity entity = this.getById(channelId);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         LogisticsChannelDTO.BaseDTO baseDTO = new LogisticsChannelDTO.BaseDTO();
         BeanMapperUtils.copy(entity, baseDTO);
@@ -426,9 +426,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
         for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
             }
         }
         return baseDTOS;

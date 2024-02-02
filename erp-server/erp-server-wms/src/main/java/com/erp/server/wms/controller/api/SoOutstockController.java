@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -289,10 +290,17 @@ public class SoOutstockController extends BaseController {
                 /**
                  * 表示有仓库为空且是已发货并且是平台仓订单
                  * 那么就要去找店铺的仓库 然后匹配上仓库
+                 * [排除速卖通订单]
                  */
-                if (Objects.nonNull(soB2c)) {
+                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
                     soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
                 }
+
+                //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
+                if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
+                    soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
+                }
+
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);
                 if (result) {
                     SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();

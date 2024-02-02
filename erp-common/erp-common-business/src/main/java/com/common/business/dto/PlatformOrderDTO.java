@@ -1,7 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -220,4 +218,9 @@ public class PlatformOrderDTO extends UniqueDto {
      * shopify=financial_status
      */
     private String platformOrderStatus;
+
+    /**
+     * 订单创建日期
+     */
+    private LocalDateTime orderCreateTime;
 }

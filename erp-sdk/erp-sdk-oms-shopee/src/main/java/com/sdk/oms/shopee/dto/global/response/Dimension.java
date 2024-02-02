@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
