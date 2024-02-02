@@ -211,7 +211,8 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsQueryVOList.setDeliveryNo("3028833906081879");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
-        System.out.println(listApiResult);
+        System.out.println("结果输出");
+        System.out.println(JSONObject.toJSONString(listApiResult));
     }
 
     /**
