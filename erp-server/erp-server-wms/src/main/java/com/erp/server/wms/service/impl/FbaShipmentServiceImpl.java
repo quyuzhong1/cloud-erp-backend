@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -114,6 +115,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private OtherOutstockService otherOutstockService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -887,8 +890,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (!fbaShipmentReceiveService.saveBatch(newReceiveEntityList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
             }
-
-            handlerWarehouse(entity, newReceiveEntityList, LocalDate.now());
+            // 查询最新库存关账记录
+            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+            handlerWarehouse(entity, newReceiveEntityList, LocalDate.now(), closedDateMap);
         }
     }
 
@@ -1036,20 +1040,20 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         });
 
 
-
-
         if (CollectionUtils.isNotEmpty(saveReceiveList)){
             if (!fbaShipmentReceiveService.saveBatch(saveReceiveList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveReceiveList));
             }
-            handlerWarehouse(entity, saveReceiveList, LocalDate.now());
+            // 查询最新库存关账记录
+            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+            handlerWarehouse(entity, saveReceiveList, LocalDate.now(), closedDateMap);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList, LocalDate billDate) {
+    public void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList, LocalDate billDate, Map<String, LocalDate> closedDateMap) {
 
         // 查询是否有发货单号
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
@@ -1107,11 +1111,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode());
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode(), closedDateMap);
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode());
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode(), closedDateMap);
             }
 
 
@@ -1166,11 +1170,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentReceiveEntity> lessThanZeroReceiveList = saveReceiveList.stream().filter(v->v.getReceiveQty()<0).collect(Collectors.toList());
             //正数签收生成在途仓-目的仓
             if(CollectionUtils.isNotEmpty(greaterThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode());
+                this.generateTransfer(shopInfoEntity,entity,greaterThanZeroReceiveList,false,String.format("FBA货件【%s】签收自动创建", entity.getCode()), billDate, TransferDirectionEnum.ORDINARY.getCode(), closedDateMap);
             }
             //负数签收生成目的仓-在途仓
             if(CollectionUtils.isNotEmpty(lessThanZeroReceiveList)){
-                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode());
+                this.generateTransfer(shopInfoEntity,entity,lessThanZeroReceiveList,true,String.format("【%s】签收数量减少后反向调拨", entity.getCode()), billDate, TransferDirectionEnum.RETURN_GOODS.getCode(), closedDateMap);
             }
         }
     }
@@ -1457,7 +1461,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate, String transferDirection){
+    public Tuple generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate, String transferDirection) {
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(shopEntity.getWarehouseId()));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1509,7 +1513,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        String transferOutId = transferInfoService.add(addDTO);
+        return new Tuple(transferOutId, addDTO);
     }
 
     @Override
@@ -1517,7 +1522,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     public BatchResultDTO regenerateTransferOut(String id) {
         FbaShipmentEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA货件单数据"));
 
-        // 已生成调拨单不允许删除
+        // 已生成调拨单不允许生成
         Integer count = transferInfoService.lambdaQuery()
                 .in(TransferInfoEntity::getSourceCode, entity.getCode())
                 .eq(TransferInfoEntity::getInvalidStatus, Boolean.FALSE)
@@ -1544,9 +1549,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         Map<LocalDate, List<FbaShipmentReceiveEntity>> groupBillDateMap = receiveEntityList.stream()
                 .collect(Collectors.groupingBy(e-> e.getReceiveDate().toLocalDate()));
 
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+
         for (Map.Entry<LocalDate, List<FbaShipmentReceiveEntity>> entry : groupBillDateMap.entrySet()) {
             // 根据签收时间作为调拨时间
-            handlerWarehouse(entity, entry.getValue(), entry.getKey());
+            handlerWarehouse(entity, entry.getValue(), entry.getKey(), closedDateMap);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.REGENERATE);
     }
@@ -1620,15 +1628,32 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection){
-        String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection);
+    public void generateTransfer(ShopInfoEntity shopInfoEntity , FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList , Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap){
+        Tuple tuple =  this.generateTransferOut(shopInfoEntity, entity,  receiveList,isToOnwayWarehouse,remark, billDate, transferDirection);
+        String transferOutId = tuple.get(0);
         if (StringUtils.isNotBlank(transferOutId)) {
+            // 关账时间之前的不审核
+            TransferInfoDTO.AddDTO addDTO = tuple.get(1);
+            LocalDate inClosedDate = closedDateMap.get(addDTO.getInOrgId());
+            LocalDate outClosedDate = closedDateMap.get(addDTO.getOutOrgId());
+            if ( null != inClosedDate){
+                if (!billDate.isAfter(inClosedDate)){
+                    return;
+                }
+            }
+            if (null != outClosedDate){
+                if (!billDate.isAfter(outClosedDate)){
+                    return;
+                }
+            }
             //提交
-            transferInfoService.submit(Arrays.asList(transferOutId));
+            transferInfoService.submit(Collections.singletonList(transferOutId));
+
             //审核
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+            baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
             baseApproveParamDTO.setType(ApproveType.PASS);
             transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
         } else {

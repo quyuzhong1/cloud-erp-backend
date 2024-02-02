@@ -3,6 +3,10 @@ package com.sdk.oms.shopify.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -13,13 +17,16 @@ import com.common.core.utils.OkHttpUtils;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Lambda
@@ -82,8 +89,24 @@ public class ShopSdkServer {
         paramsMap.put("client_id", dto.getClientId());
         paramsMap.put("client_secret", dto.getClientSecret());
         paramsMap.put("code", dto.getCode());
-        String bodyStr = OkHttpUtils.doPost(path, paramsMap, null);
-        return bodyStr;
+
+//        Request request = new Request.Builder()
+//                .post(OkHttpUtils.createFormBody(paramsMap))
+//                .headers(OkHttpUtils.createHeaders(null))
+//                .url(path)
+//                .build();
+        try {
+//            Response execute = OkHttpUtils.retryClient.newCall(request).execute();
+//            ResponseBody bodyStr = execute.body();
+            String bodyStr = OkHttpUtils.doPost(path, paramsMap, null);
+            if (null != bodyStr){
+                return bodyStr;
+            } else {
+                throw new ServiceException("Request Shopify error body is null");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
