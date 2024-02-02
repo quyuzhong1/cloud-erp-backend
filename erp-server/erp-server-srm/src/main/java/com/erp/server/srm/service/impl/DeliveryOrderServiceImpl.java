@@ -644,7 +644,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param idList
      */
     private void addPoReconciliationDetail (List<String> idList) {
-        if (CollectionUtils.isNotEmpty(idList)) {
+        if (CollectionUtils.isEmpty(idList)) {
             return;
         }
         //送货单
@@ -701,7 +701,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param idList
      */
     private void removePoReconciliationDetail (List<String> idList) {
-        if (CollectionUtils.isNotEmpty(idList)) {
+        if (CollectionUtils.isEmpty(idList)) {
             return;
         }
         //送货单
