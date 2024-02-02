@@ -533,7 +533,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Map<String, List<BomChildrenSkuDTO>> skuChildMap = bomChildrenSkuDTOS.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
         soB2cDetailEntities.forEach(soB2cDetailEntity -> {
             BomChildrenSkuDTO skuDTO = skuDTOS.stream().filter(e -> e.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
-            assert skuDTO != null;
             LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
 
             Boolean isCombination = Boolean.FALSE;
@@ -542,7 +541,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //申报类型
                 isCombination = Boolean.TRUE;
             }
-            if (!skuDTO.getType().equals(SkuTypeEnum.SINGLE.getCode()) && isCombination){
+            if (Objects.nonNull(skuDTO) && !skuDTO.getType().equals(SkuTypeEnum.SINGLE.getCode()) && isCombination){
                 List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
                 if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS1)){
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
