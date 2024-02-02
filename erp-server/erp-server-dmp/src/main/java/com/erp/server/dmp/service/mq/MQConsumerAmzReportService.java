@@ -59,7 +59,7 @@ public class MQConsumerAmzReportService {
                     String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
                     amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, entity.getCreatedRetryCount() + 1, null, null, null);
                     // 发送预警
-//                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
+                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     throw e;
                 }
             }
@@ -87,7 +87,10 @@ public class MQConsumerAmzReportService {
                 // 检查亚马逊授权异常
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
-                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
+                    String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.getQueryRetryCount() + 1, null, null);
+                    // 发送预警
+                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     throw e;
                 }
             }
@@ -115,7 +118,10 @@ public class MQConsumerAmzReportService {
                 // 检查亚马逊授权异常
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
-                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000),  null, null,entity.getDownloadRetryCount() + 1, null);
+                    String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg,  null, null,entity.getDownloadRetryCount() + 1, null);
+                    // 发送预警
+                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     throw e;
                 }
             }
@@ -141,7 +147,10 @@ public class MQConsumerAmzReportService {
                 // 报告解析处理
                 amzReportTaskService.consumerReportParse(reportRedissonKey, entity);
             } catch (Exception e) {
-                amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, null, null, entity.getParseRetryCount() + 1);
+                String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
+                amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, null, null, entity.getParseRetryCount() + 1);
+                // 发送预警
+                amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                 throw e;
             }
         }
@@ -169,7 +178,10 @@ public class MQConsumerAmzReportService {
                 // 亚马逊授权异常
                 boolean unAuthorized = amzReportTaskService.checkStopByUnAuthorized(e, entity);
                 if (!unAuthorized){
-                    amzReportTaskService.updateErrorMsgAndCount(entity, ExceptionUtil.stacktraceToString(e, 2000), null, entity.getQueryRetryCount() + 1, null, null);
+                    String errorMsg = ExceptionUtil.stacktraceToString(e, 2000);
+                    amzReportTaskService.updateErrorMsgAndCount(entity, errorMsg, null, entity.getQueryRetryCount() + 1, null, null);
+                    // 发送预警
+                    amzReportTaskService.sendReportWarnMsg(entity, errorMsg);
                     throw e;
                 }
             }
