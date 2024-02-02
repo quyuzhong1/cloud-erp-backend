@@ -3,11 +3,9 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
-import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -63,10 +61,10 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
 
     /**
      * SRM供应商退货列表tab页
-     * @param searchParam
+     * @param params
      * @return
      */
-    List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam);
+    List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList( @Param("params") PurchaseReturnOrderDTO.SupplierPagingParamDTO params);
 
     List<PurchaseReturnStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 

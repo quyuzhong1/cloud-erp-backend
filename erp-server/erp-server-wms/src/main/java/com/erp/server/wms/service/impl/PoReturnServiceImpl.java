@@ -225,11 +225,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> warehouseIds = records.stream().map(req -> req.getReturnWarehouseId()).distinct().collect(Collectors.toList());
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
-        //查询签收信息
-        List<WarehouseReceiveEntity> warehouseReceiveEntities = warehouseReceiveService.listByPurchaseOrderIds(purchaseOrderIds);
-        if (CollectionUtils.isNotEmpty(warehouseReceiveEntities)) {
 
-        }
         records.forEach(obj -> {
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
@@ -244,11 +240,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getReturnWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
 
-            WarehouseReceiveEntity entity = warehouseReceiveEntities.stream().filter(req -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(entity)) {
-                obj.setReceiveUserName(entity.getReceiveUserName());
-                obj.setReceiveTime(entity.getBillDate().atStartOfDay());
-            }
         });
     }
 
@@ -454,13 +445,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
 
-        //查询签收信息
-        List<WarehouseReceiveEntity> warehouseReceiveEntities = warehouseReceiveService.listByPurchaseOrderIds(Arrays.asList(poReturnEntity.getPurchaseOrderId()));
-        if (CollectionUtils.isNotEmpty(warehouseReceiveEntities)) {
-            viewDTO.setReceiveUserName(warehouseReceiveEntities.get(0).getReceiveUserName());
-            viewDTO.setReceiveTime(warehouseReceiveEntities.get(0).getBillDate().atStartOfDay());
-        }
-
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
@@ -491,6 +475,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(mainSupplierIdList)) {
             supplierIdList.addAll(mainSupplierIdList);
         }
+        mainSupplierIdList.add(poReturnEntity.getSupplierId());
         List<SupplierEntity>  supplierList = scmTaskFeign.getSupplierByIdList(mainSupplierIdList);
 
         //主表供应商
@@ -2159,6 +2144,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PermissionsDTO param) {
         PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam = new PurchaseReturnOrderDTO.SupplierPagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+
+        LoginUser userInfo = commonService.getUserInfo();
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(userInfo.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            searchParam.setSupplierId(supplier.getId());
+        }
+
         List<PurchaseReturnOrderDTO.SupplierTabListDTO> list = baseMapper.supplierTabList(searchParam);
         // 获取状态列表
         List<String> statusList = PoReturnConfirmStatusEnum.getStatusList();

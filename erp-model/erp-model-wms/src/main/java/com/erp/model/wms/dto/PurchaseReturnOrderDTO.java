@@ -414,16 +414,6 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime createTime;
 
         /**
-         * 签收人
-         */
-        private String receiveUserName;
-
-        /**
-         * 签收时间
-         */
-        private LocalDateTime receiveTime;
-
-        /**
          * 报价明细
          */
         @Valid

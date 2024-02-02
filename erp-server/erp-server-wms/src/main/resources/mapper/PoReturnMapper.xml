@@ -286,6 +286,10 @@
         count(*)  AS count
         FROM po_return
         WHERE is_deleted=FALSE
+        <!--供应商查询-->
+        <if test="params.supplierId != null and params.supplierId != ''">
+            AND supplier_id = #{params.supplierId}
+        </if>
         GROUP BY confirm_status
     </select>
 
