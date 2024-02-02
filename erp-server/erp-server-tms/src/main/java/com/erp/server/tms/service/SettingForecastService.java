@@ -83,4 +83,12 @@ public interface SettingForecastService extends SuperService<SettingForecastEnti
      * @return
      */
     SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(SettingForecastDTO.FindByLogisticsSupplierDTO dto);
+
+
+    /**
+     * 根据物流商id查询预报设置信息
+     * @param logisticsSupplierId
+     * @return
+     */
+    SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId);
 }

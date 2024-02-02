@@ -96,21 +96,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(PackageForecastDTO.UpdateDTO updateDTO) {
-        PackageForecastEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单"));
-        PackageForecastEntity packageForecastEntity = BeanMapperUtils.map(PackageForecastEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(packageForecastEntity);
-        log.info("编辑 开始修改组包预报单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(packageForecastEntity);
+        PackageForecastEntity entity = super.getById(updateDTO.getId());
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单"));
+        entity.setBillDate(updateDTO.getBillDate());
+        boolean save = super.updateById(entity);
         if (!save) {
             throw new ServiceException("组包预报单保存失败");
         }
-
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), packageForecastEntity.getCode(), "组包预报单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, packageForecastEntity, null, packageForecastEntity.getId(), msg);
+        packageForecastDetailService.update(entity.getId(),entity.getLogisticsSupplierId(),updateDTO.getDetailIdList());
         return Boolean.TRUE;
     }
 

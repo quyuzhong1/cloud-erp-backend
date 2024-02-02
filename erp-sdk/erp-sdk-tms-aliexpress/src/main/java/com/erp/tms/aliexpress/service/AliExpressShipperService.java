@@ -154,6 +154,13 @@ public class AliExpressShipperService {
 //        return JSONObject.parseObject(response.getBody(), LabelResult.class);
     }
 
+    /**
+     * 查询物流单明细
+     * @param authMap
+     * @param queryOrderRequest
+     * @return
+     * @throws ApiException
+     */
     public BaseResult queryLogisticsOrder(Map<String, String> authMap, QueryOrderRequest queryOrderRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");

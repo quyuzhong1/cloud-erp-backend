@@ -74,6 +74,9 @@ public class PackageForecastController extends BaseController {
 
 
 
+
+
+
     /**
     * 修改
     * @author Lambda
@@ -82,15 +85,9 @@ public class PackageForecastController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "组包预报表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:packageForecast:update",
-        serviceClass = PackageForecastService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PackageForecastDTO.UpdateDTO dto) {
-        packageForecastService.update(dto);
-        return success();
+    public ApiResult update(@RequestBody @Validated PackageForecastDTO.UpdateDTO dto) {
+        Boolean result = packageForecastService.update(dto);
+        return result ? success() : failure();
     }
 
 

@@ -30,10 +30,10 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     * 修改
     * @author Lambda
     * @date: 2024-01-26
-    * @param dto
+    * @param detailIdList
     * @return
     */
-    Boolean update(PackageForecastDetailDTO.UpdateDTO dto);
+    Boolean update(String mainId,String logisticsSupplierId,List<String> detailIdList);
 
     /**
      * 获取对应详情
