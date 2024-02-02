@@ -175,7 +175,10 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(TransferLogisticsChannelEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(TransferLogisticsChannelEntity::getMainId, mainIds)
+                .orderByAsc(TransferLogisticsChannelEntity::getDisabled)
+                .orderByDesc(TransferLogisticsChannelEntity::getCreateTime)
+                .list();
     }
 
     @Override
