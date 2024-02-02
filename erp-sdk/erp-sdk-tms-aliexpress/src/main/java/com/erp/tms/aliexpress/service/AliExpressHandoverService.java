@@ -16,12 +16,41 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * 速卖通交接服务层
+ * 速卖通交接服务层-菜鸟国际出口
  */
 @Component
 public class AliExpressHandoverService {
+    /**
+     * 批次追加大包
+     * @param authMap
+     * @param subbagRequest
+     * @return
+     * @throws ApiException
+     */
+    public IopResponse subbagAdd(Map<String, String> authMap, SubbagRequest subbagRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.handover.content.subbag.add");
+        request.addApiParameter("user_info", JSONObject.toJSONString(subbagRequest.getUserInfo()));
+        request.addApiParameter("order_code", subbagRequest.getOrderCode());
+        request.addApiParameter("add_subbag_quantity", String.valueOf(subbagRequest.getAddSubbagQuantity()));
+        request.addApiParameter("locale", subbagRequest.getLocale());
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
 
     /**
      * 查询大包详情
@@ -30,7 +59,7 @@ public class AliExpressHandoverService {
      * @return HandoverQueryResponse
      * @throws ApiException
      */
-    public IopResponse query(Map<String, String> authMap, HandoverQueryRequest handoverQueryRequest) throws ApiException {
+    public IopResponse queryContent(Map<String, String> authMap, HandoverQueryRequest handoverQueryRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -53,6 +82,44 @@ public class AliExpressHandoverService {
         return response;
     }
 
+    /**
+     * 提供给ISV通过该接口查询小包信息
+     * @param authMap
+     * @param handoverQueryRequest
+     * @return HandoverQueryResponse
+     * @throws ApiException
+     */
+    public IopResponse queryParcel(Map<String, String> authMap, HandoverQueryRequest handoverQueryRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.handover.parcel.query");
+        request.addApiParameter("user_info", JSONObject.toJSONString(handoverQueryRequest.getUserInfo()));
+        request.addApiParameter("order_code", handoverQueryRequest.getOrderCode());
+        request.addApiParameter("tracking_number", handoverQueryRequest.getTrackingNumber());
+        request.addApiParameter("client", handoverQueryRequest.getClient());
+        request.addApiParameter("locale", handoverQueryRequest.getLocale());
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    /**
+     * 提供给ISV通过该接口提交发布交接单
+     *
+     * @param authMap
+     * @param commitRequest
+     * @return
+     * @throws ApiException
+     */
     public IopResponse commit(Map<String, String> authMap, CommitRequest commitRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
@@ -68,7 +135,9 @@ public class AliExpressHandoverService {
         request.addApiParameter("seller_parcel_order_list", JSONObject.toJSONString(commitRequest.getSellerParcelOrderList()));
         request.addApiParameter("skip_invalid_parcel", String.valueOf(commitRequest.getSkipInvalidParcel()));
         request.addApiParameter("remark", commitRequest.getRemark());
-        request.addApiParameter("return_info", JSONObject.toJSONString(commitRequest.getReturnInfo()));
+        if (Objects.nonNull(commitRequest.getReturnInfo())){
+            request.addApiParameter("return_info", JSONObject.toJSONString(commitRequest.getReturnInfo()));
+        }
         request.addApiParameter("pickup_info", JSONObject.toJSONString(commitRequest.getPickInfo()));
         request.addApiParameter("order_code_list", String.join(",", commitRequest.getOrderCodeList()));
         request.addApiParameter("weight", String.valueOf(commitRequest.getWeight()));
@@ -89,6 +158,14 @@ public class AliExpressHandoverService {
         return response;
     }
 
+    /**
+     * 提供给ISV通过该接口修改交接单
+     *
+     * @param authMap
+     * @param updateRequest
+     * @return
+     * @throws ApiException
+     */
     public IopResponse update(Map<String, String> authMap, UpdateRequest updateRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
@@ -117,6 +194,15 @@ public class AliExpressHandoverService {
         System.out.println(response.getBody());
         return response;
     }
+
+    /**
+     * 提供给ISV通过该接口取消交接单
+     *
+     * @param authMap
+     * @param cancelRequest
+     * @return
+     * @throws ApiException
+     */
     public IopResponse cancel(Map<String, String> authMap, CancelRequest cancelRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
@@ -141,6 +227,14 @@ public class AliExpressHandoverService {
         return response;
     }
 
+    /**
+     * 提供给ISV通过该接口获取面单云打印数据
+     *
+     * @param authMap
+     * @param cloudPrintRequest
+     * @return
+     * @throws ApiException
+     */
     public IopResponse cloudPrint(Map<String, String> authMap, CloudPrintRequest cloudPrintRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
@@ -158,6 +252,122 @@ public class AliExpressHandoverService {
         request.addApiParameter("user_info", JSONObject.toJSONString(cloudPrintRequest.getUserInfo()));
         request.addApiParameter("client", cloudPrintRequest.getClient());
         request.addApiParameter("locale", cloudPrintRequest.getLocale());
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    /**
+     * 返回指定大包面单的PDF文件数据
+     * @param authMap
+     * @param pdfRequest
+     * @return
+     * @throws ApiException
+     */
+    public IopResponse getPdf(Map<String, String> authMap, PdfRequest pdfRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.handover.pdf.get");
+        request.addApiParameter("handover_content_id", pdfRequest.getHandoverContentId());
+        request.addApiParameter("type", pdfRequest.getType());
+        request.addApiParameter("user_info", JSONObject.toJSONString(pdfRequest.getUserInfo()));
+        request.addApiParameter("client", pdfRequest.getClient());
+        request.addApiParameter("locale", pdfRequest.getLocale());
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    /**
+     * 揽收资源推荐
+     *
+     * @param authMap
+     * @param resourceRecommendRequest
+     * @return
+     * @throws ApiException
+     */
+    public IopResponse resourceRecommend(Map<String, String> authMap, ResourceRecommendRequest resourceRecommendRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.pickup.resource.recommend");
+        request.addApiParameter("solution_code", resourceRecommendRequest.getSolutionCode());
+        request.addApiParameter("pickup_type", resourceRecommendRequest.getPickup_type());
+        request.addApiParameter("user_info", JSONObject.toJSONString(resourceRecommendRequest.getUserInfo()));
+        request.addApiParameter("pickup_info", JSONObject.toJSONString(resourceRecommendRequest.getPickInfo()));
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    /**
+     * 查询出所有的实际承运商
+     * @param authMap
+     * @param locale
+     * @return
+     * @throws ApiException
+     */
+    public IopResponse queryCarrierList(Map<String, String> authMap, String locale) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.logistics.carrier.querylist");
+        request.addApiParameter("locale", locale);
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+        return response;
+    }
+
+    /**
+     *查询包裹可用物流方案
+     * @param authMap
+     * @param serviceRequest
+     * @return
+     * @throws ApiException
+     * 用于异常订单重新发货时获取物流方案，如异常滞留订单
+     */
+    public IopResponse queryService(Map<String, String> authMap, ServiceRequest serviceRequest) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.global.logistics.service.query");
+        request.addApiParameter("trade_order_id", serviceRequest.getTradeOrderId());
+        request.addApiParameter("intl_tracking_no", serviceRequest.getIntlTrackingNo());
+        request.addApiParameter("out_order_code", serviceRequest.getOutOrderCode());
+        request.addApiParameter("reason", serviceRequest.getReason());
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
@@ -186,7 +396,7 @@ public class AliExpressHandoverService {
                 .trackingNumber("LP00629346935157")
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
-        IopResponse query = service.query(authMap, handoverQueryRequest);
+        IopResponse query = service.queryContent(authMap, handoverQueryRequest);
         System.out.println(query);
     }
 
