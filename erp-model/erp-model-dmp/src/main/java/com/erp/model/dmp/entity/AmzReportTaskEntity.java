@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -173,4 +174,11 @@ public class AmzReportTaskEntity extends BaseEntity<AmzReportTaskEntity> {
     public static final String DOWNLOAD_RETRY_COUNT = "download_retry_count";
 
     public static final String PARSE_RETRY_COUNT = "parse_retry_count";
+
+    public String getFirstMarketplace() {
+        if (StringUtils.isNotBlank(this.marketplaceIds)){
+            return this.marketplaceIds.split(",")[0];
+        }
+        return "";
+    }
 }

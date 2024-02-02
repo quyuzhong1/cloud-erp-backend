@@ -436,7 +436,7 @@ public class PullAmzJob {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
         } else {
-            size = 100;
+            size = 20;
         }
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据

@@ -39,6 +39,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -183,14 +184,15 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         Map<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(e -> e.convertIdentifiersType(marketPlaceEnum)));
 
-        ApiResponse<Item> itemResponse = null;
         //查询商品详情
         CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+
+        Map<AmazonIdentifiersTypeEnum, Map<String, Item>> conbineMap = new HashMap<>();
 
         List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
         for (Map.Entry<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> entry : listMap.entrySet()) {
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
-            List<String> identifiers = Arrays.asList("788185949481");
+            List<String> identifiers = entry.getValue().stream().map(PlatformAmazonListingDTO::getProductId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
             String identifiersType = entry.getKey().getCode();
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             String locale = null;
@@ -208,29 +210,41 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
                 throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
             }
             amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, apiResponse);
-
-//            apiResponse.getData().getItems()
-//            resultList.addAll()
+            List<Item> items = apiResponse.getData().getItems();
+            if (CollectionUtils.isEmpty(items)){
+                return Collections.emptyList();
+            }
+            // 根据identifiers.identifierType区分返回的来源的ProductId
+            Map<String, Item> itemMap = items.stream().collect(Collectors.toMap(e -> e.getKeyByIdentifierType(entry.getKey(), marketPlaceEnum), Function.identity()));
+            conbineMap.put(entry.getKey(), itemMap);
+            entry.getValue().forEach(e-> {
+                Item item = itemMap.get(e.getProductId());
+                if (null != item){
+                    this.setAllDetail(e, item, marketPlaceEnum);
+                }
+            });
+            resultList.addAll(entry.getValue());
         }
 
-//        Item response = itemResponse.getData();
-//
-//
-//        // 拼接产品规格信息
-//        productSpec = response.combineProductSpec(marketPlaceEnum.getMarketplaceId());
-//        // 拼接包装信息
-//        packing = response.combinePacking(marketPlaceEnum.getMarketplaceId());
-//        // 找出第一张图片信息
-//        imageUrl = response.combineImage(marketPlaceEnum.getMarketplaceId());
-//        // 源信息
-//        dto.setDetail(response);
-//
-//        // 产品规格信息
-//        dto.setProductSpec(productSpec);
-//        // 产品包装信息
-//        dto.setProductPacking(packing);
-//        // 产品图片
-//        dto.setImageUrl(imageUrl);
-        return null;
+        return resultList;
+    }
+
+    private void setAllDetail(PlatformAmazonListingDTO dto, Item item, AmazonMarketplaceEnum marketPlaceEnum) {
+        // 拼接产品规格信息
+        String productSpec = item.combineProductSpec(marketPlaceEnum.getMarketplaceId());
+        // 拼接包装信息
+        String packing = item.combinePacking(marketPlaceEnum.getMarketplaceId());
+        // 找出第一张图片信息
+        String imageUrl = item.combineImage(marketPlaceEnum.getMarketplaceId());
+        // 源信息
+        dto.setDetail(item);
+        // 产品规格信息
+        dto.setProductSpec(productSpec);
+        // 产品包装信息
+        dto.setProductPacking(packing);
+        // 产品图片
+        dto.setImageUrl(imageUrl);
+        // ASIN
+        dto.setAsin1(item.getAsin());
     }
 }

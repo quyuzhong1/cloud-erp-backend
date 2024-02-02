@@ -15,6 +15,9 @@ package com.erp.sdk.oms.amz.spapi.model.catalogitems;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.productpricing.IdentifierType;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
@@ -375,6 +378,31 @@ public class Item {
             return "";
         }
         return itemImage.getLink();
+    }
+
+    public String getKeyByIdentifierType(AmazonIdentifiersTypeEnum identifierType, AmazonMarketplaceEnum marketplaceEnum){
+        if (AmazonIdentifiersTypeEnum.ASIN.equals(identifierType)){
+            return this.getAsin();
+        }
+        // 日本
+        if (AmazonIdentifiersTypeEnum.JAN.equals(identifierType)){
+            ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
+                    .stream()
+                    .filter(e -> marketplaceEnum.getMarketplaceId().equalsIgnoreCase(e.getMarketplaceId()))
+                    .findFirst()
+                    .orElse(null);
+            if (null != identifiersByMarketplace){
+                ItemIdentifier itemIdentifier = identifiersByMarketplace.getIdentifiers()
+                        .stream()
+                        .filter(e -> "UPC".equalsIgnoreCase(e.getIdentifierType()))
+                        .findFirst()
+                        .orElse(null);
+                if (null != itemIdentifier){
+                    return itemIdentifier.getIdentifier();
+                }
+            }
+        }
+        return this.getAsin();
     }
 }
 

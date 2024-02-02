@@ -4,9 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
@@ -107,8 +106,7 @@ public class PullAmzReportJob {
         Integer size = 20;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
-            JSONObject jobParam = JSON.parseObject(jobParamStr);
-            size = jobParam.getInteger("size");
+            size = new JSONObject(jobParamStr).getInt("size");
         }
         // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[亚马逊请求报表计划任务] 任务开始 size={}", size);
@@ -284,23 +282,23 @@ public class PullAmzReportJob {
      */
     @XxlJob("amazonReportRetry")
     public ReturnT<String> amazonReportRetry() {
-        int size = 10;
+        Integer size = 10;
         List<String> taskIdList = new ArrayList<>();
         List<String> recordTypeList = new ArrayList<>();
         List<String> shopIdsList = new ArrayList<>();
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StringUtils.isNotBlank(jobParamStr)) {
-            JSONObject jsonObject = JSONObject.parseObject(jobParamStr);
-            size = jsonObject.getInteger("size");
-            String taskIdStr = jsonObject.getString("taskIdList");
+            JSONObject jsonObject = new JSONObject(jobParamStr);
+            size = jsonObject.getInt("size");
+            String taskIdStr = jsonObject.getStr("taskIdList");
             if (StringUtils.isNotBlank(taskIdStr)) {
                 taskIdList = JSONUtil.toList(taskIdStr, String.class);
             }
-            String recordTypeStr = jsonObject.getString("recordTypeList");
+            String recordTypeStr = jsonObject.getStr("recordTypeList");
             if (StringUtils.isNotBlank(recordTypeStr)) {
                 recordTypeList = JSONUtil.toList(recordTypeStr, String.class);
             }
-            String shopIdsListStr = jsonObject.getString("shopIdsList");
+            String shopIdsListStr = jsonObject.getStr("shopIdsList");
             if (StringUtils.isNotBlank(shopIdsListStr)) {
                 shopIdsList = JSONUtil.toList(shopIdsListStr, String.class);
             }
@@ -309,7 +307,7 @@ public class PullAmzReportJob {
                 " taskIdList={}, recordTypeList={}, shopIds={}", size, taskIdList, recordTypeList, shopIdsList);
 
         List<AmzReportTaskEntity> taskEntityList;
-        if (CollectionUtils.isEmpty(taskIdList)) {
+        if (!CollectionUtils.isEmpty(taskIdList)) {
             taskEntityList = amzReportTaskService.listByIds(taskIdList);
         } else {
             taskEntityList = amzReportTaskService.lambdaQuery()

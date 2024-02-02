@@ -177,8 +177,14 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 转换IdentifiersType
      */
     public AmazonIdentifiersTypeEnum convertIdentifiersType(AmazonMarketplaceEnum marketPlaceEnum) {
-
-
-        return null;
+        // 日本
+        if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)){
+            if ("3".equals(this.productIdType)){
+                return AmazonIdentifiersTypeEnum.JAN;
+            } else {
+                return AmazonIdentifiersTypeEnum.ASIN;
+            }
+        }
+        return AmazonIdentifiersTypeEnum.ASIN;
     }
 }

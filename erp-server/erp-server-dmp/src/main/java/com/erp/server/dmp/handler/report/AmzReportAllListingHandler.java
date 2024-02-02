@@ -11,6 +11,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,15 @@ public class AmzReportAllListingHandler extends AmzReportBusinessHandler {
         jobTaskDTO.setOperateType("pull");
 
         List<ReportListingCsvEntity> list = JSONUtil.toList(jsonArray, ReportListingCsvEntity.class);
+        // 日本店铺特殊ASIN处理
+        if (AmazonMarketplaceEnum.JP.getMarketplaceId().equalsIgnoreCase(taskEntity.getFirstMarketplace())){
+            list.forEach(e -> {
+                if (null != e.getProductIdType() && e.getProductIdType().contains("1")) {
+                    e.setAsin1(e.getProductId());
+                }
+            });
+        }
+
         jobTaskDTO.setSourceList(list);
         // 事务处理
         businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO);

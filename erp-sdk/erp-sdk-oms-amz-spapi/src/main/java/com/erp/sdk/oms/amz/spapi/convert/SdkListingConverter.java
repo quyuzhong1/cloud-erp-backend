@@ -26,7 +26,7 @@ public interface SdkListingConverter {
     @Mappings({
             @Mapping(target = "uniqueId", source = "csvEntity.listingId"),
             @Mapping(target = "shopId", source = "shopId"),
-            @Mapping(target = "downloadStatus", expression = "java(null == csvEntity.getAsin1() ? -1 : 0)"),
+            @Mapping(target = "downloadStatus", constant = "0"),
             @Mapping(target = "platformUpdateTime", source = "updateTime"),
     })
     PlatformAmazonListingDTO sourceDtoToListingDto(ReportListingCsvEntity csvEntity, String shopId, LocalDateTime updateTime);
