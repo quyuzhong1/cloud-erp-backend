@@ -626,6 +626,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调入仓库仓位
          */
         private String toWarehouseLocation;
+        /**
+         * 调出组织
+         */
+        private String outOrgId;
+
+        /**
+         * 调入组织
+         */
+        private String inOrgId;
     }
 
     /**
@@ -713,6 +722,18 @@ public class RequisitionApplicationDTO implements Serializable {
         @Min(value = 1,message = "拣货数量最小值为1")
         @Max(value = 999999999,message = "拣货数量最大值为999999999")
         private Integer pickingQty;
+
+        /**
+         * 调出组织
+         */
+        private String outOrgId;
+
+        /**
+         * 调入组织
+         */
+        private String inOrgId;
+
+
 
     }
 

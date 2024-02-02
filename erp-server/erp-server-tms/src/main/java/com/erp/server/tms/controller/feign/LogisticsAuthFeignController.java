@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 授权信息
@@ -33,5 +34,18 @@ public class LogisticsAuthFeignController {
     public LogisticsSupplierDTO.AuthDTO getAuthByChannelId(@RequestBody String channelId) {
         LogisticsSupplierDTO.AuthDTO authByChannelId = logisticsAuthService.getAuthByChannelId(channelId);
         return authByChannelId;
+    }
+
+    /**
+     * 根据渠道id查询渠道关联的平台信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:27
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsSupplierDTO.AuthChannelViewDTO>
+     **/
+    @PostMapping("/listAuthChannelView")
+    public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@RequestBody List<String> channelIdList) {
+        List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOS = logisticsAuthService.listAuthChannelView(channelIdList);
+        return authChannelViewDTOS;
     }
 }

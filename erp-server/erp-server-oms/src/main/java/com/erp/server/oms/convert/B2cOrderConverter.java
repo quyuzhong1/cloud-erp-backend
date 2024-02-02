@@ -5,6 +5,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -71,6 +72,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "qty", source = "qty"),
             @Mapping(target = "platformSkuNo", source = "platformSkuNo"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "sourceDetailId", source = "sourceDetailId"),
 
     })
     LogisticsBillDTO.SkuDTO convertSku(SoB2cDetailEntity data);

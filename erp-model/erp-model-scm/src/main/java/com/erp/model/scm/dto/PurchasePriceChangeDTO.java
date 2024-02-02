@@ -36,18 +36,6 @@ public class PurchasePriceChangeDTO implements Serializable {
     public static class AddDTO extends PermissionsDTO {
 
         /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
-
-        /**
-         * 采购价目表id
-         */
-        @NotBlank(message = "采购价目表id 不能为空")
-        private String purchasePriceId;
-
-        /**
          * 调价日期
          */
         @NotNull(message = "调价日期不能为空")
@@ -104,18 +92,10 @@ public class PurchasePriceChangeDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
-
         /**
-         * 供应商表id
+         * 原因
          */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
-
-        /**
-         * 采购价目表id
-         */
-        @NotBlank(message = "采购价目表id 不能为空")
-        private String purchasePriceId;
+        private String reason;
 
         /**
          * 调价日期
@@ -171,17 +151,17 @@ public class PurchasePriceChangeDTO implements Serializable {
 
         private String code;
 
-        /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
 
         /**
          * 采购价目表id
          */
         @NotBlank(message = "采购价目表id 不能为空")
         private String purchasePriceId;
+
+        /**
+         * 价目表id
+         */
+        private List<String> purchasePriceIdList;
 
         /**
          * 调价日期
@@ -247,6 +227,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 详情id
          */
         private String changeDetailId;
+
+        /**
+         * 价目表id
+         */
+        private String purchasePriceId;
 
         /**
          * 价目明细id
@@ -416,6 +401,10 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 采购价目表编码
+         */
+        private String priceCode;
 
         /**
          * 主键 id 集合

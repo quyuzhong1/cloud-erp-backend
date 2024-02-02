@@ -1,15 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
-import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;

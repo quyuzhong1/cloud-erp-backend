@@ -54,4 +54,21 @@ public class UpdateStateDTO implements Serializable {
         @NotNull(message = "禁用状态不能为空")
         private Boolean disabled;
     }
+
+
+    /**
+     *
+     * 状态为str
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateByStrStatusDTO {
+        @NotNull(message = "id不能为空")
+        private  List<String> ids;
+        /**
+         *
+         */
+        @NotBlank(message = "状态为空")
+        private String status;
+    }
 }

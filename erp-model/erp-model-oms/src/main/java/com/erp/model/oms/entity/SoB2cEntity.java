@@ -233,6 +233,32 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("sign_order_error")
     private String signOrderError;
 
+    /**
+     * 第三方仓发货订单id
+     */
+    @TableField("shipping_order_no")
+    private String shippingOrderNo;
+
+    /**
+     * 单据冻结状态
+     */
+    @TableField("is_frozen")
+    private Boolean isFrozen;
+
+    /**
+     * 组包状态
+     * not 不需要  wait 待组包   already 已经组包
+     */
+    @TableField("package_status")
+    private String packageStatus;
+
+    /**
+     * 中转状态
+     * not 不需要  wait 待中转   already 已经中转
+     */
+    @TableField("transfer_status")
+    private String transferStatus;
+
 
 
     public static final String CODE = "code";

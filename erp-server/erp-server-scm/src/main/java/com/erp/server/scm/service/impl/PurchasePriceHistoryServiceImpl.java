@@ -97,6 +97,21 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
     }
 
     @Override
+    public List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIds, List<String> skuIdList) {
+        LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(PurchasePriceHistoryEntity::getSupplierId, supplierIds);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            queryWrapper.in(PurchasePriceHistoryEntity::getSkuId, skuIdList);
+        }
+        LocalDate now = LocalDate.now();
+        queryWrapper.le(PurchasePriceHistoryEntity::getEffectiveDate, now);
+        queryWrapper.ge(PurchasePriceHistoryEntity::getExpireDate, now);
+        List<PurchasePriceHistoryEntity> list = this.list(queryWrapper);
+
+        return BeanMapper.copyList(list, PurchasePriceDetailDTO.AddDTO.class);
+    }
+
+    @Override
     public List<PurchasePriceHistoryEntity> getHistoryByDetailIds(List<String> purchasePriceDetailIds) {
         if (CollectionUtils.isEmpty(purchasePriceDetailIds)) {
             return Collections.emptyList();

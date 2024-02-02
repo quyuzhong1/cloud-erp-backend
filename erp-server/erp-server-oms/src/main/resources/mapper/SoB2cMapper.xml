@@ -42,6 +42,8 @@
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
         sb2c.bill_status as billStatus,
+        sb2c.package_status as packageStatus,
+        sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
         sb2c.amount as amount,
         sb2c.currency as currency,
@@ -154,6 +156,22 @@
                     #{item}
                 </foreach>
             </if>
+            <!-- 组包状态 -->
+            <if test="params.packageStatusList != null and params.packageStatusList.size > 0">
+                and sb2c.package_status in
+                <foreach collection="params.packageStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <!-- 中转状态 -->
+            <if test="params.transferStatusList != null and params.transferStatusList.size > 0">
+                and sb2c.transfer_status in
+                <foreach collection="params.transferStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
             <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
                 and sb2c.abnormal_type in
                 <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
@@ -656,5 +674,96 @@
         </if>
     </select>
 
+    <!--根据渠道id查询需要生成中转报关单的数据-->
+    <select id="listByLogisticsSupplier" resultType="com.erp.model.tms.dto.TransferDeclareDetailDTO$AddDTO">
+        SELECT
+            sb.id AS soId,
+            sb.code AS soCode,
+            sbl.logistics_channel_id AS logisticsChannelId,
+            sbl.code AS trackNo,
+            sbl.weight AS packageWeight
+        FROM so_b2c sb
+        INNER JOIN so_b2c_logistics sbl ON sbl.main_id = sb.id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        AND sb.transfer_status = 'wait'
+        AND sb.package_status = 'not'
+        AND sb.bill_status = 'waitShipped'
+        <if test="channelIds !=null and channelIds.size >0">
+            AND sbl.logistics_channel_id IN
+            <foreach collection="channelIds" item="channelId" open="(" separator="," close=")">
+                #{channelId}
+            </foreach>
+        </if>
+    </select>
 
+    <!--查询组包扫描的数据 根据code-->
+    <select id="packageScanByCode" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
+         SELECT
+           sb.id AS soId,
+           sb.code AS soCode,
+           sb.bill_status AS billStatus,
+           sb.package_status AS packageStatus,
+           sbl.logistics_channel_id AS logisticsChannelId,
+           sbl.track_no AS trackNo,
+           sbl.weight AS weight
+         FROM so_b2c sb
+         LEFT JOIN so_b2c_logistics sbl
+         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+         WHERE sb.is_deleted = FALSE
+         AND (sb.code = #{code}
+                  OR
+              #{code} = ANY(string_to_array(sbl.code,','))
+             )
+    </select>
+
+    <!--分拨组包 分页-->
+    <select id="packagePing" resultType="com.erp.model.oms.dto.PackageDTO$PagingViewDTO">
+        SELECT
+            sb.id AS soId,
+            sb.code AS soCode,
+            sb.bill_status AS billStatus,
+            sb.package_status AS packageStatus,
+            sbl.logistics_channel_id AS logisticsChannelId,
+            sbl.code AS trackNo,
+            sbl.weight AS weight
+        FROM so_b2c sb
+        LEFT JOIN so_b2c_logistics sbl
+        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        <if test="params.billStatusList !=null and params.billStatusList.size>0">
+          AND sb.bill_status IN
+           <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
+                  #{item}
+           </foreach>
+        </if>
+        <if test="params.packageStatusList !=null and params.packageStatusList.size>0">
+            AND sb.package_status IN
+            <foreach collection="params.packageStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="listMergePackageBySoIds" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
+        SELECT
+        sb.id AS soId,
+        sb.code AS soCode,
+        sb.bill_status AS billStatus,
+        sb.package_status AS packageStatus,
+        sbl.logistics_channel_id AS logisticsChannelId,
+        sbl.code AS transportNo,
+        sbl.track_no AS trackNo,
+        sbl.weight AS weight
+        FROM so_b2c sb
+        LEFT JOIN so_b2c_logistics sbl
+        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE
+        <if test="ids !=null and ids.size>0">
+            AND sb.id IN
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

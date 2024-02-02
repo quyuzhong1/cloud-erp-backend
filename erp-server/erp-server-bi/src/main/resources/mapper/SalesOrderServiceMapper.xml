@@ -964,35 +964,6 @@
         <include refid="sql_report_condition"/>
         GROUP BY o.shop_name
         ORDER BY sales DESC LIMIT 20
-
-        SELECT o.shop_no,
-        <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
-        </if>
-        <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales
-        </if>
-        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-        <where>
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                    o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt; #{params.endTime}
-                </if>
-            </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt; #{params.endTime}
-                </if>
-            </if>
-        </where>
-        GROUP BY o.shop_no
     </select>
 
     <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">

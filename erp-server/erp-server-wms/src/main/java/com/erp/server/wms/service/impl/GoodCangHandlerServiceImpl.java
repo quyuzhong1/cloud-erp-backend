@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
@@ -22,10 +23,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +72,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
         GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
         if(response.getMessage().contains("参考号重复")){
-            return ApiResult.success();
+            GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
+            return success(orderCode.getData());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
@@ -82,9 +81,14 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        if(Objects.isNull(response.getCancelStatus())){
+            return failure(response.getMessage());
+        }
+        if(response.getCancelStatus().equals(3)){
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
 
     @Override
     protected Boolean hasWarehouse() {

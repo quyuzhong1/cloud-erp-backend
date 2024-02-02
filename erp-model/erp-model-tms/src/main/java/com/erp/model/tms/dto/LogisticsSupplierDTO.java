@@ -227,6 +227,67 @@ public class LogisticsSupplierDTO implements Serializable {
         private String authId;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class AuthChannelViewDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+
+        /**
+         * 物流商id
+         */
+        private String mainId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 名称
+         */
+        private String supplierName;
+
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 是否禁用 true 禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 授权的平台
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 授权的id
+         */
+        private String authId;
+
+        /**
+         * 渠道id
+         */
+        private String channelId;
+
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+    }
+
     @Data
     @NoArgsConstructor
     public static class ChannelViewDTO {

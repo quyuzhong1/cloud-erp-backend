@@ -45,7 +45,7 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @param detailList
      * @return void
      */
-    void checkChange(List<SoChangeDetailDTO.AddDTO> detailList);
+    void checkChange(List<SoChangeDetailDTO.UpdateDTO> detailList);
 
     /**
      * 根据主表删除明细

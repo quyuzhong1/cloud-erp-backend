@@ -142,7 +142,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
     private TransferInfoService transferInfoService;
@@ -1505,7 +1505,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
-            purchaseReturnOrderService.add(addDTO);
+            poReturnService.add(addDTO);
         }
     }
 

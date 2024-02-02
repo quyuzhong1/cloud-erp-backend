@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PackageForecastMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PackageForecastEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="handover_no" property="handoverNo" />
+       <result column="platform_package_no" property="platformPackageNo" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="total_package_qty" property="totalPackageQty" />
+       <result column="total_package_weight" property="totalPackageWeight" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="transport_no" property="transportNo" />
+       <result column="upload_status" property="uploadStatus" />
+       <result column="print_status" property="printStatus" />
+       <result column="bill_date" property="billDate" />
+       <result column="collect_mode" property="collectMode" />
+       <result column="collect_address" property="collectAddress" />
+       <result column="collect_address_id" property="collectAddressId" />
+       <result column="handover_status" property="handoverStatus" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, handover_no, platform_package_no, logistics_supplier_id, logistics_supplier_name, total_package_qty, total_package_weight, weight_unit, transport_no, upload_status, print_status, bill_date, collect_mode, collect_address, collect_address_id, handover_status, remark
+    </sql>
+
+    <!--tab list-->
+    <select id="tabList" resultType="com.erp.model.wms.dto.PackageForecastDTO$TabListDTO">
+        SELECT count(id) AS count,upload_status AS tabFlag FROM  package_forecast
+        WHERE is_deleted = FALSE
+        GROUP BY upload_status
+
+    </select>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.PackageForecastDTO$PagingViewDTO">
+         SELECT
+                pf.id AS id,
+                pfd.id AS detailId,
+                pf.bill_date AS billDate,
+                pf.code,
+                pf.handover_no AS handoverNo,
+                pf.platform_package_no AS platformPackageNo,
+                pf.logistics_supplier_id AS logisticsSupplierId,
+                pf.logistics_supplier_name AS logisticsSupplierName,
+                pf.transport_no AS transportNo,
+                pf.total_package_qty AS totalPackageQty,
+                pf.total_package_weight AS totalPackageWeight,
+                pf.weight_unit AS totalPackageWeightUnit,
+                pf.upload_status AS uploadStatus,
+                pf.print_status AS printStatus,
+                pf.handover_status AS handoverStatus,
+                pf.remark,
+                pf.create_user_name AS createUserName,
+                pf.create_time AS  createTime,
+                pfd.so_id AS soId,
+                pfd.so_code AS soCode,
+                pfd.logistics_channel_id AS logisticsChannelId,
+                pfd.logistics_channel_name AS logisticsChannelName,
+                pfd.track_no AS trackNo,
+                pfd.transport_no AS minPackageTransportNo,
+                pfd.weight,
+                pfd.weight_unit AS weightUnit,
+                pfd.handover_status AS minPackageHandoverStatus
+         FROM package_forecast pf
+         LEFT JOIN  package_forecast_detail pfd
+         ON pf.id = pfd.main_id AND pfd.is_deleted = FALSE
+         WHERE pf.is_deleted = FALSE
+    </select>
+
+
+</mapper>

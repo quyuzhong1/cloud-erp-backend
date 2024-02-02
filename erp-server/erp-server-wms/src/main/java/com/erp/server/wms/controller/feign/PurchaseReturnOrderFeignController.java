@@ -2,10 +2,10 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.server.wms.service.PoReturnDetailService;
+import com.erp.server.wms.service.PoReturnService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,10 +27,10 @@ import java.util.List;
 public class PurchaseReturnOrderFeignController extends BaseController {
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
+    private PoReturnService poReturnService;
 
     @Resource
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private PoReturnDetailService poReturnDetailService;
 
     /**
      * @param SourceDetailIds
@@ -40,8 +40,8 @@ public class PurchaseReturnOrderFeignController extends BaseController {
      * @date: 2023/4/14 11:55
      */
     @PostMapping("/listDetailBySourceDetailIds")
-    public List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(@RequestBody List<String> SourceDetailIds) {
-        return purchaseReturnOrderDetailService.listBySourceDetailIds(SourceDetailIds);
+    public List<PoReturnDetailEntity> listBySourceDetailIds(@RequestBody List<String> SourceDetailIds) {
+        return poReturnDetailService.listBySourceDetailIds(SourceDetailIds);
     }
 
     /**
@@ -53,8 +53,8 @@ public class PurchaseReturnOrderFeignController extends BaseController {
      * @Date 2023/4/18 16:41
      **/
     @PostMapping("/listReturnOrderDetailByPodIds")
-    public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> podIds) {
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+    public List<PoReturnDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> podIds) {
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
         return purchaseReturnOrderDetailEntities;
     }
 
@@ -63,7 +63,7 @@ public class PurchaseReturnOrderFeignController extends BaseController {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-        Boolean flag = purchaseReturnOrderService.batchAdd(list);
+        Boolean flag = poReturnService.batchAdd(list);
         return flag ;
 
     }
@@ -75,7 +75,7 @@ public class PurchaseReturnOrderFeignController extends BaseController {
      */
     @PostMapping("/getReturnInfo")
     public List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO params) {
-        return purchaseReturnOrderService.getReturnInfo(params);
+        return poReturnService.getReturnInfo(params);
     }
 
     /**
@@ -86,11 +86,11 @@ public class PurchaseReturnOrderFeignController extends BaseController {
      * @return List<PurchaseReturnOrderEntity>
      */
     @PostMapping("/listPoReturnByIdList")
-    public List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList) {
+    public List<PoReturnEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList) {
         if (CollectionUtils.isEmpty(poReturnIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<PurchaseReturnOrderEntity> list = purchaseReturnOrderService.listByIds(poReturnIdList);
+        List<PoReturnEntity> list = poReturnService.listByIds(poReturnIdList);
         return list;
 
     }

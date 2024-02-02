@@ -1,12 +1,11 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -59,7 +58,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         private Integer qty;
 
 
-        public static InOutStockDTO initByReturnOrder(PurchaseReturnOrderEntity entity, PurchaseReturnOrderDetailEntity detail, InventorySourceTypeEnum sourceType,Integer qty, InventoryStatusEnum inventoryStatus) {
+        public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
                 inOutStockDTO.setSourceType(sourceType);
                 inOutStockDTO.setSourceId(entity.getId());

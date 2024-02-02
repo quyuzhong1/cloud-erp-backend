@@ -10,8 +10,6 @@ import lombok.experimental.Accessors;
  * @Author yl
  **/
 @Data
-@Accessors(chain = true)
-@NoArgsConstructor
 public class AliExpressShopInfoDTO {
 
     /**

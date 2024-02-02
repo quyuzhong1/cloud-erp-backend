@@ -1582,6 +1582,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String orderType;
 
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
         private String code;
 
         private Boolean invalidStatus;
@@ -2132,6 +2137,16 @@ public class SoInfoDTO implements Serializable {
          * 价税合计(本位币)
          */
         private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 发货数量
+         */
+        private Integer totalDeliveryQty;
+
+        /**
+         * 待发货数量
+         */
+        private Integer totalWaitQty;
 
 
     }

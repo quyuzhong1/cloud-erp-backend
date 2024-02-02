@@ -94,6 +94,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "invalidStatus", source = "dto.invalidStatus"),
             @Mapping(target = "invalidType", source = "dto.invalidType"),
             @Mapping(target = "invalidRemark", source = "dto.invalidRemark"),
+            @Mapping(target = "labelJson", source = "dto.labelJson"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
@@ -109,7 +110,6 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "sourceType", source = "oldEntity.sourceType"),
             @Mapping(target = "sourceId", source = "oldEntity.sourceId"),
             @Mapping(target = "sourceCode", source = "oldEntity.sourceCode"),
-            @Mapping(target = "labelJson", source = "oldEntity.labelJson"),
             @Mapping(target = "abnormalType", source = "oldEntity.abnormalType"),
             @Mapping(target = "isNotMerge", source = "oldEntity.isNotMerge"),
             @Mapping(target = "syncKingdeeStatus", source = "oldEntity.syncKingdeeStatus"),
@@ -133,8 +133,11 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
             @Mapping(target = "weight", source = "allNetWeight"),
+            @Mapping(target = "length", source = "maxLength"),
+            @Mapping(target = "width", source = "maxWidth"),
+            @Mapping(target = "height", source = "totalHeight"),
     })
-    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight);
+    SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight, BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight);
 
 
     @Mappings({

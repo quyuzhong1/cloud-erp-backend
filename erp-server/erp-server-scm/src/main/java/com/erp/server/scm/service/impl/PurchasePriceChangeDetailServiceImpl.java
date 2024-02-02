@@ -74,7 +74,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @date 2023-03-28 12:07
      */
     @Override
-    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
+    public void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
 
@@ -309,6 +309,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setSkuNo(skuVO.getSkuNo());
                 item.setProductName(skuVO.getSpuName());
             }
+
             item.setPurchasePriceChangeId(purchasePriceChangeId);
             //失效时间
             item.setExpireDate(localDate.plusYears(100));
@@ -347,8 +348,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             //更改的价目
             PurchasePriceChangeDetailEntity changeDetail = list.stream().filter(P -> P.getPurchasePriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
             if (changeDetail != null) {
-                String supplierId = purchasePriceChangeList.stream().filter(p -> p.getPurchasePriceId().equals(item.getPurchasePriceId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                /*String supplierId = purchasePriceChangeList.stream().filter(p -> p.getPurchasePriceId().equals(item.getPurchasePriceId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");*/
                 //历史的
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
@@ -357,7 +358,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 history.setChangeDetailId(changeDetail.getId());
                 //失效时间
                 history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
-                history.setSupplierId(supplierId);
+                history.setSupplierId(changeDetail.getSupplierId());
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setProductName(changeDetail.getProductName());
@@ -476,6 +477,14 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     public List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(String purchasePriceChangeId) {
         return baseMapper.listByPurchasePriceChangeId(purchasePriceChangeId);
+    }
+
+    @Override
+    public List<PurchasePriceChangeDetailEntity> listByPurchasePriceDetailIds(List<String> purchasePriceDetailIds) {
+        if (CollectionUtils.isEmpty(purchasePriceDetailIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByPurchasePriceDetailIds(purchasePriceDetailIds);
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -91,6 +92,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private SupplierService supplierService;
 
     /**
      * 检查sku 区间报价
@@ -331,8 +335,28 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
+    public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceIds(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        List<PurchasePriceDetailEntity> list = this.listGetListByPurchasePriceId(dto);
+
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        //处理采购价目明细信息
+        handlePurchasePriceDetail(viewList);
+
+        //根据id查询供应商
+        List<String> supplierIds = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+
+        //设置供应商名称
+        for (PurchasePriceDetailDTO.ViewDTO viewDTO : viewList) {
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> viewDTO.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
+            viewDTO.setSupplierName(supplierEntity.getName());
+        }
+        return viewList;
+    }
+
+    @Override
     public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceDetailIds(List<String> purchasePriceDetailIds) {
-        List<PurchasePriceDetailEntity> list = this.listByIds(purchasePriceDetailIds);
+        List<PurchasePriceDetailEntity> list = baseMapper.listDetailByIds(purchasePriceDetailIds);
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
         //处理采购价目明细信息
         handlePurchasePriceDetail(viewList);
@@ -561,6 +585,17 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return list;
     }
 
+    @Override
+    public List<PurchasePriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIds, List<String> detailIds, List<String> skuIdList) {
+        List<String> statusList = new ArrayList<>(4);
+        statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        statusList.add(ApproveStatusEnum.REJECT.getStatus());
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.listBySupplierId(supplierIds, statusList, detailIds, skuIdList);
+        return list;
+    }
+
 
     /**
      * 采购价目表 点击变更报价 获取到详情
@@ -573,27 +608,38 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(List<String> purchasePriceDetailIds) {
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
-
         List<PurchasePriceDetailDTO.ViewDTO> viewList = this.listByPurchasePriceDetailIds(purchasePriceDetailIds);
         if (CollectionUtils.isEmpty(viewList)) {
             throw new ServiceException(ApiError.ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL);
         }
-        long count = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getPurchasePriceId).distinct().count();
-        if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_ID_REPEAT);
+
+        //查询价目信息
+        List<String> purchasePriceIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getPurchasePriceId).collect(Collectors.toList());
+        List<PurchasePriceEntity> purchasePriceEntities = priceService.listByIds(purchasePriceIds);
+
+        //校验审核状态才可以修改
+        for (PurchasePriceEntity purchasePriceEntity : purchasePriceEntities) {
+            String approveStatus = purchasePriceEntity.getApproveStatus().getStatus();
+            if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_98029);
+            }
         }
 
-        PurchasePriceEntity priceEntity = priceService.getById(viewList.get(0).getPurchasePriceId());
-        if (Objects.isNull(priceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+        //只有相同的采购组织可以批量变更报价
+        long purchaseOrgCount = purchasePriceEntities.stream().map(req -> req.getPurchaseOrgId()).distinct().count();
+        if (purchaseOrgCount > 1) {
+            throw new ServiceException(ApiError.PURCHASE_ORG_NOT_REPEAT);
         }
-        viewDTO.setPurchasePriceId(viewList.get(0).getPurchasePriceId());
-        viewDTO.setSupplierId(priceEntity.getSupplierId());
-        viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+
+        viewDTO.setPurchaseOrgId(purchasePriceEntities.get(0).getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
+        //查询产品信息
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //查询供应商
+        List<String> supplierIds = viewList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
 
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
@@ -611,6 +657,17 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setProductName(skuVO.getSkuName());
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
+            //采购价目信息
+            PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+                throw new ServiceException(ApiError.ERROR_98024);
+            }
+
+            //供应商名称
+            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> item.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
+            result.setSupplierId(purchasePriceEntity.getSupplierId());
+            result.setSupplierName(supplierEntity.getName());
+            result.setPriceCode(purchasePriceEntity.getCode());
             resultList.add(result);
         }
         viewDTO.setPurchasePriceChangeDetailList(resultList);
@@ -621,18 +678,20 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 根据采购价目表id 获取到采购价目变更的明细
      *
-     * @param purchasePriceId
+     * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
      * @author yl
      * @date 2023-04-06 18:54
      */
     @Override
-    public List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId) {
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
 
-        List<PurchasePriceDetailDTO.ViewDTO> list = this.getByPurchasePriceId(purchasePriceId);
+        List<PurchasePriceDetailDTO.ViewDTO> list = this.listByPurchasePriceIds(dto);
 
         List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+
 
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
         for (PurchasePriceDetailDTO.ViewDTO item : list) {
@@ -647,6 +706,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setSkuNo(item.getSkuNo());
             result.setProductName(skuVO.getSkuName());
             result.setPurchasePriceDetailId(item.getId());
+            result.setSupplierId(item.getSupplierId());
+            result.setSupplierName(item.getSupplierName());
+            result.setPriceCode(item.getPriceCode());
+            result.setEffectiveDate(item.getEffectiveDate());
+            result.setDisabled(item.getDisabled());
+            result.setPurchaseOrgName(item.getPurchaseOrgName());
             resultList.add(result);
         }
         return resultList;
@@ -684,6 +749,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             return Collections.emptyList();
         }
         return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId, mainId).list();
+    }
+
+    @Override
+    public List<PurchasePriceDetailEntity> listDetailByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PurchasePriceDetailEntity::getPurchasePriceId, mainIds).list();
     }
 
     @Override
@@ -731,6 +804,15 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
         return this.list(queryWrapper);
 
+    }
+
+
+    private List<PurchasePriceDetailEntity> listGetListByPurchasePriceId(PurchasePriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getPurchasePriceIds())) {
+            return Collections.emptyList();
+        }
+        List<PurchasePriceDetailEntity> detail = baseMapper.listGetListByPurchasePriceIds(dto);
+        return detail;
     }
 
     @Override
