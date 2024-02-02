@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BooleanEnum;
+import com.common.business.enums.SettleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -357,7 +358,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //更新对账明细mainId
             value.stream().forEach(obj-> {
                 obj.setMainId(id);
-                obj.setIsAddAccount(Boolean.TRUE);
             });
         }
     }
@@ -384,7 +384,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         //更新对账明细
         poReconciliationDetailList.stream().forEach(obj ->{
             obj.setMainId(poReconciliationEntity.getId());
-            obj.setIsAddAccount(Boolean.TRUE);
         });
     }
 
@@ -454,6 +453,13 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), supplierEntity.getPayMethodId()))
                     .map(DictBasicEntity::getValue).findFirst().orElse("");
             detailEntity.setSettleDict(settleDict);
+            /**
+             * 当结算方式为月结/空时候，显示为是
+             * 当结算方式为现结/预付：显示为否
+             */
+            if (StrUtil.isBlank(settleDict) || StrUtil.equals(SettleEnum.MONTHLY.getCode(),settleDict)) {
+                detailEntity.setIsAddAccount(Boolean.TRUE);
+            }
             //组织名称
             String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -463,8 +469,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
                         StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
                                 && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
-                                && detailEntity.getReceiveQty() > obj.getMinQty()
-                                && obj.getMaxQty() >= detailEntity.getReceiveQty()
+                                && Math.abs(detailEntity.getReceiveQty())  > obj.getMinQty()
+                                && obj.getMaxQty() >= Math.abs(detailEntity.getReceiveQty())
                 ).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
