@@ -32,7 +32,7 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
             if (SourceTypeEnum.DELIVERY_ORDER.getCode().equals(value)) {
                 super.buildDefaultDTO("prd.source_type",SourceTypeEnum.DELIVERY_ORDER.getCode());
             }
-            if (SourceTypeEnum.PO_RETURN.getCode().equals(value)) {
+            if (ReturnOrderSourceEnum.QC.getCode().equals(value) || ReturnOrderSourceEnum.OTHER.getCode().equals(value)) {
                 super.buildDefaultDTO("prd.source_type",SourceTypeEnum.PO_RETURN.getCode());
                 super.buildDefaultDTO("prd.return_source_type", value);
             }
