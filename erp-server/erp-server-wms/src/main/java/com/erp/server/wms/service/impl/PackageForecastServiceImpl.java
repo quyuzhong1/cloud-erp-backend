@@ -12,8 +12,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
@@ -149,8 +151,45 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params );
+        List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
+        //处理分页数据
+        fillPaging(list);
+        return new PagingVO<>(pageData);
 
-        return null;
+    }
+
+
+    @Override
+    public PackageForecastDTO.ViewDTO view(String id) {
+        PackageForecastDTO.ViewDTO viewDTO = new PackageForecastDTO.ViewDTO();
+        PackageForecastEntity packageForecast = this.getById(id);
+        if (Objects.isNull(packageForecast)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        BeanMapperUtils.copy(packageForecast, viewDTO);
+        String uploadStatus = packageForecast.getUploadStatus();
+        viewDTO.setUploadStatusName(PackageUploadStatusEnum.getName(uploadStatus));
+        String printStatus = packageForecast.getPrintStatus();
+        viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(printStatus));
+        //获取详情
+        List<PackageForecastDetailDTO.ViewDTO> detailList = packageForecastDetailService.listDetailViewByMainId(id);
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
+    }
+
+    /**
+     * 填充分页数据
+     * @param list
+     */
+    private void fillPaging(List<PackageForecastDTO.PagingViewDTO> list) {
+        for (PackageForecastDTO.PagingViewDTO item : list) {
+            String uploadStatus = item.getUploadStatus();
+            String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
+            item.setUploadStatusName(uploadStatusName);
+            String printStatus=item.getPrintStatus();
+            String printStatusName= PackagePrintStatusEnum.getName(printStatus);
+            item.setPrintStatusName(printStatusName);
+        }
     }
 
 

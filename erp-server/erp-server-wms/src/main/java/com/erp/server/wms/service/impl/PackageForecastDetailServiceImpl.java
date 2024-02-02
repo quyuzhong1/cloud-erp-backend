@@ -13,6 +13,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     private CommonService commonService;
     @Autowired
     private SoB2cFeign soB2cFeign;
+
+    @Autowired
+    private SoOutstockService soOutstockService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -99,6 +103,25 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, packageForecastDetailEntity, null, packageForecastDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+
+
+    @Override
+    public List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id) {
+        List<PackageForecastDetailEntity> detailList = this.listDbByMainId(id);
+        List<PackageForecastDetailDTO.ViewDTO> resultList=BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class,detailList);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(soIdList)) {
+
+        }
+
+        return resultList;
+    }
+
+
+    public List<PackageForecastDetailEntity>  listDbByMainId(String id) {
+        return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, id).list();
     }
 
 

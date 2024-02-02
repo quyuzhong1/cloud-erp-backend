@@ -63,6 +63,16 @@ public class PackageForecastController extends BaseController {
     }
 
 
+    /**
+     * 详情
+     */
+    @GetMapping("/view")
+    public ApiResult<PackageForecastDTO.ViewDTO> view(@RequestParam("id") String id) {
+        PackageForecastDTO.ViewDTO viewDTO = packageForecastService.view(id);
+        return success(viewDTO);
+    }
+
+
 
     /**
     * 修改

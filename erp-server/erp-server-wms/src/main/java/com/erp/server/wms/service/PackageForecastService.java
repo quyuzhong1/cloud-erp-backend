@@ -51,4 +51,11 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<PackageForecastDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    PackageForecastDTO.ViewDTO view(String id);
 }

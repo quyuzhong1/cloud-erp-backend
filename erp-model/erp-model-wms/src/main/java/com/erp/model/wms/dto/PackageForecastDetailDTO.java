@@ -88,9 +88,14 @@ public class PackageForecastDetailDTO implements Serializable {
         private String handoverStatus;
 
         /**
-        * 出库状态
+         * 交接状态名
+         */
+        private String handoverStatusName;
+
+        /**
+        * 出库状态名
         */
-        private String outstockStatus;
+        private String outstockStatusName;
 
 
     }

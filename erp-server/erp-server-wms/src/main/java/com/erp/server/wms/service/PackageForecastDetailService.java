@@ -35,5 +35,10 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     */
     Boolean update(PackageForecastDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 获取对应详情
+     * @param id
+     * @return
+     */
+    List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id);
 }

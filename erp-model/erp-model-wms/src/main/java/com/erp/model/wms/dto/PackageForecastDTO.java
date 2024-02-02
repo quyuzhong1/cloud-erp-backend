@@ -291,9 +291,19 @@ public class PackageForecastDTO implements Serializable {
         private String uploadStatus;
 
         /**
+         * 上传状态名
+         */
+        private String uploadStatusName;
+
+        /**
         * 打印状态
         */
         private String printStatus;
+
+        /**
+         * 打印状态名
+         */
+        private String printStatusName;
 
         /**
         * 组包日期
@@ -324,6 +334,11 @@ public class PackageForecastDTO implements Serializable {
         * 备注
         */
         private String remark;
+
+        /**
+         * 详情
+         */
+        private List<PackageForecastDetailDTO.ViewDTO> detailList;
 
 
     }
