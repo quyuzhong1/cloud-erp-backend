@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.server.tms.service.SettingForecastService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,11 @@ public class SettingForecastFeignController {
     @PostMapping("/getByLogisticsChannelId")
     public SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestBody SettingForecastDTO.FindSettingForecastDTO dto) {
          return settingForecastService.getByLogisticsChannelId(dto);
+    }
+
+    @GetMapping("/getSettingForecastByLogisticsSupplierId")
+    public SettingForecastEntity getSettingForecastByLogisticsSupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId) {
+        return settingForecastService.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
     }
 
 

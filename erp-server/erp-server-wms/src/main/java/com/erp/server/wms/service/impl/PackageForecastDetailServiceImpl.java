@@ -5,7 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -27,6 +30,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,6 +95,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
      * 修改
      */
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(String mainId,String logisticsSupplierId, List<String> detailIdList) {
         List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
@@ -99,9 +104,22 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailEntity> deleteList=dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
+        this.removeByIds(deleteIdList);
         //销售订单id
         List<String> soIdList=deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+        SettingForecastEntity settingForecast = forecastFeign.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
+        //是否强制组包
+        Boolean isMustPackage = settingForecast.getIsMustPackage();
+        for (SoB2cEntity item : soB2cList) {
+            SettingForecastDTO.FindByLogisticsSupplierDTO findDTO = new SettingForecastDTO.FindByLogisticsSupplierDTO();
+            LocalDateTime orderTime = item.getCreateTime();
+
+
+
+
+        }
 
 
 

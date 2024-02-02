@@ -236,6 +236,11 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     }
 
+    @Override
+    public SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId) {
+        return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
+    }
+
     private SettingForecastDTO.SaveOrUpdateDTO getSaveOrUpdateByDb(SettingForecastEntity entity) {
         SettingForecastDTO.SaveOrUpdateDTO dto = new SettingForecastDTO.SaveOrUpdateDTO();
         dto.setId(entity.getId());

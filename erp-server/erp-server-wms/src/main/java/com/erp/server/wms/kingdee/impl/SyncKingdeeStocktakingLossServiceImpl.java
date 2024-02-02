@@ -1,6 +1,4 @@
 package com.erp.server.wms.kingdee.impl;
-
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -26,9 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -88,8 +86,13 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         resultMap.put("sourceCode", entity.getSourceCode());
         //单据类型
         resultMap.put("billType", entity.getBillType().getCode());
+        LocalDate billDate = entity.getBillDate();
+        if (Objects.isNull(billDate)) {
+            billDate = LocalDate.now();
+        }
+        String billDateStr = billDate.format(DateTimeFormatter.ISO_DATE);
         //单据日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", billDateStr);
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(detailDbList)) {
             return;
@@ -156,4 +159,5 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
+
 }
