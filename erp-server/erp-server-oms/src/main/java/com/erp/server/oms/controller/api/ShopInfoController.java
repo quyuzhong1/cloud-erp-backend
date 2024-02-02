@@ -10,11 +10,8 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.*;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
@@ -293,6 +290,17 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/getShopAuthorizeUrl")
     public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeUrlDTO dto) {
         String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
+        return success(resultUrl);
+    }
+
+    /**
+     * Shopfiy直接安装地址url
+     *
+     * @return
+     */
+    @PostMapping("/shopifyUrl")
+    public ApiResult<?> shopifyUrl(@RequestBody @Validated ShopifyAuthorizeUrlDTO dto) {
+        String resultUrl = shopInfoService.getShopifyAuthorizeUrl(dto);
         return success(resultUrl);
     }
 

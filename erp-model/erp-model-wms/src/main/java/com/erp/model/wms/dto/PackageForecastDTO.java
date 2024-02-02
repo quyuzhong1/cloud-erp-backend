@@ -10,10 +10,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -360,13 +357,28 @@ public class PackageForecastDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+
+        /**
+         * 组包日期
+         */
+        @NotNull(message = "组包日期不能为空")
+        private LocalDate billDate;
+
+
+        /**
+         * 详情id 不能为空
+         */
+        @NotNull(message = "详情id不能为空")
+        @Size(min = 1, message = "详情不能为空")
+        private List<String> detailIdList;
 
     }
 
