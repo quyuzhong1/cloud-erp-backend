@@ -59,6 +59,7 @@
         prd.tax_rate as taxRate,
         prd.tax_price as taxPrice,
         prd.tax_amount as taxAmount,
+        prd.settle_org_id as settleOrgId,
         prd.settle_org_Name as settleOrgName,
         prd.settle_dict as settleDict,
         prd.payment_condition as paymentCondition,
@@ -133,6 +134,20 @@
                 </foreach>
             </if>
             prd.id desc
+        </where>
+    </select>
+
+    <!-- 查询自动生成数据 -->
+    <select id="listAutoGeneratePoReconciliation"
+            resultType="com.erp.model.srm.entity.PoReconciliationDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from
+        po_reconciliation_detail prd
+        <where>
+            prd.is_deleted = false and prd.business_status = 'confirm'
+            and prd.confirm_date >= #{startDate}
+            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.confirm_date
         </where>
     </select>
 

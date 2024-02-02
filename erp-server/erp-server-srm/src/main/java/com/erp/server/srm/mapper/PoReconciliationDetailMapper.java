@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -46,4 +47,13 @@ public interface PoReconciliationDetailMapper extends BaseMapper<PoReconciliatio
      * @return List<ListDTO>
      */
     List<PoReconciliationDetailDTO.ListDTO> listDetail(@Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
+    /**
+     * @description: 查询可自动生成对账的数据
+     * @author Will
+     * @date: 2024/2/2 14:48
+     * @param startDate
+     * @param endDate
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listAutoGeneratePoReconciliation(@Param("startDate")LocalDate startDate,@Param("endDate") LocalDate endDate);
 }

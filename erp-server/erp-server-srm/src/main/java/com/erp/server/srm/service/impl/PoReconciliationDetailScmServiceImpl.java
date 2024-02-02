@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -276,7 +277,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
-            listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            listDTO.setTaxRateStr(StrUtil.format("{}%",MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
             String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
@@ -335,6 +336,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         lambdaUpdate().eq(PoReconciliationDetailEntity::getMainId,id)
                 .set(PoReconciliationDetailEntity::getMainId,"")
                 .update();
+    }
+
+    @Override
+    public void autoGeneratePoReconciliation(LocalDate startDate, LocalDate endDate) {
+        List<PoReconciliationDetailEntity> list =  baseMapper.listAutoGeneratePoReconciliation(startDate,endDate);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
     }
 
     /**

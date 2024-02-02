@@ -8,6 +8,7 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -109,4 +110,12 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param id
      */
     void cleanDetailMainId(String id);
+    /**
+     * @description: 自动生成对账单
+     * @author Will
+     * @date: 2024/2/2 14:41
+     * @param startDate
+     * @param endDate
+     */
+    void autoGeneratePoReconciliation(LocalDate startDate, LocalDate endDate);
 }
