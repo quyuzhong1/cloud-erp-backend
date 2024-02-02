@@ -23,6 +23,7 @@
         pro.return_remark AS returnRemark,
         pro.return_mode AS returnMode,
         pro.purchase_user_id AS purchaseUserId,
+        pro.purchase_user_name AS purchaseUserName,
         pro.return_user_name AS returnUserName,
         prod.remark,
         pro.approve_user_name AS approveUserName,
