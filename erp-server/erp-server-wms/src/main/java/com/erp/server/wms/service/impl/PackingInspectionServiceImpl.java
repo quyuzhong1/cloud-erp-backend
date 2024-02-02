@@ -219,17 +219,16 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
-        if(dto.getIsAutoDelivery() && entity.getIsInspection()){
-            //将发货状态更新为已发货
-            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            if (!soB2cDeliveryService.updateById(entity)) {
-                throw new ServiceException("发货单更新失败");
-            }
-            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
-
-
-        }
+//        if(dto.getIsAutoDelivery() && entity.getIsInspection()){
+//            //将发货状态更新为已发货
+//            entity.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+//            if (!soB2cDeliveryService.updateById(entity)) {
+//                throw new ServiceException("发货单更新失败");
+//            }
+//            soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()),SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+//            soB2cDeliveryService.generateB2cSoOutstock(entity);
+//
+//        }
         this.saveViewDTO(entity.getId(),viewDTO);
         return viewDTO;
     }

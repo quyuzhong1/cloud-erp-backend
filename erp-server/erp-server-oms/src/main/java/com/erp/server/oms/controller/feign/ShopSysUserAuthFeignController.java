@@ -48,4 +48,16 @@ public class ShopSysUserAuthFeignController extends BaseController {
         List<String> list = shopSysUserAuthService.listUserIdByShopIdList(shopIdList);
         return list;
     }
+
+    /**
+     * 下拉用户拥有权限的店铺
+     * @Author Luo_WG
+     * @Date 2024/1/31 11:11
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>>
+     **/
+    @PostMapping("/listUserAuthShop")
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(@RequestBody ShopSysUserAuthDTO.UserAuthShopParamDTO dto) {
+        List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthService.listUserAuthShop(dto);
+        return viewShopDTOList;
+    }
 }

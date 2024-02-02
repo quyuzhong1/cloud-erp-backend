@@ -30,6 +30,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -40,8 +41,11 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -58,6 +62,7 @@ import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -127,6 +132,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
 
 
     @Resource
@@ -220,7 +228,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //查询是否冻结
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
-        if (soB2cEntity.getIsFrozen()) {
+        if (Objects.nonNull(soB2cEntity) && soB2cEntity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
 
@@ -230,6 +238,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         ) {
             throw new ServiceException(ApiError.IS_NOT_MANUAL_DELIVERY);
         }
+        if (Objects.nonNull(soB2cEntity)) {
+            String transferStatus = soB2cEntity.getTransferStatus();
+            //表示要中转啊
+            if(!TransferStatusEnum.NOT.getCode().equals(transferStatus)){
+                TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());
+                if (Objects.nonNull(transferDeclareDetailEntity)) {
+                    String uploadSuccess= TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+                    String uploadStatus = transferDeclareDetailEntity.getOrderUploadStatus();
+                    if (!uploadSuccess.equals(uploadStatus)) {
+                        throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                    }
+                }else{
+                    throw new ServiceException(ApiError.NOT_TRANSFER_DECLARE);
+                }
+            }
+
+        }
+
 
         //如果是虚假发货不用再次调用第三方SDK标记发货，因为虚假发货已经调用过了
         if (!SoB2cDeliveryStatusEnum.FALSE_SHIPMENT.getCode().equals(entity.getStatus())) {
@@ -674,11 +700,19 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySoB2cId(soB2cId);
         String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         SoB2cErrorEntity soB2cError = soB2cFeign.getB2cError(soB2cId, errorType);
+        String shippedCode = SoB2cDeliveryStatusEnum.SHIPPED.getCode();
         if (Objects.nonNull(soB2cError)) {
             String type = soB2cError.getParamJson();
             for (SoB2cDeliveryEntity item : soB2cDeliveryList) {
-                BatchResultDTO resultDTO = this.delivery(item.getId(),type);
-                resultList.add(resultDTO);
+                String status = item.getStatus();
+                //表示已发货
+                if (shippedCode.equals(status)) {
+                   resultList.add(BatchResultDTO.success(item.getId(), item.getCode(), "手动发货"));
+                }else{
+                    BatchResultDTO resultDTO = this.delivery(item.getId(),type);
+                    resultList.add(resultDTO);
+                }
+
             }
         }
 

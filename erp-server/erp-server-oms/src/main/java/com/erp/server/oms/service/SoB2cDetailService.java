@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -131,4 +132,13 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @create 2023-12-13 20:15
      */
     List<SoB2cDetailDTO.OutstockDTO> listOutstockByMainId(String mainId);
+
+    /**
+     * 速卖通修改仓库信息
+     * @Author Luo_WG
+     * @Date 2024/2/1 17:24
+     * @param viewDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
 }

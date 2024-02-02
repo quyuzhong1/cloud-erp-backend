@@ -80,7 +80,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight);
+    SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight, BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight);
 
     /**
      * 获取物流费用参数

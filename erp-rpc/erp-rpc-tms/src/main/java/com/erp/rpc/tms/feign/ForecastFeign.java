@@ -1,0 +1,48 @@
+package com.erp.rpc.tms.feign;
+
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.entity.ProductRegistrationEntity;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * @author Lambda
+ * @Classname ForecastFeign
+ * @Description TODO
+ * @Date 2024-01-19 17:16
+ * @Created by yl
+ */
+@FeignClient(name = "erp-tms", contextId = "forecast")
+public interface ForecastFeign {
+
+
+    /**
+     * 根据渠道id 获取到对应的有效时间的预报设置信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/settingForecast/getByLogisticsChannelId")
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsChannelId(@RequestBody SettingForecastDTO.FindSettingForecastDTO dto);
+
+    /**
+     * 根据平台和sku no 获取到备案产品信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/productRegistration/listNotRegistrationByParam")
+    List<String> listNotRegistrationByParam(@RequestBody SettingForecastDTO.CheckRegistrationDTO dto);
+
+    /**
+     * 根据供应商id 获取到对应的有效时间的预报设置信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/settingForecast/getByLogisticsSupplier")
+    SettingForecastDTO.ForecastStatusDTO getByLogisticsSupplier(@RequestBody SettingForecastDTO.FindByLogisticsSupplierDTO dto);
+}

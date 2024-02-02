@@ -70,6 +70,9 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             String code = sysCodeService.getSeqNo(new SysCodeDTO(BusinessNoConstant.BM, BusinessNoTypeEnum.CODE_USER.getCode()));
             sysDepartment.setCode(code);
         }
+        if (sysDepartment.getId().equals(sysDepartment.getParentId())) {
+            throw new ServiceException("部门不能设置自己为上级部门");
+        }
         this.saveOrUpdate(sysDepartment);
 
         //金蝶推送
@@ -162,6 +165,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (CollectionUtils.isNotEmpty(sysDepartmentTree)) {
             for (SysDepartmentDTO dto : sysDepartmentTree) {
                 getSaveTree("0", batchList, dto);
+            }
+
+            long count = batchList.stream().filter(d -> d.getId().equals(d.getParentId())).count();
+            if (count > 0) {
+                throw new ServiceException("部门不能和上级部门相同");
             }
             this.saveOrUpdateBatch(batchList);
         }

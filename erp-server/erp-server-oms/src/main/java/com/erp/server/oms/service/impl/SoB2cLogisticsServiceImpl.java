@@ -129,6 +129,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             if (Objects.nonNull(channelEntity)) {
                 logisticsChannelName = channelEntity.getName();
             }
+
         }
         entity.setLogisticsChannelName(logisticsChannelName);
         entity.setEstimatedShippingCost(ObjectUtil.isEmpty(entity.getEstimatedShippingCost()) ? BigDecimal.ZERO : entity.getEstimatedShippingCost());
@@ -167,9 +168,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateLogisticsCode(String mainId,  String transportNo, String trackNo) {
-        if (StringUtils.isBlank(trackNo)) {
-            trackNo = transportNo;
-        }
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
@@ -179,7 +177,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight) {
+    public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight,
+                                                   BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {
 //        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
@@ -187,7 +186,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             //获取主表下物流记录
             SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
             if (null == oldEntity) {
-                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight);
+                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
                 // 无信息新增空表
@@ -211,7 +210,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
             SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
-                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight);
+                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
                 if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())){
@@ -238,10 +237,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     }
                 }
                 entity2.setWeight(allNetWeight);
+                entity2.setLength(maxLength);
+                entity2.setWidth(maxWidth);
+                entity2.setHeight(totalHeight);
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
+                entity = entity2;
                 if (isShopee) {
                     addDTOList.add(buildLogisticsBill(entity, mainEntity));
                 }

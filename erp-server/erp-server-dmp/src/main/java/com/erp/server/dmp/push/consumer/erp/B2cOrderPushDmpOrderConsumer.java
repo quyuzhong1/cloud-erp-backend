@@ -1,36 +1,26 @@
 package com.erp.server.dmp.push.consumer.erp;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.service.DmpOrderInfoService;
-import com.erp.server.dmp.service.DmpOrderItemService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 /**
  * ERP的b2c订单推送到金蝶消费者
@@ -64,8 +54,7 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        DmpSyncMqDTO dto = JSONUtil.toBean(JSONObject.toJSONString(ext), DmpSyncMqDTO.class);
-        SoB2cDTO.ViewDTO viewDTO = JSONObject.parseObject(dto.getMqData(), SoB2cDTO.ViewDTO.class);
+        SoB2cDTO.ViewDTO viewDTO = JSONUtil.toBean(ext.toString(), SoB2cDTO.ViewDTO.class);
         this.cleanOrderField(viewDTO);
         return ApiResult.success();
     }

@@ -6,17 +6,20 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ReportDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -162,6 +165,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
+
+    /**
+     * 校验物流尺寸规则
+     * @param id
+     * @param dto
+     * @return
+     */
+    BatchResultDTO checkBasicLogistics(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
     /**
      * @description: 获取物流单号
      * @author Will
@@ -218,7 +229,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date: 2023/8/21 9:02
      * @param ids
      */
-    Boolean mergeSave(List<String> ids);
+    String mergeSave(List<String> ids);
     /**
      * @description: 取消合并
      * @author Will
@@ -242,7 +253,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean splitSave(SoB2cDTO.SplitSaveDTO dto);
+    List<String> splitSave(SoB2cDTO.SplitSaveDTO dto);
     /**
      * @description: 取消合并前数据展示
      * @author Will
@@ -571,7 +582,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description
      * @param id
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-09 12:06
      */
     BatchResultDTO cancelProcess(String id);
@@ -581,7 +592,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @description
      * @param id
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-09 14:17
      */
     BatchResultDTO disApprove(String id);
@@ -604,4 +615,166 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateAbnormalType(String id, String soB2cAbnormalType);
+
+    /**
+     * 更新组包状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 10:58
+     */
+    Boolean updatePackageStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+    /**
+     * 更新中转状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 11:07
+     */
+    Boolean updateTransferStatus(UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+
+    /**
+     * 预报状态统计
+     * @param dto
+     * @return
+     */
+    List<SoB2cDTO.ForecastCountDTO> forecastCount(PermissionsDTO dto);
+
+    /**
+     * 中转报关
+     * @description
+     * @param ids
+     * @author Lambda
+     * @return
+     * @create 2024-01-20 15:47
+     */
+    Boolean transferDeclare(List<String> ids,String transferLogisticsSupplierId,String  transferLogisticsChannelId);
+
+    /**
+     * 根据物流商查询待中转的订单
+     * @Author Luo_WG
+     * @Date 2024/1/25 18:53
+     * @param deliveryLogisticsSupplierId 物流服务商id
+     * @return
+     **/
+    List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(String deliveryLogisticsSupplierId);
+
+    /**
+     * 根据报关设置生成报关单信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
+     * @param viewDTOList
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     **/
+    List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList);
+
+    /**
+     * 更改订单的中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
+     * @param soIds 订单id
+     * @param status 中转状态
+     * @return java.lang.Boolean
+     **/
+    Boolean updateTransferStatusBatch(List<String> soIds, String status);
+
+    
+    /** 
+     * @description
+     * @param code
+     * @return 
+     * @author Lambda
+     * @create 2024-01-26 15:26
+     */
+    PackageDTO.ScanResultDTO packageScan(String code);
+    /**
+     * 组包分页
+     * @description
+     * @param dto
+     * @return
+     * @date 2024-01-26 18:40
+     * @author Lambda
+     */
+    PagingVO<PackageDTO.PagingViewDTO> packagePing(PagingDTO<PackageDTO.PagingParamDTO> dto);
+
+    /**
+     * 校验尺寸
+     * @param id
+     * @param dto
+     * @return
+     */
+    BatchResultDTO checkLength(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
+
+
+    /**
+     * 检查产品是否备案
+     * @description
+     * @param id 销售订单id
+     * @return
+     * @date 2024-01-27 18:14
+     * @author Lambda
+     */
+    void checkProductRegistrationAndUpdate(String id, String logisticsChannelId);
+
+
+    /**
+     * 检查产品是否备案
+     * @description
+     * @param id 销售订单id
+     * @return
+     * @date 2024-01-27 18:14
+     * @author Lambda
+     */
+    SettingForecastDTO.CheckRegistrationResultDTO getCheckRegistrationResult(String id, String logisticsChannelId);
+
+
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
+
+    /**
+     * 计算产品尺寸
+     * @param bomChildrenSkuDTOS
+     */
+    void buildProductSize(List<BomChildrenSkuDTO> bomChildrenSkuDTOS);
+
+    /**
+     * 计算长度
+     * @param skuList
+     * @return
+     */
+    BigDecimal calculateSplitSkuDTOLength(List<SplitSkuDTO> skuList,String length);
+    BigDecimal calculateSplitSkuDTOWidth(List<SplitSkuDTO> skuList,String width);
+    BigDecimal calculateSplitSkuDTOHeight(List<SplitSkuDTO> skuList,String Height);
+
+    /**
+     * 根据订单拆分sku
+     */
+    List<TransferDeclareProductDTO> getTransferDeclareProductBySoInfo(String soId);
+
+    /**
+     * 根据销售订单id批量拆分
+     * @param soIds
+     * @return
+     */
+    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(List<String> soIds);
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 11:09
+     * @param soId
+     * @return void
+     **/
+    Boolean updateAliExpressOrderWarehouse(String soId, String shopId);
 }

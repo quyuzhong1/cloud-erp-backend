@@ -90,6 +90,9 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
 
+    @PostMapping("feign/product/listBySkuNoList")
+    List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNoList);
+
     /**
      * @return List<SkuVO>
      * @description: 获取已审核sku
