@@ -36,7 +36,7 @@ public class AliExpressDliveryOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
         paramMap.put("customer_order_number_list", orderIds);
-        request.addApiParameter("customer_order_number_list", JSONObject.toJSONString(paramMap));
+        request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         return response;
 //        return JSONObject.parseObject(response.getBody(), LabelResult.class);
@@ -45,7 +45,7 @@ public class AliExpressDliveryOrderService {
     private void validate(String appKey,String appSecret,String token,String url){
         if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
-
+//
     public static void main(String[] args) throws ApiException {
         String appKey = "502978";
         String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
@@ -56,9 +56,7 @@ public class AliExpressDliveryOrderService {
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
-        paramMap.put("page_index", 5);
-        paramMap.put("page_size", 50);
-        paramMap.put("customer_order_number_list", Arrays.asList(""));
+        paramMap.put("customer_order_number_list", Arrays.asList("3029323621897935"));
         System.out.println();
         request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
