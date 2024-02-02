@@ -303,7 +303,7 @@ public class AliExpressOrderService {
         }
         AliExpressAscpFfoQueryResponse result = com.alibaba.fastjson.JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
         DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
-        if (ObjectUtil.isEmpty(dataList)) {
+        if (ObjectUtil.isEmpty(dataList) || CollectionUtils.isEmpty(dataList.getErpFulfillmentForwardDto())) {
             return Collections.emptyList();
         }
         return dataList.getErpFulfillmentForwardDto();
