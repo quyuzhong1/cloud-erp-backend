@@ -236,6 +236,14 @@ public interface PlmTaskFeign {
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
 
     /**
+     * 根据skuid获取bom类型信息
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("feign/bom/listBomBySkuIds")
+    List<BomChildrenSkuDTO> listBomBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
      * 查询bom子件信息
      *
      * @param skuNos

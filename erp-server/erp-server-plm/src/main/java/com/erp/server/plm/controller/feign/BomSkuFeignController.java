@@ -49,6 +49,19 @@ public class BomSkuFeignController {
     }
 
     /**
+     * 根据skuid获取bom类型信息
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("/listBomBySkuIds")
+    public List<BomChildrenSkuDTO> listBomBySkuIds(@RequestBody List<String> skuIds){
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return new ArrayList<>();
+        }
+        return bomSkuService.listBomBySkuIds(skuIds);
+    }
+
+    /**
      * 根据父级skuIds查询子集sku
      * @Author Luo_WG
      * @Date 2023/9/14 12:13

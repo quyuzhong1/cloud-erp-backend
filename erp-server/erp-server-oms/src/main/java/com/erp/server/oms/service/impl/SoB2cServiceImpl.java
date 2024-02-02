@@ -517,6 +517,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<TransferDeclareProductDTO> transferDeclareProductDTOS = new ArrayList<>();
         List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //合并 子sku和父级sku获取 全量sku明细
@@ -531,29 +532,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //sku 父子 map
         Map<String, List<BomChildrenSkuDTO>> skuChildMap = bomChildrenSkuDTOS.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
         soB2cDetailEntities.forEach(soB2cDetailEntity -> {
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
+            BomChildrenSkuDTO skuDTO = skuDTOS.stream().filter(e -> e.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
+            assert skuDTO != null;
             LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
-            if (CollectionUtils.isEmpty(bomChildrenSkuDTOS1)) {
-                //没有子集时
-                transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
-                                .soId(soB2cDetailEntity.getMainId())
-                                .soCode(soCode)
-                        .skuNo(soB2cDetailEntity.getSkuNo())
-                        .soDetailId(soB2cDetailEntity.getId())
-                        .qty(soB2cDetailEntity.getQty())
-                        .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
-                        .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
-                        .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
-                        .currency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
-                        .build());
-            } else {
-                Boolean isCombination = Boolean.FALSE;
-                //检查sku是否是组合产品
-                if (Objects.nonNull(productDTO) && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productDTO.getCombinationDeclareType())) {
-                    //申报类型
-                    isCombination = Boolean.TRUE;
-                }
-                if (isCombination) {
+
+            Boolean isCombination = Boolean.FALSE;
+            //检查sku是否是组合产品
+            if (Objects.nonNull(productDTO) && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productDTO.getCombinationDeclareType())) {
+                //申报类型
+                isCombination = Boolean.TRUE;
+            }
+            if (!skuDTO.getType().equals(SkuTypeEnum.SINGLE.getCode()) && isCombination){
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
+                if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS1)){
                     bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
                         LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
                         transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
@@ -568,21 +559,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 .currency(Objects.nonNull(bomProduct) ? bomProduct.getDestCurrency() : "")
                                 .build());
                     });
-                } else {
-                    //存在bom 但是是单品时
-                    transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
-                            .soId(soB2cDetailEntity.getMainId())
-                            .soCode(soCode)
-                            .skuNo(soB2cDetailEntity.getSkuNo())
-                            .soDetailId(soB2cDetailEntity.getId())
-                            .qty(soB2cDetailEntity.getQty())
-                            .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
-                            .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
-                            .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
-                            .currency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
-                            .build());
                 }
+            }else {
+
+                transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+                        .soId(soB2cDetailEntity.getMainId())
+                        .soCode(soCode)
+                        .skuNo(soB2cDetailEntity.getSkuNo())
+                        .soDetailId(soB2cDetailEntity.getId())
+                        .qty(soB2cDetailEntity.getQty())
+                        .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
+                        .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
+                        .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
+                        .currency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
+                        .build());
             }
+//
+//            LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
+//            if (CollectionUtils.isEmpty(bomChildrenSkuDTOS1)) {
+//                //没有子集时
+//                transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+//                                .soId(soB2cDetailEntity.getMainId())
+//                                .soCode(soCode)
+//                        .skuNo(soB2cDetailEntity.getSkuNo())
+//                        .soDetailId(soB2cDetailEntity.getId())
+//                        .qty(soB2cDetailEntity.getQty())
+//                        .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
+//                        .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
+//                        .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
+//                        .currency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
+//                        .build());
+//            } else {
+//                Boolean isCombination = Boolean.FALSE;
+//                //检查sku是否是组合产品
+//                if (Objects.nonNull(productDTO) && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productDTO.getCombinationDeclareType())) {
+//                    //申报类型
+//                    isCombination = Boolean.TRUE;
+//                }
+//                if (isCombination) {
+//
+//                } else {
+//                    //存在bom 但是是单品时
+//                    transferDeclareProductDTOS.add(TransferDeclareProductDTO.builder()
+//                            .soId(soB2cDetailEntity.getMainId())
+//                            .soCode(soCode)
+//                            .skuNo(soB2cDetailEntity.getSkuNo())
+//                            .soDetailId(soB2cDetailEntity.getId())
+//                            .qty(soB2cDetailEntity.getQty())
+//                            .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
+//                            .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
+//                            .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
+//                            .currency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
+//                            .build());
+//                }
+//            }
         });
         return transferDeclareProductDTOS;
     }
