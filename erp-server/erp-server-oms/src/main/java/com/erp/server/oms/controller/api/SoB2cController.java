@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -876,6 +877,14 @@ public class SoB2cController extends BaseController {
     public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
         Map<String, Object> map = soB2cService.getJson(id);
         return success(map);
+
+    }
+    @GetMapping("/getSplitSku")
+    public ApiResult<List<TransferDeclareProductDTO>> getSplitSku(@RequestParam("id") String id) {
+//        String soId = "1751895670669832193";
+        List<TransferDeclareProductDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
+        System.out.println(JSONUtil.parse(skusBySoInfo));
+        return success(skusBySoInfo);
 
     }
 
