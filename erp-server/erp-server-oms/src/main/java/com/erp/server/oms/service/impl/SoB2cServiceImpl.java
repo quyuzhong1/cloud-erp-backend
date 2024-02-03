@@ -5582,19 +5582,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
             } else {
                 String[] xes = productSize.split("X");
-                if (xes.length > 2) {
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
-                    bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
-                } else if (xes.length > 1) {
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
-                    bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                if (xes.length > 2){
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
+                        bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    }else {
+                        bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                    }
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
+                        bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    }else {
+                        bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    }
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[2])){
+                        bomChildrenSkuDTO.setHeight(new BigDecimal(xes[2]));
+                    }else {
+                        bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
+                    }
+                }else if (xes.length > 1){
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
+                        bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    }else {
+                        bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                    }
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[1])){
+                        bomChildrenSkuDTO.setWidth(new BigDecimal(xes[1]));
+                    }else {
+                        bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
+                    }
                     bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-                } else if (xes.length > 0) {
-                    bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                }else if (xes.length > 0){
+                    if (org.apache.commons.lang3.StringUtils.isNotEmpty(xes[0])){
+                        bomChildrenSkuDTO.setLength(new BigDecimal(xes[0]));
+                    }else {
+                        bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
+                    }
                     bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
                     bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
-                } else {
+                }else {
                     bomChildrenSkuDTO.setLength(BigDecimal.ZERO);
                     bomChildrenSkuDTO.setWidth(BigDecimal.ZERO);
                     bomChildrenSkuDTO.setHeight(BigDecimal.ZERO);
