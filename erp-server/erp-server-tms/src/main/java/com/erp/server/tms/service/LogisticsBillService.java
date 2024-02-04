@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -175,4 +177,10 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
      **/
     List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list);
+
+    List<BatchResultDTO> updateBatchTrackNo(List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList, Boolean isAdd);
+
+    Map<String, List<String>> mapTrackNoAndSoOutId(List<String> ids);
+
+    List<String> listSoOutIdByQuery(AdvanceQueryContainer advanceQueryContainer);
 }

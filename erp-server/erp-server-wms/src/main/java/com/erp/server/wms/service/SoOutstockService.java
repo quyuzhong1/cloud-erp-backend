@@ -244,7 +244,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return String
      */
-    Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto);
+    List<BatchResultDTO> pagingUpdate(List<SoOutstockDTO.PagingUpdateDTO> dto);
 
     /**
      * 打印

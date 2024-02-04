@@ -1133,16 +1133,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType);
-        if (CollectionUtils.isNotEmpty(approveList)) {
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //处理国家数据
-        handleCountryIdList(params);
-        IPage pageData = baseMapper.paging(query, params, approveList);
+        IPage pageData = baseMapper.paging(query, params);
         List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -1173,7 +1165,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cEntities = soB2cFeign.listByIds(soIds);
         }
         String b2c = OrderTypeEnum.B2C.getCode();
+        List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        //跟踪单号
+        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
         for (SoOutstockDTO.PagingViewDTO item : list) {
+            //设置跟踪单号
+            if(trackNoMAp.containsKey(item.getId())){
+                item.setTrackNo(trackNoMAp.get(item.getId()));
+            }
             //设置拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(item.getSoId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
@@ -1244,12 +1243,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        List<String> approveList = listBySearchType(searchType);
-        //处理国家数据
-        handleCountryIdList(dto);
         //获取导出数据
-        List<SoOutstockDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        List<SoOutstockDTO.PagingViewDTO> list = baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -1280,6 +1275,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String updateSoOutstock(SoOutstockDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoOutstockEntity soOutstock = this.getById(id);
@@ -1369,6 +1365,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         handleSaveOrUpdateDbByB2b(soOutstock,soInfo);
         Boolean updateResult = this.updateById(soOutstock);
         if (updateResult) {
+            //更新TMS物流跟踪号
+            LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
+            batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+            batchUpdateTrackNoDTO.setTrackNoList(dto.getTrackNoList());
+            List<BatchResultDTO> batchResultDTOList = logisticsBillFeign.updateBatchTrackNo(Collections.singletonList(batchUpdateTrackNoDTO),false);
+            if(CollectionUtils.isNotEmpty(batchResultDTOList) && !batchResultDTOList.get(0).getSuccess()){
+                throw new ServiceException("更新跟踪单号失败:"+batchResultDTOList.get(0).getMsg());
+            }
             /**
              * 添加修改日志
              */
@@ -1376,7 +1380,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstockDetailService.updateDetail(id, detailList);
             return id;
         }
-
         return "";
     }
 
@@ -1594,30 +1597,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return Boolean.TRUE;
     }
 
-    private List<String> listBySearchType(String searchType) {
-        List<String> approveList = new ArrayList<>(4);
-        // 待提交
-        if (SearchType.WAIT_SUBMIT.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        }
-        //待审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-        return approveList;
-    }
-
-
     /**
      * 添加日志
      */
@@ -1688,21 +1667,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto) {
-        List<SoOutstockEntity> list = this.listByIds(dto.getIdList());
+    public List<BatchResultDTO> pagingUpdate(List<SoOutstockDTO.PagingUpdateDTO> dtoList) {
+        List<SoOutstockEntity> list = this.listByIds(dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getId).collect(Collectors.toList()));
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
-        boolean update = lambdaUpdate().in(SoOutstockEntity::getId, dto.getIdList())
-                .set(SoOutstockEntity::getTrackNo, dto.getTrackNo())
-                .update();
-        LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO = new LogisticsBillDTO.UpdateTrackNoDTO();
-        updateTrackNoDTO.setTrackNo(dto.getTrackNo());
-        updateTrackNoDTO.setOutstockIdList(dto.getIdList());
-        logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
-        return update;
+        //
+        List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList = new ArrayList<>();
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        for(SoOutstockDTO.PagingUpdateDTO pagingUpdateDTO : dtoList){
+            SoOutstockEntity soOutstock = list.stream().filter(v->v.getId().equals(pagingUpdateDTO.getId())).findFirst().orElse(null);
+            if(Objects.isNull(soOutstock)){
+                BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),pagingUpdateDTO.getId(),ApiError.ERROR_99058.msg);
+                batchResultDTOList.add(batchResultDTO);
+            }else{
+                LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
+                batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
+                batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+                batchUpdateTrackNoDTO.setLogisticsChannelId(pagingUpdateDTO.getLogisticsChannelId());
+                batchUpdateTrackNoDTOList.add(batchUpdateTrackNoDTO);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTOList)){
+            batchResultDTOList.addAll(logisticsBillFeign.updateBatchTrackNo(batchUpdateTrackNoDTOList,true));
+        }
+        return batchResultDTOList;
     }
 
     @Override
@@ -1803,29 +1792,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstockDetailService.saveBatch(detailList);
     }
 
-
-    /**
-     * @param params
-     * @description: 处理国家字段
-     * @author Will
-     * @date: 2023/7/24 14:01
-     */
-    private void handleCountryIdList(SoOutstockDTO.PagingParamDTO params) {
-        if (CollectionUtils.isNotEmpty(params.getCountryIdList())) {
-            List<CustomerInfoEntity> customerList = customerFeign.listByCountryIdList(params.getCountryIdList());
-            if (CollectionUtils.isEmpty(customerList)) {
-                return;
-            }
-            List<String> customerIdList = customerList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(params.getCustomerIdList())) {
-                params.setCustomerIdList(customerIdList);
-            } else {
-                List<String> newCustomerIdList = customerIdList.stream().filter(obj -> params.getCustomerIdList().contains(obj)).collect(Collectors.toList());
-                params.setCustomerIdList(newCustomerIdList);
-            }
-        }
-
-    }
 
     @Override
     public PagingVO<SoOutstockDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<SoOutstockDTO.PdaPagingParamDTO> pagingParamDTO) {
@@ -2017,15 +1983,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-        String searchType = params.getSearchType();
-        //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType);
-        if (CollectionUtils.isNotEmpty(approveList)) {
-            params.setInvalidStatus(Boolean.FALSE);
-        }
-        //处理国家数据
-        handleCountryIdList(params);
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params, approveList);
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
 

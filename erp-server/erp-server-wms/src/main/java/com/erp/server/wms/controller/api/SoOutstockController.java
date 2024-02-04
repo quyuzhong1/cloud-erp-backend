@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -19,9 +20,11 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,6 +78,7 @@ public class SoOutstockController extends BaseController {
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
         return success(pagingVO);
@@ -94,6 +98,7 @@ public class SoOutstockController extends BaseController {
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<SoOutstockDTO.PagingTotalDTO> getTotalByQuery(@RequestBody @Validated SoOutstockDTO.PagingParamDTO dto) {
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
         return success(pagingTotalDTO);
@@ -218,9 +223,9 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
-    public ApiResult pagingUpdate(@RequestBody @Validated SoOutstockDTO.PagingUpdateDTO dto) {
-        Boolean result = soOutstockService.pagingUpdate(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> pagingUpdate(@RequestBody @Validated List<SoOutstockDTO.PagingUpdateDTO> dto) {
+        List<BatchResultDTO> batchResultDTOList = soOutstockService.pagingUpdate(dto);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 
     /**
@@ -400,6 +405,7 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "so"
     )
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soOutstockService.exportExcel(dto, response);
         return result ? success() : failure();

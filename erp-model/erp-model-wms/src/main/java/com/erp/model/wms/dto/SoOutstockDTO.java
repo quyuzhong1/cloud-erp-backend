@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 销售出库
@@ -245,9 +247,9 @@ public class SoOutstockDTO implements Serializable {
         private LocalDate packDate;
 
         /**
-         * 运输单号
+         * 运输单号集合
          */
-        private String trackNo;
+        private List<String> trackNo;
 
 
         /**
@@ -362,101 +364,21 @@ public class SoOutstockDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * all 全部
-         * waitApprove 待审核
-         * approve 已审核
-         * reject 审核不通过
+         * sqlMap 默认key default
          */
-        @StateEnumValue(strValues = {"all","waitSubmit", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
+        private Map<String,String> sqlMap;
 
-        /**
-         * sku no 集合
-         */
-        private List<String> skuNoList;
-
-        /**
-         * code
-         */
-        private String code;
-
-        /**
-         * 销售code
-         */
-        private String soCode;
-
-        /**
-         * 类型
-         */
-        private String orderType;
-
-
-        /**
-         * 审核列表集合
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 作废状态
-         * true 已作废
-         * false 未作废
-         */
         private Boolean invalidStatus;
 
+        private List<String> approveStatusList;
 
-        /**
-         * 客户 集合
-         */
-        private List<String> customerIdList;
-
-        /**
-         * 国家 集合
-         */
-        private List<String> countryIdList;
-
-        /**
-         * 销售员 id 集合
-         */
-        private List<String> sellerIdList;
-
-        /**
-         * 销售部门
-         */
-        private String salesDeptId;
-
-        /**
-         * 出库日期
-         */
         private List<LocalDate> billDateList;
-
-        /**
-         * 出库仓库
-         */
-        private List<String> warehouseIdList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 运单号
-         */
-        private List<String> trackNoList;
-
-        /**
-         * 客户订单号
-         */
-        private String customerOrderNo;
-
     }
 
     /**
@@ -1011,7 +933,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 运输单号
          */
-        private String trackNo;
+        private List<String> trackNoList;
 
         /**
          * 承运商id 来源供应商
@@ -1068,19 +990,32 @@ public class SoOutstockDTO implements Serializable {
          * 主键id
          */
         @NotEmpty(message = "主键id不能为空")
-        private List<String> idList;
+        private String id;
 
         /**
-         * 运输单号
+         * 物流渠道id
          */
-        private String trackNo;
+        private String logisticsChannelId;
+
+        /**
+         * 跟踪号
+         */
+        private List<String> trackNoList;
     }
 
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
 
-        private List<String> ids;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
     @Data

@@ -6,6 +6,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
+import com.common.core.constant.EnumMessage;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -16,7 +17,7 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     @Override
     public String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql) {
         try {
-            AdvanceQueryContext.setCompareCode(compareCode);
+            AdvanceQueryContext.setCompareCode(EnumMessage.getByCode(QueryConditionEnum.class,compareCode));
             String sql = handleSqlLogic(field,  value, compareCodeSplicingValueSql);
             if (StringUtils.isNotBlank(sql)) {
                 return sql;

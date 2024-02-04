@@ -181,6 +181,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return Boolean.FALSE;
     }
 
+    @Override
+    public List<LogisticsBillDetailEntity> listByTrackNo(List<String> trackNoList) {
+        if (CollectionUtils.isEmpty(trackNoList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsBillDetailEntity::getTrackNo, trackNoList).list();
+    }
+
 
     /**
      * 新增修改处理数据

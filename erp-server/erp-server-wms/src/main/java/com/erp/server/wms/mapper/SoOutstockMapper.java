@@ -22,9 +22,9 @@ import java.util.List;
 @Mapper
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
-    IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
+    IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params);
 
-    List<SoOutstockDTO.PagingViewDTO> listExport(@Param("params") SoOutstockDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
+    List<SoOutstockDTO.PagingViewDTO> listExport(@Param("params") SoOutstockDTO.ExportDTO dto);
 
     List<InOutStockDTO> listInventoryInOut(@Param("ids") List<String> idList);
 
@@ -68,8 +68,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @author Will
      * @date: 2023/11/1 14:25
      * @param params
-     * @param approveList
      * @return PagingTotalDTO
      */
-    SoOutstockDTO.PagingTotalDTO getTotalByQuery(@Param("params") SoOutstockDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
+    SoOutstockDTO.PagingTotalDTO getTotalByQuery(@Param("params") SoOutstockDTO.PagingParamDTO params);
 }
