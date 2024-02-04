@@ -744,9 +744,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 计算产品尺寸
-     * @param bomChildrenSkuDTOS
+     * @param bomChildrenSkuDTO
      */
-    void buildProductSize(List<BomChildrenSkuDTO> bomChildrenSkuDTOS);
+    void buildProductSize(BomChildrenSkuDTO bomChildrenSkuDTO);
 
     /**
      * 计算长度
