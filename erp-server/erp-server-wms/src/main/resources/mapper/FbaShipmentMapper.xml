@@ -93,4 +93,33 @@
             </foreach>
         </if>
     </select>
+    <select id="export" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
+        SELECT
+        fsd.id as detailId,
+        fs.code,
+        fs.shop_name AS shopName,
+        fs.country_name AS countryName,
+        fs.fulfillment_center AS fulfillmentCenter,
+        fs.delivery_status AS deliveryStatus,
+        (SELECT string_agg(fd.code,',') FROM first_mile_delivery fd WHERE fd.source_id = fs.id AND fd.is_deleted = FALSE GROUP BY fd.source_id) AS deliveryCode,
+        fs.platform_shipment_status AS platformShipmentStatus,
+        fsd.asin,
+        fsd.msku,
+        fsd.fn_sku AS fnSku,
+        fsd.sku_no AS skuNo,
+        fsd.declare_qty AS declareQty,
+        fsd.delivery_qty as deliveryQty,
+        fsd.diff_qty AS diffQty,
+        fs.shipment_create_time AS shipmentCreateTime,
+        fsd.receive_date AS shipmentReceiveTime
+        FROM fba_shipment_detail fsd
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and fs.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ObjectUtil;
@@ -21,9 +23,12 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -49,6 +54,7 @@ import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -57,6 +63,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -1658,6 +1665,49 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
         } else {
             throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+        }
+    }
+
+    @Override
+    public void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<FbaShipmentDTO.ListDTO> list = baseMapper.export(dto);
+        fillList(list);
+        List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(list,FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));
+        fillReceive(exportDTOList);
+//        ExcelUtil.export("FBA货件","FBA货件",exportDTOList,FbaShipmentDTO.ExportDTO.class,response);
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/fbaShipment.xlsx";
+        String name = "FBA货件导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(exportDTOList, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    private void fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {
+        List<String> detailIds = exportDTOList.stream().map(FbaShipmentDTO.ExportDTO::getDetailId).distinct().collect(Collectors.toList());
+        Map<String,List<FbaShipmentReceiveEntity>> fbaShipmentReceiveEntitieMap = fbaShipmentReceiveService.listByDetailIds(detailIds).stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getDetailId));
+        for(FbaShipmentDTO.ExportDTO exportDTO : exportDTOList){
+            List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntityList = fbaShipmentReceiveEntitieMap.get(exportDTO.getDetailId());
+            if(CollectionUtils.isEmpty(fbaShipmentReceiveEntityList)){
+                exportDTO.setReceiveQty("0");
+                continue;
+            }
+            String receive = null;
+            for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntityList) {
+                //映射字段
+                FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
+                if(receive == null){
+                    receive = receiveRecordView.toString();
+                }else{
+                    receive = receive + ",\n\r" + receiveRecordView.toString();
+                }
+            }
+            exportDTO.setReceiveQty(receive);
         }
     }
 }

@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -27,6 +31,135 @@ import javax.validation.constraints.*;
 public class FbaShipmentDTO implements Serializable {
 
     /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * 详情Id
+         */
+        @ExcelIgnore
+        private String detailId;
+        /**
+         * 货件单号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "货件单号", index = 0)
+        private String code;
+        /**
+         * 店铺名称
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "店铺名称", index = 1)
+        private String shopName;
+        /**
+         * 国家名称
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "国家名称", index = 2)
+        private String countryName;
+        /**
+         * 平台物流中心
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "平台物流中心", index = 3)
+        private String fulfillmentCenter;
+        /**
+         * 发货状态名称
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "发货状态名称", index = 4)
+        private String deliveryStatusName;
+        /**
+         * 发货单号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "发货单号", index = 5)
+        private String deliveryCode;
+        /**
+         * 平台货件状态
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "平台货件状态", index = 6)
+        private String platformShipmentStatus;
+        /**
+         * ASIN
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "ASIN", index = 7)
+        private String asin;
+
+        /**
+         * MSKU
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "MSKU", index = 8)
+        private String msku;
+        /**
+         * FNSKU
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "FNSKU", index = 9)
+        private String fnSku;
+        /**
+         * sku编号
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "sku编号", index = 10)
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "产品名称", index = 11)
+        private String productName;
+        /**
+         * 申报数量
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "申报数量", index = 12)
+        private Integer declareQty;
+        /**
+         * 发货数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "发货数量", index = 13)
+        private Integer deliveryQty;
+        /**
+         * 签收数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "签收数量", index = 14)
+        private String receiveQty;
+        /**
+         * 在途数量
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "在途数量", index = 15)
+        private Integer transportQty;
+        /**
+         * 收发差异
+         */
+        @ColumnWidth(15)
+        @ExcelProperty(value = "收发差异", index =16)
+        private Integer diffQty;
+        /**
+         * 创建时间
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "创建时间", index = 17)
+        private LocalDateTime shipmentCreateTime;
+        /**
+         * 签收时间（拉取签收数据的日期）
+         */
+        @ColumnWidth(30)
+        @ExcelProperty(value = "签收时间", index = 18)
+        private LocalDateTime shipmentReceiveTime;
+    }
+
+
+        /**
      * 详情
      */
     @Data
@@ -449,6 +582,13 @@ public class FbaShipmentDTO implements Serializable {
          * 签收数量
          */
         private Integer receiveQty;
+
+        @Override
+        public String toString(){
+
+            return "签收时间:"+LocalDateTimeUtil.formatNormal(receiveTime) + " 签收数量:" + receiveQty;
+        }
+
     }
 
     /**
