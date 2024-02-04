@@ -1181,24 +1181,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          */
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
-
-        /**
-         * 获取渠道备案结果
-         */
-        SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
-        String packageStatus = resultDTO.getPackageStatus();
-        String transferStatus = resultDTO.getTransferStatus();
-        //未备案的sku
-        List<String> notRegistrationSkuNoList = resultDTO.getNotRegistrationSkuNoList();
-        //是否备案
-        Boolean isRegistration = CollectionUtils.isEmpty(notRegistrationSkuNoList);
-
-        //表示没有备案了
-        if (!isRegistration) {
-            String skuStr = notRegistrationSkuNoList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.NOT_PRODUCT_REGISTRATION, skuStr, resultDTO.getDeclarePlatformName(), resultDTO.getLogisticsChannelName());
-        }
-        updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration);
         //选择了渠道则更新
         if (StrUtil.isNotBlank(logisticsChannelId)) {
             if (Boolean.TRUE.equals(isCover)) {
