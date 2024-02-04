@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
@@ -64,6 +65,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -589,6 +591,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity taskEntity) {
+        // 从缓存获取(已完成或结束删除)
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
+        Object reportDocumentObj = redisUtil.get(key);
+        if (null != reportDocumentObj) {
+            return JSONUtil.toBean(reportDocumentObj.toString(), ReportDocument.class);
+        }
+
         // 店铺
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(reportInfoEntity.getShopId());
         // 市场
@@ -610,6 +619,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             reportDocument = respWithHttpInfo.getData();
         } catch (ApiException e) {
             throw new RuntimeException(e);
+        }
+        if (null != reportDocument){
+            List<String> xAmzExpiresValues = UriComponentsBuilder.fromHttpUrl(reportDocument.getUrl()).build().getQueryParams().get("X-Amz-Expires");
+            // 提取过期时间的值
+            int xAmzExpires = Integer.parseInt(xAmzExpiresValues.stream().findFirst().orElse("300")) - 1;
+            // 设置到缓存(已完成或结束删除)
+            redisUtil.set(key, JSONUtil.toJsonStr(reportDocument), xAmzExpires);
         }
         // 检查和缓存响应的速率到redis
         amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, respWithHttpInfo);

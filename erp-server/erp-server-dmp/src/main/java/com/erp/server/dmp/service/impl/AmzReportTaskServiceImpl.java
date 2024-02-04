@@ -529,6 +529,9 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 检查报告是否已存在
         AmzReportInfoEntity reportInfo = amzReportInfoService.getByReportId(report.getReportId(), null);
         if (null != reportInfo) {
+            // 移除缓存
+            this.checkAndDelHistory(entity);
+
             // 更新待下载状态
             this.updateStatus(report.getReportId(), entity, AmzReportTaskStatusEnum.EXIST_STOP, null, LocalDateTime.now(), null, null, null, false);
             return;
