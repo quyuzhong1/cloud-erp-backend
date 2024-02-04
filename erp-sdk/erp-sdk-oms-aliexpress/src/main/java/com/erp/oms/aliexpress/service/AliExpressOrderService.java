@@ -284,7 +284,7 @@ public class AliExpressOrderService {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
         paramMap.put("customer_order_number_list", orderIdList);
-        request.addApiParameter("customer_order_number_list", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
+        request.addApiParameter("fulfillment_forward_order_query", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = null;
         try {
@@ -293,8 +293,9 @@ public class AliExpressOrderService {
             log.error("查询速卖通发货单请求失败>>>>>>>{}", request.toString());
         }
         JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
-        JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-        Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+        Boolean success = resultJson.getBool("success", Boolean.FALSE);
         //失败
         if (!success) {
             log.error("查询速卖通发货单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
@@ -302,7 +303,7 @@ public class AliExpressOrderService {
         }
         AliExpressAscpFfoQueryResponse result = com.alibaba.fastjson.JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
         DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
-        if (ObjectUtil.isEmpty(dataList)) {
+        if (ObjectUtil.isEmpty(dataList) || CollectionUtils.isEmpty(dataList.getErpFulfillmentForwardDto())) {
             return Collections.emptyList();
         }
         return dataList.getErpFulfillmentForwardDto();

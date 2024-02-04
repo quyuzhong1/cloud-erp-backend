@@ -169,7 +169,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private void aliExpressDeliveryQuery(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(logisticsDTOS)) {
+        if (CollectionUtils.isNotEmpty(logisticsDTOS) && resultDTO.getIsWarehouseEmpty()) {
             //生成销售出库单
             soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
 
