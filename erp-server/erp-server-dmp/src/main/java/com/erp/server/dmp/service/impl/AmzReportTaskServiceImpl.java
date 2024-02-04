@@ -185,9 +185,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             throw new ServiceException("保存创建报告待请求记录失败");
         }
 
-        // 更新下次计划任务下次执行时间
-        amzReportScheduleService.updateNextTime(reportSchedule.getId(), reportTypeConfig);
-
         // 添加到延时队列1末端
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
                 RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
@@ -368,6 +365,10 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
         // 请求创建报告
         String reportId = amzReportHandleService.createAmzReport(entity);
+
+        // 固定位置：防止授权异常后所有任务后, 导致当前时间任务停止
+        // 更新下次计划任务下次执行时间
+        amzReportScheduleService.updateNextTime(entity.getMainId(), config);
 
         // 更新任务状态
         AmzReportTaskEntity newEntity = this.updateStatus(reportId, entity, AmzReportTaskStatusEnum.QUERY, LocalDateTime.now(), null, null, null, null, true);
