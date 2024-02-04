@@ -39,6 +39,29 @@ public class PackageForecastDTO implements Serializable {
         private Integer count;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TransferDeclareDTO{
+        /**
+         * 组包预报单
+         */
+        @Size(min = 1 ,message = "组包预报单不能为空")
+        private List<String> ids;
+
+        /**
+         * 报关物流商id  来源 http://172.16.100.11:3002/project/128/interface/api/28035  id
+         */
+        @NotBlank(message = "报关商不能为空")
+        private String transferLogisticsSupplierId;
+
+
+        /**
+         * 报关物流商渠道id http://172.16.100.11:3002/project/128/interface/api/28035  children.id
+         */
+        @NotBlank(message = "报关商渠道不能为空")
+        private String transferLogisticsChannelId;
+    }
+
 
     /**
      * 分页

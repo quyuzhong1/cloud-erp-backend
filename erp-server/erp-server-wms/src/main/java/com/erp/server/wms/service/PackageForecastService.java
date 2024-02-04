@@ -58,4 +58,18 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     PackageForecastDTO.ViewDTO view(String id);
+
+    /**
+     * 删除组包预报单
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 中转报关
+     * @param id
+     * @return
+     */
+    BatchResultDTO forecast(String id,String transferLogisticsSupplierId,String transferLogisticsChannelId);
 }

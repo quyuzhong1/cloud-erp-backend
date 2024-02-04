@@ -3,9 +3,13 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.entity.PackageForecastEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -22,7 +26,9 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 组包预报表
@@ -73,17 +79,14 @@ public class PackageForecastController extends BaseController {
     }
 
 
-
-
-
-
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2024-01-26
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2024-01-26
+     */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated PackageForecastDTO.UpdateDTO dto) {
         Boolean result = packageForecastService.update(dto);
@@ -91,5 +94,61 @@ public class PackageForecastController extends BaseController {
     }
 
 
+    /**
+     * 删除
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = packageForecastService.delete(id);
+            } catch (Exception e) {
+                log.error("组包预报单删除失败===>{}", e.getMessage());
+                PackageForecastEntity entity = packageForecastService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
+    /**
+     * 中转报关
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/forecast")
+    public ApiResult<List<BatchResultDTO>> forecast(@RequestBody @Valid PackageForecastDTO.TransferDeclareDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String transferLogisticsChannelId = dto.getTransferLogisticsChannelId();
+        String transferLogisticsSupplierId = dto.getTransferLogisticsSupplierId();
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = packageForecastService.forecast(id,transferLogisticsSupplierId,transferLogisticsChannelId);
+            } catch (Exception e) {
+                log.error("组包预报单 中转报关失败===>{}", e.getMessage());
+                PackageForecastEntity entity = packageForecastService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 中转报关失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

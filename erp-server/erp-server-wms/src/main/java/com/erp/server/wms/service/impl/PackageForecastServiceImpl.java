@@ -3,21 +3,28 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
+import com.erp.server.wms.convert.PackageForecastConverter;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
@@ -37,10 +44,14 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -65,6 +76,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Autowired
     private ForecastFeign forecastFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
+
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -103,12 +121,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (!save) {
             throw new ServiceException("组包预报单保存失败");
         }
-        packageForecastDetailService.update(entity.getId(),entity.getLogisticsSupplierId(),updateDTO.getDetailIdList());
+        packageForecastDetailService.update(entity.getId(), entity.getLogisticsSupplierId(), updateDTO.getDetailIdList());
         return Boolean.TRUE;
     }
 
     /**
      * tab 列表
+     *
      * @param
      * @return
      */
@@ -116,7 +135,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public List<PackageForecastDTO.TabListDTO> tabList() {
         List<PackageForecastDTO.TabListDTO> resultList = new ArrayList<>(5);
         List<PackageForecastDTO.TabListDTO> tabListList = baseMapper.tabList();
-        PackageForecastDTO.TabListDTO all=new PackageForecastDTO.TabListDTO();
+        PackageForecastDTO.TabListDTO all = new PackageForecastDTO.TabListDTO();
         all.setTabFlag("all");
         all.setTabName("全部");
         Integer allCount = tabListList.stream().mapToInt(PackageForecastDTO.TabListDTO::getCount).sum();
@@ -124,12 +143,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         resultList.add(all);
         PackageUploadStatusEnum cancel = PackageUploadStatusEnum.CANCEL;
         for (PackageUploadStatusEnum item : PackageUploadStatusEnum.values()) {
-            if(!cancel.equals(item)){
+            if (!cancel.equals(item)) {
                 PackageForecastDTO.TabListDTO tabDTO = new PackageForecastDTO.TabListDTO();
                 String tabCode = item.getCode();
                 tabDTO.setTabFlag(item.getCode());
                 tabDTO.setTabName(item.getName());
-                Integer count= tabListList.stream().filter(t->tabCode.equals(t.getTabFlag())).
+                Integer count = tabListList.stream().filter(t -> tabCode.equals(t.getTabFlag())).
                         map(PackageForecastDTO.TabListDTO::getCount).findFirst().orElse(0);
                 tabDTO.setCount(count);
                 resultList.add(tabDTO);
@@ -143,7 +162,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params );
+        IPage pageData = baseMapper.paging(query, params);
         List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
         //处理分页数据
         fillPaging(list);
@@ -170,8 +189,65 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         return viewDTO;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        String successCode = PackageUploadStatusEnum.SUCCESS.getCode();
+        if (successCode.equals(entity.getUploadStatus())) {
+            throw new ServiceException("已上传成功,无法删除");
+        }
+        this.removeById(id);
+        packageForecastDetailService.removeByMainId(id);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO forecast(String id, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        List<String> uploadStatusList = new ArrayList<>(2);
+        uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
+        uploadStatusList.add(PackageUploadStatusEnum.SUCCESS.getCode());
+        String uploadStatus = entity.getUploadStatus();
+        if (!uploadStatusList.contains(uploadStatus)) {
+            new ServiceException("只有无需上传和上传成功的组包 才能中转报关");
+        }
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainId(id);
+        TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
+        addDTO.setTransferLogisticsSupplierId(transferLogisticsSupplierId);
+        addDTO.setTransferChannelId(transferLogisticsChannelId);
+        addDTO.setDeliveryLogisticsSupplierId(entity.getLogisticsSupplierId());
+        addDTO.setGenerateTime(LocalTime.now());
+        List<TransferDeclareDetailDTO.AddDTO> addDetailList= PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
+        addDTO.setDetailList(addDetailList);
+        BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
+        String transferStatus = TransferStatusEnum.ALREADY.getCode();
+        if (StringUtils.isNotBlank(result.getId())) {
+            List<String> soIdList=detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+            UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
+            dto.setStatus(transferStatus);
+            dto.setIds(soIdList);
+            soB2cFeign.updateTransferStatus(dto);
+        }
+        entity.setTransferStatus(transferStatus);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+
+    }
+
     /**
      * 填充分页数据
+     *
      * @param list
      */
     private void fillPaging(List<PackageForecastDTO.PagingViewDTO> list) {
@@ -179,8 +255,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             String uploadStatus = item.getUploadStatus();
             String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
             item.setUploadStatusName(uploadStatusName);
-            String printStatus=item.getPrintStatus();
-            String printStatusName= PackagePrintStatusEnum.getName(printStatus);
+            String printStatus = item.getPrintStatus();
+            String printStatusName = PackagePrintStatusEnum.getName(printStatus);
             item.setPrintStatusName(printStatusName);
         }
     }
@@ -196,7 +272,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         dto.setLogisticsSupplierId(logisticsSupplierId);
         SettingForecastDTO.ForecastStatusDTO forecastStatus = forecastFeign.getByLogisticsSupplier(dto);
         String uploadStatus = PackageUploadStatusEnum.NOT.getCode();
-        if(Objects.nonNull(forecastStatus)){
+        if (Objects.nonNull(forecastStatus)) {
             String packageStatus = forecastStatus.getPackageStatus();
             //表示要组包啊
             if (!PackageStatusEnum.NOT.getCode().equals(packageStatus)) {

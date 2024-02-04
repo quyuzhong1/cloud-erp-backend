@@ -23,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.python.antlr.ast.Str;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,25 +107,56 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
         //销售订单id
-        List<String> soIdList=deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<String> soIdList = deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
         List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+
         SettingForecastEntity settingForecast = forecastFeign.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
-        //是否强制组包
-        Boolean isMustPackage = settingForecast.getIsMustPackage();
-        for (SoB2cEntity item : soB2cList) {
-            SettingForecastDTO.FindByLogisticsSupplierDTO findDTO = new SettingForecastDTO.FindByLogisticsSupplierDTO();
-            LocalDateTime orderTime = item.getCreateTime();
+        //表示没有设置 那就是无需组包
+        if (Objects.isNull(settingForecast)) {
+            updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+        }else{
+            //表示需要q组包
+            Boolean isMustPackage = settingForecast.getIsMustPackage();
+            //表示强制组包
+            if(isMustPackage){
+                //组包时间
+                LocalDateTime enablePackageTime = settingForecast.getEnablePackageTime();
+                //如果为空就都要组包
+                if (Objects.isNull(enablePackageTime)) {
+                    updatePackageStatus(soIdList, PackageStatusEnum.WAIT.getCode());
+                }else{
+                    List<String> waitSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) > 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(waitSoIdList)) {
+                        updatePackageStatus(waitSoIdList, PackageStatusEnum.WAIT.getCode());
+                    }
+                    List<String> notSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) <= 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(notSoIdList)) {
+                        updatePackageStatus(notSoIdList, PackageStatusEnum.NOT.getCode());
+                    }
 
 
+                }
 
-
+            }
         }
 
 
 
 
+
+
         return Boolean.TRUE;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updatePackageStatus(List<String> soIdList, String status){
+        UpdateStateDTO.UpdateByStrStatusDTO updatePackageStatus = new UpdateStateDTO.UpdateByStrStatusDTO();
+        updatePackageStatus.setStatus(status);
+        updatePackageStatus.setIds(soIdList);
+        soB2cFeign.updatePackageStatus(updatePackageStatus);
     }
 
 
@@ -149,9 +181,15 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         return resultList;
     }
 
+    @Override
+    public void removeByMainId(String mainId) {
+        this.lambdaUpdate().eq(PackageForecastDetailEntity::getMainId,mainId).remove();
+    }
 
-    public List<PackageForecastDetailEntity> listDbByMainId(String id) {
-        return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, id).list();
+
+    @Override
+    public List<PackageForecastDetailEntity> listDbByMainId(String mainId) {
+        return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, mainId).list();
     }
 
 

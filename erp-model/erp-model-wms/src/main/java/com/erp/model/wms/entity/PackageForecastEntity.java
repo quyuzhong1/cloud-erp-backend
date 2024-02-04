@@ -112,6 +112,10 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
     @TableField("remark")
     private String remark;
 
+    @TableField("transfer_status")
+    private String transferStatus;
+
+
 
     public static final String CODE = "code";
 

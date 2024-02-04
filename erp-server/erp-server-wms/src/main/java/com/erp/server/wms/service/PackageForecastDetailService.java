@@ -41,4 +41,8 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
      * @return
      */
     List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id);
+
+    List<PackageForecastDetailEntity> listDbByMainId(String mainId);
+
+    void removeByMainId(String mainId);
 }
