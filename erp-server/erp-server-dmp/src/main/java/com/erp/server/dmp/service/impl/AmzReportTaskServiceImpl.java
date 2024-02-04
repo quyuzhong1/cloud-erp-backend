@@ -178,11 +178,16 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             // 解析时间
             reqDataStartTime = amzReportInfo.getDataEndTime();
         }
+
         // 创建报告待请求记录
         AmzReportTaskEntity newTaskEntity = DmpReportConverter.INSTANCE.initScheduleEntityToTask(reportSchedule, reqDataStartTime, reqDataEndTime, groupId);
         if (!this.save(newTaskEntity)) {
             throw new ServiceException("保存创建报告待请求记录失败");
         }
+
+        // 更新下次计划任务下次执行时间
+        amzReportScheduleService.updateNextTime(reportSchedule.getId(), reportTypeConfig);
+
         // 添加到延时队列1末端
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(
                 RocketMqTopic.AMZ_REPORT_TASK_TOPIC,
@@ -360,8 +365,6 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 }
             }
         }
-        // 更新下次计划任务下次执行时间
-        amzReportScheduleService.updateNextTime(entity.getMainId(), config);
 
         // 请求创建报告
         String reportId = amzReportHandleService.createAmzReport(entity);
