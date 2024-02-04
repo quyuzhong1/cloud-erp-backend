@@ -45,11 +45,11 @@
 
         <if test="roleIds !=null  and  roleIds.size()>0">
             AND uid in
-            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
+            SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
                 <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
                     #{roleId}
                 </foreach>
-            ))
+            )
         </if>
 
         ORDER BY update_time DESC
