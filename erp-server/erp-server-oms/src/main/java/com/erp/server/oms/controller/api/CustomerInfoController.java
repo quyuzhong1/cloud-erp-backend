@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -17,6 +18,7 @@ import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
 import com.erp.server.oms.service.CustomerInfoService;
@@ -79,6 +81,7 @@ public class CustomerInfoController extends BaseController {
             menuCode = "oms:customer:paging",
             tableAlias = "ci"
     )
+    @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public ApiResult<PagingVO<CustomerDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerDTO.PagingParamDTO> dto) {
         PagingVO<CustomerDTO.PagingViewDTO> pagingVO = customerInfoService.paging(dto);
         return success(pagingVO);
@@ -267,6 +270,7 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出客户信息")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerInfoService.exportExcel(dto, response);
         return result ? success() : failure();

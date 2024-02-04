@@ -348,25 +348,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto) {
         CustomerDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
-        List<String> approveList = new ArrayList<>();
-        //待审核
-        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (OmsConstant.APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (OmsConstant.REJECT.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, approveList);
+        IPage pageData = baseMapper.paging(query, params);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -798,24 +781,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
-        List<String> approveList = new ArrayList<>();
-        //待审核
-        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-
-        //已审核
-        if (OmsConstant.APPROVE.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
-        }
-
-        //审核不通过
-        if (OmsConstant.REJECT.equals(searchType)) {
-            approveList.add(ApproveStatusEnum.REJECT.getStatus());
-        }
-
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto);
 
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
