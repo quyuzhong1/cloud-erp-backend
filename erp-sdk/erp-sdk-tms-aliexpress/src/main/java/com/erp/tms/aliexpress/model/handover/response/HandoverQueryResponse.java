@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName HandoverQueryResponse
- * @description: TODO
+ * @description: 查询大包详情
  * @date 2024年02月01日
  * @version: 1.0
  */

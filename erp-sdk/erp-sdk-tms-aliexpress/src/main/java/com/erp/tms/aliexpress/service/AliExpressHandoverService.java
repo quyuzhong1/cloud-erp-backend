@@ -27,7 +27,7 @@ public class AliExpressHandoverService {
      * 批次追加大包
      * @param authMap
      * @param subbagRequest
-     * @return
+     * @return SubbagResponse
      * @throws ApiException
      */
     public IopResponse subbagAdd(Map<String, String> authMap, SubbagRequest subbagRequest) throws ApiException {
@@ -117,7 +117,7 @@ public class AliExpressHandoverService {
      *
      * @param authMap
      * @param commitRequest
-     * @return
+     * @return HandoverCommitResponse
      * @throws ApiException
      */
     public IopResponse commit(Map<String, String> authMap, CommitRequest commitRequest) throws ApiException {
@@ -163,7 +163,7 @@ public class AliExpressHandoverService {
      *
      * @param authMap
      * @param updateRequest
-     * @return
+     * @return boolean
      * @throws ApiException
      */
     public IopResponse update(Map<String, String> authMap, UpdateRequest updateRequest) throws ApiException {
@@ -200,7 +200,7 @@ public class AliExpressHandoverService {
      *
      * @param authMap
      * @param cancelRequest
-     * @return
+     * @return boolean
      * @throws ApiException
      */
     public IopResponse cancel(Map<String, String> authMap, CancelRequest cancelRequest) throws ApiException {
@@ -232,7 +232,7 @@ public class AliExpressHandoverService {
      *
      * @param authMap
      * @param cloudPrintRequest
-     * @return
+     * @return CloudPrintResponse
      * @throws ApiException
      */
     public IopResponse cloudPrint(Map<String, String> authMap, CloudPrintRequest cloudPrintRequest) throws ApiException {
@@ -262,7 +262,7 @@ public class AliExpressHandoverService {
      * 返回指定大包面单的PDF文件数据
      * @param authMap
      * @param pdfRequest
-     * @return
+     * @return PdfResponse
      * @throws ApiException
      */
     public IopResponse getPdf(Map<String, String> authMap, PdfRequest pdfRequest) throws ApiException {
@@ -293,7 +293,7 @@ public class AliExpressHandoverService {
      *
      * @param authMap
      * @param resourceRecommendRequest
-     * @return
+     * @return ResourceRecommendResponse
      * @throws ApiException
      */
     public IopResponse resourceRecommend(Map<String, String> authMap, ResourceRecommendRequest resourceRecommendRequest) throws ApiException {
@@ -322,7 +322,7 @@ public class AliExpressHandoverService {
      * 查询出所有的实际承运商
      * @param authMap
      * @param locale
-     * @return
+     * @return CarrierResponse
      * @throws ApiException
      */
     public IopResponse queryCarrierList(Map<String, String> authMap, String locale) throws ApiException {
@@ -348,7 +348,7 @@ public class AliExpressHandoverService {
      *查询包裹可用物流方案
      * @param authMap
      * @param serviceRequest
-     * @return
+     * @return ServiceResponse
      * @throws ApiException
      * 用于异常订单重新发货时获取物流方案，如异常滞留订单
      */
