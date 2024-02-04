@@ -4,12 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -294,78 +296,17 @@ public class FbaShipmentDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-        /**
-         * 单据编号
-         */
-        private String code;
 
         /**
-         * sku编号
+         * 页面高级查询
          */
-        private List<String> skuNoList;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 店铺id
+         * sqlMap 默认key default
          */
-        private List<String> shopIdList;
+        private Map<String, String> sqlMap;
 
-        /**
-         * 国家二字码
-         */
-        private List<String> countryIdList;
-
-        /**
-         * 平台物流中心
-         */
-        private String fulfillmentCenter;
-
-        /**
-         * 发货状态:/wms/common/enumDropDown?type=FbaDeliveryStatus
-         * 描述：shipped:已发货  isOver:已完结  unShipped:未发货
-         */
-        private List<String> deliveryStatusList;
-
-        /**
-         * 平台货件状态:/wms/common/enumDropDown?type=FbaPlatformShipmentStatus
-         * 描述： CLOSED WORKING SHIPPED RECEIVING
-         */
-        private List<String> platformShipmentStatusList;
-
-        /**
-         * 平台产品id
-         */
-        private String asin;
-
-        /**
-         * 平台sku
-         */
-        private String msku;
-
-        /**
-         * fnSku
-         */
-        private String fnSku;
-
-        /**
-         * 是否组合品 true 是
-         */
-        private Boolean isCombination;
-
-        /**
-         * 收发差异：/wms/common/enumDropDown?type=DiffRule
-         * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
-         */
-        private String diffRule;
-
-        /**
-         * 创建时间（拉取数据的日期）
-         */
-        private List<LocalDate> shipmentCreateTimeList;
-
-        /**
-         * 签收时间（拉取签收数据的日期）
-         */
-        private List<LocalDate> shipmentReceiveTimeList;
 
     }
 

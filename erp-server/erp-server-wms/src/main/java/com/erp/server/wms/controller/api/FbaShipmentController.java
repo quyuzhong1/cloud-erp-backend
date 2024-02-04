@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -50,6 +51,7 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
         return success(list);
