@@ -43,10 +43,7 @@ import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
-import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
 import com.erp.server.oms.service.*;
@@ -128,6 +125,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Resource
     private CustomerAddressService customerAddressService;
 
+    @Resource
+    private SoReturnInstockFeign soReturnInstockFeign;
+
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -147,6 +147,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
         List<String> soDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
+        List<String> detailIds = records.stream().map(SoReturnDTO.PagingView::getDetailId).collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIds);
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -165,6 +167,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setCurrency(soDetailEntity.getCurrency());
                 obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                Integer returnInStockQty = soReturnInstockDetailEntityList.stream().filter(detail -> obj.getDetailId().equals(detail.getSoReturnDetailId())  ).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setReturnInStockQty(returnInStockQty);
             });
         }
         return new PagingVO(pageData);

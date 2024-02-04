@@ -359,6 +359,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
 
+    @Override
+    public List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(List<String> soReturnDetailIds) {
+        if(CollectionUtils.isEmpty(soReturnDetailIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SoReturnInstockDetailEntity::getSoReturnDetailId, soReturnDetailIds).list();
+    }
+
     /**
      * @description: 更新委外标识
      * @author Will

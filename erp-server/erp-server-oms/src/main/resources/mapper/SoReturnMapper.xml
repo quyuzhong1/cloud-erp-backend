@@ -6,6 +6,7 @@
             sr.id,
             sr.source_id AS sourceId,
             srd.source_detail_id AS sourceDetailId,
+            srd.id as detailId,
             sr.create_time AS createTime,
             sr.code,
             sr.source_code AS sourceCode,

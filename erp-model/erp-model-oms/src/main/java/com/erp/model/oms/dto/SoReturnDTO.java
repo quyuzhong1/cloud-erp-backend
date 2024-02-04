@@ -79,6 +79,10 @@ public class SoReturnDTO {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 销售单id
          */
         private String sourceId;
@@ -170,6 +174,10 @@ public class SoReturnDTO {
          * 剩余未出数量
          */
         private Integer unDeliveryQty;
+        /**
+         * 退货入库
+         */
+        private Integer returnInStockQty;
         /**
          * 单位
          */
