@@ -167,9 +167,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
      * @param mainEntity
      */
     private void aliExpressDeliveryQuery(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
+        String warehouseName = "";
+        if (CollectionUtils.isNotEmpty(dto.getDetails())) {
+            warehouseName = dto.getDetails().get(0).getWarehouseName();
+        }
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(logisticsDTOS) && resultDTO.getIsWarehouseEmpty()) {
+        if (CollectionUtils.isNotEmpty(logisticsDTOS) && StringUtils.isNotBlank(warehouseName)) {
             //生成销售出库单
             soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
 
@@ -177,7 +181,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             addAliExpressDelivery(dto, mainEntity, logisticsDTOS);
         } else {
             //如果仓库名称为空表示没找到速卖通发货单，记录异常订单，这里的WarehouseName是速卖通仓库名称
-            if (StringUtils.isBlank(resultDTO.getWarehouseName())) {
+            if (StringUtils.isBlank(warehouseName)) {
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson("");
@@ -188,7 +192,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 return;
             }
 
-            //如果是否匹配到仓库，是空表示未绑定速卖通仓库，记录异常订单
+            //是否匹配到仓库，是空表示未绑定速卖通仓库，记录异常订单
             if (resultDTO.getIsWarehouseEmpty()) {
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
