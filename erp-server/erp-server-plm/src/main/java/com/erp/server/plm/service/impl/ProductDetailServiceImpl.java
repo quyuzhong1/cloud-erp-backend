@@ -2713,7 +2713,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
-                    buildProductSize(skuVO);
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
@@ -2724,34 +2723,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return skuList;
 
-    }
-
-    private void buildProductSize(SkuVO skuVO) {
-        if (Objects.isNull(skuVO) || StringUtils.isEmpty(skuVO.getProductSize())){
-            skuVO.setLength(BigDecimal.ZERO);
-            skuVO.setWidth(BigDecimal.ZERO);
-            skuVO.setHeight(BigDecimal.ZERO);
-            return;
-        }
-        String productSize = skuVO.getProductSize();
-        String[] xes = productSize.split("X");
-        if (xes.length > 2){
-            skuVO.setLength(new BigDecimal(xes[0]));
-            skuVO.setWidth(new BigDecimal(xes[1]));
-            skuVO.setHeight(new BigDecimal(xes[2]));
-        }else if (xes.length > 1){
-            skuVO.setLength(new BigDecimal(xes[0]));
-            skuVO.setWidth(new BigDecimal(xes[1]));
-            skuVO.setHeight(BigDecimal.ZERO);
-        }else if (xes.length > 0){
-            skuVO.setLength(new BigDecimal(xes[0]));
-            skuVO.setWidth(BigDecimal.ZERO);
-            skuVO.setHeight(BigDecimal.ZERO);
-        }else {
-            skuVO.setLength(BigDecimal.ZERO);
-            skuVO.setWidth(BigDecimal.ZERO);
-            skuVO.setHeight(BigDecimal.ZERO);
-        }
     }
 
     @Override
