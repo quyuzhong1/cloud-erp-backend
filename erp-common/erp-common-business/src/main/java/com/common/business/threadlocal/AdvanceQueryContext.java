@@ -18,11 +18,18 @@ public class AdvanceQueryContext {
      */
     private static final ThreadLocal<List<AdvanceQueryDTO>> queryList = ThreadLocal.withInitial(ArrayList::new);
 
+    private static final ThreadLocal<String> compareCode = new ThreadLocal<>();
+
     public static void addQuery(AdvanceQueryDTO dto) {queryList.get().add(dto);}
 
     public static List<AdvanceQueryDTO> getQueryList() { return queryList.get();}
 
+    public static void setCompareCode(String code) {compareCode.set(code);}
+
+    public static String getCompareCode() {return compareCode.get();}
+
     public static void remove() {
         queryList.remove();
+        compareCode.remove();
     }
 }
