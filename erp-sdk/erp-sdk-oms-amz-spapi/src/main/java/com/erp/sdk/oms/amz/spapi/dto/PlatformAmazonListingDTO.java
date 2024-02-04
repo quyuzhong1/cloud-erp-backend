@@ -84,6 +84,9 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
     private String merchantShippingGroup;
 
+    @Panno(findType = PannoEnum.EQ,field = "status")
+    private String status;
+
     /**
      * 店铺ID
      */
@@ -114,6 +117,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private Integer downloadStatus;
 
     /**
+     * 下载描述
+     */
+    private String downloadDesc;
+
+    /**
      * 产品详情
      */
     private Item detail;
@@ -127,6 +135,8 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * redisson执行中key
      */
     private String redissonKey;
+
+
 
     /**
      * 转换目标实体:PlatformProductDTO
@@ -180,7 +190,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         // 日本
         if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)){
             if ("3".equals(this.productIdType)){
-                return AmazonIdentifiersTypeEnum.JAN;
+                return AmazonIdentifiersTypeEnum.UPC;
             } else {
                 return AmazonIdentifiersTypeEnum.ASIN;
             }

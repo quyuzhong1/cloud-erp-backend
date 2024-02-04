@@ -203,6 +203,7 @@ public class PullAmzReportJob {
     @XxlJob("amazonCheckReportJob")
     public ReturnT<String> amazonCheckReportJob() {
         // 执行参数
+        // {"shopIdList": [""],"recordTypeList": ["GET_MERCHANT_LISTINGS_ALL_DATA"]}
         String jobParamStr = XxlJobHelper.getJobParam();
         AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 10);
         // 根据报告ID和状态获取reportDocumentId
@@ -298,9 +299,9 @@ public class PullAmzReportJob {
             if (StringUtils.isNotBlank(recordTypeStr)) {
                 recordTypeList = JSONUtil.toList(recordTypeStr, String.class);
             }
-            String shopIdsListStr = jsonObject.getStr("shopIdsList");
-            if (StringUtils.isNotBlank(shopIdsListStr)) {
-                shopIdsList = JSONUtil.toList(shopIdsListStr, String.class);
+            String shopIdListStr = jsonObject.getStr("shopIdList");
+            if (StringUtils.isNotBlank(shopIdListStr)) {
+                shopIdsList = JSONUtil.toList(shopIdListStr, String.class);
             }
         }
         XxlJobHelper.log("[重试【亚马逊报告】任务] 任务开始 当前执行参数:size={}," +

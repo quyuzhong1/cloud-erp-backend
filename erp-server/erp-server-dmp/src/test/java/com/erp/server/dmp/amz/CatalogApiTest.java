@@ -87,38 +87,51 @@ public class CatalogApiTest {
 //        List<String> identifiers = Arrays.asList("1963-US7");
 //        String identifiersType = "SKU";
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
-        String shopId = "1735479610549735425";
+//        String shopId = "1735479610549735425";
+        String shopId = "1735516266715680769";
         List<String> marketplaceIds = Arrays.asList(marketplaceEnum.getMarketplaceId());
-//        List<String> identifiers = Arrays.asList(
-//                "782902337179",
-//                "782902336509",
-//                "782902324780",
-//                "708214686514",
-//                "782902336530",
-//                "782902327606",
-//                "708214686828",
-//                "782902324698"
-//        );
-//        String identifiersType = "JAN";
         List<String> identifiers = Arrays.asList(
-                "B08627ND7D",
-                "B0861YTDGS",
-                "B08P1MZDTZ",
-                "B08P7M6V9S",
-                "B09VC81FBR",
-                "B08SWJXTCX",
-                "B08MBNH3QG",
-                "B09KLZ85WJ"
-                );
-        String identifiersType = "ASIN";
-
+                "699942852190",
+                "699973419805",
+                "699946240887",
+                "699990602211",
+                "699994473985",
+                "699961098241",
+                "708214680710",
+                "699919591947"
+        );
+        String identifiersType = "JAN";
+//        String identifiersType = "UPC";
+//        List<String> identifiers = Arrays.asList(
+//                "B07B9MXJTK",
+//                "B07CZ8J9GX",
+//                "B0928FVD8W",
+//                "B09DGKNH31",
+//                "B094MYTPVF",
+//                "B09CYJ5XQK",
+//                "B09CT5ZSLW",
+//                "B0C49KNYKV",
+//                "B0BC1P629W",
+//                "B0B7L1XFRD",
+//                "B0BWCLMZ8W",
+//                "B0BGN75SJW",
+//                "B0BGN6QMZD",
+//                "B0C1SH518V",
+//                "B0BSL2GF54",
+//                "B0BZ3PZ4JX",
+//                "B0C6K9V8GY",
+//                "B0BPBG6JVQ",
+//                "B0C581CX5P",
+//                "B0BRLWCXN4"
+//                );
+//        String identifiersType = "ASIN";
         List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");;
         String locale = null;
         String sellerId = null;
         List<String> keywords = null;
         List<String> brandNames = null;
         List<String> classificationIds = null;
-        Integer pageSize = null;
+        Integer pageSize = 20;
         String pageToken = null;
         String keywordsLocale = null;
         // 获取店铺授权信息

@@ -15,6 +15,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -27,6 +28,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonListingStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
@@ -396,8 +398,9 @@ public class PullAmzJob {
      */
     private List<PlatformAmazonListingDTO> findProductDownloadStatusAnShopId(Integer downloadStatus, List<String> shopIds, int currentPage, Integer pageSize) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("downloadStatus").is(downloadStatus)
-                .and("shopId").in(shopIds));
+        query.addCriteria(Criteria.where("shopId").in(shopIds)
+                .and("downloadStatus").is(downloadStatus)
+        );
 
         if (currentPage > 0 && pageSize > 0) {
             query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
@@ -430,11 +433,22 @@ public class PullAmzJob {
      */
     @XxlJob("amazonProductDetailDownload")
     public ReturnT<String> amazonProductDetail() {
-        Integer size;
+        // 每次请求接口限制数量不能大于20
+        int size;
+        List<String> shopIdList = new ArrayList<>();
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
-            size = jobParam.getInteger("size");
+            Integer sizeInt = jobParam.getInteger("size");
+            if (null != sizeInt){
+                size = sizeInt;
+            } else {
+                size = 20;
+            }
+            String shopIdListStr = jobParam.getString("shopIdList");
+            if (StringUtils.isNotBlank(shopIdListStr)){
+                shopIdList = JSONUtil.toList(shopIdListStr, String.class);
+            }
         } else {
             size = 20;
         }
@@ -446,6 +460,16 @@ public class PullAmzJob {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
+        // 指定店铺
+        List<String> finalShopIdList = shopIdList;
+        taskList = taskList.stream()
+                .filter(e-> !CollectionUtils.isEmpty(finalShopIdList) && finalShopIdList.contains(e.getShopId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(taskList)) {
+            XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,未找到指定店铺需执行的任务");
+            return ReturnT.SUCCESS;
+        }
+
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
 
@@ -499,15 +523,21 @@ public class PullAmzJob {
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
         for (Map.Entry<String, List<PlatformAmazonListingDTO>> entry : dtoGroupList.entrySet()) {
             AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(entry.getKey());
-            List<PlatformAmazonListingDTO> currentListingDTOList = entry.getValue();
             AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            // 过滤亚马逊异常数据或无法查询明细的数据
+            List<PlatformAmazonListingDTO> currentListingDTOList = this.filterAndGetEnableList(entry.getValue(), marketPlaceEnum);
+            if (CollectionUtils.isEmpty(currentListingDTOList)){
+                XxlJobHelper.log("[拉取亚马逊商品详情任务] 当前店铺无有效数据需下载，shopId={}", entry.getKey());
+                continue;
+            }
+
             // 动态请求配置
             // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
             String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, key, requestTypeRateLimiterEnum.getBusinessTypeName());
             JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
             extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
             // 根据IdentifiersType分组查询
-            List<PlatformAmazonListingDTO> newDtoList = amazonListingHandler.downloadDetailListByIdentifiersType(currentListingDTOList, extentJsonObj, shopInfoDTO, marketPlaceEnum);
+            List<PlatformAmazonListingDTO> newDtoList = amazonListingHandler.downloadDetailListByIdentifiersType(currentListingDTOList, extentJsonObj, shopInfoDTO, marketPlaceEnum, size);
             for (PlatformAmazonListingDTO newDto : newDtoList) {
                 try {
                     // 关联FNSKU信息
@@ -540,6 +570,37 @@ public class PullAmzJob {
         }
 
 
+    }
+
+    private List<PlatformAmazonListingDTO> filterAndGetEnableList(List<PlatformAmazonListingDTO> listingDTOList, AmazonMarketplaceEnum marketPlaceEnum) {
+        List<PlatformAmazonListingDTO> resultList = new ArrayList<>();
+        Class<?> tClass = PlatformAmazonListingDTO.class;
+        String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT;
+        for (PlatformAmazonListingDTO dto : listingDTOList) {
+            if ("1".equalsIgnoreCase(dto.getProductIdType()) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(dto.getStatus())){
+                dto.setDownloadStatus(-1);
+                dto.setDownloadDesc("ProductIdType=ASIN,停售无法更新明细");
+                //更新mongo
+                UniqueDto updateDto = UniqueDto.getUniqId(dto.getUniqueId());
+                MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+                mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+                continue;
+            }
+            // 日本异常数据
+            if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)) {
+                if ("4".equals(dto.getProductIdType())){
+                    dto.setDownloadStatus(-1);
+                    dto.setDownloadDesc("日本站点ProductIdType=4无法更新明细");
+                    //更新mongo
+                    UniqueDto updateDto = UniqueDto.getUniqId(dto.getUniqueId());
+                    MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+                    mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+                    continue;
+                }
+            }
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
 

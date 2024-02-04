@@ -385,7 +385,7 @@ public class Item {
             return this.getAsin();
         }
         // 日本
-        if (AmazonIdentifiersTypeEnum.JAN.equals(identifierType)){
+        if (AmazonIdentifiersTypeEnum.UPC.equals(identifierType)){
             ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
                     .stream()
                     .filter(e -> marketplaceEnum.getMarketplaceId().equalsIgnoreCase(e.getMarketplaceId()))

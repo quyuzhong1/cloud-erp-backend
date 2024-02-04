@@ -1,5 +1,7 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -176,7 +178,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     /**
      * 根据IdentifiersType分组查询
      */
-    public List<PlatformAmazonListingDTO> downloadDetailListByIdentifiersType(List<PlatformAmazonListingDTO> currentListingDTOList, JSONObject extendObj, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum) {
+    public List<PlatformAmazonListingDTO> downloadDetailListByIdentifiersType(List<PlatformAmazonListingDTO> currentListingDTOList, JSONObject extendObj, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, Integer size) {
         // 默认请求速率配置
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
@@ -186,8 +188,6 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         //查询商品详情
         CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
-
-        Map<AmazonIdentifiersTypeEnum, Map<String, Item>> conbineMap = new HashMap<>();
 
         List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
         for (Map.Entry<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> entry : listMap.entrySet()) {
@@ -200,7 +200,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
             List<String> keywords = null;
             List<String> brandNames = null;
             List<String> classificationIds = null;
-            Integer pageSize = null;
+            Integer pageSize = size;
             String pageToken = null;
             String keywordsLocale = null;
             ApiResponse<ItemSearchResults> apiResponse;
@@ -216,12 +216,15 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
             }
             // 根据identifiers.identifierType区分返回的来源的ProductId
             Map<String, Item> itemMap = items.stream().collect(Collectors.toMap(e -> e.getKeyByIdentifierType(entry.getKey(), marketPlaceEnum), Function.identity()));
-            conbineMap.put(entry.getKey(), itemMap);
             entry.getValue().forEach(e-> {
                 Item item = itemMap.get(e.getProductId());
-                if (null != item){
+                if (null != item) {
                     this.setAllDetail(e, item, marketPlaceEnum);
                 }
+//                } else {
+//                    String msg = StrUtil.format("数据异常：未找到对应ProductId,listing={}", JSONUtil.toJsonStr(e));
+//                    throw new ServiceException(msg);
+//                }
             });
             resultList.addAll(entry.getValue());
         }
