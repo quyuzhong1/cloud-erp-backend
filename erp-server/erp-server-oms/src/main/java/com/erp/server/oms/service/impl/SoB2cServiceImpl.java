@@ -377,7 +377,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(logisticsDTO.getLength()) && Objects.nonNull(logisticsDTO.getWidth()) && Objects.nonNull(logisticsDTO.getHeight())) {
             return;//存在则不重算
         }
-        detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).filter(StrUtil::isNotEmpty).collect(Collectors.toList())
+        detailList.stream().map(SoB2cDetailDTO.AddDTO::getSkuId).filter(StrUtil::isNotEmpty).collect(Collectors.toList());
         //根据明细进行sku拆分
         List<SplitSkuDTO> splitSkuDTOS = splitBySoDetailByAdd(detailList);
         //拆分完成后根据拆分结果进行汇总
