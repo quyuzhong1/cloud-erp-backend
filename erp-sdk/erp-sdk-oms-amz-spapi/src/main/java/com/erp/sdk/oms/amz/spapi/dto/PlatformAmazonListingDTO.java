@@ -11,6 +11,7 @@ import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -187,14 +188,24 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 转换IdentifiersType
      */
     public AmazonIdentifiersTypeEnum convertIdentifiersType(AmazonMarketplaceEnum marketPlaceEnum) {
-        // 日本
-        if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)){
+        // 日本/法国
+//        if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum) || AmazonMarketplaceEnum.FR.equals(marketPlaceEnum)){
             if ("3".equals(this.productIdType)){
                 return AmazonIdentifiersTypeEnum.UPC;
             } else {
                 return AmazonIdentifiersTypeEnum.ASIN;
             }
+//        }
+//        return AmazonIdentifiersTypeEnum.ASIN;
+    }
+
+    /**
+     * 检查IdentifiersType
+     */
+    public String checkAndGetIdentifier() {
+        if (("4".equals(this.productIdType) || "2".equals(this.productIdType))&& StringUtils.isNotBlank(this.getAsin1())){
+            return this.getAsin1();
         }
-        return AmazonIdentifiersTypeEnum.ASIN;
+        return this.getProductId();
     }
 }

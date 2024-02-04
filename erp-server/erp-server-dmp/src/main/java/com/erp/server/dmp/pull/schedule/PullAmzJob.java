@@ -434,6 +434,7 @@ public class PullAmzJob {
     @XxlJob("amazonProductDetailDownload")
     public ReturnT<String> amazonProductDetail() {
         // 每次请求接口限制数量不能大于20
+        // {"shopIdList":[""]}
         int size;
         List<String> shopIdList = new ArrayList<>();
         String jobParamStr = XxlJobHelper.getJobParam();
@@ -463,7 +464,7 @@ public class PullAmzJob {
         // 指定店铺
         List<String> finalShopIdList = shopIdList;
         taskList = taskList.stream()
-                .filter(e-> !CollectionUtils.isEmpty(finalShopIdList) && finalShopIdList.contains(e.getShopId()))
+                .filter(e-> CollectionUtils.isEmpty(finalShopIdList) || finalShopIdList.contains(e.getShopId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,未找到指定店铺需执行的任务");

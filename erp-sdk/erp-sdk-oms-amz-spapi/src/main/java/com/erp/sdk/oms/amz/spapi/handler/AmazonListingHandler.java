@@ -181,8 +181,9 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     public List<PlatformAmazonListingDTO> downloadDetailListByIdentifiersType(List<PlatformAmazonListingDTO> currentListingDTOList, JSONObject extendObj, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, Integer size) {
         // 默认请求速率配置
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
-        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+//        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
+//        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+        RateLimitConfiguration rateLimitConfig = null;
 
         Map<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(e -> e.convertIdentifiersType(marketPlaceEnum)));
 
@@ -192,7 +193,9 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
         for (Map.Entry<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> entry : listMap.entrySet()) {
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
-            List<String> identifiers = entry.getValue().stream().map(PlatformAmazonListingDTO::getProductId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+            List<String> identifiers = entry.getValue()
+                    .stream()
+                    .map(e-> e.checkAndGetIdentifier()).filter(Objects::nonNull).distinct().collect(Collectors.toList());
             String identifiersType = entry.getKey().getCode();
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             String locale = null;
