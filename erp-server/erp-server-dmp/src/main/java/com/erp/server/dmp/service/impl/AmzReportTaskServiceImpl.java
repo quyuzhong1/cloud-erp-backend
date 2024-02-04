@@ -9,7 +9,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.RedisService;
@@ -362,7 +361,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             }
         }
         // 更新下次计划任务下次执行时间
-        amzReportScheduleService.updateNextTime(entity.getMainId());
+        amzReportScheduleService.updateNextTime(entity.getMainId(), config);
 
         // 请求创建报告
         String reportId = amzReportHandleService.createAmzReport(entity);
@@ -732,7 +731,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             reqDataStartTime = amzReportInfo.getDataEndTime();
         }
         // 更新下次计划任务下次执行时间
-        amzReportScheduleService.updateNextTime(reportSchedule.getId());
+        amzReportScheduleService.updateNextTime(reportSchedule.getId(), reportTypeConfig);
 
         // 创建报告待请求记录
         AmzReportTaskEntity newTaskEntity = DmpReportConverter.INSTANCE.initDirectQueryTask(reportSchedule, groupId, reqDataStartTime, reqDataEndTime);

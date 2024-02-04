@@ -178,13 +178,20 @@ public class AmzReportScheduleServiceImpl extends SuperServiceImpl<AmzReportSche
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateNextTime(String mainId) {
+    public void updateNextTime(String mainId, CfgAmzReportTypeEntity config) {
         AmzReportScheduleEntity reportSchedule = this.getByIdOpt(mainId).orElseThrow(() -> new ServiceException("未找到计划任务ID=" + mainId));
         // 支持切换时间间隔
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-        // 之前的时间
-        LocalDateTime historyTime = reportSchedule.getFirstNextReportCreationTime();
-        OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(historyTime.atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        OffsetDateTime roundedOffsetDateTime;
+        // 是否是全量报告
+        if (config.getIsFullUpdate()){
+            roundedOffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+        } else {
+            // 之前的时间
+            LocalDateTime historyTime = reportSchedule.getFirstNextReportCreationTime();
+            roundedOffsetDateTime = periodEnum.formatTime(historyTime.atOffset(ZoneOffset.of("+8")).withOffsetSameInstant(ZoneOffset.UTC));
+        }
+
         // 修改下次创建时间
         LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
                 .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)

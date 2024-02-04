@@ -74,7 +74,7 @@ public interface AmzReportScheduleService extends SuperService<AmzReportSchedule
      * @author Jim
      * @date: 2024-01-20
      */
-    void updateNextTime(String mainId);
+    void updateNextTime(String mainId, CfgAmzReportTypeEntity config);
 
     /**
      * 根据任务参数查询执行的计划任务
