@@ -864,6 +864,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void retryTask(AmzReportTaskEntity entity) {
         if (!AmzReportTaskStatusEnum.notFinishOrStopList().contains(entity.getStatus())){
             log.info("[重试【亚马逊报告】任务] 当前任务执行完毕, taskId={},非运行中状态:{}", entity.getId(), entity.getStatus());
@@ -895,6 +896,15 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             default:
         }
 
+    }
+
+    @Override
+    public boolean stopRetryCount(Integer retryCount) {
+        Map<SettingEnum, String> configMap = cfgSettingService.getMap(SettingEnum.AMAZON_REPORT);
+        // 获取停止次数
+        String stopCountStr = configMap.getOrDefault(SettingEnum.AMAZON_REPORT_STOP_COUNT, "4");
+        int stopCount = Integer.parseInt(stopCountStr);
+        return retryCount > stopCount;
     }
 
 

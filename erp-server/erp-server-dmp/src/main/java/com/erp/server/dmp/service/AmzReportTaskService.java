@@ -190,4 +190,13 @@ public interface AmzReportTaskService extends SuperService<AmzReportTaskEntity> 
      * @date: 2024-01-31
      */
     void retryTask(AmzReportTaskEntity taskEntity);
+
+
+    /**
+     * 检查重试次数是否停止
+     *
+     * @author Jim
+     * @date: 2024-01-31
+     */
+    boolean stopRetryCount(Integer retryCount);
 }

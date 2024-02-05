@@ -18,24 +18,17 @@ import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
-import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
-import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
-import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.thread.PlatformDataThread;
-import com.erp.server.dmp.service.*;
-import com.erp.server.dmp.service.impl.BusinessServiceImpl;
+import com.erp.server.dmp.service.AmzReportHandleService;
+import com.erp.server.dmp.service.AmzReportScheduleService;
+import com.erp.server.dmp.service.AmzReportTaskService;
+import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.redisson.api.RedissonClient;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -44,7 +37,10 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,40 +53,14 @@ import java.util.stream.Collectors;
 @EnableScheduling
 public class PullAmzReportJob {
 
-    @Resource
-    private PlatformDataThread platformDataThread;
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-    @Resource
-    private MongoService mongoService;
-    @Resource
-    private BusinessServiceImpl businessService;
-    @Resource
-    private PlatformApiTaskService platformApiTaskService;
-    @Resource
-    private AmazonOrderHandler amazonOrderHandler;
-    @Resource
-    private AmazonListingHandler amazonListingHandler;
-    @Resource
-    private AmazonFbaShipmentHandler amazonFbaShipmentHandler;
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private AmzReportHandleService amzReportHandleService;
     @Resource
     private AmzReportScheduleService reportScheduleService;
-    @Resource
-    private WmsFbaInventoryFeign wmsFbaInventoryFeign;
-    @Resource
-    private DmpAmazonFeign dmpAmazonFeign;
-    @Resource
-    private DmpPushTaskService dmpPushTaskService;
-    @Resource
-    private RedissonClient redissonClient;
-    @Resource
-    private MongoTemplate mongoTemplate;
-    @Resource
-    private CfgSettingService cfgSettingService;
     @Resource
     private CfgAmzReportTypeService cfgAmzReportTypeService;
     @Resource
