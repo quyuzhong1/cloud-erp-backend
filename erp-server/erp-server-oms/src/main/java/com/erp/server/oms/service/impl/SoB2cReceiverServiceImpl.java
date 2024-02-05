@@ -108,7 +108,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream()
-                .filter(e-> e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
+                .filter(e-> Objects.nonNull(receiverDTO) && e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
                 .findFirst()
                 .orElse(null);
         if (null == receiverDTO){

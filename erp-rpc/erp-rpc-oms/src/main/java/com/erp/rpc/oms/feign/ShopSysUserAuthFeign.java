@@ -26,4 +26,13 @@ public interface ShopSysUserAuthFeign {
      */
     @PostMapping("feign/shopSysUserAuth/listUserIdByShopIdList")
     List<String> listUserIdByShopIdList(@RequestBody List<String> shopIdList);
+
+    /**
+     * 下拉用户拥有权限的店铺
+     * @Author Luo_WG
+     * @Date 2024/1/31 11:11
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>>
+     **/
+    @PostMapping("feign/shopSysUserAuth/listUserAuthShop")
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(@RequestBody ShopSysUserAuthDTO.UserAuthShopParamDTO dto);
 }

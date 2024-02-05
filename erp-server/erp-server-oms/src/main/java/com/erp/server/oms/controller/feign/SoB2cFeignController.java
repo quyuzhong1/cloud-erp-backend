@@ -3,18 +3,21 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -379,14 +382,111 @@ public class SoB2cFeignController extends BaseController {
      * 拦截打标识，冻结订单
      * @Author Luo_WG
      * @Date 2024/1/17 18:54
-     * @param isIntercept 是否打标拦截
-     * @param isFrozen 是否冻结单据
-     * @param ids 订单id
+     * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
      **/
     @PostMapping("/updateIntercept")
-    public Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids) {
-        return soB2cService.updateIntercept(isIntercept, isFrozen, ids);
+    public Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
+        return soB2cService.updateIntercept(interceptUpdateOrderDTO);
     }
 
+    /**
+     * 修改订单异常原因
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:51
+     * @param id
+     * @param soB2cAbnormalType
+     * @return java.lang.Boolean
+     **/
+    @GetMapping("/updateAbnormalType")
+    public Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType) {
+        return soB2cService.updateAbnormalType(id, soB2cAbnormalType);
+    }
+
+
+    /**
+     * 更新组包状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 10:57
+     */
+    @PostMapping("/updatePackageStatus")
+    public  Boolean updatePackageStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        return soB2cService.updatePackageStatus(dto);
+    }
+
+    /**
+     * 更新中转状态
+     * @description
+     * @param dto
+     * @author Lambda
+     * @return
+     * @create 2024-01-19 10:57
+     */
+    @PostMapping("/updateTransferStatus")
+    public  Boolean updateTransferStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+        return soB2cService.updateTransferStatus(dto);
+    }
+
+    /**
+     * 根据报关设置生成报关单信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
+     * @param viewDTOList
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     **/
+    @PostMapping("/generateTransferDeclareView")
+    public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList) {
+        return soB2cService.generateTransferDeclareView(viewDTOList);
+    }
+
+    /**
+     * 更改订单的中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
+     * @param soIds 订单id
+     * @param status 中转状态
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateTransferStatusBatch")
+    public Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status) {
+        return soB2cService.updateTransferStatusBatch(soIds, status);
+    }
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateShippingOrderNo")
+    public Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list) {
+        return soB2cService.updateShippingOrderNo(list);
+    }
+
+    /**
+     * 根据销售订单拆分sku
+     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/getTransferDeclareProductBySoIds")
+    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
+        return soB2cService.getTransferDeclareProductBySoIds(soIds);
+    }
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/updateAliExpressOrderWarehouse")
+    public Boolean updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId) {
+        return soB2cService.updateAliExpressOrderWarehouse(soId, shopId);
+    }
 }

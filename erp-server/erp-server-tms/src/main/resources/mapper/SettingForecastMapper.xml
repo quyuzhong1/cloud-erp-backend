@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.SettingForecastMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.SettingForecastEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="logistics_supplier_id" property="logisticsSupplierId" />
+        <result column="logistics_supplier_name" property="logisticsSupplierName" />
+        <result column="is_must_package" property="isMustPackage" />
+        <result column="enable_package_time" property="enablePackageTime" />
+        <result column="is_must_transfer" property="isMustTransfer" />
+        <result column="enable_transfer_time" property="enableTransferTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        logistics_supplier_id,
+        logistics_supplier_name,
+        is_must_package,
+        enable_package_time,
+        is_must_transfer,
+        enable_transfer_time,
+        declare_platform,
+        transfer_logistics_supplier_id,
+        transfer_logistics_supplier_name
+    </sql>
+
+    <select id="getByLogisticsChannelId" resultType="com.erp.model.tms.entity.SettingForecastEntity">
+        select
+          <include refid="Base_Column_List" />
+        from setting_forecast
+        WHERE logistics_supplier_id=
+        (SELECT main_id FROM logistics_channel WHERE id=#{logisticsChannelId} AND is_deleted=FALSE)
+        AND is_deleted=FALSE  LIMIT 1
+    </select>
+
+</mapper>

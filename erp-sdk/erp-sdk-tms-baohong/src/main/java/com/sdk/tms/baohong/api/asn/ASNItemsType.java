@@ -1,0 +1,101 @@
+
+package com.sdk.tms.baohong.api.asn;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>ASNItemsType complex type�� Java �ࡣ
+ * 
+ * <p>����ģʽƬ��ָ�������ڴ����е�Ԥ�����ݡ�
+ * 
+ * <pre>
+ * &lt;complexType name="ASNItemsType">
+ *   &lt;complexContent>
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *       &lt;sequence>
+ *         &lt;element name="productInfo" type="{http://www.example.org/ServiceForAsn/}ProductArray" maxOccurs="unbounded" minOccurs="0"/>
+ *         &lt;element name="OrderInfo" type="{http://www.w3.org/2001/XMLSchema}string" maxOccurs="unbounded"/>
+ *       &lt;/sequence>
+ *     &lt;/restriction>
+ *   &lt;/complexContent>
+ * &lt;/complexType>
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "ASNItemsType", propOrder = {
+    "productInfo",
+    "orderInfo"
+})
+public class ASNItemsType {
+
+    protected List<ProductArray> productInfo;
+    @XmlElement(name = "OrderInfo", required = true)
+    protected List<String> orderInfo;
+
+    /**
+     * Gets the value of the productInfo property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the productInfo property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getProductInfo().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link ProductArray }
+     * 
+     * 
+     */
+    public List<ProductArray> getProductInfo() {
+        if (productInfo == null) {
+            productInfo = new ArrayList<ProductArray>();
+        }
+        return this.productInfo;
+    }
+
+    /**
+     * Gets the value of the orderInfo property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the orderInfo property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getOrderInfo().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link String }
+     * 
+     * 
+     */
+    public List<String> getOrderInfo() {
+        if (orderInfo == null) {
+            orderInfo = new ArrayList<String>();
+        }
+        return this.orderInfo;
+    }
+
+}

@@ -2,14 +2,11 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
-import com.common.business.dto.base.BaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.Digits;
@@ -246,7 +243,22 @@ public class LogisticsChannelDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
-
+        /**
+         * 长度上限
+         */
+        private BigDecimal maxLength;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+        /**
+         * 宽度上限
+         */
+        private BigDecimal maxWidth;
+        /**
+         * 高度上限
+         */
+        private BigDecimal maxHeight;
         /**
          * 税费模式
          */
@@ -465,6 +477,19 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotBlank(message = "重量单位不能为空")
         private String weightUnit;
+
+        /**
+         * 长度上限
+         */
+        private BigDecimal maxLength;
+        /**
+         * 宽度上限
+         */
+        private BigDecimal maxWidth;
+        /**
+         * 高度上限
+         */
+        private BigDecimal maxHeight;
 
         /**
          * 税费模式

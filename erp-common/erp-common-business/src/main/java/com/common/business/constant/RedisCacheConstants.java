@@ -72,7 +72,7 @@ public interface RedisCacheConstants {
      * shopify授权:{shop}
      * 内容店铺ID
      */
-    String AUTH_SHOPIFY_SHOP = "third-party-auth:shopify_shop:{}";
+    String AUTH_SHOPIFY_SHOP = "third_party_auth:shopify_shop:{}";
 
     /**
      * 速卖通授权:{stare}

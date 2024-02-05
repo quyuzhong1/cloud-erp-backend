@@ -1,6 +1,8 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -16,6 +18,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -52,6 +55,7 @@ import com.sdk.oms.shopee.service.ShopeeShopService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
+import com.sdk.oms.shopify.utils.HmacVerificationUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -236,6 +240,28 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return id;
 
 
+    }
+
+    @Override
+    public String getShopifyAuthorizeUrl(ShopifyAuthorizeUrlDTO dto) {
+        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
+        CfgAppClientDTO.FindDTO findDTO = CfgAppClientDTO.FindDTO.init(appClient);
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (null == cfgAppClient){
+            throw new ServiceException("Shopify系统配置缺失");
+        }
+        Map<String, String> paramsMap = BeanUtil.beanToMap(dto)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
+        // 校验
+        boolean verifyResult = HmacVerificationUtils.verifyQueryString(cfgAppClient.getClientSecret(), new TreeMap<>(paramsMap));
+        if (!verifyResult){
+            throw new ServiceException("Verify Params Error");
+        }
+        // 生成跳转地址
+        String grantOptions = "offline-access";
+        return String.format(cfgAppClient.getUrl(), dto.getShop(), cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
     }
 
     @Override

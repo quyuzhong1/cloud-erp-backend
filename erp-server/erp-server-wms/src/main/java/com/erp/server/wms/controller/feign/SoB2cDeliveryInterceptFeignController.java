@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@LogSystemModule("b2c发货单")
+@LogSystemModule("b2c发货拦截")
 @RequestMapping("/feign/soB2cDeliveryIntercept")
 public class SoB2cDeliveryInterceptFeignController extends BaseController {
 
@@ -106,7 +106,7 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     @PostMapping("/interceptResultConfirm")
-    public BatchResultDTO interceptResultConfirm(@RequestParam("dto") SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id) {
+    public BatchResultDTO interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id) {
         BatchResultDTO resultDTO = soB2cDeliveryInterceptService.interceptResultConfirm(dto, id);
         return resultDTO;
     }

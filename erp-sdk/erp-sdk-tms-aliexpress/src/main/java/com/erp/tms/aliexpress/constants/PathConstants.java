@@ -12,6 +12,8 @@ public interface PathConstants {
 //    String BASE_URL = "https://open.aliexpress.com";
     String BASE_URL = "https://api-sg.aliexpress.com";
     String APP_KEY = "502978";
-    String TOKEN = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
+    String TOP_USER_KEY = "2671706312";
+    String CLIENT = "ISV-数大臣";
+    String TOKEN = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
     String APP_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 }

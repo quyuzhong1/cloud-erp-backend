@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -83,7 +84,6 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setShopId(dto.getShopId());
             // 包装信息
             String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
-
             product.setProductPacking(packing);
             String gmtModified = sourceProduct.getGmtModified();
             product.setPlatformUpdateTime(LocalDateUtil.parseStrToLocalTime(gmtModified));

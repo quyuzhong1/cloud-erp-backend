@@ -218,6 +218,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     String autoCreateShopCustomer(String id);
 
     /**
+     * Shopify直接安装授权Url
+     * @param dto
+     * @return
+     */
+    String getShopifyAuthorizeUrl(ShopifyAuthorizeUrlDTO dto);
+
+    /**
      * 查询指定或所有店铺
      */
     List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto);

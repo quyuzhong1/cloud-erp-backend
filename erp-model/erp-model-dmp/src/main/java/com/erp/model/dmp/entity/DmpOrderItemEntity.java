@@ -232,6 +232,11 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "original_amount_after")
     private BigDecimal originalAmountAfter;
 
+    /**
+     * 清洗前数量
+     */
+    @TableField(value = "original_quantity")
+    private Integer originalQuantity;
 
     /**
      * 是否拆分订单 1.拆分 2.非拆分

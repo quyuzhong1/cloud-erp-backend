@@ -1,22 +1,23 @@
 package com.erp.rpc.oms.feign;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
+import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soB2c")
@@ -266,11 +267,85 @@ public interface SoB2cFeign {
      * 拦截打标识，冻结订单
      * @Author Luo_WG
      * @Date 2024/1/17 18:54
-     * @param isIntercept 是否打标拦截
-     * @param isFrozen 是否冻结单据
-     * @param ids 订单id
+     * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
      **/
     @PostMapping("/feign/soB2c/updateIntercept")
-    Boolean updateIntercept(@RequestParam("isIntercept") Boolean isIntercept, @RequestParam("isFrozen") Boolean isFrozen, @RequestParam("ids") List<String> ids);
+    Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO);
+
+    /**
+     * 修改订单异常原因
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:51
+     * @param id
+     * @param soB2cAbnormalType
+     * @return java.lang.Boolean
+     **/
+    @GetMapping("/feign/soB2c/updateAbnormalType")
+    Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType);
+
+
+
+    /**
+     * 更改订单的组包状态
+     * @return
+     */
+    @PostMapping("/feign/soB2c/updatePackageStatus")
+    Boolean updatePackageStatus(@RequestBody UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+    /**
+     * 更改订单的中转状态
+     * @return
+     */
+    @PostMapping("/feign/soB2c/updateTransferStatus")
+    Boolean updateTransferStatus(@RequestBody UpdateStateDTO.UpdateByStrStatusDTO dto);
+
+    /**
+     * 根据报关设置生成报关单信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
+     * @param viewDTOList
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     **/
+    @PostMapping("/feign/soB2c//generateTransferDeclareView")
+    List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList);
+
+    /**
+     * 更改订单的中转状态
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
+     * @param soIds 订单id
+     * @param status 中转状态
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateTransferStatusBatch")
+    Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status);
+
+    /**
+     * 修改订单的第三方物流单号
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/soB2c/updateShippingOrderNo")
+    Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list);
+    /**
+     * 根据销售订单拆分sku
+     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
+     * @param soIds
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getTransferDeclareProductBySoIds")
+    List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) ;
+
+    /**
+     * 修改速卖通订单仓库
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
+     * @param soId
+     * @return void
+     **/
+    @PostMapping("/feign/soB2c/updateAliExpressOrderWarehouse")
+    void updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId);
 }

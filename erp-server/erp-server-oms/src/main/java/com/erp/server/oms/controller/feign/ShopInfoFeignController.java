@@ -9,9 +9,11 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -78,6 +80,9 @@ public class ShopInfoFeignController extends BaseController {
      **/
     @PostMapping("/listShopInfoByIds")
     public List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return shopInfoService.listByIds(ids);
     }
 
