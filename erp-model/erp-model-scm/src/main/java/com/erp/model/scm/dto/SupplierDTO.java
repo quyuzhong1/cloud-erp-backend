@@ -31,7 +31,28 @@ import java.util.List;
  * @Created by yl
  */
 public class SupplierDTO implements Serializable {
+    /**
+     * 批量修改供应商分类
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class BatchUpdateCategoryDTO {
 
+        /**
+         * 主键集合
+         */
+        @Valid
+        @NotEmpty(message = "至少选择一条数据")
+        private List<String> ids;
+
+        /**
+         * 分类Id
+         */
+        @NotBlank(message = "供应商分类不能为空")
+        private String categoryId;
+
+    }
 
     /**
      * 供应商基础添加信息

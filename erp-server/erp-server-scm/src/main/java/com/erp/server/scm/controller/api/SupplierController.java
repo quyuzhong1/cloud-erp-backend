@@ -348,4 +348,23 @@ public class SupplierController extends BaseController {
     }
 
 
+    /**
+     * 批量修改供应商分类
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改供应商分类")
+    @PostMapping("/updateCategory")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
+    public ApiResult updateCategory(@RequestBody @Validated SupplierDTO.BatchUpdateCategoryDTO dto) {
+        supplierService.updateCategory(dto);
+        return success();
+    }
+
 }

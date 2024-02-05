@@ -293,4 +293,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
+    void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
 }
