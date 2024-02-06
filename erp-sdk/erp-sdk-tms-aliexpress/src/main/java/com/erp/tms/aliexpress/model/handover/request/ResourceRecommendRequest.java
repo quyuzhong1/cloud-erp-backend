@@ -32,7 +32,7 @@ public class ResourceRecommendRequest implements Serializable {
      *发货方式：上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND
      */
     @JSONField(name = "pickup_type")
-    private String pickup_type;
+    private String pickupType;
     /**
      * 揽收信息
      */

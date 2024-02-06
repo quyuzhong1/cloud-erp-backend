@@ -10,9 +10,12 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.tms.ErpServerTmsApplication;
 import com.erp.server.tms.service.logistics.AliExpressLogisticsHandlerImpl;
 import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.model.handover.*;
-import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
-import com.erp.tms.aliexpress.model.handover.request.ServiceRequest;
+import com.erp.tms.aliexpress.model.handover.request.*;
+import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
+import com.erp.tms.aliexpress.model.handover.response.CarrierResponse;
+import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
@@ -164,9 +167,12 @@ public class AliExpressOrderHandlerImplTest {
                 .outOrderCode("LP00622895695059")
                 .reason("批准")
                 .build();
-        IopResponse iopResponse = aliExpressHandoverService.queryService(authMap, serviceRequest);
+        IopResponse response = aliExpressHandoverService.queryService(authMap, serviceRequest);
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(iopResponse));
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        System.out.println(JSONObject.toJSONString(baseResponse));
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResponse(),BaseResult.class);
+        System.out.println(JSONObject.toJSONString(baseResult));
     }
 
     /**
@@ -182,5 +188,218 @@ public class AliExpressOrderHandlerImplTest {
         BaseResult baseResult = aliExpressShipperService.queryLogisticsOrder(authMap, queryOrderRequest);
         System.out.println("结果输出");
         System.out.println(JSONObject.toJSONString(baseResult));
+    }
+
+    /**
+     * 大包详情
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void queryContent() throws com.erp.tms.aliexpress.util.ApiException {
+                HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
+                .client(PathConstants.CLIENT)
+                .locale("zh_CN")
+                .orderCode("8183868002476390")
+                .trackingNumber("LP00629346935157")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.queryContent(authMap, handoverQueryRequest);
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+
+    /**
+     * 批次追加大包
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void subbagAdd() throws com.erp.tms.aliexpress.util.ApiException {
+        SubbagRequest subbagRequest = SubbagRequest.builder()
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .addSubbagQuantity(1)
+                .orderCode("8183868002476390")
+                .locale("zh_CN")
+                .build();
+        IopResponse response = aliExpressHandoverService.subbagAdd(authMap, subbagRequest);
+//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+
+    /**
+     * 提供给ISV通过该接口查询小包信息
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void queryParcel() throws com.erp.tms.aliexpress.util.ApiException {
+        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
+                .client(PathConstants.CLIENT)
+                .locale("zh_CN")
+                .orderCode("8183868002476390")
+                .trackingNumber("LP00629346935157")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.queryParcel(authMap, handoverQueryRequest);
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+
+    /**
+     * 提供给ISV通过该接口修改交接单
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void update() throws com.erp.tms.aliexpress.util.ApiException {
+        AddressBase addressBase = AddressBase.builder()
+                .city("Rinchoa")
+                .country("PT")
+                .detailAddress("Praca do R********")
+                .province("Rio de Mouro")
+                .district("Rio")
+                .zipCode("2635-457")
+                .street("mouro")
+                .build();
+        AddressInfo addressInfo = AddressInfo.builder()
+                .address(addressBase)
+                .email("123@qq.com")
+                .name("dddd")
+                .mobile("92****596")
+                .phone("17654546969")
+                .addressId("440174520062")
+                .build();
+        UserInfo userInfo = UserInfo.builder().topUserKey(TOP_USER_KEY).build();
+        UpdateRequest updateRequest = UpdateRequest.builder()
+                .handoverOrderId("")
+                .client(CLIENT)
+                .locale("zh_CN")
+                .orderCodeList(Collections.singletonList("3030096741091976"))
+                .pickInfo(addressInfo)
+                .remark("dd")
+                .returnInfo(addressInfo)
+                .type("cainiao_pickup")
+                .userInfo(userInfo)
+                .weight(new BigDecimal(1000))
+                .weightUnit("kg")
+                .build();
+        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
+                .client(PathConstants.CLIENT)
+                .locale("zh_CN")
+                .orderCode("8183868002476390")
+                .trackingNumber("LP00629346935157")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.update(authMap, updateRequest);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+
+    /**
+     * 提供给ISV通过该接口取消交接单
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void cancel() throws com.erp.tms.aliexpress.util.ApiException {
+        CancelRequest cancelRequest = CancelRequest.builder()
+                .client(CLIENT)
+                .handoverContentId(8183868002476390L)
+                .handoverOrderId("8183868002476390")
+                .locale("zh_CN")
+                .trackingNumber("LP00629346935157")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.cancel(authMap, cancelRequest);
+//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+    /**
+     * 提供给ISV通过该接口获取面单云打印数据
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void cloudPrint() throws com.erp.tms.aliexpress.util.ApiException {
+        CloudPrintRequest cloudPrintRequest = CloudPrintRequest.builder()
+                .client(CLIENT)
+                .locale("zh_CN")
+                .orderCode("8183868002476390")
+                .trackingNumber("LP00629346935157")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.cloudPrint(authMap, cloudPrintRequest);
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+    /**
+     * 返回指定大包面单的PDF文件数据
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void getPdf() throws com.erp.tms.aliexpress.util.ApiException {
+        PdfRequest pdfRequest = PdfRequest.builder()
+                .client(CLIENT)
+                .handoverContentId(8183868002476390L)
+                .locale("zh_CN")
+                .type(1)
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.getPdf(authMap, pdfRequest);
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        System.out.println(baseResult);
+        PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
+        System.out.println(pdfResponse);
+    }
+    /**
+     * 揽收资源推荐
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void resourceRecommend() throws com.erp.tms.aliexpress.util.ApiException {
+        AddressBase addressBase = AddressBase.builder()
+                .city("Rinchoa")
+                .country("PT")
+                .detailAddress("Praca do R********")
+                .province("Rio de Mouro")
+                .district("Rio")
+                .zipCode("2635-457")
+                .street("mouro")
+                .build();
+        AddressInfo addressInfo = AddressInfo.builder()
+                .address(addressBase)
+                .email("123@qq.com")
+                .name("dddd")
+                .mobile("92****596")
+                .phone("17654546969")
+                .addressId("440174520062")
+                .build();
+        ResourceRecommendRequest resourceRecommendRequest = ResourceRecommendRequest.builder()
+                .pickInfo(addressInfo)
+                .pickupType("SELF_POST")
+                .solutionCode("ddd")
+                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+                .build();
+        IopResponse response = aliExpressHandoverService.resourceRecommend(authMap, resourceRecommendRequest);
+//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        System.out.println(baseResult);
+    }
+    /**
+     * 查询出所有的实际承运商
+     * @throws com.erp.tms.aliexpress.util.ApiException
+     */
+    @Test
+    public void queryCarrierList() throws com.erp.tms.aliexpress.util.ApiException {
+        String locale ="zh_CN";
+        IopResponse response = aliExpressHandoverService.queryCarrierList(authMap, locale);
+//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        System.out.println(baseResult);
+        JSONObject jsonObject1 = JSONObject.parseObject(baseResult.getResult());
+        JSONObject jsonObject2 = JSONObject.parseObject(jsonObject1.getString("data"));
+        List<CarrierResponse> carrierResponses = JSONObject.parseArray(jsonObject2.getString("courier_list"), CarrierResponse.class);
+        System.out.println(carrierResponses);
     }
 }

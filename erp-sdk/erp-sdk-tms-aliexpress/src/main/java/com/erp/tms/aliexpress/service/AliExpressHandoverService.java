@@ -8,7 +8,6 @@ import com.erp.tms.aliexpress.api.IopRequest;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.domain.Protocol;
-import com.erp.tms.aliexpress.model.handover.UserInfo;
 import com.erp.tms.aliexpress.model.handover.request.*;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.StringUtils;
@@ -218,7 +217,7 @@ public class AliExpressHandoverService {
         request.addApiParameter("tracking_number", cancelRequest.getTrackingNumber());
         request.addApiParameter("handover_order_id", cancelRequest.getHandoverOrderId());
         request.addApiParameter("user_info", JSONObject.toJSONString(cancelRequest.getUserInfo()));
-        request.addApiParameter("handover_content_id", cancelRequest.getHandoverContentId());
+        request.addApiParameter("handover_content_id", String.valueOf(cancelRequest.getHandoverContentId()));
         request.addApiParameter("client", cancelRequest.getClient());
         request.addApiParameter("locale", cancelRequest.getLocale());
         request.addApiParameter("simplify", "true");
@@ -277,8 +276,8 @@ public class AliExpressHandoverService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("cainiao.global.handover.pdf.get");
-        request.addApiParameter("handover_content_id", pdfRequest.getHandoverContentId());
-        request.addApiParameter("type", pdfRequest.getType());
+        request.addApiParameter("handover_content_id", String.valueOf(pdfRequest.getHandoverContentId()));
+        request.addApiParameter("type", String.valueOf(pdfRequest.getType()));
         request.addApiParameter("user_info", JSONObject.toJSONString(pdfRequest.getUserInfo()));
         request.addApiParameter("client", pdfRequest.getClient());
         request.addApiParameter("locale", pdfRequest.getLocale());
@@ -309,7 +308,7 @@ public class AliExpressHandoverService {
         IopRequest request = new IopRequest();
         request.setApiName("cainiao.global.pickup.resource.recommend");
         request.addApiParameter("solution_code", resourceRecommendRequest.getSolutionCode());
-        request.addApiParameter("pickup_type", resourceRecommendRequest.getPickup_type());
+        request.addApiParameter("pickup_type", resourceRecommendRequest.getPickupType());
         request.addApiParameter("user_info", JSONObject.toJSONString(resourceRecommendRequest.getUserInfo()));
         request.addApiParameter("pickup_info", JSONObject.toJSONString(resourceRecommendRequest.getPickInfo()));
         request.addApiParameter("simplify", "true");
@@ -389,15 +388,24 @@ public class AliExpressHandoverService {
 //        JSONObject jsonObject = service.generateToken(authMap);
 //        System.out.println(jsonObject);
         //大包查询
-        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
-                .client(PathConstants.CLIENT)
-                .locale("zh_CN")
-                .orderCode("8183868002476390")
-                .trackingNumber("LP00629346935157")
-                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+//        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
+//                .client(PathConstants.CLIENT)
+//                .locale("zh_CN")
+//                .orderCode("8183868002476390")
+//                .trackingNumber("LP00629346935157")
+//                .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
+//                .build();
+//        BaseResult query = service.queryContent(authMap, handoverQueryRequest);
+//        System.out.println(query);
+        //可用服务
+        ServiceRequest serviceRequest = ServiceRequest.builder()
+                .intlTrackingNo("LP00629346935157")
+                .outOrderCode("8183868002476390")
+                .tradeOrderId("8183868002476390")
+                .reason("dd")
                 .build();
-        IopResponse query = service.queryContent(authMap, handoverQueryRequest);
-        System.out.println(query);
+        IopResponse iopResponse = service.queryService(authMap, serviceRequest);
+        System.out.println(iopResponse);
     }
 
     public JSONObject generateToken(Map<String, String> map) throws ApiException {
