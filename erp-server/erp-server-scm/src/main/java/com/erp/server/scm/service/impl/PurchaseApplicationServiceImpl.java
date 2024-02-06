@@ -470,13 +470,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (ObjectUtils.isEmpty(skuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
-                if (CollectionUtils.isNotEmpty(sourceDetailList)) {
-                    long count = sourceDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(generatePurchaseOrderDTO.getPurchaseApplicationDetailId())).count();
-                    if (count > 0) {
-                        log.error("采购申请单【{}】明细SKU【{}】已下推委外订单",entity.getCode(), generatePurchaseOrderDTO.getSkuId());
-                        throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),skuVO.getSkuNo())));
-                    }
-                }
+//                if (CollectionUtils.isNotEmpty(sourceDetailList)) {
+//                    long count = sourceDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(generatePurchaseOrderDTO.getPurchaseApplicationDetailId())).count();
+//                    if (count > 0) {
+//                        log.error("采购申请单【{}】明细SKU【{}】已下推委外订单",entity.getCode(), generatePurchaseOrderDTO.getSkuId());
+//                        throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),skuVO.getSkuNo())));
+//                    }
+//                }
                 addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
                 addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
                 addDetailDTO.setPlanDeliveryDate(generatePurchaseOrderDTO.getPlanDeliveryDate());
@@ -854,14 +854,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 long subCount = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(generateDetailDTO.getSourceDetailId())).count();
 
                 //存在采购订单、不存在委外订单的数据不能下推委外订单
-                if (CollectionUtils.isNotEmpty(purchaseApplicationRefPoList) && subCount == 0) {
-                    String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(generateDetailDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-                    long count = purchaseApplicationRefPoList.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(generateDetailDTO.getSourceDetailId())).count();
-                    if (count > 0) {
-                        log.error("采购申请单【{}】明细SKU【{}】已下推采购订单",generateDetailDTO.getSourceCode(),generateDetailDTO.getSkuId());
-                        throw new ServiceException(new ApiResult(ApiError.ERROR_98075.code,StrUtil.format(ApiError.ERROR_98075.msg,generateDetailDTO.getSourceCode(),skuNo)));
-                    }
-                }
+//                if (CollectionUtils.isNotEmpty(purchaseApplicationRefPoList) && subCount == 0) {
+//                    String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(generateDetailDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+//                    long count = purchaseApplicationRefPoList.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(generateDetailDTO.getSourceDetailId())).count();
+//                    if (count > 0) {
+//                        log.error("采购申请单【{}】明细SKU【{}】已下推采购订单",generateDetailDTO.getSourceCode(),generateDetailDTO.getSkuId());
+//                        throw new ServiceException(new ApiResult(ApiError.ERROR_98075.code,StrUtil.format(ApiError.ERROR_98075.msg,generateDetailDTO.getSourceCode(),skuNo)));
+//                    }
+//                }
                 //委外订单父级SKU
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
                 PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().orElse(new PurchaseApplicationDetailEntity());
@@ -881,6 +881,38 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setDetailList(detailList);
             subcontractOrderService.add(addDTO);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean close(PurchaseApplicationDTO.CloseDTO dto) {
+        List<PurchaseApplicationDetailEntity> detailEntityList = purchaseApplicationDetailService.listByIds(dto.getDetailIds());
+        if(CollectionUtils.isEmpty(detailEntityList)){
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+        searchParamDTO.setPurchaseApplicationDetailIds(dto.getDetailIds());
+        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
+        detailEntityList.forEach(v->{
+            Integer purchaseQty = 0;
+            //采购数量
+            if (CollectionUtils.isNotEmpty(refList)) {
+                purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(v.getId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //数量
+            int waitQty = v.getApplyQty() - purchaseQty;
+            if(waitQty == 0 || waitQty >= v.getApplyQty()){
+                throw new ServiceException("只有SKU剩余数量小于申请数量，且不为0时，可以提交关闭");
+            }
+            v.setCloseReason(dto.getCloseReason());
+            v.setCreatePoType(CreatePoTypeEnum.CLOSED.getStatus());
+            String content = String.format("终止SKU【%s】剩余采购量【%s】的采购",v.getSkuNo(),waitQty);
+            moduleOperateLogService.addModuleOperateLog(content,ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),v.getPurchaseApplicationId(),"关闭操作");
+        });
+        if(!purchaseApplicationDetailService.updateBatchById(detailEntityList)){
+            throw new ServiceException("申请单明细更新失败");
+        }
+        return true;
     }
 
     /**
@@ -1117,6 +1149,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            if(obj.getCreatePoType().equals(CreatePoTypeEnum.CLOSED.getStatus())){
+                obj.setWaitQty(0);
+            }else{
+                obj.setWaitQty(obj.getApplyQty() - (Objects.isNull(obj.getRealPurchaseQty())?0:obj.getRealPurchaseQty()));
+            }
         }
     }
 }

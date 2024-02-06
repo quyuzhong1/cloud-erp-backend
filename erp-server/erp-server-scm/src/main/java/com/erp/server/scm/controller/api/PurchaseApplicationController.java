@@ -269,7 +269,24 @@ public class PurchaseApplicationController extends BaseController {
         Boolean flag = purchaseApplicationService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
-
+    /**
+     * 批量关闭（传明细ID）
+     * @author Will
+     * @date: 2023/3/15 17:47
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "批量关闭采购申请单")
+    @PostMapping("/close")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id,create_user_id",
+            menuCode = "scm:purchaseApplication:delete",
+            serviceClass = PurchaseApplicationService.class,
+            keyIdName = "ids")
+    public ApiResult close(@RequestBody @Validated PurchaseApplicationDTO.CloseDTO dto) {
+        Boolean flag = purchaseApplicationService.close(dto);
+        return flag == true ? success() : failure();
+    }
     /**
      * 生成采购单弹窗显示
      * @author Will

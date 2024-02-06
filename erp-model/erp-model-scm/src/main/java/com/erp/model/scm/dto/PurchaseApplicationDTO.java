@@ -125,6 +125,10 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer realPurchaseQty;
 
         /**
+         * 剩余数量
+         */
+        private Integer waitQty;
+        /**
          * 签收数量
          */
         private Integer receiveQty;
@@ -168,6 +172,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否是组合SKU
          */
         private Boolean isConstitute;
+
+        /**
+         * 关闭原因
+         */
+        private String closeReason;
     }
 
     @Data
@@ -298,6 +307,21 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @Valid
         private List<PurchaseApplicationDetailDTO.AddDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CloseDTO {
+        /**
+         * 采购申请明细id
+         */
+        @NotEmpty(message = "采购申请明细id不能为空")
+        private List<String> detailIds;
+        /**
+         * 关闭原因
+         */
+        @NotBlank(message = "关闭原因不能为空")
+        private String closeReason;
     }
 
     @Data
