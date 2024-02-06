@@ -34,13 +34,11 @@ import java.util.*;
 @Component
 public class LingxingApiUtils {
 
-    // 授权获取 access-token和refresh-token
-    public static final String AUTH_URI = "api/auth-server/oauth/access-token";
+
     // 查询亚马逊店铺列表
     public static final String SHOP_LIST_URI = "erp/sc/data/seller/lists";
     // 查询FBA货件
     public static final String FBA_SHIPMENT_LIST_RUI = "erp/sc/data/fba_report/shipmentList";
-
     // FBA货件签收明细列表
     public static final String FBA_SHIPMENT_DETAIL_RUI = "erp/sc/data/fba_report/receivedInventory";
 
