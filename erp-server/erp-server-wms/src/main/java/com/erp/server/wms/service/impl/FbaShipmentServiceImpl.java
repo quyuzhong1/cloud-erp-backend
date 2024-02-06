@@ -62,6 +62,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -855,6 +856,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (!fbaShipmentDetailService.saveBatch(newDetailEntityList)) {
             throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newDetailEntityList));
         }
+
+        // 检查货件是否生成签收记录
+        if (this.checkStopGenReceived(entity)){
+            return;
+        }
+
         Map<String, String> detailIdMap = newDetailEntityList
                 .stream()
                 .collect(Collectors.toMap(
@@ -975,6 +982,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (!fbaShipmentDetailService.saveOrUpdateBatch(saveOrUpdateDetailList)) {
                 throw new ServiceException("【FbaShipmentDetailEntity】批量更新或保存失败");
             }
+        }
+
+        // 检查货件是否生成签收记录
+        if (this.checkStopGenReceived(entity)){
+            return;
         }
 
         // 批量更新或保存签收列表
@@ -1659,5 +1671,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         } else {
             throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
         }
+    }
+
+    @Override
+    public boolean checkStopGenReceived(FbaShipmentEntity entity) {
+        List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey("stopGenReceivedTime");
+        if (!CollectionUtils.isEmpty(stopGenReceivedTimeList) && null != entity.getCreateTime()){
+            DictBasicDTO.ListDTO configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
+            if (null != configDTO){
+                LocalDateTime stopTime = LocalDateTime.parse(configDTO.getValue(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                return entity.getCreateTime().isAfter(stopTime);
+            }
+        }
+        return false;
     }
 }
