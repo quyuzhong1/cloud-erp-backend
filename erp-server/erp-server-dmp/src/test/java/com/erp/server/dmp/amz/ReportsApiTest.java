@@ -13,6 +13,7 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -24,12 +25,15 @@ import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.csv.ReportLedgerDetailViewEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.service.CfgAmzReportFieldService;
 import com.erp.server.dmp.service.CfgAppClientService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -351,7 +355,8 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
-        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
+        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
+//        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
@@ -367,7 +372,7 @@ public class ReportsApiTest {
 //        String shopId = "1734478618723094529";
 //        String shopId = "1734478618731483137";
 //        String shopId = "1738050804738166786";
-        String shopId = "1736965724917731330";
+        String shopId = "1735479610549735425";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -394,8 +399,10 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
 //        String shopId = "1739494918432231426";
 
-        String reportDocumentId = "amzn1.spdoc.1.4.eu.2dab2b36-2509-427e-a09c-849f9aa3d2a1.T2YME8P5WMNUJ8.47700";
-        String shopId = "1734478618723094530";
+//        String reportDocumentId = "amzn1.spdoc.1.4.eu.2dab2b36-2509-427e-a09c-849f9aa3d2a1.T2YME8P5WMNUJ8.47700";
+//        String shopId = "1734478618723094530";
+        String reportDocumentId = "amzn1.spdoc.1.4.fe.b7a2550b-23f6-49cf-b999-9763dbc56dfc.T2D0ZXHD56F8VZ.84700";
+        String shopId = "1735479610549735425";
 
 
         // 获取店铺授权信息
@@ -409,25 +416,29 @@ public class ReportsApiTest {
         String url = reportDocument.getUrl();
         System.out.println("路径");
         System.out.println(url);
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+//        String recordType= AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType();
+        String recordType= "GET_LEDGER_DETAIL_VIEW_DATA";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
         String fileName = StrUtil.subBetween(reportDocument.getUrl(), ".com/", "?");
-        String fileId = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, fileName, reportDocumentId, recordTypeEnum.getRecordType());
+        String fileId = AmazonSpApiReportUtils.downloadAndUploadFastDFS(reportDocument.getUrl(), compressionAlgorithm, fileName, reportDocumentId, recordType);
         System.out.println("报告下载结果");
         // group1/M00/00/56/rBBkDGWwfPOAKTzHAAA9CK6hNZY852.300=group1/M00/00/57/rBBkDGWwuAGAPmJMAAA9CK6hNZY.T1RW0R
         // GZIP
         // group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700
 
         // group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A
+
+        // group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz
         System.out.println(fileId);
 
     }
 
     @Test
     public void getGzipFileMetadata() throws Exception {
-        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+//        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+        String filePath = "group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz";
         Map<String, String> fileMetadata = FastDFSClientUtil.getFileMetadata(filePath);
         System.out.println(fileMetadata);
         // {reportDocumentId=amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700, compressionAlgorithm=GZIP, recordType=GET_LEDGER_DETAIL_VIEW_DATA, Content-Type=text/plain}
@@ -439,17 +450,20 @@ public class ReportsApiTest {
         // GET_MERCHANT_LISTINGS_DATA
 //        String filePath = "group1/M00/00/57/rBBkDGWwwAGAKM66AAA9CK6hNZY.T1RW0R";
 //        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
-        String filePath = "group1/M00/00/57/rBBkDGW4nuuADoN_AAAg-IUy1xw8966.gz";
+        String filePath = "group1/M00/00/59/rBBkDGXB43OAfWxJAABZFLcZxlY4128.gz";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+//        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
+        String recordType = "GET_LEDGER_DETAIL_VIEW_DATA";
         // GET_LEDGER_DETAIL_VIEW_DATA
 //        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;
 
-        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
-        JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(filePath, configMap, recordTypeEnum.getRecordType());
+        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordType);
+        JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(filePath, configMap, recordType);
         System.out.println("下载解析后的结果------------------------------------------------------------");
-        System.out.println(jsonArray);
+        List<ReportLedgerDetailViewEntity> list = JSONUtil.toList(jsonArray, ReportLedgerDetailViewEntity.class);
+        List<ReportLedgerDetailViewEntity> collect = list.stream().filter(e -> StringUtils.isNotBlank(e.getReferenceID())).collect(Collectors.toList());
+        System.out.println(JSONUtil.toJsonStr(collect));
         System.out.println("下载解析后的结尾------------------------------------------------------------");
     }
 }

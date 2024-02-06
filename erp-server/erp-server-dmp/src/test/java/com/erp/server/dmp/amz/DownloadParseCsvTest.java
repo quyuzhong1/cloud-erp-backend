@@ -94,9 +94,11 @@ public class DownloadParseCsvTest {
     public void config() {
         // 报告下载的路径
 //        String url= "https://tortuga-prod-eu.s3-eu-west-1.amazonaws.com/ca512ea1-2c85-4ff3-8036-6ae79d658bb0.amzn1.tortuga.4.eu.T1HRCYGSSGU3BS?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240201T031344Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX2ZVOZFBGHMXDPXP%2F20240201%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Signature=599d2288794207eb18df8acd4e17dccbbd3c3e84822606bf90b90fd4d259295a";
-        String filePath= "group1/M00/00/58/rBBkDGW7anqAGPwdAAC0mLiMIrg.T185LI";
+//        String filePath= "group1/M00/00/58/rBBkDGW7anqAGPwdAAC0mLiMIrg.T185LI";
+        String filePath= "group1/M00/00/59/rBBkDGXB3MyAO03dAABZFLcZxlY6434.gz";
         // 报告的下载类型
-        String recordType = "GET_FBA_MYI_ALL_INVENTORY_DATA";
+//        String recordType = "GET_FBA_MYI_ALL_INVENTORY_DATA";
+        String recordType = "GET_LEDGER_DETAIL_VIEW_DATA";
         // 是否跳过已存在的配置
         boolean checkExistConfig = true;
 
