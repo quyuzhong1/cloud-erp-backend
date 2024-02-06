@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.third.lingxing.service.LingxingUtils
+   com.sdk.third.lingxing.utils.LingxingApiUtils

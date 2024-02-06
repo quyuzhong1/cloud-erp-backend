@@ -28,7 +28,7 @@ public class AKRestClientBuild {
             return this;
         }
 
-        public Result<Token> getAccessToken(String appId, String appSecret) throws Exception {
+        public <T> Result<T> getAccessToken(String appId, String appSecret) throws Exception {
             AKRestClient akRestClient = new AKRestClient(endpoint, config);
             return akRestClient.getAccessToken(appId, appSecret);
         }

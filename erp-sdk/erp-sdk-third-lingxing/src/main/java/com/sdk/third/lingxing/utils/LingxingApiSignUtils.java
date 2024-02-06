@@ -27,7 +27,7 @@ public class LingxingApiSignUtils {
         // 以「key=value&key2=value2」的方式组合成字符串
         String paramValue = treeMap.entrySet().stream()
                 .filter(e -> null != e.getValue() && StringUtils.isNotBlank(e.getValue().toString()))
-                .map(e -> StrUtil.format("{}={}", e.getKey(), e.getValue()))
+                .map(e -> StrUtil.format("{}={}", e.getKey(), e.getValue().toString()))
                 .collect(Collectors.joining("&"));
         // md5加密
         String md5Hex = DigestUtils.md5Hex(paramValue.getBytes(StandardCharsets.UTF_8)).toUpperCase();

@@ -22,7 +22,7 @@ public class AKRestClient {
         this.endpoint = endpoint;
     }
 
-    public Result<Token> getAccessToken(String appId, String appSecret) throws Exception {
+    public Result getAccessToken(String appId, String appSecret) throws Exception {
         HttpRequest<Result> build = HttpRequest.builder(Result.class)
                 .config(this.config)
                 .method(HttpMethod.POST)

@@ -1,8 +1,10 @@
 package com.sdk.third.lingxing.utils;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
@@ -11,15 +13,16 @@ import com.sdk.third.lingxing.core.Config;
 import com.sdk.third.lingxing.core.HttpMethod;
 import com.sdk.third.lingxing.core.HttpRequest;
 import com.sdk.third.lingxing.core.HttpResponse;
-import com.sdk.third.lingxing.dto.Result;
-import com.sdk.third.lingxing.dto.Token;
+import com.sdk.third.lingxing.dto.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.TreeMap;
+import java.time.LocalDate;
+import java.util.*;
 
 /**
  * 领星API 工具类
@@ -32,14 +35,14 @@ import java.util.TreeMap;
 public class LingxingApiUtils {
 
     // 授权获取 access-token和refresh-token
-    public static final String AUTH_URI = "/api/auth-server/oauth/access-token";
+    public static final String AUTH_URI = "api/auth-server/oauth/access-token";
     // 查询亚马逊店铺列表
-    public static final String SHOP_LIST_URI = "/erp/sc/data/seller/lists";
+    public static final String SHOP_LIST_URI = "erp/sc/data/seller/lists";
     // 查询FBA货件
-    public static final String FBA_SHIPMENT_LIST_RUI = "/erp/sc/data/fba_report/shipmentList";
+    public static final String FBA_SHIPMENT_LIST_RUI = "erp/sc/data/fba_report/shipmentList";
 
     // FBA货件签收明细列表
-    public static final String FBA_SHIPMENT_DETAIL_RUI = "/erp/sc/data/fba_report/receivedInventory";
+    public static final String FBA_SHIPMENT_DETAIL_RUI = "erp/sc/data/fba_report/receivedInventory";
 
     /**
      * 接口域名
@@ -58,8 +61,9 @@ public class LingxingApiUtils {
      */
     private static RedisUtil redisUtil;
 
+
     @Resource
-    public void setRedisUtil(RedisUtil redisUtil){
+    public void setRedisUtil(RedisUtil redisUtil) {
         LingxingApiUtils.redisUtil = redisUtil;
     }
 
@@ -81,7 +85,7 @@ public class LingxingApiUtils {
     /**
      * 添加通用参数并签名和post请求请求参数
      */
-    private static <T> Result<T> postAndSign(String path, TreeMap<String, Object> requestBody) {
+    public static <T> Result<T> postAndSign(String path, TreeMap<String, Object> requestBody) {
         // 组合请求参数并生成签名
         TreeMap<String, Object> queryParam = combineQueryParams(requestBody);
         // 构建请求
@@ -105,9 +109,16 @@ public class LingxingApiUtils {
     }
 
     /**
+     * 添加通用参数并签名和post请求请求参数
+     */
+    public static <T> Result<T> postAndSign(String path, Map<String, Object> requestBody) {
+        return postAndSign(path, new TreeMap<>(requestBody));
+    }
+
+    /**
      * 添加通用参数并签名和get请求请求参数
      */
-    private static <T> Result<T> getAndSign(String path, TreeMap<String, Object> requestBody) {
+    public static <T> Result<T> getAndSign(String path, TreeMap<String, Object> requestBody) {
         // 组合请求参数并生成签名
         TreeMap<String, Object> queryParam = combineQueryParams(requestBody);
         // 构建请求
@@ -130,9 +141,16 @@ public class LingxingApiUtils {
     }
 
     /**
+     * 添加通用参数并签名和get请求请求参数
+     */
+    public static <T> Result<T> getAndSign(String path, Map<String, Object> requestBody) {
+        return getAndSign(path, new TreeMap<>(requestBody));
+    }
+
+    /**
      * 组合请求参数并生成签名
      */
-    private static TreeMap<String, Object> combineQueryParams(TreeMap<String, Object> requestBody) {
+    public static TreeMap<String, Object> combineQueryParams(TreeMap<String, Object> requestBody) {
         // 获取访问token
         String accessToken = getAccessToken();
         // 组合请求参数
@@ -143,7 +161,7 @@ public class LingxingApiUtils {
 
         TreeMap<String, Object> signMap = new TreeMap<>();
         signMap.putAll(queryParam);
-        if (!CollectionUtils.isEmpty(requestBody)){
+        if (!CollectionUtils.isEmpty(requestBody)) {
             signMap.putAll(requestBody);
         }
         // 生成签名
@@ -157,31 +175,100 @@ public class LingxingApiUtils {
     /**
      * 请求或缓存获取访问接口的AccessToken
      */
-    private static String getAccessToken() {
+    public static String getAccessToken() {
         // 访问令牌key
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, "lingxing", APP_ID);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
-        if (null != tokenObj){
+        if (null != tokenObj) {
             return tokenObj.toString();
         }
-        Result<Token> result;
+        // 检查配置参数
+        checkConfig();
+
         try {
-            result = AKRestClientBuild.builder().endpoint(ENDPOINT).getAccessToken(APP_ID, APP_SECRET);
-            if (null == result){
+            // 请求授权
+            Result<?> sourceResult = AKRestClientBuild.builder().endpoint(ENDPOINT).getAccessToken(APP_ID, APP_SECRET);
+            if (null == sourceResult) {
                 throw new ServiceException("请求领星授权接口失败：响应未空");
             }
-            if (!"200".equals(result.getCode())){
-                throw new ServiceException("请求领星授权接口失败：result="+ JSONUtil.toJsonStr(result));
+            if (!"200".equals(sourceResult.getCode())) {
+                throw new ServiceException("请求领星授权接口失败：result=" + JSONUtil.toJsonStr(sourceResult));
             }
-            String expiresIn = result.getData().getExpiresIn();
-            String accessToken = result.getData().getAccessToken();
+            JSONObject jsonObject = new JSONObject(sourceResult.getData());
+            String expiresIn = jsonObject.getStr("expires_in");
+            String accessToken = jsonObject.getStr("access_token");
             // 缓存到redis
             redisUtil.set(tokenKey, accessToken, Integer.parseInt(expiresIn) - 1);
-            return tokenKey;
+            return accessToken;
         } catch (Exception e) {
             log.error("请求领星授权接口失败: error={}", ExceptionUtil.stacktraceToString(e, 2000));
             throw new ServiceException("请求领星授权接口失败：error=" + ExceptionUtil.stacktraceToString(e, 1000));
         }
+    }
+
+    private static void checkConfig() {
+        if (StringUtils.isBlank(ENDPOINT) || StringUtils.isBlank(ENDPOINT) || StringUtils.isBlank(ENDPOINT)) {
+            throw new ServiceException("领星配置参数为空");
+        }
+    }
+
+    /**
+     * 获取领星店铺列表
+     */
+    public static List<ShopInfoDTO> getAllShopList() {
+        Result<List<ShopInfoDTO>> result = LingxingApiUtils.getAndSign(LingxingApiUtils.SHOP_LIST_URI, new TreeMap<>());
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星商店列表失败:, result={}", JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result.getData();
+    }
+
+
+    /**
+     * 根据领星店铺ID和签收日期获取所有货件签收明细列表
+     *
+     * @param sid          领星店铺ID
+     * @param receivedDate 签收日期
+     * @return 所有货件签收明细列表
+     */
+    public static List<FbaShipmentReceivedDTO> getAllReceivedInventory(Integer sid, LocalDate receivedDate) {
+        FbaReceivedDTO receivedDTO = new FbaReceivedDTO(sid, receivedDate);
+        Result<List<FbaShipmentReceivedDTO>> firstResult = getReceivedInventory(receivedDTO);
+        if (CollectionUtils.isEmpty(firstResult.getData())) {
+            return Collections.emptyList();
+        }
+        if (firstResult.getTotal() <= 1000) {
+            return firstResult.getData();
+        }
+        List<FbaShipmentReceivedDTO> resultList = firstResult.getData();
+        int count = firstResult.getTotal() / 1000;
+        for (int offset = 1; offset < count; offset++) {
+            FbaReceivedDTO currentReceivedDTO = new FbaReceivedDTO(sid, receivedDate, offset);
+            Result<List<FbaShipmentReceivedDTO>> currentResult = getReceivedInventory(currentReceivedDTO);
+            if (!CollectionUtils.isEmpty(currentResult.getData())) {
+                resultList.addAll(currentResult.getData());
+            }
+        }
+        return resultList;
+    }
+
+    /**
+     * 根据领星店铺ID和签收日期，分页参数获取货件签收明细分页
+     *
+     * @param receivedDTO 请求参数
+     * @return 当前分页结果
+     */
+    public static Result<List<FbaShipmentReceivedDTO>> getReceivedInventory(FbaReceivedDTO receivedDTO) {
+        Map<String, Object> objectMap = BeanUtil.beanToMap(receivedDTO);
+        Result<List<FbaShipmentReceivedDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星FBA货件签收明细列表失败:,sid={}, result={}", receivedDTO.getSid(), JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
     }
 }
