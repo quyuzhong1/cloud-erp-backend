@@ -50,7 +50,7 @@ public class MachineInfoDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 来源类型
+         * 来源类型 {soInfo:b2b销售订单，MB_FBA_DELIVERY：马帮FBA发货单，firstMileDelivery：头程发货单，soReturnInstock:销售退货入库单，transferApplication：调拨申请单}
          */
         private String sourceType;
 
