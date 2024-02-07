@@ -1232,6 +1232,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
             addDTO.setWarehouseId(entry.getKey());
             addDTO.setType(MachineTypeEnum.OUTSOURCING.getCode());
+            addDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
 
             Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseLocation())));

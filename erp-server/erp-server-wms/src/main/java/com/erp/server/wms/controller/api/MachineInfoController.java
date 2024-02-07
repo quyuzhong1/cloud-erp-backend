@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -54,6 +55,7 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<MachineInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<MachineInfoDTO.SearchParamDTO> dto) {
         PagingVO<MachineInfoDTO.ListDTO> pagingVO = machineInfoService.paging(dto);
         return success(pagingVO);
@@ -327,6 +329,7 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = machineInfoService.exportExcel(dto, response);
         return flag == true ? success() : failure();
