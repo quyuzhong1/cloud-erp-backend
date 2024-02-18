@@ -12,4 +12,6 @@ public class ErpPlatform {
     public static final String GYY="Gyy";
 
     public static final String YXK="Yxk";
+    // 领星
+    public static final String LX = "Lx";
 }

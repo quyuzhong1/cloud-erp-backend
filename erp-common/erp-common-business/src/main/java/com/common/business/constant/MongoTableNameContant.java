@@ -222,6 +222,12 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_ALI_EXPRESS_ORDER = "third_system_AliExpress_order";
 
     /**
+     * 领星店铺信息表
+     */
+    String ORIGINAL_LX_SHOP_LIST = "original_lx_shop_list";
+
+
+    /**
      * 根据任务 key 获取表名
      * @param key
      * @return

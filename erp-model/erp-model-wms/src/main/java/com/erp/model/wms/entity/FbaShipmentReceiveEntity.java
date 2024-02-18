@@ -1,14 +1,16 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.handler.mybatisplus.MyOffsetDateTimeTypeHandler;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+
+import java.time.OffsetDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -22,7 +24,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("fba_shipment_receive")
+@TableName(value = "fba_shipment_receive", autoResultMap = true)
 public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntity> {
 
     /**
@@ -80,6 +82,11 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     */
     @TableField("receive_date")
     private LocalDateTime receiveDate;
+    /**
+     * 当地签收日期:格式:yyyy-MM-dd'T'HH:mm:ssXXX
+     */
+    @TableField(value = "receive_locale_date", typeHandler = MyOffsetDateTimeTypeHandler.class)
+    private OffsetDateTime receiveLocaleDate;
 
 
     public static final String DETAIL_ID = "detail_id";

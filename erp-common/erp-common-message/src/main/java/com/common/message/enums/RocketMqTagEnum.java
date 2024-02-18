@@ -147,6 +147,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_EXCHANGE_RATE_TAG(27,RocketMqTagEnum.SYNC_DMP,"kingdee_exchange_rate_tag"),
 
+    /**
+     * 领星店铺信息tag
+     */
+    LX_SHOP_INFO_TAG(28, RocketMqTagEnum.SHOP_INFO,"lx_shop_info_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**

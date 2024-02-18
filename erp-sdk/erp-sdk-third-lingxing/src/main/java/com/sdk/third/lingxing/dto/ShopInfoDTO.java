@@ -36,12 +36,24 @@ public class ShopInfoDTO {
     @JsonProperty("country")
     private String country;
 
+    /**
+     * 是否授权广告：
+     * 0 否
+     * 1 是
+     */
     @JsonProperty("has_ads_setting")
     private int hasAdsSetting;
 
     @JsonProperty("marketplace_id")
     private String marketplaceId;
 
+    /**
+     * 店铺状态：
+     * 0 停止同步
+     * 1 正常
+     * 2 授权异常
+     * 3 欠费停服
+     */
     @JsonProperty("status")
     private int status;
 

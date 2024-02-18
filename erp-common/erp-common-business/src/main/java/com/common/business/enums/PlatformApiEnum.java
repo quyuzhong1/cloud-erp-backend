@@ -116,6 +116,13 @@ public enum PlatformApiEnum {
     GOODCANG_PRODUCT(26,"GOODCANG_PRODUCT", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
 
     TRACK123_GET_TRACK(27,"getTask", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
+
+    /**
+     * 领星api
+     */
+    // 店铺信息
+    LX_ERP_SHOP_LIST_GET(60, "getShopList", MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ""),
+
     ;
 
     /** 状态码 */
