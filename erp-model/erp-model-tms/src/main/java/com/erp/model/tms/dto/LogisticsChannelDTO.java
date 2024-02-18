@@ -481,14 +481,17 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 长度上限
          */
+        @Digits(integer = 16, fraction = 4, message = "长度上限整数位不能超过16位，小数位不能超过4位")
         private BigDecimal maxLength;
         /**
          * 宽度上限
          */
+        @Digits(integer = 16, fraction = 4, message = "宽度上限整数位不能超过16位，小数位不能超过4位")
         private BigDecimal maxWidth;
         /**
          * 高度上限
          */
+        @Digits(integer = 16, fraction = 4, message = "高度上限整数位不能超过16位，小数位不能超过4位")
         private BigDecimal maxHeight;
 
         /**
