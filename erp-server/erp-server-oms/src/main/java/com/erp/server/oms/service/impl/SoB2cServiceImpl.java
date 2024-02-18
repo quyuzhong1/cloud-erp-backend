@@ -5205,6 +5205,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (logisticsChannel.getSizeUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
+        //所有都清空就是初始值，其实就不用校验了。
+        if(maxHeight.compareTo(BigDecimal.ZERO) == 0 && maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+        }
         if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
                 soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
                 soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
