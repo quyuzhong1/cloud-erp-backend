@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import com.common.business.dto.base.BaseResultDTO;
@@ -444,10 +445,13 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // 审核完成自动发料扣库存
-        autoOutStockInventory(entity,Boolean.TRUE);
-        //推送金蝶
-        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+        if (dto.getType().equals(ApproveType.PASS)) {
+            // 审核完成自动发料扣库存
+            autoOutStockInventory(entity,Boolean.TRUE);
+            //推送金蝶
+            syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
         return Boolean.TRUE;
     }
 
