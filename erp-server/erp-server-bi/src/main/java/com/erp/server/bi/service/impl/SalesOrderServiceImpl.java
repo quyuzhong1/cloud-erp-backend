@@ -2733,7 +2733,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2023-01-06 11:19
      */
     @Override
-//    @Cacheable(cacheNames = "cache:bi:byDate",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:byDate",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
 
         //如果查询财务销售额
