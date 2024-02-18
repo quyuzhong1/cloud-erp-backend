@@ -106,6 +106,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZD);
         poReconciliationEntity.setCode(code);
+        //生成对账日期
+        poReconciliationEntity.setReconciliationDate(LocalDate.now());
         boolean save = super.save(poReconciliationEntity);
         if(!save) {
             throw new ServiceException("采购对账单保存失败");

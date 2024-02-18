@@ -501,34 +501,36 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean confirmReceiveStatus(List<String> ids) {
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
-        //收货单确认生成对账明细
-        this.addPoReconciliationDetail(ids);
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode())
                 .set(DeliveryOrderEntity::getConfirmReceiveDate,LocalDate.now())
                 .in(DeliveryOrderEntity::getId,ids)
                 .update();
+
+        //收货单确认生成对账明细
+        this.addPoReconciliationDetail(ids);
         return true;
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean unConfirmReceiveStatus(List<String> ids) {
         if(CollectionUtils.isEmpty(ids)){
             return true;
         }
-        //收货单反确认删除对账明细
-        removePoReconciliationDetail(ids);
-
         this.lambdaUpdate()
                 .set(DeliveryOrderEntity::getReceiptStatus,DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode())
                 .in(DeliveryOrderEntity::getId,ids)
                 .update();
 
+        //收货单反确认删除对账明细
+        removePoReconciliationDetail(ids);
         return true;
     }
 
