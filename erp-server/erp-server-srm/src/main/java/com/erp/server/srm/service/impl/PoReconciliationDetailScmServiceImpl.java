@@ -278,7 +278,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
-            listDTO.setTaxRateStr(StrUtil.format("{}%",MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString()));
+            listDTO.setTaxRate(MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
+            listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
             String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
