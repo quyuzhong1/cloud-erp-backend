@@ -62,6 +62,19 @@ public class ProductDetailExcelDTO {
     @FieldValid(fieldName = "品名（英文）", isNotBlank = true, maxLength = 255)
     private String nameEn;
 
+
+    /**
+     * 产品类型
+     */
+    @FieldValid(fieldName = "产品类型", isNotBlank = true, maxLength = 50,enumClass = ProductTypeEnum.class)
+    private String typeName;
+
+    /**
+     * 关联产品
+     */
+    @FieldValid(fieldName = "关联产品", maxLength = 64)
+    private String iterateRefSkuNo;
+
     /**
      * 产品属性
      */

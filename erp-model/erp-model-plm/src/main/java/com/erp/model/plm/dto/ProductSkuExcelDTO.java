@@ -25,6 +25,11 @@ public class ProductSkuExcelDTO {
     private String productId;
 
     /**
+     * 迭代产品SKU编码
+     */
+    private String iterateRefSkuNo;
+
+    /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
      */
     private List<Integer> stateList;
