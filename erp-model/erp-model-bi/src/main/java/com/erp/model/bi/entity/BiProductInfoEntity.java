@@ -288,7 +288,9 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
 
     public static final String SALE_METHOD = "sale_method";
 
-    public static final String RELEVANCE_PRODUCT_ID = "relevance_product_id";
+    public static final String ITERATE_REF_SKU_ID = "iterate_ref_sku_id";
+
+    public static final String ITERATE_REF_SKU_NO = "iterate_ref_sku_no";
 
     public static final String GRADE_ID = "grade_id";
 

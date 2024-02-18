@@ -1121,6 +1121,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setIterateRefSkuId(productDetailEntity.getId());
             productInfoEntity.setIterateRefSkuNo(productDetailEntity.getSkuNo());
         } else {
+            productInfoEntity.setType(ProductTypeEnum.NEW_PRODUCT.getCode());
             productInfoEntity.setIterateRefSkuId("");
             productInfoEntity.setIterateRefSkuNo("");
         }
@@ -1940,12 +1941,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
         }
-        //查询关联产品版本
-        ProductInfoEntity productInfoEntity = this.getById(oldDto.getRelevanceProductId());
-        if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-            oldDto.setRelevanceProductName(productInfoEntity.getName());
-        }
-
         sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 

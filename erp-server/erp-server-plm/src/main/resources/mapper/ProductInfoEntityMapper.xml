@@ -510,8 +510,8 @@
     </select>
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
-        SELECT relevance_product_id AS flagId, COUNT(*)  AS count FROM product_info
-        WHERE relevance_product_id !='' AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY relevance_product_id
+        SELECT iterate_ref_sku_id AS flagId, COUNT(*)  AS count FROM product_info
+        WHERE iterate_ref_sku_id !='' AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY iterate_ref_sku_id
     </select>
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -788,7 +788,8 @@
             materials,
             spec_type,
             sale_method,
-            relevance_product_id,
+            iterate_ref_sku_id,
+            iterate_ref_sku_no,
             grade_id,
             create_user_id,
             create_user_name,

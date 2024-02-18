@@ -116,9 +116,11 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     private String categoryId;
 
 
-
+    /**
+     * 产品类型，ProductTypeEnum枚举
+     */
     @TableField("type")
-    private Integer type;
+    private String type;
 
     /**
      * spu
