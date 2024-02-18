@@ -27,7 +27,6 @@ public class GoodCangUtils {
         String response = OkHttpUtils.doPostJson(url, paramsMap, headerMap);
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(paramsMap));
         ThirdWarehouseContext.setResponseJson(response);
-        // {"appKey": "f7e4102f9b0b983e58bed3140dc22f1a", "appToken": "a39ab99c1437c991ec07fad4e1f78f8f"}
         return response;
     }
 
