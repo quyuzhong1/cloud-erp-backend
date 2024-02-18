@@ -110,7 +110,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Resource
     private BiTargetStaffSettingService biTargetStaffSettingService;
 
-
     @Override
     @Cacheable(cacheNames = "cache:bi:getMonthSales", keyGenerator = "myKeyGenerator")
     public StatisticalDataVO getMonthSales(BiFilterDTO dto) {
@@ -2740,11 +2739,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
+        //维度列表
+        String dateType = dto.getDateType();
+        List<DateDimensionVO> dateList = baseMapper.getDateList(dto.getStartTime(), dto.getEndTime(), dateType);
         dto.setEndTime(dto.getEndTime(), 1);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.BAR);
-        String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
 
@@ -2812,71 +2813,36 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 if (days > 31) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_THIRTY_ONE);
                 }
-//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), DateTypeEnum.DAY.getCode());
-//                dto.setStartTime(dto.getStartTime().minusYears(1));
-//                dto.setEndTime(dto.getEndTime().minusYears(1));
-//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.DAY.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
                 break;
             case "WEEK":
                 long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (weekDay > 90) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
                 }
-//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.WEEK.getCode());
-//                dto.setStartTime(dto.getStartTime().minusYears(1));
-//                dto.setEndTime(dto.getEndTime().minusYears(1));
-//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.WEEK.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "WEEK");
                 break;
             case "MONTH":
-//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.MONTH.getCode());
-//                dto.setStartTime(dto.getStartTime().minusYears(1));
-//                dto.setEndTime(dto.getEndTime().minusYears(1));
-//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.MONTH.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH");
                 break;
             case "QUARTER":
-//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.QUARTER.getCode());
-//                dto.setStartTime(dto.getStartTime().minusYears(1));
-//                dto.setEndTime(dto.getEndTime().minusYears(1));
-//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.QUARTER.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER");
                 break;
             case "YEAR":
-//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.YEAR.getCode());
-//                dto.setStartTime(dto.getStartTime().minusYears(1));
-//                dto.setEndTime(dto.getEndTime().minusYears(1));
-//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.YEAR.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy");
-//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR");
                 break;
             default:
                 salesList = new ArrayList<>();
                 break;
         }
-
         salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),null);
         dto.setStartTime(dto.getStartTime().minusYears(1));
         dto.setEndTime(dto.getEndTime().minusYears(1));
         lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), null);
-        dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, dateType);
-
-        //如果是季度
-//        if (dateType.equals("QUARTER")) {
-//            for (SalesFlagVO item : salesList) {
-//                String name = item.getName();
-//                String quarterName = conversionQuarterName(name);
-//                item.setName(quarterName);
-//            }
-//        }
+        dateSalesTrendRatio(dateList,salesList, lastYearSalesList, dateTimeFormatter, dateType);
 
         ChartVO chartVO = new ChartVO();
-        List<String> siteNameList = salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
+        List<String> siteNameList = dateList.stream().map(DateDimensionVO::getDateName).collect(Collectors.toList());
         //有两个
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
 
@@ -2906,41 +2872,47 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param dateTimeFormatter
      * @param dateType
      */
-    private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType) {
+    private void dateSalesTrendRatio(List<DateDimensionVO> dateList,List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList,
+                                     DateTimeFormatter dateTimeFormatter, String dateType) {
         List<SalesFlagVO> list = new ArrayList<>();
         list.addAll(salesList);
         list.addAll(lastYearSalesList);
-        for (int i = 0; i < salesList.size(); i++) {
-
+        for (int i = 0; i < dateList.size(); i++) {
+            DateDimensionVO dateDimensionVO = dateList.get(i);
+            SalesFlagVO salesFlagVO = salesList.stream().filter(e -> e.getName().equals(dateDimensionVO.getDateName())).findFirst().orElse(null);
+            if (Objects.isNull(salesFlagVO)){
+                salesFlagVO = new SalesFlagVO();
+//                salesFlagVO.setName(dateDimensionVO.getDateName());
+                salesList.add(salesFlagVO);
+            }
             //上一期的日期
             String parse = "";
             //去年同期日期
             String prevYearDate = "";
             if ("DAY".equals(dateType)) {
-                parse = LocalDate.parse(salesList.get(i).getName(), dateTimeFormatter).minusDays(1) + "";
-                prevYearDate = LocalDate.parse(salesList.get(i).getName(), dateTimeFormatter).minusYears(1) + "";
+                parse = LocalDate.parse(dateDimensionVO.getDateName(), dateTimeFormatter).minusDays(1) + "";
+                prevYearDate = LocalDate.parse(dateDimensionVO.getDateName(), dateTimeFormatter).minusYears(1) + "";
             }
             if ("WEEK".equals(dateType)) {
-                String[] split = salesList.get(i).getName().split("~");
+                String[] split = dateDimensionVO.getDateName().split("~");
                 parse = LocalDate.parse(split[0], dateTimeFormatter).minusDays(7) + "~" + LocalDate.parse(split[0], dateTimeFormatter).minusDays(1);
-                if (ObjectUtil.isNotEmpty(lastYearSalesList.get(i))) {
+                //计算中间值 匹配记录
+                if (lastYearSalesList.size() > i){
                     prevYearDate = lastYearSalesList.get(i).getName();
                 }
             }
             if ("MONTH".equals(dateType)) {
-                Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.fmt_month);
+                Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_month);
                 parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 1);
                 prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
             }
             if ("QUARTER".equals(dateType)) {
-                parse = salesList.get(i).getName();
-                prevYearDate = salesList.get(i).getName();
-//                Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.fmt_month);
-//                parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 3);
-//                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
+                parse = dateDimensionVO.getDateName();
+                Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_quarter);
+                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_quarter, 1);
             }
             if ("YEAR".equals(dateType)) {
-                Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.FMT_YEAR4);
+                Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.FMT_YEAR4);
                 parse = DateUtil.getPrevYearDate(date, DateUtil.FMT_YEAR4, 1);
                 prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.FMT_YEAR4, 1);
             }
@@ -2949,7 +2921,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String finalParse = parse;
             SalesFlagVO lastYearSalesFlagVo = list.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSales().compareTo(BigDecimal.ZERO) > 0) {
-                salesList.get(i).setSalesChainRelativeRatio(salesList.get(i).getSales()
+                salesFlagVO.setSalesChainRelativeRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlagVo.getSales())
                         .divide(lastYearSalesFlagVo.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
@@ -2958,7 +2930,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销量环比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSalesQuantity() > 0) {
-                salesList.get(i).setSalesQuantityChainRelativeRatio(MathUtil.valueOf(salesList.get(i).getSalesQuantity() + "")
+                salesFlagVO.setSalesQuantityChainRelativeRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
                         .subtract(MathUtil.valueOf(lastYearSalesFlagVo.getSalesQuantity() + ""))
                         .divide(MathUtil.valueOf(lastYearSalesFlagVo.getSalesQuantity() + ""), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
@@ -2967,7 +2939,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取客单价环比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSalesPrice().compareTo(BigDecimal.ZERO) > 0) {
-                salesList.get(i).setSalesPriceChainRelativeRatio(salesList.get(i).getSalesPrice()
+                salesFlagVO.setSalesPriceChainRelativeRatio(salesFlagVO.getSalesPrice()
                         .subtract(lastYearSalesFlagVo.getSalesPrice())
                         .divide(lastYearSalesFlagVo.getSalesPrice(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
@@ -2979,7 +2951,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesFlagVO lastYearSalesFlag = lastYearSalesList.stream().filter(req -> req.getName().equals(finalPrevYearDate)).findFirst().orElse(null);
 
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSales().compareTo(BigDecimal.ZERO) > 0) {
-                salesList.get(i).setSalesBasisRatio(salesList.get(i).getSales()
+                salesFlagVO.setSalesBasisRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlag.getSales())
                         .divide(lastYearSalesFlag.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
@@ -2990,7 +2962,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销量同比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSalesQuantity() > 0) {
-                salesList.get(i).setSalesQuantityBasisRatio(MathUtil.valueOf(salesList.get(i).getSalesQuantity() + "")
+                salesFlagVO.setSalesQuantityBasisRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
                         .subtract(MathUtil.valueOf(lastYearSalesFlag.getSalesQuantity() + ""))
                         .divide(MathUtil.valueOf(lastYearSalesFlag.getSalesQuantity() + ""), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
@@ -2999,7 +2971,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取客单价同比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSalesPrice().compareTo(BigDecimal.ZERO) > 0) {
-                salesList.get(i).setSalesPriceBasisRatio(salesList.get(i).getSalesPrice()
+                salesFlagVO.setSalesPriceBasisRatio(salesFlagVO.getSalesPrice()
                         .subtract(lastYearSalesFlag.getSalesPrice())
                         .divide(lastYearSalesFlag.getSalesPrice(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)

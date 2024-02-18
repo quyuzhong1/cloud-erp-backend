@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -223,4 +224,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @return java.math.BigDecimal
      */
     BigDecimal netSalesAmount(@Param("params") BiTargetYearDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 获取时间维度列表
+     * @param startTime
+     * @param endTime
+     * @param dateType
+     * @return
+     */
+    List<DateDimensionVO> getDateList(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("dateType") String dateType);
 }
