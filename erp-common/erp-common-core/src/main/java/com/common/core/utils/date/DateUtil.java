@@ -34,6 +34,7 @@ public class DateUtil {
             fmt_year = "yy",
             fmt_md = "MMdd",
             fmt_month = "yyyy-MM",
+            fmt_quarter = "yyyy-M",
 
             fmt_hms = "HH:mm:ss";
 
