@@ -4395,6 +4395,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc())
                     .setBusinessId(taskEntity.getId());
             sysLogService.save(sysLogEntity);
+
+            noticeMessageService.finishTaskNotice(loginUser.getUserName(),Arrays.asList(taskEntity),taskEntity.getProductId());
         }
 
     }
