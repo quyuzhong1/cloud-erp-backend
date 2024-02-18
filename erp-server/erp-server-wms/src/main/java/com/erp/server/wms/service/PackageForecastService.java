@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -72,4 +73,32 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     BatchResultDTO forecast(String id,String transferLogisticsSupplierId,String transferLogisticsChannelId);
+
+
+    /**
+     * 导出
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 取消上传
+     * @description
+     * @param id
+     * @return
+     * @date 2024-02-18 10:28
+     * @author Lambda
+     */
+    BatchResultDTO cancel(String id);
+
+    /**
+     * 上传
+     * @param id 组包预报单
+     * @param collectMode 揽收方式
+     * @param collectAddressId 地址id
+     * @return
+     */
+    BatchResultDTO upload(String id, String collectMode, String collectAddressId);
 }

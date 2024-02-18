@@ -35,4 +35,11 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @return
      */
     IPage<PackageForecastDTO.PagingViewDTO> paging(Page query,  @Param("params") PackageForecastDTO.PagingParamDTO params);
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    List<PackageForecastDTO.PagingViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto);
 }

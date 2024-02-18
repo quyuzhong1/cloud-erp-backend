@@ -151,6 +151,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
+    public LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(String logisticsSupplierId) {
+        return baseMapper.getAuthBySupplierId(logisticsSupplierId);
+    }
+
+    @Override
     public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(List<String> channelIdList) {
         if (CollectionUtil.isEmpty(channelIdList)) {
             return Collections.emptyList();

@@ -2,27 +2,36 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackageForecastConverter;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
@@ -36,6 +45,8 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.tms.aliexpress.service.AliExpressHandoverService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +54,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDTO;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -52,6 +65,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -66,8 +80,10 @@ import javax.annotation.Resource;
 public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecastMapper, PackageForecastEntity> implements PackageForecastService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -77,12 +93,23 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Autowired
     private ForecastFeign forecastFeign;
 
-    @Resource
+    @Autowired
+    private LogisticsFeign logisticsFeign;
+
+    @Autowired
+    private LogisticsAuthFeign logisticsAuthFeign;
+
+    @Autowired
     private TransferDeclareFeign transferDeclareFeign;
 
-
-    @Resource
+    @Autowired
     private SoB2cFeign soB2cFeign;
+
+    @Autowired
+    private DmpTaskFeign dmpTaskFeign;
+
+    @Autowired
+    private AliExpressHandoverService aliExpressHandoverService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -196,7 +223,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (Objects.isNull(entity)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
-        String successCode = PackageUploadStatusEnum.SUCCESS.getCode();
+        String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         if (successCode.equals(entity.getUploadStatus())) {
             throw new ServiceException("已上传成功,无法删除");
         }
@@ -204,6 +231,89 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         packageForecastDetailService.removeByMainId(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
+    }
+
+
+
+    /**
+     * 取消上传
+     * @param id
+     * @return
+     */
+    @Override
+    public BatchResultDTO cancel(String id) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        if (!successCode.equals(entity.getUploadStatus())) {
+            throw new ServiceException("仅上传成功可操作");
+        }
+        entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
+        this.updateById(entity);
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        //待上传
+        String wait = PackageUploadStatusEnum.WAIT.getCode();
+        //上传失败
+        String failure = PackageUploadStatusEnum.UPLOAD_FAILURE.getCode();
+
+        List<String> uploadStatusList = Arrays.asList(wait, failure);
+        //上传状态
+        String uploadStatus = entity.getUploadStatus();
+        if(!uploadStatusList.contains(uploadStatus)){
+            throw new ServiceException("仅待上传/上传失败可操作");
+        }
+        //物流地址
+        LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+        if (Objects.isNull(addressEntity)) {
+            throw new ServiceException("揽收地址不存在");
+        }
+        //物流商
+        String supplierId = entity.getLogisticsSupplierId();
+        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+        if (Objects.isNull(authDTO)) {
+            throw new ServiceException("物流商不存在");
+        }
+        String addressName=addressEntity.getName();
+        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        entity.setCollectMode(collectMode);
+        entity.setCollectAddressId(collectAddressId);
+        entity.setCollectAddress(addressName);
+
+        String logisticsPlatform = authDTO.getLogisticsPlatform();
+        //如果这里是速卖通的话就 对接平台
+        if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+              addBigPackage(logisticsPlatform,entity);
+        }
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传");
+    }
+
+    public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity) {
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(logisticsPlatform);
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient=  dmpTaskFeign.getCfgAppClient(findDTO);
+        if(Objects.nonNull(cfgAppClient)){
+            Map<String, String> authMap=new HashMap<>(4);
+
+
+        }
     }
 
 
@@ -217,7 +327,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         List<String> uploadStatusList = new ArrayList<>(2);
         uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
-        uploadStatusList.add(PackageUploadStatusEnum.SUCCESS.getCode());
+        uploadStatusList.add(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
         String uploadStatus = entity.getUploadStatus();
         if (!uploadStatusList.contains(uploadStatus)) {
             new ServiceException("只有无需上传和上传成功的组包 才能中转报关");
@@ -245,6 +355,34 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     }
 
+    @Override
+    public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
+        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //处理分页数据
+        fillPaging(list);
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/packageForecast.xlsx";
+        String name = "组包预报列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("组包预报导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+    }
+
+
+
+
     /**
      * 填充分页数据
      *
@@ -258,6 +396,20 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             String printStatus = item.getPrintStatus();
             String printStatusName = PackagePrintStatusEnum.getName(printStatus);
             item.setPrintStatusName(printStatusName);
+            //第三方交接单号
+            String handoverNo = item.getHandoverNo();
+            //第三方组包号
+            String platformPackageNo = item.getPlatformPackageNo();
+            String platformNo = handoverNo + "/" + platformPackageNo;
+            item.setPlatformNo(platformNo);
+            BigDecimal totalPackageWeight=item.getTotalPackageWeight();
+            String totalPackageWeightUnit=item.getTotalPackageWeightUnit();
+            String totalPackageWeightStr=totalPackageWeight+totalPackageWeightUnit;
+            item.setTotalPackageWeightStr(totalPackageWeightStr);
+            BigDecimal weight=item.getWeight();
+            String weightUnit=item.getWeightUnit();
+            String weightStr=weight+weightUnit;
+            item.setWeightStr(weightStr);
         }
     }
 

@@ -103,6 +103,15 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 
     /**
+     * 根据id获取授权信息
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-23
+     */
+    LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(String logisticsSupplierId);
+
+    /**
      * 根据渠道id查询关联的平台信息
      * @Author Luo_WG
      * @Date 2024/1/25 17:24
@@ -129,4 +138,6 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      *@date 2023-11-24
      */
     void updateLogisticsAuthStatus(String mainId, String authStatus);
+
+
 }

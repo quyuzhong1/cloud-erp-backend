@@ -62,6 +62,32 @@ public class PackageForecastDTO implements Serializable {
         private String transferLogisticsChannelId;
     }
 
+    /**
+     * 上传
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UploadDTO{
+        /**
+         * 组包预报单
+         */
+        @Size(min = 1 ,message = "组包预报单不能为空")
+        private List<String> ids;
+
+        /**
+         * 揽收方式  来源 http://172.16.100.11:3002/project/92/interface/api/13147   type=collectMode
+         */
+        @NotBlank(message = "揽收方式不能为空")
+        private String collectMode;
+
+
+        /**
+         * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
+         */
+        @NotBlank(message = "揽收地址不能为空")
+        private String collectAddressId;
+    }
+
 
     /**
      * 分页
@@ -101,6 +127,11 @@ public class PackageForecastDTO implements Serializable {
         private String platformPackageNo;
 
         /**
+         * 导出用到 handoverNo/platformPackageNo
+         */
+        private String platformNo;
+
+        /**
          *物流商id
          */
         private String logisticsSupplierId;
@@ -124,6 +155,11 @@ public class PackageForecastDTO implements Serializable {
          *包裹总重量
          */
         private BigDecimal totalPackageWeight;
+
+        /**
+         * 导出用到 包裹总重量
+         */
+        private String totalPackageWeightStr;
 
         /**
          *单位
@@ -206,6 +242,11 @@ public class PackageForecastDTO implements Serializable {
         private BigDecimal weight;
 
         /**
+         * 重量
+         */
+        private String weightStr;
+
+        /**
          * 重量单位
          */
         private String weightUnit;
@@ -246,6 +287,19 @@ public class PackageForecastDTO implements Serializable {
 
     }
 
+    /**
+     * 导出参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO{
+
+        /**
+         * 注意该ids 为 detailId 的集合
+         */
+        private List<String> ids;
+
+    }
 
 
     /**
