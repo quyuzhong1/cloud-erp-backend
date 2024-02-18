@@ -125,4 +125,13 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param statusDTO
      */
     void updateBusinessStatusBySourceIdList(PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO);
+
+    /**
+     * @description: 更新主表id
+     * @author Will
+     * @date: 2024/2/18 10:03
+     * @param detailIdList
+     * @param mainId
+     */
+    void updateMainIdByIdList(List<String> detailIdList, String mainId);
 }

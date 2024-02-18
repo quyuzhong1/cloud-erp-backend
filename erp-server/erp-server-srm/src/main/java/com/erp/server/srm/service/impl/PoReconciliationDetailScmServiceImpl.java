@@ -187,11 +187,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (PoReconciliationEnum.GenerateTypeEnum.CREATE_NEW.getCode().equals(dto.getGenerateType())) {
             //新生成对账单
             addNewPoReconciliation(dto,poReconciliationDetailList);
+            return Boolean.TRUE;
         } else {
             //选择已有对账单
             updateOldPoReconciliation(dto,poReconciliationDetailList);
+            return this.updateBatchById(poReconciliationDetailList);
         }
-        return this.updateBatchById(poReconciliationDetailList);
     }
 
     @Override
@@ -367,6 +368,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 .update();
     }
 
+    @Override
+    public void updateMainIdByIdList(List<String> detailIdList, String mainId) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return;
+        }
+        lambdaUpdate().in(PoReconciliationDetailEntity::getId,detailIdList)
+                .set(PoReconciliationDetailEntity::getMainId,mainId)
+                .update();
+    }
+
     /**
      * 新生成对账单
      */
@@ -383,12 +394,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             addDTO.setDetailIdList(detailIdList);
             addDTO.setStartDate(dto.getReconciliationDateList().get(0));
             addDTO.setEndDate(dto.getReconciliationDateList().get(1));
-            BaseResultDTO.AddDTO add = poReconciliationScmService.add(addDTO);
-            String id = add.getId();
-            //更新对账明细mainId
-            value.stream().forEach(obj-> {
-                obj.setMainId(id);
-            });
+            poReconciliationScmService.add(addDTO);
         }
     }
 

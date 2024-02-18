@@ -70,7 +70,7 @@ public class PoReconciliationJob {
                 return ReturnT.SUCCESS;
             }
             LocalDate endDate = LocalDate.now().minusDays(1);
-            LocalDate startDate = endDate.minusMonths(1);
+            LocalDate startDate = LocalDate.now().minusMonths(1);
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         }
         XxlJobHelper.log("====结束生成对账单====");
