@@ -15,6 +15,13 @@ public class CustomerInfoQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if("cbs.approve_status".equals(field)){
+            String searchType = value.toString();
+            if ("all".equals(searchType)) {
+                return getQueryAllSql();
+            }
+            super.buildDefaultDTO("cbs.approve_status", value.toString());
+        }
         if("ci.tab".equals(field)){
             String searchType = value.toString();
             if ("all".equals(searchType)) {

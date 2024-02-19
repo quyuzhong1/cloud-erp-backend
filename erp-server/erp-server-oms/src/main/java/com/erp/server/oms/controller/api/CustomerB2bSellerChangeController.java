@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -50,7 +51,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
      * 分页
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public ApiResult<PagingVO<CustomerB2bSellerChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
         return success(customerB2bSellerChangeService.paging(dto));
     }
