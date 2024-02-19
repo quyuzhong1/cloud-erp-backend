@@ -167,6 +167,10 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopAuth.setRefreshToken(refreshToken);
                 shopAuth.setAppClientId(cfgAppClient.getId());
                 shopAuth.setExpiresIn(expiresIn);
+                String sellerId=jsonObject.getOrDefault("seller_id","").toString();
+                JSONObject extendJson = new JSONObject();
+                extendJson.put("sellerId", sellerId);
+                shopInfo.setExtendData(extendJson.toJSONString());
                 shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
                 shopInfo.setAuthTime(LocalDateTime.now());
                 shopAuthService.saveOrUpdate(shopAuth);

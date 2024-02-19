@@ -124,6 +124,35 @@ public class PackageForecastController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     * 打印面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/print")
+    public ApiResult<List<BatchResultDTO>> print(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = packageForecastService.print(id);
+            } catch (Exception e) {
+                log.error("组包预报单打印失败===>{}", e.getMessage());
+                PackageForecastEntity entity = packageForecastService.getById(id);
+                if (Objects.isNull(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 打印失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
     /**
      * 取消
      *

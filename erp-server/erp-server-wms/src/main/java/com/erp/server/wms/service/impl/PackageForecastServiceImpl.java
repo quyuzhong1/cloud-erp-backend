@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -16,6 +15,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -25,14 +25,17 @@ import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
+import com.erp.server.wms.constant.PackageForecastConstant;
 import com.erp.server.wms.convert.PackageForecastConverter;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.mapper.PackageForecastMapper;
@@ -45,8 +48,24 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.constants.PathConstants;
+import com.erp.tms.aliexpress.model.handover.AddressBase;
+import com.erp.tms.aliexpress.model.handover.AddressInfo;
+import com.erp.tms.aliexpress.model.handover.UserInfo;
+import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
+import com.erp.tms.aliexpress.model.handover.request.CloudPrintRequest;
+import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
+import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
+import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
+import com.erp.tms.aliexpress.model.handover.response.CloudPrintResponse;
+import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
+import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
+import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
+import com.erp.tms.aliexpress.util.ApiException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,6 +126,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Autowired
     private DmpTaskFeign dmpTaskFeign;
+
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
 
     @Autowired
     private AliExpressHandoverService aliExpressHandoverService;
@@ -188,8 +210,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PackageForecastDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        String uploadStatus="";
+        if(!"all".equals(params.getTabFlag())){
+            uploadStatus=params.getTabFlag();
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params,uploadStatus);
         List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
         //处理分页数据
         fillPaging(list);
@@ -234,13 +260,15 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
 
-
     /**
      * 取消上传
+     *
      * @param id
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -250,11 +278,95 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (!successCode.equals(entity.getUploadStatus())) {
             throw new ServiceException("仅上传成功可操作");
         }
-        entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
-        this.updateById(entity);
+        //物流商
+        String supplierId = entity.getLogisticsSupplierId();
+        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+        String logisticsPlatform = authDTO.getLogisticsPlatform();
+        try {
+            //如果这里是速卖通的话就 对接平台
+            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                aliExpressCancel(logisticsPlatform, entity);
+            }
+            entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
+            this.updateById(entity);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
+        } catch (Exception e) {
+            entity.setRemark("取消失败原因:" + e.getMessage());
+            this.updateById(entity);
+            log.error("取消上传失败>>>>{}", e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传");
+        }
 
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
+    }
 
+
+    /**
+     * 速卖通取消上传
+     *
+     * @param logisticsPlatform
+     * @param entity
+     */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void aliExpressCancel(String logisticsPlatform, PackageForecastEntity entity) {
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
+        CancelRequest cancelRequest = CancelRequest.builder().
+                userInfo(base.getUserInfo()).client(base.getClient()).
+                handoverContentId(Long.valueOf(entity.getPlatformPackageNo())).
+                build();
+        try {
+            IopResponse iopResponse = aliExpressHandoverService.cancel(base.getAuthMap(), cancelRequest);
+            BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
+            if (!baseResult.getSuccess()) {
+                throw new ServiceException(baseResult.getErrorMsg());
+            }
+        } catch (ApiException e) {
+            log.error("取消上传交接单失败>>>>>>{}", e);
+            throw new ServiceException(e.getMessage());
+        }
+
+
+    }
+
+    /**
+     * 获取速卖通交接单上传基础信息
+     *
+     * @return
+     */
+    public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform) {
+
+        PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBaseDTO = new PackageForecastDTO.AlExpressHandoverBaseDTO();
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(logisticsPlatform);
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        ApiResult<List<ShopAuthEntity>> shopAuthResult = shopInfoFeign.getAuthShopByPlatformType(logisticsPlatform);
+        if (!shopAuthResult.isSuccess()) {
+            throw new ServiceException("获取店铺token失败");
+        }
+        String sellerIdFlag = PackageForecastConstant.SELLER_ID;
+        List<ShopAuthEntity> shopAuthList = shopAuthResult.getData().stream().filter(s -> s.getExtendData().contains(sellerIdFlag)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopAuthList)) {
+            throw new ServiceException("获取店铺速卖通卖家id失败");
+        }
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("未找到对应平台");
+        }
+        ShopAuthEntity shopAuthEntity = shopAuthList.get(0);
+        Map<String, String> authMap = new HashMap<>(4);
+        authMap.put("clientId", cfgAppClient.getClientId());
+        authMap.put("clientSecret", cfgAppClient.getClientSecret());
+        authMap.put("token", shopAuthEntity.getToken());
+        JSONObject jsonObject = JSONObject.parseObject(shopAuthEntity.getExtendData());
+        //买家id
+        String sellerId = jsonObject.getString("sellerId");
+        String client = PackageForecastConstant.CLIENT;
+        UserInfo userInfo = UserInfo.builder().topUserKey(sellerId).build();
+        alExpressHandoverBaseDTO.setClient(client);
+        alExpressHandoverBaseDTO.setAuthMap(authMap);
+        alExpressHandoverBaseDTO.setUserInfo(userInfo);
+        return alExpressHandoverBaseDTO;
     }
 
     @Override
@@ -269,11 +381,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String wait = PackageUploadStatusEnum.WAIT.getCode();
         //上传失败
         String failure = PackageUploadStatusEnum.UPLOAD_FAILURE.getCode();
-
         List<String> uploadStatusList = Arrays.asList(wait, failure);
         //上传状态
         String uploadStatus = entity.getUploadStatus();
-        if(!uploadStatusList.contains(uploadStatus)){
+        if (!uploadStatusList.contains(uploadStatus)) {
             throw new ServiceException("仅待上传/上传失败可操作");
         }
         //物流地址
@@ -287,33 +398,144 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (Objects.isNull(authDTO)) {
             throw new ServiceException("物流商不存在");
         }
-        String addressName=addressEntity.getName();
-        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-        entity.setCollectMode(collectMode);
-        entity.setCollectAddressId(collectAddressId);
-        entity.setCollectAddress(addressName);
-
-        String logisticsPlatform = authDTO.getLogisticsPlatform();
-        //如果这里是速卖通的话就 对接平台
-        if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
-              addBigPackage(logisticsPlatform,entity);
+        try {
+            String addressName = addressEntity.getName();
+            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+            entity.setCollectMode(collectMode);
+            entity.setCollectAddressId(collectAddressId);
+            entity.setCollectAddress(addressName);
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            //如果这里是速卖通的话就 对接平台
+            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                addBigPackage(logisticsPlatform, entity, addressEntity);
+            }
+            this.updateById(entity);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传");
+        } catch (Exception e) {
+            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+            entity.setRemark("上传失败:" + e.getMessage());
+            this.updateById(entity);
+            log.error("组包预报上传失败>>>>>{}", e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传");
         }
-        this.updateById(entity);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传");
+
+
     }
 
-    public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity) {
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(logisticsPlatform);
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient=  dmpTaskFeign.getCfgAppClient(findDTO);
-        if(Objects.nonNull(cfgAppClient)){
-            Map<String, String> authMap=new HashMap<>(4);
-
-
+    @Override
+    public BatchResultDTO print(String id) {
+        PackageForecastEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
+        //上传成功
+        String uploadSuccess = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        //上传状态
+        String uploadStatus = entity.getUploadStatus();
+        if (!uploadSuccess.equals(uploadStatus)) {
+            throw new ServiceException("仅上传成功后可操作");
+        }
+        //物流商
+        String supplierId = entity.getLogisticsSupplierId();
+        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+        if (Objects.isNull(authDTO)) {
+            throw new ServiceException("物流商不存在");
+        }
+        String logisticsPlatform = authDTO.getLogisticsPlatform();
+        String base64="";
+        try {
+            //如果这里是速卖通的话就 对接平台
+            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                base64 = aliExpressPrint(logisticsPlatform, entity);
+            }
+        } catch (Exception e) {
+            log.error("打印失败>>>>>>>{}", e);
+        }
+        if(StringUtils.isNotBlank(base64)){
+            entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
+            this.updateById(entity);
+        }
+        return null;
+    }
+
+    /**
+     * 速卖通打印
+     *
+     * @param logisticsPlatform
+     * @param entity
+     */
+    public String aliExpressPrint(String logisticsPlatform, PackageForecastEntity entity) {
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
+        CloudPrintRequest cloudPrintRequest = CloudPrintRequest.builder().
+                client(base.getClient())
+                .locale("zh_CN")
+                .orderCode(entity.getHandoverNo())
+                .trackingNumber(entity.getTransportNo())
+                .userInfo(base.getUserInfo())
+                .build();
+        try {
+            IopResponse response = aliExpressHandoverService.cloudPrint(base.getAuthMap(), cloudPrintRequest);
+            BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+            BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+            if(!baseResult.getSuccess()){
+                throw new ServiceException(baseResult.getErrorMsg());
+            }
+            CloudPrintResponse cloudPrintResponse = JSONObject.parseObject(baseResult.getData(), CloudPrintResponse.class);
+            return cloudPrintResponse.getPrintData();
+        } catch (ApiException e) {
+            log.error("速卖通打印失败>>>{}", e);
+            throw new ServiceException(e.getMessage());
+        }
+
+    }
+
+    /**
+     * 速卖通组包
+     *
+     * @param logisticsPlatform
+     * @param entity
+     * @param logisticsAddress
+     */
+    public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
+        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        //揽收地址基础信息
+        AddressBase addressBase = PackageForecastConverter.INSTANCE.convertAddressBase(logisticsAddress);
+        //揽收地址信息
+        AddressInfo addressInfo = PackageForecastConverter.INSTANCE.convertAddressInfo(logisticsAddress);
+        addressInfo.setAddress(addressBase);
+        /**
+         * 要创建交接单的小包编码集合
+         */
+        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoCode).collect(Collectors.toList());
+        String type = PackageForecastConstant.CAINIAO_PICKUP;
+        String collectMode = entity.getCollectMode();
+        String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
+        if (selfSend.equals(collectMode)) {
+            type = PackageForecastConstant.SELF_SEND;
+        }
+        String client = PackageForecastConstant.CLIENT;
+        CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
+                orderCodeList(orderCodeList).weight(entity.getTotalPackageWeight()).
+                weightUnit(entity.getWeightUnit()).userInfo(base.getUserInfo()).
+                type(type).client(client).build();
+        try {
+            IopResponse iopResponse = aliExpressHandoverService.commit(base.getAuthMap(), commitRequest);
+            BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
+            if (Objects.nonNull(baseResult.getErrorResponse())) {
+                throw new ServiceException(baseResult.getErrorResponse().getMsg());
+            }
+            HandoverCommitResponse handoverCommitResponse = JSONObject.parseObject(baseResult.getData(), HandoverCommitResponse.class);
+            if (Objects.nonNull(handoverCommitResponse)) {
+                entity.setHandoverNo(handoverCommitResponse.getHandoverContentCode());
+                entity.setPlatformPackageNo(String.valueOf(handoverCommitResponse.getHandoverContentId()));
+            }
+        } catch (ApiException e) {
+            log.error("创建交接单失败>>>>>>{}", e);
+            throw new ServiceException(e.getMessage());
+        }
+
+
     }
 
 
@@ -338,12 +560,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         addDTO.setTransferChannelId(transferLogisticsChannelId);
         addDTO.setDeliveryLogisticsSupplierId(entity.getLogisticsSupplierId());
         addDTO.setGenerateTime(LocalTime.now());
-        List<TransferDeclareDetailDTO.AddDTO> addDetailList= PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
+        List<TransferDeclareDetailDTO.AddDTO> addDetailList = PackageForecastConverter.INSTANCE.convertDeclareDetail(detailList);
         addDTO.setDetailList(addDetailList);
         BaseResultDTO.AddDTO result = transferDeclareFeign.add(addDTO);
         String transferStatus = TransferStatusEnum.ALREADY.getCode();
         if (StringUtils.isNotBlank(result.getId())) {
-            List<String> soIdList=detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+            List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
             UpdateStateDTO.UpdateByStrStatusDTO dto = new UpdateStateDTO.UpdateByStrStatusDTO();
             dto.setStatus(transferStatus);
             dto.setIds(soIdList);
@@ -357,7 +579,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
-        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto);
+        String uploadStatus="";
+        if(!"all".equals(dto.getTabFlag())){
+            uploadStatus=dto.getTabFlag();
+        }
+        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto,uploadStatus);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -381,8 +607,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
 
-
-
     /**
      * 填充分页数据
      *
@@ -402,13 +626,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             String platformPackageNo = item.getPlatformPackageNo();
             String platformNo = handoverNo + "/" + platformPackageNo;
             item.setPlatformNo(platformNo);
-            BigDecimal totalPackageWeight=item.getTotalPackageWeight();
-            String totalPackageWeightUnit=item.getTotalPackageWeightUnit();
-            String totalPackageWeightStr=totalPackageWeight+totalPackageWeightUnit;
+            BigDecimal totalPackageWeight = item.getTotalPackageWeight();
+            String totalPackageWeightUnit = item.getTotalPackageWeightUnit();
+            String totalPackageWeightStr = totalPackageWeight + totalPackageWeightUnit;
             item.setTotalPackageWeightStr(totalPackageWeightStr);
-            BigDecimal weight=item.getWeight();
-            String weightUnit=item.getWeightUnit();
-            String weightStr=weight+weightUnit;
+            BigDecimal weight = item.getWeight();
+            String weightUnit = item.getWeightUnit();
+            String weightStr = weight + weightUnit;
             item.setWeightStr(weightStr);
         }
     }

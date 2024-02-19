@@ -37,7 +37,7 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
     @TableField("handover_no")
     private String handoverNo;
     /**
-    * 第三方组包号
+    * 第三方组包id 对应 handoverContentId
     */
     @TableField("platform_package_no")
     private String platformPackageNo;

@@ -101,4 +101,14 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     BatchResultDTO upload(String id, String collectMode, String collectAddressId);
+
+    /**
+     * 打印面单
+     * @description
+     * @param id
+     * @return
+     * @date 2024-02-19 14:35
+     * @author Lambda
+     */
+    BatchResultDTO print(String id);
 }
