@@ -410,7 +410,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     item.setIfAddProduct(false);
                 }
 
-                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
+                if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(item.getType())) {
                     item.setIfIteration(true);
                 }
                 String progressStatus = item.getProgressStatus();

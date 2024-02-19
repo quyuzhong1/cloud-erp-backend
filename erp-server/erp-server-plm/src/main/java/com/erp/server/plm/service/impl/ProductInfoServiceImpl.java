@@ -800,7 +800,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIsAddProductName("否");
                     item.setIfAddProduct(false);
                 }
-                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
+                if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(item.getType())) {
                     item.setIfIteration(true);
                     item.setIsIterationName("是");
                 } else {

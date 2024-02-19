@@ -106,8 +106,8 @@ public class ProductDTO implements Serializable {
      * 产品类型 1 新产品 2 迭代产品
      */
     @NotNull(message = "产品类型不能为空")
-    @StateEnumValue(intValues = {2, 1}, message = "产品类型有误")
-    private Integer type;
+    @StateEnumValue(strValues = {"newProduct", "iterativeProduct"}, message = "产品类型有误")
+    private String type;
 
     /**
      * 迭代产品关联skuid
