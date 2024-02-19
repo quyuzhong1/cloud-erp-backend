@@ -164,7 +164,7 @@ public enum GoodCangEnums {
         TRANSIT_WAREHOUSE_TO_BE_SHIPPED(6,"中转仓待发货", OverseasInstockStatusEnum.TO_BE_SIGNED),
         OVERSEAS_WAREHOUSE_IN_TRANSIT(7,"海外仓在途", OverseasInstockStatusEnum.TO_BE_SIGNED),
         RECEIVING_FROM_OVERSEAS_WAREHOUSES(8,"海外仓收货中", OverseasInstockStatusEnum.PARTIAL_SIGNED),
-        COMPLETION_OVERSEAS_WAREHOUSE_RECEIPT(9,"海外仓收货完成", OverseasInstockStatusEnum.SIGNED),
+        COMPLETION_OVERSEAS_WAREHOUSE_RECEIPT(9,"海外仓收货完成", OverseasInstockStatusEnum.PARTIAL_SIGNED),
         COMPLETION_OF_OVERSEAS_WAREHOUSE_LISTING(10,"海外仓上架完成", OverseasInstockStatusEnum.SIGNED),
         ABANDONMENT(100,"废弃", OverseasInstockStatusEnum.CANCELED),
         ;
