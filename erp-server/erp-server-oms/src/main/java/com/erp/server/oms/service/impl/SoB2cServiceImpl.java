@@ -5380,6 +5380,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
                     //生成速卖通发货单
                     addAliExpressDelivery(logisticsEntity, erpFulfillmentForwardDto.get(0), entity);
+
+                    return Boolean.TRUE;
                 }
             }
 
@@ -5387,7 +5389,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             e.printStackTrace();
         }
 
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 
