@@ -216,6 +216,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private NoticeMessageService noticeMessageService;
+
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -2124,6 +2127,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + dto.getComment()));
         }
         //workflowFeign.taskPass(approveProcess);
+        //发送通知
+        noticeMessageService.approveProductNotice(userName, entity);
+
         //审核通过后发送到金蝶系统
         syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return true;

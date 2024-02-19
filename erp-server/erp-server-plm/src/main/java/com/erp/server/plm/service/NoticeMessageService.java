@@ -11,6 +11,7 @@ import com.erp.model.plm.dto.FlyingBookReminderDTO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.NoticeEnum;
 
@@ -170,6 +171,11 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      */
     Boolean beginProjectNotice(String userName,String productId);
 
+
+    /**
+     * 产品审核 发送通知
+     */
+    Boolean approveProductNotice(String userName, ProductDetailEntity entity);
 
     /**
      * 完成项目 发送通知

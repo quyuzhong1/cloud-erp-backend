@@ -208,7 +208,7 @@ public class SoOutstockController extends BaseController {
     }
 
     /**
-     * 列表修改
+     * 更新跟踪号
      *
      * @param dto
      * @return ApiResult

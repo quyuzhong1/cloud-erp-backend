@@ -40,32 +40,32 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         private String id;
 
         /**
-         * code
+         * code[可排序]
          */
         private String code;
 
         /**
-         * 客户名称
+         * 客户名称[可排序]
          */
         private String name;
 
         /**
-         * 简称
+         * 简称[可排序]
          */
         private String shortName;
 
         /**
-         * 原销售员名称
+         * 原销售员名称[可排序]
          */
         private String originSellerName;
 
         /**
-         * 变更后销售员名称
+         * 变更后销售员名称[可排序]
          */
         private String changeSellerName;
 
         /**
-         * 审核状态
+         * 审核状态[可排序]
          */
         private String approveStatus;
 
@@ -75,27 +75,27 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 最新审核人
+         * 最新审核人[可排序]
          */
         private String approveUserName;
 
         /**
-         * 创建人
+         * 创建人[可排序]
          */
         private String createUserName;
 
         /**
-         * 创建时间
+         * 创建时间[可排序]
          */
         private LocalDateTime createTime;
 
         /**
-         * 变更启用日期
+         * 变更启用日期[可排序]
          */
         private LocalDate startDate;
 
         /**
-         * 审核时间
+         * 审核时间[可排序]
          */
         private LocalDateTime approveTime;
     }
