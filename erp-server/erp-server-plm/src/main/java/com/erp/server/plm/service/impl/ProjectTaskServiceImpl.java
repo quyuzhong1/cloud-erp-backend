@@ -4369,10 +4369,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
                 Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
                 if (approvalTaskFlag) {
-                    UpdateProductDTO dto = new UpdateProductDTO();
-                    dto.setProductId(taskEntity.getProductId());
-                    dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
-                    productInfoService.updateProduct(dto);
+                    ProductInfoEntity productEntity = productInfoService.getById(taskEntity.getProductId());
+                    if (Objects.nonNull(productEntity) && !ApprovalStatusEnum.APPROVAL.getCode().equals(productEntity.getApprovalStatus())) {
+                        UpdateProductDTO dto = new UpdateProductDTO();
+                        dto.setProductId(taskEntity.getProductId());
+                        dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
+                        productInfoService.updateProduct(dto);
+                    }
                 }
             }
 
