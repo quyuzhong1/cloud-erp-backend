@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -125,6 +124,11 @@ public class WarehouseDTO implements Serializable {
          * 在途仓库名
          */
         private String onwayWarehouseName;
+
+        /**
+         * 绑定第三方仓（目前只用于速卖通仓）
+         */
+        private String thirdWarehouseName;
 
     }
 

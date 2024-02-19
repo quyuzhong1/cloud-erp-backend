@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -62,12 +63,6 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
             throw new ServiceException("仓库映射第三方平台单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "仓库映射第三方平台单" , warehouseMappingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, warehouseMappingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(warehouseMappingEntity.getId(), warehouseMappingEntity.getId());
     }
 
@@ -88,13 +83,6 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
         if(!save) {
             throw new ServiceException("仓库映射第三方平台单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录仓库映射第三方平台单日志数据，id：【{}】", warehouseMappingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseMappingEntity.getId(), "仓库映射第三方平台单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, warehouseMappingEntity, null, warehouseMappingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -132,6 +120,19 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
         }
 
         return resultList;
+    }
+
+    @Override
+    public WarehouseMappingDTO.MappingViewDTO getMappingViewByDictPlatform(String warehouseId, String dictPlatform) {
+        WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = baseMapper.getMappingViewByDictPlatform(warehouseId, dictPlatform);
+
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(mappingViewByDictPlatform.getWarehouseOrgId()));
+        BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewByDictPlatform.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(codeDTO)) {
+            mappingViewByDictPlatform.setWarehouseOrgName(codeDTO.getName());
+        }
+        return mappingViewByDictPlatform;
     }
 
     /**
