@@ -67,7 +67,7 @@ public class PullLingxingJob {
     @XxlJob("syncLingxingSid")
     public ReturnT<String> syncLingxingSid(){
         XxlJobHelper.log("syncLingxingSid 同步领星店铺ID 任务开始执行！");
-        // 查询直接调拨订单上次执行时间
+        // 查询上次执行时间
         PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());
         if(ObjectUtil.isEmpty(entity)){
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());

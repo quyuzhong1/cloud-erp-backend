@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FbaReceivedDTO {
+public class FbaReceiveReqDTO {
 
     /**
      * sid	店铺id	是
@@ -37,14 +37,14 @@ public class FbaReceivedDTO {
     private Integer length;
 
 
-    public FbaReceivedDTO(Integer sid, LocalDate eventDate) {
+    public FbaReceiveReqDTO(Integer sid, LocalDate eventDate) {
         this.sid = sid;
         this.event_date = eventDate.toString();
         this.offset = 0;
         this.length = 1000;
     }
 
-    public FbaReceivedDTO(Integer sid, LocalDate eventDate, Integer offset) {
+    public FbaReceiveReqDTO(Integer sid, LocalDate eventDate, Integer offset) {
         this.sid = sid;
         this.event_date = eventDate.toString();
         this.offset = offset;

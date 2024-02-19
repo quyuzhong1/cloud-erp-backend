@@ -1675,11 +1675,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public boolean checkStopGenReceived(FbaShipmentEntity entity) {
-        List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey("stopGenReceivedTime");
+        List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
         if (!CollectionUtils.isEmpty(stopGenReceivedTimeList) && null != entity.getCreateTime()){
             DictBasicDTO.ListDTO configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
             if (null != configDTO){
                 LocalDateTime stopTime = LocalDateTime.parse(configDTO.getValue(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                return entity.getCreateTime().isAfter(stopTime);
+            } else {
+                LocalDateTime stopTime = LocalDateTime.of(2024, 2,20,0,0,0);
                 return entity.getCreateTime().isAfter(stopTime);
             }
         }

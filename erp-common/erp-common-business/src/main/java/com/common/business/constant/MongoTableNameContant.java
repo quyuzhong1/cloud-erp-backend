@@ -226,6 +226,11 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_LX_SHOP_LIST = "original_lx_shop_list";
 
+    /**
+     * 领星签收明细表
+     */
+    String ORIGINAL_LX_FBA_SHIPMENT_RECEIVE = "original_lx_fba_shipment_receive";
+
 
     /**
      * 根据任务 key 获取表名

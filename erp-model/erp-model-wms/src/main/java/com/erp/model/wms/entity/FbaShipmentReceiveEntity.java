@@ -87,6 +87,37 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
      */
     @TableField(value = "receive_locale_date", typeHandler = MyOffsetDateTimeTypeHandler.class)
     private OffsetDateTime receiveLocaleDate;
+    /**
+     * 亚马逊FBA货件单号
+     */
+    @TableField("fba_shipment_id")
+    private String fbaShipmentId;
+    /**
+     * 处理状态：none=暂无处理, wait=待处理， already=已处理
+     */
+    @TableField("handle_status")
+    private String handleStatus;
+    /**
+     * 来源类型：erp=系统生成, lingxing=领星 amazon=亚马逊报告
+     */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+     * 亚马逊仓储中心ID
+     */
+    @TableField("fulfillment_center")
+    private String fulfillmentCenter;
+    /**
+     * 单内签收日期索引
+     */
+    @TableField("unique_index")
+    private String uniqueIndex;
+    /**
+     * 与unique_index组成唯一索引
+     */
+    @TableField("unique_md5")
+    private String uniqueMd5;
+
 
 
     public static final String DETAIL_ID = "detail_id";

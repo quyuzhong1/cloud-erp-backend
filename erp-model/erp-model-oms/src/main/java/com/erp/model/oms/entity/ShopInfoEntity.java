@@ -173,18 +173,6 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("platform_status")
     private String platformStatus;
 
-    /**
-     * 同步第三方平台类型
-     */
-    @TableField("third_platform_type")
-    private String thirdPlatformType;
-
-    /**
-     * 同步第三方平台的id
-     */
-    @TableField("third_platform_id")
-    private String thirdPlatformId;
-
 
     public static final String PLATFORM_DICT = "platform_dict";
 

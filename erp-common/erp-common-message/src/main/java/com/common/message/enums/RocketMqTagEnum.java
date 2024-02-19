@@ -152,6 +152,11 @@ public enum RocketMqTagEnum {
      */
     LX_SHOP_INFO_TAG(28, RocketMqTagEnum.SHOP_INFO,"lx_shop_info_tag"),
 
+    /**
+     * 领星FBA货件信息tag
+     */
+    LX_FBA_SHIPMENT_RECEIVE_TAG(29, RocketMqTagEnum.FBA_SHIPMENT,"lx_fba_shipment_receive_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -537,6 +542,8 @@ public enum RocketMqTagEnum {
     public static final String SYS_LOG = "sys_log";
 
     public static final String AMZ_REPORT = "amz_report";
+
+    public static final String FBA_SHIPMENT = "fba_shipment";
 
     private Integer code;
 

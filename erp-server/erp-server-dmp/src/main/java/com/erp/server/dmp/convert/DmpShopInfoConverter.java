@@ -20,6 +20,7 @@ import java.util.List;
 @Mapper
 @Component
 public interface DmpShopInfoConverter {
+
     DmpShopInfoConverter INSTANCE = Mappers.getMapper(DmpShopInfoConverter.class);
     @Mappings({
     })

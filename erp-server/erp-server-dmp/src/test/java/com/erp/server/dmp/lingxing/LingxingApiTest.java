@@ -15,8 +15,8 @@ package com.erp.server.dmp.lingxing;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.sdk.third.lingxing.dto.FbaReceivedDTO;
-import com.sdk.third.lingxing.dto.FbaShipmentReceivedDTO;
+import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
+import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
 import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -29,7 +29,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * API tests for Lingxing
@@ -52,12 +51,12 @@ public class LingxingApiTest {
     @Test
     public void receivedInventory(){
         LocalDate startTime = LocalDate.of(2024,1,20);
-        FbaReceivedDTO receivedDTO = new FbaReceivedDTO(126, startTime);
+        FbaReceiveReqDTO receivedDTO = new FbaReceiveReqDTO(126, startTime);
         Map<String, Object> objectMap = BeanUtil.beanToMap(receivedDTO);
-        Result<List<FbaShipmentReceivedDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
+        Result<List<FbaShipmentReceiveDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
         System.out.println("FBA货件明细总结果");
         System.out.println(JSONUtil.toJsonStr(result));
-        List<FbaShipmentReceivedDTO> data = result.getData();
+        List<FbaShipmentReceiveDTO> data = result.getData();
         System.out.println("FBA货件明细列表");
         System.out.println(JSONUtil.toJsonStr(data));
     }
@@ -66,7 +65,7 @@ public class LingxingApiTest {
     public void allReceivedInventory(){
         Integer sid = 126;
         LocalDate receivedDate = LocalDate.of(2024,1,20);
-        List<FbaShipmentReceivedDTO> data = LingxingApiUtils.getAllReceivedInventory(sid, receivedDate);
+        List<FbaShipmentReceiveDTO> data = LingxingApiUtils.getAllReceivedInventory(sid, receivedDate);
         System.out.println("FBA货件明细列表");
         System.out.println(JSONUtil.toJsonStr(data));
     }

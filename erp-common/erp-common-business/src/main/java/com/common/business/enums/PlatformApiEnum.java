@@ -122,6 +122,7 @@ public enum PlatformApiEnum {
      */
     // 店铺信息
     LX_ERP_SHOP_LIST_GET(60, "getShopList", MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ""),
+    LX_ERP_FBA_SHIPMENT_RECEIVE_GET(61, "getFbaShipmentReceive", MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, TaskConstant.LX_PULL_DATA_TASK),
 
     ;
 

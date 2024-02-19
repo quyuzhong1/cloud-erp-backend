@@ -32,4 +32,9 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * @return
      */
     List<FbaShipmentReceiveEntity> checkAndSetReceiveSkuMapping(List<FbaShipmentDetailEntity> oldDetailEntityList, List<FbaShipmentReceiveEntity> receiveEntityList);
+
+    /**
+     * 保存签收记录并检查调拨
+     */
+    Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList);
 }

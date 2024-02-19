@@ -19,6 +19,7 @@ public enum DictBasicEnum {
     OUTSTOCK_TYPE("outstockType", "", "出库类型"),
     WORK_TYPE("workType", "", "事务类型"),
     MACHINE_TYPE("machineType", "", "加工单类型"),
+    STOP_GEN_RECEIVE_TIME("stopGenReceiveTime", "", "系统停止生成FBA货件签收记录有效时间配置"),
 
     ;
 

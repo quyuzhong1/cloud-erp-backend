@@ -232,20 +232,20 @@ public class LingxingApiUtils {
      * @param receivedDate 签收日期
      * @return 所有货件签收明细列表
      */
-    public static List<FbaShipmentReceivedDTO> getAllReceivedInventory(Integer sid, LocalDate receivedDate) {
-        FbaReceivedDTO receivedDTO = new FbaReceivedDTO(sid, receivedDate);
-        Result<List<FbaShipmentReceivedDTO>> firstResult = getReceivedInventory(receivedDTO);
+    public static List<FbaShipmentReceiveDTO> getAllReceivedInventory(Integer sid, LocalDate receivedDate) {
+        FbaReceiveReqDTO receivedDTO = new FbaReceiveReqDTO(sid, receivedDate);
+        Result<List<FbaShipmentReceiveDTO>> firstResult = getReceivedInventory(receivedDTO);
         if (CollectionUtils.isEmpty(firstResult.getData())) {
             return Collections.emptyList();
         }
         if (firstResult.getTotal() <= 1000) {
             return firstResult.getData();
         }
-        List<FbaShipmentReceivedDTO> resultList = firstResult.getData();
+        List<FbaShipmentReceiveDTO> resultList = firstResult.getData();
         int count = firstResult.getTotal() / 1000;
         for (int offset = 1; offset < count; offset++) {
-            FbaReceivedDTO currentReceivedDTO = new FbaReceivedDTO(sid, receivedDate, offset);
-            Result<List<FbaShipmentReceivedDTO>> currentResult = getReceivedInventory(currentReceivedDTO);
+            FbaReceiveReqDTO currentReceivedDTO = new FbaReceiveReqDTO(sid, receivedDate, offset);
+            Result<List<FbaShipmentReceiveDTO>> currentResult = getReceivedInventory(currentReceivedDTO);
             if (!CollectionUtils.isEmpty(currentResult.getData())) {
                 resultList.addAll(currentResult.getData());
             }
@@ -259,9 +259,9 @@ public class LingxingApiUtils {
      * @param receivedDTO 请求参数
      * @return 当前分页结果
      */
-    public static Result<List<FbaShipmentReceivedDTO>> getReceivedInventory(FbaReceivedDTO receivedDTO) {
+    public static Result<List<FbaShipmentReceiveDTO>> getReceivedInventory(FbaReceiveReqDTO receivedDTO) {
         Map<String, Object> objectMap = BeanUtil.beanToMap(receivedDTO);
-        Result<List<FbaShipmentReceivedDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
+        Result<List<FbaShipmentReceiveDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件签收明细列表失败:,sid={}, result={}", receivedDTO.getSid(), JSONUtil.toJsonStr(result));
             log.error(errorMsg);

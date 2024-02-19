@@ -113,10 +113,4 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * 关闭店铺所有信息
      */
     void checkAndClosedPlatformShopByShopId(String shopId);
-
-
-    /**
-     * 检查任务和记录平台店铺ID
-     */
-    void handleThirdPlatformId(ShopEntity shopEntity);
 }

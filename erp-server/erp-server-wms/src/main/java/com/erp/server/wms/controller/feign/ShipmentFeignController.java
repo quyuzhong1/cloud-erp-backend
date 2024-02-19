@@ -5,8 +5,10 @@ import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
 import com.erp.server.wms.service.FbaInventoryService;
+import com.erp.server.wms.service.FbaShipmentReceiveService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +27,8 @@ public class ShipmentFeignController extends BaseController {
 
     @Resource
     private PlatformFbaShipmentConsumerService<?> platformFbaShipmentConsumerService;
+    @Resource
+    private FbaShipmentReceiveService fbaShipmentReceiveService;
 
 
     /**
@@ -35,4 +39,15 @@ public class ShipmentFeignController extends BaseController {
     public ApiResult<?> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO){
         return platformFbaShipmentConsumerService.handle(new JSONObject(platformFbaShipmentDTO));
     }
+
+
+    /**
+     * 保存签收记录并检查调拨
+     * @author Jim
+     */
+    @PostMapping("/saveAndCheckTransfer")
+    public Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList){
+        return fbaShipmentReceiveService.saveAndCheckTransfer(entityList);
+    }
+
 }

@@ -19,6 +19,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.lingxing.ShopEntity;
 import com.erp.server.dmp.convert.DmpShopInfoConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.ShopInfoMappingService;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,8 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     private MQProducerService mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private ShopInfoMappingService shopInfoMappingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -65,6 +69,18 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
             return;
         }
         log.info("拉取领星店铺列表 entityList.size = {} ", entityList.size());
+        // 历史映射记录
+        List<ShopInfoMappingEntity> mappingEntityList = shopInfoMappingService.listByType(PlatformEnum.LINGXING.getName());
+        List<String> platformShopIdList = mappingEntityList.stream().map(ShopInfoMappingEntity::getThirdPlatformShopId).distinct().collect(Collectors.toList());
+
+        List<ShopEntity> newShopEntityList = entityList.stream()
+                .filter(e -> !CollectionUtils.isEmpty(platformShopIdList) && !platformShopIdList.contains(e.getShopId().toString()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(newShopEntityList)){
+            log.warn("已映射所有领星店铺列表");
+            return;
+        }
+
         List<ShopEntity> insertList = new ArrayList<>();
         List<ShopEntity> entityToMqlist = new ArrayList<>();
         for (ShopEntity entity : entityList) {
@@ -132,7 +148,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         }
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopInfo), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SHOP_INFO_TAG.getName(),
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(),
                 shopInfo, shopInfo.getShopId().toString());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
