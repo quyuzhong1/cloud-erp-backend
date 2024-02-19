@@ -2855,6 +2855,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendRatio(List<DateDimensionVO> dateList,List<DateDimensionVO> lastDateList,List<SalesFlagVO> salesList,
                                      List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType,
                                      List<SalesFlagVO> newSales,List<SalesFlagVO> newLastSales) {
+        if (CollectionUtils.isEmpty(dateList) || CollectionUtils.isEmpty(lastDateList)){
+            return;
+        }
         List<SalesFlagVO> list = new ArrayList<>();
         list.addAll(salesList);
         list.addAll(lastYearSalesList);
