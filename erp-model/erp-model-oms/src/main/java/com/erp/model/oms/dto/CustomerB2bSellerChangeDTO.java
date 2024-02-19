@@ -39,7 +39,7 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
          */
         private String id;
         /**
-         * id
+         * 客户id
          */
         private String customerId;
         /**
