@@ -473,8 +473,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
         }
-
-
+        //跟踪单号
+        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(Arrays.asList(soOutstock.getId()));
+        result.setTrackNoList(trackNoMAp.get(soOutstock.getId()));
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(soOutstock.getWarehouseId()));
         for (SoOutstockDetailDTO.ViewDTO viewDTO : detailList) {

@@ -794,9 +794,9 @@ public class SoOutstockDTO implements Serializable {
         private LocalDateTime actualDeliveryDate;
 
         /**
-         * 运输单号
+         * 运输单号列表
          */
-        private String trackNo;
+        private List<String> trackNoList;
 
 
         /**
