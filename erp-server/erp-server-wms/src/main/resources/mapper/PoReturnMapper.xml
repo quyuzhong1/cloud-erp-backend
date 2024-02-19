@@ -305,6 +305,7 @@
         from po_return pr
                  inner join po_return_detail prd on pr.id = prd.main_id and prd.is_deleted = false
         where pr.supplier_id =  #{params.surpplierId}
+          and pr.approve_status = 'approve'
         <if test="params.startTime != null">
             and pr.bill_date >= #{params.startTime}
         </if>
