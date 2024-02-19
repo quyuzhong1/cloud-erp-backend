@@ -214,7 +214,6 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         for(String id : ids){
             BatchResultDTO batchResultDTO = new BatchResultDTO();
-            resultDTOList.add(batchResultDTO);
             //提交流程
             CustomerB2bSellerChangeEntity entity = this.getById(id);
             if(Objects.isNull(entity)){
@@ -222,6 +221,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
                 batchResultDTO.setMsg("单据不存在");
+                resultDTOList.add(batchResultDTO);
                 continue;
             }
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
@@ -230,10 +230,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)){
                 batchResultDTO.setMsg("只有待提交状态可以提交审核");
                 batchResultDTO.setSuccess(false);
+                resultDTOList.add(batchResultDTO);
                 continue;
             }
             batchResultDTO = this.startProcess(entity);
             if(!batchResultDTO.getSuccess()){
+                resultDTOList.add(batchResultDTO);
                 continue;
             }
             entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
@@ -248,6 +250,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setMsg("提交审核失败");
             }
+            resultDTOList.add(batchResultDTO);
         }
         return resultDTOList;
     }

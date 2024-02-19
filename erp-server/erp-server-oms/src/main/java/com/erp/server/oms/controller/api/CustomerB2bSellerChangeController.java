@@ -76,7 +76,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
     }
 
     /**
-     * 修改
+     * 修改并提交
      * @author lrp
      * @date:  2024-01-31
      * @param dto
