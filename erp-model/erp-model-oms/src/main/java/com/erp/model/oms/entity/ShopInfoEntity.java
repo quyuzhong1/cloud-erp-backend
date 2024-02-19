@@ -161,6 +161,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String platformShopCode;
 
     /**
+     * 扩展字段的 数据+值
+     */
+    @TableField("extend_data")
+    private String extendData;
+
+    /**
      * ioss税号
      */
     @TableField("ioss_tax_no")
