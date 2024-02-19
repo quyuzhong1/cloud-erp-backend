@@ -209,7 +209,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
         String warehouseName = "";
-        if (detailNotNull) {
+        if (detailNotNull && CollectionUtils.isNotEmpty(detail.getLogisticInfoList())) {
             List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
                     filter(d -> StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(logisticInfoList)) {
@@ -239,22 +239,28 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         if (detailNotNull) {
             //收货信息
             ReceiptInfo receiptInfo = detail.getReceiptAddress();
+            if (Objects.nonNull(receiptInfo)){
+                receiverDTO.setCountry(receiptInfo.getCountry());
+                receiverDTO.setFirstAddress(receiptInfo.getAddress());
+                receiverDTO.setSecondAddress(receiptInfo.getAddress2());
+                receiverDTO.setFullAddress(receiptInfo.getDetailAddress());
+                receiverDTO.setCityName(receiptInfo.getCity());
+                receiverDTO.setProvinceName(receiptInfo.getProvince());
+                receiverDTO.setReceiverName(receiptInfo.getContactPerson());
+                receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
+                receiverDTO.setPostCode(receiptInfo.getZip());
+            }
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());
-            receiverDTO.setCountry(receiptInfo.getCountry());
+
             receiverDTO.setName(sourceOrder.getBuyerSignerFullname());
             receiverDTO.setEmail("");
-            receiverDTO.setFirstAddress(receiptInfo.getAddress());
-            receiverDTO.setSecondAddress(receiptInfo.getAddress2());
-            receiverDTO.setFullAddress(receiptInfo.getDetailAddress());
-            receiverDTO.setCityName(receiptInfo.getCity());
+
             receiverDTO.setCountryName("");
             receiverDTO.setDistrictName("");
-            receiverDTO.setProvinceName(receiptInfo.getProvince());
-            receiverDTO.setReceiverName(receiptInfo.getContactPerson());
-            receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
+
             receiverDTO.setTelNumber("");
-            receiverDTO.setPostCode(receiptInfo.getZip());
+
 
         } else {
             receiverDTO.setCountry("");
