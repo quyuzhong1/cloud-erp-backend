@@ -66,7 +66,7 @@ public class DataReportTaskJob {
      *
      * @return
      */
-    @XxlJob("DmpOrderCreateTimeToPhysical")
+    @XxlJob("dmpOrderCreateTimeToPhysical")
     public void DmpOrderCreateTimeToPhysical(){
         XxlJobHelper.log("DmpOrderCreateTimeToPhysical start :" + LocalDateTime.now());
         try (Connection conn = DriverManager.getConnection(url, username, password)) {
@@ -88,7 +88,7 @@ public class DataReportTaskJob {
      *
      * @return
      */
-    @XxlJob("DmpOrderDeliveryTimeToPhysical")
+    @XxlJob("dmpOrderDeliveryTimeToPhysical")
     public void DmpOrderDeliveryTimeToPhysical(){
         XxlJobHelper.log("DmpOrderDeliveryTimeToPhysical start :" + LocalDateTime.now());
         try (Connection conn = DriverManager.getConnection(url, username, password)) {
