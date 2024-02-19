@@ -9,9 +9,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,6 +27,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -55,7 +60,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -91,6 +95,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private OverseasProviderService overseasProviderService;
+
+    @Resource
+    private WarehouseMappingService warehouseMappingService;
 
 
 
@@ -282,9 +289,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             warehouse.setOnwayWarehouseName(entity.getName());
         }
 
-
         Boolean result = this.save(warehouse);
         if (result) {
+
+            //如果设置了第三方仓绑定
+            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+                WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
+                addDTO.setName(dto.getThirdWarehouseName());
+                addDTO.setWarehouseId(warehouse.getId());
+                addDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                warehouseMappingService.add(addDTO);
+            }
+
             return warehouse.getId();
         }
         return "";
@@ -327,6 +343,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         Boolean result = this.updateById(warehouse);
         if (result) {
+            //如果设置了第三方仓绑定
+            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+                WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+                if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+                    WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
+                    updateDTO.setId(mappingViewByDictPlatform.getId());
+                    updateDTO.setName(dto.getThirdWarehouseName());
+                    updateDTO.setWarehouseId(warehouse.getId());
+                    updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                    warehouseMappingService.update(updateDTO);
+                }
+            }
             return warehouseId;
         }
         return "";
@@ -565,6 +593,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(warehouse, dto);
         ApproveStatusEnum approveStatusEnum = warehouse.getApproveStatus();
         dto.setApproveStatusCode(approveStatusEnum.getStatus());
+
+        WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+            dto.setThirdWarehouseName(mappingViewByDictPlatform.getThirdWarehouseName());
+        }
         return dto;
     }
 
