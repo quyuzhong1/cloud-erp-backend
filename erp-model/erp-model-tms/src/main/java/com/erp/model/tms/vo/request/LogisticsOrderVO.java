@@ -24,6 +24,10 @@ import java.util.Map;
 @Builder
 public class LogisticsOrderVO implements Serializable {
     /**
+     * 速卖通 ISV用户唯一标识，一般为userId,最大长度为16个字符
+     */
+    private String topUserKey;
+    /**
      * 顺丰月结卡号
      */
     private String monthlyCard;

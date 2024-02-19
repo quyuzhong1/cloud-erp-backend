@@ -230,6 +230,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 //托寄物信息
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
+                .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
         return orderRequest;
     }

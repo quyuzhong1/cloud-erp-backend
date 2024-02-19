@@ -15,6 +15,7 @@ import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.*;
 import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
 import com.erp.tms.aliexpress.model.handover.response.CarrierResponse;
+import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
 import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
@@ -57,7 +58,7 @@ public class AliExpressOrderHandlerImplTest {
     public AliExpressOrderHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
+        String token = "50000201323txAyeuenSZSrh8BiTAsWVDfF1722521eNIWkzSnFXkuwgvw4IUHrpU3LN";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -104,7 +105,7 @@ public class AliExpressOrderHandlerImplTest {
         SellerParcelOrder sellerParcelOrder = SellerParcelOrder.builder()
                 .sellerId(TOP_USER_KEY)
                 .orderCodeList(Collections.singletonList("3030096741101976"))
-//                .userNick("au2801869788uepae")
+                .userNick("cn1072056312gdtae")
                 .build();
 
         AddressBase addressBase = AddressBase.builder()
@@ -151,9 +152,14 @@ public class AliExpressOrderHandlerImplTest {
                 .domesticLogisticsCompany("SF")
                 .domesticLogisticsCompanyId("505")
                 .build();
-        IopResponse commit = aliExpressHandoverService.commit(authMap, commitRequest);
+        IopResponse response = aliExpressHandoverService.commit(authMap, commitRequest);
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(),BaseResult.class);
+        if (Objects.nonNull(baseResult.getErrorResponse())){
+            System.out.println(JSONObject.toJSONString(baseResult.getErrorResponse()));
+        }
+        HandoverCommitResponse handoverCommitResponse = JSONObject.parseObject(baseResult.getData(), HandoverCommitResponse.class);
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(commit));
+        System.out.println(JSONObject.toJSONString(handoverCommitResponse));
     }
 
     /**

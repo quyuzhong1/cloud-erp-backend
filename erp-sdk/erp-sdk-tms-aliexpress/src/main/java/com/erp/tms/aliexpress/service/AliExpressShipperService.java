@@ -186,13 +186,6 @@ public class AliExpressShipperService {
         IopResponse response = client.execute(request, token, Protocol.TOP);
         return JSONObject.parseObject(response.getBody(), BaseResult.class);
     }
-    public void generateToken(String code) throws ApiException {
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
-        IopRequest request = new IopRequest();
-        request.setApiName("/auth/token/create");
-        request.addApiParameter("code", code);
-        IopResponse response = client.execute(request, Protocol.GOP);
-    }
 
     public IopResponse getLogisticsAddress(Map<String, String> authMap) throws ApiException {
         String appKey = authMap.get("clientId");

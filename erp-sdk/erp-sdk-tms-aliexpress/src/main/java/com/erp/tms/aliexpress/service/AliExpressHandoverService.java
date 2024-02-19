@@ -382,11 +382,11 @@ public class AliExpressHandoverService {
         authMap.put("clientSecret", PathConstants.APP_SECRET);
         authMap.put("token", PathConstants.TOKEN);
         authMap.put("url", PathConstants.BASE_URL);
-        authMap.put("code", "3_502978_YNyPkGTynMfcDkZYcOXO58qf299");
+        authMap.put("code", "3_502978_KLBOdhI2WuO3i9V5DaTT9leN3894");
         AliExpressHandoverService service = new AliExpressHandoverService();
         //授权
-//        JSONObject jsonObject = service.generateToken(authMap);
-//        System.out.println(jsonObject);
+        JSONObject jsonObject = service.generateToken(authMap);
+        System.out.println(jsonObject);
         //大包查询
 //        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
 //                .client(PathConstants.CLIENT)
@@ -398,14 +398,14 @@ public class AliExpressHandoverService {
 //        BaseResult query = service.queryContent(authMap, handoverQueryRequest);
 //        System.out.println(query);
         //可用服务
-        ServiceRequest serviceRequest = ServiceRequest.builder()
-                .intlTrackingNo("LP00629346935157")
-                .outOrderCode("8183868002476390")
-                .tradeOrderId("8183868002476390")
-                .reason("dd")
-                .build();
-        IopResponse iopResponse = service.queryService(authMap, serviceRequest);
-        System.out.println(iopResponse);
+//        ServiceRequest serviceRequest = ServiceRequest.builder()
+//                .intlTrackingNo("LP00629346935157")
+//                .outOrderCode("8183868002476390")
+//                .tradeOrderId("8183868002476390")
+//                .reason("dd")
+//                .build();
+//        IopResponse iopResponse = service.queryService(authMap, serviceRequest);
+//        System.out.println(iopResponse);
     }
 
     public JSONObject generateToken(Map<String, String> map) throws ApiException {
