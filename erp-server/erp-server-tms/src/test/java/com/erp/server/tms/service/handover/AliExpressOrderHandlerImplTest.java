@@ -22,6 +22,7 @@ import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -354,9 +355,16 @@ public class AliExpressOrderHandlerImplTest {
         IopResponse response = aliExpressHandoverService.getPdf(authMap, pdfRequest);
         BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
         BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        if (StringUtils.isNotEmpty(baseResult.getErrorMsg()) || StringUtils.isEmpty(baseResult.getData())){
+            //接口异常
+        }
         System.out.println(baseResult);
         PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
         System.out.println(pdfResponse);
+        String prefix = "data:application/pdf;base64,";
+        String base64Str = prefix + pdfResponse.getBody();
+        //文件base64
+        System.out.println(base64Str);
     }
     /**
      * 揽收资源推荐
