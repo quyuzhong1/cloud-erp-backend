@@ -60,10 +60,9 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * 销售维度 模块服务
@@ -2402,39 +2401,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
-
-//        List<SalesFlagVO> salesList = new ArrayList();
-//        switch (dateType) {
-//            case "DAY":
-//                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-//                break;
-//            case "MONTH":
-//                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-//                break;
-//            case "WEEK":
-//                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-//                break;
-//            case "QUARTER":
-//                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-//                break;
-//            case "YEAR":
-//                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-//                break;
-//            default:
-//                salesList = new ArrayList<>();
-//                break;
-//        }
-
         List<SalesFlagVO> salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),groupName);
 
-        //如果是季度
-        if (dateType.equals("QUARTER")) {
-            for (SalesFlagVO item : salesList) {
-                String name = item.getName();
-                String quarterName = conversionQuarterName(name);
-                item.setName(quarterName);
-            }
-        }
+//        //如果是季度
+//        if (dateType.equals("QUARTER")) {
+//            for (SalesFlagVO item : salesList) {
+//                String name = item.getName();
+//                String quarterName = conversionQuarterName(name);
+//                item.setName(quarterName);
+//            }
+//        }
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         List<String> categoryList = salesList.stream().map(SalesFlagVO::getCategory).distinct().collect(Collectors.toList());
         List<String> dateList = salesList.stream().map(SalesFlagVO::getName).distinct().collect(Collectors.toList());
@@ -2826,7 +2802,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 break;
             case "QUARTER":
-                dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-M");
                 break;
             case "YEAR":
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy");
@@ -2838,8 +2814,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),null);
         dto.setStartTime(dto.getStartTime().minusYears(1));
         dto.setEndTime(dto.getEndTime().minusYears(1));
+        List<DateDimensionVO> lastDateList = baseMapper.getDateList(dto.getStartTime(), dto.getEndTime(), dateType);
         lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), null);
-        dateSalesTrendRatio(dateList,salesList, lastYearSalesList, dateTimeFormatter, dateType);
+
+        List<SalesFlagVO> newSales = new ArrayList<>(dateList.size());
+        List<SalesFlagVO> newLastSales = new ArrayList<>(dateList.size());
+        dateSalesTrendRatio(dateList,lastDateList,salesList, lastYearSalesList, dateTimeFormatter, dateType, newSales, newLastSales);
 
         ChartVO chartVO = new ChartVO();
         List<String> siteNameList = dateList.stream().map(DateDimensionVO::getDateName).collect(Collectors.toList());
@@ -2848,13 +2828,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         switch (DateSalesTrendSearchTypeEnum.getEnumByCode(dto.getSearchType())) {
             case SALES_AMOUNT:
-                dateSalesTrendSalesAmount(salesList, lastYearSalesList, seriesList);
+                dateSalesTrendSalesAmount(newSales, newLastSales, seriesList);
                 break;
             case SALES_QUANTITY:
-                dateSalesTrendSalesQuantity(salesList, lastYearSalesList, seriesList);
+                dateSalesTrendSalesQuantity(newSales, newLastSales, seriesList);
                 break;
             case SALES_PRICE:
-                dateSalesTrendSalesPrice(salesList, lastYearSalesList, seriesList);
+                dateSalesTrendSalesPrice(newSales, newLastSales, seriesList);
                 break;
         }
 
@@ -2872,54 +2852,48 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param dateTimeFormatter
      * @param dateType
      */
-    private void dateSalesTrendRatio(List<DateDimensionVO> dateList,List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList,
-                                     DateTimeFormatter dateTimeFormatter, String dateType) {
+    private void dateSalesTrendRatio(List<DateDimensionVO> dateList,List<DateDimensionVO> lastDateList,List<SalesFlagVO> salesList,
+                                     List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType,
+                                     List<SalesFlagVO> newSales,List<SalesFlagVO> newLastSales) {
         List<SalesFlagVO> list = new ArrayList<>();
         list.addAll(salesList);
         list.addAll(lastYearSalesList);
-        for (int i = 0; i < dateList.size(); i++) {
-            DateDimensionVO dateDimensionVO = dateList.get(i);
-            SalesFlagVO salesFlagVO = salesList.stream().filter(e -> e.getName().equals(dateDimensionVO.getDateName())).findFirst().orElse(null);
-            if (Objects.isNull(salesFlagVO)){
-                salesFlagVO = new SalesFlagVO();
-//                salesFlagVO.setName(dateDimensionVO.getDateName());
-                salesList.add(salesFlagVO);
-            }
+        IntStream.range(0,dateList.size()).forEach(index ->{
+            DateDimensionVO dateDimensionVO = dateList.get(index);
+            DateDimensionVO lastDateDimensionVO = lastDateList.get(index);
+            SalesFlagVO salesFlagVO = salesList.stream().filter(e -> e.getName().equals(dateDimensionVO.getDateName())).findFirst().orElse(new SalesFlagVO());
+            salesFlagVO.setName(dateDimensionVO.getDateName());
             //上一期的日期
-            String parse = "";
+            String parse = null;
             //去年同期日期
-            String prevYearDate = "";
+            String prevYearDate = lastDateDimensionVO.getDateName();
             if ("DAY".equals(dateType)) {
                 parse = LocalDate.parse(dateDimensionVO.getDateName(), dateTimeFormatter).minusDays(1) + "";
-                prevYearDate = LocalDate.parse(dateDimensionVO.getDateName(), dateTimeFormatter).minusYears(1) + "";
+//                prevYearDate = LocalDate.parse(dateDimensionVO.getDateName(), dateTimeFormatter).minusYears(1) + "";
             }
             if ("WEEK".equals(dateType)) {
                 String[] split = dateDimensionVO.getDateName().split("~");
                 parse = LocalDate.parse(split[0], dateTimeFormatter).minusDays(7) + "~" + LocalDate.parse(split[0], dateTimeFormatter).minusDays(1);
-                //计算中间值 匹配记录
-                if (lastYearSalesList.size() > i){
-                    prevYearDate = lastYearSalesList.get(i).getName();
-                }
             }
             if ("MONTH".equals(dateType)) {
                 Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_month);
                 parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 1);
-                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
+//                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
             }
             if ("QUARTER".equals(dateType)) {
                 parse = dateDimensionVO.getDateName();
-                Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_quarter);
-                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_quarter, 1);
+//                Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_quarter);
+//                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_quarter, 1);
             }
             if ("YEAR".equals(dateType)) {
                 Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.FMT_YEAR4);
                 parse = DateUtil.getPrevYearDate(date, DateUtil.FMT_YEAR4, 1);
-                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.FMT_YEAR4, 1);
+//                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.FMT_YEAR4, 1);
             }
 
             //获取销售环比
             String finalParse = parse;
-            SalesFlagVO lastYearSalesFlagVo = list.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
+            SalesFlagVO lastYearSalesFlagVo = list.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(new SalesFlagVO());
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSales().compareTo(BigDecimal.ZERO) > 0) {
                 salesFlagVO.setSalesChainRelativeRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlagVo.getSales())
@@ -2948,16 +2922,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销售同比
             String finalPrevYearDate = prevYearDate;
-            SalesFlagVO lastYearSalesFlag = lastYearSalesList.stream().filter(req -> req.getName().equals(finalPrevYearDate)).findFirst().orElse(null);
-
+            SalesFlagVO lastYearSalesFlag = lastYearSalesList.stream().filter(req -> req.getName().equals(finalPrevYearDate)).findFirst().orElse(new SalesFlagVO());
+            lastYearSalesFlag.setName(finalPrevYearDate);
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSales().compareTo(BigDecimal.ZERO) > 0) {
                 salesFlagVO.setSalesBasisRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlag.getSales())
                         .divide(lastYearSalesFlag.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
-            } else {
-                lastYearSalesList.add(new SalesFlagVO());
             }
 
             //获取销量同比
@@ -2977,7 +2949,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .multiply(MathUtil.BigDecimal_100)
                 );
             }
-        }
+            newSales.add(salesFlagVO);
+            newLastSales.add(lastYearSalesFlag);
+        });
     }
 
     /**
