@@ -2900,6 +2900,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .divide(lastYearSalesFlagVo.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
+            }else if (salesFlagVO.getSales().compareTo(BigDecimal.ZERO) > 0){
+                salesFlagVO.setSalesChainRelativeRatio(MathUtil.BigDecimal_100);
             }
 
             //获取销量环比
@@ -2909,6 +2911,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .divide(MathUtil.valueOf(lastYearSalesFlagVo.getSalesQuantity() + ""), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
+            }else if (salesFlagVO.getSalesQuantity() > 0){
+                salesFlagVO.setSalesQuantityChainRelativeRatio(MathUtil.BigDecimal_100);
             }
 
             //获取客单价环比
@@ -2918,6 +2922,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .divide(lastYearSalesFlagVo.getSalesPrice(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
+            }else if (salesFlagVO.getSalesPrice().compareTo(BigDecimal.ZERO) > 0){
+                salesFlagVO.setSalesPriceChainRelativeRatio(MathUtil.BigDecimal_100);
             }
 
             //获取销售同比
