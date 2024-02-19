@@ -473,7 +473,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外父级SKU明细
         List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId()) && (CollectionUtil.isEmpty(dto.getSkuNoList()) ? Boolean.TRUE : dto.getSkuNoList().contains(obj.getSkuNo()))).collect(Collectors.toList());
         if (CollectionUtil.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98082);
+            throw new ServiceException(ApiError.ERROR_98071);
         }
 
         //bom信息
@@ -483,7 +483,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外子级SKU明细
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtil.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98082);
+            throw new ServiceException(ApiError.ERROR_98072);
         }
 
         //已审核发料数量
