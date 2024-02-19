@@ -92,7 +92,7 @@ public class HomePageServiceImpl implements HomePageService {
                 .waitConfirmOrderCount(purchaseStatisticsFeign.statisticsExecutionStatus(requestDTO).getCount())
                 .waitPrintDeliveryCount(deliveryOrderService.countByPrint(supplier.getId(),false))
                 .waitConfirmReturnCount(purchaseReturnStatisticsFeign.confirmStatusCountBySupplier(returnRequestDTO).getCount())
-                .ConfirmingReconciliationCount(poReconciliationService.countByStatus(supplier.getId(), PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode()))
+                .confirmingReconciliationCount(poReconciliationService.countByStatus(supplier.getId(), PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode()))
                 .build();
     }
 

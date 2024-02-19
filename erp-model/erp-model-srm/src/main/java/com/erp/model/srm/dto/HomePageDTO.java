@@ -81,7 +81,7 @@ public class HomePageDTO implements Serializable {
         /**
          * 确认中对账单数
          */
-        private Integer ConfirmingReconciliationCount;
+        private Integer confirmingReconciliationCount;
     }
 
 
