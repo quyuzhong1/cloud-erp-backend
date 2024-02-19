@@ -807,6 +807,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
                 }
             }
+            //如果是保宏
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
+                }
+            }
 
             //运单号
             getLabelVO.setTransportNo(dto.getTransportNo());
