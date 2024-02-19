@@ -174,11 +174,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(logisticsDTOS) && StringUtils.isNotBlank(warehouseName)) {
-            //生成销售出库单
-            soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
-
             //生成速卖通发货单
             addAliExpressDelivery(dto, mainEntity, logisticsDTOS);
+
+            //生成销售出库单
+            soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
         } else {
             //如果仓库名称为空表示没找到速卖通发货单，记录异常订单，这里的WarehouseName是速卖通仓库名称
             if (StringUtils.isBlank(warehouseName)) {
@@ -199,7 +199,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 addError.setParamJson("");
                 addError.setReturnJson("");
                 addError.setMainId(mainEntity.getId());
-                addError.setMessage("平台发货单仓库【" + resultDTO.getWarehouseName() + "】未匹配系统仓库");
+                addError.setMessage(StrUtil.format("发货单仓库【{}】未匹配系统仓库", resultDTO.getWarehouseName()));
                 soB2cErrorService.add(addError);
                 return;
             }
