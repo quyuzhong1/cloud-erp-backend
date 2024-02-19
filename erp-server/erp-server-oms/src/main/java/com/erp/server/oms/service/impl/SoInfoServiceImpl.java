@@ -2800,24 +2800,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         LoginUser userInfo = commonService.getUserInfo();
         Boolean isHasAdd = Boolean.FALSE;
-        //根据仓库分组生成加工单
-        Map<String, List<SoInfoEntity>> map = soInfoEntityList.stream().collect(Collectors.groupingBy(SoInfoEntity::getWarehouseId));
-        for (Map.Entry<String, List<SoInfoEntity>> entry : map.entrySet()) {
-            List<SoInfoEntity> value = entry.getValue();
-
+        //生成加工单
+        for (SoInfoEntity entry : soInfoEntityList) {
             MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
             addDTO.setBillDate(LocalDate.now());
 
             addDTO.setReceiverId(userInfo.getUid());
             addDTO.setWarehouseKeeperId(userInfo.getUid());
-            addDTO.setWarehouseId(value.get(0).getWarehouseId());
+            addDTO.setWarehouseId(entry.getWarehouseId());
             addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
             addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-
-            List<String> mainIdList = value.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
-            //仓库下明细信息
-            List<SoDetailEntity> soDetailList = soDetailEntityList.stream().filter(obj -> mainIdList.contains(obj.getMainId())).collect(Collectors.toList());
+            addDTO.setSourceId(entry.getId());
+            addDTO.setSourceCode(entry.getCode());
+            //明细信息
+            List<SoDetailEntity> soDetailList = soDetailEntityList.stream().filter(obj -> entry.getId().equals(obj.getMainId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soDetailList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
@@ -2832,21 +2829,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if (CollectionUtils.isEmpty(bomList)) {
                     continue;
                 }
-
-                SoInfoEntity soInfoEntity = value.stream().filter(obj -> obj.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(soInfoEntity)) {
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
-                }
                 addDetailDTO.setReferenceVersion(bomList.get(0).getBomVersion());
-                addDetailDTO.setRefCode(soInfoEntity.getCode());
-                addDetailDTO.setRefId(soInfoEntity.getId());
+                addDetailDTO.setRefCode(entry.getCode());
+                addDetailDTO.setRefId(entry.getId());
                 addDetailDTO.setRefDetailId(soDetailEntity.getId());
                 List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
                     MachineSubComponentsDTO.AddDTO subComponentsDTO = new MachineSubComponentsDTO.AddDTO();
                     subComponentsDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
                     subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    subComponentsDTO.setWarehouseId(value.get(0).getWarehouseId());
+                    subComponentsDTO.setWarehouseId(entry.getWarehouseId());
                     subComponentsDTO.setQty(soDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
                     subComponentsList.add(subComponentsDTO);
                 }

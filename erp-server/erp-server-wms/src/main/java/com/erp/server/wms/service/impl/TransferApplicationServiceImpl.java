@@ -838,6 +838,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
             addDTO.setSourceId(sourceId);
             addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+            String sourceCode = list.stream().filter(v->v.getSourceId().equals(sourceId)).findFirst().orElseThrow(() -> new ServiceException("未找到对应信息")).getSourceCode();
+            addDTO.setSourceCode(sourceCode);
             List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = list.stream().filter(req -> req.getSourceId().equals(sourceId)).collect(Collectors.toList());
             List<MachineSubComponentsDTO.AddDTO> componentsDTOList = new ArrayList<>();
             for (TransferApplicationDTO.ViewGenerateMachineInfo viewGenerateMachineInfo : viewGenerateMachineInfoList) {
