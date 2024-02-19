@@ -10,9 +10,9 @@ import com.common.core.constant.EnumMessage;
  */
 public enum ProductTypeEnum implements EnumMessage {
 
-    NEW_PRODUCT("new_product","新产品"),
+    NEW_PRODUCT("newProduct","新产品"),
 
-    ITERATIVE_PRODUCT("iterative_product","迭代产品");
+    ITERATIVE_PRODUCT("iterativeProduct","迭代产品");
 
     private String code;
 
