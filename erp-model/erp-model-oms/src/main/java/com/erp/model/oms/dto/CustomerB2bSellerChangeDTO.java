@@ -239,7 +239,6 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         /**
          * 变更后销售名
          */
-        @NotBlank(message = "变更后销售名不能为空")
         private String changeSellerName;
 
         /**
@@ -274,7 +273,6 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         /**
          * 变更后销售名
          */
-        @NotBlank(message = "变更后销售名不能为空")
         private String changeSellerName;
 
         /**
