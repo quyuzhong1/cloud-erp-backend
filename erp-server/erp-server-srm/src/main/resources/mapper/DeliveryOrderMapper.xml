@@ -76,7 +76,7 @@
             do2.create_time as createTime,
             do2.supplier_id as supplierId
         from delivery_order do2
-        left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
@@ -142,7 +142,7 @@
         do2.create_time as createTime,
         do2.supplier_id as supplierId
         from delivery_order do2
-        left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
@@ -188,7 +188,7 @@
             sum(doe.receive_qty) as totalReceiveQty,
             sum(doe.gift_receive_qty) as totalGiftReceiveQty
         from delivery_order do2
-        left join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
