@@ -66,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -2342,7 +2343,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO) {
         return  PurchaseReturnStatisticsDTO.StatusDTO.builder()
                 .count(lambdaQuery().eq(PoReturnEntity::getSupplierId, returnRequestDTO.getSurpplierId())
-                        .eq(PoReturnEntity::getConfirmStatus, returnRequestDTO.getConfirmStatus()).count())
+                        .eq(PoReturnEntity::getConfirmStatus, returnRequestDTO.getConfirmStatus())
+                        .eq(PoReturnEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).count())
                 .build();
     }
 }
