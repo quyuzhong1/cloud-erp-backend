@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import cn.hutool.core.date.DateTime;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PackageForecastDTO;
@@ -42,4 +43,10 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @return
      */
     List<PackageForecastDTO.PagingViewDTO> listExcel(@Param("params") PackageForecastDTO.ExportDTO dto,@Param("uploadStatus") String uploadStatus);
+
+    /**
+     * 获取订单查询列表（速卖通订单更新使用）
+     * @return
+     */
+    List<PackageForecastEntity> getAliExpressHandoverList(@Param("dateTime") DateTime dateTime);
 }

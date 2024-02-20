@@ -48,4 +48,11 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     void removeByMainId(String mainId);
 
     List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto);
+
+    /**
+     * 更新订单明细状态
+     * @param orderCode
+     * @param status
+     */
+    void updateStatusByOrderCode(String orderCode, String status);
 }

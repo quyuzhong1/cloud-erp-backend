@@ -212,6 +212,16 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         return resultList;
     }
 
+    @Override
+    public void updateStatusByOrderCode(String orderCode, String status) {
+        if (StringUtils.isEmpty(orderCode) || StringUtils.isEmpty(status)){
+            return;
+        }
+        this.lambdaUpdate().set(PackageForecastDetailEntity::getHandoverStatus,status)
+                .eq(PackageForecastDetailEntity::getSoCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted,false)
+                .update();
+    }
+
 
     @Override
     public List<PackageForecastDetailEntity> listDbByMainId(String mainId) {
