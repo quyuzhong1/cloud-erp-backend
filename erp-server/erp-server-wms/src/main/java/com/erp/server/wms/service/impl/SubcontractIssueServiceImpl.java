@@ -576,7 +576,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BaseResultDTO.AddDTO AutoAddDTO(SubcontractIssueDTO.AutoAddDTO dto) {
+    public BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto) {
         SubcontractIssueDTO.AddDTO addDTO = dto.getAddDTO();
         //新增
         BaseResultDTO.AddDTO add = this.add(addDTO);

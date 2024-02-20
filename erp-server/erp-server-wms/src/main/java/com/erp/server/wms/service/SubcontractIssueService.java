@@ -158,7 +158,7 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @param dto
      * @return AddDTO
      */
-    BaseResultDTO.AddDTO AutoAddDTO(SubcontractIssueDTO.AutoAddDTO dto);
+    BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto);
     /**
      * @description: 根据业务id更新金蝶id
      * @author Will

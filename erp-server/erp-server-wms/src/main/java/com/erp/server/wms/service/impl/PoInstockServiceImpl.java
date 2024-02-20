@@ -9,11 +9,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -75,7 +73,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 采购入库单 服务实现类
@@ -1772,14 +1769,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         throw new ServiceException(ApiError.ERROR_95166);
                     }
                     addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
-                    addDetailDTO.setWarehouseId(poInstockEntity.getDeliveryWarehouseId());
-                    addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                    addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                    addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
                     detailList.add(addDetailDTO);
                 }
                 addDTO.setDetailList(detailList);
                 //自动新增
                 SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
-                subcontractIssueService.AutoAddDTO(autoAddDTO);
+                subcontractIssueService.autoAdd(autoAddDTO);
             }
         }
     }

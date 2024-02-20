@@ -2,16 +2,12 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.SubcontractIssueService;
-import com.erp.server.wms.service.WarehouseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -35,7 +31,7 @@ public class SubcontractIssueFeignController {
      */
     @PostMapping("/add")
     public String add(@RequestBody @Validated SubcontractIssueDTO.AutoAddDTO dto) {
-        BaseResultDTO.AddDTO add = subcontractIssueService.AutoAddDTO(dto);
+        BaseResultDTO.AddDTO add = subcontractIssueService.autoAdd(dto);
         return  add.getId();
     }
 
