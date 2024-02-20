@@ -621,6 +621,11 @@ public class ExcelPrintUtils {
 			EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+			// list转化器，导入导出都可以使用
+			EasyExcelListConverter listConverter = new EasyExcelListConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+
 			WriteSheet writeSheet = EasyExcel.writerSheet().build();
 
 			//列表数据
