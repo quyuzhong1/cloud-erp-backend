@@ -24,7 +24,6 @@ import com.common.business.service.impl.RedisService;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -47,9 +46,6 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -78,7 +74,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -1066,7 +1061,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //8.修改/新增 证书信息
         List<ProductCertificateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
-        productCertificateList.forEach(req -> req.setSkuId(skuId));
+        //productCertificateList.forEach(req -> req.setSkuId(skuId));
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
             //SKU操作日志
             addProductCertificateLog(productCertificateList, id);
@@ -3410,7 +3405,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 证书信息新增或修改日志
      */
     private void addProductCertificateLog(List<ProductCertificateDTO> productCertificateList, String pid) {
-        List<String> ids = productCertificateList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCertificateDTO::getId).collect(Collectors.toList());
+       /* List<String> ids = productCertificateList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCertificateDTO::getId).collect(Collectors.toList());
         List<ProductCertificateEntity> certificateEntityList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             certificateEntityList = productCertificateService.listByIds(ids);
@@ -3428,7 +3423,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
-        });
+        });*/
     }
 
     /**

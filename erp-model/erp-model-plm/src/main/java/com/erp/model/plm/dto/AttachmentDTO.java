@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -108,4 +110,32 @@ public class AttachmentDTO implements Serializable {
     }
 
 
+    /**
+     * 列表数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 附件名称
+         */
+        private String attachName;
+
+        /**
+         * 上传日期
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 大小
+         */
+        private BigDecimal fileSize;
+
+    }
 }

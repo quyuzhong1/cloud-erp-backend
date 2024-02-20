@@ -23,8 +23,6 @@ public enum  BasicDictTypeEnum {
      */
     PRODUCT_ATTESTATION("productAttestation", "产品认证"),
 
-
-
     /**
      * 运输认证
      */
@@ -39,7 +37,20 @@ public enum  BasicDictTypeEnum {
     /**
      * 国家
      */
-    COUNTRY("country", "国家");
+    COUNTRY("country", "国家"),
+
+    /**
+     * 证书类型
+     */
+    CERTIFICATE_TYPE("certificateType", "证书类型"),
+
+    /**
+     * 证书项目
+     */
+    CERTIFICATE_PROJECT("certificateProject", "证书项目"),
+    ;
+
+
 
     private String code;
     private String name;

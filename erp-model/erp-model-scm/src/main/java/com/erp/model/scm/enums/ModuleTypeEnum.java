@@ -65,7 +65,7 @@ public enum ModuleTypeEnum {
     SKU_MAPPING("61", "sku映射表"),
     LISTING_INFO("62", "对应平台sku 表"),
     CUSTOMER_B2B_SELLER_CHANGE("63", "b2b客户销售员变更单"),
-
+    PRODUCT_CERTIFICATE("64", "产品认证"),
     ;
 
 
