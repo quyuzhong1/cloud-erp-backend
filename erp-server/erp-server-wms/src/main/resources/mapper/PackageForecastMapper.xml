@@ -144,6 +144,8 @@
             AND pf.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > pf.create_time
         </if>
+
+        ORDER BY pf.create_time DESC
     </select>
 
 
@@ -248,6 +250,7 @@
                 </if>
             </otherwise>
         </choose>
+        ORDER BY pf.create_time DESC
     </select>
     <select id="getAliExpressHandoverList" resultType="com.erp.model.wms.entity.PackageForecastEntity">
         select

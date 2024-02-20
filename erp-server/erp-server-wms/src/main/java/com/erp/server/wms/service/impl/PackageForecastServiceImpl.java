@@ -212,12 +212,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public PagingVO<PackageForecastDTO.PagingViewDTO> paging(PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PackageForecastDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String uploadStatus="";
-        if(!"all".equals(params.getTabFlag())){
-            uploadStatus=params.getTabFlag();
+        String uploadStatus = "";
+        if (!"all".equals(params.getTabFlag())) {
+            uploadStatus = params.getTabFlag();
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params,uploadStatus);
+        IPage pageData = baseMapper.paging(query, params, uploadStatus);
         List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
         //处理分页数据
         fillPaging(list);
@@ -387,15 +387,15 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 .build();
         try {
             IopResponse response = aliExpressHandoverService.queryContent(alExpressHandoverBase.getAuthMap(), handoverQueryRequest);
-            if (StringUtils.isEmpty(response.getBody())){
+            if (StringUtils.isEmpty(response.getBody())) {
                 return;
             }
             BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-            if (StringUtils.isEmpty(baseResponse.getResult())){
+            if (StringUtils.isEmpty(baseResponse.getResult())) {
                 return;
             }
             BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
-            if (StringUtils.isEmpty(baseResult.getData())){
+            if (StringUtils.isEmpty(baseResult.getData())) {
                 return;
             }
             HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
@@ -404,11 +404,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             baseMapper.updateById(packageForecastEntity);
             //更新明细表
             List<ParcelOrder> parcelOrderList = queryResponse.getParcelOrderList();
-            if (CollectionUtils.isEmpty(parcelOrderList)){
+            if (CollectionUtils.isEmpty(parcelOrderList)) {
                 return;
             }
             parcelOrderList.forEach(parcelOrder -> {
-                packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(),parcelOrder.getStatus());
+                packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(), parcelOrder.getStatus());
             });
         } catch (ApiException e) {
             throw new RuntimeException(e);
@@ -488,7 +488,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("物流商不存在");
         }
         String logisticsPlatform = authDTO.getLogisticsPlatform();
-        String base64="";
+        String base64 = "";
         try {
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
@@ -497,10 +497,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         } catch (Exception e) {
             log.error("打印失败>>>>>>>{}", e);
         }
-        if(StringUtils.isNotBlank(base64)){
+        if (StringUtils.isNotBlank(base64)) {
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
             this.updateById(entity);
-        }else{
+        } else {
             throw new ServiceException("打印失败");
         }
         return base64;
@@ -567,7 +567,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         String client = PackageForecastConstant.CLIENT;
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
-                orderCodeList(orderCodeList).weight(entity.getTotalPackageWeight()).
+                orderCodeList(orderCodeList).weight(entity.getTotalPackageWeight().setScale(2)).
                 weightUnit(entity.getWeightUnit()).userInfo(base.getUserInfo()).
                 type(type).client(client).build();
         try {
@@ -630,11 +630,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
-        String uploadStatus="";
-        if(!"all".equals(dto.getTabFlag())){
-            uploadStatus=dto.getTabFlag();
+        String uploadStatus = "";
+        if (!"all".equals(dto.getTabFlag())) {
+            uploadStatus = dto.getTabFlag();
         }
-        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto,uploadStatus);
+        List<PackageForecastDTO.PagingViewDTO> list = baseMapper.listExcel(dto, uploadStatus);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -671,6 +671,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             String printStatus = item.getPrintStatus();
             String printStatusName = PackagePrintStatusEnum.getName(printStatus);
             item.setPrintStatusName(printStatusName);
+            //跟踪单号
+            String trackNo = item.getTrackNo();
+            String minPackageTransportNo = item.getMinPackageTransportNo();
+            if(StringUtils.isBlank(trackNo)){
+                trackNo=minPackageTransportNo;
+            }
+            item.setTrackNo(trackNo);
             //第三方交接单号
             String handoverNo = item.getHandoverNo();
             //第三方组包号
