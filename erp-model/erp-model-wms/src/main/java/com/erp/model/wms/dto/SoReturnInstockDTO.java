@@ -767,6 +767,14 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class ViewGenerateMachineInfoDTO {
         /**
+         * id
+         */
+        private String id;
+        /**
+         * 退货入库单据编号
+         */
+        private String code;
+        /**
          * 事务类型
          */
         private String workType;

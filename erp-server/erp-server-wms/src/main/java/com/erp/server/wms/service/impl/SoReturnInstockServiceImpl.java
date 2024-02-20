@@ -1124,76 +1124,77 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
 
         //根据sku、仓库、仓位合并显示
-        Map<String, List<SoReturnInstockDetailEntity>> map = viewList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(mainList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getWarehouseId())).orElse("")).concat(obj.getWarehouseLocation())));
-
         List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> resultList = new ArrayList<>();
-        for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : map.entrySet()) {
-            SoReturnInstockDetailEntity entity = entry.getValue().get(0);
-            SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
+        for (SoReturnInstockEntity entity : mainList) {
+            List<SoReturnInstockDetailEntity> detailEntityList = viewList.stream().filter(v->v.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            Map<String, List<SoReturnInstockDetailEntity>> detailMap = detailEntityList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(entity.getWarehouseId() == null?"":entity.getWarehouseId()).concat(obj.getWarehouseLocation())));
 
-            SoReturnInstockEntity soReturnInstockEntity = mainList.stream().filter(obj -> obj.getId().equals(entity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(soReturnInstockEntity)) {
-                throw new ServiceException(ApiError.ERROR_99083);
-            }
-            if (!ApproveStatusEnum.APPROVE.getStatus().equals(soReturnInstockEntity.getApproveStatus())) {
-                throw new ServiceException(ApiError.ERROR_SO_RETURN_INSTOCK_NOT_GENERATE,soReturnInstockEntity.getCode());
-            }
-            //事务类型默认拆卸
-            viewDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
-            viewDTO.setSkuId(entity.getSkuId());
-            viewDTO.setSkuNo(entity.getSkuNo());
-            viewDTO.setWarehouseId(soReturnInstockEntity.getWarehouseId());
-            viewDTO.setWarehouseName(soReturnInstockEntity.getWarehouseName());
-            viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
-            if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
-                String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                viewDTO.setWarehouseLocationName(warehouseLocationName);
-            }
-            //产品信息
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
-            viewDTO.setProductName(skuVO.getSkuName());
-            viewDTO.setVariantProperty(skuVO.getVariantProperty());
+            for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : detailMap.entrySet()) {
+                SoReturnInstockDetailEntity detailEntity = entry.getValue().get(0);
+                SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
 
-            //即时库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDTO.getSkuId(), viewDTO.getWarehouseLocation());
-
-            List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> obj.getParentSkuId().equals(entity.getSkuId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(childList)) {
-                throw new ServiceException(ApiError.ERROR_95166);
-            }
-            viewDTO.setBomVersion(childList.get(0).getBomVersion());
-            viewDTO.setCurInventoryQty(curInventoryQty);
-            viewDTO.setQty(curInventoryQty);
-            viewDTO.setChildLength(childList.size());
-            Boolean childHidden = false;
-            //显示按明细维度显示数据
-            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+                    throw new ServiceException(ApiError.ERROR_SO_RETURN_INSTOCK_NOT_GENERATE,entity.getCode());
+                }
+                //事务类型默认拆卸
+                viewDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
+                viewDTO.setSkuId(detailEntity.getSkuId());
+                viewDTO.setId(entity.getId());
+                viewDTO.setCode(entity.getCode());
+                viewDTO.setSkuNo(detailEntity.getSkuNo());
+                viewDTO.setWarehouseId(entity.getWarehouseId());
+                viewDTO.setWarehouseName(entity.getWarehouseName());
+                viewDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
+                    String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    viewDTO.setWarehouseLocationName(warehouseLocationName);
+                }
                 //产品信息
-                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(childSkuVO)) {
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
-                SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
-                BeanMapperUtils.copy(viewDTO,viewChildDTO);
-                if (!childHidden) {
-                    childHidden = Boolean.TRUE;
-                    viewChildDTO.setChildHidden(childHidden);
-                }
-                viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
-                viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
-                viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
-                viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
-                //默认退供应商
-                viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
-                viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
-                viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
-                viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
-                resultList.add(viewChildDTO);
-            }
+                viewDTO.setProductName(skuVO.getSkuName());
+                viewDTO.setVariantProperty(skuVO.getVariantProperty());
 
+                //即时库存
+                Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDTO.getSkuId(), viewDTO.getWarehouseLocation());
+
+                List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childList)) {
+                    throw new ServiceException(ApiError.ERROR_95166);
+                }
+                viewDTO.setBomVersion(childList.get(0).getBomVersion());
+                viewDTO.setCurInventoryQty(curInventoryQty);
+                viewDTO.setQty(curInventoryQty);
+                viewDTO.setChildLength(childList.size());
+                Boolean childHidden = false;
+                //显示按明细维度显示数据
+                for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                    //产品信息
+                    SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(childSkuVO)) {
+                        throw new ServiceException(ApiError.ERROR_95084);
+                    }
+                    SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
+                    BeanMapperUtils.copy(viewDTO,viewChildDTO);
+                    if (!childHidden) {
+                        childHidden = Boolean.TRUE;
+                        viewChildDTO.setChildHidden(childHidden);
+                    }
+                    viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
+                    viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
+                    viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
+                    viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
+                    //默认退供应商
+                    viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
+                    viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
+                    viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
+                    viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
+                    resultList.add(viewChildDTO);
+                }
+
+            }
         }
         return resultList;
     }
