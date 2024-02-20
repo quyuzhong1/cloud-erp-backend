@@ -1206,8 +1206,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
         /**
-         * 1、同一仓库生成一个加工单
+         * 1、一个单据生成一个加工单
          * 2、同仓库、sku、仓位生成一个加工单明细
          */
         List<String> skuIds = list.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getChildSkuId())).collect(Collectors.toList());
@@ -1224,16 +1225,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         List<String> ids = new ArrayList<>();
 
-        Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> map = list.getList().stream().collect(Collectors.groupingBy(SoReturnInstockDTO.GenerateMachineInfoDTO::getWarehouseId));
+        Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> map = list.getList().stream().collect(Collectors.groupingBy(SoReturnInstockDTO.GenerateMachineInfoDTO::getId));
         for (Map.Entry<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> entry : map.entrySet()) {
             List<SoReturnInstockDTO.GenerateMachineInfoDTO> value = entry.getValue();
             MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
             addDTO.setBillDate(LocalDate.now());
             //事务类型默认拆卸
             addDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
-            addDTO.setWarehouseId(entry.getKey());
+            addDTO.setWarehouseId(value.get(0).getWarehouseId());
             addDTO.setType(MachineTypeEnum.OUTSOURCING.getCode());
             addDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
+            addDTO.setSourceId(entry.getKey());
+            addDTO.setSourceCode(value.get(0).getCode());
             List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
 
             Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseLocation())));
@@ -1259,8 +1262,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                     //BOM信息
                     BomChildrenSkuDTO bomChildrenSkuDTO = bomList.stream().filter(obj -> obj.getParentSkuId().equals(subComponentsDTO.getSkuId())
-                            && obj.getSkuId().equals(subComponentsDTO.getChildSkuId())
-                            && obj.getBomVersion().equals(subComponentsDTO.getBomVersion()))
+                                    && obj.getSkuId().equals(subComponentsDTO.getChildSkuId())
+                                    && obj.getBomVersion().equals(subComponentsDTO.getBomVersion()))
                             .findFirst().orElse(null);
 
                     if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
@@ -1285,6 +1288,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             String id = machineInfoService.add(addDTO);
             ids.add(id);
         }
+
         //自动提交
         Boolean submit = machineInfoService.submit(ids);
         if (!submit) {

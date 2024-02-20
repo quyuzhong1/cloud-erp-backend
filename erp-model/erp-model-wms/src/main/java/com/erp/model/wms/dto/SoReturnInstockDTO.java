@@ -879,6 +879,16 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class GenerateMachineInfoDTO {
         /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 退货入库单号
+         */
+        @NotBlank(message = "退货入库单号不能为空")
+        private String code;
+        /**
          * skuId
          */
         @NotBlank(message = "sku不能为空")
