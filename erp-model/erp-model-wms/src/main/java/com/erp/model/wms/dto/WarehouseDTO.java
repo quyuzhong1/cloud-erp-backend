@@ -361,6 +361,16 @@ public class WarehouseDTO implements Serializable {
          * 是否启用仓位
          */
         private Boolean isEnableLocation;
+
+        /**
+         * 在途仓库名称
+         */
+        private String onwayWarehouseName;
+
+        /**
+         * 第三方仓库名称
+         */
+        private String thirdWarehouseName;
     }
 
 
