@@ -2,6 +2,7 @@ package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -91,4 +92,8 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return
      */
     List<ListingInfoWithSkuMappingDTO> listByParams(@Param("params") ListingInfoParamDTO params);
+
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@Param("erpSkuIdList") List<String> erpSkuIdList, @Param("type") String type);
+
+    List<String> advanceQuerySku(@Param("params") AdvanceQueryContainer advanceQueryContainer);
 }

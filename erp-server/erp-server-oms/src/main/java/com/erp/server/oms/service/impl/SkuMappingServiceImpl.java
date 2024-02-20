@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -1095,6 +1096,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
         }
         return listDTOPagingVO;
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList, String type) {
+        return baseMapper.listByErpSkuIdAndType(erpSkuIdList,type);
+    }
+
+    @Override
+    public List<String> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer) {
+        return baseMapper.advanceQuerySku(advanceQueryContainer);
     }
 
     private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type) {

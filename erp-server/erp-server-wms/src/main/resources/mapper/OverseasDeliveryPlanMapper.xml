@@ -64,78 +64,16 @@
             odp.approve_user_id AS approveUserId,
             odp.approve_user_name AS approveUserName,
             odp.create_time AS createTime,
-            odp.approve_time AS  approveTime
+            odp.approve_time AS  approveTime,
+            op.code AS sourcePlatformCode
         FROM overseas_delivery_plan_detail odpd
         INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
-        WHERE odp.is_deleted = FALSE
-        <!--状态-->
-        <if test="params.tabFlag != null and params.tabFlag != ''">
-            AND odp.approve_status = #{params.tabFlag}
-        </if>
-        <!--单号-->
-        <if test="params.code != null and params.code != ''">
-            AND odp.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--sku编号-->
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND odpd.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <!--审核状态-->
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            AND odp.approve_status in
-            <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                #{approveStatus}
-            </foreach>
-        </if>
-        <!--发货状态-->
-        <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
-            AND odp.delivery_status in
-            <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
-                #{deliveryStatus}
-            </foreach>
-        </if>
-        <!--发货单号-->
-        <if test="params.deliveryCode != null and params.deliveryCode != ''">
-            AND EXISTS (SELECT id FROM first_mile_delivery fd WHERE fd.source_id = odp.id AND fd.code ILIKE concat('%',#{params.deliveryCode}::text,'%'))
-        </if>
-        <!--目的仓库-->
-        <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
-            AND odp.to_warehouse_id in
-            <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" close=")" separator=",">
-                #{toWarehouseId}
-            </foreach>
-        </if>
-        <!--国家-->
-        <if test="params.countryList != null and params.countryList.size > 0">
-            AND odp.country in
-            <foreach collection="params.countryList" item="country" open="(" close=")" separator=",">
-                #{country}
-            </foreach>
-        </if>
-        <!--是否组合品-->
-        <if test="params.isCombination != null">
-            and odpd.is_combination = #{params.isCombination}
-        </if>
-        <!--操作人-->
-        <if test="params.updateUserIdList != null and params.updateUserIdList.size > 0">
-            AND odp.update_user_id in
-            <foreach collection="params.updateUserIdList" item="updateUserId" open="(" close=")" separator=",">
-                #{updateUserId}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND odp.create_time >= #{params.createTimeList[0]} and
-            (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.create_time
-        </if>
-        <!--审核时间-->
-        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-            AND odp.approve_time >= #{params.approveTimeList[0]} and
-            (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.approve_time
-        </if>
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and  odp.is_deleted = FALSE
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -172,88 +110,15 @@
         odp.approve_user_id,
         odp.approve_user_name,
         odp.create_time,
-        odp.approve_time
+        odp.approve_time,
+        op.code AS sourcePlatformCode
         FROM overseas_delivery_plan_detail odpd
         INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
-        WHERE odp.is_deleted = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND odp.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--状态-->
-                <if test="params.tabFlag != null and params.tabFlag != ''">
-                    AND odp.approve_status = #{params.tabFlag}
-                </if>
-                <!--单号-->
-                <if test="params.code != null and params.code != ''">
-                    AND odp.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <!--sku编号-->
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    AND odpd.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--审核状态-->
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    AND odp.approve_status in
-                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
-                        #{approveStatus}
-                    </foreach>
-                </if>
-                <!--发货状态-->
-                <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
-                    AND odp.delivery_status in
-                    <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
-                        #{deliveryStatus}
-                    </foreach>
-                </if>
-                <!--发货单号-->
-                <if test="params.deliveryCode != null and params.deliveryCode != ''">
-                    AND odp.delivery_code ILIKE concat('%',#{params.deliveryCode}::text,'%')
-                </if>
-                <!--目的仓库-->
-                <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
-                    AND odp.to_warehouse_id in
-                    <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" close=")" separator=",">
-                        #{toWarehouseId}
-                    </foreach>
-                </if>
-                <!--国家-->
-                <if test="params.countryList != null and params.countryList.size > 0">
-                    AND odp.country in
-                    <foreach collection="params.countryList" item="country" open="(" close=")" separator=",">
-                        #{country}
-                    </foreach>
-                </if>
-                <!--是否组合品-->
-                <if test="params.isCombination != null">
-                    and odpd.is_combination = #{params.isCombination}
-                </if>
-                <!--操作人-->
-                <if test="params.updateUserIdList != null and params.updateUserIdList.size > 0">
-                    AND odp.update_user_id in
-                    <foreach collection="params.updateUserIdList" item="updateUserId" open="(" close=")" separator=",">
-                        #{updateUserId}
-                    </foreach>
-                </if>
-                <!--创建时间-->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND odp.create_time >= #{params.createTimeList[0]} and
-                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.create_time
-                </if>
-                <!--审核时间-->
-                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND odp.approve_time >= #{params.approveTimeList[0]} and
-                    (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.approve_time
-                </if>
-            </otherwise>
-        </choose>
+        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+         and odp.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

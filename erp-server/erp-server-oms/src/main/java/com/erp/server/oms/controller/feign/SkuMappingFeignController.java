@@ -1,5 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -7,10 +9,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.server.oms.service.SkuMappingService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -67,5 +66,29 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/list")
     public List<ListingInfoWithSkuMappingDTO> listDTOByType(@RequestBody ListingInfoParamDTO dto) {
         return skuMappingService.findListDto(dto);
+    }
+
+
+    /**
+     * 通过skuId查询映射关系列表
+     *
+     * @author Jim
+     * @date 2023/11/2
+     */
+    @PostMapping("/listByErpSkuIdAndType")
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList, @RequestParam(value = "type") String type) {
+        return skuMappingService.listByErpSkuIdAndType(erpSkuIdList,type);
+    }
+
+    /**
+     * 通过skuId查询映射关系列表
+     *
+     * @author Jim
+     * @date 2023/11/2
+     */
+    @PostMapping("/advanceQuerySku")
+    @WebAdvanceQuery
+    public  List<String> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer){
+        return skuMappingService.advanceQuerySku(advanceQueryContainer);
     }
 }

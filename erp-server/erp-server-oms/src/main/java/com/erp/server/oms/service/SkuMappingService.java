@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -222,4 +223,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
 
 
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList, String type);
+
+    List<String> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer);
 }

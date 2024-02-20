@@ -645,4 +645,53 @@
             </foreach>
         </if>
     </select>
+    <select id="listByErpSkuIdAndType" resultType="com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO">
+        select
+            sm.id as tableId,
+            sm.shop_id as shopId,
+            sm.dict_platform as dictPlatform,
+            sm.platform_name as platformName,
+            sm.product_sku_id as productSkuId,
+            sm.product_sku_no as productSkuNo,
+            sm.product_name as productName,
+            sm.type as type,
+            sm.warehouse_id as warehouseId,
+            sm.warehouse_name as warehouseName,
+            sm.effective_time as effectiveTime,
+            sm.expire_time as expireTime,
+            sm.is_expire as isExpire,
+            sm.has_mapping_all as hasMappingAll,
+            li.id as listingId,
+            li.platform_sku_no as platformSkuNo,
+            li.platform_sku_name as platformSkuName,
+            li.platform_spu_no as platformSpuNo,
+            li.platform_spu_name as platformSpuName,
+            li.platform as platform,
+            li.match_result as matchResult,
+            li.product_image_url as productImageUrl,
+            li.product_spec as productSpec,
+            li.product_packing as productPacking
+        from sku_mapping sm
+        inner join listing_info li on sm.listing_id = li.id
+        where sm.is_deleted = false
+        and li.is_deleted = false
+        <if test="erpSkuIdList !=null and erpSkuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="erpSkuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="type != null and type != ''">
+            AND sm.type = #{type}
+        </if>
+    </select>
+    <select id="advanceQuerySku" resultType="java.lang.String">
+        select
+           distinct sm.product_sku_id as productSkuId
+        from sku_mapping sm
+                 inner join listing_info li on sm.listing_id = li.id
+        where
+            ${params.sqlMap.default}
+        and sm.is_deleted = false and li.is_deleted = false
+    </select>
 </mapper>

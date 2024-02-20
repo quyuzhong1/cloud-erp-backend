@@ -1,12 +1,14 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
+import com.erp.server.wms.query.OverseasDeliveryPlanQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -112,6 +114,7 @@ public class OverseasDeliveryPlanController extends BaseController {
             menuCode = "wms:overseasDeliveryPlan:paging",
             tableAlias = "odp"
     )
+    @WebAdvanceQuery(handler = OverseasDeliveryPlanQueryHandler.class)
     public ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasDeliveryPlanDTO.PagingParamDTO> dto) {
         return success(overseasDeliveryPlanService.paging(dto));
     }
@@ -397,7 +400,8 @@ public class OverseasDeliveryPlanController extends BaseController {
             tableAlias = "odp"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货计划导出Excel数据")
-    public void exportList(@RequestBody @Validated OverseasDeliveryPlanDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = OverseasDeliveryPlanQueryHandler.class)
+    public void exportList(@RequestBody @Validated OverseasDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response) {
         overseasDeliveryPlanService.exportList(dto, response);
     }
 

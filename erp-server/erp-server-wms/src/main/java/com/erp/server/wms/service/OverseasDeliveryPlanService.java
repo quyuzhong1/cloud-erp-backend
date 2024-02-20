@@ -147,7 +147,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     * @param response
     * @return
     */
-    void exportList(OverseasDeliveryPlanDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(OverseasDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
