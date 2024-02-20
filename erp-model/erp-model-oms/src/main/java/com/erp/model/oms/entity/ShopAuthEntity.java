@@ -62,6 +62,7 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
     @TableField("shopee_id")
     private String shopeeId;
 
+    @TableField(exist = false)
     private String extendData;
 
     public static final String SHOP_ID = "shop_id";

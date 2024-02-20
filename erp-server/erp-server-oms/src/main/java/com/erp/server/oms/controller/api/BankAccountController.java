@@ -27,10 +27,10 @@ public class BankAccountController extends BaseController {
     private BankAccountService bankAccountService;
 
     @GetMapping("/select")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> select(@RequestParam(value = "orgId") String orgId) {
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> select(@RequestParam(value = "orgId") String orgId) {
         List<BankAccountEntity> list = bankAccountService.findByOrgId(orgId);
-        List<BaseDropDownDTO.CommonDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getBankAccountNo(), x.getBankAccountNo()+"/"+x.getAccountName()))
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getBankAccountNo(), x.getBankAccountNo()+"/"+x.getAccountName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);
     }

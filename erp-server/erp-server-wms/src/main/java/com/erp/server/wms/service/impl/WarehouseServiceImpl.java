@@ -100,7 +100,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     private WarehouseMappingService warehouseMappingService;
 
 
-
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
@@ -676,6 +675,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
+            List<String> warehouseIds = viewList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
+
             for (WarehouseDTO.PagingViewDTO item : viewList) {
                 WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
@@ -702,6 +704,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 excelDTO.setOrgName(orgName);
                 excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
                 excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
+                excelDTO.setOnwayWarehouseName(item.getOnwayWarehouseName());
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> req.getWarehouseId().equals(item.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(mappingViewDTO)) {
+                    excelDTO.setThirdWarehouseName(mappingViewDTO.getThirdWarehouseName());
+                }
                 resultList.add(excelDTO);
 
 

@@ -3,30 +3,24 @@ package com.sdk.oms.shopify.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.base.AuthorizeDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.common.business.dto.base.AuthorizeDTO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Lambda
@@ -81,7 +75,7 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            throw new ServiceException("店铺授权检验未通过");
+            throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);
