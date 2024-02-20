@@ -37,4 +37,9 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * 保存签收记录并检查调拨
      */
     Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList);
+
+    /**
+     * 移除非Erp系统的签收记录的关联关系
+     */
+    void checkAndRemoveDetailIds(List<String> mainIds);
 }

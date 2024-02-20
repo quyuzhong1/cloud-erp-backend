@@ -1290,6 +1290,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
             throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_NOT_DELETE);
         }
+        // 如果存在非Erp系统的签收记录， 移除关联关系
+        fbaShipmentReceiveService.checkAndRemoveDetailIds(Collections.singletonList(id));
 
         // 删除明细数据
         fbaShipmentDetailService.removeByMainIds(Arrays.asList(id));

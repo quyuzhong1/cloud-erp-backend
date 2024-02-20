@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OperateLogDTO;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.sql.rowset.serial.SerialException;
 
 /**
  * <p>
@@ -69,13 +71,15 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<FbaShipmentReceiveEntity> checkAndSetReceiveSkuMapping(List<FbaShipmentDetailEntity> oldDetailEntityList, List<FbaShipmentReceiveEntity> sourceReceiveEntityList) {
-        Map<Boolean, List<FbaShipmentReceiveEntity>> gourpMap = sourceReceiveEntityList.stream()
-                .collect(Collectors.groupingBy(e -> StringUtils.isBlank(e.getSkuId()) || StringUtils.isBlank(e.getSkuNo())));
-        // 签收记录丢失映射关系的
-        List<FbaShipmentReceiveEntity> missingSkuMappingReceiveList = gourpMap.get(true);
-        if (CollectionUtils.isEmpty(missingSkuMappingReceiveList)){
-            return sourceReceiveEntityList;
-        }
+//        Map<Boolean, List<FbaShipmentReceiveEntity>> gourpMap = sourceReceiveEntityList.stream()
+//                .collect(Collectors.groupingBy(e -> StringUtils.isBlank(e.getSkuId()) || StringUtils.isBlank(e.getSkuNo())));
+//        // 签收记录丢失映射关系的
+//        List<FbaShipmentReceiveEntity> missingSkuMappingReceiveList = gourpMap.get(true);
+//        if (CollectionUtils.isEmpty(missingSkuMappingReceiveList)){
+//            return sourceReceiveEntityList;
+//        }
+        // 根据明细的新记录调拨
+        List<FbaShipmentReceiveEntity> missingSkuMappingReceiveList = sourceReceiveEntityList;
 
         // 检查详情是否都有映射
         FbaShipmentDetailEntity missingSkuMappingEntity = oldDetailEntityList.stream().filter(e -> StringUtils.isBlank(e.getSkuId()) || StringUtils.isBlank(e.getSkuNo())).findFirst().orElse(null);
@@ -98,11 +102,11 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             throw new ServiceException("批量更新签收记录失败");
         }
         // 已匹配关系的签收记录
-        List<FbaShipmentReceiveEntity> alreadySkuMappingReceiveEntityList = gourpMap.get(false);
-        if (CollectionUtils.isEmpty(alreadySkuMappingReceiveEntityList)){
-            return missingSkuMappingReceiveList;
-        }
-        missingSkuMappingReceiveList.addAll(alreadySkuMappingReceiveEntityList);
+//        List<FbaShipmentReceiveEntity> alreadySkuMappingReceiveEntityList = gourpMap.get(false);
+//        if (CollectionUtils.isEmpty(alreadySkuMappingReceiveEntityList)){
+//            return missingSkuMappingReceiveList;
+//        }
+//        missingSkuMappingReceiveList.addAll(alreadySkuMappingReceiveEntityList);
         return missingSkuMappingReceiveList;
     }
 
@@ -206,5 +210,31 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         // 执行调拨逻辑
         fbaShipmentService.handlerWarehouse(fbaShipmentEntity, entityList, billDate, closedDateMap);
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndRemoveDetailIds(List<String> mainIds) {
+        List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return;
+        }
+        List<String> detailIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        List<FbaShipmentReceiveEntity> oldList = this.lambdaQuery()
+                .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
+                .ne(FbaShipmentReceiveEntity::getSourceType, "erp")
+                .list();
+        if (CollectionUtils.isEmpty(oldList)){
+            return;
+        }
+        oldList.forEach(e->{
+            e.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode());
+            e.setDetailId("");
+        });
+        if (this.updateBatchById(oldList)){
+            throw new ServiceException("批量更新FBA签收记录失败");
+        }
+
     }
 }
