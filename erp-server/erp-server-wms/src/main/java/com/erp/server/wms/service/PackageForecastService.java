@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import cn.hutool.core.date.DateTime;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
@@ -113,6 +114,23 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      */
     String print(String id);
 
+    /**
+     * 获取速卖通授权信息
+     * @param logisticsPlatform
+     * @return
+     */
+    PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform);
 
+    /**
+     * 获取组包订单 更新订单明细
+     * @return
+     */
+    List<PackageForecastEntity> getAliExpressHandoverList(DateTime dateTime);
 
+    /**
+     * 更新订单状态信息
+     * @param packageForecastEntity
+     * @param alExpressHandoverBase
+     */
+    void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase);
 }

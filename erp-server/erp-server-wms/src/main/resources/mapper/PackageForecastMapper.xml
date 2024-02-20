@@ -249,6 +249,18 @@
             </otherwise>
         </choose>
     </select>
+    <select id="getAliExpressHandoverList" resultType="com.erp.model.wms.entity.PackageForecastEntity">
+        select
+            pf.id,
+            pf.code,
+            pf.handover_no AS handoverNo,
+            pf.platform_package_no AS platformPackageNo,
+            pf.transport_no AS transportNo,
+            pf.handover_status AS handoverStatus
+        from package_forecast pf
+        where pf.handover_no != '' and pf.handover_status not in ('canceled','closed','signedNormal')
+        and pf.bill_date > #{dateTime}
+    </select>
 
 
 </mapper>

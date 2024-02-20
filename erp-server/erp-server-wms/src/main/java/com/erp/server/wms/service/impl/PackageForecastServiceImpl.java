@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -55,14 +56,18 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.model.handover.AddressBase;
 import com.erp.tms.aliexpress.model.handover.AddressInfo;
+import com.erp.tms.aliexpress.model.handover.ParcelOrder;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
 import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
+import com.erp.tms.aliexpress.model.handover.request.HandoverQueryRequest;
 import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
 import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
 import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
+import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
 import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
@@ -329,6 +334,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      *
      * @return
      */
+    @Override
     public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform) {
 
         PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBaseDTO = new PackageForecastDTO.AlExpressHandoverBaseDTO();
@@ -364,6 +370,49 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         alExpressHandoverBaseDTO.setAuthMap(authMap);
         alExpressHandoverBaseDTO.setUserInfo(userInfo);
         return alExpressHandoverBaseDTO;
+    }
+
+    @Override
+    public List<PackageForecastEntity> getAliExpressHandoverList(DateTime dateTime) {
+        return baseMapper.getAliExpressHandoverList(dateTime);
+    }
+
+    @Override
+    public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase) {
+        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
+                .client(alExpressHandoverBase.getClient())
+                .locale("zh_CN")
+                .orderCode(packageForecastEntity.getHandoverNo())
+                .userInfo(alExpressHandoverBase.getUserInfo())
+                .build();
+        try {
+            IopResponse response = aliExpressHandoverService.queryContent(alExpressHandoverBase.getAuthMap(), handoverQueryRequest);
+            if (StringUtils.isEmpty(response.getBody())){
+                return;
+            }
+            BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+            if (StringUtils.isEmpty(baseResponse.getResult())){
+                return;
+            }
+            BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+            if (StringUtils.isEmpty(baseResult.getData())){
+                return;
+            }
+            HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
+            packageForecastEntity.setHandoverStatus(queryResponse.getStatus());
+            packageForecastEntity.setTransportNo(queryResponse.getTrackingNumber());
+            baseMapper.updateById(packageForecastEntity);
+            //更新明细表
+            List<ParcelOrder> parcelOrderList = queryResponse.getParcelOrderList();
+            if (CollectionUtils.isEmpty(parcelOrderList)){
+                return;
+            }
+            parcelOrderList.forEach(parcelOrder -> {
+                packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(),parcelOrder.getStatus());
+            });
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
