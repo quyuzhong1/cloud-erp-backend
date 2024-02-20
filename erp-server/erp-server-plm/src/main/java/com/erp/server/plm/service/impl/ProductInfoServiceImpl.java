@@ -533,6 +533,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @return List<String>
      */
     private List<String> handleDept(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(deptIdList);
         if (CollectionUtils.isEmpty(sysDepartmentUserNumberList)) {
            return Collections.EMPTY_LIST;
