@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -184,6 +185,31 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     @Override
     public void removeByMainId(String mainId) {
         this.lambdaUpdate().eq(PackageForecastDetailEntity::getMainId,mainId).remove();
+    }
+
+    @Override
+    public List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto) {
+        List<PackageForecastDetailEntity> detailList = this.lambdaQuery().
+                eq(PackageForecastDetailEntity::getMainId,dto.getId()).
+                in(CollectionUtils.isNotEmpty(dto.getSoCodeList()),PackageForecastDetailEntity::getSoCode,dto.getSoCodeList()).
+                eq(StringUtils.isNotBlank(dto.getHandoverStatus()),PackageForecastDetailEntity::getHandoverStatus,dto.getHandoverStatus()).
+                like(StringUtils.isNotBlank(dto.getTrackNo()),PackageForecastDetailEntity::getTransportNo,dto.getTrackNo()).
+                list();
+        List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIdList);
+        for (PackageForecastDetailDTO.ViewDTO item : resultList) {
+            String soId = item.getSoId();
+            ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+                    map(SoOutstockEntity::getApproveStatus).findFirst().orElse(null);
+            item.setOutstockStatusName("未出库");
+            if (Objects.nonNull(approveStatus)) {
+                if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+                    item.setOutstockStatusName("已出库");
+                }
+            }
+        }
+        return resultList;
     }
 
 

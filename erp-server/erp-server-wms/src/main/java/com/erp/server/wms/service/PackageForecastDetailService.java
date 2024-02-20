@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -45,4 +46,6 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     List<PackageForecastDetailEntity> listDbByMainId(String mainId);
 
     void removeByMainId(String mainId);
+
+    List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto);
 }

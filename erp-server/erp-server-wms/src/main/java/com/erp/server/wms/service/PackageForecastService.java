@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.common.business.service.SuperService;
@@ -110,5 +111,8 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @date 2024-02-19 14:35
      * @author Lambda
      */
-    BatchResultDTO print(String id);
+    String print(String id);
+
+
+
 }

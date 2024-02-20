@@ -297,6 +297,35 @@ public class PackageForecastDTO implements Serializable {
         private LocalDateTime createTime;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailQueryParamDTO{
+
+
+        /**
+         * 组包预报不能为空
+         */
+        @NotBlank(message = "组包预报不能为空")
+        private String id;
+
+        /**
+         * 销售订单code
+         */
+        private List<String> soCodeList;
+
+        /**
+         * 交接状态
+         */
+        private String handoverStatus;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+    }
+
     /**
      * 分页参数
      */

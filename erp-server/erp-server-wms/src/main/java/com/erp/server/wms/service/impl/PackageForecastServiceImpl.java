@@ -5,12 +5,21 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -19,10 +28,13 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.SettingForecastDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
@@ -37,54 +49,39 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.constant.PackageForecastConstant;
 import com.erp.server.wms.convert.PackageForecastConverter;
-import com.erp.server.wms.mapper.PackageForecastDetailMapper;
 import com.erp.server.wms.mapper.PackageForecastMapper;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import com.erp.tms.aliexpress.api.IopResponse;
-import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.model.handover.AddressBase;
 import com.erp.tms.aliexpress.model.handover.AddressInfo;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
-import com.erp.tms.aliexpress.model.handover.request.CloudPrintRequest;
 import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
 import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
 import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
-import com.erp.tms.aliexpress.model.handover.response.CloudPrintResponse;
 import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
 import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.util.ApiException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.PackageForecastDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -423,7 +420,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    public BatchResultDTO print(String id) {
+    public String print(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
@@ -454,9 +451,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if(StringUtils.isNotBlank(base64)){
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
             this.updateById(entity);
+        }else{
+            throw new ServiceException("打印失败");
         }
-        return null;
+        return base64;
     }
+
 
     /**
      * 速卖通打印
@@ -466,22 +466,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      */
     public String aliExpressPrint(String logisticsPlatform, PackageForecastEntity entity) {
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
-        CloudPrintRequest cloudPrintRequest = CloudPrintRequest.builder().
-                client(base.getClient())
+        PdfRequest pdfRequest = PdfRequest.builder()
+                .client(base.getClient())
+                .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
                 .locale("zh_CN")
-                .orderCode(entity.getHandoverNo())
-                .trackingNumber(entity.getTransportNo())
+                .type(1)
                 .userInfo(base.getUserInfo())
                 .build();
         try {
-            IopResponse response = aliExpressHandoverService.cloudPrint(base.getAuthMap(), cloudPrintRequest);
+            IopResponse response = aliExpressHandoverService.getPdf(base.getAuthMap(), pdfRequest);
             BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
             BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
-            if(!baseResult.getSuccess()){
+            if (StringUtils.isNotEmpty(baseResult.getErrorMsg()) || StringUtils.isEmpty(baseResult.getData())) {
                 throw new ServiceException(baseResult.getErrorMsg());
             }
-            CloudPrintResponse cloudPrintResponse = JSONObject.parseObject(baseResult.getData(), CloudPrintResponse.class);
-            return cloudPrintResponse.getPrintData();
+            PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
+            String prefix = "data:application/pdf;base64,";
+            String base64Str = prefix + pdfResponse.getBody();
+            return base64Str;
         } catch (ApiException e) {
             log.error("速卖通打印失败>>>{}", e);
             throw new ServiceException(e.getMessage());

@@ -2,8 +2,10 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,9 @@ public class PackageForecastController extends BaseController {
 
     @Resource
     private PackageForecastService packageForecastService;
+
+    @Resource
+    private PackageForecastDetailService  packageForecastDetailService;
 
     /**
      * 获取 tab列表
@@ -132,25 +137,10 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/print")
-    public ApiResult<List<BatchResultDTO>> print(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.print(id);
-            } catch (Exception e) {
-                log.error("组包预报单打印失败===>{}", e.getMessage());
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 打印失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    public ApiResult<String> print(@RequestBody @Valid BaseIdDTO dto) {
+        String resultBase64 = packageForecastService.print(dto.getId());
+        return success(resultBase64);
+
     }
 
     /**
@@ -195,7 +185,7 @@ public class PackageForecastController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = packageForecastService.forecast(id,transferLogisticsSupplierId,transferLogisticsChannelId);
+                deleteResult = packageForecastService.forecast(id, transferLogisticsSupplierId, transferLogisticsChannelId);
             } catch (Exception e) {
                 log.error("组包预报单 中转报关失败===>{}", e.getMessage());
                 PackageForecastEntity entity = packageForecastService.getById(id);
@@ -218,12 +208,12 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/upload")
-    public ApiResult<List<BatchResultDTO>> upload( @RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
+    public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = packageForecastService.upload(id,dto.getCollectMode(),dto.getCollectAddressId());
+                deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
             } catch (Exception e) {
                 log.error("组包预报上传消失败===>{}", e);
                 PackageForecastEntity entity = packageForecastService.getById(id);
@@ -241,7 +231,8 @@ public class PackageForecastController extends BaseController {
 
 
     /**
-     *  导出组包预报
+     * 导出组包预报
+     *
      * @param dto
      * @param response
      * @return
@@ -252,6 +243,18 @@ public class PackageForecastController extends BaseController {
         Boolean result = packageForecastService.exportExcel(dto, response);
         return result ? success() : failure();
     }
+
+    /**
+     * 详情里面查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/detailQuery")
+    public ApiResult<List<PackageForecastDetailDTO.ViewDTO>> detailQuery(@RequestBody @Valid PackageForecastDTO.DetailQueryParamDTO dto) {
+        List<PackageForecastDetailDTO.ViewDTO> list = packageForecastDetailService.detailQuery(dto);
+        return success(list);
+    }
+
 
 
 }
