@@ -30,7 +30,7 @@ public class BankAccountController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> select(@RequestParam(value = "orgId") String orgId) {
         List<BankAccountEntity> list = bankAccountService.findByOrgId(orgId);
         List<BaseDropDownDTO.DisabledDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getBankAccountNo(), x.getBankAccountNo()+"   "+x.getAccountName(),x.getDisabled()))
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getBankAccountNo(), x.getBankAccountNo()+"      "+x.getAccountName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);
     }
