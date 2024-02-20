@@ -533,6 +533,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @return List<String>
      */
     private List<String> handleDept(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(deptIdList);
         if (CollectionUtils.isEmpty(sysDepartmentUserNumberList)) {
            return Collections.EMPTY_LIST;
@@ -800,7 +803,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIsAddProductName("否");
                     item.setIfAddProduct(false);
                 }
-                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
+                if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(item.getType())) {
                     item.setIfIteration(true);
                     item.setIsIterationName("是");
                 } else {

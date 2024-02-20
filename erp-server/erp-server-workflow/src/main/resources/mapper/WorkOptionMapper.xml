@@ -155,7 +155,7 @@
         cancelProcessParam
         <if test="params.sortList != null and params.sortList.size > 0">
             ORDER BY
-            <foreach collection="params.sortList" item="item" separator="," close=",">
+            <foreach collection="params.sortList" item="item" separator=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>

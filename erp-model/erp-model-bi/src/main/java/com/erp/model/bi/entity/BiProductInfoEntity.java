@@ -101,7 +101,7 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
      * 产品类型 1 新产品 2 迭代产品
      */
     @TableField("type")
-    private Integer type;
+    private String type;
 
 
 
