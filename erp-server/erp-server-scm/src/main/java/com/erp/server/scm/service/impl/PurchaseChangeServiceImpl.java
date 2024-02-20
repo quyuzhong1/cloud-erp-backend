@@ -33,7 +33,10 @@ import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.*;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -315,8 +318,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      **/
     private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
         String executionStatus = "";
-        //送货中
-        if ((receiveQty - returnQty <= MathUtil.ZERO) || (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty)) {
+        if (receiveQty - returnQty <= MathUtil.ZERO) {
+            //已确认
+            executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
+        } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+            //送货中
             executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
         } else {
             //已完成
