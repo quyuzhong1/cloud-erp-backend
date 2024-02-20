@@ -72,4 +72,10 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return
      */
     Integer srmWaitDeliveryCount(String supplierId,String code);
+
+    /**
+     * 变更单信息同步
+     * @param ext
+     */
+    void saveOrUpdatePurchaseOrderDetail(List<com.erp.model.scm.entity.PurchaseOrderDetailEntity> ext);
 }

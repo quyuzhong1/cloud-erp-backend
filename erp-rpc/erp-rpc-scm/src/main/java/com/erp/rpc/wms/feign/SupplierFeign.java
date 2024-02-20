@@ -76,9 +76,9 @@ public interface SupplierFeign {
 
     /**
      * 根据采购订单获取供应商信息
-     * @param orderId
+     * @param ids
      * @return
      */
-    @GetMapping("/feign/supplier/getSupplierByOrderId")
-    PurchaseOrderSupplierEntity getSupplierByOrderId(@RequestParam("orderId") String orderId);
+    @GetMapping("/feign/supplier/getSupplierByOrderIds")
+    List<PurchaseOrderSupplierEntity> getSupplierByOrderIds(@RequestBody List<String> ids);
 }

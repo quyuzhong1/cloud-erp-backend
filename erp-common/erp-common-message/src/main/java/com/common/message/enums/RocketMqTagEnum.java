@@ -403,9 +403,13 @@ public enum RocketMqTagEnum {
     SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4002,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
 
     /**
-     * 同步采购订单详情到WMS
+     * 同步采购订单详情到SRM
      */
     SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG(4004,RocketMqTagEnum.SYNC_SCM,"sync_srm_purchase_order_detail_tag"),
+    /**
+     * 同步采购变更单信息到SRM
+     */
+    SYNC_SRM_PURCHASE_ORDER_DETAIL_INFO_TAG(4005,RocketMqTagEnum.SYNC_SCM,"sync_srm_purchase_order_detail_info_tag"),
     /**
      * 同步采购订单供应商信息到WMS
      */

@@ -138,9 +138,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             return;
         }
-        PurchaseOrderSupplierEntity orderSupplierEntity = supplierFeign.getSupplierByOrderId(id);
+        List<PurchaseOrderSupplierEntity> supplierByOrderIds = supplierFeign.getSupplierByOrderIds(Collections.singletonList(id));
+        if (CollectionUtils.isEmpty(supplierByOrderIds)) {
+            return;
+        }
         purchaseOrderDetailList.forEach(purchaseOrderDetailEntity -> {
-            PurchaseOrderDetailEntity newEntity = PurchaseOrderConverter.INSTANCE.scmPurchaseOrderToSrmPurchaseOrderDetail(purchaseOrderEntities.get(0), purchaseOrderDetailEntity, orderSupplierEntity);
+            PurchaseOrderDetailEntity newEntity = PurchaseOrderConverter.INSTANCE.scmPurchaseOrderToSrmPurchaseOrderDetail(purchaseOrderEntities.get(0), purchaseOrderDetailEntity, supplierByOrderIds.get(0));
             PurchaseOrderDetailEntity oldEntity = this.getBySrmDetailId(purchaseOrderDetailEntity.getId());
             if (Objects.isNull(oldEntity)){
                 this.save(newEntity);
@@ -183,6 +186,28 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public Integer srmWaitDeliveryCount(String supplierId,String code){
         return baseMapper.srmWaitDeliveryCount(supplierId,code);
+    }
+
+    @Override
+    public void saveOrUpdatePurchaseOrderDetail(List<com.erp.model.scm.entity.PurchaseOrderDetailEntity> ext) {
+        if (CollectionUtils.isEmpty(ext)){
+            return;
+        }
+        List<String> detailIds = ext.stream().map(com.erp.model.scm.entity.PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderDetailId, detailIds).list();
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        //同步已存在的详情变更信息
+        list.forEach(entity -> {
+            com.erp.model.scm.entity.PurchaseOrderDetailEntity old = ext.stream().filter(e -> e.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (Objects.nonNull(old)){
+                entity.setPurchaseQty(old.getPurchaseQty());
+                entity.setPurchaseAmount(old.getPurchaseAmount());
+                entity.setTaxRate(old.getTaxRate());
+                this.updateById(entity);
+            }
+        });
     }
 
     @Override

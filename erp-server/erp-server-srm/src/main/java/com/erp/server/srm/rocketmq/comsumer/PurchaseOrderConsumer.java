@@ -2,6 +2,7 @@ package com.erp.server.srm.rocketmq.comsumer;
 
 import cn.hutool.json.JSONObject;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.server.srm.service.PurchaseOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,9 @@ public class PurchaseOrderConsumer {
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
+    /**
+     * 同步已确认订单数据
+     */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
             selectorExpression = "sync_srm_purchase_order_detail_tag",
@@ -46,5 +50,20 @@ public class PurchaseOrderConsumer {
         }
     }
 
+    /**
+     * 用户采购变更单数据同步
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC,
+            selectorExpression = "sync_srm_purchase_order_detail_info_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-srm_purchase_order_detail_info_consumer")
+    public class ConsumerWmsPurchaseDetail implements RocketMQListener<List<PurchaseOrderDetailEntity>> {
+        @Override
+        public void onMessage(List<PurchaseOrderDetailEntity> ext) {
+            log.info("-----用户采购变更单数据同步 开始-----");
+            purchaseOrderDetailService.saveOrUpdatePurchaseOrderDetail(ext);
+            log.info("-----用户采购变更单数据同步 结束-----");
+        }
+    }
 }
 

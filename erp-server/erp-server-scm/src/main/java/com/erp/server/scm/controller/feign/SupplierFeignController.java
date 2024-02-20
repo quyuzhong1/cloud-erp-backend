@@ -99,11 +99,11 @@ public class SupplierFeignController extends BaseController {
 
     /**
      * 根据采购订单获取供应商信息
-     * @param orderId
+     * @param ids
      * @return
      */
-    @GetMapping("/getSupplierByOrderId")
-    PurchaseOrderSupplierEntity getSupplierByOrderId(@RequestParam("orderId") String orderId){
-        return purchaseOrderSupplierService.getByPurchaseOrderId(orderId);
+    @PostMapping("/getSupplierByOrderIds")
+    List<PurchaseOrderSupplierEntity> getSupplierByOrderIds(@RequestBody List<String> ids){
+        return purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
     }
 }

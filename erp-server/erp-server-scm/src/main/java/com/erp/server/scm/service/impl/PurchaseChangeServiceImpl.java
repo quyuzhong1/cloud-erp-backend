@@ -575,16 +575,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
         //同步到SRM
-        list.forEach(purchaseChangeEntity -> {
-            List<String> detailIds = purchaseChangeDetailList.stream()
-                    .filter(e -> e.getPurchaseChangeId().equals(purchaseChangeEntity.getId()))
-                    .map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putOpt("id",purchaseChangeEntity.getPurchaseOrderId());
-            jsonObject.putOpt("detailIds",detailIds);
-            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-        });
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_INFO_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
     }
 
     /**
