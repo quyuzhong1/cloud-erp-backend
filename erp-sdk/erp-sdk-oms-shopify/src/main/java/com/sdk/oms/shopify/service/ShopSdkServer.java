@@ -75,7 +75,7 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            throw new ServiceException(ApiError.ERROR_402);
+            throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);
