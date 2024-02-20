@@ -23,6 +23,7 @@ public enum ApiError implements Serializable {
     ERROR_5001(5001, "未授权访问!"),
 
     ERROR_403(403, "您未登录,请登录后操作"),
+    ERROR_401(401, "Unauthorized "),
 
 
 
