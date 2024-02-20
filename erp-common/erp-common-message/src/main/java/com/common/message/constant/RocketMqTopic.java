@@ -57,7 +57,7 @@ public class RocketMqTopic {
     public static final String SYNC_SCM_TO_WMS_PURCHASE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_wms_purchase_topic";
 
     /**
-     * 推送Scm采购单信息到Wms
+     * 推送Scm采购单信息到SRM
      */
     public static final String SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_srm_purchase_order_detail_topic";
     /**

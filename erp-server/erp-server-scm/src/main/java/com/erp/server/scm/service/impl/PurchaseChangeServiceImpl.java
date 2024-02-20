@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -573,7 +574,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
-
+        //同步到SRM
+        list.forEach(purchaseChangeEntity -> {
+            List<String> detailIds = purchaseChangeDetailList.stream()
+                    .filter(e -> e.getPurchaseChangeId().equals(purchaseChangeEntity.getId()))
+                    .map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putOpt("id",purchaseChangeEntity.getPurchaseOrderId());
+            jsonObject.putOpt("detailIds",detailIds);
+            jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
+        });
     }
 
     /**
