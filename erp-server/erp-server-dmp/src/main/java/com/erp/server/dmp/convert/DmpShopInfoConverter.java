@@ -3,6 +3,7 @@ package com.erp.server.dmp.convert;
 import com.erp.model.dmp.lingxing.ShopEntity;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public interface DmpShopInfoConverter {
 
     DmpShopInfoConverter INSTANCE = Mappers.getMapper(DmpShopInfoConverter.class);
     @Mappings({
+            @Mapping(target = "uniqueId", source = "sid"),
     })
     ShopEntity dtoToEntity(ShopInfoDTO dto);
 

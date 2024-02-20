@@ -13,7 +13,6 @@
         <result column="version" property="version"/>
         <result column="is_deleted" property="isDeleted"/>
         <result column="detail_id" property="detailId"/>
-        <result column="receive_locale_date" property="receiveLocaleDate"
-                typeHandler="com.common.business.handler.mybatisplus.MyOffsetDateTimeTypeHandler"/>
+        <result column="receive_locale_date" property="receiveLocaleDate"/>
     </resultMap>
 </mapper>

@@ -26,6 +26,8 @@ public interface DmpFbaShipmentReceiveConverter {
     DmpFbaShipmentReceiveConverter INSTANCE = Mappers.getMapper(DmpFbaShipmentReceiveConverter.class);
 
     @Mappings({
+            @Mapping(target = "receivedDateStr", expression = "java(dto.getReceivedDate().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
+            @Mapping(target = "receivedDateLocaleStr", expression = "java(dto.getReceivedDateLocale().format(java.time.format.DateTimeFormatter.ofPattern(\"yyyy-MM-dd'T'HH:mm:ssXXX\")))"),
     })
     FbaReceiveDetailEntity dtoToEntity(FbaShipmentReceiveDTO dto);
 
@@ -35,12 +37,21 @@ public interface DmpFbaShipmentReceiveConverter {
 
 
     @Mappings({
-            @Mapping(target = "receiveDate", expression = "java(entity.getReceivedDate().toLocalDateTime())"),
-            @Mapping(target = "receiveLocaleDate", source = "receivedDateLocale"),
+            // 有效签收时间
+            @Mapping(target = "receiveDate", expression = "java(entity.getReceivedDateLocaleStr())"),
+            // UTC签收时间
+            @Mapping(target = "receiveUTCDate", expression = "java(entity.getReceivedDateStr())"),
+            // 当地签收日期
+            @Mapping(target = "receiveLocaleDate", expression = "java(entity.getReceivedDateLocaleStr())"),
             @Mapping(target = "fnSku", source = "fnsku"),
             @Mapping(target = "msku", source = "sku"),
             @Mapping(target = "receiveQty", source = "quantity"),
-            @Mapping(target = "fulfillmentCenter", source = "fulfillmentCenterId")
+            @Mapping(target = "fulfillmentCenter", source = "fulfillmentCenterId"),
+            @Mapping(target = "asin", constant = ""),
+            @Mapping(target = "skuNo", constant = ""),
+            @Mapping(target = "skuId", constant = ""),
+            @Mapping(target = "detailId", constant = ""),
+            @Mapping(target = "sourceType", constant = "lingxing"),
     })
     FbaShipmentReceiveEntity sourceToTargetEntity(FbaReceiveDetailEntity entity);
 

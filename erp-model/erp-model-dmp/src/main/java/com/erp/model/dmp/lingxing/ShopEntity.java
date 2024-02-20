@@ -1,7 +1,6 @@
 package com.erp.model.dmp.lingxing;
 
 import com.common.business.dto.CleanBaseDTO;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -12,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class ShopEntity extends CleanBaseDTO {
 
 
-    private Integer shopId;
+    private Integer sid;
 
 
     private Integer merchantId;
@@ -47,7 +46,7 @@ public class ShopEntity extends CleanBaseDTO {
     @Override
     public String toString() {
         return "ShopEntity{" +
-                "shopId=" + shopId +
+                "sid=" + sid +
                 ", merchantId=" + merchantId +
                 ", shopName='" + shopName + '\'' +
                 ", sellerId='" + sellerId + '\'' +

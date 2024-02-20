@@ -4,6 +4,7 @@ package com.sdk.third.lingxing.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -13,7 +14,10 @@ import com.sdk.third.lingxing.core.Config;
 import com.sdk.third.lingxing.core.HttpMethod;
 import com.sdk.third.lingxing.core.HttpRequest;
 import com.sdk.third.lingxing.core.HttpResponse;
-import com.sdk.third.lingxing.dto.*;
+import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
+import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
+import com.sdk.third.lingxing.dto.Result;
+import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +26,10 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 领星API 工具类
@@ -83,7 +90,7 @@ public class LingxingApiUtils {
     /**
      * 添加通用参数并签名和post请求请求参数
      */
-    public static <T> Result<T> postAndSign(String path, TreeMap<String, Object> requestBody) {
+    public static Result postAndSign(String path, TreeMap<String, Object> requestBody) {
         // 组合请求参数并生成签名
         TreeMap<String, Object> queryParam = combineQueryParams(requestBody);
         // 构建请求
@@ -96,7 +103,7 @@ public class LingxingApiUtils {
                 .config(Config.DEFAULT.withConnectionTimeout(30000).withReadTimeout(30000))
                 .build();
         try (HttpResponse execute = HttpExecutor.create().execute(build)) {
-            Result<T> result = execute.readEntity(Result.class);
+            Result result = execute.readEntity(Result.class);
             log.debug("Post请求领星接口:路径={}, 参数={}, 结果={}", path, JSONUtil.toJsonStr(requestBody), JSONUtil.toJsonStr(result));
             return result;
         } catch (Exception e) {
@@ -109,7 +116,7 @@ public class LingxingApiUtils {
     /**
      * 添加通用参数并签名和post请求请求参数
      */
-    public static <T> Result<T> postAndSign(String path, Map<String, Object> requestBody) {
+    public static Result postAndSign(String path, Map<String, Object> requestBody) {
         return postAndSign(path, new TreeMap<>(requestBody));
     }
 
@@ -215,13 +222,13 @@ public class LingxingApiUtils {
      * 获取领星店铺列表
      */
     public static List<ShopInfoDTO> getAllShopList() {
-        Result<List<ShopInfoDTO>> result = LingxingApiUtils.getAndSign(LingxingApiUtils.SHOP_LIST_URI, new TreeMap<>());
+        Result<Object> result = LingxingApiUtils.getAndSign(LingxingApiUtils.SHOP_LIST_URI, new TreeMap<>());
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星商店列表失败:, result={}", JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
         }
-        return result.getData();
+        return JSONUtil.toList(JSONUtil.toJsonStr(result.getData()), ShopInfoDTO.class);
     }
 
 
@@ -234,23 +241,23 @@ public class LingxingApiUtils {
      */
     public static List<FbaShipmentReceiveDTO> getAllReceivedInventory(Integer sid, LocalDate receivedDate) {
         FbaReceiveReqDTO receivedDTO = new FbaReceiveReqDTO(sid, receivedDate);
-        Result<List<FbaShipmentReceiveDTO>> firstResult = getReceivedInventory(receivedDTO);
+        Result<List<Object>> firstResult = getReceivedInventory(receivedDTO);
         if (CollectionUtils.isEmpty(firstResult.getData())) {
             return Collections.emptyList();
         }
         if (firstResult.getTotal() <= 1000) {
-            return firstResult.getData();
+            return JSONUtil.toList(JSONUtil.toJsonStr(firstResult.getData()), FbaShipmentReceiveDTO.class);
         }
-        List<FbaShipmentReceiveDTO> resultList = firstResult.getData();
+        List<Object> resultList = firstResult.getData();
         int count = firstResult.getTotal() / 1000;
         for (int offset = 1; offset < count; offset++) {
             FbaReceiveReqDTO currentReceivedDTO = new FbaReceiveReqDTO(sid, receivedDate, offset);
-            Result<List<FbaShipmentReceiveDTO>> currentResult = getReceivedInventory(currentReceivedDTO);
+            Result<List<Object>> currentResult = getReceivedInventory(currentReceivedDTO);
             if (!CollectionUtils.isEmpty(currentResult.getData())) {
                 resultList.addAll(currentResult.getData());
             }
         }
-        return resultList;
+        return JSONUtil.toList(JSONUtil.toJsonStr(resultList), FbaShipmentReceiveDTO.class);
     }
 
     /**
@@ -259,9 +266,9 @@ public class LingxingApiUtils {
      * @param receivedDTO 请求参数
      * @return 当前分页结果
      */
-    public static Result<List<FbaShipmentReceiveDTO>> getReceivedInventory(FbaReceiveReqDTO receivedDTO) {
+    public static Result<List<Object>> getReceivedInventory(FbaReceiveReqDTO receivedDTO) {
         Map<String, Object> objectMap = BeanUtil.beanToMap(receivedDTO);
-        Result<List<FbaShipmentReceiveDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
+        Result<List<Object>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件签收明细列表失败:,sid={}, result={}", receivedDTO.getSid(), JSONUtil.toJsonStr(result));
             log.error(errorMsg);

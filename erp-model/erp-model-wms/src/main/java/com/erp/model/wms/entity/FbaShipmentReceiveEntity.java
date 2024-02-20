@@ -78,15 +78,20 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     @TableField("receive_qty")
     private Integer receiveQty;
     /**
-    * 最新签收日期
+    * 当地最新签收日期
     */
     @TableField("receive_date")
     private LocalDateTime receiveDate;
     /**
      * 当地签收日期:格式:yyyy-MM-dd'T'HH:mm:ssXXX
      */
-    @TableField(value = "receive_locale_date", typeHandler = MyOffsetDateTimeTypeHandler.class)
-    private OffsetDateTime receiveLocaleDate;
+    @TableField(value = "receive_locale_date")
+    private String receiveLocaleDate;
+    /**
+     * UTC 签收日期:格式:yyyy-MM-dd'T'HH:mm:ssXXX
+     */
+    @TableField(value = "receive_utc_date")
+    private String receiveUTCDate;
     /**
      * 亚马逊FBA货件单号
      */

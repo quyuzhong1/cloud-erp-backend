@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.BaseController;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 货件feign控制器
@@ -45,9 +48,11 @@ public class ShipmentFeignController extends BaseController {
      * 保存签收记录并检查调拨
      * @author Jim
      */
-    @PostMapping("/saveAndCheckTransfer")
+    @PostMapping("9/saveAndCheckTransfer")
     public Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList){
-        return fbaShipmentReceiveService.saveAndCheckTransfer(entityList);
+        Map<String, List<FbaShipmentReceiveEntity>> groupMap = entityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
+        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value));
+        return true;
     }
 
 }

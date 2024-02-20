@@ -2,7 +2,6 @@ package com.erp.server.dmp.pull.service.lingxing;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -18,7 +17,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -74,7 +72,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         List<String> platformShopIdList = mappingEntityList.stream().map(ShopInfoMappingEntity::getThirdPlatformShopId).distinct().collect(Collectors.toList());
 
         List<ShopEntity> newShopEntityList = entityList.stream()
-                .filter(e -> !CollectionUtils.isEmpty(platformShopIdList) && !platformShopIdList.contains(e.getShopId().toString()))
+                .filter(e -> CollectionUtils.isEmpty(platformShopIdList) || !platformShopIdList.contains(e.getSid().toString()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newShopEntityList)){
             log.warn("已映射所有领星店铺列表");
@@ -84,7 +82,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         List<ShopEntity> insertList = new ArrayList<>();
         List<ShopEntity> entityToMqlist = new ArrayList<>();
         for (ShopEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getShopId().toString());
+            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getSid().toString());
             List<ShopEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
@@ -112,7 +110,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
 
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(), msg,  msg.getShopId().toString());
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(), JSONUtil.toJsonStr(msg),  msg.getSid().toString());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -139,7 +137,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity shopInfo) {
-        OrderMongoDTO updateDto = new OrderMongoDTO(shopInfo.getShopId().toString());
+        OrderMongoDTO updateDto = new OrderMongoDTO(shopInfo.getSid().toString());
         if(null == shopInfo){
             shopInfo.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopInfo), MapUtil.class);
@@ -149,7 +147,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopInfo), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(),
-                shopInfo, shopInfo.getShopId().toString());
+                JSONUtil.toJsonStr(shopInfo), shopInfo.getSid().toString());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }

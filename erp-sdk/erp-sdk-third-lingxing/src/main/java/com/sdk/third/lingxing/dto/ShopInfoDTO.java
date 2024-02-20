@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ShopInfoDTO {
     @JsonProperty("sid")
-    private int shopId;
+    private int sid;
 
     @JsonProperty("mid")
     private int merchantId;

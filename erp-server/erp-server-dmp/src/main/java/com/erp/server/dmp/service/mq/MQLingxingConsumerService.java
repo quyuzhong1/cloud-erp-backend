@@ -13,7 +13,6 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.dmp.lingxing.ShopEntity;
-import com.erp.model.dmp.mabang.DeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.rpc.wms.feign.WmsShipmentFeign;
 import com.erp.server.dmp.convert.DmpFbaShipmentReceiveConverter;
@@ -47,12 +46,16 @@ public class MQLingxingConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "lx_shop_info_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-lx_shop_info_consumer")
-    public class ConsumerErpShopInfo implements RocketMQListener<ShopEntity> {
+    public class ConsumerErpShopInfo implements RocketMQListener {
         @Override
-        public void onMessage(ShopEntity ext) {
-            log.info("监听领星店铺信息消息：entity={}", JSONUtil.toJsonStr(ext));
+        public void onMessage(Object extObj) {
+            log.info("监听领星店铺信息消息：entity={}", JSONUtil.toJsonStr(extObj));
+            ShopEntity ext = JSONUtil.toBean(extObj.toString(), ShopEntity.class);
             // 检查任务和记录平台店铺ID
             shopInfoMappingService.saveAndHandle(ext);
+            MapUtil mapUtil = getMapParam();
+            OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(ext.getUniqueId());
+            finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
         }
     }
 
@@ -63,16 +66,17 @@ public class MQLingxingConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "lx_fba_shipment_receive_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-lx_fba_receive_consumer")
-    public class ConsumerErpDeliveryOrder implements RocketMQListener<FbaReceiveGroupEntity> {
+    public class ConsumerErpFbaReceive implements RocketMQListener {
         @Override
-        public void onMessage(FbaReceiveGroupEntity ext) {
-            log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(ext));
+        public void onMessage(Object extObj) {
+            log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(extObj));
+            FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
             List<FbaShipmentReceiveEntity> receiveEntityList = DmpFbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(ext.getDetailList());
             // 保存和检查调拨
             wmsShipmentFeign.saveAndCheckTransfer(receiveEntityList);
             MapUtil mapUtil = getMapParam();
             OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(ext.getUniqueId());
-            finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
+            finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
         }
     }
 

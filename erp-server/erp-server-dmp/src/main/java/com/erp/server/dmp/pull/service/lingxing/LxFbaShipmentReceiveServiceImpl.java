@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.lingxing;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -21,13 +22,17 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveDetailEntity;
+import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
+import com.erp.model.dmp.lingxing.ShopEntity;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.convert.DmpFbaShipmentReceiveConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
 import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -52,7 +57,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.LX_ERP_FBA_SHIPMENT_RECEIVE_GET)
-public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaReceiveDetailEntity> {
+public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaReceiveGroupEntity> {
     @Resource
     private MongoService mongoService;
     @Autowired
@@ -61,6 +66,8 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private ShopInfoMappingService shopInfoMappingService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 
     /**
@@ -90,11 +97,17 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
         List<FbaReceiveDetailEntity> entityList = DmpFbaShipmentReceiveConverter.INSTANCE.dtoListToEntityList(dtoList);
 
         log.info("拉取领星货件签收明细数据 entityList.size = {} ", entityList.size());
-        List<FbaReceiveDetailEntity> insertList = new ArrayList<>();
-        List<FbaReceiveDetailEntity> pushToMqList = new ArrayList<>();
-        for (FbaReceiveDetailEntity entity : entityList) {
+        List<FbaReceiveGroupEntity> insertList = new ArrayList<>();
+        List<FbaReceiveGroupEntity> pushToMqList = new ArrayList<>();
+        // 按fba_shipment_id分组构造结构
+        Map<String, List<FbaReceiveDetailEntity>> entityToMqList = entityList.stream()
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
+        for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
+            // 构造消息体
+            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate());
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getUniqId(entity.getUniqueId());
-            List<FbaReceiveDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveDetailEntity.class);
+            List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             if(CollectionUtil.isEmpty(mongoData)){
@@ -102,7 +115,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
                 pushToMqList.add(entity);
                 continue;
             }
-            FbaReceiveDetailEntity mongoDatum = mongoData.get(0);
+            FbaReceiveGroupEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
@@ -110,24 +123,20 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getUniqueId());
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
             log.warn("领星FBA货件明细, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
-        // 按fba_shipment_id分组构造结构
-        Map<String, List<FbaReceiveDetailEntity>> entityToMqList = pushToMqList.stream()
-                .filter(ObjectUtil::isNotEmpty)
-                .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
 
         // 异步推送到MQ
-        entityToMqList.entrySet().stream().peek(msg ->{
+        pushToMqList.stream().peek(msgEntity ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_FBA_SHIPMENT_RECEIVE_TAG.getName(),
-                    msg.getValue(), msg.getKey());
+                    JSONUtil.toJsonStr(msgEntity), msgEntity.getUniqueId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送领星FBA货件签收MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -136,13 +145,38 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
 
     @Override
     public void cleanDataSave(String tableName, int size) {
-
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (FbaReceiveGroupEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
+            updateAndSaveDb(mongoDatum);
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
-    public void updateAndSaveDb(FbaReceiveDetailEntity mongoDatum) {
-
+    public void updateAndSaveDb(FbaReceiveGroupEntity mongoDatum) {
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getFbaShipmentId());
+        if(null == mongoDatum){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_FBA_SHIPMENT_RECEIVE_TAG.getName(),
+                JSONUtil.toJsonStr(mongoDatum), mongoDatum.getFbaShipmentId());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
 }

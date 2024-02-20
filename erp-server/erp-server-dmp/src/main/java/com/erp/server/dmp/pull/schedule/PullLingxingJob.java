@@ -53,6 +53,9 @@ public class PullLingxingJob {
     private IReportSaveService lxShopInfoService;
 
 
+    /**
+     * 领星相关任务
+     */
     @XxlJob("lingxingExecute")
     public ReturnT<String> lingxingExecute(){
         threadPoolTaskExecutor.execute(() -> {
@@ -61,50 +64,50 @@ public class PullLingxingJob {
         return ReturnT.SUCCESS;
     }
 
-    /**
-     * 同步领星店铺ID
-     */
-    @XxlJob("syncLingxingSid")
-    public ReturnT<String> syncLingxingSid(){
-        XxlJobHelper.log("syncLingxingSid 同步领星店铺ID 任务开始执行！");
-        // 查询上次执行时间
-        PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());
-        if(ObjectUtil.isEmpty(entity)){
-            XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());
-            return ReturnT.SUCCESS;
-        }
-        RequestDTO requestDTO = new RequestDTO(PullGyyHistoryJob.getJobTaskDTO(entity, TaskConstant.LX_PULL_DATA_TASK), PlatformApiEnum.LX_ERP_SHOP_LIST_GET);
-        try {
-            // 保存或更新领星店铺ID
-            lxShopInfoService.pullDataSave(requestDTO);
-            // 修改执行更新时间
-            // 修改执行结果信息
-            Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
-            if (!aBoolean) {
-                throw new RuntimeException("修改同步领星店铺ID任务下次执行时间失败！");
-            }
-        }catch (Exception e) {
-            XxlJobHelper.log(" 同步领星店铺ID错误dto={} e= {}", JSONUtil.toJsonStr(requestDTO), e);
-            String message = e.getMessage();
-            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
-            dmpErrorLogService.save(dmpErrorLogEntity);
-            // 发送下载异常消息
-            sendErrorMsgToDark(e, dmpErrorLogEntity);
-        }
-
-        XxlJobHelper.log("yncLingxingSid 同步领星店铺ID 任务执行结束！");
-        return ReturnT.SUCCESS;
-    }
-
-    private void sendErrorMsgToDark(Exception e, DmpErrorLogEntity dmpErrorLogEntity) {
-        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle("同步领星店铺ID异常");
-        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfoDTO.setBizName("同步领星店铺ID");
-        warnMsgInfoDTO.setTableName(SqlHelper.table(DmpErrorLogEntity.class).getTableName());
-        warnMsgInfoDTO.setTableId(dmpErrorLogEntity.getId());
-        warnMsgInfoDTO.setKeyInfo(e.getMessage());
-        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-    }
+//    /**
+//     * 同步领星店铺ID
+//     */
+//    @XxlJob("syncLingxingSid")
+//    public ReturnT<String> syncLingxingSid(){
+//        XxlJobHelper.log("syncLingxingSid 同步领星店铺ID 任务开始执行！");
+//        // 查询上次执行时间
+//        PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());
+//        if(ObjectUtil.isEmpty(entity)){
+//            XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.LX_ERP_SHOP_LIST_GET.getTaskName());
+//            return ReturnT.SUCCESS;
+//        }
+//        RequestDTO requestDTO = new RequestDTO(PullLingxingJob.getJobTaskDTO(entity, TaskConstant.LX_PULL_DATA_TASK), PlatformApiEnum.LX_ERP_SHOP_LIST_GET);
+//        try {
+//            // 保存或更新领星店铺ID
+//            lxShopInfoService.pullDataSave(requestDTO);
+//            // 修改执行更新时间
+//            // 修改执行结果信息
+//            Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
+//            if (!aBoolean) {
+//                throw new RuntimeException("修改同步领星店铺ID任务下次执行时间失败！");
+//            }
+//        }catch (Exception e) {
+//            XxlJobHelper.log(" 同步领星店铺ID错误dto={} e= {}", JSONUtil.toJsonStr(requestDTO), e);
+//            String message = e.getMessage();
+//            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
+//            dmpErrorLogService.save(dmpErrorLogEntity);
+//            // 发送下载异常消息
+//            sendErrorMsgToDark(e, dmpErrorLogEntity);
+//        }
+//
+//        XxlJobHelper.log("yncLingxingSid 同步领星店铺ID 任务执行结束！");
+//        return ReturnT.SUCCESS;
+//    }
+//
+//    private void sendErrorMsgToDark(Exception e, DmpErrorLogEntity dmpErrorLogEntity) {
+//        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+//        warnMsgInfoDTO.setTitle("同步领星店铺ID异常");
+//        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+//        warnMsgInfoDTO.setBizName("同步领星店铺ID");
+//        warnMsgInfoDTO.setTableName(SqlHelper.table(DmpErrorLogEntity.class).getTableName());
+//        warnMsgInfoDTO.setTableId(dmpErrorLogEntity.getId());
+//        warnMsgInfoDTO.setKeyInfo(e.getMessage());
+//        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+//    }
 
 }

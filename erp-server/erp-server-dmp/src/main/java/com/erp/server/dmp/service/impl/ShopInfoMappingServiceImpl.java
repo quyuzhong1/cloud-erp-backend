@@ -12,9 +12,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.lingxing.ShopEntity;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.sellers.Marketplace;
 import com.erp.server.dmp.mapper.ShopInfoMappingMapper;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
@@ -64,7 +65,8 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
             return;
         }
         ShopInfoEntity shopInfo = shopInfoEntityList.stream()
-                .filter(e -> e.getPlatformShopCode().equalsIgnoreCase(sourceEntity.getSellerId()) && e.getDictCountryCode().equalsIgnoreCase(sourceEntity.getRegion()))
+                .filter(e -> e.getPlatformShopCode().equalsIgnoreCase(sourceEntity.getSellerId())
+                        && AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getMarketplaceId().equalsIgnoreCase(sourceEntity.getMarketplaceId()))
                 .findFirst().orElse(null);
         if (null == shopInfo){
             log.error("数据处理异常：未找到对应店铺, msg={}", JSONUtil.toJsonStr(sourceEntity));
@@ -74,12 +76,11 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
         ShopInfoMappingEntity entity = new ShopInfoMappingEntity();
 
         entity.setThirdPlatformType(PlatformEnum.LINGXING.getName());
-        entity.setThirdPlatformShopId(sourceEntity.getShopId().toString());
+        entity.setThirdPlatformShopId(sourceEntity.getSid().toString());
         entity.setShopId(shopInfo.getId());
         if (!this.save(entity)){
             throw new ServiceException("[保存店铺映射关系失败]");
         }
-
 
         // 查询需要当前平台需要增加的任务
         platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), PlatformEnum.LINGXING.getName()));
@@ -90,7 +91,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
     public ShopInfoMappingEntity getByShopIdAndType(String shopId, String thirdPlatformType) {
         return lambdaQuery()
                 .eq(ShopInfoMappingEntity::getThirdPlatformType, thirdPlatformType)
-                .eq(ShopInfoMappingEntity::getThirdPlatformShopId, shopId)
+                .eq(ShopInfoMappingEntity::getShopId, shopId)
                 .last("LIMIT 1")
                 .one();
     }
