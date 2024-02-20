@@ -68,4 +68,14 @@ public class SrmPoReconciliationFeignController extends BaseController {
     public void updateBusinessStatusBySourceIdList(@RequestBody @Validated PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO) {
         poReconciliationDetailScmService.updateBusinessStatusBySourceIdList(statusDTO);
     }
+
+    /**
+     * 获取供应商未确认订单明细数量
+     * @param supplierId
+     * @return
+     */
+    @GetMapping("/countSupplierUnConfirmOrderDetail")
+    public Integer countSupplierUnConfirmOrderDetail(@RequestParam(value = "supplierId") String supplierId){
+        return poReconciliationDetailScmService.countSupplierUnConfirmOrderDetail(supplierId);
+    }
 }

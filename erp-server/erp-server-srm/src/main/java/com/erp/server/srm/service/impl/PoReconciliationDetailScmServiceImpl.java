@@ -57,6 +57,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
@@ -97,6 +98,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
     @Autowired
     private SysUserFeign sysUserFeign;
+    @Resource
+    private UserService userService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -377,6 +380,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         lambdaUpdate().in(PoReconciliationDetailEntity::getId,detailIdList)
                 .set(PoReconciliationDetailEntity::getMainId,mainId)
                 .update();
+    }
+
+    @Override
+    public Integer countSupplierUnConfirmOrderDetail(String supplierId) {
+        if (StringUtils.isEmpty(supplierId)){
+            supplierId = userService.getSupplierId();
+        }
+        return lambdaQuery().eq(PoReconciliationDetailEntity::getSupplierId,supplierId)
+                .eq(PoReconciliationDetailEntity::getBusinessStatus,ConfirmStatusEnum.WAIT_CONFIRM.getCode())
+                .count();
     }
 
     /**

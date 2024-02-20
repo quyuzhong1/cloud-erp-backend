@@ -8,6 +8,7 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,4 +60,11 @@ public interface SrmPoReconciliationFeign {
      */
     @PostMapping("/feign/poReconciliation/updateBusinessStatusBySourceIdList")
     void updateBusinessStatusBySourceIdList(@RequestBody @Validated PoReconciliationDetailDTO.UpdateBusinessStatusDTO statusDTO);
+    /**
+     * 获取供应商未确认订单明细数量
+     * @param supplierId
+     * @return
+     */
+    @GetMapping("/feign/poReconciliation/countSupplierUnConfirmOrderDetail")
+    Integer countSupplierUnConfirmOrderDetail(@RequestParam(value = "supplierId") String supplierId);
 }

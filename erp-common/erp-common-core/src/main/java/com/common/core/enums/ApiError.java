@@ -604,6 +604,7 @@ public enum ApiError implements Serializable {
     ERROR_SUPPLIER_UN_APPROVE(98053,"供应商未审核"),
     ERROR_SUPPLIER_DISABLE(98054,"供应商未启用"),
     ERROR_SUPPLIER_SRM_DISABLE(98055,"供应商未协同"),
+    ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL(98056,"存在待对账明细/未确认的对账单，请完成对账后关闭"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),

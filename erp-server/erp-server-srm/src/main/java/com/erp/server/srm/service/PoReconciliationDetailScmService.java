@@ -134,4 +134,11 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param mainId
      */
     void updateMainIdByIdList(List<String> detailIdList, String mainId);
+
+    /**
+     * 获取供应商未确认订单明细数量
+     * @param supplierId
+     * @return
+     */
+    Integer countSupplierUnConfirmOrderDetail(String supplierId);
 }

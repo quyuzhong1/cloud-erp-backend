@@ -49,6 +49,7 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
+import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -142,6 +143,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierRefUserService supplierRefUserService;
 
+    @Resource
+    private SrmPoReconciliationFeign srmPoReconciliationFeign;
     /**
      * 保存供应商信息
      *
@@ -707,6 +710,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //当启用后 禁用时 校验是否存在未确认采购对账单明细
+        if (!supplier.getSrmDisabled() && dto.getState()){
+            Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
+            if (Objects.nonNull(count) && count > 0){
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
+            }
         }
         Boolean state = dto.getState();
         supplier.setSrmDisabled(state);
