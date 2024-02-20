@@ -148,6 +148,11 @@ public class HomePageDTO implements Serializable {
          * 退货总额
          */
         private BigDecimal refundMoney;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
 

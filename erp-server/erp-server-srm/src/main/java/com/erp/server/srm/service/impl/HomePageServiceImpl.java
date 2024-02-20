@@ -1,5 +1,6 @@
 package com.erp.server.srm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -9,9 +10,11 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.srm.dto.HomePageDTO;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.wms.feign.PurchaseReturnStatisticsFeign;
 import com.erp.rpc.wms.feign.PurchaseStatisticsFeign;
@@ -60,6 +63,9 @@ public class HomePageServiceImpl implements HomePageService {
     @Resource
     private PoReconciliationService poReconciliationService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @Override
     public HomePageDTO.AccountInfoDTO getAccountInfo() {
         LoginUser loginUser = commonService.getUserInfo();
@@ -99,6 +105,8 @@ public class HomePageServiceImpl implements HomePageService {
     @Override
     public HomePageDTO.Statistical getStatistical(String year) {
         SupplierEntity supplier = commonService.getSupplierEntity();
+        List<CurrencyDTO.ViewDTO> currencylist = sysUserFeign.listByCurrency(Arrays.asList(supplier.getPayCurrency()));
+        String currencySymbol = CollectionUtils.isEmpty(currencylist)?"":currencylist.get(0).getSymbol();
         //采购数据
         PurchaseStatisticsDTO.RequestDTO purchaseRequestDTO = PurchaseStatisticsDTO.RequestDTO.builder()
                 .supplierId(supplier.getId())
@@ -125,6 +133,7 @@ public class HomePageServiceImpl implements HomePageService {
                         .refundSkuCount(returnList.stream().mapToInt(PurchaseReturnStatisticsDTO.StatisticsMonthDTO::getReturnSkuCount).sum())
                         .skuQcRefundCount(returnList.stream().mapToInt(PurchaseReturnStatisticsDTO.StatisticsMonthDTO::getQcReturnSkuCount).sum())
                         .refundMoney(returnList.stream().map(PurchaseReturnStatisticsDTO.StatisticsMonthDTO::getReturnMoney).reduce(BigDecimal.ZERO, BigDecimal::add))
+                        .currencySymbol(currencySymbol)
                         .build())
                 .orderTrendList(HomePageConverter.INSTANCE.orderTrendConvert(purchaseList))
                 .refundTrendList(HomePageConverter.INSTANCE.refundTrendConvert(returnList))
