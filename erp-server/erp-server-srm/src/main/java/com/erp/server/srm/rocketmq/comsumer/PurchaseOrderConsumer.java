@@ -33,6 +33,8 @@ public class PurchaseOrderConsumer {
     public class ConsumerSrmPurchaseOrder implements RocketMQListener<JSONObject> {
         @Override
         public void onMessage(JSONObject message) {
+            log.info("------同步scm采购订单明细开始-------");
+            log.info("同步明细：{}", message);
             //按照订单id维度进行同步
             String id = message.getStr("id");
             List<String> ids = message.getBeanList("ids", String.class);
@@ -47,6 +49,7 @@ public class PurchaseOrderConsumer {
             }else {
                 purchaseOrderDetailService.updateBySrmOrderIds(ids,detailIds, executionStatus);
             }
+            log.info("------同步scm采购订单明细结束-------");
         }
     }
 
