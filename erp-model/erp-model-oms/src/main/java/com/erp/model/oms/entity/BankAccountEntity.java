@@ -60,6 +60,12 @@ public class BankAccountEntity extends BaseEntity<BankAccountEntity> {
     @TableField("org_id")
     private String orgId;
 
+    /**
+     * 启用/禁用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+
     public static final String BANK_ACCOUNT_NO = "bank_account_no";
 
     public static final String ACCOUNT_NAME = "account_name";
