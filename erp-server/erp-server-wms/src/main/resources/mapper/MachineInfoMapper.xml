@@ -37,6 +37,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.MachineInfoDTO$ListDTO">
         select
             mi.id,
+            md.id as detailId,
             mi.code,
             mi.work_type as workType,
             mi.approve_status as approveStatus,

@@ -39,6 +39,11 @@ public class MachineInfoDTO implements Serializable {
         private String id;
 
         /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
          * 来源id
          */
         private String sourceId;
