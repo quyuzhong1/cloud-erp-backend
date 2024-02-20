@@ -4,22 +4,45 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProductCertificateMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductCertificateEntity">
-        <id property="id" column="id" jdbcType="VARCHAR"/>
-        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="certificateImg" column="certificate_img" jdbcType="VARCHAR"/>
-        <result property="certificateValidTime" column="certificate_valid_time" jdbcType="TIMESTAMP"/>
-        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
-        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
-    </resultMap>
-
     <sql id="Base_Column_List">
-        sku_id,certificate_img,
-        certificate_valid_time,pd.create_time,pd.create_user_id,
+        pc.sku_id,
+        pc.certificate_valid_time,pd.create_time,pd.create_user_id,
         pd.update_time,pd.update_user_id
     </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductCertificateDTO$ListDTO">
+        select
+            pc.id,
+            pc.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as skuName,
+            pc.certificate_valid_time as certificateValidTime,
+            pc.type,
+            pc.dict_project as dictProject,
+            att.attach_name as attachName,
+            att.attach_url as attachUrl,
+            pc.remark,
+            pc.update_user_name as updateUserName,
+            pc.update_time as updateTime
+        from product_certificate pc
+        inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
+        inner join attachment att on pc.id = att.business_id and att.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and po.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.id desc
+    </select>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
         SELECT
@@ -46,4 +69,38 @@
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
+
+    <select id="exportExcel" resultType="com.erp.model.plm.dto.ProductCertificateDTO$ListDTO">
+        select
+        pc.id,
+        pc.sku_id as skuId,
+        pd.sku_no as skuNo,
+        pd.name as skuName,
+        pc.certificate_valid_time as certificateValidTime,
+        pc.type,
+        pc.dict_project as dictProject,
+        att.attach_name as attachName,
+        att.attach_url as attachUrl,
+        pc.remark,
+        pc.update_user_name as updateUserName,
+        pc.update_time as updateTime
+        from product_certificate pc
+        inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
+        inner join attachment att on pc.id = att.business_id and att.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and po.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.id desc
+    </select>
+
 </mapper>

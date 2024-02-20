@@ -1,12 +1,14 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
-import com.erp.model.plm.dto.ProductPackDTO;
-import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -34,15 +36,6 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
     List<ProductCertificateShowDTO> listBySkuId(String skuId);
 
     /**
-     * @Description 保存/修改产品证书信息
-     * @Author Luo_WG
-     * @Date 2022/9/23 10:13
-     * @param productCertificateDTO 产品证书信息表
-     * @return java.lang.Boolean
-     **/
-    Boolean saveOrUpdate(ProductCertificateDTO productCertificateDTO);
-
-    /**
      * @Description 保存/修改产品证书信息-批量操作
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
@@ -61,11 +54,63 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
     Boolean removeCertificate(List<String> skuIds);
 
     /**
-     * @description: 根据id删除证书信息
+     * @description: 分页查询
      * @author Will
-     * @date: 2022/12/14 11:42
-     * @param id
+     * @date: 2024/2/19 10:52
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> dto);
+
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2024/2/19 14:51
+     * @param dto 
+     * @param response 
+     * @return Boolean 
+     */
+    Boolean exportExcel(ProductCertificateDTO.SearchParamDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 新增
+     * @author Will
+     * @date: 2024/2/19 14:56
+     * @param dto
+     */
+    void add(ProductCertificateDTO.AddDTO dto);
+
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2024/2/19 14:56
+     * @param dto
      * @return Boolean
      */
-    Boolean removeCertificateById(String id);
+    Boolean update(ProductCertificateDTO.UpdateDTO dto);
+    /**
+     * @description: 查询详情
+     * @author Will
+     * @date: 2024/2/19 14:56
+     * @param id
+     * @return ViewDTO
+     */
+    ProductCertificateDTO.ViewDTO view(String id);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2024/2/19 14:58
+     * @param ids
+     * @return Boolean
+     */
+    Boolean delete(List<String> ids);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2024/2/20 10:00
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

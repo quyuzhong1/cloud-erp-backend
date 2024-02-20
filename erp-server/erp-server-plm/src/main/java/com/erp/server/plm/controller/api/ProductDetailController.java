@@ -445,34 +445,6 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-    /*    *//**
-     * 证书信息-主页列表-新增|修改
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:25
-     * @param productCertificateDTO 产品证书表
-     * @return com.common.core.vo.ApiResult
-     **//*
-    @GetMapping("/saveOrUpdateCertificate")
-    public ApiResult saveOrUpdateCertificate(@RequestBody List<ProductCertificateDTO> productCertificateDTO) {
-        Boolean flag = productCertificateService.saveOrUpdateBatch(productCertificateDTO);
-        return  flag == true ? this.success() : this.failure();
-    }*/
-
-    /**
-     * 证书信息-主页列表-删除
-     *
-     * @param id 证书信息id
-     * @return com.common.core.vo.ApiResult
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:25
-     **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "证书信息-主页列表-删除")
-    @GetMapping("/removeCertificate")
-    //@RequestPermissions("plm:product:detail:removeCertificate")
-    public ApiResult removeCertificateById(@RequestParam("id") String id) {
-        Boolean flag = productCertificateService.removeCertificateById(id);
-        return flag == true ? this.success() : this.failure();
-    }
 
     /**
      * 采购信息-主页备注信息列表-查询
