@@ -516,13 +516,51 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        //部门下人员
-        List<String> deptUserIdList =  handleDept(params.getDeptIdList());
-        params.setDeptUserIdList(deptUserIdList);
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    /**
+     * @description: 分页数据处理
+     * @author Will
+     * @date: 2024/2/21 14:22
+     * @param params
+     * @return Boolean
+     */
+    @Override
+    public  Boolean handlePagingDept(ProductSearchDTO.PagingParamDTO params) {
+        //项目经理部门下人员
+        List<String> projectChargeDeptUserIdList =  handleDept(params.getProjectChargeDeptIdList());
+        params.setProjectChargeDeptUserIdList(projectChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getProjectChargeDeptIdList()) && CollectionUtils.isEmpty(projectChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //产品经理部门下人员
+        List<String> productChargeDeptUserIdList =  handleDept(params.getProductChargeDeptIdList());
+        params.setProductChargeDeptUserIdList(productChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getProductChargeDeptIdList()) && CollectionUtils.isEmpty(productChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //团队成员部门下人员
+        List<String> teamChargeDeptUserIdList =  handleDept(params.getTeamChargeDeptIdList());
+        params.setTeamChargeDeptUserIdList(teamChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getTeamChargeDeptIdList()) && CollectionUtils.isEmpty(teamChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        //创建人部门下人员
+        List<String> createChargeDeptUserIdList =  handleDept(params.getCreateChargeDeptIdList());
+        params.setCreateChargeDeptUserIdList(createChargeDeptUserIdList);
+        if (CollectionUtils.isNotEmpty(params.getCreateChargeDeptIdList()) && CollectionUtils.isEmpty(createChargeDeptUserIdList)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**
@@ -536,7 +574,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (CollectionUtils.isEmpty(deptIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(deptIdList);
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = sysUserFeign.listDeptUserByDeptIdList(deptIdList);
         if (CollectionUtils.isEmpty(sysDepartmentUserNumberList)) {
            return Collections.EMPTY_LIST;
         }
@@ -568,6 +606,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
         //我的项目
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -598,6 +641,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
         //收藏的项目
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -910,6 +958,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            return dataList;
+        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -2391,6 +2444,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
@@ -2487,7 +2546,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
-
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
@@ -2580,6 +2643,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
+
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
 
         //两个都是
         if (size == 2) {

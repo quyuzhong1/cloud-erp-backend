@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -14,6 +15,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductCertificateDTO;
+import com.erp.server.plm.query.ProductCertificateQueryHandler;
 import com.erp.server.plm.service.ProductCertificateService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -55,6 +57,7 @@ public class ProductCertificateController extends BaseController {
             tableField = "create_user_id",
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc")
+    @WebAdvanceQuery(handler = ProductCertificateQueryHandler.class)
     public ApiResult<PagingVO<ProductCertificateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ProductCertificateDTO.SearchParamDTO> dto) {
         PagingVO<ProductCertificateDTO.ListDTO> pagingVO = productCertificateService.paging(dto);
         return success(pagingVO);
@@ -69,12 +72,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "上传证书")
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:productCertificate:add",
-            serviceClass = ProductCertificateService.class,
-            keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated ProductCertificateDTO.AddDTO dto) {
+    public ApiResult add(@ModelAttribute @Validated ProductCertificateDTO.AddDTO dto) {
         productCertificateService.add(dto);
         return  success();
     }
@@ -88,12 +86,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改产品证书信息")
     @PostMapping("/update")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:productCertificate:update",
-            serviceClass = ProductCertificateService.class,
-            keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ProductCertificateDTO.UpdateDTO dto) {
+    public ApiResult update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
         Boolean flag = productCertificateService.update(dto);
         return flag == true ? success() : failure();
     }

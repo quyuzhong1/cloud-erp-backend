@@ -296,6 +296,12 @@ public interface SysUserFeign {
     List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@RequestBody List<String> userIdList);
 
     /**
+     * 根据部门id查询部门下人员
+     */
+    @PostMapping("feign/dept/listDeptUserByDeptIdList")
+    List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(@RequestBody List<String> deptIdList);
+
+    /**
      * 更新业务单据状态
      */
     @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")

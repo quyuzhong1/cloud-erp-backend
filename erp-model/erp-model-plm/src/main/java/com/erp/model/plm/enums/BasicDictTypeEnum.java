@@ -19,11 +19,6 @@ public enum  BasicDictTypeEnum {
     DECLARE_PROPERTY("declareProperty", "报关属性"),
 
     /**
-     * 产品认证
-     */
-    PRODUCT_ATTESTATION("productAttestation", "产品认证"),
-
-    /**
      * 运输认证
      */
     TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),

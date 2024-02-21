@@ -178,12 +178,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductAccessoriesService productAccessoriesService;
 
-    @Resource
-    private ProductAttestationService productAttestationService;
-
-    @Autowired
-    private ProductArchiveService archiveService;
-
     @Autowired
     private ProductUnitService productUnitService;
 
@@ -437,17 +431,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
-        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
-        for (ProductAttestationDTO attestation : productAttestationList) {
-            String skuNo = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-            attestation.setSkuNo(skuNo);
-
-            String skuImagesUrl = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
-            attestation.setSkuImagesUrl(skuImagesUrl);
-        }
-        productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
+        productNoSpecDetailAllDTO.setProductAttestationList(null);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
@@ -548,17 +532,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
-        List<ProductAttestationDTO> productAttestationList = productAttestationService.getBySkuId(skuId);
-        for (ProductAttestationDTO attestation : productAttestationList) {
-            String skuNo = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-            attestation.setSkuNo(skuNo);
-
-            String skuImagesUrl = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
-            attestation.setSkuImagesUrl(skuImagesUrl);
-        }
-        productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
+        productNoSpecDetailAllDTO.setProductAttestationList(null);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listBySkuId(skuId);
@@ -779,19 +753,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
         productManyDetail.setProductAccessoriesList(productAccessoriesList);
-
-        //产品认证信息
-        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
-        for (ProductAttestationDTO attestation : productAttestationList) {
-            String skuNo = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-            attestation.setSkuNo(skuNo);
-
-            String skuImagesUrl = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
-            attestation.setSkuImagesUrl(skuImagesUrl);
-        }
-        productManyDetail.setProductAttestationList(productAttestationList);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
@@ -1060,13 +1021,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //8.修改/新增 证书信息
-        List<ProductCertificateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
-        //productCertificateList.forEach(req -> req.setSkuId(skuId));
+        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
-            //SKU操作日志
-            addProductCertificateLog(productCertificateList, id);
-            productCertificateService.saveOrUpdateBatch(productCertificateList);
+            productCertificateService.productAddOrUpdate(productCertificateList);
         }
+
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(id);
 
@@ -1083,17 +1042,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductAccessoriesLog(productAccessoriesList, id);
 
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
-        }
-
-        //10.修改/新增  认证信息
-        List<ProductAttestationDTO> productAttestationList = productNoSpecDTO.getProductAttestationList();
-        if (CollectionUtils.isNotEmpty(productAttestationList)) {
-            for (ProductAttestationDTO attestation : productAttestationList) {
-                attestation.setSkuId(skuId);
-            }
-
-            addProductAttestationLog(productAttestationList, id);
-            productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
         //11.修改/新增  目的国海关编码信息
@@ -1277,11 +1225,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //8.修改/新增 证书信息
-        List<ProductCertificateDTO> productCertificateList = productManySpecDTO.getProductCertificateList();
-        if (productCertificateList.size() > 0) {
-            //操作日志
-            addProductCertificateLog(productCertificateList, productInfoDTO.getId());
-            productCertificateService.saveOrUpdateBatch(productCertificateList);
+        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = productManySpecDTO.getProductCertificateList();
+        if (ObjectUtils.isNotEmpty(productCertificateList)) {
+            productCertificateService.productAddOrUpdate(productCertificateList);
         }
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(productInfoDTO.getId());
@@ -1293,13 +1239,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //添加包装辅料的日志
             addProductAccessoriesLog(productAccessoriesList, productInfoDTO.getId());
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
-        }
-
-        //10.修改/新增  认证信息
-        List<ProductAttestationDTO> productAttestationList = productManySpecDTO.getProductAttestationList();
-        if (CollectionUtils.isNotEmpty(productAttestationList)) {
-            addProductAttestationLog(productAttestationList, productInfoDTO.getId());
-            productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
         //11.修改/新增  目的国海关编码信息
@@ -1342,7 +1281,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         List<String> skuIds = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
 
-        List<ProductAttestationEntity> attestationDataList = productAttestationService.getBySkuIds(skuIds);
 
         for (ProductAttestationDTO item : productAttestationList) {
             //产品认证
@@ -1381,11 +1319,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         attestationList.forEach(obj -> {
             //SKU操作日志
-            ProductAttestationEntity oldEntity = attestationDataList.stream().filter(e -> e.getDictId().equals(obj.getDictId())).findFirst().orElse(null);
             AttestationDTO oldDto = new AttestationDTO();
-            if (ObjectUtils.isNotEmpty(oldEntity)) {
-                BeanMapperUtils.copy(oldEntity, oldDto);
-            }
+
             ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95084);
@@ -1606,7 +1541,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
-        productCertificateService.removeCertificate(idList);
+        productCertificateService.deleteBySkuIdList(idList);
         //2.删除包装信息
         productPackService.removePack(idList);
         //3.删除物流信息
@@ -1687,7 +1622,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
-        productCertificateService.removeCertificate(skuIds);
+        productCertificateService.deleteBySkuIdList(skuIds);
         //2.删除包装信息
         productPackService.removePack(skuIds);
         //3.删除物流信息
@@ -2896,17 +2831,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductCertificateShowDTO item : certificateShowList) {
             item.setDisableFieldList(disableFields);
         }
-        result.setProductCertificateShowDTOList(certificateShowList);
-
-        //产品认证信息
-        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
-        ProductAttestationDTO productAttestationDTO = productAttestationList.stream().filter(attestation ->
-                skuId.equals(attestation.getSkuId())).findFirst().orElse(null);
-        if (productAttestationDTO != null) {
-            productAttestationDTO.setSkuNo(productDetail.getSkuNo());
-            productAttestationDTO.setSkuImagesUrl(productDetail.getImagesUrl());
-        }
-        result.setProductAttestationDTO(productAttestationDTO);
+        result.setProductCertificateShowDTOList(null);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
@@ -3061,23 +2986,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackService.saveOrUpdate(productPackDTO);
         }
         //8.修改/新增 证书信息
-        List<ProductCertificateShowDTO> productCertificateShowList = skuDTO.getProductCertificateShowDTOList();
+        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateShowList = skuDTO.getProductCertificateShowDTOList();
         if (CollectionUtils.isNotEmpty(productCertificateShowList)) {
-            List<ProductCertificateDTO> productCertificateList = BeanMapper.copyList(productCertificateShowList, ProductCertificateDTO.class);
-            //SKU操作日志
-            addProductCertificateLog(productCertificateList, id);
-            productCertificateService.saveOrUpdateBatch(productCertificateList);
+            productCertificateService.productAddOrUpdate(productCertificateShowList);
         }
 
-        //9.修改/新增 产品认证信息
-        ProductAttestationDTO productAttestationDTO = skuDTO.getProductAttestationDTO();
-        if (!Objects.isNull(productAttestationDTO)) {
-            List<ProductAttestationDTO> list = new ArrayList<>(1);
-            list.add(productAttestationDTO);
-            //添加日志
-            addProductAttestationLog(list, id);
-            productAttestationService.saveOrUpdateBatchAttestation(list);
-        }
         //10 修改/新增加 包装辅料信息
 
         List<ProductAccessoriesDTO> productAccessoriesList = skuDTO.getProductAccessoriesList();
@@ -3402,31 +3315,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
-     * 证书信息新增或修改日志
-     */
-    private void addProductCertificateLog(List<ProductCertificateDTO> productCertificateList, String pid) {
-       /* List<String> ids = productCertificateList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCertificateDTO::getId).collect(Collectors.toList());
-        List<ProductCertificateEntity> certificateEntityList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(ids)) {
-            certificateEntityList = productCertificateService.listByIds(ids);
-        }
-        List<ProductCertificateEntity> finalCertificateEntityList = certificateEntityList;
-        productCertificateList.forEach(obj -> {
-            //SKU操作日志
-            ProductCertificateEntity oldEntity = finalCertificateEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
-            ProductCertificateDTO oldDto = new ProductCertificateDTO();
-            if (ObjectUtils.isNotEmpty(oldEntity)) {
-                BeanMapperUtils.copy(oldEntity, oldDto);
-            }
-            ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
-            if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
-            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
-        });*/
-    }
-
-    /**
      * 获取所有明细信息包括删除，用来同步到DMP
      *
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
@@ -3695,7 +3583,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
         });
         //1.删除证书信息
-        productCertificateService.removeCertificate(ids);
+        productCertificateService.deleteBySkuIdList(ids);
         //2.删除包装信息
         productPackService.removePack(ids);
         //3.删除物流信息
