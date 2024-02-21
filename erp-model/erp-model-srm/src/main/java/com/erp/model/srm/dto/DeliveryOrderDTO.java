@@ -307,6 +307,11 @@ public class DeliveryOrderDTO implements Serializable {
         private String detailId;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseDetailId;
+
+        /**
          * 送货单号
          */
         private String code;

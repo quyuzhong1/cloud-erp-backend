@@ -648,5 +648,19 @@
         </if>
         ORDER BY qb.create_time DESC
     </select>
+    <select id="getQcReceiveResult" resultType="com.erp.model.wms.dto.QcInfoDTO$QcReceiveResultDTO">
+        SELECT
+            qi.purchase_order_detail_id as purchaseDetailId,
+            qb.source_code AS receiveCode,
+            qi.qc_good_qty as qcGoodQty
+        FROM qc_info qb
+                 LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+                 LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
+        WHERE qb.is_deleted=FALSE
+        AND qi.purchase_order_detail_id IN
+        <foreach collection="purchaseDetailIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 
 </mapper>

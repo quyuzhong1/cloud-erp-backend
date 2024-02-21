@@ -2455,4 +2455,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
 
     }
+
+    @Override
+    public List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds) {
+        if(CollectionUtils.isEmpty(purchaseDetailIds)){
+            return new ArrayList<>();
+        }
+        return baseMapper.getQcReceiveResult(purchaseDetailIds);
+    }
 }
