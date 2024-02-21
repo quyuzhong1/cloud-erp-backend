@@ -103,22 +103,45 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<LocalDate> createTimeList;
 
+        /**
+         * 项目经理部门id集合
+         */
+        private List<String> projectChargeDeptIdList;
 
         /**
-         * 产品部门类型，/plm/dict/list?type=productDeptType
+         *  产品经理部门id集合
          */
-        private String productDeptType;
+        private List<String> productChargeDeptIdList;
 
         /**
-         * 部门id集合
+         * 团队成员部门id集合
          */
-        private List<String> deptIdList;
-
+        private List<String> teamChargeDeptIdList;
 
         /**
-         * 部门下用户id集合
+         * 创建人部门id集合
          */
-        private List<String> deptUserIdList;
+        private List<String> createChargeDeptIdList;
+
+        /**
+         * 项目经理部门下用户id集合(无需传参)
+         */
+        private List<String> projectChargeDeptUserIdList;
+
+        /**
+         *  产品经理部门下用户id集合(无需传参)
+         */
+        private List<String> productChargeDeptUserIdList;
+
+        /**
+         * 团队成员部门下用户id集合(无需传参)
+         */
+        private List<String> teamChargeDeptUserIdList;
+
+        /**
+         * 创建人部门下用户id集合(无需传参)
+         */
+        private List<String> createChargeDeptUserIdList;
 
     }
 

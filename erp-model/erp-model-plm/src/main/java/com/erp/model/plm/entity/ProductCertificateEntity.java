@@ -1,5 +1,6 @@
 package com.erp.model.plm.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -58,6 +59,7 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
      * 附件
      */
     @TableField(exist = false)
+    @JSONField(serialize = false)
     private MultipartFile multipartFile;
 
 

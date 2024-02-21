@@ -32,7 +32,6 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.BomCombinationExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -441,13 +440,10 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productNoSpecDTO.setProductAccessoriesList(productAccessoriesList);
         //证书信息
         List<ProductCertificateDTO> productCertificateList = new ArrayList<>();
-        productNoSpecDTO.setProductCertificateList(productCertificateList);
+        productNoSpecDTO.setProductCertificateList(null);
         //海关信息
         List<ProductCustomsDTO> productCustomsList = new ArrayList<>();
         productNoSpecDTO.setProductCustomsList(productCustomsList);
-        //认证信息
-        List<ProductAttestationDTO> productAttestationList = new ArrayList<>();
-        productNoSpecDTO.setProductAttestationList(productAttestationList);
 
         productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
 

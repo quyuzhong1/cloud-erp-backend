@@ -106,40 +106,32 @@
                 #{phaseName}
             </foreach>
         </if>
-
-        <if test="params.productDeptType != null ">
-            <if test="params.deptUserIdList != null and params.deptUserIdList.size > 0">
-                <if test=" params.productDeptType == 'projectChargeDept'">
-                    and pi.charge_id in
-                    <foreach collection="params.deptUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test=" params.productDeptType == 'productChargeDept'">
-                    and p.charge_id in
-                    <foreach collection="params.deptUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test=" params.productDeptType == 'teamChargeDept'">
-                  and exists (
-                    select id from project_members where product_id = p.id where and is_deleted = false
-                      and  member_id in
-                    <foreach collection="params.deptUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                    )
-                </if>
-                <if test=" params.productDeptType == 'createChargeDept'">
-                    and p.create_user_id in
-                    <foreach collection="params.deptUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-            </if>
-            <if test="params.deptUserIdList == null or params.deptUserIdList.size == 0">
-               and 1 != 1
-            </if>
+        <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+            and p.project_charge_id in
+            <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+            and p.charge_id in
+            <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+            and exists (
+            select id from project_members where product_id = p.id and  is_deleted = false
+            and  member_id in
+            <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+            and p.create_user_id in
+            <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
@@ -272,6 +264,33 @@
             AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > p.create_time
         </if>
+        <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+            and p.project_charge_id in
+            <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+            and p.charge_id in
+            <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+            and exists (
+            select id from project_members where product_id = p.id and  is_deleted = false
+            and  member_id in
+            <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+            and p.create_user_id in
+            <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         ORDER BY p.create_time DESC
     </select>
     <select id="collect" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -383,6 +402,33 @@
             AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > p.create_time
         </if>
+        <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+            and p.project_charge_id in
+            <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+            and p.charge_id in
+            <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+            and exists (
+            select id from project_members where product_id = p.id and  is_deleted = false
+            and  member_id in
+            <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+            and p.create_user_id in
+            <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
@@ -489,7 +535,33 @@
             AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > p.create_time
         </if>
-
+        <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+            and p.project_charge_id in
+            <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+            and p.charge_id in
+            <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+            and exists (
+            select id from project_members where product_id = p.id and  is_deleted = false
+            and  member_id in
+            <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+            and p.create_user_id in
+            <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
@@ -513,212 +585,6 @@
         SELECT iterate_ref_sku_id AS flagId, COUNT(*)  AS count FROM product_info
         WHERE iterate_ref_sku_id !='' AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY iterate_ref_sku_id
     </select>
-
-    <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
-        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
-        pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
-        p.charge_id AS productChargeId,p.project_charge_id AS projectChargeId,
-        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time,
-        p.progress_status,
-        p.image_url,
-        p.property,
-        p.category,
-        p.spu_no
-        FROM product_info p LEFT JOIN project_info pi
-        ON p.id = pi.product_id AND pi.is_deleted = FALSE
-        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
-        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
-        ppe.is_deleted = FALSE
-        WHERE pt.is_deleted = FALSE
-        GROUP BY pt.product_id) pp on p.id = pp.product_id
-        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
-        <if test="categoryIdList!=null and categoryIdList.size >0 ">
-            AND p.category_id IN
-            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
-                #{categoryId}
-            </foreach>
-        </if>
-        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
-        </if>
-        <if test="params.stateList !=null and params.stateList.size()>0">
-            AND P.approval_status IN
-            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
-        <if test="productIds !=null and productIds.size()>0">
-            AND P.id IN
-            <foreach collection="productIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-        <if test="archiveProductIds!=null and archiveProductIds.size()>0">
-            AND P.id NOT IN
-            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-        <if test="params.gradeList !=null and params.gradeList.size>0">
-            AND p.grade_id IN
-            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
-                #{gradeId}
-            </foreach>
-        </if>
-        <if test="params.brandList !=null and params.brandList.size>0">
-            AND p.brand_id IN
-            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
-                #{brandId}
-            </foreach>
-        </if>
-
-        <if test="params.propertyList !=null and params.propertyList.size>0">
-            AND p.property_id IN
-            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
-                #{propertyId}
-            </foreach>
-        </if>
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
-            AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
-                #{chargeId}
-            </foreach>
-        </if>
-
-        <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
-            AND pph.name IN
-            <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
-                #{phaseName}
-            </foreach>
-        </if>
-
-        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
-            AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
-                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
-            </foreach>
-        </if>
-
-        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
-            AND p.progress_status IN
-            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
-                #{progressStatus}
-            </foreach>
-        </if>
-        <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
-        </if>
-        <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.endTime}
-        </if>
-        <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
-        </if>
-        ORDER BY pi.create_time DESC
-
-    </select>
-
-    <select id="listMyCollectNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
-        SELECT p.id, p.name
-        FROM product_info p LEFT JOIN project_info pi
-        ON p.id = pi.product_id
-        left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
-        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
-        ppe.is_deleted = FALSE
-        WHERE pt.is_deleted = FALSE
-        GROUP BY pt.product_id) pp on p.id = pp.product_id
-        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
-        <if test="categoryIdList!=null and categoryIdList.size >0 ">
-            AND p.category_id IN
-            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
-                #{categoryId}
-            </foreach>
-        </if>
-        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND p.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
-        </if>
-        <if test="params.stateList !=null and params.stateList.size()>0">
-            AND P.approval_status IN
-            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
-        <if test="productIds !=null and productIds.size()>0">
-            AND P.id IN
-            <foreach collection="productIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-        <if test="archiveProductIds!=null and archiveProductIds.size()>0">
-            AND P.id NOT IN
-            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-        <if test="params.gradeList !=null and params.gradeList.size>0">
-            AND p.grade_id IN
-            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
-                #{gradeId}
-            </foreach>
-        </if>
-        <if test="params.brandList !=null and params.brandList.size>0">
-            AND p.brand_id IN
-            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
-                #{brandId}
-            </foreach>
-        </if>
-
-        <if test="params.propertyList !=null and params.propertyList.size>0">
-            AND p.property_id IN
-            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
-                #{propertyId}
-            </foreach>
-        </if>
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
-            AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
-                #{chargeId}
-            </foreach>
-        </if>
-
-        <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
-            AND pph.name IN
-            <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
-                #{phaseName}
-            </foreach>
-        </if>
-
-        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
-            AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
-                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
-            </foreach>
-        </if>
-
-        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
-            AND p.progress_status IN
-            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
-                #{progressStatus}
-            </foreach>
-        </if>
-        <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
-        </if>
-        <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.endTime}
-        </if>
-        <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
-        </if>
-        ORDER BY pi.create_time DESC
-    </select>
-
 
     <select id="getProductAndProjectList" resultType="com.erp.model.plm.dto.ProductProjectDTO">
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
@@ -1021,6 +887,33 @@
                     AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
                     )
                 </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id and  is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
@@ -1130,6 +1023,33 @@
                 <if test="params.permissionSql!=null  and params.permissionSql!=''">
                     AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
                     )
+                </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id  and is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
                 </if>
             </otherwise>
         </choose>
@@ -1258,6 +1178,33 @@
                     INTERVAL '1
                     DAY' ) > p.create_time
                 </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id and  is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
@@ -1366,6 +1313,33 @@
                     AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
                     INTERVAL '1
                     DAY' ) > p.create_time
+                </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id and  is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
                 </if>
             </otherwise>
         </choose>
@@ -1493,6 +1467,33 @@
                     INTERVAL '1
                     DAY' ) > p.create_time
                 </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id and  is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
                 <if test="params.permissionSql!=null  and params.permissionSql!=''">
                     AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
                     )
@@ -1602,6 +1603,33 @@
                     AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
                     INTERVAL '1
                     DAY' ) > p.create_time
+                </if>
+                <if test="params.projectChargeDeptUserIdList != null and params.projectChargeDeptUserIdList.size > 0">
+                    and p.project_charge_id in
+                    <foreach collection="params.projectChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.productChargeDeptUserIdList != null and params.productChargeDeptUserIdList.size > 0">
+                    and p.charge_id in
+                    <foreach collection="params.productChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.teamChargeDeptUserIdList != null and params.teamChargeDeptUserIdList.size > 0">
+                    and exists (
+                    select id from project_members where product_id = p.id and  is_deleted = false
+                    and  member_id in
+                    <foreach collection="params.teamChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                </if>
+                <if test="params.createChargeDeptUserIdList != null and params.createChargeDeptUserIdList.size > 0">
+                    and p.create_user_id in
+                    <foreach collection="params.createChargeDeptUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
                 </if>
             </otherwise>
         </choose>

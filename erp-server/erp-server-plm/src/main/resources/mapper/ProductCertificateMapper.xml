@@ -27,10 +27,15 @@
             pc.update_time as updateTime
         from product_certificate pc
         inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
-        inner join attachment att on pc.id = att.business_id and att.is_deleted = false
+        inner join (
+            select
+                   business_id,attach_name,attach_url
+            from attachment
+            where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
         <where>
             ${params.sqlMap.default}
-            and po.is_deleted = false
+            and pc.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

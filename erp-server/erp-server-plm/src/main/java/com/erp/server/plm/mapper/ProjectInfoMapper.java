@@ -26,10 +26,6 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
 
     IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
-    IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds, @Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
-
-    List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
-
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
     List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);

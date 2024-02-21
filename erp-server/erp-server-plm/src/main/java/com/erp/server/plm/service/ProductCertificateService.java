@@ -36,24 +36,6 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
     List<ProductCertificateShowDTO> listBySkuId(String skuId);
 
     /**
-     * @Description 保存/修改产品证书信息-批量操作
-     * @Author Luo_WG
-     * @Date 2022/9/26 18:42
-     * @param productCertificateList 产品证书信息表
-     * @return java.lang.Boolean
-     **/
-    Boolean saveOrUpdateBatch(List<ProductCertificateDTO> productCertificateList);
-
-    /**
-     * @Description 根据skuId删除产品证书信息
-     * @Author Luo_WG
-     * @Date 2022/9/26 18:42
-     * @param skuIds skuIds
-     * @return java.lang.Boolean
-     **/
-    Boolean removeCertificate(List<String> skuIds);
-
-    /**
      * @description: 分页查询
      * @author Will
      * @date: 2024/2/19 10:52
@@ -113,4 +95,27 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @return Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 产品信息新增或修改
+     * @author Will
+     * @date: 2024/2/21 10:49
+     * @param productCertificateList
+     */
+    void productAddOrUpdate(List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList);
+    /**
+     * @description: 根据skuid集合删除
+     * @author Will
+     * @date: 2024/2/21 11:25
+     * @param skuIdList
+     */
+    void deleteBySkuIdList(List<String> skuIdList);
+
+    /**
+     * @description: 根据skuId集合查询
+     * @author Will
+     * @date: 2024/2/21 11:48
+     * @param skuIdList
+     * @return List<ProductCertificateEntity>
+     */
+    List<ProductCertificateEntity> listBySkuIdList(List<String> skuIdList);
 }

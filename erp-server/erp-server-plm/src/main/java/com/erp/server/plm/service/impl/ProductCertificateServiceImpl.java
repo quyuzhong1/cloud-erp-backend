@@ -1,10 +1,10 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,7 +13,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
@@ -35,12 +34,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -89,6 +91,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(ProductCertificateDTO.AddDTO dto) {
         List<ProductCertificateEntity> resultList = handleAdd(dto);
         //新增数据
@@ -107,16 +110,24 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     private List<ProductCertificateEntity> handleAdd(ProductCertificateDTO.AddDTO dto) {
         List<String> skuIdList = dto.getSkuIdList();
         List<ProductCertificateDTO.FileDTO> fileList = dto.getFileList();
+
+        //产品信息
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
+
         //结果集
         List<ProductCertificateEntity> resultList = new ArrayList<>();
         for (String skuId : skuIdList) {
             for (ProductCertificateDTO.FileDTO fileDTO : fileList) {
+                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), skuId)).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_95154);
+                }
                 ProductCertificateEntity entity = new ProductCertificateEntity();
                 entity.setSkuId(skuId);
                 entity.setType(dto.getType());
                 entity.setDictProject(fileDTO.getDictProject());
                 entity.setMultipartFile(fileDTO.getMultipartFile());
-                entity.setCertificateValidTime(dto.getCertificateValidTime());
+                entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 entity.setRemark(dto.getRemark());
                 resultList.add(entity);
             }
@@ -138,6 +149,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         for (ProductCertificateEntity entity : resultList) {
             //附件
             MultipartFile multipartFile = entity.getMultipartFile();
+            if (ObjectUtil.isEmpty(multipartFile)) {
+                continue;
+            }
             double size = multipartFile.getSize();
             double fileSize = size / (1024 * 1024);
             fileSize = (double) Math.round(fileSize * 100) / 100;
@@ -164,9 +178,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCertificateDTO.UpdateDTO dto) {
         ProductCertificateEntity entity = new ProductCertificateEntity();
-        BeanMapperUtils.copy(dto,entity);
+        entity.setId(dto.getId());
+        entity.setRemark(dto.getRemark());
+        entity.setMultipartFile(dto.getMultipartFile());
+        entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         log.info("编辑 开始更新产品认证", entity.getId());
         //更新主表数据
         this.updateById(entity);
@@ -184,6 +202,49 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         return Boolean.TRUE;
     }
 
+    @Override
+    public void productAddOrUpdate(List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList) {
+        //结果集
+        List<ProductCertificateEntity> resultList = new ArrayList<>();
+
+        for (ProductCertificateDTO.ProductAddOrUpdateDTO productAddOrUpdateDTO : productCertificateList) {
+            //新增数据附件不能为空
+            if (StrUtil.isBlank(productAddOrUpdateDTO.getId()) && ObjectUtil.isEmpty(productAddOrUpdateDTO.getMultipartFile())) {
+                throw new ServiceException(ApiError.TIME_NOT_NULL,"新增附件");
+            }
+            ProductCertificateEntity entity = new ProductCertificateEntity();
+            entity.setId(productAddOrUpdateDTO.getId());
+            entity.setSkuId(productAddOrUpdateDTO.getSkuId());
+            entity.setType(productAddOrUpdateDTO.getType());
+            entity.setDictProject(productAddOrUpdateDTO.getType());
+            entity.setMultipartFile(productAddOrUpdateDTO.getMultipartFile());
+            entity.setRemark(productAddOrUpdateDTO.getRemark());
+            resultList.add(entity);
+        }
+        //新增数据
+        this.saveOrUpdateBatch(resultList);
+        //上传附件
+        uploadFile(resultList);
+        //删除附件
+        productCertificateList.forEach(obj -> deleteFile(obj.getRemoveFileIdList(),obj.getId()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return;
+        }
+        List<ProductCertificateEntity> productCertificateList = listBySkuIdList(skuIdList);
+        if (CollectionUtils.isEmpty(productCertificateList)) {
+            return;
+        }
+        List<String> ids = productCertificateList.stream().map(ProductCertificateEntity::getId).collect(Collectors.toList());
+        //删除
+        delete(ids);
+    }
+
+
     /**
      * @description: 删除附件
      * @author Will
@@ -192,7 +253,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @param businessId
      */
     private void deleteFile (List<String> removeFileIdList,String businessId) {
-        if (CollectionUtils.isEmpty(removeFileIdList)) {
+        if (CollectionUtils.isEmpty(removeFileIdList) || StrUtil.isBlank(businessId)) {
             return;
         }
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Arrays.asList(businessId));
@@ -202,7 +263,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         List<PlmAttachmentEntity> removeFileList = attachmentList.stream().filter(obj -> removeFileIdList.contains(obj.getId())).collect(Collectors.toList());
         //删除附件表数据
-        plmAttachmentService.removeByIds(removeFileList);
+        plmAttachmentService.removeByIds(removeFileIdList);
         for (PlmAttachmentEntity entity : removeFileList) {
             //fastdfs删除附件
             FastDFSClientUtil.deleteFile(entity.getAttachUrl());
@@ -247,6 +308,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         log.info("编辑 开始更新产品认证,ids={}", ids);
         //删除认证信息
@@ -258,7 +320,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return Boolean.TRUE;
         }
         //删除附件表数据
-        plmAttachmentService.removeByIds(attachmentList);
+        List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
+        plmAttachmentService.removeByIds(attachmentIdList);
         for (PlmAttachmentEntity entity : attachmentList) {
             //fastdfs删除附件
             FastDFSClientUtil.deleteFile(entity.getAttachUrl());
@@ -309,6 +372,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         return Boolean.TRUE;
     }
+
 
     /**
      * @description: 处理导入成功数据
@@ -371,37 +435,15 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     public List<ProductCertificateShowDTO> listBySkuId(String skuId) {
         return productCertificateMapper.listBySkuId(skuId);
     }
-    /**
-     * @Description 保存/修改产品证书信息-批量操作
-     * @Author Luo_WG
-     * @Date 2022/9/23 10:13
-     * @param productCertificateList 产品证书信息表
-     * @return java.lang.Boolean
-     **/
-    @Override
-    public Boolean saveOrUpdateBatch(List<ProductCertificateDTO> productCertificateList) {
-        List<ProductCertificateEntity> list = BeanMapper.copyList(productCertificateList, ProductCertificateEntity.class);
-        return this.saveOrUpdateBatch(list);
-    }
 
-    /**
-     * @Description 根据skuid删除产品证书信息
-     * @Author Luo_WG
-     * @Date 2022/9/26 18:42
-     * @param skuIds skuIds
-     * @return java.lang.Boolean
-     **/
     @Override
-    public Boolean removeCertificate(List<String> skuIds) {
-        LambdaQueryWrapper<ProductCertificateEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.in(ProductCertificateEntity::getSkuId, skuIds);
-        Integer count = baseMapper.delete(queryWrapper);
-        if (count > 0) {
-            return true;
+    public List<ProductCertificateEntity> listBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.EMPTY_LIST;
         }
-        return false;
+        List<ProductCertificateEntity> list = this.lambdaQuery().in(ProductCertificateEntity::getSkuId, skuIdList).list();
+        return list;
     }
-
 
     /**
      * @description: 数据赋值处理

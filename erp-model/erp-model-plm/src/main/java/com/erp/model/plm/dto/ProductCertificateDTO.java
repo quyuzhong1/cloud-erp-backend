@@ -1,9 +1,7 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
@@ -157,7 +155,7 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * 有效期
          */
-        private LocalDate certificateValidTime;
+        private String certificateValidTimeStr;
 
         /**
          * 备注
@@ -187,6 +185,58 @@ public class ProductCertificateDTO implements Serializable {
     }
 
     /**
+     * 产品信息修改DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductAddOrUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 证书类型
+         */
+        @NotBlank(message = "证书类型不能为空")
+        private String type;
+
+        /**
+         * 证书项目
+         */
+        @NotBlank(message = "证书项目不能为空")
+        private String dictProject;
+
+        /**
+         * 有效期
+         */
+        private String certificateValidTimeStr;
+
+        /**
+         * 证书文件
+         */
+        private MultipartFile multipartFile;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 需要上传的附件id集合
+         */
+        private List<String> removeFileIdList;
+    }
+
+
+    /**
      * 修改DTO
      */
     @Data
@@ -202,7 +252,7 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * 有效期
          */
-        private LocalDate certificateValidTime;
+        private String certificateValidTimeStr;
 
         /**
          * 证书文件
