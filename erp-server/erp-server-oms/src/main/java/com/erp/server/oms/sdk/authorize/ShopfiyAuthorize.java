@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -106,7 +107,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String bodyStr = "";
         // 二级域名
         String secondDomain = dto.getShop();
@@ -138,16 +139,8 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setHost(dto.getHost());
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
-        try {
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
-        } catch (ServiceException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
-        }
-        if (StringUtils.isBlank(bodyStr)) {
-            throw new ServiceException("Authorize timed out");
-        }
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
+
         JSONObject jsonObject = JSONObject.parseObject(bodyStr);
         //token
         String accessToken = jsonObject.getOrDefault("access_token", "").toString();

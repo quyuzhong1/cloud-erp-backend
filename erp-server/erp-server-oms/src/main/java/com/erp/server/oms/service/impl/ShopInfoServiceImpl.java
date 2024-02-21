@@ -2,37 +2,30 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.CustomerDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -65,12 +58,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -608,8 +599,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform());
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
     /**
