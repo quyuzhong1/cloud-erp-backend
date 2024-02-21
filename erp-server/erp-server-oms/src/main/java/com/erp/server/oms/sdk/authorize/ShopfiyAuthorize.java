@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -104,7 +105,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String bodyStr = "";
         // 二级域名
         String secondDomain = dto.getShop();
@@ -137,7 +138,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
         try {
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
