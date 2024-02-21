@@ -342,8 +342,8 @@ public class AliExpressOrderHandlerImplTest {
         CloudPrintRequest cloudPrintRequest = CloudPrintRequest.builder()
                 .client(CLIENT)
                 .locale("zh_CN")
-                .orderCode("8183868002476390")
-                .trackingNumber("LP00629346935157")
+                .orderCode("LP00631998284401")
+//                .trackingNumber("LP00629346935157")
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.cloudPrint(authMap, cloudPrintRequest);
@@ -359,7 +359,7 @@ public class AliExpressOrderHandlerImplTest {
     public void getPdf() throws com.erp.tms.aliexpress.util.ApiException {
         PdfRequest pdfRequest = PdfRequest.builder()
                 .client(CLIENT)
-                .handoverContentId(8183868002476390L)
+                .handoverContentId(10084152400L)
                 .locale("zh_CN")
                 .type(1)
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
