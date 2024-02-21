@@ -25,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -303,7 +304,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
             list.add(receiveRecordView);
         }
-        return list;
+        return list.stream()
+                .sorted(Comparator.comparing(FbaShipmentDTO.ReceiveRecordView::getReceiveTime))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -859,6 +862,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         // 检查货件是否生成签收记录
         if (this.checkStopGenReceived(entity)){
+            // 检查历史领星的签收记录绑定
+            fbaShipmentReceiveService.checkAndBindHistory(entity, newDetailEntityList, PlatformEnum.LINGXING.getName());
             return;
         }
 
@@ -1680,11 +1685,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
         if (!CollectionUtils.isEmpty(stopGenReceivedTimeList) && null != entity.getCreateTime()){
             DictBasicDTO.ListDTO configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
-            if (null != configDTO){
-                LocalDateTime stopTime = LocalDateTime.parse(configDTO.getValue(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-                return entity.getCreateTime().isAfter(stopTime);
-            } else {
-                LocalDateTime stopTime = LocalDateTime.of(2024, 2,20,0,0,0);
+            LocalDateTime stopTime;
+            if (null != configDTO) {
+                stopTime = LocalDateTime.parse(configDTO.getValue(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 return entity.getCreateTime().isAfter(stopTime);
             }
         }

@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.exception.ServiceException;
@@ -106,7 +107,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
         for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
             // 构造消息体
             FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate(), sid);
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getUniqId(entity.getUniqueId());
+            UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.toString());
             List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
@@ -163,7 +164,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(FbaReceiveGroupEntity mongoDatum) {
-        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getFbaShipmentId());
+        UniqueDto updateDto = UniqueDto.getUniqId(mongoDatum.getUniqueId());
         if(null == mongoDatum){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);

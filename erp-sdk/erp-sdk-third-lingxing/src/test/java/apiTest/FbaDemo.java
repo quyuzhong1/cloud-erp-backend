@@ -55,9 +55,9 @@ public class FbaDemo {
 
 
     public static void main(String[] args) throws Exception {
-        String endpoint = "xxxx";
-        String appId = "xxxx";
-        String accessToken = "xxxx";
+        String endpoint = "https://openapi.lingxing.com";
+        String appId = "ak_v1mOqadGTMHkC";
+        String accessToken = "e922b893-34ae-48be-842a-bd2ce930966e";
 
         Map<String, Object> queryParam = new HashMap<>();
         queryParam.put("timestamp", System.currentTimeMillis() / 1000 + "");
@@ -65,8 +65,8 @@ public class FbaDemo {
         queryParam.put("app_key", appId);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("sid", 126);
-        body.put("event_date", "2024-01-20");
+        body.put("sid", 125);
+        body.put("event_date", "2024-02-04");
 
         Map<String, Object> signMap = new HashMap<>();
         signMap.putAll(queryParam);

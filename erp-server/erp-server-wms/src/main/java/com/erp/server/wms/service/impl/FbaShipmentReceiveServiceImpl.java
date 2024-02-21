@@ -15,6 +15,7 @@ import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.FbaReceiveHandleStatusEnum;
+import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.server.wms.mapper.FbaShipmentReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -154,42 +155,46 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getByFbaShipmentId(fbaShipmentId);
         if (null == fbaShipmentEntity){
             // 不存在货件只保存
-            entityList.forEach(entity-> entity.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode()));
-            if (!this.saveBatch(entityList)) {
+            saveList.forEach(entity-> entity.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode()));
+            if (!this.saveBatch(saveList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(entityList));
             }
             return true;
         }
-        // 查询新生效的货件日期
-        if (fbaShipmentService.checkStopGenReceived(fbaShipmentEntity)){
+        // 历史货件的签收记录停止=只记录领星来源签收记录
+        if (!fbaShipmentService.checkStopGenReceived(fbaShipmentEntity)){
             // 货件创建时间在新生效的货件日期之前只保存
-            entityList.forEach(entity-> entity.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode()));
-            if (!this.saveBatch(entityList)) {
+            saveList.forEach(entity-> entity.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode()));
+            if (!this.saveBatch(saveList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(entityList));
             }
             return true;
         }
-
         // 查询对应detailId
         List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(fbaShipmentEntity.getId()));
 
         // 补充关联数据并保存
-        entityList.forEach(entity-> {
-            entity.setHandleStatus(FbaReceiveHandleStatusEnum.ALREADY.getCode());
-            FbaShipmentDetailEntity currentDetailEntity = detailEntityList.stream()
-                    .filter(e -> e.getMsku().equalsIgnoreCase(entity.getMsku()) && e.getFnSku().equalsIgnoreCase(entity.getFnSku()))
-                    .findFirst().orElseThrow(() -> new ServiceException(StrUtil.format("[FBA签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
-            entity.setDetailId(currentDetailEntity.getId());
-            entity.setSkuNo(currentDetailEntity.getSkuNo());
-            entity.setSkuId(currentDetailEntity.getSkuId());
-            entity.setAsin(currentDetailEntity.getAsin());
-        });
-        if (!this.saveBatch(entityList)) {
+        fillData(saveList, detailEntityList, fbaShipmentEntity);
+        if (!this.saveBatch(saveList)) {
             throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(entityList));
         }
 
+        // 需要挑拨的列表
+        List<FbaShipmentReceiveEntity> handleEntityList = new LinkedList<>(saveList);
+
+        // 判断历史记录是否有处理
+        List<FbaShipmentReceiveEntity> updateEntityList = oldEntityList.stream().filter(e -> FbaReceiveHandleStatusEnum.NONE.getCode().equalsIgnoreCase(e.getHandleStatus())).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(updateEntityList)) {
+            // 补充关联数据并保存
+            fillData(updateEntityList, detailEntityList, fbaShipmentEntity);
+            if (!this.updateBatchById(updateEntityList)) {
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量更新失败: entity=" + JSONUtil.toJsonStr(entityList));
+            }
+            handleEntityList.addAll(updateEntityList);
+        }
+
         // 添加日志
-        List<OperateLogDTO.AddModuleOperateLogDTO> logList = entityList.stream().map(entity -> {
+        List<OperateLogDTO.AddModuleOperateLogDTO> logList = handleEntityList.stream().map(entity -> {
             OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
             addModuleOperateLog.setBusinessId(fbaShipmentEntity.getId());
             addModuleOperateLog.setOperation("FBA签收数量变更");
@@ -209,8 +214,24 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         LocalDate billDate = entityList.get(0).getReceiveDate().toLocalDate();
         // 执行调拨逻辑
-        fbaShipmentService.handlerWarehouse(fbaShipmentEntity, entityList, billDate, closedDateMap);
+        fbaShipmentService.handlerWarehouse(fbaShipmentEntity, handleEntityList, billDate, closedDateMap);
         return true;
+    }
+
+    /**
+     * 补充明细ID和sku信息
+     */
+    private static void fillData(List<FbaShipmentReceiveEntity> updateEntityList, List<FbaShipmentDetailEntity> detailEntityList, FbaShipmentEntity fbaShipmentEntity) {
+        updateEntityList.forEach(entity-> {
+            entity.setHandleStatus(FbaReceiveHandleStatusEnum.ALREADY.getCode());
+            FbaShipmentDetailEntity currentDetailEntity = detailEntityList.stream()
+                    .filter(e -> e.getMsku().equalsIgnoreCase(entity.getMsku()) && e.getFnSku().equalsIgnoreCase(entity.getFnSku()))
+                    .findFirst().orElseThrow(() -> new ServiceException(StrUtil.format("[FBA签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
+            entity.setDetailId(currentDetailEntity.getId());
+            entity.setSkuNo(currentDetailEntity.getSkuNo());
+            entity.setSkuId(currentDetailEntity.getSkuId());
+            entity.setAsin(currentDetailEntity.getAsin());
+        });
     }
 
     @Override
@@ -237,5 +258,23 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             throw new ServiceException("批量更新FBA签收记录失败");
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> detailEntityList, String sourceType) {
+        List<FbaShipmentReceiveEntity> list = this.lambdaQuery()
+                .eq(FbaShipmentReceiveEntity::getFbaShipmentId, entity.getFbaShipmentId())
+                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .ne(FbaShipmentReceiveEntity::getHandleStatus, FbaReceiveHandleStatusEnum.ALREADY.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        // 补充关联数据并保存
+        fillData(list, detailEntityList, entity);
+        if (!this.updateBatchById(list)) {
+            throw new ServiceException("[FbaShipmentDetailEntity] 批量更新失败: entity=" + JSONUtil.toJsonStr(list));
+        }
     }
 }

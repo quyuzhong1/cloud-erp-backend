@@ -50,13 +50,13 @@ public class LingxingApiTest {
 
     @Test
     public void receivedInventory(){
-        LocalDate startTime = LocalDate.of(2024,1,20);
-        FbaReceiveReqDTO receivedDTO = new FbaReceiveReqDTO(126, startTime);
+        LocalDate startTime = LocalDate.of(2024,2,4);
+        FbaReceiveReqDTO receivedDTO = new FbaReceiveReqDTO(125, startTime);
         Map<String, Object> objectMap = BeanUtil.beanToMap(receivedDTO);
-        Result<List<FbaShipmentReceiveDTO>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_DETAIL_RUI, objectMap);
         System.out.println("FBA货件明细总结果");
         System.out.println(JSONUtil.toJsonStr(result));
-        List<FbaShipmentReceiveDTO> data = result.getData();
+        Object data = result.getData();
         System.out.println("FBA货件明细列表");
         System.out.println(JSONUtil.toJsonStr(data));
     }

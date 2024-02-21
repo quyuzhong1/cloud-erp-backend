@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.utils.MapUtil;
@@ -82,7 +83,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         List<ShopEntity> insertList = new ArrayList<>();
         List<ShopEntity> entityToMqlist = new ArrayList<>();
         for (ShopEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getSid().toString());
+            UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.getSid().toString());
             List<ShopEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
@@ -137,7 +138,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity shopInfo) {
-        OrderMongoDTO updateDto = new OrderMongoDTO(shopInfo.getSid().toString());
+        UniqueDto updateDto = UniqueDto.getUniqId(shopInfo.getSid().toString());
         if(null == shopInfo){
             shopInfo.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopInfo), MapUtil.class);
