@@ -23,6 +23,7 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -31,7 +32,9 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
+import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +80,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private QcInfoService qcInfoService;
+
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -111,8 +120,24 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         }
 
+        String soId = "";
+        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
+                soId = soReturnReceiveEntities.get(0).getSoId();
+            }
+        } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+            soId = entity.getSoId();
+        } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
+            soId = entity.getSoId();
+        }
+
         //销售单明细
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
+        List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
+        if (StringUtils.isNotBlank(soId)) {
+            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
+        }
+
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
@@ -249,6 +274,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                     map.put("FSrcBillNo", soReturnEntity.getSourceCode());
                 }
             }
+
+
 
 /*            List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> linkMap = new HashMap<>();
