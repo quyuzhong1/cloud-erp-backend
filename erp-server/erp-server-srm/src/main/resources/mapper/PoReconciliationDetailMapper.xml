@@ -77,7 +77,7 @@
         from po_reconciliation_detail prd
         <where>
             ${params.sqlMap.default}
-            and prd.is_deleted = false
+            and prd.is_deleted = false and prd.main_id = ''
             <if test="params.supplierId != null and params.supplierId != ''">
                 and prd.supplier_id = #{params.supplierId}
             </if>
