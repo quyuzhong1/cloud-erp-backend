@@ -13,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.stringtemplate.v4.ST;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -45,7 +47,7 @@ public class SoB2cDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单）
+         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废,orderError 异常订单 ）
          */
         private String tabFlag;
 
@@ -54,6 +56,30 @@ public class SoB2cDTO implements Serializable {
          */
         private Integer count;
 
+    }
+
+    /**
+     * 销售订单的预报统计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForecastCountDTO  {
+
+        /**
+         * 状态
+         */
+        private String status;
+
+
+        /**
+         * 状态名
+         */
+        private String statusName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 
     /**
@@ -79,6 +105,16 @@ public class SoB2cDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 组包状态 （soB2cPackageStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> packageStatusList;
+
+        /**
+         * 中转状态 （soB2cTransferStatus 字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> transferStatusList;
         /**
          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
          */
@@ -192,6 +228,17 @@ public class SoB2cDTO implements Serializable {
          * 作废状态（false未作废，true已作废）
          */
         private Boolean invalidStatus;
+
+        /**
+         * 组包状态  not 不需要  wait 待组包   already 已经组包
+         *
+         */
+        private String packageStatus;
+        /**
+         * 中转状态 not 不需要  wait 待中转   already 已经中转
+         */
+        private String transferStatus;
+
 
         /**
          * 国家
@@ -1688,7 +1735,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isWarehouseEmpty;
 
-
+        /**
+         * 订单仓库名称
+         */
+        private String warehouseName;
     }
 
     /**
@@ -1823,4 +1873,70 @@ public class SoB2cDTO implements Serializable {
          */
         private String countryName;
     }
+
+    /**
+     * 拦截订单修改订单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptUpdateOrderDTO {
+        /**
+         * 订单id
+         */
+        private List<String> ids;
+        /**
+         * 是否打标拦截
+         */
+        private Boolean isIntercept;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
+
+        /**
+         * 异常原因
+         * 取值：SoB2cAbnormalTypeEnum
+         */
+        private String abnormalType;
+    }
+
+
+    /**
+     * 中转报关
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TransferDeclareDTO{
+
+        /**
+         * 销售订单
+         */
+        @Size(min = 1 ,message = "销售订单不能为空")
+        private List<String> ids;
+
+        /**
+         * 报关物流商id  来源 http://172.16.100.11:3002/project/128/interface/api/28035  id
+         */
+        @NotBlank(message = "报关商不能为空")
+        private String transferLogisticsSupplierId;
+
+
+        /**
+         * 报关物流商渠道id http://172.16.100.11:3002/project/128/interface/api/28035  children.id
+         */
+        @NotBlank(message = "报关商渠道不能为空")
+        private String transferLogisticsChannelId;
+
+    }
+
 }

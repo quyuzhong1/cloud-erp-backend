@@ -156,9 +156,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                         oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
                     }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
-                    if (!listingInfoService.updateById(oldEntity)) {
-                        throw new ServiceException("Listing 产品更新失败");
-                    }
+                    listingInfoService.updateById(oldEntity);
+//                    if (!listingInfoService.updateById(oldEntity)) {
+//                        throw new ServiceException("Listing 产品更新失败");
+//                    }
                     //记录更新日志
                     String msg = StrUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);

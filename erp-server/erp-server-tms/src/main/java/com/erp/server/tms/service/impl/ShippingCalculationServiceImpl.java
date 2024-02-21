@@ -227,6 +227,19 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         return shippingCalculationDTO;
     }
 
+    @Override
+    public ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule,LogisticsChannelEntity channelEntity
+            , BigDecimal weight,BigDecimal length,BigDecimal width,BigDecimal height) {
+
+        //查询其他费用
+        List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
+        }
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(entity, shippingTemplateRule, channelEntity, otherCostList, weight, length, width, height);
+        return shippingCalculationDTO;
+    }
+
     /**
      * @param entity
      * @param shippingTemplateRule

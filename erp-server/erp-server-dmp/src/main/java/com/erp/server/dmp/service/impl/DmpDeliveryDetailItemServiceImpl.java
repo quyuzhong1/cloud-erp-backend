@@ -126,15 +126,20 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             if (CollectionUtil.isEmpty(splitSkuDTOS)){
                 continue;
             }
-            for (SplitSkuDTO skuDTO : splitSkuDTOS) {
+            for (int i = 0;i < splitSkuDTOS.size(); i++) {
+                SplitSkuDTO skuDTO = splitSkuDTOS.get(i);
                 DmpDeliveryDetailItemEntity entity = new DmpDeliveryDetailItemEntity();
                 BeanMapper.copy(dmpDeliveryDetailItemEntity, entity);
+                //仅第一条拆分数据保存原单的成本、金额、数量
+                if (i == 0) {
+                    entity.setOriginalQuantity(skuDTO.getOriginalQuantity());
+                    entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                    entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
+                }
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmount(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
-                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
-                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());

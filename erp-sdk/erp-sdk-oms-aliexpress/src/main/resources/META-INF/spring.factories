@@ -1,5 +1,6 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
    com.erp.oms.aliexpress.service.AliExpressOrderService,\
    com.erp.oms.aliexpress.service.AliExpressProductService,\
+   com.erp.oms.aliexpress.service.AliExpressDliveryOrderService,\
    com.erp.oms.aliexpress.service.AliExpressAuthService\
 

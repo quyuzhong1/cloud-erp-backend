@@ -14,7 +14,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -46,6 +49,7 @@ import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -53,6 +57,7 @@ import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -145,6 +150,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Resource
     private SrmPoReconciliationFeign srmPoReconciliationFeign;
+    @Autowired
+    private TransferLogisticsFeign transferLogisticsFeign;
+
     /**
      * 保存供应商信息
      *
@@ -680,6 +688,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST);
             }
+            List<BaseIdDTO.CodeDTO> transferLogisticsChannelList = transferLogisticsFeign.listBySupplierId(supplierId);
+            long transferLogisticsChannelCount = transferLogisticsChannelList.stream().filter(c -> !c.getDisabled()).count();
+            if (transferLogisticsChannelCount > 0) {
+                throw new ServiceException(ApiError.ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST);
+            }
 
         }
         supplier.setDisabled(state);
@@ -700,6 +713,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         updateDisabledDTO.setDisabled(state);
         logisticsFeign.updateDisabledBySupplierId(updateDisabledDTO);
 
+        //修改中转服务商启用状态
+        TransferLogisticsSupplierDTO.UpdateDisabledDTO transferUpdateDisabledDTO = new TransferLogisticsSupplierDTO.UpdateDisabledDTO();
+        transferUpdateDisabledDTO.setSupplierId(supplierId);
+        transferUpdateDisabledDTO.setDisabled(state);
+        transferLogisticsFeign.updateDisabledBySupplierId(transferUpdateDisabledDTO);
 
         return this.updateById(supplier);
     }
@@ -925,8 +943,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 exportExcel.setPayMethodName(payMethodName);
                 //付款条件
-                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                item.setPaymentConditionName(paymentConditionName);
+                String  paymentCondition = item.getPaymentCondition();
+                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                exportExcel.setPaymentConditionName(paymentConditionName);
                 //采购员
                 exportExcel.setPurchaseUserName(item.getPurchaseUserName());
                 SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
@@ -937,7 +956,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 //采购次数
                 long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
                 exportExcel.setPurchasesCount((int) purchasesCount);
-
+                exportExcel.setCreateTime(item.getCreateTime());
+                exportExcel.setCreateUserName(item.getCreateUserName());
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));

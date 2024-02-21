@@ -2,9 +2,11 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -45,9 +47,6 @@ public class SoB2cDeliveryController extends BaseController {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
-
-    @Resource
-    private SoOutstockService soOutstockService;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -149,8 +148,7 @@ public class SoB2cDeliveryController extends BaseController {
                 if (isManual) {
                     //生成销售出库单
                     if(isSuccess){
-                        //生成销售出库单
-                        soOutstockService.generateB2cSoOutstock(entity.getSourceId());
+                        soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
                 //清状态
@@ -228,6 +226,7 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/retryFalseDelivery")
     public ApiResult<List<BatchResultDTO>> retryDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
         //id 为销售订单id
         for (String id : dto.getIds()) {
             try {
@@ -236,6 +235,11 @@ public class SoB2cDeliveryController extends BaseController {
             } catch (Exception e) {
                 log.error("发货单 虚假发货失败", e);
             }
+
+            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+            deleteDTO.setType(type);
+            deleteDTO.setMainId(id);
+            soB2cFeign.deleteError(deleteDTO);
 
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

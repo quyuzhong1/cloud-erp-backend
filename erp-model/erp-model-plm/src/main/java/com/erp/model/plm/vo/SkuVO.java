@@ -49,6 +49,19 @@ public class SkuVO implements Serializable {
     private Integer unitQty;
 
     /**
+     * 长
+     */
+    private BigDecimal length;
+    /**
+     * 宽
+     */
+    private BigDecimal width;
+    /**
+     * 高
+     */
+    private BigDecimal height;
+
+    /**
      * sku 名称
      */
     private String skuName = "";

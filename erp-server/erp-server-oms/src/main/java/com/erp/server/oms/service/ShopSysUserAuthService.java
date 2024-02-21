@@ -48,4 +48,13 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @return List<String>
      */
     List<String> listUserIdByShopIdList(List<String> shopIdList);
+
+    /**
+     * 下拉用户拥有权限的店铺
+     * @Author Luo_WG
+     * @Date 2024/1/31 11:14
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>
+     **/
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(ShopSysUserAuthDTO.UserAuthShopParamDTO dto);
 }

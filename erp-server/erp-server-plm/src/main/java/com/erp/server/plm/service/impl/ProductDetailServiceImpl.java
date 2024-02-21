@@ -4043,4 +4043,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         return flag;
     }
+
+    @Override
+    public List<ProductDetailEntity> listBySkuNoList(List<String> skuNoList) {
+        if(CollectionUtils.isEmpty(skuNoList)){
+             return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProductDetailEntity::getSkuNo, skuNoList).list();
+    }
 }

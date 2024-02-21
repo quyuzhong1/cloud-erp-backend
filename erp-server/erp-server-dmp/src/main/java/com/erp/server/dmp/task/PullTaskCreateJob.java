@@ -54,21 +54,16 @@ public class PullTaskCreateJob {
      **/
     @XxlJob("createOrderJob")
     public void createOrderJob() {
-        // 执行
-        createOrderHandler("createOrderJob" + LocalDateTime.now());
-    }
-
-    @Idempotent(interval = 15)
-    private void createOrderHandler(String key) {
-        XxlJobHelper.log("createOrderJob 执行任务列表开始:key={}", key);
+        XxlJobHelper.log("createOrderJob 执行任务列表开始");
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
         if(CollectionUtil.isEmpty(list)){
             XxlJobHelper.log("createOrderJob 需要执行任务列表为空");
             return;
         }
         reportTaskService.addTaskToQueue(list);
-        XxlJobHelper.log("createOrderJob 执行任务列表结束:key={}", key);
+        XxlJobHelper.log("createOrderJob 执行任务列表结束");
     }
+
     /**
      * 定时扫描需要添加到任务表的api接口
      * @Author Luo_WG

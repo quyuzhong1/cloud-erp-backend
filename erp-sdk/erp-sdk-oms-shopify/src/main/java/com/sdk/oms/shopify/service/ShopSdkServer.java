@@ -4,13 +4,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.base.AuthorizeDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.common.business.dto.base.AuthorizeDTO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -74,7 +75,7 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            throw new ServiceException("店铺授权检验未通过");
+            throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);
@@ -82,8 +83,24 @@ public class ShopSdkServer {
         paramsMap.put("client_id", dto.getClientId());
         paramsMap.put("client_secret", dto.getClientSecret());
         paramsMap.put("code", dto.getCode());
-        String bodyStr = OkHttpUtils.doPost(path, paramsMap, null);
-        return bodyStr;
+
+//        Request request = new Request.Builder()
+//                .post(OkHttpUtils.createFormBody(paramsMap))
+//                .headers(OkHttpUtils.createHeaders(null))
+//                .url(path)
+//                .build();
+        try {
+//            Response execute = OkHttpUtils.retryClient.newCall(request).execute();
+//            ResponseBody bodyStr = execute.body();
+            String bodyStr = OkHttpUtils.doPost(path, paramsMap, null);
+            if (null != bodyStr){
+                return bodyStr;
+            } else {
+                throw new ServiceException("Request Shopify error body is null");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

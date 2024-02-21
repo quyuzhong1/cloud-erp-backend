@@ -3,9 +3,11 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -104,4 +106,38 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     List<SoB2cDTO.CustomerDTO> listCustomer(@Param("idList")List<String> soIdList);
 
     List<SoB2cEntity> listWarehouseIsEmpty(@Param("idList") List<String> soIdList);
+
+    /**
+     * 根据渠道id查询需要生成中转报关单的数据
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:11
+     * @param channelIds
+     * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDetailDTO.AddDTO>
+     **/
+    List<TransferDeclareDetailDTO.AddDTO> listByLogisticsSupplier(@Param("channelIds") List<String> channelIds);
+
+
+     /**
+      * @description
+      * @param code
+      * @return
+      * @date 2024-01-26 15:51
+      * @author Lambda
+      */
+    PackageDTO.ScanResultDTO packageScanByCode(@Param("code") String code);
+
+    /**
+     * 分拨组包 分页
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PackageDTO.PagingViewDTO> packagePing(Page query, @Param("params") PackageDTO.PagingParamDTO params);
+
+    /**
+     * 根据销售订单ids 获取到合并的数据
+     * @param ids
+     * @return
+     */
+    List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@Param("ids")List<String> ids);
 }

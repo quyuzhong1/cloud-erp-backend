@@ -476,6 +476,31 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
+
+        /**
+         * 报价明细
+         */
+        for(String id : ids){
+            List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(id);
+
+            //根据供应商分组
+            Map<String, List<PurchasePriceChangeDetailEntity>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getSupplierId));
+            for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> item : map.entrySet()) {
+                List<PurchasePriceChangeDetailEntity> detailList=item.getValue();
+                List<String> skuIdList = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
+                List<String> detailIds = detailList.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
+                //根据供应商 获取到 对应 已有的区间
+                List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
+                //检查区间报价是否重叠
+                List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(item.getValue(), PurchasePriceChangeDetailDTO.AddDTO.class);
+                //历史报价
+                List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(item.getKey(), skuIdList);
+
+                //检查区间报价是否重叠
+                purchasePriceChangeDetailService.checkSkuInterval(priceChangeDetailList, supplierPriceDetailList, historyList);
+            }
+
+        }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {

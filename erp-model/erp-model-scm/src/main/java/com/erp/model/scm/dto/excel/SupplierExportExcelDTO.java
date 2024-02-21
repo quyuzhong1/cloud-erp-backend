@@ -100,14 +100,14 @@ public class SupplierExportExcelDTO implements Serializable {
      * 结算方式
      */
     @ExcelProperty(value = "结算方式", index = 10)
-    @ColumnWidth(20)
+    @ColumnWidth(30)
     private String payMethodName;
 
     /**
      * 付款条件
      */
     @ExcelProperty(value = "付款条件", index = 11)
-    @ColumnWidth(20)
+    @ColumnWidth(30)
     private String paymentConditionName;
 
     /**

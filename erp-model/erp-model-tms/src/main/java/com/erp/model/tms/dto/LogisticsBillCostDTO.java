@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -358,7 +359,6 @@ public class LogisticsBillCostDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
     }
 
     /**
@@ -391,18 +391,16 @@ public class LogisticsBillCostDTO implements Serializable {
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
+        /**
+         * 币别
+         */
+        private String currency;
+
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 物流渠道id
-        */
-        @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
-        private String channelId;
 
         /**
         * 物流单id
@@ -440,7 +438,14 @@ public class LogisticsBillCostDTO implements Serializable {
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
-
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+        /**
+         * 物流渠道id
+         */
+        private String channelId;
     }
     /**
      * 修改导入数据

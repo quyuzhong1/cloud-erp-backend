@@ -54,7 +54,7 @@
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
         pp.create_time AS createTime,
-        ppd.supplier_id AS supplierId,
+        pp.supplier_id AS supplierId,
         (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
         ppd.sku_id AS skuId,
         ppd.sku_no AS skuNo,

@@ -8,16 +8,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.*;
@@ -35,28 +38,21 @@ import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 物流单 服务实现类
@@ -200,8 +196,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
                 saveEntity.setId(logisticsBillEntity.getId());
+                this.saveOrUpdate(saveEntity);
+            } else {
+                this.save(saveEntity);
+                //新增物流费用单
+                addLogisticsBillCost(saveEntity, addDTO.getCurrency());
             }
-            this.saveOrUpdate(saveEntity);
+
             logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
             List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
@@ -216,6 +217,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         return Boolean.TRUE;
     }
+
 
     @Override
     public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(List<String> sourceIdList) {
@@ -353,7 +355,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
         List<LogisticsAddressEntity> addressList = logisticsAddressService.listByChannelIdAndShopId(channelId, dto.getShopId());
-        List<LogisticsAddressEntity> deliverList=addressList.stream().filter(a->deliverType.equals(a.getType())).collect(Collectors.toList());
+        List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> deliverType.equals(a.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
@@ -404,15 +406,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
                 int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
-                if(maxCustoms<0){
-                    destDeclarePrice=maxCustomsAmount;
+                if (maxCustoms < 0) {
+                    productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
-                int minCustoms = minCustomsAmount.compareTo(destDeclarePrice);
+                int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
-                if(minCustoms<0){
-                    destDeclarePrice=minCustomsAmount;
+                if (minCustoms < 0) {
+                    productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
-                productDTO.setDestDeclarePrice(destDeclarePrice);
+
                 //如果是速卖通的话
                 if (isAliExpress) {
                     String platformSpuNo = item.getPlatformSpuNo();
@@ -637,7 +639,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LocalDateTime now = LocalDateTime.now();
         List<String> trackNoList = list.stream().map(LogisticsBillDTO.PagingVO::getTrackNo).distinct().collect(Collectors.toList());
         List<LogisticsTrackEntity> trackList = logisticsTrackService.listByTrackNoList(trackNoList);
+        String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         for (LogisticsBillDTO.PagingVO item : list) {
+            //是否签收
+            Boolean isSign = signCode.equals(item.getTrackStatus());
             String salesPlatform = item.getSalesPlatform();
             PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(salesPlatform);
             String salesPlatformName = Objects.nonNull(salesPlatformEnum) ? salesPlatformEnum.getDesc() : "";
@@ -645,10 +650,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             //发货时间
             LocalDateTime deliveryTime = item.getDeliveryTime();
             Integer transportDays = 0;
+            LocalDateTime signTime = item.getSignTime();
             if (Objects.nonNull(deliveryTime)) {
-                Duration duration = Duration.between(now, deliveryTime);
-                transportDays = Math.toIntExact(duration.toDays());
+                LocalDateTime compareTime = now;
+                //如果是签收成功状态
+                if (isSign) {
+                    if (Objects.nonNull(signTime)) {
+                        compareTime = signTime;
+                    }
+                }
+                long daysBetween = ChronoUnit.DAYS.between(deliveryTime, compareTime);
+                if (daysBetween >= 0) {
+                    transportDays = Math.toIntExact(daysBetween) + 1;
+                }
             }
+
             item.setTransportDays(transportDays);
             String trackStatus = item.getTrackStatus();
             String trackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
@@ -660,14 +676,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 item.setTrackContent(trackEntity.getContent());
                 item.setUpdateTime(trackEntity.getUpdateTime());
             }
-            LocalDateTime signTime = trackList.stream().filter(t -> "6".equals(t.getStatus())).findFirst().
-                    map(LogisticsTrackEntity::getCreateTime).orElse(null);
-            item.setSignTime(signTime);
-
             String orderType = item.getOrderType();
             String orderTypeName = OrderTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
-
 
         }
     }
@@ -679,48 +690,84 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @date: 2023/11/20 12:27
      */
     public void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
-        try {
-            LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
-            //渠道关联模板
-            ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
-            //来源b2c销售订单
-            if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
-                //物流信息
-                List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
-                if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
-                }
-                addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
-                //存在模板时计算体积重
-                if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                    BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
-                            .multiply(soB2cLogisticsList.get(0).getWeight())
-                            .multiply(soB2cLogisticsList.get(0).getLength());
-                    addDTO.setVolumeWeight(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
-                }
-            }
-            if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-                //计费重
-                BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
-                        ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
-                //预估运费
-                ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-                viewParamDTO.setWeight(addDTO.getActualWeight());
-                viewParamDTO.setMainId(shippingTemplateEntity.getId());
-                ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-                if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
-                    BigDecimal shippingCost = shippingCalculationService.calculationShippingCost(shippingTemplateEntity, shippingTemplateRule, billingWeight);
-                    addDTO.setEstimatedShippingCost(shippingCost);
-                }
-            }
-            addDTO.setCurrency(currency);
-            addDTO.setChannelId(logisticsBillEntity.getChannelId());
-            addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-            logisticsBillCostService.add(addDTO);
-        } catch (Exception e) {
-            log.error("生成物流费用出错>>>>>{}", e.getMessage());
-        }
+        LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+        //渠道关联模板
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
 
+        //来源b2c销售订单
+        BigDecimal length = BigDecimal.ZERO;
+        BigDecimal width = BigDecimal.ZERO;
+        BigDecimal height = BigDecimal.ZERO;
+        if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
+            //物流信息
+            List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
+            if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            }
+            //销售订单重量单位转成kg
+            BigDecimal actualWeight = MathUtil.divide(soB2cLogisticsList.get(0).getWeight(), new BigDecimal(1000), 4);
+            addDTO.setActualWeight(actualWeight);
+
+            //存在模板时计算体积重
+            if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
+                //模板重量单位转成kg
+                BigDecimal volumeRatio = BigDecimal.ONE;
+                if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                    //g
+                    volumeRatio = new BigDecimal(0.001);
+                }
+                length = soB2cLogisticsList.get(0).getLength();
+                width = soB2cLogisticsList.get(0).getWidth();
+                height = soB2cLogisticsList.get(0).getHeight();
+                BigDecimal volume = height
+                        .multiply(width)
+                        .multiply(length);
+                BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())), volumeRatio, 4);
+                addDTO.setVolumeWeight(volumeWeight);
+            }
+        }
+        if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
+            //渠道
+            LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+
+            //重量,根据计费规则判断用何种重量计算运费
+            BigDecimal weight = addDTO.getActualWeight();
+            if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())) {
+                weight = MathUtil.compareTo(addDTO.getVolumeWeight(), weight) > MathUtil.ZERO ? addDTO.getVolumeWeight() : weight;
+            }
+            if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())) {
+                weight = addDTO.getVolumeWeight();
+            }
+            //重量转成模板单位传入计算运费
+            if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
+                //kg
+                weight = MathUtil.multiply(weight, new BigDecimal(1000));
+            }
+            //预估运费
+            ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+            viewParamDTO.setWeight(weight);
+            viewParamDTO.setMainId(shippingTemplateEntity.getId());
+            ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+            if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
+
+                ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, logisticsChannelEntity, weight,
+                        length, width, height);
+                addDTO.setEstimatedShippingCost(viewDTO.getTotalShippingCost());
+            }
+        }
+        addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : "");
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
+        addDTO.setChannelId(logisticsBillEntity.getChannelId());
+        logisticsBillCostService.add(addDTO);
+    }
+
+    public static void main(String[] args) {
+        BigDecimal volume = new BigDecimal(10)
+                .multiply(new BigDecimal(20))
+                .multiply(new BigDecimal(30));
+        BigDecimal divide = MathUtil.divide(volume, new BigDecimal(2000));
+        System.out.println(divide);
     }
 
     /**
@@ -745,18 +792,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
             Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
 
-            //平台
-            String logisticsPlatform = auth.getLogisticsPlatform();
-            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-
-            if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
-                authMap = service.getLogisticsAuthConfig(dto.getShopId());
-            }
-
             //请求面单参数
             List<LogisticsGetLabelVO> labelVOArrayList = new ArrayList<>();
             LogisticsGetLabelVO getLabelVO = new LogisticsGetLabelVO();
             getLabelVO.setDeliveryNo(dto.getDeliveryNo());
+
+            //平台
+            String logisticsPlatform = auth.getLogisticsPlatform();
+            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.ALI_EXPRESS.getCode())) {
+                authMap = service.getLogisticsAuthConfig(dto.getShopId());
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
+                }
+            }
 
             //运单号
             getLabelVO.setTransportNo(dto.getTransportNo());

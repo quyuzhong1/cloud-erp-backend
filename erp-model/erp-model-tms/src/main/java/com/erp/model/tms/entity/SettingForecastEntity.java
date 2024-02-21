@@ -1,0 +1,100 @@
+package com.erp.model.tms.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+/**
+ * <p>
+ * 预报设置
+ * </p>
+ *
+ * @author Lambda
+ * @since 2024-01-18
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("setting_forecast")
+public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
+
+    /**
+     * 物流商id
+     */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
+
+    /**
+     * 物流商
+     */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+
+    /**
+     * 是否强制组包 true 
+     */
+    @TableField("is_must_package")
+    private Boolean isMustPackage;
+
+    /**
+     * 组包启用时间
+     */
+    @TableField( value= "enable_package_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime enablePackageTime;
+
+    /**
+     * 是否强制中转  true 是
+     */
+    @TableField("is_must_transfer")
+    private Boolean isMustTransfer;
+
+    /**
+     * 中转时间启用时间
+     */
+    @TableField( value = "enable_transfer_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime enableTransferTime;
+
+    /**
+     * 报关平台
+     */
+    @TableField("declare_platform")
+    private String declarePlatform;
+
+
+    /**
+     * 中转物流商id
+     */
+    @TableField("transfer_logistics_supplier_id")
+    private String transferLogisticsSupplierId;
+
+    /**
+     * 中转物流商名
+     */
+    @TableField("transfer_logistics_supplier_name")
+    private String transferLogisticsSupplierName;
+
+
+    public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
+
+    public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
+
+    public static final String IS_MUST_PACKAGE = "is_must_package";
+
+    public static final String ENABLE_PACKAGE_TIME = "enable_package_time";
+
+    public static final String IS_MUST_TRANSFER = "is_must_transfer";
+
+    public static final String ENABLE_TRANSFER_TIME = "enable_transfer_time";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

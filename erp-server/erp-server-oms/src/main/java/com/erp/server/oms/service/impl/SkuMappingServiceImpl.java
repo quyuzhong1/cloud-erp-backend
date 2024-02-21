@@ -500,7 +500,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
         skuMappingEntity.setDictPlatform("");
-        skuMappingEntity.setHasMappingAll(dto.checkAndGetHasMappingAll());
+        skuMappingEntity.setHasMappingAll(false);
         LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
@@ -625,7 +625,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setListingId(listingId);
         addSkuMapping.setDictPlatform(skuMapping.getDictPlatform());
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
-        addSkuMapping.setHasMappingAll(dto.checkAndGetHasMappingAll());
+        addSkuMapping.setHasMappingAll(!StringUtils.isBlank(skuMapping.getDictPlatform()) && dto.checkAndGetHasMappingAll());
         //生效时间
         addSkuMapping.setEffectiveTime(now);
         addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
@@ -670,7 +670,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : dataList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
-            listSkuDTO.setProductSkuId(skuVO.getSkuId());
+            listSkuDTO.setProductSkuId(StringUtils.isBlank(skuVO.getSkuId()) ? "" : skuVO.getSkuId());
             listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());

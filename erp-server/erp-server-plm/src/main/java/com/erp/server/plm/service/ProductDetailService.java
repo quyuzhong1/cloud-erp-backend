@@ -616,4 +616,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return void
      **/
     Boolean updateWarehouseLocationById(String id, String warehouseLocation);
+
+    /**
+     * 根据skuNo查询
+     * @param skuNoList
+     * @return
+     */
+    List<ProductDetailEntity> listBySkuNoList(List<String> skuNoList);
 }

@@ -23,6 +23,7 @@ public enum ApiError implements Serializable {
     ERROR_5001(5001, "未授权访问!"),
 
     ERROR_403(403, "您未登录,请登录后操作"),
+    ERROR_401(401, "Unauthorized"),
 
     /**
      * 高级查询异常
@@ -926,6 +927,23 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
+    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
+    STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
+    HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
+    B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
+    NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
+    UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
+    UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
+    RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
+    ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
+    ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
+
+
+
+
+
+
+
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -935,10 +953,6 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
-    RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
-    ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
-    ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
-
 
 
 
@@ -1109,11 +1123,14 @@ public enum ApiError implements Serializable {
     SO_CHANGE_TERMINATE_EXIST(92124,"存在已终止过的销售订单，无法再次终止"),
     ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
-
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
-
-
+    ERROR_WAIT_SHIPPED_TRANSFER(92125,"销售单【{}】 不属于待发货的订单 不能进行中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于待中转的订单,不能进行中转报关"),
+    ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
+    ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
+    ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
+    PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
 
     /**
      * TMS 错误
@@ -1180,7 +1197,19 @@ public enum ApiError implements Serializable {
 
 
 
+    ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
+    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
+    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
+    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系财务备案"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
+    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
+    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

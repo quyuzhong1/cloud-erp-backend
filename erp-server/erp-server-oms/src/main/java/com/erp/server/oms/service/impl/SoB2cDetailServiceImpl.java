@@ -1,10 +1,12 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -17,14 +19,15 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WarehouseMappingFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
@@ -75,6 +78,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private SoB2cRefService soB2cRefService;
+
+    @Resource
+    private WarehouseMappingFeign warehouseMappingFeign;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -271,7 +277,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
+        //查询速卖通仓库名称是否映射ERP仓库
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = new ArrayList<>();
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
+            mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
+        }
+
         // 新增或更新列表
+        List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
@@ -295,6 +308,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             } else {
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
+            }
+
+            //查询映射的仓库信息
+            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
+                saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
+                saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
+                saveOrUpdateEntity.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
+                saveOrUpdateEntity.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
             }
 
             //建议售价
@@ -459,6 +481,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             return hasBomOutstockList;
         }
 
+    }
+
+    @Override
+    public Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO) {
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            lambdaUpdate()
+                    .set(SoB2cDetailEntity::getWarehouseId, viewDTO.getWarehouseId())
+                    .set(SoB2cDetailEntity::getWarehouseName, viewDTO.getWarehouseName())
+                    .set(SoB2cDetailEntity::getWarehouseOrgId, viewDTO.getWarehouseOrgId())
+                    .set(SoB2cDetailEntity::getWarehouseOrgName, viewDTO.getWarehouseOrgName())
+                    .update();
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**

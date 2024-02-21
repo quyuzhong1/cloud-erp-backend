@@ -1,10 +1,10 @@
 package com.erp.server.wms.service;
+import cn.hutool.core.lang.Tuple;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -146,7 +146,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
 
-    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList, LocalDate billDate);
+    void handlerWarehouse(FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> saveReceiveList, LocalDate billDate, Map<String, LocalDate> closedDateMap);
 
     /**
      * 通过fbaShipmentId查询实体
@@ -214,7 +214,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Author Jim
      * @Date 2023/12/04
      */
-    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,Boolean isToOnwayWarehouse,String remark, LocalDate billDate);
+    Tuple generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection);
 
     /**
      * 重新直接调拨单
@@ -222,4 +222,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @Date 2024/01/15
      */
     BatchResultDTO regenerateTransferOut(String id);
+
+
+    void generateTransfer(ShopInfoEntity shopInfoEntity, FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
 }

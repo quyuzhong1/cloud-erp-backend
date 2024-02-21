@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +9,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @Classname BomChildrenSkuDTO
@@ -71,6 +73,22 @@ public class BomChildrenSkuDTO  implements Serializable {
 
     private String productId;
 
+    /**
+     * 产品尺寸
+     */
+    private String productSize;
+    /**
+     * 长度
+     */
+    private BigDecimal length;
+    /**
+     * 宽度
+     */
+    private BigDecimal width;
+    /**
+     * 高度
+     */
+    private BigDecimal height;
     /**
      * sku名称
      */

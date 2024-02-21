@@ -964,35 +964,6 @@
         <include refid="sql_report_condition"/>
         GROUP BY o.shop_name
         ORDER BY sales DESC LIMIT 20
-
-        SELECT o.shop_no,
-        <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
-        </if>
-        <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales
-        </if>
-        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-        <where>
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                    o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt; #{params.endTime}
-                </if>
-            </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt; #{params.endTime}
-                </if>
-            </if>
-        </where>
-        GROUP BY o.shop_no
     </select>
 
     <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">
@@ -1495,5 +1466,29 @@
 
     <select id="getSkuItemName" resultType="com.erp.model.bi.vo.SkuItemVO">
         select sku_no,min(item_name) AS itemName from dmp_order_item  GROUP BY sku_no
+    </select>
+
+
+    <select id="getDateList" resultType="com.erp.model.bi.vo.DateDimensionVO">
+        select
+        <if test="dateType != null and dateType == 'DAY'">
+            ddd.date_day as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'WEEK'">
+            ddd.date_week as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'MONTH'">
+            ddd.date_month as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'QUARTER'">
+            ddd.date_quarter as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'YEAR'">
+            ddd.date_year as dateName,
+        </if>
+        #{dateType} as dateType
+        from dmp_date_dimension as ddd where ddd.is_deleted = false and ddd.date_time between #{startTime} and #{endTime}
+        group by dateName
+        order by dateName asc
     </select>
 </mapper>

@@ -69,6 +69,10 @@ public enum ModuleTypeEnum {
     SRM_USER("65", "SRM用户"),
     DELIVERY_ORDER("66", "发货单"),
     PO_RECONCILIATION("67", "对账单"),
+    TRANSFER_LOGISTICS_CHANNEL("63", "中转报关服务商渠道"),
+    TRANSFER_LOGISTICS_SUPPLIER("64", "中转报关服务商"),
+    TRANSFER_DECLARE("65", "中转报关单"),
+    PACKAGE_FORECAST("66", "组包预报"),
     ;
 
 
