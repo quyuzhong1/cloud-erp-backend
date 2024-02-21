@@ -92,7 +92,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
         String sid = mappingEntity.getThirdPlatformShopId();
         List<FbaShipmentReceiveDTO> dtoList = LingxingApiUtils.getAllReceivedInventory(Integer.parseInt(sid), nextTime.toLocalDate());
         if (CollectionUtil.isEmpty(dtoList)) {
-            log.info("拉取领星货件签收明细数据列表数据为空 entityList.size = 0 ");
+            log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, nextTime);
             return;
         }
         List<FbaReceiveDetailEntity> entityList = DmpFbaShipmentReceiveConverter.INSTANCE.dtoListToEntityList(dtoList);
@@ -107,7 +107,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
         for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
             // 构造消息体
             FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate(), sid);
-            UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.toString());
+            UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.getUniqueId());
             List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
