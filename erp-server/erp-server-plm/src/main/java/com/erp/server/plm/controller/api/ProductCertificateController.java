@@ -32,9 +32,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * @author Will
+ * 产品认证
+ * * @author Will
  * @version 1.0
- * @description: 产品认证
  * @date 2024/2/19 10:38
  */
 @RestController

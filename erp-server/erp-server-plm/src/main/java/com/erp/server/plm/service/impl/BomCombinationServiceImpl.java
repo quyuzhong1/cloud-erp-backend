@@ -439,8 +439,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productAccessoriesList.add(productAccessoriesDTO);
         productNoSpecDTO.setProductAccessoriesList(productAccessoriesList);
         //证书信息
-        List<ProductCertificateDTO> productCertificateList = new ArrayList<>();
-        productNoSpecDTO.setProductCertificateList(null);
+        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = new ArrayList<>();
+        productNoSpecDTO.setProductCertificateList(productCertificateList);
         //海关信息
         List<ProductCustomsDTO> productCustomsList = new ArrayList<>();
         productNoSpecDTO.setProductCustomsList(productCustomsList);

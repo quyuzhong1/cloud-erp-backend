@@ -412,8 +412,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
 
-        List<ProductDetailEntity> detailEntityList = this.queryByProductId(productId);
-
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
         List<String> accessoriesSkuIds = productAccessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
@@ -430,8 +428,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
-        //产品认证信息
-        productNoSpecDetailAllDTO.setProductAttestationList(null);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
@@ -513,7 +509,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.listBySkuId(skuId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
 
-        List<ProductDetailEntity> detailEntityList = Arrays.asList(entity);
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getBySkuId(skuId);
@@ -530,9 +525,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
-
-        //产品认证信息
-        productNoSpecDetailAllDTO.setProductAttestationList(null);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listBySkuId(skuId);
@@ -889,10 +881,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95015);
         }
 
-        //如果是修改允许保留原来的产品名称不变
-  /*      if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_95007);
-        }*/
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
@@ -910,7 +898,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品信息修改操作日志
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
-//        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
 
@@ -920,14 +907,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
         productSkuBaseInfoDTO.setProductId(id);
-        //如果是修改sku图片 还需要修改图片表
-/*        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
-            ProductImagesDTO productImagesDTO = new ProductImagesDTO();
-            productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
-            productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
-            productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
-            productImagesService.updateProductImage(productImagesDTO);
-        }*/
+
         //SKU修改操作日志
         Boolean isAdd = false;
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
@@ -979,7 +959,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //SKU操作日志
             addProductPurchaseLog(productPurchaseDTO, id);
             productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-
         }
         //新增/修改采购备注信息
         if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
@@ -1040,7 +1019,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //添加包装辅料的日志
             addProductAccessoriesLog(productAccessoriesList, id);
-
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
@@ -1130,10 +1108,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95017);
         }
 
-        //如果是修改允许保留原来的产品名称不变
-/*        if (this.checkName(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_95007);
-        }*/
         List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
         //检查sku是否重复
         for (int i = 0; i < productDetailList.size(); i++) {
@@ -1141,7 +1115,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95015.code, ApiError.ERROR_95015.msg + " 第" + (i + 1) + "行");
             }
         }
-
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
@@ -1173,7 +1146,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });
             this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
-
         }
 
         //3.修改/新增 成本信息
@@ -1262,73 +1234,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
-
-    /**
-     * 添加产品认证的日志
-     *
-     * @param productAttestationList
-     * @param productId
-     * @return void
-     * @author yl
-     * @date 2023-02-27 10:02
-     */
-    private void addProductAttestationLog(List<ProductAttestationDTO> productAttestationList, String productId) {
-
-        if (CollectionUtils.isEmpty(productAttestationList)) {
-            return;
-        }
-        List<AttestationDTO> attestationList = new ArrayList<>(10);
-
-        List<String> skuIds = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
-
-
-        for (ProductAttestationDTO item : productAttestationList) {
-            //产品认证
-            List<String> productDictList = item.getProductList();
-            for (String productDict : productDictList) {
-                AttestationDTO product = new AttestationDTO();
-                product.setSkuId(item.getSkuId());
-                product.setType(ProductManyDetailConstant.PRODUCT_ATTESTATION);
-                product.setDictId(productDict);
-                attestationList.add(product);
-            }
-
-            //其它认证
-            List<String> otherDictList = item.getOtherList();
-            for (String otherDict : otherDictList) {
-                AttestationDTO other = new AttestationDTO();
-                other.setDictId(otherDict);
-                other.setSkuId(item.getSkuId());
-                other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
-                attestationList.add(other);
-            }
-
-            //运输认证
-            List<String> transportDictList = item.getTransportList();
-            for (String transportDict : transportDictList) {
-                AttestationDTO transport = new AttestationDTO();
-                transport.setSkuId(item.getSkuId());
-                transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
-                transport.setDictId(transportDict);
-                attestationList.add(transport);
-            }
-        }
-        if (CollectionUtils.isEmpty(attestationList)) {
-            return;
-        }
-
-        attestationList.forEach(obj -> {
-            //SKU操作日志
-            AttestationDTO oldDto = new AttestationDTO();
-
-            ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
-            if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
-            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
-        });
-    }
-
     /**
      * 添加包装辅料的信息 操作日志
      *
@@ -1375,10 +1280,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95017);
         }
 
-        //如果是修改允许保留原来的产品名称不变
-/*        if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_95007);
-        }*/
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(2);
         //产品等级
@@ -1872,13 +1773,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setSkuId(skuId);
             productPackService.saveOrUpdate(productPackDTO);
         }
-
-        //8.修改/新增 证书信息
-        /*ProductCertificateDTO productCertificateDTO = productNoSpecDTO.getProductCertificateDTO();
-        if (!ObjectUtils.isEmpty(productCertificateDTO)) {
-            productCertificateDTO.setSkuId(skuId);
-            productCertificateService.saveOrUpdate(productCertificateDTO);
-        }*/
         return true;
     }
 
@@ -2831,7 +2725,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductCertificateShowDTO item : certificateShowList) {
             item.setDisableFieldList(disableFields);
         }
-        result.setProductCertificateShowDTOList(null);
+        result.setProductCertificateShowDTOList(certificateShowList);
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
@@ -2986,9 +2880,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackService.saveOrUpdate(productPackDTO);
         }
         //8.修改/新增 证书信息
-        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateShowList = skuDTO.getProductCertificateShowDTOList();
+        List<ProductCertificateShowDTO> productCertificateShowList = skuDTO.getProductCertificateShowDTOList();
         if (CollectionUtils.isNotEmpty(productCertificateShowList)) {
-            productCertificateService.productAddOrUpdate(productCertificateShowList);
+            List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = BeanMapperUtils.copyList(ProductCertificateDTO.ProductAddOrUpdateDTO.class, productCertificateShowList);
+            productCertificateService.productAddOrUpdate(productCertificateList);
         }
 
         //10 修改/新增加 包装辅料信息

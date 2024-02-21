@@ -209,24 +209,38 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
         for (ProductCertificateDTO.ProductAddOrUpdateDTO productAddOrUpdateDTO : productCertificateList) {
             //新增数据附件不能为空
-            if (StrUtil.isBlank(productAddOrUpdateDTO.getId()) && ObjectUtil.isEmpty(productAddOrUpdateDTO.getMultipartFile())) {
+            if (StrUtil.isBlank(productAddOrUpdateDTO.getId()) && StrUtil.isBlank(productAddOrUpdateDTO.getAttachmentId())) {
                 throw new ServiceException(ApiError.TIME_NOT_NULL,"新增附件");
             }
-            ProductCertificateEntity entity = new ProductCertificateEntity();
-            entity.setId(productAddOrUpdateDTO.getId());
-            entity.setSkuId(productAddOrUpdateDTO.getSkuId());
-            entity.setType(productAddOrUpdateDTO.getType());
-            entity.setDictProject(productAddOrUpdateDTO.getType());
-            entity.setMultipartFile(productAddOrUpdateDTO.getMultipartFile());
-            entity.setRemark(productAddOrUpdateDTO.getRemark());
+            ProductCertificateEntity entity = BeanMapperUtils.map(ProductCertificateEntity.class, productAddOrUpdateDTO);
             resultList.add(entity);
         }
         //新增数据
         this.saveOrUpdateBatch(resultList);
-        //上传附件
-        uploadFile(resultList);
+        //绑定附件id
+        updateAttachmentId(resultList);
         //删除附件
         productCertificateList.forEach(obj -> deleteFile(obj.getRemoveFileIdList(),obj.getId()));
+    }
+
+    /**
+     * @description: 绑定附件id
+     * @author Will
+     * @date: 2024/2/21 18:06
+     * @param resultList
+     */
+    private void updateAttachmentId (List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<PlmAttachmentEntity> list = new ArrayList<>();
+        for (ProductCertificateEntity entity : resultList) {
+            PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
+            attachmentEntity.setId(entity.getAttachmentId());
+            attachmentEntity.setBusinessId(entity.getId());
+            list.add(attachmentEntity);
+        }
+        plmAttachmentService.saveBatch(list);
     }
 
     @Override

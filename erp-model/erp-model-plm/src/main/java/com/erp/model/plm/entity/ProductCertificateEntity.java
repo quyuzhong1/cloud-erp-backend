@@ -62,6 +62,11 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
     @JSONField(serialize = false)
     private MultipartFile multipartFile;
 
+    /**
+     * 证书文件表id
+     */
+    @TableField(exist = false)
+    private String attachmentId;
 
     public static final String TABLE_NAME = "product_certificate";
 

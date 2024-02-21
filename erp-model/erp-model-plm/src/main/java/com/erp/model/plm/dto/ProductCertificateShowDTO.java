@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,11 +37,6 @@ public class ProductCertificateShowDTO implements Serializable {
      * skuNo
      */
     private String skuNo;
-
-    /**
-     * 证书图片
-     */
-    private String certificateImg;
 
     /**
      * 证书有效期

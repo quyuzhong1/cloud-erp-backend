@@ -220,9 +220,9 @@ public class ProductCertificateDTO implements Serializable {
         private String certificateValidTimeStr;
 
         /**
-         * 证书文件
+         * 证书文件表id
          */
-        private MultipartFile multipartFile;
+        private String attachmentId;
 
         /**
          * 备注
