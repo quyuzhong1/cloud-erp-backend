@@ -62,10 +62,7 @@ import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
 import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
 import com.erp.tms.aliexpress.model.handover.request.HandoverQueryRequest;
 import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
-import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
-import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
-import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
-import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
+import com.erp.tms.aliexpress.model.handover.response.*;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.util.ApiException;
@@ -554,7 +551,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         for (PackageForecastDetailEntity item : forecastDetailList) {
             SellerParcelOrder parcelOrder = new SellerParcelOrder();
             parcelOrder.setSellerId(topUserKey);
-            parcelOrder.setOrderCodeList(Collections.singletonList(item.getTransportNo()));
+            parcelOrder.setOrderCodeList(Collections.singletonList("LP00632391816034"));
             //parcelOrder.setUserNick("cn123435sss");
             sellerParcelOrderList.add(parcelOrder);
         }
@@ -567,7 +564,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         /**
          * 要创建交接单的小包编码集合
          */
-        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getTrackNo).collect(Collectors.toList());
+//        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getTrackNo).collect(Collectors.toList());
+        List<String> orderCodeList = Collections.singletonList("LP00632391816034");
         String type = PackageForecastConstant.CAINIAO_PICKUP;
         String collectMode = entity.getCollectMode();
         String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
@@ -592,10 +590,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             if (Objects.nonNull(baseResult.getErrorResponse())) {
                 throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
             }
-            HandoverCommitResponse handoverCommitResponse = JSONObject.parseObject(baseResult.getData(), HandoverCommitResponse.class);
-            if (Objects.nonNull(handoverCommitResponse)) {
-                entity.setHandoverNo(handoverCommitResponse.getHandoverContentCode());
-                entity.setPlatformPackageNo(String.valueOf(handoverCommitResponse.getHandoverContentId()));
+            HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
+            if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
+                entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
+                entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
             }
         } catch (ApiException e) {
             log.error("创建交接单失败>>>>>>{}", e);

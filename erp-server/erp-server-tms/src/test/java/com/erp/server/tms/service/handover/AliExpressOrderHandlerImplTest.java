@@ -59,7 +59,7 @@ public class AliExpressOrderHandlerImplTest {
     public AliExpressOrderHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000201323txAyeuenSZSrh8BiTAsWVDfF1722521eNIWkzSnFXkuwgvw4IUHrpU3LN";
+        String token = "50000200611rxCpJesCK9Oy14a48a06rR9gcm1HJQZTsE7ijPhNSVinjvo46ZN5WMNYv";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -188,7 +188,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("3030096741091976")
+                .trade_order_id("8185112291932412")
                 .current_page(1)
                 .page_size(20)
                 .build();
