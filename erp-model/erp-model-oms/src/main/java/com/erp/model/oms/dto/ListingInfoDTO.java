@@ -1,10 +1,13 @@
 package com.erp.model.oms.dto;
 
 import cn.hutool.core.util.ReflectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +18,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -25,6 +29,85 @@ import java.util.List;
  */
 public class ListingInfoDTO implements Serializable {
 
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO implements Serializable{
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 目的仓Id（目的仓Id和店铺Id不能都为空）
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺Id（目的仓Id和店铺Id不能都为空）
+         */
+        private String shopId;
+
+        /**
+         * 服务商code
+         */
+        @JsonIgnore
+        private String  providerCode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PageDTO implements Serializable{
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 第三方sku
+         */
+        private String platformSku;
+
+        /**
+         * 第三方产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+
+        /**
+         * MSKU/FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+    }
 
     @Data
     @NoArgsConstructor

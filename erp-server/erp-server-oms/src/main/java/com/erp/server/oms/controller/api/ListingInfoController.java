@@ -1,21 +1,16 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseSelectDTO;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -68,6 +63,16 @@ public class ListingInfoController extends BaseController {
     @PostMapping("/select/list")
     public ApiResult<List<ListingInfoDTO.BaseDropDownDTO>> listByType(@RequestBody @Valid ListingInfoDTO.BaseDropDownParamDTO dto) {
         List<ListingInfoDTO.BaseDropDownDTO> list = listingInfoService.listByTypeWithFieldName(dto);
+        return success(list);
+    }
+
+    /**
+     * listing 分页
+     **/
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<ListingInfoDTO.PageDTO>> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
+        PagingVO<ListingInfoDTO.PageDTO> list = listingInfoService.paging(dto);
         return success(list);
     }
 }

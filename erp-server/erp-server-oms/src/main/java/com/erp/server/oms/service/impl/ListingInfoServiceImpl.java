@@ -2,38 +2,40 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.convert.OmsListingConverter;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -53,7 +55,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Resource
     private SkuMappingService skuMappingService;
 
-
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
     /**
      * 添加库存sku
      *
@@ -187,5 +190,39 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     public void updateMatchResult(String listingId, Boolean matchResult) {
         this.lambdaUpdate().set(ListingInfoEntity::getMatchResult,matchResult).
                 eq(ListingInfoEntity::getId,listingId).update(new ListingInfoEntity());
+    }
+
+    @Override
+    public PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
+        ListingInfoDTO.PagingParamDTO pagingParamDTO = dto.getParams();
+        if(StringUtils.isBlank(pagingParamDTO.getWarehouseId()) && StringUtils.isBlank(pagingParamDTO.getShopId())){
+            throw new ServiceException("店铺和仓库不能同时为空");
+        }
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //如果传仓库ID，查询对应服务商的sku，如果传店铺id，查询店铺下SKU
+        if(StringUtils.isNotBlank(dto.getParams().getWarehouseId())){
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getParams().getWarehouseId()));
+            if(CollectionUtils.isEmpty(viewDTOS)){
+                throw new ServiceException("获取不到仓库对应的服务商");
+            }
+            OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
+            pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
+        }
+        IPage<ListingInfoDTO.PageDTO> iPage = baseMapper.paging(query,pagingParamDTO);
+        this.fillData(iPage.getRecords());
+        return new PagingVO<>(iPage);
+    }
+
+    private void fillData(List<ListingInfoDTO.PageDTO> records) {
+        List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
+
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+
+        records.forEach(v->{
+            SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setImagesUrl(skuVO.getSkuImagesUrl());
+            }
+        });
     }
 }
