@@ -376,6 +376,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             BeanMapperUtils.copy(returnAddress, returnInfo);
             //地址id
             returnInfo.setId(returnAddress.getAddressId());
+        } else {
+            returnInfo = senderInfo;
         }
 
 

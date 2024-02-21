@@ -755,6 +755,11 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.logisticsChannelName !=null and params.logisticsChannelName!=''">
+            AND sbl.logistics_channel_name ILIKE CONCAT('%',#{params.logisticsChannelName}::text,'%')
+        </if>
+        ORDER BY sb.create_time DESC
+
     </select>
 
 
