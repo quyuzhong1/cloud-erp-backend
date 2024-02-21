@@ -2,6 +2,7 @@ package com.erp.server.tms.service.handover;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
@@ -13,10 +14,7 @@ import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.*;
-import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
-import com.erp.tms.aliexpress.model.handover.response.CarrierResponse;
-import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResponse;
-import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
+import com.erp.tms.aliexpress.model.handover.response.*;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
@@ -163,6 +161,17 @@ public class AliExpressOrderHandlerImplTest {
         System.out.println(JSONObject.toJSONString(handoverCommitResponse));
     }
 
+    @Test
+    public void testCommit(){
+        String body = "{\"result\":{\"data\":{\"handover_order_id\":10071881812,\"handover_content_code\":\"LP00631998284401\",\"handover_content_id\":10084152400},\"success\":true},\"request_id\":\"213bd16f17084991518705952\"}";
+        BaseResult baseResult = JSONObject.parseObject(body, BaseResult.class);
+        if (Objects.nonNull(baseResult.getErrorResponse())) {
+            throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
+        }
+        HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
+        System.out.println("结果输出");
+        System.out.println(JSONObject.toJSONString(handoverCommitResult));
+    }
     /**
      * 返回直接解决方案的指定物流服务的可用资源列表
      */
@@ -206,13 +215,16 @@ public class AliExpressOrderHandlerImplTest {
                 HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
                 .client(PathConstants.CLIENT)
                 .locale("zh_CN")
-                .orderCode("8183868002476390")
-                .trackingNumber("LP00629346935157")
+                .orderCode("LP00631998284401")
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.queryContent(authMap, handoverQueryRequest);
         BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
         BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        if (baseResult.getSuccess() && StringUtils.isNotEmpty(baseResult.getData())){
+            HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
+            System.out.println(queryResponse);
+        }
         System.out.println(baseResult);
     }
 
@@ -244,7 +256,7 @@ public class AliExpressOrderHandlerImplTest {
                 .client(PathConstants.CLIENT)
                 .locale("zh_CN")
                 .orderCode("8183868002476390")
-                .trackingNumber("LP00629346935157")
+//                .trackingNumber("LP00629346935157")
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.queryParcel(authMap, handoverQueryRequest);

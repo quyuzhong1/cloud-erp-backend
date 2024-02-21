@@ -47,7 +47,7 @@ public class HandoverQueryResponse implements Serializable {
      * 批次约揽下的子大包列表
      */
     @JSONField(name = "slave_bigbag_list")
-    private List<SlaveBigbag> SlaveBigbagList;
+    private List<SlaveBigbag> slaveBigbagList;
     /**
      * 交接物物流订单编号
      */
