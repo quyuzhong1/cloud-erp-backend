@@ -67,7 +67,8 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.order.createorder");
         request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
-        request.addApiParameter("oaid", orderRequest.getOaid());
+//        request.addApiParameter("oaid", orderRequest.getOaid());
+        request.addApiParameter("oaid", "FhyXOdVEOnaTQekLa8vUGQ");
         request.addApiParameter("pickup_type", orderRequest.getPickup_type());
         request.addApiParameter("address_d_t_os", JSONObject.toJSONString(orderRequest.getAddress_d_t_os()));
         request.addApiParameter("declare_product_d_t_os", JSONObject.toJSONString(orderRequest.getDeclareProducts()));
