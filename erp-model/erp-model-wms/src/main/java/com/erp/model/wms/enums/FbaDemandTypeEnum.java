@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 public enum FbaDemandTypeEnum implements EnumMessage {
-    DEMAND_PLATFORM_WAREHOUSE("demandPlatformWarehouse", "备货平台仓"),
-    DEMAND_OVERSEAS_WAREHOUSE("demandOverseasWarehouse", "备货海外仓"),
+    DEMAND_PLATFORM_WAREHOUSE("demandPlatformWarehouse", "备货FBA仓"),
+    DEMAND_OVERSEAS_WAREHOUSE("demandOverseasWarehouse", "备货第三方仓"),
     ;
     /**
      * 类型
