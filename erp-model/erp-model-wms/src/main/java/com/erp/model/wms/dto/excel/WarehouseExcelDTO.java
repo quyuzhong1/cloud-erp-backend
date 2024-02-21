@@ -92,10 +92,23 @@ public class WarehouseExcelDTO  implements Serializable {
 
 
     /**
+     * 在途仓库名称
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "在途仓库名称", index = 8)
+    private String onwayWarehouseName;
+
+    /**
+     * 第三方仓库名称
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "第三方仓库名称", index = 9)
+    private String thirdWarehouseName;
+    /**
      * 仓库地址
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库地址", index = 8)
+    @ExcelProperty(value = "仓库地址", index = 10)
     @FieldValid(fieldName = "仓库地址",maxLength = 200)
     private String address;
 
@@ -103,23 +116,10 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "仓库状态", index = 9)
+    @ExcelProperty(value = "仓库状态", index = 11)
     @FieldValid(fieldName = "仓库状态",isNotBlank = true,fieldValues = "启用,停用")
     private String enabled;
 
-    /**
-     * 在途仓库名称
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "在途仓库名称", index = 10)
-    private String onwayWarehouseName;
-
-    /**
-     * 第三方仓库名称
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "第三方仓库名称", index = 11)
-    private String thirdWarehouseName;
 
     /**
      * 错误信息
