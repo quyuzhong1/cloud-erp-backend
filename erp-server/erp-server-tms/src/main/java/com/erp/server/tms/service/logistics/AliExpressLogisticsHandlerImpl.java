@@ -217,6 +217,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         }
         OrderRequest orderRequest = OrderRequest.builder()
+                .oaid(logisticsOrderVO.getOaid())
                 .pickup_type(logisticsOrderVO.getPickupType())
                 .declareProducts(declareProducts)
                 .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())

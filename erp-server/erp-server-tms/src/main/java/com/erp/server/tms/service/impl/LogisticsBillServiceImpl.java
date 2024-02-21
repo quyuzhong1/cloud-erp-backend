@@ -368,10 +368,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
-        SenderInfo returnInfo = new SenderInfo();
+        SenderInfo returnInfo = null;
         //退货地址
         LogisticsAddressEntity returnAddress = addressList.stream().filter(a -> refundType.equals(a.getType())).findFirst().orElse(null);
         if (Objects.nonNull(returnAddress)) {
+            returnInfo = new SenderInfo();
             BeanMapperUtils.copy(returnAddress, returnInfo);
             //地址id
             returnInfo.setId(returnAddress.getAddressId());
