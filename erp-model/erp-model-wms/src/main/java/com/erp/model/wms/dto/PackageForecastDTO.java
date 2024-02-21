@@ -59,6 +59,11 @@ public class PackageForecastDTO implements Serializable {
          */
         private String  client;
 
+        /**
+         * 多语言
+         */
+        private String  locale;
+
     }
 
     @Data

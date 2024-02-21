@@ -10,6 +10,7 @@ import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.domain.Protocol;
 import com.erp.tms.aliexpress.model.handover.request.*;
 import com.erp.tms.aliexpress.util.ApiException;
+import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -131,7 +132,9 @@ public class AliExpressHandoverService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("cainiao.global.handover.commit");
-        request.addApiParameter("seller_parcel_order_list", JSONObject.toJSONString(commitRequest.getSellerParcelOrderList()));
+        if(CollectionUtils.isNotEmpty(commitRequest.getSellerParcelOrderList())){
+            request.addApiParameter("seller_parcel_order_list", JSONObject.toJSONString(commitRequest.getSellerParcelOrderList()));
+        }
         request.addApiParameter("skip_invalid_parcel", String.valueOf(commitRequest.getSkipInvalidParcel()));
         request.addApiParameter("remark", commitRequest.getRemark());
         if (Objects.nonNull(commitRequest.getReturnInfo())){
@@ -146,11 +149,19 @@ public class AliExpressHandoverService {
         request.addApiParameter("type", commitRequest.getType());
         request.addApiParameter("client", commitRequest.getClient());
         request.addApiParameter("locale", commitRequest.getLocale());
-        request.addApiParameter("features", JSONObject.toJSONString(commitRequest.getFeatures()));
+        if (Objects.nonNull(commitRequest.getFeatures())){
+            request.addApiParameter("features", JSONObject.toJSONString(commitRequest.getFeatures()));
+        }
         request.addApiParameter("appointment_type", commitRequest.getAppointmentType());
-        request.addApiParameter("domestic_tracking_no", commitRequest.getDomesticTrackingNo());
-        request.addApiParameter("domestic_logistics_company_id", commitRequest.getDomesticLogisticsCompanyId());
-        request.addApiParameter("domestic_logistics_company", commitRequest.getDomesticLogisticsCompany());
+        if (StringUtils.isNotEmpty(commitRequest.getDomesticTrackingNo())){
+            request.addApiParameter("domestic_tracking_no", commitRequest.getDomesticTrackingNo());
+        }
+        if(StringUtils.isNotEmpty(commitRequest.getDomesticLogisticsCompanyId())){
+            request.addApiParameter("domestic_logistics_company_id", commitRequest.getDomesticLogisticsCompanyId());
+        }
+        if (StringUtils.isNotEmpty(commitRequest.getDomesticLogisticsCompany())){
+            request.addApiParameter("domestic_logistics_company", commitRequest.getDomesticLogisticsCompany());
+        }
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());

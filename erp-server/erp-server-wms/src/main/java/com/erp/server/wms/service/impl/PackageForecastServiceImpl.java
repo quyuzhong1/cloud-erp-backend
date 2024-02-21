@@ -57,10 +57,7 @@ import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.constants.PathConstants;
-import com.erp.tms.aliexpress.model.handover.AddressBase;
-import com.erp.tms.aliexpress.model.handover.AddressInfo;
-import com.erp.tms.aliexpress.model.handover.ParcelOrder;
-import com.erp.tms.aliexpress.model.handover.UserInfo;
+import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
 import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
 import com.erp.tms.aliexpress.model.handover.request.HandoverQueryRequest;
@@ -369,6 +366,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         alExpressHandoverBaseDTO.setClient(client);
         alExpressHandoverBaseDTO.setAuthMap(authMap);
         alExpressHandoverBaseDTO.setUserInfo(userInfo);
+        alExpressHandoverBaseDTO.setLocale("zh_CN");
         return alExpressHandoverBaseDTO;
     }
 
@@ -550,6 +548,17 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+
+        List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(forecastDetailList.size());
+        String topUserKey = base.getUserInfo().getTopUserKey();
+        for (PackageForecastDetailEntity item : forecastDetailList) {
+            SellerParcelOrder parcelOrder = new SellerParcelOrder();
+            parcelOrder.setSellerId(topUserKey);
+            parcelOrder.setOrderCodeList(Collections.singletonList(item.getTransportNo()));
+            parcelOrder.setUserNick("cn123435sss");
+            sellerParcelOrderList.add(parcelOrder);
+        }
+
         //揽收地址基础信息
         AddressBase addressBase = PackageForecastConverter.INSTANCE.convertAddressBase(logisticsAddress);
         //揽收地址信息
@@ -566,15 +575,22 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             type = PackageForecastConstant.SELF_SEND;
         }
         String client = PackageForecastConstant.CLIENT;
+
+
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
-                orderCodeList(orderCodeList).weight(entity.getTotalPackageWeight().setScale(2)).
+                skipInvalidParcel(Boolean.TRUE).
+                orderCodeList(orderCodeList).
+                handoverOrderId("").
+                appointmentType("bigbag").
+                weight(entity.getTotalPackageWeight().setScale(0)).
                 weightUnit(entity.getWeightUnit()).userInfo(base.getUserInfo()).
-                type(type).client(client).build();
+                sellerParcelOrderList(sellerParcelOrderList).
+                type(type).client(client).locale(base.getLocale()).build();
         try {
             IopResponse iopResponse = aliExpressHandoverService.commit(base.getAuthMap(), commitRequest);
             BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
             if (Objects.nonNull(baseResult.getErrorResponse())) {
-                throw new ServiceException(baseResult.getErrorResponse().getMsg());
+                throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
             }
             HandoverCommitResponse handoverCommitResponse = JSONObject.parseObject(baseResult.getData(), HandoverCommitResponse.class);
             if (Objects.nonNull(handoverCommitResponse)) {
@@ -674,8 +690,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //跟踪单号
             String trackNo = item.getTrackNo();
             String minPackageTransportNo = item.getMinPackageTransportNo();
-            if(StringUtils.isBlank(trackNo)){
-                trackNo=minPackageTransportNo;
+            if (StringUtils.isBlank(trackNo)) {
+                trackNo = minPackageTransportNo;
             }
             item.setTrackNo(trackNo);
             //第三方交接单号

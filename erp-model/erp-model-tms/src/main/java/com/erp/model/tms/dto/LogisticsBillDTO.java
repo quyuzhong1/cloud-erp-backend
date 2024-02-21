@@ -616,7 +616,10 @@ public class LogisticsBillDTO implements Serializable {
         private String token;
 
 
-
+        /**
+         * 速卖通 ISV用户唯一标识，一般为userId,最大长度为16个字符
+         */
+        private String topUserKey;
 
         @NotBlank(message = "渠道不能为空")
         private String channelId;

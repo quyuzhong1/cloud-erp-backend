@@ -1293,18 +1293,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String dictPlatform = entity.getDictPlatform();
         result.setSalesPlatform(dictPlatform);
         Boolean isAliExpress = aliExpress.equals(dictPlatform);
-        if (isAliExpress) {
-            result.setOrderCode(entity.getPlatformCode());
-        } else {
-            result.setOrderCode(entity.getCode());
-        }
-
-        result.setOrderType(OrderTypeEnum.B2C.getCode());
         String shopId = entity.getShopId();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+
+        if (isAliExpress) {
+            result.setOrderCode(entity.getPlatformCode());
+            JSONObject jsonObject = JSONObject.parseObject(shopInfoEntity.getExtendData());
+            //买家id
+            String sellerId = jsonObject.getOrDefault("sellerId","").toString();
+            result.setTopUserKey(sellerId);
+        } else {
+            result.setOrderCode(entity.getCode());
+        }
+
+        result.setOrderType(OrderTypeEnum.B2C.getCode());
+
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
