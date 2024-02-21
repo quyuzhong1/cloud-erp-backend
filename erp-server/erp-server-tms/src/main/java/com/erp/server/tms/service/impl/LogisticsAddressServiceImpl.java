@@ -218,9 +218,11 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
                 LogisticsAddressEntity logisticsServiceAddress = getLogisticsServiceAddress(logisticsAddressEntity.getAddressId(), logisticsAddressEntity.getShopId());
                 if (Objects.nonNull(logisticsServiceAddress)){
                     logisticsAddressEntity.setId(logisticsServiceAddress.getId());
+                    this.updateById(logisticsAddressEntity);
+                }else {
+                    this.save(logisticsAddressEntity);
                 }
             });
-            this.saveOrUpdateBatch(list);
         }
     }
 
