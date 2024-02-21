@@ -250,6 +250,16 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 }
             }
 
+/*            List<Map<String, Object>> mapList = new ArrayList<>();
+            Map<String, Object> linkMap = new HashMap<>();
+            linkMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+            linkMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            linkMap.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
+            linkMap.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
+            mapList.add(linkMap);
+            //销售单金蝶明细id
+            map.put("FInStockEntry_Link", mapList);*/
+
             list.add(map);
         }
         resultMap.put("FEntityList", list);

@@ -97,7 +97,7 @@
         is_virtual AS isVirtual,
         approve_status AS approveStatus,
         is_enable_location AS isEnableLocation,
-        onway_warehouse_name AS onwayWarehouseName,
+        onway_warehouse_name AS onwayWarehouseName
 
         FROM warehouse WHERE is_deleted=false
       <choose>

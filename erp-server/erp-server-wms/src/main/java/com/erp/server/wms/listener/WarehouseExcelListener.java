@@ -5,6 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -56,7 +57,6 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         this.existList = existList;
 
     }
-
 
     /**
      * 每解析一行数据回调一遍
@@ -113,10 +113,21 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (addCodeCount > 0) {
             errorMsgList.add("金蝶仓库编号已存在");
         }
-        WarehouseEntity warehouseEntity = addWarehouseList.stream().filter(req -> req.getOnwayWarehouseName().equals(warehouseExcelDTO.getOnwayWarehouseName())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(warehouseEntity)) {
-            errorMsgList.add("在途仓库名称不存在");
+        WarehouseEntity warehouseEntity = null;
+        if (StringUtils.isNotBlank(warehouseExcelDTO.getOnwayWarehouseName())) {
+            warehouseEntity = addWarehouseList.stream()
+                    .filter(req -> req.getOnwayWarehouseName().equals(warehouseExcelDTO.getOnwayWarehouseName())
+                            && !req.getDisabled()
+                            && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())
+                    )
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isEmpty(warehouseEntity)) {
+                errorMsgList.add("在途仓库名称不存在");
+            }
         }
+
+
 
         addDTO.setKingdeeWarehouseCode(kingdeeWarehouseCode);
         addDTO.setName(warehouseExcelDTO.getName());
@@ -165,10 +176,13 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             errorList.add(warehouseExcelDTO);
             return;
         }
-
-        addDTO.setOnwayWarehouseId(warehouseEntity.getId());
-        addDTO.setOnwayWarehouseName(warehouseEntity.getName());
-        addDTO.setThirdWarehouseName(warehouseExcelDTO.getThirdWarehouseName());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            addDTO.setOnwayWarehouseId(warehouseEntity.getId());
+            addDTO.setOnwayWarehouseName(warehouseEntity.getName());
+        }
+        if (StringUtils.isNotBlank(warehouseExcelDTO.getThirdWarehouseName())) {
+            addDTO.setThirdWarehouseName(warehouseExcelDTO.getThirdWarehouseName());
+        }
 
         //保存的数据
         warehouseService.add(addDTO);
