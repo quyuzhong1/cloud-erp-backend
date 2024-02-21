@@ -555,7 +555,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             SellerParcelOrder parcelOrder = new SellerParcelOrder();
             parcelOrder.setSellerId(topUserKey);
             parcelOrder.setOrderCodeList(Collections.singletonList(item.getTransportNo()));
-            parcelOrder.setUserNick("cn123435sss");
+            //parcelOrder.setUserNick("cn123435sss");
             sellerParcelOrderList.add(parcelOrder);
         }
 
@@ -567,7 +567,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         /**
          * 要创建交接单的小包编码集合
          */
-        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoCode).collect(Collectors.toList());
+        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getTrackNo).collect(Collectors.toList());
         String type = PackageForecastConstant.CAINIAO_PICKUP;
         String collectMode = entity.getCollectMode();
         String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
