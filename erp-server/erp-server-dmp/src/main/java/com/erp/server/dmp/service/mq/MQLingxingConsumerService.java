@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -54,7 +55,7 @@ public class MQLingxingConsumerService {
             // 检查任务和记录平台店铺ID
             shopInfoMappingService.saveAndHandle(ext);
             MapUtil mapUtil = getMapParam();
-            OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(ext.getUniqueId());
+            UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
             finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
         }
     }
@@ -75,7 +76,7 @@ public class MQLingxingConsumerService {
             // 保存和检查调拨
             wmsShipmentFeign.saveAndCheckTransfer(receiveEntityList);
             MapUtil mapUtil = getMapParam();
-            OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(ext.getUniqueId());
+            UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
             finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
         }
     }
@@ -87,11 +88,12 @@ public class MQLingxingConsumerService {
         return JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
     }
 
-    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
+    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, UniqueDto updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
             log.warn("mongo暂未写入数据, 请稍后重试");
             throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
+//            return;
         }
         if(CleanStatusEnum.CLEANED.getCode().equals(mongoData.get(0).getIsClean())){
             return;

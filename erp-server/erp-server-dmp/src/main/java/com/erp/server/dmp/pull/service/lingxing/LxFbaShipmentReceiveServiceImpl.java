@@ -105,7 +105,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
                 .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
         for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
             // 构造消息体
-            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate());
+            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate(), sid);
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getUniqId(entity.getUniqueId());
             List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());

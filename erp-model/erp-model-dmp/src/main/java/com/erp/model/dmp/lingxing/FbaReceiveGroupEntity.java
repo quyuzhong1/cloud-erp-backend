@@ -2,6 +2,7 @@ package com.erp.model.dmp.lingxing;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
+import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -17,26 +18,33 @@ import java.util.Map;
 @ToString(callSuper = true)
 public class FbaReceiveGroupEntity extends CleanBaseDTO {
     /**
+     * 领星店铺ID
+     */
+    private String sid;
+
+    /**
      * 同组的货件ID
      */
     private String fbaShipmentId;
 
     /**
-     * 签收日期
+     * 请求的签收日期
      */
-    private LocalDate receiveDate;
+    private LocalDate requestReceiveDate;
 
     /**
      * 当天同组的货件明细
      */
     private List<FbaReceiveDetailEntity> detailList;
 
-    public static FbaReceiveGroupEntity init(Map.Entry<String, List<FbaReceiveDetailEntity>> entry, LocalDate receiveDate) {
+    public static FbaReceiveGroupEntity init(Map.Entry<String, List<FbaReceiveDetailEntity>> entry, LocalDate receiveDate,String sid) {
         FbaReceiveGroupEntity result = new FbaReceiveGroupEntity();
+        result.setSid(sid);
         result.setFbaShipmentId(entry.getKey());
-        result.setReceiveDate(receiveDate);
+        result.setRequestReceiveDate(receiveDate);
         result.setDetailList(entry.getValue());
-        result.setUniqueId(StrUtil.format("{}_{}", entry.getKey(), receiveDate.toString()));
+        result.setPlatform(PlatformEnum.LINGXING.getName());
+        result.setUniqueId(StrUtil.format("{}_{}_{}", entry.getKey(), receiveDate.toString(), sid));
         return result;
     }
 

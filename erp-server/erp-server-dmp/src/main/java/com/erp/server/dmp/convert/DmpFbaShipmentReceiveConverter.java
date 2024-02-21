@@ -38,7 +38,7 @@ public interface DmpFbaShipmentReceiveConverter {
 
     @Mappings({
             // 有效签收时间
-            @Mapping(target = "receiveDate", expression = "java(entity.getReceivedDateLocaleStr())"),
+            @Mapping(target = "receiveDate", expression = "java(java.time.OffsetDateTime.parse(entity.getReceivedDateLocaleStr()).toLocalDateTime())"),
             // UTC签收时间
             @Mapping(target = "receiveUTCDate", expression = "java(entity.getReceivedDateStr())"),
             // 当地签收日期

@@ -48,7 +48,7 @@ public class ShipmentFeignController extends BaseController {
      * 保存签收记录并检查调拨
      * @author Jim
      */
-    @PostMapping("9/saveAndCheckTransfer")
+    @PostMapping("/saveAndCheckTransfer")
     public Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList){
         Map<String, List<FbaShipmentReceiveEntity>> groupMap = entityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
         groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value));
