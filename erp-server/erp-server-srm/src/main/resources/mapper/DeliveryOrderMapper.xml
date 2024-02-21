@@ -52,6 +52,7 @@
             do2.id,
             doe.id as detailId,
             do2.code,
+            doe.source_detail_id as purchaseDetailId,
             do2.plan_delivery_date as planDeliveryDate,
             do2.receive_code as receiveCode,
             do2.is_print as isPrint,

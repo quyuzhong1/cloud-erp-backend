@@ -295,4 +295,6 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return void
      **/
     void repairQcInfoSourceCode();
+
+    List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds);
 }
