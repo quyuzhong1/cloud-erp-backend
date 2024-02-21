@@ -83,32 +83,34 @@ public class WarehouseExportExcelDTO implements Serializable {
     private String contactTelNumber;
 
     /**
-     * 地址
-     */
-    @ColumnWidth(50)
-    @ExcelProperty(value = "仓库地址", index = 8)
-    private String address;
-
-    /**
-     * 状态
-     */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "启用状态", index = 9)
-    private String enabled;
-
-    /**
      * 在途仓库名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "在途仓库名称", index = 10)
+    @ExcelProperty(value = "在途仓库名称", index = 8)
     private String onwayWarehouseName;
 
     /**
      * 第三方仓库名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "第三方仓库名称", index = 11)
+    @ExcelProperty(value = "第三方仓库名称", index = 9)
     private String thirdWarehouseName;
+
+    /**
+     * 地址
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "仓库地址", index = 10)
+    private String address;
+
+    /**
+     * 状态
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "启用状态", index = 11)
+    private String enabled;
+
+
 
     @ColumnWidth(10)
     @ExcelProperty(value = "数据状态", index = 12)
