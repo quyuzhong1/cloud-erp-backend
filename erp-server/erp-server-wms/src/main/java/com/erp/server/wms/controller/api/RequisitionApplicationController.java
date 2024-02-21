@@ -2,9 +2,11 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import com.erp.server.wms.service.OverseasDeliveryPlanService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -105,6 +107,7 @@ public class RequisitionApplicationController extends BaseController {
             menuCode = "wms:requisitionApplication:paging",
             tableAlias = "ra"
     )
+    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
     public ApiResult<PagingVO<RequisitionApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto) {
         return success(requisitionApplicationService.paging(dto));
     }
@@ -286,6 +289,7 @@ public class RequisitionApplicationController extends BaseController {
             menuCode = "wms:requisitionApplication:exportExcel",
             tableAlias = "ra"
     )
+    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
     public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
         requisitionApplicationService.exportExcel(dto, response);
         return success();

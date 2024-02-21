@@ -4,6 +4,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -76,8 +77,8 @@ public class SkuMappingFeignController extends BaseController {
      * @date 2023/11/2
      */
     @PostMapping("/listByErpSkuIdAndType")
-    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList, @RequestParam(value = "type") String type) {
-        return skuMappingService.listByErpSkuIdAndType(erpSkuIdList,type);
+    public List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList) {
+        return skuMappingService.listByErpSkuIdAndType(erpSkuIdList);
     }
 
     /**
@@ -88,7 +89,7 @@ public class SkuMappingFeignController extends BaseController {
      */
     @PostMapping("/advanceQuerySku")
     @WebAdvanceQuery
-    public  List<String> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer){
+    public  List<ListingAdvanceQueryDTO> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer){
         return skuMappingService.advanceQuerySku(advanceQueryContainer);
     }
 }

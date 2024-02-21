@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
+import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -63,12 +64,12 @@ public interface SkuMappingFeign {
      * @date 2023/11/2
      */
     @PostMapping("feign/skuMapping/listByErpSkuIdAndType")
-    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList, @RequestParam(value = "type") String type);
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(@RequestBody List<String> erpSkuIdList);
 
     /**
      * 高级查询
      * @return erp skuId
      */
     @PostMapping("feign/skuMapping/advanceQuerySku")
-    List<String> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer);
+    List<ListingAdvanceQueryDTO> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 }

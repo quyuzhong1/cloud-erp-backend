@@ -218,7 +218,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 来源平台
          */
-        private String sourcePlatformCode;
+        private String provideCode;
     }
 
     /**

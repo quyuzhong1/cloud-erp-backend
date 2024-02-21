@@ -1,24 +1,18 @@
 package com.erp.server.wms.query;
 
-import com.common.business.constant.SearchType;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +21,7 @@ import java.util.stream.Collectors;
  * @date 2024年01月08日 9:54
  */
 @Component
-public class OverseasDeliveryPlanQueryHandler extends AbstractQueryHandler {
+public class RequisitionApplicationQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
@@ -35,24 +29,43 @@ public class OverseasDeliveryPlanQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //第三方仓SKU
-        if("platformSku".equals(field)){
+        if("platformProductId".equals(field) || "platformSku".equals(field)
+        ||"fnSku".equals(field) || "thirdWarehouseSku".equals(field)){
+            String queryField = "li.platform_sku_no";
+            if("platformProductId".equals(field)){
+                queryField = "li.platform_spu_no";
+            }
+            if("fnSku".equals(field)){
+                queryField = "li.platform_fn_sku";
+            }
             List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
             || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("li.platform_sku_no",queryConditionEnum,value,QueryDataTypeEnum.STRING);
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
                 advanceQueryDTOList.add(advanceQueryDTO);
                 AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+
+                //查询sku mapping
                 List<ListingAdvanceQueryDTO> listingAdvanceQueryDTOList = skuMappingFeign.advanceQuerySku(advanceQueryContainer);
                 List<String> skuIds = listingAdvanceQueryDTOList.stream().map(ListingAdvanceQueryDTO::getSkuId).distinct().collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(skuIds)) {
                     return getQueryEmptySql();
                 }
-                super.buildSplicingSQLDTO("odpd.sku_id",QueryConditionEnum.IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+                super.buildSplicingSQLDTO("rad.sku_id",QueryConditionEnum.IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+
+                //过滤指定店铺
+                if(!"thirdWarehouseSku".equals(field)){
+                    List<String> shopIds = listingAdvanceQueryDTOList.stream().map(ListingAdvanceQueryDTO::getShopId).distinct().collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(shopIds)) {
+                        return getQueryEmptySql();
+                    }
+                    super.buildDefaultDTO("ra.channel_id",shopIds);
+                }
             }
 
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("li.platform_sku_no",QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
                 advanceQueryDTOList.add(advanceQueryDTO);
                 AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
                 List<ListingAdvanceQueryDTO> listingAdvanceQueryDTOList = skuMappingFeign.advanceQuerySku(advanceQueryContainer);
@@ -60,7 +73,12 @@ public class OverseasDeliveryPlanQueryHandler extends AbstractQueryHandler {
                 if (CollectionUtils.isEmpty(skuIds)) {
                     return getQueryAllSql();
                 }
-                super.buildSplicingSQLDTO("odpd.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+                super.buildSplicingSQLDTO("rad.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+            }
+            if("thirdWarehouseSku".equals(field)){
+                super.buildDefaultDTO("ra.type","overseasWarehouse");
+            }else{
+                super.buildDefaultDTO("ra.type","salesPlatform");
             }
 
         }

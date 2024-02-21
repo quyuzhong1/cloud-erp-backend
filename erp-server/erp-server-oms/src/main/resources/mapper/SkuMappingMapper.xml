@@ -670,7 +670,8 @@
             li.match_result as matchResult,
             li.product_image_url as productImageUrl,
             li.product_spec as productSpec,
-            li.product_packing as productPacking
+            li.product_packing as productPacking,
+            li.platform_fn_sku as platformFnSku
         from sku_mapping sm
         inner join listing_info li on sm.listing_id = li.id
         where sm.is_deleted = false
@@ -681,13 +682,13 @@
                 #{item}
             </foreach>
         </if>
-        <if test="type != null and type != ''">
-            AND sm.type = #{type}
-        </if>
     </select>
-    <select id="advanceQuerySku" resultType="java.lang.String">
+
+    <select id="advanceQuerySku" resultType="com.erp.model.oms.dto.ListingAdvanceQueryDTO">
         select
-           distinct sm.product_sku_id as productSkuId
+           distinct sm.product_sku_id as skuId,
+                    sm.shop_id as shopId,
+                    sm.dict_platform as platform
         from sku_mapping sm
                  inner join listing_info li on sm.listing_id = li.id
         where

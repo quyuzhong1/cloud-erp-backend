@@ -64,7 +64,7 @@ public class ListingInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class PageDTO implements Serializable{
         /**
-         * id
+         * skuMapping id 编辑时传
          */
         private String id;
 
