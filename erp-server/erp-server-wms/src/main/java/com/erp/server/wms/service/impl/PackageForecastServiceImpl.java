@@ -16,6 +16,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.config.JacksonConfig;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -56,15 +58,22 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import com.erp.tms.aliexpress.api.IopResponse;
-import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
 import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
 import com.erp.tms.aliexpress.model.handover.request.HandoverQueryRequest;
 import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
-import com.erp.tms.aliexpress.model.handover.response.*;
+import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
+import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResult;
+import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
+import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
+import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
+import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
+import com.erp.tms.aliexpress.model.order.response.QueryResponse;
+import com.erp.tms.aliexpress.model.order.response.QueryResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
+import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -128,6 +137,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Autowired
     private AliExpressHandoverService aliExpressHandoverService;
+
+    @Autowired
+    private AliExpressShipperService aliExpressShipperService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -545,14 +558,50 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        Map<String, String> authMap = base.getAuthMap();
+        //销售订单
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+        for (SoB2cEntity soB2c : soB2cList) {
+            String tradeOrderId = soB2c.getSourceId();
+            PackageForecastDetailEntity detailEntity = forecastDetailList.stream().filter(d -> d.getSoId().equals(soB2c.getId())).
+                    findFirst().orElse(null);
+            String transportNo = detailEntity.getTransportNo();
+            if (StringUtils.isNotBlank(tradeOrderId) && Objects.nonNull(detailEntity) && StringUtils.isBlank(detailEntity.getSourceCode())) {
+                QueryOrderRequest queryOrderRequest=QueryOrderRequest.builder()
+                        .trade_order_id(tradeOrderId)
+                        .current_page(1)
+                        .page_size(20)
+                        .build();
+                try {
+                    BaseResult iopResponse = aliExpressShipperService.queryLogisticsOrder(authMap, queryOrderRequest);
+                    ErrorResponse errorResponse = iopResponse.getErrorResponse();
+                    if(Objects.nonNull(errorResponse)){
+                        continue;
+                    }
+                    QueryResponse queryResponse = JSONObject.parseObject(iopResponse.getResult(), QueryResponse.class);
+                    //成功
+                    if (Objects.nonNull(queryResponse) && queryResponse.getSuccess()) {
+                        List<QueryResult> responseList = queryResponse.getResultList();
+                        String outOrderCode= responseList.stream().filter(r->r.getLogistics_order_id().equals(transportNo)).
+                               map(QueryResult::getOut_order_code).findFirst().orElse("");
+                       detailEntity.setSourceCode(outOrderCode);
+                    }
+                } catch (ApiException e) {
+                 log.error("查询物流单信息失败,tradeOrderId:{}，错误信息:{}",tradeOrderId,e);
+                }
+            }
+        }
+
+
 
         List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(forecastDetailList.size());
         String topUserKey = base.getUserInfo().getTopUserKey();
+        packageForecastDetailService.updateBatchById(forecastDetailList);
         for (PackageForecastDetailEntity item : forecastDetailList) {
             SellerParcelOrder parcelOrder = new SellerParcelOrder();
             parcelOrder.setSellerId(topUserKey);
-            parcelOrder.setOrderCodeList(Collections.singletonList("LP00632391816034"));
-            //parcelOrder.setUserNick("cn123435sss");
+            parcelOrder.setOrderCodeList(Collections.singletonList(item.getSourceCode()));
             sellerParcelOrderList.add(parcelOrder);
         }
 
@@ -564,8 +613,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         /**
          * 要创建交接单的小包编码集合
          */
-//        List<String> orderCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getTrackNo).collect(Collectors.toList());
-        List<String> orderCodeList = Collections.singletonList("LP00632391816034");
+        List<String> sourceCodeList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).collect(Collectors.toList());
         String type = PackageForecastConstant.CAINIAO_PICKUP;
         String collectMode = entity.getCollectMode();
         String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
@@ -573,11 +621,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             type = PackageForecastConstant.SELF_SEND;
         }
         String client = PackageForecastConstant.CLIENT;
-
-
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
                 skipInvalidParcel(Boolean.TRUE).
-                orderCodeList(orderCodeList).
+                orderCodeList(sourceCodeList).
                 handoverOrderId("").
                 appointmentType("bigbag").
                 weight(entity.getTotalPackageWeight().setScale(0)).
@@ -585,7 +631,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 sellerParcelOrderList(sellerParcelOrderList).
                 type(type).client(client).locale(base.getLocale()).build();
         try {
-            IopResponse iopResponse = aliExpressHandoverService.commit(base.getAuthMap(), commitRequest);
+            IopResponse iopResponse = aliExpressHandoverService.commit(authMap, commitRequest);
             BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
             if (Objects.nonNull(baseResult.getErrorResponse())) {
                 throw new ServiceException(baseResult.getErrorResponse().getSubMsg());

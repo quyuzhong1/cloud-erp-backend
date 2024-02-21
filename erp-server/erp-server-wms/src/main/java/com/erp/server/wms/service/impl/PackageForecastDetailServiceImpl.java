@@ -218,7 +218,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             return;
         }
         this.lambdaUpdate().set(PackageForecastDetailEntity::getHandoverStatus,status)
-                .eq(PackageForecastDetailEntity::getSoCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted,false)
+                .eq(PackageForecastDetailEntity::getSourceCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted,false)
                 .update();
     }
 
