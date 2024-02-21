@@ -259,6 +259,9 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("transfer_status")
     private String transferStatus;
 
+    @TableField("extend_data")
+    private String extendData;
+
 
 
     public static final String CODE = "code";

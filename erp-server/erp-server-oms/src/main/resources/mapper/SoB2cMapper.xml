@@ -743,6 +743,18 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.shopIdList !=null and params.shopIdList.size>0">
+            AND sb.shop_id IN
+            <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.logisticsChannelIdList !=null and params.logisticsChannelIdList.size>0">
+            AND sbl.logistics_channel_id IN
+            <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

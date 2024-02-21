@@ -621,6 +621,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String topUserKey;
 
+        /**
+         *订单对应收货地址OAID 目前速卖通用到
+         */
+        private String oaid;
+
         @NotBlank(message = "渠道不能为空")
         private String channelId;
 
