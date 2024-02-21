@@ -99,10 +99,24 @@ public class PackageDTO implements Serializable {
     public static class PagingParamDTO{
 
         /**
-         * 单据状态
+         * 物流渠道id 来源 http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        private List<String> logisticsChannelIdList;
+
+        /**
+         * 店铺id 集合  来源 http://172.16.100.11:3002/project/110/interface/api/24424
+         */
+        private List<String> shopIdList;
+
+
+        /**
+         * 不需要传参数
          */
         private List<String> billStatusList;
 
+        /**
+         * 不需要传参数
+         */
         private List<String> packageStatusList;
 
     }

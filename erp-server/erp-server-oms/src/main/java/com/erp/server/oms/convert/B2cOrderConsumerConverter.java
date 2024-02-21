@@ -95,6 +95,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "invalidType", source = "dto.invalidType"),
             @Mapping(target = "invalidRemark", source = "dto.invalidRemark"),
             @Mapping(target = "labelJson", source = "dto.labelJson"),
+            @Mapping(target = "extendData", source = "dto.extendData"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
