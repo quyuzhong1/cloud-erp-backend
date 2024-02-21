@@ -14,7 +14,9 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
@@ -75,7 +77,7 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            throw new ServiceException(ApiError.ERROR_401);
+            throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);
