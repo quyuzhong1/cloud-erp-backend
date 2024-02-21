@@ -1,16 +1,21 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.server.wms.service.WarehouseMappingService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +47,8 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private List<WarehouseEntity> addWarehouseList = new ArrayList<>();
 
+    private WarehouseMappingService warehouseMappingService;
+
 
     /**
      * 错误信息
@@ -49,12 +56,14 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList, List<WarehouseEntity> existList) {
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList
+            , List<WarehouseEntity> existList, WarehouseMappingService warehouseMappingService) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;
         this.orgList = orgList;
         this.existList = existList;
+        this.warehouseMappingService = warehouseMappingService;
 
     }
 
@@ -127,7 +136,10 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             }
         }
 
-
+        WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(warehouseExcelDTO.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+            errorMsgList.add((StrUtil.format(ApiError.THIRD_WAREHOUSE_NAME_EXIST.msg, PlatformDictEnum.ALI_EXPRESS.getCode(), warehouseExcelDTO.getThirdWarehouseName())));
+        }
 
         addDTO.setKingdeeWarehouseCode(kingdeeWarehouseCode);
         addDTO.setName(warehouseExcelDTO.getName());

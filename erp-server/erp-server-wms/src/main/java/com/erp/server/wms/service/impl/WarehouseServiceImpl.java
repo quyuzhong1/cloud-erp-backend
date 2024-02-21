@@ -32,6 +32,7 @@ import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -293,6 +294,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
             //如果设置了第三方仓绑定
             if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+                WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
+                }
                 WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
                 addDTO.setName(dto.getThirdWarehouseName());
                 addDTO.setWarehouseId(warehouse.getId());
@@ -343,16 +349,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         Boolean result = this.updateById(warehouse);
         if (result) {
             //如果设置了第三方仓绑定
-            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
-                WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
-                if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
-                    WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
-                    updateDTO.setId(mappingViewByDictPlatform.getId());
-                    updateDTO.setName(dto.getThirdWarehouseName());
-                    updateDTO.setWarehouseId(warehouse.getId());
-                    updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-                    warehouseMappingService.update(updateDTO);
+            WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+            if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+                WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
+                WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
+                updateDTO.setId(mappingViewByDictPlatform.getId());
+                updateDTO.setName(dto.getThirdWarehouseName());
+                updateDTO.setWarehouseId(warehouse.getId());
+                updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                warehouseMappingService.update(updateDTO);
             }
             return warehouseId;
         }
@@ -770,8 +778,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+
+
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {

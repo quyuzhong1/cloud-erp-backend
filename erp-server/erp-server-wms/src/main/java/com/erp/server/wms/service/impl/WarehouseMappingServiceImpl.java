@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -19,6 +18,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseMappingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,7 +125,9 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
     @Override
     public WarehouseMappingDTO.MappingViewDTO getMappingViewByDictPlatform(String warehouseId, String dictPlatform) {
         WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = baseMapper.getMappingViewByDictPlatform(warehouseId, dictPlatform);
-
+        if (ObjectUtil.isEmpty(mappingViewByDictPlatform)) {
+            return null;
+        }
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(mappingViewByDictPlatform.getWarehouseOrgId()));
         BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewByDictPlatform.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
@@ -133,6 +135,20 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
             mappingViewByDictPlatform.setWarehouseOrgName(codeDTO.getName());
         }
         return mappingViewByDictPlatform;
+    }
+
+    @Override
+    public WarehouseMappingEntity checkThirdWarehouseNameExist(String thirdWarehouseName, String dictPlatform) {
+        if (StringUtils.isBlank(thirdWarehouseName)) {
+            return null;
+        }
+        WarehouseMappingEntity entity = lambdaQuery()
+                .eq(WarehouseMappingEntity::getName, thirdWarehouseName)
+                .eq(WarehouseMappingEntity::getDictPlatform, dictPlatform).last("LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            return entity;
+        }
+        return null;
     }
 
     /**

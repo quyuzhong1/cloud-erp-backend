@@ -4,8 +4,6 @@ import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * 平台授权
  * @Author Luo_WG
@@ -24,7 +22,7 @@ public interface IShopAuthorizeService<T> {
      * 授权
      * @param dto
      */
-    Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto);
 
     /**
      * 取消授权
