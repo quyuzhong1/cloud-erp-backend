@@ -4335,14 +4335,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public void approvalTaskPass(String processId) {
         LoginUser loginUser = commonService.getUserInfo();
+        String userName = loginUser.getUserName();
+        if (StringUtils.isBlank(userName)) {
+            userName = "system";
+        }
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
+        Integer beforeStatus = taskEntity.getStatus();
         Integer notFinish = IsConstant.NO;
         if (!Objects.isNull(taskEntity)) {
-            //是否是变更任务
-            Boolean isChangeDocs = taskEntity.getIsChangeDocs();
             taskDocHistoryService.updateChangeResult(taskEntity.getId());
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
             List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
@@ -4369,10 +4372,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
                 Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
                 if (approvalTaskFlag) {
-                    UpdateProductDTO dto = new UpdateProductDTO();
-                    dto.setProductId(taskEntity.getProductId());
-                    dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
-                    productInfoService.updateProduct(dto);
+                    ProductInfoEntity productEntity = productInfoService.getById(taskEntity.getProductId());
+                    if (Objects.nonNull(productEntity) && !ApprovalStatusEnum.APPROVAL.getCode().equals(productEntity.getApprovalStatus())) {
+                        UpdateProductDTO dto = new UpdateProductDTO();
+                        dto.setProductId(taskEntity.getProductId());
+                        dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
+                        productInfoService.updateProduct(dto);
+                    }
                 }
             }
 
@@ -4384,17 +4390,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
             recordEntity.setTaskId(taskEntity.getId());
-            recordEntity.setBeforeState(taskEntity.getStatus());
-            recordEntity.setAfterState(TaskStateEnum.FINISH.getCode());
+            recordEntity.setBeforeState(beforeStatus);
+            recordEntity.setAfterState(taskEntity.getStatus());
             recordEntity.setOperatorId(loginUser.getUid());
-            recordEntity.setOperatorName(loginUser.getUserName());
+            recordEntity.setOperatorName(userName);
             taskOperatorRecordService.save(recordEntity);
             //操作日志
             SysLogEntity sysLogEntity = new SysLogEntity()
-                    .setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(taskEntity.getStatus()), TaskStateEnum.FINISH.getName()))
+                    .setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(beforeStatus), TaskStateEnum.getName(taskEntity.getStatus())))
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc())
                     .setBusinessId(taskEntity.getId());
             sysLogService.save(sysLogEntity);
+            if (TaskStateEnum.FINISH.getCode().equals(taskEntity.getStatus())) {
+                noticeMessageService.finishTaskNotice(userName, Arrays.asList(taskEntity), taskEntity.getProductId());
+            }
         }
 
     }

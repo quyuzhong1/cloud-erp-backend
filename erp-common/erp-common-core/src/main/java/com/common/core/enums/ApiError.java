@@ -23,6 +23,7 @@ public enum ApiError implements Serializable {
     ERROR_5001(5001, "未授权访问!"),
 
     ERROR_403(403, "您未登录,请登录后操作"),
+    ERROR_401(401, "Unauthorized"),
 
 
 
@@ -1128,14 +1129,15 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
     DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
     TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
-    GENERATE_TIME_GT_DEADLINE_TIME(94033,"生成时间不可晚于截单时间"),
-    ERROR_NOT_UPDATE_TRACK_STATUS(94032,"该运输状态为系统更新不可修改"),
-    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94033,"被其他单据引用的中转物流商不允许删除"),
-    NOT_PRODUCT_REGISTRATION(94034," 【{}】 未在【{}】平台备案，请联系财务备案"),
-    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94035," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
+    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系财务备案"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
-    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94033,"存在未停用的中转物流渠道,无法停用该物流商"),
-    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94033,"订单【{}】上传成功不能删除"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
+    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
+    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
 
     // 亚马逊公用异常
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
