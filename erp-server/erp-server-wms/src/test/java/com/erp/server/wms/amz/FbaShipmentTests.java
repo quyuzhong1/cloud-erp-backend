@@ -50,7 +50,7 @@ public class FbaShipmentTests {
 //            System.out.println(receiveDateLocale);
 //        }else {
 //          entity.setReceiveDateLocale(entity.getReceiveDate().atOffset(ZoneOffset.of("+8")));
-            entity.setReceiveLocaleDate(offsetDateTime);
+            entity.setReceiveLocaleDate(null);
             boolean result = fbaShipmentReceiveService.updateById(entity);
             FbaShipmentReceiveEntity updateEntity = fbaShipmentReceiveService.getById(id);
             if (null != updateEntity.getReceiveLocaleDate()) {
