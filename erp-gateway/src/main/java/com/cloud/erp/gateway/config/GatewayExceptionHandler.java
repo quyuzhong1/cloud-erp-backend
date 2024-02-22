@@ -78,7 +78,7 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 	 */
 	@Override
 	protected int getHttpStatus(Map<String, Object> errorAttributes) {
-		if (errorAttributes.get("code").equals(200)) {
+		if (errorAttributes.get("code").equals("200")) {
 			return HttpStatus.UNAUTHORIZED.value();
 		}
 		return HttpStatus.OK.value();
