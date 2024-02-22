@@ -132,7 +132,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
         //如果已发货且仓库为空且是平台仓订单
-        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse) {
+        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
@@ -174,6 +174,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(logisticsDTOS) && StringUtils.isNotBlank(warehouseName)) {
+            if (resultDTO.getIsWarehouseEmpty()) {
+                return;
+            }
             //生成速卖通发货单
             addAliExpressDelivery(dto, mainEntity, logisticsDTOS);
 
