@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
@@ -26,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -72,14 +70,11 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(WarehouseMappingDTO.UpdateDTO updateDTO) {
-        WarehouseMappingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "仓库映射第三方平台单"));
         WarehouseMappingEntity warehouseMappingEntity =  BeanMapperUtils.map(WarehouseMappingEntity.class, updateDTO);
 
         // 数据处理
         handleData(warehouseMappingEntity);
-        log.info("编辑 开始修改仓库映射第三方平台单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(warehouseMappingEntity);
+        boolean save = super.saveOrUpdate(warehouseMappingEntity);
         if(!save) {
             throw new ServiceException("仓库映射第三方平台单保存失败");
         }

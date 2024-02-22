@@ -350,18 +350,24 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (result) {
             //如果设置了第三方仓绑定
             WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
             if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
-                WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+                updateDTO.setId(mappingViewByDictPlatform.getId());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist) && !checkThirdWarehouseNameExist.getId().equals(mappingViewByDictPlatform.getId())) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                }
+            } else {
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
                     throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
-                WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
-                updateDTO.setId(mappingViewByDictPlatform.getId());
-                updateDTO.setName(dto.getThirdWarehouseName());
-                updateDTO.setWarehouseId(warehouse.getId());
-                updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-                warehouseMappingService.update(updateDTO);
             }
+            updateDTO.setName(dto.getThirdWarehouseName());
+            updateDTO.setWarehouseId(warehouse.getId());
+            updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+            warehouseMappingService.update(updateDTO);
             return warehouseId;
         }
         return "";
