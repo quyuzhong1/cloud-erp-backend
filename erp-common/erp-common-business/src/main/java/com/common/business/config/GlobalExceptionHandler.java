@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
 
