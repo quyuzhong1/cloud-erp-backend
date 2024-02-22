@@ -98,7 +98,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             responseVO = LogisticsOrderResponseVO.builder()
                     .transportNo(orderResponse.getShippingMethodNo())
-                    .trackNo(orderResponse.getShippingMethodNo())
+                    .trackNo(orderResponse.getChannelHawbcode())
                     .deliveryNo(logisticsOrder.getDeliveryNo())
                     .build();
             logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
