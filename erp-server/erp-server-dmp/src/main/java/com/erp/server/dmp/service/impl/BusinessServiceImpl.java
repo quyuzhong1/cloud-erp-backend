@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -155,7 +156,17 @@ public class BusinessServiceImpl {
             if (mongoDatum.toString().equals(item.toString())) {
                 continue;
             }
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
+            // 更新
+            Map<String, Object> updateFieldMap = item.getUpdateFieldMap();
+            MapUtil mapUtil;
+            if (CollectionUtil.isEmpty(updateFieldMap)){
+                // 无指定字段更新所有
+                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
+            } else {
+                // 根据指定字段更新
+                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+                mapUtil.putAll(updateFieldMap);
+            }
             OmsMongoDTO updateDto = new OmsMongoDTO(mongoDatum.getUniqueId());
             mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
             uniqueIds.add(item.getUniqueId());

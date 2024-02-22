@@ -15,7 +15,9 @@ package com.erp.server.dmp.amz;
 
 
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
@@ -23,14 +25,17 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,6 +45,8 @@ import java.util.List;
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
 public class FbaInboundApiTest {
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
 
     /**
@@ -203,18 +210,28 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getShipmentItemsTest() throws ApiException {
+        String shopId = "1735479610549735425";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
 //        String queryType = "SHIPMENT";
         String queryType = "DATE_RANGE";
-        String marketplaceId = "ATVPDKIKX0DER";
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        String marketplaceId = marketplaceEnum.getMarketplaceId();
 //        String lastUpdatedAfter = null;
 //        String lastUpdatedBefore = null;
 //        String nextToken = "NextToken";
-        LocalDateTime startTime = LocalDateTime.of(2023, 10, 31, 0, 0, 0);
-        LocalDateTime now = LocalDateTime.now();
-        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
-        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+//        LocalDateTime startTime = LocalDateTime.of(2023, 10, 31, 0, 0, 0);
+//        LocalDateTime now = LocalDateTime.now();
+//        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+//        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+        String lastUpdatedAfter = "2024-02-02T00:00:00.000Z";
+        String lastUpdatedBefore = "2024-02-05T00:00:00.000Z";
+
         String nextToken = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
+        FbaInboundApi api = FbaInboundApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO ,false);
         GetShipmentItemsResponse response = api.getShipmentItems(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         System.out.println("货件详情:");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -246,13 +263,20 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getShipmentsTest() throws ApiException {
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
+        String shopId = "1735588142481674247";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        FbaInboundApi api = FbaInboundApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO ,false);
         String queryType = "SHIPMENT";
 //        String queryType = "DATE_RANGE";
 //        String queryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
-        String marketplaceId = "ATVPDKIKX0DER";
-        List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
-        List<String> shipmentIdList = null;
+        String marketplaceId = marketplaceEnum.getMarketplaceId();
+        List<String> shipmentStatusList = null;
+        List<String> shipmentIdList = Arrays.asList("FBA15HMCLVH2");
 //        LocalDateTime startTime = LocalDateTime.of(2023, 11, 1, 0, 0, 0);
 //        LocalDateTime now = LocalDateTime.now();
 //        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();

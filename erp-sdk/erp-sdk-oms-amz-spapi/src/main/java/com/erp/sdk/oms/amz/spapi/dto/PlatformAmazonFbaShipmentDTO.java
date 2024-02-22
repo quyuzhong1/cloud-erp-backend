@@ -5,6 +5,7 @@ import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentInfo;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItem;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +13,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 平台亚马逊FBA货件DTO
@@ -77,6 +80,15 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
         this.downloadStatus = 0;
         this.detailList = new InboundShipmentItemList();
         super.setUniqueId(shipmentInfo.getShipmentId());
+    }
+
+    public PlatformAmazonFbaShipmentDTO(String shipmentId, String shopId, String shopName) {
+        this.shopId = shopId;
+        this.shopName = shopName;
+        this.platformUpdateTime = LocalDateTime.now(ZoneId.systemDefault());
+        this.downloadStatus = 0;
+        this.detailList = new InboundShipmentItemList();
+        super.setUniqueId(shipmentId);
     }
 
     /**
