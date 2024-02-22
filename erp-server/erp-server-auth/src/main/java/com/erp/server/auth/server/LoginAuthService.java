@@ -46,7 +46,7 @@ public class LoginAuthService {
                     return ApiResult.error(ApiError.ERROR_96001);
                 }
                 if(supplier.getSrmDisabled() || supplier.getDisabled()
-                        || (!supplier.getDisabled() && Objects.nonNull(supplier.getSrmDisabledTime()) && LocalDate.now().isBefore(supplier.getSrmDisabledTime()))){
+                        || (!supplier.getDisabled() && Objects.nonNull(supplier.getSrmDisabledDate()) && LocalDate.now().isBefore(supplier.getSrmDisabledDate()))){
                     return ApiResult.error(ApiError.ERROR_LOGIN_SRM_DISABLE);
                 }
             }

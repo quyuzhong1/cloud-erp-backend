@@ -165,8 +165,8 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     /**
      * SRM操作时间
      */
-    @TableField("srm_disabled_time")
-    private LocalDate srmDisabledTime;
+    @TableField("srm_disabled_date")
+    private LocalDate srmDisabledDate;
 
     /**
      * SRM操作人名称ID

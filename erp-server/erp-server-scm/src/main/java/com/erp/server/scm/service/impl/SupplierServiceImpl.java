@@ -219,7 +219,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(addEntity.getSrmDisabled())){
             addEntity.setSrmDisabled(Boolean.TRUE);//默认禁用
         }
-        addEntity.setSrmDisabledTime(LocalDate.now());
+        addEntity.setSrmDisabledDate(LocalDate.now());
         LoginUser userInfo = commonService.getUserInfo();
         if (Objects.nonNull(userInfo)){
             addEntity.setSrmOperateUserId(userInfo.getUid());
@@ -341,7 +341,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 supplier.setSrmOperateUserId(user.getUid());
                 supplier.setSrmOperateUserName(user.getUserName());
             }
-            supplier.setSrmDisabledTime(LocalDate.now());
+            supplier.setSrmDisabledDate(LocalDate.now());
             //设置为启用时：校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
             //设置为停用时：供应商协同开启后关闭--新增校验：存在待对账明细/未确认的对账单，请完成对账后关闭
             if (dto.getSrmDisabled()){
@@ -356,9 +356,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
                 Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(supplierId,startTime,endTime);
                 if (Objects.nonNull(count) && count > 0){
-                    supplier.setSrmDisabledTime(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                    supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
                 }else {
-                    supplier.setSrmDisabledTime(LocalDate.now());
+                    supplier.setSrmDisabledDate(LocalDate.now());
                 }
             }
         }
@@ -770,7 +770,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        supplier.setSrmDisabledTime(LocalDate.now());
+        supplier.setSrmDisabledDate(LocalDate.now());
         //当启用后 禁用时 校验是否存在未确认采购对账单明细
         if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
                 !supplier.getSrmDisabled() && dto.getState()){
@@ -789,7 +789,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (Objects.nonNull(count) && count > 0){
                 //SRM协同开启后，下月生效
                 msg = "SRM协同开启后，下月生效";
-                supplier.setSrmDisabledTime(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
             }
         }
         Boolean state = dto.getState();
