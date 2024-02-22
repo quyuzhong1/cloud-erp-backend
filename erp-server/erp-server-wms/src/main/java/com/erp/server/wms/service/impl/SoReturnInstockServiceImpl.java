@@ -211,7 +211,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
 
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-                obj.setCustomerName(customerInfoEntity.getName());
+                if(StringUtils.isNotBlank(customerInfoEntity.getName())){
+                    obj.setCustomerName(customerInfoEntity.getName());
+                }
                 list.add(obj.getId());
             });
         }
@@ -745,7 +747,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setReceiveQty(receiveQty);
             }
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            obj.setCustomerName(customerInfoEntity.getName());
+            if(StringUtils.isNotBlank(customerInfoEntity.getName())){
+                obj.setCustomerName(customerInfoEntity.getName());
+            }
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soReturnInstock.xlsx";
