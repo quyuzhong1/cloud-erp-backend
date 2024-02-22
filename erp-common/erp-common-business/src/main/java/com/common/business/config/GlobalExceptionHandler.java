@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,8 +60,7 @@ import java.util.Objects;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
-    @ResponseStatus(HttpStatus.OK)
-    public ApiResult resolveException(ServiceException e) {
+    public ApiResult resolveException(ServiceException e, HttpServletResponse response) {
         log.error("系统异常：{}", e.getMsg());
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
@@ -69,17 +69,28 @@ public class GlobalExceptionHandler {
         if (Objects.nonNull(e.getData())) {
             result.setData(e.getData());
         }
+        if(ApiError.ERROR_401.code.equals(result.getCode())){
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
         return result;
     }
 
 
     @ExceptionHandler(value = FeignServiceException.class)
-    @ResponseStatus(HttpStatus.OK)
-    public ApiResult resolveException(FeignServiceException e) {
+    public ApiResult resolveException(FeignServiceException e, HttpServletResponse response) {
         log.error("系统异常：{}", e.getMsg(), e);
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
+
+        if(ApiError.ERROR_401.code.equals(result.getCode())){
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+
         return result;
     }
 

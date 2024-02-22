@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -311,8 +312,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
-        Boolean result = shopInfoService.shopAuthorize(dto);
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
+        Boolean result = shopInfoService.shopAuthorize(dto, response);
         return result ? success() : failure();
     }
 
