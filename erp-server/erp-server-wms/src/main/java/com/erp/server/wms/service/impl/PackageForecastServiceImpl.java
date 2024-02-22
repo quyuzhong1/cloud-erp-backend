@@ -694,7 +694,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         entity.setTransferStatus(transferStatus);
         this.updateById(entity);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "中转报关");
 
     }
 
