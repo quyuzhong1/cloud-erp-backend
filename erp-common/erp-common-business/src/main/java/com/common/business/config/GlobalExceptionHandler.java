@@ -60,7 +60,7 @@ import java.util.Objects;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
-    public ApiResult resolveException(ServiceException e, HttpServletResponse response) {
+    public ApiResult resolveException(ServiceException e) {
         log.error("系统异常：{}", e.getMsg());
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
@@ -69,27 +69,27 @@ public class GlobalExceptionHandler {
         if (Objects.nonNull(e.getData())) {
             result.setData(e.getData());
         }
-        if(ApiError.ERROR_401.code.equals(result.getCode())){
+/*        if(ApiError.ERROR_401.code.equals(result.getCode())){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }else {
             response.setStatus(HttpServletResponse.SC_OK);
-        }
+        }*/
         return result;
     }
 
 
     @ExceptionHandler(value = FeignServiceException.class)
-    public ApiResult resolveException(FeignServiceException e, HttpServletResponse response) {
+    public ApiResult resolveException(FeignServiceException e) {
         log.error("系统异常：{}", e.getMsg(), e);
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
 
-        if(ApiError.ERROR_401.code.equals(result.getCode())){
+/*        if(ApiError.ERROR_401.code.equals(result.getCode())){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }else {
             response.setStatus(HttpServletResponse.SC_OK);
-        }
+        }*/
 
         return result;
     }

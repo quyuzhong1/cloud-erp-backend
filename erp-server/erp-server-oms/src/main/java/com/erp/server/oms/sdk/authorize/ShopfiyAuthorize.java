@@ -140,7 +140,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
         try {
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
