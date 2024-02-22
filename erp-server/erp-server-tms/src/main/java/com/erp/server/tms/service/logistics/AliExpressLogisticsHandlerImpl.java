@@ -216,6 +216,11 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
             addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         }
+        if(Objects.isNull(addressDTO.getPickup())){
+            Address sender = addressDTO.getSender();
+            sender.setMemberType("pickup");
+            addressDTO.setPickup(sender);
+        }
         OrderRequest orderRequest = OrderRequest.builder()
                 .oaid(logisticsOrderVO.getOaid())
                 .pickup_type(logisticsOrderVO.getPickupType())

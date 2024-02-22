@@ -67,21 +67,47 @@ public class AliExpressShipperService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.order.createorder");
-        request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
-        request.addApiParameter("oaid", orderRequest.getOaid());
-        request.addApiParameter("pickup_type", orderRequest.getPickup_type());
+        if (Objects.nonNull(orderRequest.getIs_agree_upgrade_reverse_parcel_insure())){
+            request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getOaid())){
+            request.addApiParameter("oaid", orderRequest.getOaid());
+        }
+        if(StringUtils.isNotEmpty(orderRequest.getPickup_type())){
+            request.addApiParameter("pickup_type", orderRequest.getPickup_type());
+        }
         request.addApiParameter("address_d_t_os", JSONObject.toJSONString(orderRequest.getAddress_d_t_os()));
         request.addApiParameter("declare_product_d_t_os", JSONObject.toJSONString(orderRequest.getDeclareProducts()));
-        request.addApiParameter("domestic_logistics_company", orderRequest.getDomestic_logistics_company());
-        request.addApiParameter("domestic_logistics_company_id", String.valueOf(orderRequest.getDomestic_logistics_company_id()));
-        request.addApiParameter("domestic_tracking_no", orderRequest.getDomestic_tracking_no());
-        request.addApiParameter("package_num", String.valueOf(orderRequest.getPackage_num()));
-        request.addApiParameter("trade_order_from", orderRequest.getTrade_order_from());
-        request.addApiParameter("trade_order_id", orderRequest.getTrade_order_id());
-        request.addApiParameter("undeliverable_decision", orderRequest.getUndeliverable_decision());
-        request.addApiParameter("warehouse_carrier_service", orderRequest.getWarehouse_carrier_service());
-        request.addApiParameter("invoice_number", orderRequest.getInvoice_number());
-        request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
+        if (StringUtils.isNotEmpty(orderRequest.getDomestic_logistics_company())){
+            request.addApiParameter("domestic_logistics_company", orderRequest.getDomestic_logistics_company());
+        }
+        if (Objects.nonNull(orderRequest.getDomestic_logistics_company_id())){
+            request.addApiParameter("domestic_logistics_company_id", String.valueOf(orderRequest.getDomestic_logistics_company_id()));
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getDomestic_tracking_no())){
+            request.addApiParameter("domestic_tracking_no", orderRequest.getDomestic_tracking_no());
+        }
+        if (Objects.nonNull(orderRequest.getPackage_num())){
+            request.addApiParameter("package_num", String.valueOf(orderRequest.getPackage_num()));
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getTrade_order_from())){
+            request.addApiParameter("trade_order_from", orderRequest.getTrade_order_from());
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getTrade_order_id())){
+            request.addApiParameter("trade_order_id", orderRequest.getTrade_order_id());
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getUndeliverable_decision())){
+            request.addApiParameter("undeliverable_decision", orderRequest.getUndeliverable_decision());
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getWarehouse_carrier_service())){
+            request.addApiParameter("warehouse_carrier_service", orderRequest.getWarehouse_carrier_service());
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getInvoice_number())){
+            request.addApiParameter("invoice_number", orderRequest.getInvoice_number());
+        }
+        if (StringUtils.isNotEmpty(orderRequest.getTop_user_key())){
+            request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
+        }
         if (Objects.nonNull(orderRequest.getInsuranceCoverage())){
             request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         }
