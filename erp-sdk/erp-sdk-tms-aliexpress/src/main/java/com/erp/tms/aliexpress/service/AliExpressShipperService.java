@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author zdy
@@ -67,8 +68,7 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.order.createorder");
         request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
-//        request.addApiParameter("oaid", orderRequest.getOaid());
-        request.addApiParameter("oaid", "FhyXOdVEOnaTQekLa8vUGQ");
+        request.addApiParameter("oaid", orderRequest.getOaid());
         request.addApiParameter("pickup_type", orderRequest.getPickup_type());
         request.addApiParameter("address_d_t_os", JSONObject.toJSONString(orderRequest.getAddress_d_t_os()));
         request.addApiParameter("declare_product_d_t_os", JSONObject.toJSONString(orderRequest.getDeclareProducts()));
@@ -82,7 +82,9 @@ public class AliExpressShipperService {
         request.addApiParameter("warehouse_carrier_service", orderRequest.getWarehouse_carrier_service());
         request.addApiParameter("invoice_number", orderRequest.getInvoice_number());
         request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
-//        request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
+        if (Objects.nonNull(orderRequest.getInsuranceCoverage())){
+            request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
+        }
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         log.info("下单完成：{}",JSONObject.toJSONString(response));
