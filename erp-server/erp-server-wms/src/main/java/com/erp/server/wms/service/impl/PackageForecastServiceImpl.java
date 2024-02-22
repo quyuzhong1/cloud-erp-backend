@@ -624,6 +624,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         SellerParcelOrder parcelOrder = new SellerParcelOrder();
         parcelOrder.setSellerId(topUserKey);
         List<String> orderCodeList =forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).collect(Collectors.toList());
+        if (orderCodeList.size() != forecastDetailList.size()) {
+            throw new ServiceException("未获取到小包第三方交易号");
+        }
         parcelOrder.setOrderCodeList(orderCodeList);
         sellerParcelOrderList.add(parcelOrder);
 
@@ -644,7 +647,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         String client = PackageForecastConstant.CLIENT;
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
-                skipInvalidParcel(Boolean.TRUE).
+                skipInvalidParcel(Boolean.FALSE).
                 orderCodeList(sourceCodeList).
                 handoverOrderId("").
                 appointmentType("bigbag").
