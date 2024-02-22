@@ -5373,8 +5373,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             IopResponse response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(entity.getPlatformCode()));
 
             cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
-            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-            Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+            cn.hutool.json.JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+            Boolean success = resultJson.getBool("success", Boolean.FALSE);
             //失败
             if (!success) {
                 log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
