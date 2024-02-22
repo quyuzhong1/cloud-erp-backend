@@ -107,7 +107,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         String bodyStr = "";
         // 二级域名
         String secondDomain = dto.getShop();
@@ -140,7 +140,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
         try {
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {

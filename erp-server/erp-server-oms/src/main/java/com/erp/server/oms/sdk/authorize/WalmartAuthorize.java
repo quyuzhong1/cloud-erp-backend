@@ -73,7 +73,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);

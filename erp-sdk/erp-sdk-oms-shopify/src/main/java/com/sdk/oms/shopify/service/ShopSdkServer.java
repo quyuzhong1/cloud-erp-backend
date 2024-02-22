@@ -14,13 +14,9 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +65,7 @@ public class ShopSdkServer {
      * @author yl
      * @date 2023-08-29 8:59
      */
-    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto, HttpServletResponse response) {
+    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto) {
         String code = dto.getCode();
         String host = dto.getHost();
         String shop = dto.getShop();
@@ -79,7 +75,6 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
@@ -88,7 +83,6 @@ public class ShopSdkServer {
         paramsMap.put("client_id", dto.getClientId());
         paramsMap.put("client_secret", dto.getClientSecret());
         paramsMap.put("code", dto.getCode());
-        ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 //        Request request = new Request.Builder()
 //                .post(OkHttpUtils.createFormBody(paramsMap))
 //                .headers(OkHttpUtils.createHeaders(null))

@@ -10,8 +10,8 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.*;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
@@ -23,7 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -312,8 +311,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
-        Boolean result = shopInfoService.shopAuthorize(dto, response);
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        Boolean result = shopInfoService.shopAuthorize(dto);
         return result ? success() : failure();
     }
 
