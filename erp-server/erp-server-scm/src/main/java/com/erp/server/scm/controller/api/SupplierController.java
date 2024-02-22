@@ -154,7 +154,7 @@ public class SupplierController extends BaseController {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         String msg = "请求成功！";
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) && Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
+        if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
             //启用时 检查当前周期确认订单是否存在，存在则下月生效
             LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
             LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());

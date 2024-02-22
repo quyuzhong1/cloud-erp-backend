@@ -335,8 +335,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierEntity old = new SupplierEntity();
         BeanMapper.copy(supplier, old);
         //供应商srm状态是否修改
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
-                Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
+        if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
+            LoginUser user = commonService.getUserInfo();
+            if (Objects.nonNull(user)){
+                supplier.setSrmOperateUserId(user.getUid());
+                supplier.setSrmOperateUserName(user.getUserName());
+            }
+            supplier.setSrmDisabledTime(LocalDate.now());
             //设置为启用时：校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
             //设置为停用时：供应商协同开启后关闭--新增校验：存在待对账明细/未确认的对账单，请完成对账后关闭
             if (dto.getSrmDisabled()){
