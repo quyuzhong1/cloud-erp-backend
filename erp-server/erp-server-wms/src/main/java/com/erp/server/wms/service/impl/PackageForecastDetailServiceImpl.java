@@ -138,10 +138,9 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
                     if (CollectionUtils.isNotEmpty(notSoIdList)) {
                         updatePackageStatus(notSoIdList, PackageStatusEnum.NOT.getCode());
                     }
-
-
                 }
-
+            }else{
+                updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
             }
         }
 
@@ -230,6 +229,8 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
                     }
                 }
 
+            }else{
+                updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
             }
         }
 
