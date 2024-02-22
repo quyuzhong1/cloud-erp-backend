@@ -5142,7 +5142,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
-                scanResult.setLogisticsSupplierId(baseDTO.getLogisticsSupplierId());
+                scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
             }
 
