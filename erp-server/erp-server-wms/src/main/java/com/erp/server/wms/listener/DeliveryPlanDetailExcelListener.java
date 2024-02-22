@@ -5,19 +5,17 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SalesDemandDetailDTO;
-import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<DeliveryPlanDetailExportExcelDTO> {
+
     /**
      * 导入数据，用于判断导入是否为空
      */
@@ -31,38 +29,34 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
     /**
      * 导入正确数据
      */
-    private List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList = new ArrayList<>();
+    private List<ListingInfoDTO.PageDTO> successList = new ArrayList<>();
 
     /**
-     * 明细中已存在的skuId集合
+     * 明细中已存在的第三方仓集合
      */
-    private List<String> skuIds;
+    private List<String> thirdSkuNoList;
+
+    /**
+     * 全部第三方仓sku
+     */
+    private List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList;
 
     /**
      * 导入成功的skuId集合
      */
     private List<String> importSkuIds = new ArrayList<>();
 
-    /**
-     * sku数据
-     */
-    private List<SkuVO> skuList;
 
-    /**
-     * 子件数据
-     */
-    private List<BomChildrenSkuDTO> bomChildrenSkuList;
 
-    public DeliveryPlanDetailExcelListener(List<SkuVO> skuList, List<String> skuIds, List<BomChildrenSkuDTO> bomChildrenSkuList) {
-        this.skuList = skuList;
-        this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
-        this.bomChildrenSkuList = CollectionUtils.isNotEmpty(bomChildrenSkuList) ? bomChildrenSkuList : new ArrayList<>();
+    public DeliveryPlanDetailExcelListener(List<String> thirdSkuNoList,List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList) {
+        this.thirdSkuNoList = CollectionUtils.isNotEmpty(thirdSkuNoList) ? thirdSkuNoList : new ArrayList<>();
+        this.allThirdWarehouseSkuList = allThirdWarehouseSkuList;
     }
 
 
     @Override
     public void invoke(DeliveryPlanDetailExportExcelDTO deliveryPlanDetailExportExcelDTO, AnalysisContext analysisContext) {
-        OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO = new OverseasDeliveryPlanDetailDTO.ViewDTO();
+        ListingInfoDTO.PageDTO viewDTO = new ListingInfoDTO.PageDTO();
         //添加数据用于判断是否为空
         allList.add(deliveryPlanDetailExportExcelDTO);
 
@@ -72,37 +66,33 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if (CollectionUtils.isEmpty(skuList)) {
-            errorMsgList.add("系统中未发现已审核SKU");
+        if (CollectionUtils.isEmpty(allThirdWarehouseSkuList)) {
+            errorMsgList.add("系统中第三方仓sku为空");
         } else {
-            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo())).findFirst().orElse(null);
-            if (Objects.isNull(skuEntity)) {
-                errorMsgList.add("sku在系统中未匹配到");
-            }
-            if (skuEntity != null) {
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream().filter(v->v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.nonNull(listingInfoWithSkuMappingDTO)) {
                 if (!StrUtils.isInteger(deliveryPlanDetailExportExcelDTO.getPlanQty())) {
                     errorMsgList.add("计划数量只能为正整数");
                 } else {
-                    if (skuIds.contains(skuEntity.getSkuId())) {
+                    if (thirdSkuNoList.contains(deliveryPlanDetailExportExcelDTO.getSkuNo())) {
                         errorMsgList.add("明细列表已存在该SKU");
-                    } else if (importSkuIds.contains(skuEntity.getSkuId())) {
+                    } else if (importSkuIds.contains(deliveryPlanDetailExportExcelDTO.getSkuNo())) {
                         errorMsgList.add("导入数据中已存在该SKU");
                     } else {
-                        viewDTO.setQty(Integer.valueOf(deliveryPlanDetailExportExcelDTO.getPlanQty()));
-                        viewDTO.setSkuId(skuEntity.getSkuId());
-                        viewDTO.setSkuNo(skuEntity.getSkuNo());
-                        viewDTO.setProductName(skuEntity.getSkuName());
-                        viewDTO.setImageUrl(skuEntity.getSkuImagesUrl());
-
-                        //查询sku是否存在子SKU
-                        List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream().filter(req -> req.getParentSkuId().equals(skuEntity.getSkuId())).collect(Collectors.toList());
-                        if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                            viewDTO.setIsCombination(Boolean.TRUE);
-                        } else {
-                            viewDTO.setIsCombination(Boolean.FALSE);
-                        }
+                        viewDTO = ListingInfoDTO.PageDTO.builder()
+                                .id(listingInfoWithSkuMappingDTO.getTableId())
+                                .platformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo())
+                                .platformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName())
+                                .skuId(listingInfoWithSkuMappingDTO.getProductSkuId())
+                                .skuNo(listingInfoWithSkuMappingDTO.getProductSkuNo())
+                                .productName(listingInfoWithSkuMappingDTO.getProductName())
+                                .fnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku())
+                                .asin(listingInfoWithSkuMappingDTO.getPlatformSpuNo())
+                                .build();
                     }
                 }
+            }else{
+                errorMsgList.add("系统中没有该第三方仓sku");
             }
         }
         //存在错误数据则直接返回
@@ -111,7 +101,7 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
             errorList.add(deliveryPlanDetailExportExcelDTO);
             return;
         }
-        importSkuIds.add(viewDTO.getSkuId());
+        importSkuIds.add(deliveryPlanDetailExportExcelDTO.getSkuNo());
         successList.add(viewDTO);
     }
 
@@ -128,7 +118,7 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
         return errorList;
     }
 
-    public List<OverseasDeliveryPlanDetailDTO.ViewDTO> getSuccessList(){
+    public List<ListingInfoDTO.PageDTO> getSuccessList(){
         return successList;
     }
 }

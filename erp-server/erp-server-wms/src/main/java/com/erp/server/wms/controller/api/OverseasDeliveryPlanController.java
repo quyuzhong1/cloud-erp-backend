@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
@@ -509,8 +510,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
      **/
     @PostMapping("/importDetailFile")
-    public ApiResult<OverseasDeliveryPlanDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        OverseasDeliveryPlanDetailDTO.ImportDTO list = overseasDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
+    public ApiResult<ListingInfoDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
+        ListingInfoDTO.ImportDTO list = overseasDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),response);
         return success(list);
     }
 

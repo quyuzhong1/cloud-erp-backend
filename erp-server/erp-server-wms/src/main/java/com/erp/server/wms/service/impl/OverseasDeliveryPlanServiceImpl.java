@@ -20,6 +20,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -98,6 +99,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     private SkuMappingFeign skuMappingFeign;
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -683,13 +686,22 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     @Override
-    public OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
-        //查询所有审核通过的sku
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //子件信息
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList,String warehouseId, HttpServletResponse response) {
 
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(skuList, skuIds, bomChildrenSkuList);
+        if(StringUtils.isBlank(warehouseId)){
+            throw new ServiceException("仓库id不能为空");
+        }
+
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
+        if(CollectionUtils.isEmpty(viewDTOList)){
+            throw new ServiceException("查询不到海外仓信息");
+        }
+        String provideCode = viewDTOList.get(0).getProviderCode();
+
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode);
+
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList);
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -704,9 +716,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        OverseasDeliveryPlanDetailDTO.ImportDTO importDTO = new OverseasDeliveryPlanDetailDTO.ImportDTO();
+        ListingInfoDTO.ImportDTO importDTO = new ListingInfoDTO.ImportDTO();
         //导入数据处理
-        List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
+        List<ListingInfoDTO.PageDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
@@ -717,6 +729,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        this.fillData(successList);
         importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
         return importDTO;
@@ -872,7 +885,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //查询第三方仓SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds);
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIds,"");
         //根据单据id查询审核流程
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
@@ -947,5 +960,16 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
 
     }
+    private void fillData(List<ListingInfoDTO.PageDTO> records) {
+        List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
 
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+
+        records.forEach(v->{
+            SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setImagesUrl(skuVO.getSkuImagesUrl());
+            }
+        });
+    }
 }

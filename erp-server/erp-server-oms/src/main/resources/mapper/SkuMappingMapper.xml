@@ -682,6 +682,10 @@
                 #{item}
             </foreach>
         </if>
+        <if test="provideCode != null and provideCode != ''">
+            AND li.platform = #{provideCode}
+            AND sm.dict_platform = #{provideCode}
+        </if>
     </select>
 
     <select id="advanceQuerySku" resultType="com.erp.model.oms.dto.ListingAdvanceQueryDTO">

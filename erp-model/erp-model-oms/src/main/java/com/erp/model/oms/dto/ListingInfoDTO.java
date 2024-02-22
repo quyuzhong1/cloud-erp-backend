@@ -7,8 +7,10 @@ import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +64,8 @@ public class ListingInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class PageDTO implements Serializable{
         /**
          * skuMapping id 编辑时传
@@ -107,6 +111,12 @@ public class ListingInfoDTO implements Serializable {
          * ASIN
          */
         private String asin;
+
+
+        /**
+         * 计划发货数量
+         */
+        private Integer qty;
     }
 
     @Data
@@ -199,6 +209,18 @@ public class ListingInfoDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<ListingInfoDTO.PageDTO> successList;
 
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
 
 }
