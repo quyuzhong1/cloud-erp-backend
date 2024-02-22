@@ -26,6 +26,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.UUID;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
@@ -132,7 +133,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
-        String password = DEFAULT_PASS;//123456
+        String randomString = UUID.generateRandomString();
+        String password = Md5Util.md5(randomString);
         boolean needChangePwd;
         //表示自己输入
         if (createPasswordType == 1) {
@@ -167,7 +169,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         boolean saveResult = this.save(entity);
         if (needChangePwd){
-            sendPwdEmail(entity,"123456");
+            sendPwdEmail(entity,randomString);
         }
         //保存成功 就去更新角色表
         if (saveResult) {
@@ -187,7 +189,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
-        String password = DEFAULT_PASS;
+        String randomString = UUID.generateRandomString();
+        String password = Md5Util.md5(randomString);
         Boolean needChangePwd = sysUserInfoDTO.getNeedChangePwd();
         //表示自己输入
         if (Objects.nonNull(createPasswordType) && 1 == createPasswordType) {
@@ -214,7 +217,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         this.save(entity);
         //发送email
         if (Objects.nonNull(createPasswordType) && 0 == createPasswordType){
-            sendPwdEmail(entity,"123456");
+            sendPwdEmail(entity,randomString);
         }
         return entity.getUid();
     }
