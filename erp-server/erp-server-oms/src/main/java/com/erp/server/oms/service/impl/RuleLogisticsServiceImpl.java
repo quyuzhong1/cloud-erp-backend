@@ -123,8 +123,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
-        handleData(old);
-
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
