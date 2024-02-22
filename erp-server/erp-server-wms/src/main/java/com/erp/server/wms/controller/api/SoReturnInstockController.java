@@ -19,6 +19,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
+import com.erp.server.wms.query.SoReturnInstockQueryHandler;
 import com.erp.server.wms.service.SoReturnInstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -57,7 +58,7 @@ public class SoReturnInstockController extends BaseController {
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
     public ApiResult<PagingVO<SoReturnInstockDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnInstockDTO.PagingParam> dto) {
         PagingVO<SoReturnInstockDTO.PagingView> pagingVO = soReturnInstockService.paging(dto);
         return success(pagingVO);
@@ -300,7 +301,7 @@ public class SoReturnInstockController extends BaseController {
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
     public ApiResult exportExcel(@RequestBody SoReturnInstockDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();
