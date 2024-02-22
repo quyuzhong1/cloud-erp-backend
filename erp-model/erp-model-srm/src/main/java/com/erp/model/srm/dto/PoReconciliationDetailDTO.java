@@ -1,17 +1,20 @@
 package com.erp.model.srm.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -55,6 +58,11 @@ public class PoReconciliationDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+
+        /**
+         * 序号
+         */
+        private Integer index;
 
         /**
          * 对账明细主键id
@@ -644,6 +652,5 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String businessStatus;
 
     }
-
 
 }
