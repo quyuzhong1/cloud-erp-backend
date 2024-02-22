@@ -52,7 +52,14 @@ public class DataRecoveryJob {
         List<String> ids = param.getBeanList("ids", String.class);
         String type = param.get("type", String.class);
         if(CollectionUtil.isEmpty(ids)){
-            ids = soOutstockService.getIdsByTemp();
+            if("soReturnInstockService".equals(type)){
+                ids = soOutstockService.getIdsByTemp("so_return_instock");
+            }else if("transferInfoService".equals(type)){
+                ids = soOutstockService.getIdsByTemp("transfer_info");
+            }else if("soOutstockService".equals(type)){
+                ids = soOutstockService.getIdsByTemp("so_outstock");
+            }
+
         }
         if (ObjectUtils.isEmpty(ids)) {
             XxlJobHelper.log("参数错误ids={}", ids);

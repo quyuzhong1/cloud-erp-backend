@@ -7,8 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
-import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -83,7 +83,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return
      */
-    Boolean shopAuthorize(ShopAuthorizeDTO dto);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
 
     /**
      * 取消授权

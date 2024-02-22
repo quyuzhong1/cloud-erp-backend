@@ -69,6 +69,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.time.LocalDateTime;
@@ -608,8 +609,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform());
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
     /**
