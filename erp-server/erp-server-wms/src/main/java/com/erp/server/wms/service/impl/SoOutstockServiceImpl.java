@@ -1787,8 +1787,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public List<String> getIdsByTemp() {
-        return baseMapper.getIdsByTemp();
+    public List<String> getIdsByTemp(String tableName) {
+        return baseMapper.getIdsByTemp(tableName);
     }
 
 
