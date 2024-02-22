@@ -41,6 +41,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -589,8 +590,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //订单推送dmp
             syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(Arrays.asList(entity.getSoId()));
+            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(Arrays.asList(entity.getSoId()), TransferOutstockStatusEnum.OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return Boolean.TRUE;
     }
@@ -942,7 +946,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(soIds, TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(soIds);
+            statusDTO.setStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return result;
     }
