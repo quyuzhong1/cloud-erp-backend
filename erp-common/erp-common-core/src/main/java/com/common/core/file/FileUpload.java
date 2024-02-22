@@ -4,10 +4,14 @@ import com.common.core.security.SBase64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.FileItemFactory;
+import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -15,7 +19,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
 
 
@@ -253,4 +256,38 @@ public class FileUpload {
 			throw new RuntimeException(e);
 		}
 	}
+
+	/**
+	 * 获取MultipartFile
+	 */
+	private MultipartFile getMultipartFile (String pathUrl) {
+		File tempFile = new File(pathUrl);
+		FileItem fileItem = createFileItem(tempFile, tempFile.getName());
+		MultipartFile multipartFile = null;
+		return multipartFile;
+	}
+
+	/**
+	 * 创建FileItem
+	 */
+	private FileItem createFileItem(File file, String fieldName) {
+		FileItemFactory factory = new DiskFileItemFactory(16, null);
+		FileItem item = factory.createItem(fieldName, "text/plain", true, file.getName());
+		int bytesRead = 0;
+		byte[] buffer = new byte[8192];
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			OutputStream os = item.getOutputStream();
+			while ((bytesRead = fis.read(buffer, 0, 8192)) != -1) {
+				os.write(buffer, 0, bytesRead);
+			}
+			os.close();
+			fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return item;
+	}
+
+
 }

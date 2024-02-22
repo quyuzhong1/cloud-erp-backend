@@ -47,7 +47,7 @@ public class ProductCertificateExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "有效期", index = 4)
     @FieldValid(fieldName = "有效期",formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String certificateValidTime;
+    private String certificateValidTimeStr;
 
     /**
      * 备注

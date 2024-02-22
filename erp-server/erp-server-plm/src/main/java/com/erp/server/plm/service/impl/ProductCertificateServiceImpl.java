@@ -2,8 +2,8 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,6 +15,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
@@ -26,6 +27,7 @@ import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.plm.entity.ProductCertificateEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
@@ -348,10 +350,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         ProductCertificateExcelListener excelListenerUtil = new ProductCertificateExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductCertificateExcelDTO.class, excelListenerUtil)
-                    .extraRead(CellExtraTypeEnum.HYPERLINK)
-                    .extraRead(CellExtraTypeEnum.COMMENT)
                     .sheet(0)
-                    .headRowNumber(1)
                     .doRead();
         } catch (IOException e) {
             log.error("导入错误！",e);
@@ -396,10 +395,41 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @param errorList
      */
     private void handleImportSuccessList (List<ProductCertificateExcelDTO> successList,List<ProductCertificateExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+
+        List<ProductCertificateEntity> resultList = new ArrayList<>();
+        for (ProductCertificateExcelDTO excelDTO : successList) {
+
+            List<String> errorMsgList = new ArrayList<>();
+
+            //产品信息
+            SkuVO skuVO = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(skuVO)) {
+                errorMsgList.add("系统中未找到SKU");
+            }
+            String pathUrl = excelDTO.getPathUrl();
+            File file = null;
+            try {
+                 file = HttpUtil.downloadFileFromUrl(pathUrl, pathUrl);
+            } catch (Exception e) {
+                errorMsgList.add("文件路径下未找到文件");
+            }
+            //存在错误信息则
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            ProductCertificateEntity entity = new ProductCertificateEntity();
+            BeanMapperUtils.copy(excelDTO,entity);
+        }
 
 
     }
-
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.SearchParamDTO params, HttpServletResponse response) {
