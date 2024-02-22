@@ -306,7 +306,6 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员
@@ -377,7 +376,6 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员

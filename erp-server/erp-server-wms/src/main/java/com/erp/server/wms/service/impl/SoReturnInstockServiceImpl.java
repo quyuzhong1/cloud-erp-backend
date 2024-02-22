@@ -466,6 +466,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
+            if(StringUtils.isBlank(detailView.getWarehouseId())){
+                detailView.setWarehouseId(viewDTO.getWarehouseId());
+                detailView.setWarehouseName(viewDTO.getWarehouseName());
+            }
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

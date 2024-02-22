@@ -113,8 +113,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
+        List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
+        warehouseIds.add(entity.getWarehouseId());
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         orgIdList.add(entity.getSalesOrgId());
         orgIdList.add(entity.getInventoryOrgId());
@@ -228,7 +230,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("salesOrgCode", resultMap.get("salesOrgCode"));
             //仓库
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).map(WarehouseDTO.UpdateDTO::getKingdeeWarehouseCode).findFirst().orElse("");
+                String warehouseId = StringUtils.isBlank(detailEntity.getWarehouseId())?entity.getWarehouseId():detailEntity.getWarehouseId();
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(warehouseId)).map(WarehouseDTO.UpdateDTO::getKingdeeWarehouseCode).findFirst().orElse("");
                 //仓库
                 map.put("warehouseCode", warehouseCode);
             }
