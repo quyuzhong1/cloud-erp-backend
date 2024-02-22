@@ -5,10 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -20,19 +17,14 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.dto.DeptKingdeeDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.kingdee.SyncKingdeeSubcontractIssueService;
-import com.erp.server.wms.service.OtherInstockDetailService;
 import com.erp.server.wms.service.SubcontractIssueDetailService;
-import com.erp.server.wms.service.SubcontractIssueService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +65,11 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
     public void syncDataToKingdee(SubcontractIssueEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        //暂时不推送
+        if (Boolean.TRUE) {
+            return;
+        }
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -95,7 +92,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
         //委外订单
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(entity.getSourceId()));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
