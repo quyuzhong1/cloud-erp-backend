@@ -135,7 +135,9 @@ public class AliExpressHandoverService {
         if(CollectionUtils.isNotEmpty(commitRequest.getSellerParcelOrderList())){
             request.addApiParameter("seller_parcel_order_list", JSONObject.toJSONString(commitRequest.getSellerParcelOrderList()));
         }
-        request.addApiParameter("skip_invalid_parcel", String.valueOf(commitRequest.getSkipInvalidParcel()));
+        if (Objects.nonNull(commitRequest.getSkipInvalidParcel())){
+            request.addApiParameter("skip_invalid_parcel", String.valueOf(commitRequest.getSkipInvalidParcel()));
+        }
         request.addApiParameter("remark", commitRequest.getRemark());
         if (Objects.nonNull(commitRequest.getReturnInfo())){
             request.addApiParameter("return_info", JSONObject.toJSONString(commitRequest.getReturnInfo()));

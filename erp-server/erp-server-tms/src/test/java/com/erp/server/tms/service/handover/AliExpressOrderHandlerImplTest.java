@@ -215,7 +215,7 @@ public class AliExpressOrderHandlerImplTest {
                 HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
                 .client(PathConstants.CLIENT)
                 .locale("zh_CN")
-                .orderCode("LP00631998284401")
+                .orderCode("LP00632655786123")
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.queryContent(authMap, handoverQueryRequest);
