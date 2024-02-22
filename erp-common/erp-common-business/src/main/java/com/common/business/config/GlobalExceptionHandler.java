@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
         if (Objects.nonNull(e.getData())) {
             result.setData(e.getData());
         }
-       /* if(ApiError.ERROR_401.code.equals(result.getCode())){
+/*        if(ApiError.ERROR_401.code.equals(result.getCode())){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }else {
             response.setStatus(HttpServletResponse.SC_OK);
@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
 
-       /* if(ApiError.ERROR_401.code.equals(result.getCode())){
+/*        if(ApiError.ERROR_401.code.equals(result.getCode())){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }else {
             response.setStatus(HttpServletResponse.SC_OK);
