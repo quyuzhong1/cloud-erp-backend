@@ -66,7 +66,7 @@ public class ShopSdkServer {
      * @author yl
      * @date 2023-08-29 8:59
      */
-    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto, HttpServletResponse response) {
+    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto) {
         String code = dto.getCode();
         String host = dto.getHost();
         String shop = dto.getShop();
@@ -76,7 +76,6 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();

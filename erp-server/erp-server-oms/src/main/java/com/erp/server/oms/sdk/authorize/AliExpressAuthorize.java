@@ -115,7 +115,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         // 校验是否是本系统发起
         String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
         log.error("stateKey:：{}",stateKey);

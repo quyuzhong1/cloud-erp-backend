@@ -8,7 +8,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -83,7 +82,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return
      */
-    Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto);
 
     /**
      * 取消授权
