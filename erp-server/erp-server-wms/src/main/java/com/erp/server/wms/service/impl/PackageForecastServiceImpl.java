@@ -329,8 +329,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         try {
             IopResponse iopResponse = aliExpressHandoverService.cancel(base.getAuthMap(), cancelRequest);
             BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
-            if (!baseResult.getSuccess()) {
-                throw new ServiceException(baseResult.getErrorMsg());
+            ErrorResponse errorResponse = baseResult.getErrorResponse();
+            //表示失败了
+            if (Objects.nonNull(errorResponse)) {
+                throw new ServiceException(errorResponse.getSubMsg());
             }
         } catch (ApiException e) {
             log.error("取消上传交接单失败>>>>>>{}", e);
@@ -604,15 +606,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
 
 
-        List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(forecastDetailList.size());
+        List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(1);
         String topUserKey = base.getUserInfo().getTopUserKey();
         packageForecastDetailService.updateBatchById(forecastDetailList);
-        for (PackageForecastDetailEntity item : forecastDetailList) {
-            SellerParcelOrder parcelOrder = new SellerParcelOrder();
-            parcelOrder.setSellerId(topUserKey);
-            parcelOrder.setOrderCodeList(Collections.singletonList(item.getSourceCode()));
-            sellerParcelOrderList.add(parcelOrder);
-        }
+        SellerParcelOrder parcelOrder = new SellerParcelOrder();
+        parcelOrder.setSellerId(topUserKey);
+        List<String> orderCodeList =forecastDetailList.stream().map(PackageForecastDetailEntity::getSourceCode).collect(Collectors.toList());
+        parcelOrder.setOrderCodeList(orderCodeList);
+        sellerParcelOrderList.add(parcelOrder);
 
         //揽收地址基础信息
         AddressBase addressBase = PackageForecastConverter.INSTANCE.convertAddressBase(logisticsAddress);
