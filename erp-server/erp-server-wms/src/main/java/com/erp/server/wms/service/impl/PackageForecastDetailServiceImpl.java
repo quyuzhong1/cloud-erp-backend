@@ -13,6 +13,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.HandoverSubStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
@@ -174,6 +175,9 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
                 trackNo=transportNo;
             }
             item.setTrackNo(trackNo);
+            String handoverStatus = item.getHandoverStatus();
+            String handoverStatusName = HandoverSubStatusEnum.getByCode(handoverStatus);
+            item.setHandoverStatusName(handoverStatusName);
             if (Objects.nonNull(approveStatus)) {
                 if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
                     item.setOutstockStatusName("已出库");

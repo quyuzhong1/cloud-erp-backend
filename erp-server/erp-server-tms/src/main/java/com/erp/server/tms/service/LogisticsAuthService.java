@@ -102,6 +102,9 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      */
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 
+
+
+
     /**
      * 根据id获取授权信息
      *@parms channelId

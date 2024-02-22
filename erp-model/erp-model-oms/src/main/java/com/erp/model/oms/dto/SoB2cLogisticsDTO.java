@@ -214,6 +214,8 @@ public class SoB2cLogisticsDTO implements Serializable {
 
         private String transportNo;
 
+        private String shopToken;
+
     }
 
 

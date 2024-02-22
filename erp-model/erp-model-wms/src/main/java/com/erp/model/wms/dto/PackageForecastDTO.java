@@ -516,6 +516,18 @@ public class PackageForecastDTO implements Serializable {
         */
         private String handoverStatus;
 
+
+        /**
+         * 第三方交接状态名
+         */
+        private String handoverStatusName;
+
+
+        /**
+         * 交接单号/组包号
+         */
+        private String platformNo;
+
         /**
         * 备注
         */
