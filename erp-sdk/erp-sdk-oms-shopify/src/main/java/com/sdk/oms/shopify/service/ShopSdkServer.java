@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class ShopSdkServer {
      * @author yl
      * @date 2023-08-29 8:59
      */
-    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto) {
+    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto, HttpServletResponse response) {
         String code = dto.getCode();
         String host = dto.getHost();
         String shop = dto.getShop();
@@ -75,6 +76,7 @@ public class ShopSdkServer {
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();

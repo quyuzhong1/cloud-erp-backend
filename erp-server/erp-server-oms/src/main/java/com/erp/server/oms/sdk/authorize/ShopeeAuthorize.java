@@ -71,7 +71,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         ShopAuthDTO.ReturnDTO returnDTO = new ShopAuthDTO.ReturnDTO();
         returnDTO.setCode(dto.getCode());
         returnDTO.setId(dto.getId());

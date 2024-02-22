@@ -170,7 +170,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
         }
