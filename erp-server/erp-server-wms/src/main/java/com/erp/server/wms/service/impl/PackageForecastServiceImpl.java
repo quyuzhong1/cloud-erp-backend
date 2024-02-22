@@ -40,6 +40,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.enums.HandoverStatusEnum;
 import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
@@ -248,6 +249,17 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String collectMode = packageForecast.getCollectMode();
         String collectModeName= PackageForecastCollectModeEnum.getName(collectMode);
         viewDTO.setCollectModeName(collectModeName);
+        String handoverStatus = packageForecast.getHandoverStatus();
+        String handoverStatusName= HandoverStatusEnum.getByCode(handoverStatus);
+        viewDTO.setHandoverStatusName(handoverStatusName);
+        //交接单号
+        String handoverNo = packageForecast.getHandoverNo();
+        String platformPackageNo = packageForecast.getPlatformPackageNo();
+        String platformNo="";
+        if (StringUtils.isNotBlank(handoverNo) || StringUtils.isNotBlank(platformPackageNo)) {
+            platformNo=handoverNo+"/"+platformPackageNo;
+        }
+        viewDTO.setPlatformNo(platformNo);
         //获取详情
         List<PackageForecastDetailDTO.ViewDTO> detailList = packageForecastDetailService.listDetailViewByMainId(id);
         viewDTO.setDetailList(detailList);

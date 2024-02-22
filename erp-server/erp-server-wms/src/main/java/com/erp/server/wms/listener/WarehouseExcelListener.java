@@ -125,7 +125,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         WarehouseEntity warehouseEntity = null;
         if (StringUtils.isNotBlank(warehouseExcelDTO.getOnwayWarehouseName())) {
             warehouseEntity = existList.stream()
-                    .filter(req -> req.getOnwayWarehouseName().equals(warehouseExcelDTO.getOnwayWarehouseName())
+                    .filter(req -> req.getName().equals(warehouseExcelDTO.getOnwayWarehouseName())
                             && !req.getDisabled()
                             && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())
                     )

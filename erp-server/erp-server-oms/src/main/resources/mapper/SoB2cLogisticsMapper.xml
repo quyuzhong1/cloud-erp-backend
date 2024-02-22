@@ -48,14 +48,18 @@
     </sql>
     <select id="listTrackNoEmptyList" resultType="com.erp.model.oms.dto.SoB2cLogisticsDTO$TrackNoDTO">
        SELECT
-            id,
-            main_id AS  soB2cId,
-            code AS  transportNo,
-            logistics_channel_id
-      FROM so_b2c_logistics
-      WHERE is_deleted=FALSE
-      AND track_no=''
-      AND code!=''
+            sb2cl.id,
+            sb2cl.main_id AS  soB2cId,
+            sb2cl.code AS transportNo,
+            sb2cl.logistics_channel_id,
+            (SELECT token FROM shop_auth sa WHERE sa.shop_id=sb2c.shop_id AND sa.is_deleted=FALSE LIMIT 1) AS shopToken
+      FROM so_b2c_logistics sb2cl
+      LEFT JOIN so_b2c sb2c
+      ON sb2cl.main_id=sb2c.id AND sb2c.is_deleted=FALSE
+      WHERE sb2cl.is_deleted=FALSE
+      AND sb2cl.track_no=''
+      AND sb2cl.code!=''
+      AND sb2cl.logistics_channel_id!=''
     </select>
 
 

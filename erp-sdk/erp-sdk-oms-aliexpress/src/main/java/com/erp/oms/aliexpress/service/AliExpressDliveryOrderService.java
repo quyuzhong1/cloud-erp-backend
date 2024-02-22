@@ -56,7 +56,7 @@ public class AliExpressDliveryOrderService {
         request.setApiName(AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("biz_type", 288000);
-        paramMap.put("customer_order_number_list", Arrays.asList("3029323621897935"));
+        paramMap.put("customer_order_number_list", Arrays.asList("3031020994550558"));
         System.out.println();
         request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
         IopResponse response = client.execute(request, token, Protocol.TOP);
