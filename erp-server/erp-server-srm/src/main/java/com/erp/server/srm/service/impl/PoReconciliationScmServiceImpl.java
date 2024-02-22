@@ -17,7 +17,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.TabFlagEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -27,7 +26,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -40,11 +38,9 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
-import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -138,9 +134,29 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         addMultipartFileUrl(updateDTO);
         //更新明细
         poReconciliationDetailScmService.update(updateDTO.getDetailList(),updateDTO.getId());
+        //更新主表对账金额
+        updateAmount(updateDTO.getId());
         return Boolean.TRUE;
     }
 
+    /**
+     * @description: 更新对账金额
+     * @author Will
+     * @date: 2024/2/22 14:59
+     * @param id
+     */
+    @Override
+    public void updateAmount (String id) {
+        List<PoReconciliationDetailEntity> detailList = poReconciliationDetailScmService.listMainIdList(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+        }
+        BigDecimal amount = detailList.stream().map(PoReconciliationDetailEntity::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //更新主表对账金额
+        lambdaUpdate().eq(PoReconciliationEntity::getId,id)
+                .set(PoReconciliationEntity::getAmount,amount)
+                .update();
+    }
 
     @Override
     public PagingVO<PoReconciliationDTO.ListDTO> paging(PagingDTO<PoReconciliationDTO.PagingParamDTO> pagingParamDTO) {

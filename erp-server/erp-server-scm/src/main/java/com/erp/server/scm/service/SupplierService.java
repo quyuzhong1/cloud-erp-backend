@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -137,7 +138,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return
      */
-    Boolean updateSrmStatus(UpdateStateDTO dto);
+    ApiResult<String> updateSrmStatus(UpdateStateDTO dto);
     /**
      * 获取供应商
      * 获取 审核通过且开启的供应商

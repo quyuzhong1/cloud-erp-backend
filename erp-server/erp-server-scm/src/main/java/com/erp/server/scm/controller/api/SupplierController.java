@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -11,9 +12,13 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.server.scm.query.SupplierQueryHandler;
@@ -27,7 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 供应商管理
@@ -44,7 +52,8 @@ public class SupplierController extends BaseController {
     @Resource
     private SupplierService supplierService;
 
-
+    @Resource
+    private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
@@ -139,8 +148,23 @@ public class SupplierController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+        //增加校验
+        SupplierEntity supplier = supplierService.getById(dto.getId());
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        String msg = "请求成功！";
+        if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
+            Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(dto.getId(),startTime,endTime);
+            if (Objects.nonNull(count) && count > 0){
+                msg = "SRM协同开启后，下月生效";
+            }
+        }
         String supplierId = supplierService.updateSupplier(dto);
-        return StringUtils.isNotBlank(supplierId) ? success() : failure();
+        return StringUtils.isNotBlank(supplierId) ? success(msg) : failure();
     }
 
     /**
@@ -250,8 +274,7 @@ public class SupplierController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult updateSrmStatus(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean result = supplierService.updateSrmStatus(dto);
-        return result == true ? success() : failure();
+        return supplierService.updateSrmStatus(dto);
     }
     /**
      * 审核

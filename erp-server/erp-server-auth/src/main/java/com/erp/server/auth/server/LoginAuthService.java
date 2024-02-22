@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
 
@@ -44,7 +45,8 @@ public class LoginAuthService {
                 if(Objects.isNull(supplier)){
                     return ApiResult.error(ApiError.ERROR_96001);
                 }
-                if(supplier.getSrmDisabled() || supplier.getDisabled()){
+                if(supplier.getSrmDisabled() || supplier.getDisabled()
+                        || (!supplier.getDisabled() && Objects.nonNull(supplier.getSrmDisabledTime()) && LocalDate.now().isBefore(supplier.getSrmDisabledTime()))){
                     return ApiResult.error(ApiError.ERROR_LOGIN_SRM_DISABLE);
                 }
             }

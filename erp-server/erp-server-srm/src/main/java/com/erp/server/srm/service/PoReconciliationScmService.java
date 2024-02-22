@@ -129,4 +129,9 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return List<AddPoReconciliationViewDTO>
      */
     List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO> viewToBeSupplierConfirm(PermissionsDTO dto);
+
+    /**
+     * 更新对账单金额
+     */
+    void updateAmount (String id);
 }

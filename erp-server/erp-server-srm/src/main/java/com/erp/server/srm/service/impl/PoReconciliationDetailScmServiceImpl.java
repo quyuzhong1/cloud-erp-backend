@@ -24,8 +24,9 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.*;
+import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -33,21 +34,17 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
-import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
-import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
-import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,7 +58,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -138,10 +134,9 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<PoReconciliationDetailEntity> oldList = this.listMainIdList(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<PoReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(deleteIds)).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
-            List<PoReconciliationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
             //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
@@ -194,7 +189,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         } else {
             //选择已有对账单
             updateOldPoReconciliation(dto,poReconciliationDetailList);
-            return this.updateBatchById(poReconciliationDetailList);
+            boolean update = this.updateBatchById(poReconciliationDetailList);
+            //更新对账单金额
+            poReconciliationScmService.updateAmount(dto.getId());
+            return update;
         }
     }
 
