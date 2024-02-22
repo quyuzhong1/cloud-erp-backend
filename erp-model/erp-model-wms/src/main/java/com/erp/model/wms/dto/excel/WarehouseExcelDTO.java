@@ -96,6 +96,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "在途仓库名称", index = 8)
+    @FieldValid(fieldName = "在途仓库名称",maxLength = 50)
     private String onwayWarehouseName;
 
     /**
@@ -103,6 +104,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "第三方仓库名称", index = 9)
+    @FieldValid(fieldName = "第三方仓库名称",maxLength = 50)
     private String thirdWarehouseName;
     /**
      * 仓库地址
