@@ -3,7 +3,6 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -17,11 +16,7 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.lingxing.ShopEntity;
-import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ShopPlatformStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
@@ -35,7 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
