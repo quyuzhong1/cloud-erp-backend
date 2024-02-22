@@ -7,6 +7,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.AuthorizeDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -79,7 +80,7 @@ public class ShopSdkServer {
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED);
+            throw new ServiceException(ApiError.ERROR_401);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);

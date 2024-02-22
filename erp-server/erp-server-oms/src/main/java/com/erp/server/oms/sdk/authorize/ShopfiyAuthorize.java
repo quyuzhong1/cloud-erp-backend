@@ -139,8 +139,16 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setHost(dto.getHost());
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
+        try {
             bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
-
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+        if (StringUtils.isBlank(bodyStr)) {
+            throw new ServiceException("Authorize timed out");
+        }
         JSONObject jsonObject = JSONObject.parseObject(bodyStr);
         //token
         String accessToken = jsonObject.getOrDefault("access_token", "").toString();
