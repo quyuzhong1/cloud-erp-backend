@@ -44,6 +44,7 @@ import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
@@ -124,9 +125,15 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     private void fillData(List<DeliveryOrderDTO.ListDTO> dataList,List<String> supplierIdList){
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(supplierIdList);
+        List<String> purchaseDetailIds = dataList.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderDTO.ListDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
+        List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
         dataList.forEach(v->{
             v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+            QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
+            if(Objects.nonNull(qcReceiveResultDTO)){
+                v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
+            }
         });
     }
 

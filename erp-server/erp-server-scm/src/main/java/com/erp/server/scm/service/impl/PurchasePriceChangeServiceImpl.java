@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -32,7 +31,6 @@ import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
-import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -43,7 +41,6 @@ import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
-import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -477,30 +474,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<String> ids = dto.getIds();
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
 
-        /**
-         * 报价明细
-         */
-        for(String id : ids){
-            List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(id);
-
-            //根据供应商分组
-            Map<String, List<PurchasePriceChangeDetailEntity>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getSupplierId));
-            for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> item : map.entrySet()) {
-                List<PurchasePriceChangeDetailEntity> detailList=item.getValue();
-                List<String> skuIdList = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
-                List<String> detailIds = detailList.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
-                //根据供应商 获取到 对应 已有的区间
-                List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(item.getKey(), detailIds, skuIdList);
-                //检查区间报价是否重叠
-                List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(item.getValue(), PurchasePriceChangeDetailDTO.AddDTO.class);
-                //历史报价
-                List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(item.getKey(), skuIdList);
-
-                //检查区间报价是否重叠
-                purchasePriceChangeDetailService.checkSkuInterval(priceChangeDetailList, supplierPriceDetailList, historyList);
-            }
-
-        }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
