@@ -239,7 +239,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastDTO.ViewDTO viewDTO = new PackageForecastDTO.ViewDTO();
         PackageForecastEntity packageForecast = this.getById(id);
         if (Objects.isNull(packageForecast)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         BeanMapperUtils.copy(packageForecast, viewDTO);
         String uploadStatus = packageForecast.getUploadStatus();
@@ -272,7 +272,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO delete(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         if (successCode.equals(entity.getUploadStatus())) {
@@ -297,7 +297,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO cancel(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         if (!successCode.equals(entity.getUploadStatus())) {
@@ -447,7 +447,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         //待上传
         String wait = PackageUploadStatusEnum.WAIT.getCode();
@@ -503,7 +503,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public String print(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         //上传成功
         String uploadSuccess = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
@@ -678,14 +678,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO forecast(String id, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         List<String> uploadStatusList = new ArrayList<>(2);
         uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
         uploadStatusList.add(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
         String uploadStatus = entity.getUploadStatus();
         if (!uploadStatusList.contains(uploadStatus)) {
-            new ServiceException("只有无需上传和上传成功的组包 才能中转报关");
+            throw new ServiceException("只有无需上传和上传成功的组包 才能中转报关");
         }
         List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainId(id);
         TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
