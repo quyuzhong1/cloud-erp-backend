@@ -12,6 +12,7 @@
         SELECT
         so.id,
         so.code,
+        so.third_code as thirdCode,
         so.so_id AS soId,
         so.so_code AS soCode,
         so.source_code AS sourceCode,
@@ -79,6 +80,7 @@
        SELECT
            so.id,
            so.code,
+            so.third_code as thirdCode,
            so.so_id AS soId,
            so.so_code AS soCode,
            so.source_type AS sourceType,

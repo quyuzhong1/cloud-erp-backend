@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class SoReturnInstockDTO {
     /**
@@ -17,6 +19,17 @@ public class SoReturnInstockDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParam extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
         /**
          * 主键id
          */
@@ -118,6 +131,12 @@ public class SoReturnInstockDTO {
          * 销售单号
          */
         private String soCode;
+
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+
         /**
          * 单据类型
          */
@@ -412,6 +431,12 @@ public class SoReturnInstockDTO {
          * 审核状态
          */
         private String approveStatusName;
+
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+
         /**
          * 单据类型
          */

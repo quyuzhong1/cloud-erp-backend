@@ -32,7 +32,8 @@
         sri.create_time AS createTime,
         sri.inventory_org_id AS inventoryOrgId,
         sri.inventory_org_name AS inventoryOrgName,
-        srid.is_sub_contract AS isSubContract
+        srid.is_sub_contract AS isSubContract,
+        sri.third_code as thirdCode
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE
@@ -166,7 +167,8 @@
         sri.create_user_name AS createUserName,
         sri.create_time AS createTime,
         sri.inventory_org_id AS inventoryOrgId,
-        sri.inventory_org_name AS inventoryOrgName
+        sri.inventory_org_name AS inventoryOrgName,
+        sri.third_code as thirdCode
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
         WHERE srid.is_deleted = FALSE

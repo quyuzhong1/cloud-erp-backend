@@ -227,6 +227,12 @@ public class KingdeeDeliveryDetailEntity  extends CleanBaseDTO {
     @Alias("FISGENFORIOS")
     private Boolean FIsGenForIos;
 
+    /**
+     * 第三方单据编号
+     */
+    @Alias("FETHIRDBILLNO")
+    private String fEThirdBillNo;
+
     private List<KingdeeDeliveryDetailItemEntity> kingdeeOutStockItemEntityList;
 
     @Override

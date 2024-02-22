@@ -132,6 +132,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCode(code);
         //运输单号
         soOutstock.setTrackNo(entity.getFCarriageNO());
+        //第三方单据编号
+        soOutstock.setThirdCode(entity.getFEThirdBillNo());
         //仓管员
         String warehouseKeeperName = entity.getFStockerName();
         soOutstock.setWarehouseKeeperName(warehouseKeeperName);
