@@ -292,7 +292,7 @@ public class SoOutstockController extends BaseController {
                  * 那么就要去找店铺的仓库 然后匹配上仓库
                  * [排除速卖通订单]
                  */
-                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
+                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
                     soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
                 }
 
