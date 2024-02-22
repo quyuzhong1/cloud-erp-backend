@@ -99,11 +99,11 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String mainId,String logisticsSupplierId, List<String> detailIdList) {
+    public Boolean update(String mainId, String logisticsSupplierId, List<String> detailIdList) {
         List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
-        List<PackageForecastDetailEntity> deleteList=dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
+        List<PackageForecastDetailEntity> deleteList = dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
@@ -116,17 +116,17 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         //表示没有设置 那就是无需组包
         if (Objects.isNull(settingForecast)) {
             updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
-        }else{
+        } else {
             //表示需要q组包
             Boolean isMustPackage = settingForecast.getIsMustPackage();
             //表示强制组包
-            if(isMustPackage){
+            if (isMustPackage) {
                 //组包时间
                 LocalDateTime enablePackageTime = settingForecast.getEnablePackageTime();
                 //如果为空就都要组包
                 if (Objects.isNull(enablePackageTime)) {
                     updatePackageStatus(soIdList, PackageStatusEnum.WAIT.getCode());
-                }else{
+                } else {
                     List<String> waitSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) > 0).
                             map(SoB2cEntity::getId).collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(waitSoIdList)) {
@@ -145,15 +145,11 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         }
 
 
-
-
-
-
         return Boolean.TRUE;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void updatePackageStatus(List<String> soIdList, String status){
+    public void updatePackageStatus(List<String> soIdList, String status) {
         UpdateStateDTO.UpdateByStrStatusDTO updatePackageStatus = new UpdateStateDTO.UpdateByStrStatusDTO();
         updatePackageStatus.setStatus(status);
         updatePackageStatus.setIds(soIdList);
@@ -172,6 +168,12 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
                     map(SoOutstockEntity::getApproveStatus).findFirst().orElse(null);
             item.setOutstockStatusName("未出库");
+            String trackNo = item.getTrackNo();
+            String transportNo = item.getTransportNo();
+            if(StringUtils.isBlank(trackNo)){
+                trackNo=transportNo;
+            }
+            item.setTrackNo(trackNo);
             if (Objects.nonNull(approveStatus)) {
                 if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
                     item.setOutstockStatusName("已出库");
@@ -183,17 +185,60 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     }
 
     @Override
-    public void removeByMainId(String mainId) {
-        this.lambdaUpdate().eq(PackageForecastDetailEntity::getMainId,mainId).remove();
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void removeByMainId(String mainId,String logisticsSupplierId) {
+        List<PackageForecastDetailEntity> detailList = this.listDbByMainId(mainId);
+
+        //销售订单id
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        Boolean result = this.lambdaUpdate().eq(PackageForecastDetailEntity::getMainId, mainId).remove();
+        if (!result) {
+            return;
+        }
+
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+
+        SettingForecastEntity settingForecast = forecastFeign.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
+        //表示没有设置 那就是无需组包
+        if (Objects.isNull(settingForecast)) {
+            updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+        } else {
+            //表示需要q组包
+            Boolean isMustPackage = settingForecast.getIsMustPackage();
+            //表示强制组包
+            if (isMustPackage) {
+                //组包时间
+                LocalDateTime enablePackageTime = settingForecast.getEnablePackageTime();
+                //如果为空就都要组包
+                if (Objects.isNull(enablePackageTime)) {
+                    updatePackageStatus(soIdList, PackageStatusEnum.WAIT.getCode());
+                } else {
+                    List<String> waitSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) > 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(waitSoIdList)) {
+                        updatePackageStatus(waitSoIdList, PackageStatusEnum.WAIT.getCode());
+                    }
+                    List<String> notSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) <= 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(notSoIdList)) {
+                        updatePackageStatus(notSoIdList, PackageStatusEnum.NOT.getCode());
+                    }
+                }
+
+            }
+        }
+
+
     }
 
     @Override
     public List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto) {
         List<PackageForecastDetailEntity> detailList = this.lambdaQuery().
-                eq(PackageForecastDetailEntity::getMainId,dto.getId()).
-                in(CollectionUtils.isNotEmpty(dto.getSoCodeList()),PackageForecastDetailEntity::getSoCode,dto.getSoCodeList()).
-                eq(StringUtils.isNotBlank(dto.getHandoverStatus()),PackageForecastDetailEntity::getHandoverStatus,dto.getHandoverStatus()).
-                like(StringUtils.isNotBlank(dto.getTrackNo()),PackageForecastDetailEntity::getTransportNo,dto.getTrackNo()).
+                eq(PackageForecastDetailEntity::getMainId, dto.getId()).
+                in(CollectionUtils.isNotEmpty(dto.getSoCodeList()), PackageForecastDetailEntity::getSoCode, dto.getSoCodeList()).
+                eq(StringUtils.isNotBlank(dto.getHandoverStatus()), PackageForecastDetailEntity::getHandoverStatus, dto.getHandoverStatus()).
+                like(StringUtils.isNotBlank(dto.getTrackNo()), PackageForecastDetailEntity::getTransportNo, dto.getTrackNo()).
                 list();
         List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
         List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
@@ -214,11 +259,11 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
 
     @Override
     public void updateStatusByOrderCode(String orderCode, String status) {
-        if (StringUtils.isEmpty(orderCode) || StringUtils.isEmpty(status)){
+        if (StringUtils.isEmpty(orderCode) || StringUtils.isEmpty(status)) {
             return;
         }
-        this.lambdaUpdate().set(PackageForecastDetailEntity::getHandoverStatus,status)
-                .eq(PackageForecastDetailEntity::getSourceCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted,false)
+        this.lambdaUpdate().set(PackageForecastDetailEntity::getHandoverStatus, status)
+                .eq(PackageForecastDetailEntity::getSourceCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted, false)
                 .update();
     }
 

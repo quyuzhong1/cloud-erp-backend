@@ -104,7 +104,7 @@
         </if>
         <!-- 大包运单号-->
         <if test="params.transportNo!=null and params.transportNo!=''">
-            and pf.transport_no ILIKE concat('%',#{params.code}::text,'%')
+            and pf.transport_no ILIKE concat('%',#{params.transportNo}::text,'%')
         </if>
         <!-- 交接单号/组包号-->
         <if test="params.platformNo!=null and params.platformNo!=''">

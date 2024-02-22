@@ -3,6 +3,7 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Lambda
@@ -40,5 +41,16 @@ public enum PackageForecastCollectModeEnum implements EnumMessage {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
+            for (PackageForecastCollectModeEnum item : PackageForecastCollectModeEnum.values()) {
+                if (code.equals(item.getCode())) {
+                    return item.getName();
+                }
+            }
+        }
+        return "";
     }
 }

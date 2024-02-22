@@ -388,7 +388,7 @@ public class PackageForecastDTO implements Serializable {
         /**
          * 创建时间 集合
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
 
     }
@@ -494,6 +494,12 @@ public class PackageForecastDTO implements Serializable {
         * 揽收方式
         */
         private String collectMode;
+
+        /**
+         * 揽收方式名
+         */
+        private String collectModeName;
+
 
         /**
         * 揽收地址

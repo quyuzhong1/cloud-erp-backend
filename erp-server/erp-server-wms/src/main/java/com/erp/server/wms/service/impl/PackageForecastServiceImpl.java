@@ -245,6 +245,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         viewDTO.setUploadStatusName(PackageUploadStatusEnum.getName(uploadStatus));
         String printStatus = packageForecast.getPrintStatus();
         viewDTO.setPrintStatusName(PackagePrintStatusEnum.getName(printStatus));
+        String collectMode = packageForecast.getCollectMode();
+        String collectModeName= PackageForecastCollectModeEnum.getName(collectMode);
+        viewDTO.setCollectModeName(collectModeName);
         //获取详情
         List<PackageForecastDetailDTO.ViewDTO> detailList = packageForecastDetailService.listDetailViewByMainId(id);
         viewDTO.setDetailList(detailList);
@@ -253,6 +256,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -263,7 +267,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("已上传成功,无法删除");
         }
         this.removeById(id);
-        packageForecastDetailService.removeByMainId(id);
+        packageForecastDetailService.removeByMainId(id,entity.getLogisticsSupplierId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
@@ -462,11 +466,16 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 addBigPackage(logisticsPlatform, entity, addressEntity);
+                this.updateById(entity);
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传");
+            }else{
+                entity.setUploadStatus(failure);
+                entity.setRemark("上传失败:" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
+                this.updateById(entity);
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传");
             }
-            this.updateById(entity);
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传");
         } catch (Exception e) {
-            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+            entity.setUploadStatus(failure);
             entity.setRemark("上传失败:" + e.getMessage());
             this.updateById(entity);
             log.error("组包预报上传失败>>>>>{}", e);

@@ -45,7 +45,7 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
 
     List<PackageForecastDetailEntity> listDbByMainId(String mainId);
 
-    void removeByMainId(String mainId);
+    void removeByMainId(String mainId,String logisticsSupplierId);
 
     List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto);
 
