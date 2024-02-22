@@ -1,7 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -30,7 +29,6 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItem;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -41,7 +39,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -73,7 +70,7 @@ public class AmazonFbaShipmentDetailHandler extends AbstractFbaShipmentDetailHan
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_ITEM;
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
         // 默认请求速率配置
         String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, data.getGroupId());
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);

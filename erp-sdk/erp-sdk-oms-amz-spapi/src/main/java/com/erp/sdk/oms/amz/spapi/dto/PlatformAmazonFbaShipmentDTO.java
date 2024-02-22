@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.map.MapUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,6 +91,11 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
         this.downloadStatus = 0;
         this.detailList = new InboundShipmentItemList();
         super.setUniqueId(shipmentId);
+        // 指定下修改字段
+        Map<String, Object> updateMap = MapUtil.builder(new HashMap<String,Object>())
+                .put("downloadStatus", 0)
+                .build();
+        super.setUpdateFieldMap(updateMap);
     }
 
     /**

@@ -16,6 +16,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.dto.AmazonJobParamDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -408,6 +409,18 @@ public class PullAmzJob {
         return mongoTemplate.find(query, PlatformAmazonListingDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT);
     }
 
+    /**
+     * 根据条件查询mongo亚马逊货件
+     */
+    private List<PlatformAmazonFbaShipmentDTO> findFbaShipmentDownloadStatusAnShopId(Integer downloadStatus, List<String> shopIds, int currentPage, Integer pageSize) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("shopId").in(shopIds).and("downloadStatus").is(downloadStatus));
+        if (currentPage > 0 && pageSize > 0) {
+            query.skip((long) (currentPage - 1) * pageSize).limit(pageSize);
+        }
+        return mongoTemplate.find(query, PlatformAmazonFbaShipmentDTO.class, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT);
+    }
+
 
     private Map<String, List<PlatformAmazonOrderDTO>> groupByPlatformShopCode(List<PlatformAmazonOrderDTO> orderEntityList) {
         Map<String, List<PlatformAmazonOrderDTO>> sourceDtoMap = orderEntityList.stream().collect(Collectors.groupingBy(PlatformAmazonOrderDTO::getShopId));
@@ -435,25 +448,10 @@ public class PullAmzJob {
     public ReturnT<String> amazonProductDetail() {
         // 每次请求接口限制数量不能大于20
         // {"shopIdList":[""]}
-        int size;
-        List<String> shopIdList = new ArrayList<>();
         String jobParamStr = XxlJobHelper.getJobParam();
-        if (StrUtil.isNotBlank(jobParamStr)) {
-            JSONObject jobParam = JSON.parseObject(jobParamStr);
-            Integer sizeInt = jobParam.getInteger("size");
-            if (null != sizeInt){
-                size = sizeInt;
-            } else {
-                size = 20;
-            }
-            String shopIdListStr = jobParam.getString("shopIdList");
-            if (StringUtils.isNotBlank(shopIdListStr)){
-                shopIdList = JSONUtil.toList(shopIdListStr, String.class);
-            }
-        } else {
-            size = 20;
-        }
-        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 100);
+        int size = jobParamDTO.getSize();
+        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,param={}", JSONUtil.toJsonStr(jobParamDTO));
         // 根据状态查询未下载数据
         // 查询所有任务列表
         List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.AMAZON.getCode(), AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getBusinessTypeName());
@@ -462,7 +460,7 @@ public class PullAmzJob {
             return ReturnT.SUCCESS;
         }
         // 指定店铺
-        List<String> finalShopIdList = shopIdList;
+        List<String> finalShopIdList = jobParamDTO.getShopIdList();
         taskList = taskList.stream()
                 .filter(e-> CollectionUtils.isEmpty(finalShopIdList) || finalShopIdList.contains(e.getShopId()))
                 .collect(Collectors.toList());
@@ -610,77 +608,140 @@ public class PullAmzJob {
      */
     @XxlJob("amazonFbaShipmentDetailDownload")
     public ReturnT<String> amazonFbaShipmentDetail() {
-        Integer size = 100;
+        // {"shopIdList":[""]}
         String jobParamStr = XxlJobHelper.getJobParam();
-        if (StrUtil.isNotBlank(jobParamStr)) {
-            JSONObject jobParam = JSON.parseObject(jobParamStr);
-            size = jobParam.getInteger("size");
-        }
-        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务开始,size={}", size);
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 100);
+        int size = jobParamDTO.getSize();
+        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务开始,param={}", JSONUtil.toJsonStr(jobParamDTO));
         // 根据状态查询未下载数据
-        PlatformAmazonFbaShipmentDTO fbaShipmentDTO = PlatformAmazonFbaShipmentDTO.getByDownloadStatus(0);
-        List<PlatformAmazonFbaShipmentDTO> entityList = mongoService.findMongoData(fbaShipmentDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, PlatformAmazonFbaShipmentDTO.class);
-        if (CollectionUtil.isEmpty(entityList)) {
-            XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,无需要更新的信息");
+        // 查询所有任务列表
+        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.AMAZON.getCode(), AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT.getBusinessTypeName());
+        if (CollectionUtils.isEmpty(taskList)) {
+            XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
-        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 下载开始");
-        entityList.forEach(dto -> {
-            try {
-                // 校验黑名单不调用亚马逊接口
-                Boolean skipRequest = this.checkSkipList(dto.getUniqueId());
-                // 下载和处理详情
-                PlatformAmazonFbaShipmentDTO newDto;
-                // 非线上支持手动
-                if ((!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")) || skipRequest) {
-                    newDto = dto;
-                } else {
-                    newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
-                }
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 下载完：{}", JSONUtil.toJsonStr(dto));
-                String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
-                String platform = PlatformDictEnum.AMAZON.getCode();
-                String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
-                newDto.setDownloadStatus(1);
-                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 主体转换前：{}", JSONUtil.toJsonStr(newDto));
-                // 转换
-                PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
-                InboundShipmentItemList sourceDetailList = newDto.getDetailList();
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 详情转换前：{}", JSONUtil.toJsonStr(newDto));
-                List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
-                        .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
-                        .collect(Collectors.toList());
-                shipmentDTO.setReceiveDTOList(receiveDTOList);
-                // 合并成详情
-                List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
-                        receiveDTOList.stream()
-                                .collect(Collectors.toMap(
-                                        shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
-                                        shipment -> shipment,
-                                        PlatformFbaShipmentReceiveDTO::merge))
-                                .values()
-                );
-                // 判断签收时间
-                detailListDTO.forEach(e -> {
-                    if (e.getReceiveQty() == 0) {
-                        e.setReceiveDate(null);
+        // 指定店铺
+        List<String> finalShopIdList = jobParamDTO.getShopIdList();
+        taskList = taskList.stream()
+                .filter(e -> CollectionUtils.isEmpty(finalShopIdList) || finalShopIdList.contains(e.getShopId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(taskList)) {
+            XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,未找到指定店铺需执行的任务");
+            return ReturnT.SUCCESS;
+        }
+
+        // 根据groupId分组店铺id
+        Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
+
+        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 开始,预计分组线程数量={}", taskGroupMap.size());
+        String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+        String platform = PlatformDictEnum.AMAZON.getCode();
+        String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
+
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(taskGroupMap.entrySet().stream()
+                .map(entry -> CompletableFuture.runAsync(() -> {
+                    // 异步任务的逻辑
+                    try {
+                        String key = entry.getKey();
+                        List<PlatformApiTaskEntity> value = entry.getValue();
+                        handlerFbaShipmentDetail(key, value, size, platform, category, business);
+                    } catch (Exception e) {
+                        log.info("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));
+                        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 执行异常: groupId={}, error={}", entry.getKey(), ExceptionUtil.stacktraceToString(e, 1000));
                     }
-                });
-                shipmentDTO.setDetailList(detailListDTO);
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
-                businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送后：{}", JSONUtil.toJsonStr(newDto));
-            } catch (Exception e) {
-                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
-                        dto.getUniqueId(),
-                        e.getMessage());
-                // 发送预警
-                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
-            }
-        });
+                    log.info("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 当前线程执行完毕");
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 当前线程执行完毕");
+                })).toArray(CompletableFuture[]::new));
         XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 处理FBA货件详情
+     */
+    private void handlerFbaShipmentDetail(String groupId, List<PlatformApiTaskEntity> value, int size, String platform, String category, String business) {
+        List<String> shopIds = value.stream().map(PlatformApiTaskEntity::getShopId).distinct().collect(Collectors.toList());
+        // 查询当前分组未下载的mongo订单
+        List<PlatformAmazonFbaShipmentDTO> dtoList = this.findFbaShipmentDownloadStatusAnShopId(0, shopIds, 1, size);
+        if (CollectionUtil.isEmpty(dtoList)) {
+            XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
+            return;
+        }
+        // 根据shopId分组
+        Map<String, List<PlatformAmazonFbaShipmentDTO>> dtoGroupList = dtoList.stream().collect(Collectors.groupingBy(PlatformAmazonFbaShipmentDTO::getShopId));
+
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
+        for (Map.Entry<String, List<PlatformAmazonFbaShipmentDTO>> entry : dtoGroupList.entrySet()) {
+            AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(entry.getKey());
+            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            // 过滤亚马逊异常数据或无法查询明细的数据
+            List<PlatformAmazonFbaShipmentDTO> currentDTOList = entry.getValue();
+            if (CollectionUtils.isEmpty(currentDTOList)) {
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 当前店铺无有效数据需下载，shopId={}", entry.getKey());
+                continue;
+            }
+
+            // 动态请求配置
+            // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
+            String redissonKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, platform, groupId, requestTypeRateLimiterEnum.getBusinessTypeName());
+            JSONObject extentJsonObj = requestTypeRateLimiterEnum.getExtentJsonObj();
+            extentJsonObj.put(AmazonRequestTypeRateLimiterEnum.limitKey, redissonKey);
+            // 批量检查并填充主数据
+            currentDTOList = amazonFbaShipmentHandler.checkAndDownloadMainInfo(currentDTOList, shopInfoDTO, marketPlaceEnum);
+
+            for (PlatformAmazonFbaShipmentDTO dto : currentDTOList) {
+                try {
+                    // 校验黑名单不调用亚马逊接口
+                    Boolean skipRequest = this.checkSkipList(dto.getUniqueId());
+                    // 下载和处理详情
+                    PlatformAmazonFbaShipmentDTO newDto;
+                    // 非线上支持手动
+                    if ((!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")) || skipRequest) {
+                        newDto = dto;
+                    } else {
+                        newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
+                    }
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 下载完：{}", JSONUtil.toJsonStr(dto));
+
+                    newDto.setDownloadStatus(1);
+                    newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 主体转换前：{}", JSONUtil.toJsonStr(newDto));
+                    // 转换
+                    PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
+                    InboundShipmentItemList sourceDetailList = newDto.getDetailList();
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 详情转换前：{}", JSONUtil.toJsonStr(newDto));
+                    List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
+                            .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
+                            .collect(Collectors.toList());
+                    shipmentDTO.setReceiveDTOList(receiveDTOList);
+                    // 合并成详情
+                    List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
+                            receiveDTOList.stream()
+                                    .collect(Collectors.toMap(
+                                            shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
+                                            shipment -> shipment,
+                                            PlatformFbaShipmentReceiveDTO::merge))
+                                    .values()
+                    );
+                    // 判断签收时间
+                    detailListDTO.forEach(e -> {
+                        if (e.getReceiveQty() == 0) {
+                            e.setReceiveDate(null);
+                        }
+                    });
+                    shipmentDTO.setDetailList(detailListDTO);
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
+                    businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送后：{}", JSONUtil.toJsonStr(newDto));
+                } catch (Exception e) {
+                    XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
+                            dto.getUniqueId(),
+                            e.getMessage());
+                    // 发送预警
+                    dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
+                }
+            }
+        }
     }
 
     /**

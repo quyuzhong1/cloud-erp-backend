@@ -28,7 +28,7 @@ public enum AmazonRequestTypeRateLimiterEnum {
 
     // 货件相关
     FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
-    FBA_SHIPMENT_ITEM("2", "30","fba_shipment_item","货件详情信息"),
+    FBA_SHIPMENT_DETAIL("2", "30","fba_shipment_detail","货件详情信息"),
 
     // 报告相关
     REPORTS("0.0222", "10","reports","报告列表"),

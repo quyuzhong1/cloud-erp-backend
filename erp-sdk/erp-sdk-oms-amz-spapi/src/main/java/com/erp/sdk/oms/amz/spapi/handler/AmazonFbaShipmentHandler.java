@@ -1,6 +1,5 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -23,17 +22,17 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
+import org.python.netty.util.internal.chmv8.ConcurrentHashMapV8;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
-import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -119,16 +118,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
             FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             InboundShipmentInfo shipmentInfo = dto.getShipmentInfo();
             if (null == shipmentInfo){
-                String queryType = AmazonFbaQueryTypeEnum.DATE_RANGE.getCode();
-                String marketplaceId = marketPlaceEnum.getMarketplaceId();
-                List<String> shipmentIdList = Collections.singletonList(dto.getUniqueId());
-                // 主表信息为空, 请求获取
-                GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, null, shipmentIdList, null, null, null);
-                if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())){
-                    throw new ServiceException("[Amazon SP-APi] 查询FBA货件主信息结果为空异常：" + dto.getUniqueId());
-                }
-                InboundShipmentInfo inboundShipmentInfo = shipments.getPayload().getShipmentData().get(0);
-                dto.setShipmentInfo(inboundShipmentInfo);
+               throw new ServiceException("[Amazon SP-APi] 数据异常查询FBA货件主信息结果为空：" + dto.getUniqueId());
             }
             GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(dto.getShipmentInfo().getShipmentId(), marketPlaceEnum.getMarketplaceId());
             InboundShipmentItemList itemData = response.getPayload().getItemData();
@@ -137,5 +127,44 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
             throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
         }
         return dto;
+    }
+
+    public List<PlatformAmazonFbaShipmentDTO> checkAndDownloadMainInfo(List<PlatformAmazonFbaShipmentDTO> currentDTOList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum) {
+        List<String> shipmentIdList = currentDTOList.stream()
+                .filter(e-> null == e.getShipmentInfo())
+                .map(PlatformAmazonFbaShipmentDTO::getUniqueId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shipmentIdList)){
+            return currentDTOList;
+        }
+
+        String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
+        String marketplaceId = marketPlaceEnum.getMarketplaceId();
+        try {
+            // 查询FBA货件item
+            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            // 主表信息为空, 请求获取
+            GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, null, shipmentIdList, null, null, null);
+            if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())){
+                throw new ServiceException("[Amazon SP-APi] 查询FBA货件主信息结果为空异常：" + shipmentIdList);
+            }
+            Map<String, InboundShipmentInfo> mainMap = shipments.getPayload().getShipmentData()
+                    .stream()
+                    .collect(Collectors.toMap(InboundShipmentInfo::getShipmentId, Function.identity()));
+            for (PlatformAmazonFbaShipmentDTO fbaShipmentDTO : currentDTOList) {
+                InboundShipmentInfo shipmentInfo = fbaShipmentDTO.getShipmentInfo();
+                if (null != shipmentInfo){
+                    continue;
+                }
+                InboundShipmentInfo inboundShipmentInfo = mainMap.get(fbaShipmentDTO.getUniqueId());
+                if (null == inboundShipmentInfo){
+                    throw new ServiceException("[Amazon SP-APi] 未找到FBA货件主信息" + fbaShipmentDTO.getUniqueId());
+                }
+                fbaShipmentDTO.setShipmentInfo(inboundShipmentInfo);
+            }
+            return currentDTOList;
+        } catch (Exception e) {
+            throw new ServiceException("[Amazon SP-APi] 查询FBA货件主信息失败" + e);
+        }
     }
 }
