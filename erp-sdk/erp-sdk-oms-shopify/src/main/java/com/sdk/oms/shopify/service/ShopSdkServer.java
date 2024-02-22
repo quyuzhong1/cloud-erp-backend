@@ -14,10 +14,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -88,7 +85,6 @@ public class ShopSdkServer {
         paramsMap.put("client_id", dto.getClientId());
         paramsMap.put("client_secret", dto.getClientSecret());
         paramsMap.put("code", dto.getCode());
-        ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 //        Request request = new Request.Builder()
 //                .post(OkHttpUtils.createFormBody(paramsMap))
 //                .headers(OkHttpUtils.createHeaders(null))

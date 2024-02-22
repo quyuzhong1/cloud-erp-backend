@@ -314,6 +314,7 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/shopAuthorize")
     public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
         Boolean result = shopInfoService.shopAuthorize(dto, response);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         return result ? success() : failure();
     }
 
