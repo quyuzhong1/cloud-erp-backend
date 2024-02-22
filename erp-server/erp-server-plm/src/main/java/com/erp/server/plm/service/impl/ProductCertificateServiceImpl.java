@@ -2,7 +2,6 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -34,15 +33,21 @@ import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -412,9 +417,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 errorMsgList.add("系统中未找到SKU");
             }
             String pathUrl = excelDTO.getPathUrl();
-            File file = null;
+            MultipartFile multipartFile = null;
             try {
-                 file = HttpUtil.downloadFileFromUrl(pathUrl, pathUrl);
+                multipartFile = getMulFileByPath(pathUrl);
             } catch (Exception e) {
                 errorMsgList.add("文件路径下未找到文件");
             }
@@ -426,10 +431,50 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
             ProductCertificateEntity entity = new ProductCertificateEntity();
             BeanMapperUtils.copy(excelDTO,entity);
+            entity.setCertificateValidTime(ObjectUtil.isEmpty(excelDTO.getCertificateValidTimeStr()) ? null : LocalDate.parse(excelDTO.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            entity.setMultipartFile(multipartFile);
+            resultList.add(entity);
         }
-
-
+        //新增数据
+        this.saveOrUpdateBatch(resultList);
+        //上传附件
+        uploadFile (resultList);
     }
+
+    /**
+     * 获取MultipartFile
+     */
+    private  MultipartFile getMulFileByPath(String filePath)
+    {
+        FileItemFactory factory = new DiskFileItemFactory(16, null);
+        String textFieldName = "textField";
+        int num = filePath.lastIndexOf(".");
+        String extFile = filePath.substring(num);
+        FileItem item = factory.createItem(textFieldName, "text/plain", true,
+                "MyFileName" + extFile);
+        File newfile = new File(filePath);
+        int bytesRead = 0;
+        byte[] buffer = new byte[8192];
+        try
+        {
+            FileInputStream fis = new FileInputStream(newfile);
+            OutputStream os = item.getOutputStream();
+            while ((bytesRead = fis.read(buffer, 0, 8192))
+                    != -1)
+            {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.close();
+            fis.close();
+        }
+        catch (IOException e)
+        {
+            throw new ServiceException(ApiError.ERROR_500);
+        }
+        MultipartFile mfile = new CommonsMultipartFile(item);
+        return mfile;
+    }
+
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.SearchParamDTO params, HttpServletResponse response) {
