@@ -68,4 +68,14 @@ public interface ProductConstant {
     String IS_ELECTRIC="isElectric";
 
 
+    /**
+     * 产品单位:Pcs
+     */
+    String PRODUCT_UNIT_DEFAULT = "Pcs";
+
+    /**
+     * 产品属性:自研发
+     */
+    String PRODUCT_PROPERTY_DEFAULT = "自研发";
+
 }
