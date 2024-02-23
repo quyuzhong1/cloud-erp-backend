@@ -178,7 +178,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 return;
             }
             //生成速卖通发货单
-            addAliExpressDelivery(dto, mainEntity, logisticsDTOS);
+            addAliExpressDelivery(dto, mainEntity, logisticsDTOS, warehouseName);
 
             //生成销售出库单
             soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
@@ -216,7 +216,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
      * @param mainEntity
      * @param logisticsDTOS
      */
-    private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS) {
+    private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS, String warehouseName) {
         AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
         addDTO.setOutBoundTime(logisticsDTOS.get(0).getDeliveryTime());
         addDTO.setPlatformCode(mainEntity.getPlatformCode());
@@ -232,6 +232,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         addDTO.setTrackNo(logisticsDTOS.get(0).getCode());
         addDTO.setTradeCreateTime(dto.getOrderCreateTime());
+        addDTO.setWarehouseName(warehouseName);
         aliexpressDeliveryFeign.add(addDTO);
     }
 
