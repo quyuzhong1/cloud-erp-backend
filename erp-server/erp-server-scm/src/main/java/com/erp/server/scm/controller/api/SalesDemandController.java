@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -63,6 +64,7 @@ public class SalesDemandController extends BaseController {
            tableField = "apply_user_id",
            menuCode = "scm:salesDemand:paging",
            tableAlias = "sd")
+   @WebAdvanceQuery
    public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
         PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
@@ -355,6 +357,7 @@ public class SalesDemandController extends BaseController {
             tableField = "apply_user_id",
             menuCode = "scm:salesDemand:paging",
             tableAlias = "sd")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();

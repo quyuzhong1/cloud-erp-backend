@@ -567,7 +567,8 @@
         sm.warehouse_name,
         sm.dict_platform,
         li.platform_sku_no AS stockSku,
-        li.platform_sku_name AS stockSkuName
+        li.platform_sku_name AS stockSkuName,
+        sm.has_mapping_all as hasMappingAll
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE

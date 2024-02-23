@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @description: 产品证书表
@@ -114,16 +112,54 @@ public class ProductCertificateDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
 
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
+      /**
+       * 品名
+       */
+      private String skuName;
+
+      /**
+       * SKU
+       */
+      private List<String> skuNoList;
+
+      /**
+       * 证书类型
+       */
+      private List<String> typeList;
+
+      /**
+       * 证书项目
+       */
+      private List<String> dictProjectList;
+
+      /**
+       * 文件名称
+       */
+      private String attachName;
+
+      /**
+       * 有效期
+       */
+      private List<LocalDate> certificateValidTimeList;
+
+      /**
+       * 备注
+       */
+      private String remark;
+
+    }
+
+    /**
+     * 参数DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportParamDTO extends SearchParamDTO {
 
         /**
-         * sqlMap 默认key default
+         * 导出勾选id集合
          */
-        private Map<String, String> sqlMap;
-
+        private List<String> ids;
     }
 
     /**
@@ -134,10 +170,10 @@ public class ProductCertificateDTO implements Serializable {
     public static class AddDTO {
 
         /**
-         * skuId集合
+         * skuNo集合
          */
         @NotEmpty(message = "SKU不能为空")
-        private List<String> skuIdList;
+        private List<String> skuNoList;
 
         /**
          * 证书类型
@@ -199,7 +235,6 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * skuId
          */
-        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
         /**

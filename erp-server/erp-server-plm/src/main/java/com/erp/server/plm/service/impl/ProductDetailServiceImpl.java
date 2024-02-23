@@ -1016,6 +1016,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //8.修改/新增 证书信息
         List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
+            productCertificateList.forEach(obj -> obj.setSkuId(skuId));
             productCertificateService.productAddOrUpdate(productCertificateList);
         }
 

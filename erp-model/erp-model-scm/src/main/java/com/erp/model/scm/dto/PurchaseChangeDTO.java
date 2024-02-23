@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -32,6 +34,10 @@ public class PurchaseChangeDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 变更单号
          */
@@ -151,66 +157,20 @@ public class PurchaseChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 主键ids
+         * sqlMap 默认key default
          */
-        private List<String> ids;
-
-        /**
-         * 采购变更单号
-         */
-        private String code;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 采购订单号
-         */
-        private String purchaseOrderCode;
-
-        /**
-         * sku编码
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 供应商id
-         */
-        private List<String> supplierIdList;
-
+        private Map<String, String> sqlMap;
         /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private List<String> approveStatusList;
 
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 交货仓库id
-         */
-        private List<String> deliveryWarehouseIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 审核时间开始
-         */
-        private List<LocalDate> approveTimeList;
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
     }
 
     @Data

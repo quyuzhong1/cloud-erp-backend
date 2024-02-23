@@ -110,11 +110,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         SubcontractChangeDTO.PagingParamDTO params = pagingParamDTO.getParams();
         params.setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(params);
-        if (!isFlag) {
-            return new PagingVO(new Page());
-        }
         IPage<SubcontractChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
@@ -168,12 +163,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     }
 
     @Override
-    public void exportList(SubcontractChangeDTO.ExportDTO param, HttpServletResponse response) {
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(param);
-        if (!isFlag) {
-           return;
-        }
+    public void exportList(SubcontractChangeDTO.PagingParamDTO param, HttpServletResponse response) {
         List<SubcontractChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;

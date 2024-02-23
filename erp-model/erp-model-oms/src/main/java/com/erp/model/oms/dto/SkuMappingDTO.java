@@ -1033,6 +1033,10 @@ public class SkuMappingDTO implements Serializable {
          * 库存产品名称
          */
         private String stockSkuName;
+        /**
+         * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
+         */
+        private Boolean hasMappingAll;
     }
 
     /**

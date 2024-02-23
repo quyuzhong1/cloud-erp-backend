@@ -55,6 +55,16 @@ public class ListingInfoController extends BaseController {
         return flag ? success() : failure();
     }
 
+
+    /**
+     * 库存sku映射
+     **/
+    @PostMapping("/warehouseSkuMapping")
+    public ApiResult warehouseSkuMapping(@RequestBody @Validated ListingInfoDTO.WarehouseSkuMappingParamDTO dto) {
+        Boolean flag = listingInfoService.warehouseSkuMapping(dto);
+        return flag ? success() : failure();
+    }
+
     /**
      * sku映射选择框列表
      * @Author Jim

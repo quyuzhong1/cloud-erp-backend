@@ -213,6 +213,60 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         return new PagingVO<>(iPage);
     }
 
+    @Override
+    public Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto) {
+        SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(skuMapping)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
+        ListingInfoEntity listingInfoEntity = this.getById(skuMapping.getListingId());
+        if (ObjectUtil.isEmpty(listingInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+        if(CollectionUtils.isEmpty(viewDTOList)){
+            throw new ServiceException("查询不到仓库服务商");
+        }
+        String provideCode = viewDTOList.get(0).getProviderCode();
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(provideCode);
+        if(platformDictEnum == null){
+            throw new ServiceException("查询不到仓库服务商");
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+        if (ObjectUtil.isEmpty(skuVO)) {
+            throw new ServiceException("sku不存在");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        skuMapping.setExpireTime(now);
+        skuMapping.setIsExpire(Boolean.TRUE);
+        if (!skuMappingService.updateById(skuMapping)) {
+            throw new ServiceException("[SkuMapping] 历史映射修改失败");
+        }
+
+        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+        skuMappingEntity.setWarehouseId(dto.getWarehouseId());
+        skuMappingEntity.setWarehouseName(viewDTOList.get(0).getWarehouseName());
+        skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+        skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+        skuMappingEntity.setProductName(skuVO.getSkuName());
+        skuMappingEntity.setListingId(listingInfoEntity.getId());
+        skuMappingEntity.setDictPlatform(platformDictEnum.getCode());
+        skuMappingEntity.setPlatformName(platformDictEnum.getName());
+        skuMappingEntity.setHasMappingAll(true);
+
+        //生效时间
+        skuMappingEntity.setEffectiveTime(now);
+        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        skuMappingService.save(skuMappingEntity);
+
+        return lambdaUpdate()
+                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
+                .update();
+    }
+
     private void fillData(List<ListingInfoDTO.PageDTO> records) {
         List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
 

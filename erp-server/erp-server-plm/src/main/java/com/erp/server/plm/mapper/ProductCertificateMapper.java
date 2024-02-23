@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
-import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -51,7 +50,7 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @param params
      * @return List<ListDTO>
      */
-    List<ProductCertificateDTO.ListDTO> exportExcel(@Param("params") ProductCertificateDTO.SearchParamDTO params);
+    List<ProductCertificateDTO.ListDTO> exportExcel(@Param("params") ProductCertificateDTO.ExportParamDTO params);
 }
 
 

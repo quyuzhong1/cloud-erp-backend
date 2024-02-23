@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -21,6 +22,7 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
 import com.erp.server.scm.service.PurchaseApplicationService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -61,6 +63,7 @@ public class PurchaseApplicationController extends BaseController {
             tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
+    @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
     public ApiResult<PagingVO<PurchaseApplicationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseApplicationDTO.ListDTO> pagingVO = purchaseApplicationService.paging(dto);
         return success(pagingVO);
@@ -77,6 +80,7 @@ public class PurchaseApplicationController extends BaseController {
             tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
+    @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
     public ApiResult<PurchaseApplicationDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseApplicationDTO.SearchParamDTO dto) {
         PurchaseApplicationDTO.PagingTotalDTO pagingTotalDTO = purchaseApplicationService.pagingTotal(dto);
         return success(pagingTotalDTO);
@@ -399,6 +403,7 @@ public class PurchaseApplicationController extends BaseController {
             tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
+    @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();

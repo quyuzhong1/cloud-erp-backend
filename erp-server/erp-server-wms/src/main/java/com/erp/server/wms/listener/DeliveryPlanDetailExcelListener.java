@@ -46,11 +46,13 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
      */
     private List<String> importSkuIds = new ArrayList<>();
 
+    private String warehouseId;
 
 
-    public DeliveryPlanDetailExcelListener(List<String> thirdSkuNoList,List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList) {
+    public DeliveryPlanDetailExcelListener(List<String> thirdSkuNoList,List<ListingInfoWithSkuMappingDTO> allThirdWarehouseSkuList,String warehouseId) {
         this.thirdSkuNoList = CollectionUtils.isNotEmpty(thirdSkuNoList) ? thirdSkuNoList : new ArrayList<>();
         this.allThirdWarehouseSkuList = allThirdWarehouseSkuList;
+        this.warehouseId = warehouseId;
     }
 
 
@@ -69,7 +71,10 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
         if (CollectionUtils.isEmpty(allThirdWarehouseSkuList)) {
             errorMsgList.add("系统中第三方仓sku为空");
         } else {
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream().filter(v->v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo())).findFirst().orElse(null);
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream().filter(
+                    v->v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getSkuNo()) && (v.getHasMappingAll() || v.getWarehouseId().equals(this.warehouseId))
+                    )
+                    .findFirst().orElse(null);
             if (Objects.nonNull(listingInfoWithSkuMappingDTO)) {
                 if (!StrUtils.isInteger(deliveryPlanDetailExportExcelDTO.getPlanQty())) {
                     errorMsgList.add("计划数量只能为正整数");
@@ -88,6 +93,7 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
                                 .productName(listingInfoWithSkuMappingDTO.getProductName())
                                 .fnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku())
                                 .asin(listingInfoWithSkuMappingDTO.getPlatformSpuNo())
+                                .qty(Integer.valueOf(deliveryPlanDetailExportExcelDTO.getPlanQty()))
                                 .build();
                     }
                 }

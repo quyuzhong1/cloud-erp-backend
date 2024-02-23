@@ -48,6 +48,11 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         private String thirdWarehouseSku;
 
         /**
+         * 第三方仓产品名称
+         */
+        private String thirdWarehouseProductName;
+
+        /**
         * 产品id
         */
         private String skuId;
