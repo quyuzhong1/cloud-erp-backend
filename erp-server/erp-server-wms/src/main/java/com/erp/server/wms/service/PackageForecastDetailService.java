@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -41,4 +42,17 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
      * @return
      */
     List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id);
+
+    List<PackageForecastDetailEntity> listDbByMainId(String mainId);
+
+    void removeByMainId(String mainId,String logisticsSupplierId);
+
+    List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto);
+
+    /**
+     * 更新订单明细状态
+     * @param orderCode
+     * @param status
+     */
+    void updateStatusByOrderCode(String orderCode, String status);
 }

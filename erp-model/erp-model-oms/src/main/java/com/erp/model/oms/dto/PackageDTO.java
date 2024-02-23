@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -99,10 +100,29 @@ public class PackageDTO implements Serializable {
     public static class PagingParamDTO{
 
         /**
-         * 单据状态
+         * 物流渠道id 来源 http://172.16.100.11:3002/project/128/interface/api/25999
+         */
+        private List<String> logisticsChannelIdList;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 店铺id 集合  来源 http://172.16.100.11:3002/project/110/interface/api/24424
+         */
+        private List<String> shopIdList;
+
+
+        /**
+         * 不需要传参数
          */
         private List<String> billStatusList;
 
+        /**
+         * 不需要传参数
+         */
         private List<String> packageStatusList;
 
     }

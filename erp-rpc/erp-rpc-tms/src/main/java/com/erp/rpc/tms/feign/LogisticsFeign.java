@@ -4,12 +4,15 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -67,6 +70,14 @@ public interface LogisticsFeign {
 
     @PostMapping("/feign/logistics/getSignShipInfoByChannelById")
     LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId );
+
+    /**
+     * 获取地址信息
+     * @param id
+     * @return
+     */
+    @GetMapping("/feign/logistics/getLogisticsAddressById")
+    LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id")String id);
 
 
 }

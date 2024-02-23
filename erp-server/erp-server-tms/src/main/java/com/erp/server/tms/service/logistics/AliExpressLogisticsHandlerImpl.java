@@ -216,7 +216,13 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
             addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         }
+        if(Objects.isNull(addressDTO.getPickup())){
+            Address sender = addressDTO.getSender();
+            sender.setMemberType("pickup");
+            addressDTO.setPickup(sender);
+        }
         OrderRequest orderRequest = OrderRequest.builder()
+                .oaid(logisticsOrderVO.getOaid())
                 .pickup_type(logisticsOrderVO.getPickupType())
                 .declareProducts(declareProducts)
                 .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
@@ -230,6 +236,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 //托寄物信息
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
+                .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
         return orderRequest;
     }

@@ -9,9 +9,11 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.enums.HandoverSubStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.server.wms.mapper.PackageForecastDetailMapper;
@@ -23,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.python.antlr.ast.Str;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,34 +100,60 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String mainId,String logisticsSupplierId, List<String> detailIdList) {
+    public Boolean update(String mainId, String logisticsSupplierId, List<String> detailIdList) {
         List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
-        List<PackageForecastDetailEntity> deleteList=dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
+        List<PackageForecastDetailEntity> deleteList = dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
         //销售订单id
-        List<String> soIdList=deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<String> soIdList = deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
         List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+
         SettingForecastEntity settingForecast = forecastFeign.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
-        //是否强制组包
-        Boolean isMustPackage = settingForecast.getIsMustPackage();
-        for (SoB2cEntity item : soB2cList) {
-            SettingForecastDTO.FindByLogisticsSupplierDTO findDTO = new SettingForecastDTO.FindByLogisticsSupplierDTO();
-            LocalDateTime orderTime = item.getCreateTime();
-
-
-
-
+        //表示没有设置 那就是无需组包
+        if (Objects.isNull(settingForecast)) {
+            updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+        } else {
+            //表示需要q组包
+            Boolean isMustPackage = settingForecast.getIsMustPackage();
+            //表示强制组包
+            if (isMustPackage) {
+                //组包时间
+                LocalDateTime enablePackageTime = settingForecast.getEnablePackageTime();
+                //如果为空就都要组包
+                if (Objects.isNull(enablePackageTime)) {
+                    updatePackageStatus(soIdList, PackageStatusEnum.WAIT.getCode());
+                } else {
+                    List<String> waitSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) > 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(waitSoIdList)) {
+                        updatePackageStatus(waitSoIdList, PackageStatusEnum.WAIT.getCode());
+                    }
+                    List<String> notSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) <= 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(notSoIdList)) {
+                        updatePackageStatus(notSoIdList, PackageStatusEnum.NOT.getCode());
+                    }
+                }
+            }else{
+                updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+            }
         }
 
 
-
-
         return Boolean.TRUE;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updatePackageStatus(List<String> soIdList, String status) {
+        UpdateStateDTO.UpdateByStrStatusDTO updatePackageStatus = new UpdateStateDTO.UpdateByStrStatusDTO();
+        updatePackageStatus.setStatus(status);
+        updatePackageStatus.setIds(soIdList);
+        soB2cFeign.updatePackageStatus(updatePackageStatus);
     }
 
 
@@ -139,6 +168,15 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
                     map(SoOutstockEntity::getApproveStatus).findFirst().orElse(null);
             item.setOutstockStatusName("未出库");
+            String trackNo = item.getTrackNo();
+            String transportNo = item.getTransportNo();
+            if(StringUtils.isBlank(trackNo)){
+                trackNo=transportNo;
+            }
+            item.setTrackNo(trackNo);
+            String handoverStatus = item.getHandoverStatus();
+            String handoverStatusName = HandoverSubStatusEnum.getByCode(handoverStatus);
+            item.setHandoverStatusName(handoverStatusName);
             if (Objects.nonNull(approveStatus)) {
                 if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
                     item.setOutstockStatusName("已出库");
@@ -149,9 +187,104 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         return resultList;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void removeByMainId(String mainId,String logisticsSupplierId) {
+        List<PackageForecastDetailEntity> detailList = this.listDbByMainId(mainId);
 
-    public List<PackageForecastDetailEntity> listDbByMainId(String id) {
-        return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, id).list();
+        //销售订单id
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        Boolean result = this.lambdaUpdate().eq(PackageForecastDetailEntity::getMainId, mainId).remove();
+        if (!result) {
+            return;
+        }
+
+        List<SoB2cEntity> soB2cList = soB2cFeign.listByIds(soIdList);
+
+        SettingForecastEntity settingForecast = forecastFeign.getSettingForecastByLogisticsSupplierId(logisticsSupplierId);
+        //表示没有设置 那就是无需组包
+        if (Objects.isNull(settingForecast)) {
+            updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+        } else {
+            //表示需要q组包
+            Boolean isMustPackage = settingForecast.getIsMustPackage();
+            //表示强制组包
+            if (isMustPackage) {
+                //组包时间
+                LocalDateTime enablePackageTime = settingForecast.getEnablePackageTime();
+                //如果为空就都要组包
+                if (Objects.isNull(enablePackageTime)) {
+                    updatePackageStatus(soIdList, PackageStatusEnum.WAIT.getCode());
+                } else {
+                    List<String> waitSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) > 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(waitSoIdList)) {
+                        updatePackageStatus(waitSoIdList, PackageStatusEnum.WAIT.getCode());
+                    }
+                    List<String> notSoIdList = soB2cList.stream().filter(s -> s.getCreateTime().compareTo(enablePackageTime) <= 0).
+                            map(SoB2cEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(notSoIdList)) {
+                        updatePackageStatus(notSoIdList, PackageStatusEnum.NOT.getCode());
+                    }
+                }
+
+            }else{
+                updatePackageStatus(soIdList, PackageStatusEnum.NOT.getCode());
+            }
+        }
+
+
+    }
+
+    @Override
+    public List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto) {
+        List<PackageForecastDetailEntity> detailList = this.lambdaQuery().
+                eq(PackageForecastDetailEntity::getMainId, dto.getId()).
+                in(CollectionUtils.isNotEmpty(dto.getSoCodeList()), PackageForecastDetailEntity::getSoCode, dto.getSoCodeList()).
+                in(CollectionUtils.isNotEmpty(dto.getHandoverStatusList()), PackageForecastDetailEntity::getHandoverStatus, dto.getHandoverStatusList()).
+                like(StringUtils.isNotBlank(dto.getTrackNo()), PackageForecastDetailEntity::getTransportNo, dto.getTrackNo()).
+                list();
+        List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
+        List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIdList);
+        for (PackageForecastDetailDTO.ViewDTO item : resultList) {
+            String soId = item.getSoId();
+            ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+                    map(SoOutstockEntity::getApproveStatus).findFirst().orElse(null);
+            item.setOutstockStatusName("未出库");
+            if (Objects.nonNull(approveStatus)) {
+                if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+                    item.setOutstockStatusName("已出库");
+                }
+            }
+            String handoverStatus = item.getHandoverStatus();
+            String handoverStatusName =HandoverSubStatusEnum.getByCode(handoverStatus);
+            item.setHandoverStatusName(handoverStatusName);
+            String trackNo = item.getTrackNo();
+            String transportNo = item.getTransportNo();
+            if(StringUtils.isBlank(trackNo)){
+                trackNo=transportNo;
+            }
+            item.setTrackNo(trackNo);
+        }
+        return resultList;
+    }
+
+    @Override
+    public void updateStatusByOrderCode(String orderCode, String status) {
+        if (StringUtils.isEmpty(orderCode) || StringUtils.isEmpty(status)) {
+            return;
+        }
+        this.lambdaUpdate().set(PackageForecastDetailEntity::getHandoverStatus, status)
+                .eq(PackageForecastDetailEntity::getSourceCode, orderCode).eq(PackageForecastDetailEntity::getIsDeleted, false)
+                .update();
+    }
+
+
+    @Override
+    public List<PackageForecastDetailEntity> listDbByMainId(String mainId) {
+        return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, mainId).list();
     }
 
 

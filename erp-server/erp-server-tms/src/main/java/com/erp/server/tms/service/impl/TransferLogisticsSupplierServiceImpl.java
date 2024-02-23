@@ -241,6 +241,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
         List<TransferLogisticsSupplierEntity> list = this.list();
+        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
+        for (TransferLogisticsSupplierEntity transferLogisticsSupplierEntity : list) {
+            String authStatus = transferLogisticsSupplierEntity.getAuthStatus();
+            if (!already.equals(authStatus)) {
+                transferLogisticsSupplierEntity.setDisabled(Boolean.TRUE);
+            }
+        }
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
         return resultList;
     }
@@ -248,6 +255,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listAlreadyAll() {
         List<TransferLogisticsSupplierEntity> list = lambdaQuery().eq(TransferLogisticsSupplierEntity::getAuthStatus, TransferLogisticsAuthStatusEnum.ALREADY.getCode()).list();
+        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
+        for (TransferLogisticsSupplierEntity transferLogisticsSupplierEntity : list) {
+            String authStatus = transferLogisticsSupplierEntity.getAuthStatus();
+            if (!already.equals(authStatus)) {
+                transferLogisticsSupplierEntity.setDisabled(Boolean.TRUE);
+            }
+        }
         List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
         return resultList;
     }

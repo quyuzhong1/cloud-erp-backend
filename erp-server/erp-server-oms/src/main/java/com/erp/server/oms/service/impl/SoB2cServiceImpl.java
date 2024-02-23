@@ -1293,18 +1293,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String dictPlatform = entity.getDictPlatform();
         result.setSalesPlatform(dictPlatform);
         Boolean isAliExpress = aliExpress.equals(dictPlatform);
+        String shopId = entity.getShopId();
+        //扩展字段
+        String extendData = entity.getExtendData();
+        String oaid="";
+        if (StringUtils.isNotBlank(extendData) && extendData.contains("oaid")) {
+            oaid = JSONObject.parseObject(extendData).getOrDefault("oaid", "").toString();
+        }
+        result.setOaid(oaid);
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+
         if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
+            Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
+            //买家id
+            String sellerId = String.valueOf(extendDataMap.get("sellerId"));
+            result.setTopUserKey(sellerId);
         } else {
             result.setOrderCode(entity.getCode());
         }
 
         result.setOrderType(OrderTypeEnum.B2C.getCode());
-        String shopId = entity.getShopId();
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92058);
-        }
+
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
@@ -5129,7 +5142,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
-                scanResult.setLogisticsSupplierId(baseDTO.getLogisticsSupplierId());
+                scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
             }
 
@@ -5360,8 +5373,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             IopResponse response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(entity.getPlatformCode()));
 
             cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
-            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-            Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+            cn.hutool.json.JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+            Boolean success = resultJson.getBool("success", Boolean.FALSE);
             //失败
             if (!success) {
                 log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
@@ -5380,6 +5394,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
                     //生成速卖通发货单
                     addAliExpressDelivery(logisticsEntity, erpFulfillmentForwardDto.get(0), entity);
+
+                    return Boolean.TRUE;
                 }
             }
 
@@ -5387,7 +5403,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             e.printStackTrace();
         }
 
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 
