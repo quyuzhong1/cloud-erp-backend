@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgSettingDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 系统配置管理 服务类
@@ -48,4 +50,10 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return PoReturnSettingDTO
      */
     CfgSettingValueDTO.PoReturnSettingDTO getPoReturnSetting();
+
+    /**
+     * 获取物流产品信息-目的国申报价折扣信息
+     * @return
+     */
+    List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> getProductDestDeclarePrices();
 }

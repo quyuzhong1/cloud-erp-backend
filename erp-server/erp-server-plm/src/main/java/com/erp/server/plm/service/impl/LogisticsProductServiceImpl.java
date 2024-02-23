@@ -176,14 +176,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             rate = new BigDecimal("7.13");
         }
         String sourceCountryName = "";
-        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
+//        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
             //目的国申报价
-            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
-                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-            }
+//            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
+//            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+//                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
+//                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
+//            }
             //原产国
             String sourceCountry = productLogistics.getSourceCountry();
             if (StringUtils.isNotBlank(sourceCountry)) {
@@ -654,12 +654,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 item.setActualNoTaxCost(map.get("actualNoTaxCost"));
             }
             BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
-            //目的国申报价
-            BigDecimal destDeclarePrice = item.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
-                item.setDestDeclarePrice(resultDestDeclarePrice);
-            }
+            //目的国申报价  20240223这里改成审核后重新计算
+//            BigDecimal destDeclarePrice = item.getDestDeclarePrice();
+//            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+//                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
+//                item.setDestDeclarePrice(resultDestDeclarePrice);
+//            }
 
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
