@@ -38,7 +38,7 @@ public class ShopifyWebhookController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/customersDataRequest")
+    @PostMapping("/customersRedact")
     public void customersRedact(@RequestBody ShopifyWebhookDTO.CustomersRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
         shopInfoService.customersRedact(dto, response, request);
     }
