@@ -20,19 +20,17 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomCombinationImportExcelDTO;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.BomSkuEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.BomCombinationExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -79,6 +77,13 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private BasicDictService basicDictService;
+
+    @Resource
+    private ProductUnitService productUnitService;
+
     @Override
     public PagingVO<BomCombinationDTO.ListDTO> paging(PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         BomCombinationDTO.SearchParamDTO params = dto.getParams();
@@ -409,6 +414,13 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productInfoDTO.setCategory(productInfoEntity.getCategory());
         productInfoDTO.setCategoryId(productInfoEntity.getCategoryId());
         productInfoDTO.setSaleMethod(productInfoEntity.getSaleMethod());
+
+        //产品属性默认填自研发
+        BasicDictEntity basicDictEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), ProductConstant.PRODUCT_PROPERTY_DEFAULT);
+        if (ObjectUtils.isNotEmpty(basicDictEntity)) {
+            productInfoDTO.setProperty(ProductConstant.PRODUCT_PROPERTY_DEFAULT);
+            productInfoDTO.setPropertyId(basicDictEntity.getId());
+        }
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
@@ -416,6 +428,14 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productSkuBaseInfoDTO.setName(dto.getName());
         productSkuBaseInfoDTO.setChargeId(child.getChargeId());
         productSkuBaseInfoDTO.setChargeName(child.getChargeName());
+
+        //单位默认Pcs
+        ProductUnitEntity productUnitEntity = productUnitService.getByName(ProductConstant.PRODUCT_UNIT_DEFAULT);
+        if (ObjectUtils.isNotEmpty(productUnitEntity)) {
+            productSkuBaseInfoDTO.setUnitName(ProductConstant.PRODUCT_UNIT_DEFAULT);
+            productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
+        }
+
         productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
         productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
         //成本信息
