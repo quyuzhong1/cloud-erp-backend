@@ -2,6 +2,7 @@ package com.erp.server.auth.controller.api;
 
 
 import com.common.business.constant.TokenConstants;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -18,6 +19,7 @@ import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
+import com.erp.server.auth.server.LoginAuthService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -33,8 +35,7 @@ import java.util.Objects;
 
 
 /**
- * @Classname SysLoginController
-
+ * 用户登录模块
  * @Date 2022-07-08 16:08
  * @Created by yl
  */
@@ -46,46 +47,33 @@ public class SysLoginAuthController extends BaseController {
     @Autowired
     private SysUserFeign sysUserFeign;
 
-
     @Resource
     private AuthTokenService authTokenService;
 
-    //账号登录
-   // @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号登录:账号={account}")
-    @RequestMapping("/accountLogin")
-    public ApiResult accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
-        ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
-        int code = apiResult.getCode();
-        if (code != 200) {
-            return failure(code, apiResult.getMsg(), null);
-        } else {
-            SysUserDTO info = apiResult.getData();
-            String ip = IpUtils.getIpAddress(request);
-            info.setLoginIp(ip);
-            SysLoginIpDTO ipDTO = new SysLoginIpDTO();
-            ipDTO.setIp(ip);
-            ipDTO.setDate(new Date());
-            ipDTO.setUid(info.getUid());
-            sysUserFeign.setLoginIp(ipDTO);
-            //创建token
-            String accessToken = authTokenService.createToken(info);
-            SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
-            sysLoginUserVO.setAccessToken(accessToken);
-            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
-            sysLoginUserVO.setPermissionList(info.getPermissionList());
-            sysLoginUserVO.setUserName(info.getUserName());
-            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
-            sysLoginUserVO.setHeadIcon(info.getHeadIcon());
-            sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
-            sysLoginUserVO.setBindingState(info.getBindingState());
-            sysLoginUserVO.setUserId(info.getUid());
-            return success(sysLoginUserVO);
-        }
+    @Resource
+    private LoginAuthService loginAuthService;
 
+    /**
+     * erp登录
+     */
+    @LogAction(value = LogActionEnum.LOGIN, desc = "ERP登录")
+    @RequestMapping("/accountLogin")
+    public ApiResult<?> accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
+        return loginAuthService.processLogin(loginDTO, UserTypeEnum.ERP, request);
     }
 
+    /**
+     * srm登录
+     */
+    @LogAction(value = LogActionEnum.LOGIN, desc = "SRM登录")
+    @RequestMapping("/srmAccountLogin")
+    public ApiResult<?> srmAccountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
+        return loginAuthService.processLogin(loginDTO, UserTypeEnum.SRM, request);
+    }
 
-    //扫码登录
+    /**
+     * 扫码登录
+     */
     @LogAction(value = LogActionEnum.LOGIN, desc = "扫码登录")
     @RequestMapping("/scanCodeLogin")
     public ApiResult scanCodeLogin(@RequestBody @Validated SysUserThirdDTO loginDTO, HttpServletRequest request) {
@@ -114,12 +102,15 @@ public class SysLoginAuthController extends BaseController {
             sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
             sysLoginUserVO.setBindingState(info.getBindingState());
             sysLoginUserVO.setUserId(info.getUid());
+            sysLoginUserVO.setIsSupper(info.getIsSupper());
             return success(sysLoginUserVO);
         }
     }
 
 
-    //退出登录
+    /**
+     * 退出登录
+     */
     @LogAction(value = LogActionEnum.LOGOUT, desc = "退出登录")
     @RequestMapping("/logout")
     public ApiResult Logout(HttpServletRequest request) {
@@ -131,7 +122,6 @@ public class SysLoginAuthController extends BaseController {
 
     /**
      * 根据token 获取 用户信息
-     *
      * @return com.common.core.vo.ApiResult<com.erp.model.sys.vo.SysLoginUserVO>
      * @author yl
      * @date 2023-01-14 9:21

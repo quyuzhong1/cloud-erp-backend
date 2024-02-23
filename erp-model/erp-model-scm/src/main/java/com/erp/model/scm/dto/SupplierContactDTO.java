@@ -66,6 +66,10 @@ public class SupplierContactDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
+        /**
+         * SRM协同 true 否 false 是
+         */
+        private Boolean srmDisabled;
 
         /**
          * 备注信息

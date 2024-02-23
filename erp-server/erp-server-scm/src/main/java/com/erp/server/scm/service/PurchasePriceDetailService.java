@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import cn.hutool.json.JSONArray;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -8,6 +9,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,17 +26,6 @@ import java.util.List;
  */
 public interface PurchasePriceDetailService extends SuperService<PurchasePriceDetailEntity> {
 
-     
-    /**
-     *  检查sku 区间报价
-     * @author yl
-     * @date 2023-03-24 14:01
-     * @param purchasePriceDetailList 参数的
-     * @param  supplierPriceDetailList  供应商已有的
-     * @return void
-     */
-    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList);
-
     
     /**
      * 添加明细
@@ -45,6 +36,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return void
      */
     void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
+
+    /**
+     * @description: 报价信息验证
+     * @author Will
+     * @date: 2024/1/15 16:58
+     * @param supplierId
+     * @param list
+     */
+    void checkPurchasePriceDetail (String supplierId, List<PurchasePriceDetailEntity> list);
     /**
      * @description: 根据skuId查询是否存在符合条件的单价和税率
      * @author Will
@@ -145,9 +145,9 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @author yl
      * @date 2023-04-06 9:37
      * @param supplierId
-     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.ViewDTO>
      */
-    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
 
     /**
      * 查询供应商的
@@ -237,5 +237,20 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      */
     void updateDetailRemark(List<String> ids, String remark);
 
-
+    /**
+     * 禁用
+     * @author Will
+     * @date: 2024/1/15 15:01
+     * @param dto
+     * @return Boolean
+     */
+    Boolean disabled(BaseIdsDTO.IdsDTO dto);
+    /**
+     * 启用
+     * @author Will
+     * @date: 2024/1/15 15:02
+     * @param dto
+     * @return Boolean
+     */
+    Boolean enable(BaseIdsDTO.IdsDTO dto);
 }

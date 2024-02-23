@@ -1467,4 +1467,28 @@
     <select id="getSkuItemName" resultType="com.erp.model.bi.vo.SkuItemVO">
         select sku_no,min(item_name) AS itemName from dmp_order_item  GROUP BY sku_no
     </select>
+
+
+    <select id="getDateList" resultType="com.erp.model.bi.vo.DateDimensionVO">
+        select
+        <if test="dateType != null and dateType == 'DAY'">
+            ddd.date_day as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'WEEK'">
+            ddd.date_week as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'MONTH'">
+            ddd.date_month as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'QUARTER'">
+            ddd.date_quarter as dateName,
+        </if>
+        <if test="dateType != null and dateType == 'YEAR'">
+            ddd.date_year as dateName,
+        </if>
+        #{dateType} as dateType
+        from dmp_date_dimension as ddd where ddd.is_deleted = false and ddd.date_time between #{startTime} and #{endTime}
+        group by dateName
+        order by dateName asc
+    </select>
 </mapper>

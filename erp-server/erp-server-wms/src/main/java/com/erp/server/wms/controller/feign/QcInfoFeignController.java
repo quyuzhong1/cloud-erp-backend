@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 质检单feign控制器
  * @CreateTime: 2023-06-19  15:48
@@ -26,4 +28,8 @@ public class QcInfoFeignController extends BaseController {
         return qcInfoService.getQcInfoByPurchaseOrder(dto);
     }
 
+    @PostMapping("/getQcReceiveResult")
+    public List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(@RequestBody List<String> purchaseDetailIds) {
+        return qcInfoService.getQcReceiveResult(purchaseDetailIds);
+    }
 }

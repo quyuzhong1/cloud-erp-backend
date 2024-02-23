@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -72,6 +73,12 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         @NotNull(message = "生效时间不能为空")
         private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        @NotNull(message = "失效时间不能为空")
+        private LocalDate expireDate;
 
 
         /**
@@ -529,7 +536,10 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         private Boolean disabled;
 
-
+        /**
+         * 定价员id
+         */
+        private String pricingUserId;
     }
 
 

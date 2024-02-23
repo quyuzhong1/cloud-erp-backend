@@ -3,6 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,7 +22,7 @@ import java.util.List;
 @Mapper
 public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
 
-    IPage<PurchasePriceDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    IPage<PurchasePriceDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceDTO.PagingParamDTO params);
 
     /**
      * 获取导出数据
@@ -30,7 +31,7 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.PagingViewDTO>
      */
-    List<PurchasePriceDTO.PagingViewDTO> getExport(@Param("params") PurchasePriceDTO.ExportDTO dto);
+    List<PurchasePriceDTO.PagingViewDTO> getExport(@Param("params") PurchasePriceDTO.PagingParamDTO dto);
 
     /**
      * 获取供应商价格
@@ -50,6 +51,12 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return List<SupplierSkuPrice>
      */
     List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@Param("ids") List<String> ids);
-
-
+    /**
+     * @description: tab列表页查询
+     * @author Will
+     * @date: 2024/1/20 9:06
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer tabList(@Param("params")PurchaseOrderDTO.SearchParamDTO searchParamDTO);
 }

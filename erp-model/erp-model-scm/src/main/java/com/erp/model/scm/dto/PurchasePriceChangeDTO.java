@@ -1,9 +1,11 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -333,6 +336,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private LocalDate effectiveDate;
 
+        /**
+         * 升降比例（带百分比）【不能排序】
+         */
+        private String offsetRate;
+
 
         /**
          * 采购组织
@@ -381,74 +389,15 @@ public class PurchasePriceChangeDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO  extends SortDTO {
 
-
-
-        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
-        private String searchType;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 供应商名称
+         * sqlMap 默认key default
          */
-        private String name;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 编号
-         */
-        private String code;
-
-        /**
-         * 采购价目表编码
-         */
-        private String priceCode;
-
-        /**
-         * 主键 id 集合
-         */
-        private List<String> idList;
-
-
-        /**
-         * sku 编码 集合
-         */
-        private List<String> skuNoList;
-
-
-        /**
-         * 采购组织id集合
-         */
-        private List<String> purchaseOrgIdList;
-
-
-        /**
-         * 单据状态
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 生效时间
-         */
-        private List<LocalDate> effectiveDateList;
-
-        /**
-         * 生效时间
-         */
-        private List<LocalDate> expireDateList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
+        private Map<String,String> sqlMap;
     }
 
     @Data
@@ -459,5 +408,30 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 主键id集合
          */
         private List<String> ids;
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型 ,(approveIng待我审核,approve已审核,reject不通过)
+         */
+        private String tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 }

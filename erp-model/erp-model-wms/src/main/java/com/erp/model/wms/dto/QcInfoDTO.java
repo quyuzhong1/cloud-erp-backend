@@ -1070,6 +1070,29 @@ public class QcInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class QcReceiveResultDTO {
+
+
+        /**
+         * 收货单号
+         */
+        private String receiveCode;
+
+
+        /**
+         * 采购明细id
+         */
+        private String purchaseDetailId;
+
+        /**
+         * 收货单号
+         */
+        private Integer qcGoodQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PurchaseQcInfoDTO {
 
 

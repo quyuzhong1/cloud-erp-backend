@@ -1,9 +1,12 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,16 +19,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Lambda
- * @Classname PurchasePriceDTO
 
- * @Date 2023-03-16 14:54
- * @Created by yl
- */
-@Data
-@NoArgsConstructor
 public class PurchasePriceDTO implements Serializable {
 
 
@@ -73,6 +69,12 @@ public class PurchasePriceDTO implements Serializable {
          * 附件名
          */
         private List<String> attachmentNameList;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
         /**
          * 报价明细
          */
@@ -111,22 +113,14 @@ public class PurchasePriceDTO implements Serializable {
         private LocalDate quotedDate;
 
         /**
-         * 币种
-         */
-        private String currency;
-
-        /**
          * 审核状态
          */
         private String approveStatus;
-
-
 
         /**
          * 报价人id
          */
         private String pricingUserId;
-
 
         /**
          * 采购组织id
@@ -143,6 +137,30 @@ public class PurchasePriceDTO implements Serializable {
          */
         private List<String> attachmentNameList;
 
+        /**
+         * 供应商联系人名称,/api/scm/supplier/getSupplierInfo?supplierId=
+         */
+        private String supplierContactName;
+
+        /**
+         * 供应商联系人电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 结算币种
+         */
+        private String currency;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 报价明细
@@ -329,6 +347,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         private LocalDate effectiveDate;
 
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
 
         /**
          * 采购组织
@@ -386,68 +408,43 @@ public class PurchasePriceDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
-        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
-        private String searchType;
         /**
-         * 供应商名称
+         * 页面高级查询
          */
-        private String name;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 产品名称
+         * sqlMap 默认key default
          */
-        private String productName;
+        private Map<String,String> sqlMap;
+    }
+
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
 
         /**
-         * 编号
+         * 类型 ,(approveIng待我审核,reject不通过,approveEnable已审核启用,approveDisabled已审核停用)
          */
-        private String code;
+        private String tabFlag;
 
         /**
-         * 主键 id 集合
+         * 类型
          */
-        private List<String> idList;
+        private String tabFlagName;
 
         /**
-         * sku编码
+         * 数量
          */
-        private List<String> skuNoList;
-
-
-        /**
-         * 采购组织id集合
-         */
-        private List<String> purchaseOrgIdList;
-
-
-        /**
-         * 单据状态
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 生效时间
-         */
-        private List<LocalDate> effectiveDateList;
-
-        /**
-         * 失效时间
-         */
-        private List<LocalDate> expireDateList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
+        private Integer count;
 
     }
+
 
     /**
      * 导出采购价目
@@ -499,15 +496,6 @@ public class PurchasePriceDTO implements Serializable {
 
 
 
-    /**
-     * 导出采购价目
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO  extends PagingParamDTO {
-        private List<String> ids;
-
-    }
 
     /**
      * 导入DTO

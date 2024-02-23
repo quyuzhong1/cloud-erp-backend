@@ -123,6 +123,23 @@ public class SysUserInfoEntity implements Serializable {
 	private String code;
 
 	/**
+	 * 用户类型（默认erp, srm供应商系统）
+	 */
+	@TableField("user_type")
+	private String userType;
+
+	/**
+	 * 是否超级管理员 false 不是管理员
+	 */
+	@TableField("is_super")
+	private Boolean isSuper;
+
+	/**
+	 * 是否需要修改密码（重置密码首次登录时需要修改密码）
+	 */
+	@TableField("need_change_pwd")
+	private Boolean needChangePwd;
+	/**
 	 * 同步金蝶id
 	 */
 	@TableField("sync_kingdee_id")

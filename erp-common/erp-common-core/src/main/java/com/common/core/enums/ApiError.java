@@ -23,6 +23,7 @@ public enum ApiError implements Serializable {
     ERROR_5001(5001, "未授权访问!"),
 
     ERROR_403(403, "您未登录,请登录后操作"),
+    ERROR_401(401, "Unauthorized"),
 
     /**
      * 高级查询异常
@@ -89,7 +90,7 @@ public enum ApiError implements Serializable {
     ERROR_1039(1039,"单据【{}】未审核完成，不支持下推"),
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
-    ERROR_1042(1042,"单据提交失败"),
+    ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
@@ -105,6 +106,9 @@ public enum ApiError implements Serializable {
     ERROR_FILE_TEMPLATE_DOWNLOAD(1053,"文件模板下载失败"),
     EXCEL_PARSING_FIELD_EXCEPTION(1054,"excel解析字段异常"),
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
+    ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
+    ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+
     /**
      * 警告信息 从800 开始
      */
@@ -162,6 +166,7 @@ public enum ApiError implements Serializable {
     ERROR_SERIAL_NUMBER_EXCEED(9049, "流水号已经超出999"),
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
+    MOBILE_IS_EXIST(9054,"手机号已注册"),
 
 
     /**
@@ -604,6 +609,13 @@ public enum ApiError implements Serializable {
     ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
     ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"加工单【{}】已存在下推直接调拨单，不支持反审核"),
     ERROR_MACHINE_EXIST_PURCHASE_RETURN(98102,"加工单【{}】已存在下推采购退货单，不支持反审核"),
+    ERROR_USER_NOT_REL_SUPPLIER(98102,"用户未关联供应商"),
+    ERROR_USER_NOT_REL_OTHER_SUPPLIER(98051,"只能导入当前供应商用户"),
+    ERROR_EMPTY_SUPPLIER(98052,"供应商名称不能为空"),
+    ERROR_SUPPLIER_UN_APPROVE(98053,"供应商未审核"),
+    ERROR_SUPPLIER_DISABLE(98054,"供应商未启用"),
+    ERROR_SUPPLIER_SRM_DISABLE(98055,"供应商未协同"),
+    ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL(98056,"存在待对账明细/未确认的对账单，请完成对账后关闭"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),
@@ -623,7 +635,7 @@ public enum ApiError implements Serializable {
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
     ERROR_98039(98039,"未找到供应商联系人"),
     ERROR_98040(98040,"只有已审核采购订单能下推签收单"),
-    ERROR_98041(98041,"已到货的采购订单明细不能下推签收单"),
+    ERROR_98041(98041,"只有已确认或送货中的采购订单明细允许下推签收单"),
     ERROR_98042(98042,"未找到采购变更单"),
     ERROR_98043(98043,"未找到采购变更明细单"),
     ERROR_98044(98044,"存在已被供应商引用的等级"),
@@ -676,6 +688,7 @@ public enum ApiError implements Serializable {
     ERROR_98094(98094,"{}已生成交货单,不可变更仓库和供应商"),
     ERROR_98095(98095,"{}已生成入库单,不可变更仓库和供应商"),
     ERROR_SUB_PUSH_CHANGE(98096,"委外订单【{}】已下推委外变更单【{}】,不支持反审核"),
+    ERROR_SUB_PUSH_ISSUE(98096,"委外订单【{}】已下推委外发料单【{}】,不支持反审核"),
     ERROR_TRANSFER_MB_UPDATE(98097,"马帮直接调拨单不允许修改"),
     ERROR_TRANSFER_MB_DELETE(98098,"马帮直接调拨单【{}】不允许删除"),
     ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL(98099,"未找到采购价目明细"),
@@ -685,6 +698,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
     ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
     ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
+    ERROR_SUBCONTRACT_ORG_NOT_FOUND(98105,"委外组织不存在"),
     ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
@@ -696,6 +710,8 @@ public enum ApiError implements Serializable {
     SUBMIT_IS_DELETE(98109,"只有待提交和审核不通过数据支持删除"),
     ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
     ERROR_PURCHASE_ORDER_PUSH_DOWN_CHANGE(98110,"采购订单已下推采购变更单"),
+    ERROR_PURCHASE_ORDER_PUSH_DELIVERY(98110,"采购订单已下推送货单"),
+
     ERROR_WAREHOUSE_LOCATION_NOT_NULL(98111,"仓库【{}】下仓位不能为空"),
     PRICE_NOT_EXIST(98112,"采购价目表不存在"),
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
@@ -705,6 +721,16 @@ public enum ApiError implements Serializable {
 
 
 
+    ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
+    ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_PURCHASE_ORDER_SUPPLIER_CONFIRM(98115,"采购订单【{}】未审核完成不支持确认"),
+    ERROR_PURCHASE_ORDER_DETAIL_SUPPLIER_CONFIRM(98116,"采购订单【{}】非待确认不支持确认"),
+    ERROR_PURCHASE_ORDER_PUSH_DOWN(98117,"采购订单【{}】SKU【{}】非已确认和送货中、已完成不支持下推"),
+    ERROR_PURCHASE_ORDER_DISAPPROVE_CLOSE(98118,"已关闭采购订单不支持反审核"),
+    ERROR_PURCHASE_ORDER_NO_SUPPLIER_CONFIRM(98119,"采购订单【{}】未关联供应商不支持确认"),
+    ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
+    ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     /**
      * WMS 错误
      * 从99000 开始  以端口号
@@ -917,9 +943,38 @@ public enum ApiError implements Serializable {
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
     JOINT_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单反审删除失败，多个联合处理的要货单，无法撤销"),
+    ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(92124,"拦截单号【{}】已组包/中转，请取消组包/中转后操作"),
     STATUS_IS_HANDLE_NOT_OPERATE(92124,"已处理不可重复操作"),
     HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT(92124,"【处理状态】已处理、已取消的单据，不支持再次发起物流拦截"),
     B2C_SO_OUTSTOCK_NOT_DIS_APPROVE(92125,"销售出库单【{}】 订单类型为B2C 无法反审核"),
+    NOT_TRANSFER_DECLARE(92125,"未提交中转报关，不可操作出库"),
+    UPLOAD_SUCCESS_NOT_DELETE(92126,"上传成功状态不能删除"),
+    UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
+    RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
+    ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
+    ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
+
+
+
+
+
+
+
+    ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
+    ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
+    ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
+    NOT_WAIT_CONFIRM_STATUS(92127,"仅退货确认状态为待确认可操作"),
+    ATTACH_QTY_MAX_FIVE(92127,"附件上传数量不可超过5个文件"),
+    UNUSUAL_TYPE_NOT_EXISTS(92128,"异常分类错误"),
+    PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
+    CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
+    RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
+
+
+
+
+
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1084,11 +1139,14 @@ public enum ApiError implements Serializable {
     SO_CHANGE_TERMINATE_EXIST(92124,"存在已终止过的销售订单，无法再次终止"),
     ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA(92124,"未找到可下推加工单的销售订单信息"),
     B2C_NOT_DISAPPROVE(92124,"只有待配货或配货中的订单才能反审核"),
-
     B2C_APPROVE_DELIVERY(92125,"只有审核通过才能提交发货"),
     STATUS_END_NOT_INTERCEPT(92126,"订单拦截正在处理或已处理完成，无法取消拦截"),
-
-
+    ERROR_WAIT_SHIPPED_TRANSFER(92125,"销售单【{}】 不属于待发货的订单 不能进行中转报关"),
+    ERROR_WAIT_TRANSFER(92126,"销售单【{}】 不属于待中转的订单,不能进行中转报关"),
+    ALREADY_PACKAGE_NOT_CAN_TRANSFER(92127,"尚未完成组包，请操作组包后中转报关"),
+    ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
+    ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
+    PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
 
     /**
      * TMS 错误
@@ -1126,11 +1184,48 @@ public enum ApiError implements Serializable {
     PRINT_WAYBILL_ERROR(94028,"调用第三方接口打印异常，异常原因：{}"),
     ERROR_CHANNEL_QUOTE(94029,"该渠道已被引用,无法删除"),
     ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS(94030,"已确认和已作废不支持自发货费用单状态变更"),
+
+    /**
+     * SRM 错误
+     * 从96000 开始
+     */
+    ERROR_96000(96000,"供应商配置信息已存在"),
+    ERROR_96001(96001,"查询不到关联供应商"),
+    ERROR_96002(96002,"单据供应商与用户供应商不一致"),
+    ERROR_PO_RECONCILIATION_NOT_EXIST(96003,"对账单不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"对账明细不存在"),
+    ERROR_PO_RECONCILIATION_CONFIRM(96005,"仅【待供方确认】支持此操作"),
+    ERROR_PO_RECONCILIATION_CANCEL_CONFIRM(96005,"仅【待采方确认】支持此操作"),
+    ERROR_PO_RECONCILIATION_SCM_CANCEL_CONFIRM(96005,"仅【待采方确认】或【已确认待完结】支持此操作"),
+    ERROR_PO_RECONCILIATION_DELETE(96006,"仅【待供方确认】或【待采方确认】支持删除对账单"),
+    ERROR_PO_RECONCILIATION_RECEIVE(96007,"仅【已确认待完结】支持单据签收"),
+    ERROR_PO_RECONCILIATION_UPDATE(96008,"仅【待供方确认】或【待采方确认】支持修改对账单"),
+    ERROR_PO_RECONCILIATION_ADD_DETAIL(96009,"对账单【{}】添加对账明细数据的供应商【{}】和结算组织【{}】必须一致"),
+    ERROR_LOGIN_SRM_DISABLE(96010,"已停止跟您的合作，无法正常登录"),
+    ERROR_PO_RECONCILIATION_HAS_GENERATE(96010,"单据单号【{}】已生成对账单"),
+    ERROR_PO_RECONCILIATION_NOT_GENERATE(96011,"单据单号【{}】非已确认不支持生成对账单"),
+    ERROR_PO_RECONCILIATION_DATE(96012,"对账开始时间不能大于结束时间"),
+    ERROR_PO_RECONCILIATION_DETAIL_DELETE(96013,"单据【{}】已对账不支持删除对账明细"),
+    ERROR_DELIVERY_ORDER_NOT_EXIST(96014,"送货单不存在"),
+    ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST(96015,"送货单明细不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
+    ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
+
+
+
     ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST(94031,"物流渠道未匹配到授权信息"),
-    ERROR_NOT_UPDATE_TRACK_STATUS(94032,"该运输状态为系统更新不可修改"),
-
-
+    DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER(94032,"发货物流商不可以重复设置，一个发货物流商只能有一个报关设置"),
+    TRANSFER_DELIVERY_LOGISTICS_SUPPLIER(94033,"中转物流商不可以重复设置，一个中转物流商只能有一个截单设置"),
+    GENERATE_TIME_GT_DEADLINE_TIME(94034,"生成时间不可晚于截单时间"),
+    ERROR_NOT_UPDATE_TRACK_STATUS(94035,"该运输状态为系统更新不可修改"),
+    EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE(94036,"被其他单据引用的中转物流商不允许删除"),
+    NOT_PRODUCT_REGISTRATION(94037," 【{}】 未在【{}】平台备案，请联系财务备案"),
+    NOT_UPDATE_CHANNEL_BY_NOT_REGISTRATION(94038," 【{}】 未在【{}】平台备案无法更换渠道【{}】，请联系财务备案"),
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
+    ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
+    ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

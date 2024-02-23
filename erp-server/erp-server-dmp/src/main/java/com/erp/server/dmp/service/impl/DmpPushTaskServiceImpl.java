@@ -381,6 +381,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             case STOCKTAKING_PROFIT_LOSS:
             case TRANSFER_INFO:
             case WAREHOUSE:
+            case SUBCONTRACT_ISSUE:
                 wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case CUSTOMER_INFO:

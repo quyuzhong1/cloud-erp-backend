@@ -19,7 +19,8 @@ public enum DictBasicEnum {
     OUTSTOCK_TYPE("outstockType", "", "出库类型"),
     WORK_TYPE("workType", "", "事务类型"),
     MACHINE_TYPE("machineType", "", "加工单类型"),
-
+    ISSUE_TYPE("issueType", "", "发料类型"),
+    CFG_SETTING("cfgSetting", "", "系统配置"),
     ;
 
 

@@ -49,5 +49,30 @@
 
     </select>
 
+    <!--根据渠道id 获取到授权信息-->
+    <select id="listAuthChannelView" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthChannelViewDTO">
+        SELECT
+            la.id,
+            la.id AS authId,
+            la.main_id,
+            la.name,
+            la.logistics_platform,
+            ls.supplier_id,
+            ls.supplier_name,
+            ls.auth_status,
+            lc.name AS channelName,
+            lc.id AS channelId
+        FROM logistics_auth la
+        INNER JOIN logistics_supplier ls ON ls.id=la.main_id AND ls.is_deleted = FALSE
+        INNER JOIN logistics_channel lc ON lc.main_id = ls.id AND lc.is_deleted = FALSE
+        WHERE la.is_deleted = FALSE
+        <if test="channelIds!=null and channelIds.size>0">
+            AND lc.id IN
+            <foreach collection="channelIds" item="channelId" open="(" separator="," close=")">
+                #{channelId}
+            </foreach>
+        </if>
+    </select>
+
 
 </mapper>

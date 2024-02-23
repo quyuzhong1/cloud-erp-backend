@@ -168,4 +168,18 @@ public class ShopSysUserAuthDTO implements Serializable {
         private String userId;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UserAuthShopParamDTO {
+
+        /**
+         * 用户id
+         */
+        private String userId;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+    }
 }

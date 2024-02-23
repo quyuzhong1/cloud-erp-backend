@@ -60,7 +60,11 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     }
 
     protected String getQueryEmptySql(){
-        return " 1 = 2 ";
+        try {
+            return " 1 = 2 ";
+        }   finally {
+            AdvanceQueryContext.remove();
+        }
     }
 
     protected String getQueryAllSql(){

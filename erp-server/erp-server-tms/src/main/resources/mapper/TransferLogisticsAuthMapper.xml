@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferLogisticsAuthMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferLogisticsAuthEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="logistics_platform" property="logisticsPlatform" />
+       <result column="main_id" property="mainId" />
+       <result column="name" property="name" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        logistics_platform, main_id, name
+    </sql>
+
+    <!--根据渠道id 获取到授权信息-->
+    <select id="getAuthByChannelId" resultType="com.erp.model.tms.dto.TransferLogisticsSupplierDTO$AuthDTO">
+        SELECT
+            la.id,
+            la.id AS authId,
+            la.main_id,
+            la.name,
+            la.logistics_platform,
+            ls.supplier_id,
+            ls.supplier_name,
+            ls.auth_status
+        FROM transfer_logistics_auth la
+        INNER JOIN transfer_logistics_supplier ls
+        ON ls.id=la.main_id and  ls.is_deleted=false
+        WHERE ls.id = (SELECT main_id FROM transfer_logistics_channel WHERE id=#{channelId} and is_deleted = FALSE LIMIT 1)
+        AND la.is_deleted = false
+    </select>
+</mapper>

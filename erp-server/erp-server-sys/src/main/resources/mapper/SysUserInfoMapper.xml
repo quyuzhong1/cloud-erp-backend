@@ -6,11 +6,13 @@
         SELECT uid AS userId,user_name,real_name,mobile
         FROM sys_user_info
         WHERE delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
-
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
     </select>
 
     <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">
@@ -42,14 +44,16 @@
         <if test="params.endTime!=null">
             AND last_login_time &lt;=#{params.endTime}
         </if>
-
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
         <if test="roleIds !=null  and  roleIds.size()>0">
             AND uid in
-            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
+            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in
                 <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
                     #{roleId}
                 </foreach>
-            ))
+            )
         </if>
 
         ORDER BY update_time DESC
@@ -59,13 +63,16 @@
     <select id="findRoleIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_role_user sru where
-        sru.user_id=sui.uid AND sru.role_id=#{roleId} limit 1),0) AS
+        sru.user_id=sui.uid AND sru.role_id=#{params.flagId} limit 1),0) AS
         flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 
@@ -73,12 +80,15 @@
     <select id="findPostIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_post_user spu
-        where spu.user_id=sui.uid AND spu.post_id=#{postId} limit 1),0) AS flagState
+        where spu.user_id=sui.uid AND spu.post_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 
@@ -86,12 +96,15 @@
     <select id="findDepartmentIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_department_user sdu
-        where sdu.user_id=sui.uid AND sdu.department_id=#{departmentId} limit 1),0) AS flagState
+        where sdu.user_id=sui.uid AND sdu.department_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.delete_state=1
-        <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
-            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
         </if>
     </select>
 
@@ -262,6 +275,100 @@
                 and sui.update_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sui.update_time
             </if>
         </where>
+    </select>
+    <select id="srmPaging" resultType="com.erp.model.sys.vo.SupplierUserVO">
+        SELECT
+        sui.uid,
+        sui.user_name,
+        sui.real_name,
+        sui.mobile,
+        sui.email,
+        sui.is_super AS isSuper,
+        sui.user_state AS userState,
+        CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
+        sui.last_login_time,
+        sui.create_user_name,
+        sui.create_time
+        FROM sys_user_info sui
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        <where>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+          AND delete_state=1 AND user_account not in ('admin')
+<!--        <if test="params.state !=null">-->
+<!--            AND sui.user_state=#{params.state}-->
+<!--        </if>-->
+<!--        <if test="params.searchKeyword !=null and params.searchKeyword!=''">-->
+<!--            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')-->
+<!--        </if>-->
+<!--        <if test="params.startTime!=null">-->
+<!--            AND sui.last_login_time &gt;=#{params.startTime}-->
+<!--        </if>-->
+<!--        <if test="params.endTime!=null">-->
+<!--            AND sui.last_login_time &lt;=#{params.endTime}-->
+<!--        </if>-->
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
+        <if test="params.isSuper != null">
+            AND sui.is_super = #{params.isSuper}
+        </if>
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+        </where>
+        ORDER BY sui.create_time DESC
+    </select>
+    <select id="srmList" resultType="com.erp.model.sys.vo.SupplierUserVO">
+        SELECT
+        sui.uid,
+        sui.user_name,
+        sui.real_name,
+        sui.mobile,
+        sui.email,
+        sui.is_super,
+        sui.user_state AS userState,
+        CASE WHEN suw.union_id IS NULL THEN false ELSE true END AS isBindWechat,
+        sui.last_login_time,
+        sui.create_user_name,
+        sui.create_time
+        FROM sys_user_info sui
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        <where>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        AND delete_state=1 AND user_account not in ('admin')
+<!--        <if test="params.state !=null">-->
+<!--            AND sui.user_state=#{params.state}-->
+<!--        </if>-->
+<!--        <if test="params.searchKeyword !=null and params.searchKeyword!=''">-->
+<!--            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')-->
+<!--        </if>-->
+<!--        <if test="params.startTime!=null">-->
+<!--            AND last_login_time &gt;=#{params.startTime}-->
+<!--        </if>-->
+<!--        <if test="params.endTime!=null">-->
+<!--            AND last_login_time &lt;=#{params.endTime}-->
+<!--        </if>-->
+        <if test="params.userType != null and params.userType != ''">
+            AND sui.user_type = #{params.userType}
+        </if>
+        <if test="params.isSuper != null">
+            AND sui.is_super = #{params.isSuper}
+        </if>
+        <if test="params.userIds != null and params.userIds.size()>0">
+            AND sui.uid in
+            <foreach collection="params.userIds" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+        </where>
+        ORDER BY sui.create_time DESC
     </select>
 
 

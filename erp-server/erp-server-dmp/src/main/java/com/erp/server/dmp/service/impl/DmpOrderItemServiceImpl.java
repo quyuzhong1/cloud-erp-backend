@@ -357,15 +357,23 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             splitSkuDTO.setAmountAfter(dmpOrderItemEntity.getAmountAfter());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = this.splitSku(splitSkuDTO, machining, allBomList);
-            for (SplitSkuDTO skuDTO : splitSkuDTOS) {
+            if (CollectionUtil.isEmpty(splitSkuDTOS)){
+                continue;
+            }
+            for (int i = 0;i < splitSkuDTOS.size(); i++) {
+                SplitSkuDTO skuDTO = splitSkuDTOS.get(i);
                 DmpOrderItemEntity entity = new DmpOrderItemEntity();
                 BeanMapper.copy(dmpOrderItemEntity, entity);
+                //仅第一条拆分数据保存原单的成本、金额、数量
+                if (i == 0) {
+                    entity.setOriginalQuantity(skuDTO.getOriginalQuantity());
+                    entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                    entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
+                }
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
-                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
-                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());
@@ -427,7 +435,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
          */
         if (CollectionUtils.isEmpty(bomList)) {
             List<DmpSplitErrorLogEntity> errorList = new ArrayList<>();
-            SplitSkuDTO newSplitSkuDTO = handleNewSplitSku(splitSkuDTO,splitSkuDTO.getSkuNo(),errorList,Boolean.FALSE);
+            SplitSkuDTO newSplitSkuDTO = handleNewSplitSku(splitSkuDTO,splitSkuDTO.getSkuNo(),errorList,null);
             if (CollectionUtil.isNotEmpty(errorList)) {
                 dmpSplitErrorLogService.saveBatch(errorList);
             }
@@ -450,7 +458,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<DmpSplitErrorLogEntity> errorList = new ArrayList<>();
         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
             //判断子级SKU是否存在成本信息
-            SplitSkuDTO newSplitSkuDTO = handleNewSplitSku(splitSkuDTO,bomChildrenSkuDTO.getSkuNo(),errorList,Boolean.TRUE);
+            SplitSkuDTO newSplitSkuDTO = handleNewSplitSku(splitSkuDTO,bomChildrenSkuDTO.getSkuNo(),errorList,bomChildrenSkuDTO);
             itemList.add(newSplitSkuDTO);
         }
         if (CollectionUtil.isNotEmpty(errorList)) {
@@ -464,10 +472,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * @date: 2023/11/24 11:14
      * @param splitSkuDTO
      * @param skuNo
-     * @param isSplit
+     * @param bomChildrenSkuDTO
      * @return SplitSkuDTO
      */
-    private SplitSkuDTO handleNewSplitSku (SplitSkuDTO splitSkuDTO, String skuNo,List<DmpSplitErrorLogEntity> errorList,Boolean isSplit) {
+    private SplitSkuDTO handleNewSplitSku (SplitSkuDTO splitSkuDTO, String skuNo,List<DmpSplitErrorLogEntity> errorList,BomChildrenSkuDTO bomChildrenSkuDTO) {
         SplitSkuDTO newSplitSkuDTO = new SplitSkuDTO();
         BeanMapperUtils.copy(splitSkuDTO,newSplitSkuDTO);
         String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
@@ -482,10 +490,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setMsg(String.format(ApiError.ERP_DMP_SKU_NOT_COST.msg,skuNo));
             errorList.add(errorLogEntity);
         }
-        //清洗成本数据
-        newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),splitSkuDTO.getQuantity()));
         //拆分订单
-        if (isSplit) {
+        if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
             newSplitSkuDTO.setSkuNo(skuNo);
             newSplitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
             //拆分前成本信息
@@ -497,7 +503,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             DmpSkuCostEntity bomCostEntity = (DmpSkuCostEntity) redisUtil.get(bomKey);
             newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(bomCostEntity) ? BigDecimal.ZERO : bomCostEntity.getCostPrice());
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);
+            newSplitSkuDTO.setOriginalQuantity(splitSkuDTO.getQuantity());
+            newSplitSkuDTO.setQuantity(splitSkuDTO.getQuantity() * bomChildrenSkuDTO.getQuantity());
         }
+        //清洗成本数据
+        newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),newSplitSkuDTO.getQuantity()));
         return newSplitSkuDTO;
 
     }

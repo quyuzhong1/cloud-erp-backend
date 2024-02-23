@@ -25,7 +25,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -38,14 +41,13 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -56,6 +58,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
@@ -67,7 +70,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -156,6 +158,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private SoB2cFeign soB2cFeign;
 
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
+
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -165,6 +170,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
                 .in(SoOutstockEntity::getSoId, soIds).list();
     }
@@ -436,20 +444,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         result.setSoCode(soOutstock.getSoCode());
         result.setSellerId(soOutstock.getSellerId());
         if (!isB2c) {
-            SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
-            if (soInfo != null) {
-                result.setCustomerName(soInfo.getCustomerName());
-                result.setSoRemark(soInfo.getSoRemark());
-                result.setReceiveAddress(soInfo.getReceiveAddress());
-                result.setReceiverName(soInfo.getReceiverName());
-                result.setDeliveryModeName(soInfo.getDeliveryModeName());
-                result.setRequireDate(soInfo.getRequireDate());
-                result.setTelNumber(soInfo.getTelNumber());
-                result.setTypeName(soInfo.getOrderTypeName());
-                result.setSellerName(soInfo.getSellerName());
-                result.setSalesDeptId(soInfo.getSalesDeptId());
-                result.setSalesDeptName(soInfo.getSalesDeptName());
-                result.setSalesOrgName(soInfo.getSalesOrgName());
+            if (StringUtils.isNotBlank(soId)){
+                SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
+                if (soInfo != null) {
+                    result.setCustomerName(soInfo.getCustomerName());
+                    result.setSoRemark(soInfo.getSoRemark());
+                    result.setReceiveAddress(soInfo.getReceiveAddress());
+                    result.setReceiverName(soInfo.getReceiverName());
+                    result.setDeliveryModeName(soInfo.getDeliveryModeName());
+                    result.setRequireDate(soInfo.getRequireDate());
+                    result.setTelNumber(soInfo.getTelNumber());
+                    result.setTypeName(soInfo.getOrderTypeName());
+                    result.setSellerName(soInfo.getSellerName());
+                    result.setSalesDeptId(soInfo.getSalesDeptId());
+                    result.setSalesDeptName(soInfo.getSalesDeptName());
+                    result.setSalesOrgName(soInfo.getSalesOrgName());
+                }
             }
         } else {
             SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
@@ -581,6 +591,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //订单推送dmp
             syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //修改中转报关单订单出库状态
+            transferDeclareFeign.updateOutstockStatus(Arrays.asList(entity.getSoId()), TransferOutstockStatusEnum.OUTSTOCK.getCode());
         }
         return Boolean.TRUE;
     }
@@ -930,6 +943,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
             }
+
+            //修改中转报关单订单出库状态
+            transferDeclareFeign.updateOutstockStatus(soIds, TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
         }
         return result;
     }

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.srm.mapper.PoReconciliationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.PoReconciliationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="start_date" property="startDate" />
+       <result column="end_date" property="endDate" />
+       <result column="settle_org_id" property="settleOrgId" />
+       <result column="settle_org_Name" property="settleOrgName" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="amount" property="amount" />
+       <result column="currency" property="currency" />
+       <result column="reconciliation_date" property="reconciliationDate" />
+       <result column="supplier_confirm_date" property="supplierConfirmDate" />
+       <result column="purchase_confirm_date" property="purchaseConfirmDate" />
+       <result column="receive_date" property="receiveDate" />
+       <result column="supplier_confirm_user_id" property="supplierConfirmUserId" />
+       <result column="supplier_confirm_user_name" property="supplierConfirmUserName" />
+       <result column="purchase_confirm_user_id" property="purchaseConfirmUserId" />
+       <result column="purchase_confirm_user_name" property="purchaseConfirmUserName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        pr.id,
+        pr.code,
+        pr.status,
+        pr.start_date as startDate,
+        pr.end_date as endDate,
+        pr.settle_org_Name as settleOrgName,
+        pr.supplier_id as supplierId,
+        pr.supplier_name as supplierName,
+        pr.amount,
+        pr.currency,
+        pr.supplier_confirm_user_name as supplierConfirmUserName,
+        pr.purchase_confirm_user_name as purchaseConfirmUserName,
+        pr.reconciliation_date as reconciliationDate,
+        pr.supplier_confirm_date as supplierConfirmDate,
+        pr.purchase_confirm_date as purchaseConfirmDate,
+        pr.receive_date as receiveDate
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from po_reconciliation pr
+        <where>
+            ${params.sqlMap.default}
+            and pr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pr.id desc
+        </where>
+    </select>
+
+    <!-- 导出 -->
+    <select id="listExport" resultType="com.erp.model.srm.dto.PoReconciliationDTO$ListDTO">
+        select
+                <include refid="Base_Column_List" />
+        from po_reconciliation pr
+        <where>
+            ${params.sqlMap.default}
+            and pr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pr.id desc
+        </where>
+    </select>
+
+    <!-- 列表查询统计 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        SELECT
+        count(pr.id)
+        FROM  po_reconciliation pr
+        WHERE
+        ${params.sqlMap.default}
+        and pr.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+
+    <select id="viewToBeSupplierConfirm"
+            resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$AddPoReconciliationViewDTO">
+        select
+            <include refid="Base_Column_List" />
+        from po_reconciliation pr
+        <where>
+             pr.is_deleted = false and pr.status = 'toBeSupplierConfirm'
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY pr.id desc
+        </where>
+    </select>
+</mapper>

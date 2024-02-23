@@ -2,23 +2,29 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 采购订单feign
@@ -87,6 +93,18 @@ public class PurchaseOrderFeignController {
     @PostMapping("/getOrderSupplierByOrderId")
     public PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id) {
         return purchaseOrderSupplierService.getByPurchaseOrderId(id);
+    }
+
+    /**
+     * @description: 根据采购订单id集合查询供应商
+     * @author Will
+     * @date: 2024/1/25 10:15
+     * @param idList
+     * @return List<PurchaseOrderSupplierEntity>
+     */
+    @PostMapping("/listOrderSupplierByOrderIdList")
+    public List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(@RequestBody List<String> idList) {
+        return purchaseOrderSupplierService.listOrderSupplierByOrderIdList(idList);
     }
 
 
@@ -360,5 +378,125 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listPurchaseOrderCost")
     public List<SkuCostDTO> listPurchaseOrderCost(@RequestBody SkuCostDTO.ParamDTO paramDTO) {
         return purchaseOrderService.listPurchaseOrderCost(paramDTO);
+    }
+
+
+    /**
+     * 统计采购订单
+     */
+    @PostMapping("/statisticsBySupplier")
+    public PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        return purchaseOrderService.statisticsBySupplier(requestDTO);
+    }
+
+
+    /**
+     * 统计采购订单
+     */
+    @PostMapping("/statisticsExecutionStatus")
+    public PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(@RequestBody PurchaseStatisticsDTO.RequestDTO requestDTO) {
+        return purchaseOrderService.statisticsExecutionStatus(requestDTO);
+    }
+
+    /**
+     * srm订单确认列表统计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/srmOrderConfirmCount")
+    public List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(@RequestBody PurchaseOrderSrmDTO.SearchParamDTO dto) {
+        return purchaseOrderService.srmOrderConfirmCount(dto);
+    }
+
+    /**
+     * srm订单确认列表分页查询
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmPaging")
+    public PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.srmOrderConfirmPaging(dto);
+        return pagingVO;
+    }
+    /**
+     * srm订单确认列表合计
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmTotal")
+    public PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
+        return purchaseOrderService.srmOrderConfirmTotal(dto);
+    }
+    /**
+     * srm订单确认整单处理
+     * @author zdy
+     * @date: 2024/1/15 17:34
+     * @param dto
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
+     */
+    @PostMapping("/srmOrderConfirmStatus")
+    public List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
+        List<BatchResultDTO> batchResultDTOS = purchaseOrderService.srmOrderConfirmStatus(dto);
+        return batchResultDTOS;
+    }
+
+    /**
+     * 查询详情
+     * @author Will
+     * @date: 2023/3/15 17:44
+     * @param id
+     * @return ApiResult<PurchaseOrderDTO.viewDTO>
+     */
+//    @LogViewService
+    @GetMapping("/srmOrderView")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:purchaseOrder:view",
+//            serviceClass = PurchaseOrderService.class,
+//            keyIdName = "id")
+    public PurchaseOrderDTO.ViewDTO srmOrderView(@RequestParam("id") String id) {
+        return purchaseOrderService.view(id);
+    }
+
+    /**
+     * 根据采购订单获取订单信息
+     * @param orderIds
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderByIds")
+    public List<PurchaseOrderEntity> getPurchaseOrderByIds(@RequestBody Set<String> orderIds){
+        if (CollectionUtils.isEmpty(orderIds)){
+            return Collections.emptyList();
+        }
+        return purchaseOrderService.listByIds(orderIds);
+    }
+
+    /**
+     * 根据订单明细获取信息
+     * @param detailIds
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderDetailByIds")
+    public List<PurchaseOrderDetailEntity> getPurchaseOrderDetailByIds(@RequestBody List<String> detailIds){
+        if (CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
+        return purchaseOrderDetailService.listByIds(detailIds);
+    }
+
+    /**
+     * 生成送货单列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/generateDeliveryList")
+    public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
+        List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
+        return list;
     }
 }
