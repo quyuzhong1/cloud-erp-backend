@@ -101,9 +101,13 @@ public class ListingInfoDTO implements Serializable {
          * 图片
          */
         private String imagesUrl;
+        /**
+         * mSKU
+         */
+        private String mSKU;
 
         /**
-         * MSKU/FNSKU
+         * FNSKU
          */
         private String fnSku;
 
