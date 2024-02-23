@@ -164,7 +164,7 @@ public class SupplierController extends BaseController {
             }
         }
         String supplierId = supplierService.updateSupplier(dto);
-        return StringUtils.isNotBlank(supplierId) ? success(msg) : failure();
+        return StringUtils.isNotBlank(supplierId) ? successMsg(msg) : failure();
     }
 
     /**

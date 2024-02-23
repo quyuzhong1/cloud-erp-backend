@@ -804,7 +804,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "否" : "是", dto.getState() == true ? "否" : "是");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
         this.updateById(supplier);
-        return ApiResult.success(msg);
+        return ApiResult.successMsg(msg);
     }
 
 
