@@ -2,6 +2,7 @@ package com.erp.model.sys.entity.password;
 
 
 import com.common.core.utils.Md5Util;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.RandomStringUtils;
  * @Date 2022-07-06 11:49
  * @Created by yl
  */
+@Slf4j
 public class PassHandler {
 
     /**
@@ -22,7 +24,9 @@ public class PassHandler {
      */
     public static boolean checkPass(String inputPass, String salt, String pass) {
         String pwdMd5 = Md5Util.md5(inputPass);
-        return Md5Util.md5(pwdMd5 + salt).equals(pass);
+        String md5 = Md5Util.md5(pwdMd5 + salt);
+        log.info("checkPass input:{},db:{}",md5,pass);
+        return md5.equals(pass);
     }
 
     /**

@@ -3,8 +3,9 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.ReturnOrderExcelDTO;
+import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,7 +29,7 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
 
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
 
-    List<ReturnOrderExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+    List<PurchaseReturnOrderDTO.PagingViewDTO> listExport(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
@@ -49,4 +50,30 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
      **/
     IPage<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(Page query, @Param("params") PurchaseReturnOrderDTO.PdaPagingParamDTO params);
+
+    /**
+     * 供应商退货分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(Page query, @Param("params") PurchaseReturnOrderDTO.SupplierPagingParamDTO params);
+
+    /**
+     * SRM供应商退货列表tab页
+     * @param params
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList( @Param("params") PurchaseReturnOrderDTO.SupplierPagingParamDTO params);
+
+    List<PurchaseReturnStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+    /**
+     * 查询需要自动确认的退货单
+     * @Author Luo_WG
+     * @Date 2024/1/24 12:43
+     * @param list
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>
+     **/
+    List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
 }

@@ -119,6 +119,12 @@ public class DmpReturnOrderItemEntity implements Serializable {
     private BigDecimal cleanCostPrice;
 
     /**
+     * 清洗前数量
+     */
+    @TableField(value = "original_quantity")
+    private Integer originalQuantity;
+
+    /**
      * 是否拆分订单 1.拆分 2.非拆分
      */
     @TableField(value = "is_split_sku")

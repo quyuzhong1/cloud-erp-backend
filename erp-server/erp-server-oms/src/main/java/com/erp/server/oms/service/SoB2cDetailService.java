@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -139,4 +140,13 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return List<WaitDeliveryQtyDTO>
      */
     List<SoB2cDetailDTO.WaitDeliveryQtyDTO> listWaitDeliveryQty(SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO);
+
+    /**
+     * 速卖通修改仓库信息
+     * @Author Luo_WG
+     * @Date 2024/2/1 17:24
+     * @param viewDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean updateWarehouseByMapping(WarehouseMappingDTO.MappingViewDTO viewDTO);
 }

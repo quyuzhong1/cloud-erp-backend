@@ -1,10 +1,16 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -20,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 供应商信息
@@ -315,6 +322,11 @@ public class SupplierDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * SRM协同 true 否 false 是
+         */
+        private Boolean srmDisabled;
+
+        /**
          * 付款条件
          */
         private String paymentCondition;
@@ -435,6 +447,11 @@ public class SupplierDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * SRM协同 true 否 false 是
+         */
+        private Boolean srmDisabled;
+
+        /**
          * 付款条件
          */
         @NotBlank(message = "付款条件不能为空")
@@ -474,72 +491,14 @@ public class SupplierDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 供应商名
+         * 页面高级查询
          */
-        private String name;
-
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 供应商 code
+         * sqlMap 默认key default
          */
-        private String code;
-
-
-        /**
-         * 分类id集合
-         */
-        private List<String> categoryIdList;
-
-
-        /**
-         * 阶段
-         */
-        private List<String> phaseList;
-
-
-        /**
-         * 等级
-         */
-        private List<String> gradeIdList;
-
-
-        /**
-         * 采购员id
-         */
-        private List<String> purchaseUserIdList;
-
-
-        /**
-         * 联系人名
-         */
-        private String contactPerson;
-
-
-        /**
-         * 联系电话
-         */
-        private String contactTelNumber;
-
-        /**
-         * 结算方式
-         */
-        private List<String> payMethodIdList;
-
-        /**
-         * 禁用状态
-         * true 禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 创建人id集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 时间
-         */
-        private List<LocalDate> createTimeList;
+        private Map<String,String> sqlMap;
     }
 
 
@@ -612,7 +571,18 @@ public class SupplierDTO implements Serializable {
          * 分类名
          */
         private String categoryName;
-
+        /**
+         * SRM协同 true 否 false 是
+         */
+        private Boolean srmDisabled;
+        /**
+         *订单接受规则
+         */
+        private String orderAcceptRule;
+        /**
+         *退货确认规则
+         */
+        private String returnConfirmRule;
 
         /**
          * 等级id
@@ -631,7 +601,6 @@ public class SupplierDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
-
 
         /**
          * 结算付款方式
@@ -770,6 +739,11 @@ public class SupplierDTO implements Serializable {
         private String payMethodId;
 
         /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
          * 结算币种
          */
         private String payCurrency;
@@ -783,6 +757,12 @@ public class SupplierDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
 
         /**
          * 公司地址
@@ -823,6 +803,31 @@ public class SupplierDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SupplierDefaultDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商信息
+         */
+        private SupplierEntity supplierEntity;
+
+        /**
+         * 联系人信息
+         */
+        private SupplierContactEntity supplierContactEntity;
+
+        /**
+         * 账户信息
+         */
+        private SupplierAccountEntity accountEntity;
     }
 
 }

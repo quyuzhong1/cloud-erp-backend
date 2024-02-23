@@ -41,6 +41,16 @@ public class WarehouseReceiveDTO {
         private String purchaseOrderCode;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 收货人id
          */
         private String receiveUserId;
@@ -49,6 +59,12 @@ public class WarehouseReceiveDTO {
          * 收货人部门id
          */
         private String receiveDeptId;
+
+
+        /**
+         * 是否通过送货单下推 ，默认false
+         */
+        private Boolean generateByDelivery = false;
 
         /**
          * 收货日期
@@ -181,6 +197,10 @@ public class WarehouseReceiveDTO {
          * 单据编号
          */
         private String code;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
 
         /**
          * 采购订单id
@@ -191,7 +211,6 @@ public class WarehouseReceiveDTO {
          * 采购订单编号
          */
         private String purchaseOrderCode;
-
         /**
          * 供应商id
          */
@@ -347,6 +366,15 @@ public class WarehouseReceiveDTO {
          * 审核状态名称
          */
         private String approveStatusName;
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
+        private String qcStatusName;
 
         /**
          * 作废状态

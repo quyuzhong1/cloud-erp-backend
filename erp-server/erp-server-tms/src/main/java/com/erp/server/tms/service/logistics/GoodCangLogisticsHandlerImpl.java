@@ -105,6 +105,8 @@ public class GoodCangLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
         } catch (Exception e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }finally {
+            ThirdWarehouseContext.remove();
         }
     }
 

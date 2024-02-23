@@ -34,8 +34,38 @@
             where id in ( select max(id) from attachment where is_deleted = false group by business_id )
         ) att on pc.id = att.business_id
         <where>
-            ${params.sqlMap.default}
-            and pc.is_deleted = false
+            pc.is_deleted = false
+
+            <if test="params.skuName != null and params.skuName != ''">
+                and pd.name ILIKE concat('%',#{params.skuName}::text,'%')
+            </if>
+            <if test="params.attachName != null and params.attachName != ''">
+                and att.attach_name ILIKE concat('%',#{params.attachName}::text,'%')
+            </if>
+            <if test="params.remark != null and params.remark != ''">
+                and pc.remark ILIKE concat('%',#{params.remark}::text,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pd.sku_no  in
+                <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and pc.type  in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.dictProjectList != null and params.dictProjectList.size > 0">
+                and pc.dict_project  in
+                <foreach collection="params.dictProjectList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.certificateValidTimeList != null and params.certificateValidTimeList.size > 0">
+                and pc.certificate_valid_time >= #{params.certificateValidTimeList[0]} and  (#{params.certificateValidTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.certificate_valid_time
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -93,8 +123,45 @@
         inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
         inner join attachment att on pc.id = att.business_id and att.is_deleted = false
         <where>
-            ${params.sqlMap.default}
-            and po.is_deleted = false
+            pc.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and pc.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.skuName != null and params.skuName != ''">
+                    and pd.name ILIKE concat('%',#{params.skuName}::text,'%')
+                </if>
+                <if test="params.attachName != null and params.attachName != ''">
+                    and att.attach_name ILIKE concat('%',#{params.attachName}::text,'%')
+                </if>
+                <if test="params.remark != null and params.remark != ''">
+                    and pc.remark ILIKE concat('%',#{params.remark}::text,'%')
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and pd.sku_no  in
+                    <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.typeList != null and params.typeList.size > 0">
+                    and pc.type  in
+                    <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.dictProjectList != null and params.dictProjectList.size > 0">
+                    and pc.dict_project  in
+                    <foreach collection="params.dictProjectList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.certificateValidTimeList != null and params.certificateValidTimeList.size > 0">
+                    and pc.certificate_valid_time >= #{params.certificateValidTimeList[0]} and  (#{params.certificateValidTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.certificate_valid_time
+                </if>
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

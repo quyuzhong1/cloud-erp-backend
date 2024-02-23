@@ -20,7 +20,6 @@ public class SysUserPagingSearchDTO   {
 
     //角色id
     private List<String> roleIds;
-
     //搜素类型 mobile，real_name，user_name
     @NotBlank(message = "探索类型不能为空")
  //   @Pattern(regexp = "^[mobile realName userName]$", message = "搜素类型有误")
@@ -36,4 +35,9 @@ public class SysUserPagingSearchDTO   {
 
     //状态 1 正常  0 不正常
     private Integer state;
+
+    /**
+     * 用户类型 erp srm
+     */
+    private String userType ;
 }

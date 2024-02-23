@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,4 +22,6 @@ public class AccountLoginDTO implements Serializable {
 
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    private String userType;
 }

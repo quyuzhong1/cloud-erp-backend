@@ -1,7 +1,9 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -42,6 +44,21 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseDetailId;
 
         /**
+         * 下单时间 取自审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 确认类型 auto系统 手动
+         */
+        private String confirmType;
+        private String confirmTypeName;
+        /**
+         * 客户
+         */
+        private String purchaseOrgName;
+
+        /**
          * 单据类型
          */
         private String type;
@@ -60,6 +77,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 委外订单编号
          */
         private String subContractCode;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
         /**
          * 供应商名称
@@ -92,14 +114,19 @@ public class PurchaseOrderDTO implements Serializable {
         private String invalidStatusName;
 
         /**
-         * 到货状态
+         * 执行状态
          */
-        private String arrivalStatus;
+        private String executionStatus;
 
         /**
-         * 到货状态（0未到货，1部分到货，2已到货）
+         * 执行状态名称
          */
-        private String arrivalStatusName;
+        private String executionStatusName;
+
+        /**
+         * 接收说明
+         */
+        private String confirmRemark;
 
         /**
          * skuId
@@ -127,17 +154,17 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
-         * 计划交期
+         * 计划交期 [可排序] 预计交货日期
          */
         private String planDeliveryDate;
 
         /**
-         * 交货仓库名称
+         * 交货仓库名称（目的仓库）
          */
         private String deliveryWarehouseName;
 
         /**
-         * 含税单价
+         * 含税单价[可排序]
          */
         private BigDecimal taxPrice;
 
@@ -157,7 +184,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 采购数量
+         * 采购数量/订单数量[可排序]
          */
         private Integer purchaseQty;
 
@@ -167,27 +194,40 @@ public class PurchaseOrderDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 签收数量
+         * 签收数量/已送货数量/已收货数量（已签收）
          */
         private Integer receiveQty;
-
         /**
-         * 入库数量
+         * 已送货未签收数量/已送货数量（待发货页面使用）
+         */
+        private Integer waitReceiveQty;
+        /**
+         * 入库数量/已收货数量
          */
         private Integer stockInQty;
 
         /**
-         * 交货数量
+         * 未交货数量/待交货量
          */
         private Integer deliveryQty;
 
         /**
-         * 退货数量
+         * 退货数量/已退货数量
          */
         private Integer returnQty;
 
         /**
-         * 备注
+         * srm协同（true 未开启，false 已开启）
+         */
+        private Boolean srmDisabled;
+
+        /**
+         * srm协同名称（true 未开启，false 已开启）
+         */
+        private String srmDisabledName;
+
+        /**
+         * 备注/明细备注
          */
         private String remark;
 
@@ -196,13 +236,9 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String approveUserName;
 
-        /**
-         * 审核完成时间
-         */
-        private LocalDateTime approveTime;
 
         /**
-         * 申请人
+         * 申请人/客户联系人
          */
         private String purchaseUserName;
 
@@ -252,6 +288,20 @@ public class PurchaseOrderDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 交货周期
+         * product_purchase
+         */
+        private Integer deliveryCycle;
+        /**
+         * 交货周期描述
+         */
+        private String deliveryCycleName;
+        /**
+         * 交货周期标识 true 红色  false 无
+         */
+        private Boolean deliveryCycleFlag;
+
+        /**
          * 采购申请单id集合
          */
         @JsonIgnore
@@ -281,6 +331,22 @@ public class PurchaseOrderDTO implements Serializable {
 
         /**
          * 页面高级查询
+         * tabFlag,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SrmSearchParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
@@ -290,106 +356,10 @@ public class PurchaseOrderDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 搜索类型
-         */
-        private String  searchType;
-
-        /**
-         * 主键ids
-         */
-        private List<String> ids;
-
-        /**
-         * 当前登录人能审核的ids
-         */
-        private List<String> idList;
-
-        /**
-         * 单据类型集合
-         */
-        private List<String> typeList;
-
-        /**
-         * 采购订单编号
-         */
-        private String code;
-
-        /**
-         * 委外订单编号
-         */
-        private String subContractCode;
-
-        /**
-         * 来源单号
-         */
-        private String sourceCode;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * sku编码
-         */
-        private List<String> skuNoList;
-
-        /**
          * 供应商id
          */
-        private List<String> supplierIdList;
-
-        /**
-         * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 作废状态（false未作废，true已作废）
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 到货状态（0未到货，1部分到货，2已到货）
-         */
-        private List<String> arrivalStatusList;
-
-        /**
-         * 是否加急（false否，true是）
-         */
-        private Boolean isUrgent;
-
-        /**
-         * 交货仓库id
-         */
-        private List<String> deliveryWarehouseIdList;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 审核时间
-         */
-        private List<LocalDate> approveTimeList;
-
-        /**
-         * 申请人id
-         */
-        private List<String> purchaseUserIdList;
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
+        private String supplierId;
     }
-
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
@@ -406,7 +376,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseUserId;
 
         /**
-         * 采购员名称
+         * 采购员名称/客户联系人
          */
         private String purchaseUserName;
 
@@ -420,19 +390,29 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
-
+        /**
+         * 采购组织名称/客户
+         */
+        private String purchaseOrgName;
         /**
          * 交货仓库id
          */
         @NotBlank(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
+        /**
+         * 目的仓库/交货仓库
+         */
+        private String deliveryWarehouseName;
 
         /**
          * 新品首批（false否,true是）
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
-
+        /**
+         * 新品首批 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
         /**
          * 委外订单类型(child子级，parent父级)
          */
@@ -490,6 +470,14 @@ public class PurchaseOrderDTO implements Serializable {
         private String id;
 
         /**
+         * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+         */
+        private String executionStatus;
+        /**
+         * 执行状态描述
+         */
+        private String executionStatusName;
+        /**
          * 供应商信息
          */
         @Valid
@@ -528,7 +516,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
-
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
         /**
          * 收料组织id
          */
@@ -538,6 +529,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 收料组织名称
          */
         private String receiveOrgName;
+
+        /**
+         * 已审核通过时间/下单时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 操作流程（仅详情显示，无需传参）
@@ -1073,6 +1069,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 采购订单编号
+         */
+        private String code;
+
+        /**
          * 收料组织
          */
         private String ReceiveOrgId;
@@ -1518,5 +1519,35 @@ public class PurchaseOrderDTO implements Serializable {
         @Valid
         @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.PdaViewDTO> details;
+    }
+
+    /**
+     * SRM 整单接受/拒绝
+     * @Author zdy
+     * @Date 2023/8/21 16:33
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmDTO{
+        /**
+         * 主键id 订单id
+         */
+        @NotEmpty(message = "订单不能为空")
+        private List<String> ids;
+        /**
+         * 1整单接受 2整单拒绝
+         */
+        @NotNull(message = "处理状态不能为空")
+        @StateEnumValue(intValues = {1,2},message = "处理状态有误")
+        private Integer status;
+
+        /**
+         * 操作说明 接受原因/拒绝原因
+         */
+        private String remark;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 }

@@ -194,6 +194,18 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
     @Override
     public Serializable pkVal() {
         return null;

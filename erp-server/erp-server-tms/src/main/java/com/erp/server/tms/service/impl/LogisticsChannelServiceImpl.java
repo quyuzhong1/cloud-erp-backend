@@ -400,7 +400,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.BaseDTO getInfoById(String channelId) {
         LogisticsChannelEntity entity = this.getById(channelId);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         LogisticsChannelDTO.BaseDTO baseDTO = new LogisticsChannelDTO.BaseDTO();
         BeanMapperUtils.copy(entity, baseDTO);
@@ -426,9 +426,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
         for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
             }
         }
         return baseDTOS;
@@ -487,7 +489,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String mainId = logisticsChannelEntity.getMainId();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(logisticsSupplier)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
 
         //纸张大小
@@ -513,6 +515,30 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             maxWeight = zero;
         }
         logisticsChannelEntity.setMaxWeight(maxWeight);
+        BigDecimal maxHeight = logisticsChannelEntity.getMaxHeight();
+        if (Objects.isNull(maxHeight)) {
+            maxHeight = zero;
+        }
+        logisticsChannelEntity.setMaxHeight(maxHeight);
+        BigDecimal maxLength = logisticsChannelEntity.getMaxLength();
+        if (Objects.isNull(maxLength)) {
+            maxLength = zero;
+        }
+        logisticsChannelEntity.setMaxLength(maxLength);
+        BigDecimal maxWidth = logisticsChannelEntity.getMaxWidth();
+        if (Objects.isNull(maxWidth)) {
+            maxWidth = zero;
+        }
+        logisticsChannelEntity.setMaxWidth(maxWidth);
+        //长宽高单个值不能为空，需大于0
+        if (logisticsChannelEntity.getMaxHeight().compareTo(BigDecimal.ZERO) == 0 || logisticsChannelEntity.getMaxLength().compareTo(BigDecimal.ZERO) == 0
+                || logisticsChannelEntity.getMaxWidth().compareTo(BigDecimal.ZERO) == 0){
+            //存在空值，校验是否存在非空值，存在则报错
+            if (logisticsChannelEntity.getMaxHeight().compareTo(BigDecimal.ZERO) != 0 || logisticsChannelEntity.getMaxLength().compareTo(BigDecimal.ZERO) != 0
+                    || logisticsChannelEntity.getMaxWidth().compareTo(BigDecimal.ZERO) != 0){
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY);
+            }
+        }
         String code = logisticsChannelEntity.getCode();
         if (StringUtils.isNotBlank(code)) {
             LogisticsAuthEntity auth = logisticsAuthService.getByMainId("", mainId);

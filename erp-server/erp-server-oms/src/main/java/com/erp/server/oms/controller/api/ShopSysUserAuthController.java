@@ -53,7 +53,4 @@ public class ShopSysUserAuthController extends BaseController {
         return success(viewDTO);
     }
 
-
-
-
 }

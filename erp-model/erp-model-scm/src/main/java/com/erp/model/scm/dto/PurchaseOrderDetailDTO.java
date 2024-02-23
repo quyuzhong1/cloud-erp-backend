@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -150,6 +151,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 未交货数量
          */
         private Integer unReceiveQty;
+        /**
+         * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+         */
+        private String executionStatus;
+        /**
+         * 执行状态描述
+         */
+        private String executionStatusName;
     }
 
     @Data
@@ -267,6 +276,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
     public static class ViewProductDTO {
 
         /**
+         * 采购单号
+         */
+        private String  code;
+
+        /**
          * skuId
          */
         private String  skuId;
@@ -297,6 +311,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer receiveQty;
 
         /**
+         * 已发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
          * 未交货数量
          */
         private Integer unReceiveQty;
@@ -322,7 +341,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer realityReturnQty;
 
         /**
-         * 超收数量
+         * 超收数量(赠品收货数量)
          */
         private Integer exceedQty;
 
@@ -385,6 +404,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 一级供应商名称
          */
         private String mainSupplierName;
+
+        /**
+         * 采购员
+         */
+        private String purchaseUserName;
     }
 
     /**
@@ -558,5 +582,18 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 未交货数量
          */
         private Integer hasStockInQty;
+    }
+
+    /**
+     * 明细id
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderConfirmDTO {
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
     }
 }

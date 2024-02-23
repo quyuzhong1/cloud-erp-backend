@@ -78,6 +78,12 @@ public class LogisitcsDTO implements Serializable {
     @SerializedName("ship_order_id")
     private String  shipOrderId;
 
+    /**
+     * 发货仓库名称
+     */
+    @SerializedName("warehouse_name")
+    private String warehouseName;
+
 
 
 

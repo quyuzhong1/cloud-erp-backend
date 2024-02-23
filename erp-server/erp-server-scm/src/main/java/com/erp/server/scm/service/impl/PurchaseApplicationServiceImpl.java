@@ -34,10 +34,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -147,32 +144,32 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PermissionsDTO dto) {
-        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        PurchaseTableFlagEnum[] values = PurchaseTableFlagEnum.values();
         List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = new ArrayList<>();
-        for (PurchaseListTypeEnum item: values) {
+        for (PurchaseTableFlagEnum item: values) {
             PurchaseApplicationDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseApplicationCountDTO resultDTO = new ListStatusCountDTO.PurchaseApplicationCountDTO();
             Integer count = MathUtil.ZERO;
-            if(PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+            if(PurchaseTableFlagEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (PurchaseTableFlagEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
+            if (PurchaseTableFlagEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
                 searchParamDTO.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus(),CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
+            if (PurchaseTableFlagEnum.CREATED.getCode().equals(item.getCode())) {
                 searchParamDTO.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (PurchaseTableFlagEnum.REJECT.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }

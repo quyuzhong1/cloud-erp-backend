@@ -67,8 +67,8 @@ public class AliExpressAuthService {
         JSONObject jsonObject = null;
         Map<String, String> map = new HashMap<>();
         map.put("clientId", "502978");
-        map.put("clientSecret", "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY");
-        map.put("code", "3_502978_EPYGramC2BZviZfQbDkHVLqJ350");
+        map.put("clientSecret", "3_502978_YNyPkGTynMfcDkZYcOXO58qf299");
+        map.put("code", "3_502978_6mwqSBdkUNNnw3ncwnXkusoj252");
         map.put("baseUrl", "https://api-sg.aliexpress.com");
         try {
             jsonObject= service.generateToken(map);

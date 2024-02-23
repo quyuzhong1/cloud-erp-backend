@@ -52,7 +52,7 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @param response 
      * @return Boolean 
      */
-    Boolean exportExcel(ProductCertificateDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProductCertificateDTO.ExportParamDTO dto, HttpServletResponse response);
 
     /**
      * @description: 新增

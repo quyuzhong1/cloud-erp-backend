@@ -49,6 +49,19 @@ public class SkuVO implements Serializable {
     private Integer unitQty;
 
     /**
+     * 长
+     */
+    private BigDecimal length;
+    /**
+     * 宽
+     */
+    private BigDecimal width;
+    /**
+     * 高
+     */
+    private BigDecimal height;
+
+    /**
      * sku 名称
      */
     private String skuName = "";
@@ -104,6 +117,16 @@ public class SkuVO implements Serializable {
      * 产品品牌
      */
     private String brandName;
+
+    /**
+     * 分类id
+     */
+    private String categoryId;
+
+    /**
+     * 分类名称
+     */
+    private String categoryName;
 
     /**
      * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架

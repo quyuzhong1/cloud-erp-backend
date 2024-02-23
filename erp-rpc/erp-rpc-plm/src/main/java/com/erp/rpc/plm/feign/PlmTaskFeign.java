@@ -90,6 +90,9 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
 
+    @PostMapping("feign/product/listBySkuNoList")
+    List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNoList);
+
     /**
      * @return List<SkuVO>
      * @description: 获取已审核sku
@@ -231,6 +234,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listBomChildBySkuIds")
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuid获取bom类型信息
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("feign/bom/listBomBySkuIds")
+    List<BomChildrenSkuDTO> listBomBySkuIds(@RequestBody List<String> skuIds);
 
     /**
      * 查询bom子件信息

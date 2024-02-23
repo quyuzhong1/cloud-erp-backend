@@ -102,6 +102,15 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      */
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 
+    /**
+     * 根据渠道id查询关联的平台信息
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:24
+     * @param channelIdList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsSupplierDTO.AuthChannelViewDTO>
+     **/
+    List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(List<String> channelIdList);
+
     ApiResult authLogistics(String id, String logisticsPlatform);
 
     /**

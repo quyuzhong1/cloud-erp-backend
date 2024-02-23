@@ -35,11 +35,7 @@ public class PackingInspectionDTO implements Serializable {
         @NotBlank(message = "操作类型不能为空")
         private String operationType;
 
-        /**
-         * 是否自动发货
-         */
-        @NotNull(message = "是否自动发货不能为空")
-        private Boolean isAutoDelivery;
+
 
         /**
          * 业务单号：运单号或销售订单编号

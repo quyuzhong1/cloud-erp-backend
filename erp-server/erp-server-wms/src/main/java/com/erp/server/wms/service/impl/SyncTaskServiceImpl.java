@@ -87,6 +87,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private SyncKingdeeWarehouseService syncKingdeeWarehouseService;
 
+    @Resource
+    private SubcontractIssueService subcontractIssueService;
+
+    @Resource
+    private SyncKingdeeSubcontractIssueService syncKingdeeSubcontractIssueService;
+
     @Override
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
@@ -125,7 +131,29 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 return;
             case WAREHOUSE:
                 syncWarehouse(sourceDetailList);
+            case SUBCONTRACT_ISSUE:
+                syncSubcontractIssue(sourceDetailList);
                 return;
+        }
+    }
+
+    /**
+     * 仓库
+     * @param sourceDetailList
+     */
+    private void syncSubcontractIssue(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SubcontractIssueEntity> list = subcontractIssueService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncWarehouse >>>> 未找到数据！");
+            return;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            SubcontractIssueEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,syncParamDetailDTO.getSyncOperate());
         }
     }
 

@@ -36,7 +36,7 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * @param supplierId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
-    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
 
     /**
      * 根据供应商id 获取到对应明细

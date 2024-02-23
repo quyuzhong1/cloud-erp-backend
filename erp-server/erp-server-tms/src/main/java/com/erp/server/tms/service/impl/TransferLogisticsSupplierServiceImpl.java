@@ -1,0 +1,348 @@
+package com.erp.server.tms.service.impl;
+
+
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
+import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
+import com.erp.server.tms.convert.TransferLogisticsSupplierConverter;
+import com.erp.server.tms.handler.TransferLogisticsRegistry;
+import com.erp.server.tms.mapper.TransferLogisticsSupplierMapper;
+import com.erp.server.tms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * 中转报关服务商表 服务实现类
+ * </p>
+ *
+ * @author Luo_WG
+ * @since 2024-01-19
+ */
+@Slf4j
+@Service
+public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<TransferLogisticsSupplierMapper, TransferLogisticsSupplierEntity> implements TransferLogisticsSupplierService {
+    @Autowired
+    private OperateLogService operateLogService;
+
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
+    @Autowired
+    private TransferLogisticsChannelService transferLogisticsChannelService;
+
+    @Autowired
+    private TransferLogisticsAuthService transferLogisticsAuthService;
+
+    @Autowired
+    private TransferLogisticsRegistry transferLogisticsRegistry;
+
+    @Autowired
+    private TransferDeclareService transferDeclareService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(TransferLogisticsSupplierDTO.AddDTO addDTO) {
+        TransferLogisticsSupplierEntity logisticsSupplierEntity = new TransferLogisticsSupplierEntity();
+        BeanMapperUtils.copy(addDTO, logisticsSupplierEntity);
+
+        // 数据处理
+        handleData(logisticsSupplierEntity);
+
+        boolean save = super.save(logisticsSupplierEntity);
+        if (!save) {
+            throw new ServiceException("物流商保存失败");
+        }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
+    }
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(TransferLogisticsSupplierDTO.UpdateDTO updateDTO) {
+        TransferLogisticsSupplierEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
+        TransferLogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(TransferLogisticsSupplierEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(logisticsSupplierEntity);
+        log.info("编辑 开始修改物流商单数据，id：【{}】", old.getId());
+        boolean save = super.updateById(logisticsSupplierEntity);
+        if (!save) {
+            throw new ServiceException("物流商单保存失败");
+        }
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<TransferLogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<TransferLogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
+        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_LOGISTICS_AUTH_STATUS.getType());
+        List<TransferLogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
+        for (DictBasicDTO.ViewDTO item : typeList) {
+            TransferLogisticsSupplierDTO.TabListDTO tab = new TransferLogisticsSupplierDTO.TabListDTO();
+            String type = item.getCode();
+            tab.setTabFlag(type);
+            Integer count = list.stream().filter(l -> l.getTabFlag().equals(type)).
+                    map(TransferLogisticsSupplierDTO.TabListDTO::getCount).findFirst().orElse(0);
+            tab.setCount(count);
+            resultList.add(tab);
+
+        }
+        return resultList;
+    }
+
+    @Override
+    public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<TransferLogisticsSupplierDTO.PagingParamDTO> dto) {
+        TransferLogisticsSupplierDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<TransferLogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
+        fillPagingData(list);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<TransferLogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id, String name) {
+        TransferLogisticsSupplierEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        //查询渠道信息
+        List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByMainIds(Arrays.asList(id));
+        List<TransferLogisticsChannelDTO.ViewDTO> allChannelList = BeanMapperUtils.copyList(TransferLogisticsChannelDTO.ViewDTO.class, channelEntityList);
+
+        //设置返回的渠道值
+        List<TransferLogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
+        TransferLogisticsSupplierDTO.ChannelViewDTO channelView = new TransferLogisticsSupplierDTO.ChannelViewDTO();
+        channelView.setChannelList(allChannelList);
+        viewList.add(channelView);
+        return viewList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        TransferLogisticsSupplierEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        // 检查订单是否引用
+        Boolean flag = transferDeclareService.checkExistTransferLogisticsSupplier(id);
+        if (flag) {
+            throw new ServiceException(ApiError.EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE);
+        }
+
+        this.removeById(id);
+
+        //删除渠道根据来源id
+        transferLogisticsChannelService.removeByMainIdList(Arrays.asList(id));
+        return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO sync(String id) {
+        TransferLogisticsSupplierEntity logisticsSupplier = this.getById(id);
+        if (Objects.isNull(logisticsSupplier)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        String authStatus = logisticsSupplier.getAuthStatus();
+        String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
+        if (!alreadyCode.equals(authStatus)) {
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+        TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", id);
+        if (Objects.isNull(authEntity)) {
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+        String logisticsPlatform = authEntity.getLogisticsPlatform();
+
+        Integer totalSize = 0;
+        TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
+        ApiResult<List<TransferLogisticsChannelEntity>> shippingMethodList = service.getShippingMethodList(authEntity.getId());
+        if (shippingMethodList.isSuccess()) {
+            shippingMethodList.getData().forEach(logisticsSaleChannelEntity -> {
+                logisticsSaleChannelEntity.setMainId(id);
+                transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
+            });
+            totalSize = shippingMethodList.getData().size();
+        }
+
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + totalSize + "个渠道");
+    }
+
+
+    @Override
+    public Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
+        List<TransferLogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        fillPagingData(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/transferLogisticsSupplier.xlsx";
+        String name = "中转报关服务商列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("中转报关服务商列表导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAll() {
+        List<TransferLogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAlreadyAll() {
+        List<TransferLogisticsSupplierEntity> list = lambdaQuery().eq(TransferLogisticsSupplierEntity::getAuthStatus, TransferLogisticsAuthStatusEnum.ALREADY.getCode()).list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = TransferLogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
+    }
+
+    @Override
+    public Boolean updateDisabledBySupplierId(TransferLogisticsSupplierDTO.UpdateDisabledDTO dto) {
+        return this.lambdaUpdate().eq(TransferLogisticsSupplierEntity::getSupplierId, dto.getSupplierId()).
+                set(TransferLogisticsSupplierEntity::getDisabled, dto.getDisabled()).update();
+    }
+
+    @Override
+    public List<BaseChildDTO.ListChildTreeDTO> tree() {
+        List<TransferLogisticsSupplierEntity> dbList = this.list();
+        List<BaseChildDTO.ListChildTreeDTO> list = TransferLogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+        List<TransferLogisticsChannelEntity> allChannelList = transferLogisticsChannelService.list();
+        String already = TransferLogisticsAuthStatusEnum.ALREADY.getCode();
+
+        for (BaseChildDTO.ListChildTreeDTO item : list) {
+            String id = item.getId();
+            TransferLogisticsSupplierEntity logisticsSupplier = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsSupplier)) {
+                String authStatus = logisticsSupplier.getAuthStatus();
+                if (!already.equals(authStatus)) {
+                    item.setDisabled(Boolean.TRUE);
+                }
+            }
+            List<TransferLogisticsChannelEntity> channelList = allChannelList.stream().
+                    filter(c -> c.getMainId().equals(id)).sorted(Comparator.comparing(TransferLogisticsChannelEntity::getDisabled)).
+                    collect(Collectors.toList());
+            List<BaseChildDTO.ListChildTreeDTO> childrenList = TransferLogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            item.setChildren(childrenList);
+        }
+        return list;
+    }
+
+
+    @Override
+    public List<TransferLogisticsSupplierDTO.AuthDTO> listAllAuth() {
+
+        return baseMapper.listAllAuth();
+    }
+
+    @Override
+    public List<TransferLogisticsSupplierDTO.AuthDTO> listAuthByMainIds(List<String> transferSupplierIdList) {
+        if(CollectionUtils.isEmpty(transferSupplierIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listAuthByMainIds(transferSupplierIdList);
+    }
+
+    @Override
+    public List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId) {
+        return baseMapper.listBySupplierId(supplierId);
+    }
+
+    /**
+     * 填充分页数据
+     *
+     * @param list
+     */
+    private void fillPagingData(List<TransferLogisticsSupplierDTO.PagingViewDTO> list) {
+        for (TransferLogisticsSupplierDTO.PagingViewDTO item : list) {
+            Boolean disabled = item.getDisabled();
+            String disabledName = Objects.nonNull(disabled) && !disabled ? "启用" : "禁用";
+            item.setDisabledName(disabledName);
+            String authStatus = item.getAuthStatus();
+            String authStatusName = TransferLogisticsAuthStatusEnum.getName(authStatus);
+            item.setAuthStatusName(authStatusName);
+
+            //获取服务商编号
+            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", item.getId());
+            if (ObjectUtil.isNotEmpty(authEntity)) {
+                String logisticsPlatform = authEntity.getLogisticsPlatform();
+                item.setLogisticsPlatform(logisticsPlatform);
+            }
+        }
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(TransferLogisticsSupplierEntity logisticsSupplierEntity) {
+        String logisticsSupplier = "物流供应商";
+        String supplierId = logisticsSupplierEntity.getSupplierId();
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException("供应商不存在");
+        }
+        //供应商分类名
+        String supplierCategoryName = supplier.getCategoryName();
+        if (!logisticsSupplier.equals(supplierCategoryName)) {
+            throw new ServiceException("供应商分类不为物流供应商");
+        }
+        logisticsSupplierEntity.setSupplierName(supplier.getName());
+
+    }
+}

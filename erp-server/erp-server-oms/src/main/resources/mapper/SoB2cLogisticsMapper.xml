@@ -54,7 +54,8 @@
             logistics_channel_id
       FROM so_b2c_logistics
       WHERE is_deleted=FALSE
-      AND track_no='';
+      AND track_no=''
+      AND code!=''
     </select>
 
 

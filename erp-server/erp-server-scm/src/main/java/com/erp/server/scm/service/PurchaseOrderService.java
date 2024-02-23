@@ -29,8 +29,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return PagingVO<PurchaseOrderDTO.listDTO>
      */
     PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
-
-    PagingVO<PurchaseOrderDTO.ListDTO> testQuery(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseOrderDTO.ListDTO> srmOrderConfirmPaging(PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
@@ -151,11 +150,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
     /**
-     * @description: 
+     * @description:
      * @author Will
      * @date: 2023/3/27 15:51
      * @param dto
-     * @return Boolean 
+     * @return Boolean
      */
     Boolean updateAndSubmit(PurchaseOrderDTO.UpdateDTO dto);
     /**
@@ -234,7 +233,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(List<String> purchaseOrderIds);
 
-    
+
     /**
      * 采购订单 下推 退货数据显示
      * @author yl
@@ -383,4 +382,55 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<SkuCostDTO>
      */
     List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO);
+
+    PurchaseStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    /**
+     * SRM 订单确认列表统计
+     * @param dto
+     * @return
+     */
+    List<ListStatusCountDTO.PurchaseOrderConfirmCountDTO> srmOrderConfirmCount(PurchaseOrderSrmDTO.SearchParamDTO dto);
+    /**
+     * @description: 供应商确认
+     * @author Will
+     * @date: 2024/1/16 17:10
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO supplierConfirm(String id);
+
+    /**
+     * 批量接受/拒绝
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> srmOrderConfirmStatus(PurchaseOrderDTO.ConfirmDTO dto);
+    /**
+     * @description: 定时任务自动确认
+     * @author Will
+     * @date: 2024/1/17 10:28
+     */
+    void purchaseOrderAutoConfirm();
+
+    /**
+     * srm订单确认列表合计
+     * @param dto
+     * @return
+     */
+    PurchaseOrderDTO.ListDTO srmOrderConfirmTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
+
+    /**
+     * 生成送货单
+     * @param dto
+     * @return
+     */
+    List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto);
+
+    PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    /**
+     * 同步已审核 已确认订单到srm
+     */
+    void syncConfirmOrder();
 }

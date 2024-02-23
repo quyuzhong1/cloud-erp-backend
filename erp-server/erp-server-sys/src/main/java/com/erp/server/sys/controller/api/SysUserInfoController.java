@@ -1,9 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -48,6 +50,7 @@ public class SysUserInfoController extends BaseController {
      */
     @RequestMapping("/list")
     public ApiResult list(@RequestBody SysSearchUserDTO dto) {
+        dto.setUserType(UserTypeEnum.ERP.code);
         List<UserDTO> list = sysUserInfoService.findList(dto);
         return success(list);
     }
@@ -59,7 +62,8 @@ public class SysUserInfoController extends BaseController {
      */
     @RequestMapping("/paging")
     public ApiResult list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
-        PagingVO pagingVO = sysUserInfoService.paging(dto);
+        dto.getParams().setUserType(UserTypeEnum.ERP.code);
+        PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -80,6 +84,7 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加用户")
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.add(sysUserInfoDTO);
         return success();
     }
@@ -90,6 +95,7 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户", keyIdName = "uid")
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.update(sysUserInfoDTO);
         return success();
     }
@@ -125,11 +131,12 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
-    @GetMapping("/resetPassword")
-    public ApiResult resetPassword(@RequestParam("uid") String uid) {
-        Boolean flag = sysUserInfoService.resetPassword(uid);
-        return flag == true ? success() : failure();
+    @DataIdempotent(keyIdName = "uid")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid},用户密码={pwd}")
+    @GetMapping("/changePassword")
+    public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        Boolean flag = sysUserInfoService.changePassword(uid,pwd);
+        return flag ? success() : failure();
     }
 
     /**
@@ -142,8 +149,9 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "忘记密码:账号={userAccount}")
     @PostMapping("/forgotPassword")
     public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
+        dto.setUserType(UserTypeEnum.ERP.code);
         Boolean flag = sysUserInfoService.forgotPassword(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
     /**
@@ -156,7 +164,29 @@ public class SysUserInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "忘记密码-获取验证码:账号={userAccount}")
     @GetMapping("/forgotPasswordGetCode")
     public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
-        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
+        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount,UserTypeEnum.ERP.code);
+        return success(map);
+    }
+
+
+    /**
+     * srm忘记密码
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "忘记密码:账号={userAccount}")
+    @PostMapping("/srmForgotPassword")
+    public ApiResult srmForgotPassword(@RequestBody ForgotPasswordDTO dto) {
+        dto.setUserType(UserTypeEnum.SRM.code);
+        Boolean flag = sysUserInfoService.forgotPassword(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * SRM用户忘记密码-获取验证码
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "SRM用户忘记密码-获取验证码:账号={account}")
+    @GetMapping("/srmForgotPasswordGetCode")
+    public ApiResult<Map<String,Object>> srmForgotPasswordGetCode(@RequestParam("account") String account) {
+        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(account,UserTypeEnum.SRM.code);
         return success(map);
     }
 

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.AttachDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
@@ -30,6 +31,19 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      * @return void
      */
     void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
+
+
+
+
+    /**
+     * 批量保存附件信息
+     * @author yl
+     * @date 2023-03-23 16:09
+     * @param type
+     * @param businessId
+     * @return void
+     */
+    void batchSave(List<AttachDTO> attachmentList, String type, String businessId);
 
     /**
      * 批量保存附件信息(不删除原有附件)
