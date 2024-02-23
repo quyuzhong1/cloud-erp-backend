@@ -62,6 +62,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1092,5 +1093,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
+    }
+
+    @Override
+    public void customersDataRequest(ShopifyWebhookDTO.CustomersDataRequestDTO dto, HttpServletResponse response, HttpServletRequest request) {
+
+    }
+
+    @Override
+    public void customersRedact(ShopifyWebhookDTO.CustomersRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
+
+    }
+
+    @Override
+    public void shopRedact(ShopifyWebhookDTO.ShopRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
+
     }
 }
