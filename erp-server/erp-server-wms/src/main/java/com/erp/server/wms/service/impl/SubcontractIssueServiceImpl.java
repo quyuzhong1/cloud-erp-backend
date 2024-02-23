@@ -539,7 +539,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 detailDTO.setCurInventoryQty(curInventoryQty);
 
                 //已发料数量
-                Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+                Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(detailDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailDTO.setHasIssueQty(hasIssueQty);
                 detailList.add(detailDTO);
@@ -691,12 +691,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                     .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             viewDTO.setCurInventoryQty(curInventoryQty);
             //已发料数量
-            Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+            Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(viewDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                     .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDTO.setHasIssueQty(hasIssueQty);
 
             //委外明细父级来源id
-            String parentSourceDetailId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(viewDTO.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            String parentSourceDetailId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(viewDTO.getSubcontractOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
             viewDTO.setParentSourceDetailId(parentSourceDetailId);
         }
         data.setDetailList(detailList);
