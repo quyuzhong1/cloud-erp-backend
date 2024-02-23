@@ -2695,7 +2695,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date 2023-03-21 12:06
      */
     @Override
-    @Cacheable(cacheNames = "cache:plm:getSkuInfoBySkuIds",keyGenerator = "myKeyGenerator")
     public List<SkuVO> getSkuInfoBySkuIds(List<String> skuIds) {
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
