@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Will
@@ -69,14 +70,19 @@ public class BaseDropDownDTO implements Serializable {
          */
         private Boolean disabled;
         /**
-         * 启用/禁用
+         * srm 启用/禁用
          */
         private Boolean srmDisabled;
+        /**
+         * 供应商在协同用户中是否能够使用
+         */
+        private Boolean supplierDisabled;
         public SrmDisabledDTO(String code, String value, Boolean disabled, Boolean srmDisabled) {
             this.setCode(code);
             this.setValue(value);
             this.disabled = disabled;
             this.srmDisabled = srmDisabled;
+            this.supplierDisabled = Objects.isNull(disabled) || Objects.isNull(srmDisabled) || (disabled || srmDisabled);
         }
     }
     @Data
