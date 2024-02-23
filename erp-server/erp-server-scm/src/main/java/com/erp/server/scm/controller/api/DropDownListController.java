@@ -83,7 +83,22 @@ public class DropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
-
+    /**
+     * 已审核且启用 srm 供应商下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/supplier/srmList")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> srmListSupplierDropDown() {
+        List<Map<String, Object>> mapList = supplierService.srmListApproveSupplier();
+        if (CollectionUtils.isEmpty(mapList)) {
+            return success(new ArrayList<>());
+        }
+        List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled")))
+                .collect(Collectors.toList());
+        return success(result);
+    }
 
     /**
      * 所有供应商下拉列表

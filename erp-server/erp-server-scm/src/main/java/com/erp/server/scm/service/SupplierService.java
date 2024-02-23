@@ -149,6 +149,15 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     List<Map<String, Object>> listApproveSupplier();
 
     /**
+     * 获取供应商
+     * 获取 审核通过且开启的供应商
+     *
+     * @return
+     * @author yl
+     */
+    List<Map<String, Object>> srmListApproveSupplier();
+
+    /**
      * 反审核
      *
      * @param ids

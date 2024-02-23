@@ -818,15 +818,30 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<Map<String, Object>> listApproveSupplier() {
         LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled);
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled, SupplierEntity::getSrmDisabled);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
-        queryWrapper.eq(SupplierEntity::getSrmDisabled,Boolean.FALSE);
-        queryWrapper.eq(SupplierEntity::getDisabled,Boolean.FALSE);
         return this.listMaps(queryWrapper);
     }
-
+    /**
+     * 获取供应商
+     * 获取 审核通过且开启的供应商 且开启srm协同
+     *
+     * @return
+     * @author zdy
+     */
+    @Override
+    public List<Map<String, Object>> srmListApproveSupplier() {
+        LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled, SupplierEntity::getSrmDisabled);
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
+        queryWrapper.eq(SupplierEntity::getDisabled,Boolean.FALSE);
+        queryWrapper.eq(SupplierEntity::getSrmDisabled,Boolean.FALSE);
+        return this.listMaps(queryWrapper);
+    }
 
     /**
      * 反审核
