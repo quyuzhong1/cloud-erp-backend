@@ -2,23 +2,19 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -27,22 +23,19 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueDetailMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 委外发料明细单 服务实现类
@@ -168,6 +161,14 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
 
+    @Override
+    public List<SubcontractIssueDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList) {
+        if (CollectionUtils.isEmpty(subcontractOrderDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
+    }
+
     /**
      * 查询需要删除的数据
      */
@@ -273,7 +274,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subcontractOrderDetailIdList);
 
         //委外明细已关联的委外发料
-        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySourceDetailIdList(subcontractOrderDetailIdList);
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         for (SubcontractIssueDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
@@ -283,7 +284,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             //正常领料需要验证发料数量
             if (SubcontractIssueTypeEnum.NORMAL.getCode().equals(subcontractIssueEntity.getType())) {
                 //已下推发料数量
-                Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getSubcontractOrderDetailId())
+                Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
                                 && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (MathUtil.add(totalIssueQty,entity.getIssueQty()) > detailEntity.getDeliveryQty()) {
