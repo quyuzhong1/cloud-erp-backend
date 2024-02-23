@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -50,24 +51,30 @@ public class GetLogisticsTrackNoTaskJob {
         List<SoB2cLogisticsDTO.TrackNoDTO> list = soB2cFeign.listTrackNoEmptyList();
         List<String> channelIdList = list.stream().map(SoB2cLogisticsDTO.TrackNoDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.LogisticsPlatformDTO> platformList=logisticsChannelService.listChannelPlatform(channelIdList);
-        logisticsAuthService.listAuthChannelView(channelIdList);
+        //物流权限
+        List<LogisticsSupplierDTO.AuthChannelViewDTO> logisticsAuthList = logisticsAuthService.listAuthChannelView(channelIdList);
+        //平台分组
         Map<String,List<LogisticsChannelDTO.LogisticsPlatformDTO>> platformMap= platformList.stream().
                 collect(Collectors.groupingBy(LogisticsChannelDTO.LogisticsPlatformDTO::getLogisticsPlatform));
 
-        List<LogisticsQueryBaseVO> logisticsQuery = listQuery(list);
+
 
         for (Map.Entry<String, List<LogisticsChannelDTO.LogisticsPlatformDTO>> entry : platformMap.entrySet()) {
-
+            String logisticsPlatform = entry.getKey();
+            List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList = entry.getValue();
+            //这个平台对应的渠道id
+            List<String> platformChannelIdList=platformLogisticsList.stream().map(LogisticsChannelDTO.LogisticsPlatformDTO::getChannelId).
+                    distinct().collect(Collectors.toList());
+            //需要查找的集合
+            List<SoB2cLogisticsDTO.TrackNoDTO>  queryBaseList=list.stream().filter(item->platformChannelIdList.contains(item.getLogisticsChannelId())).collect(Collectors.toList());
+            LogisticsService logisticsService=logisticsRegistry.getHandler(logisticsPlatform);
+            //真正查询跟踪号的
+            List<LogisticsQueryBaseVO> logisticsQuery = listQuery(queryBaseList);
+            ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
+            if(orderResponse.isSuccess()){
+                List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
+            }
         }
-
-
-
-        LogisticsService logisticsService=logisticsRegistry.getHandler("");
-        ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
-        if(orderResponse.isSuccess()){
-            List<LogisticsOrderResponseVO> resultList=orderResponse.getData();
-        }
-
 
     }
 
