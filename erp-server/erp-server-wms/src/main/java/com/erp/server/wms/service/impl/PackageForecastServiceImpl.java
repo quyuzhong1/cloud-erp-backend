@@ -40,10 +40,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.enums.HandoverStatusEnum;
-import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
-import com.erp.model.wms.enums.PackagePrintStatusEnum;
-import com.erp.model.wms.enums.PackageUploadStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -762,6 +759,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             if (StringUtils.isBlank(trackNo)) {
                 trackNo = minPackageTransportNo;
             }
+            String handoverStatus = item.getHandoverStatus();
+            String handoverStatusName= HandoverStatusEnum.getByCode(handoverStatus);
+            item.setHandoverStatusName(handoverStatusName);
+
+            String subHandoverStatus = item.getMinPackageHandoverStatus();
+            String subHandoverStatusName= HandoverSubStatusEnum.getByCode(subHandoverStatus);
+            item.setMinPackageHandoverStatusName(subHandoverStatusName);
+
             item.setTrackNo(trackNo);
             //第三方交接单号
             String handoverNo = item.getHandoverNo();

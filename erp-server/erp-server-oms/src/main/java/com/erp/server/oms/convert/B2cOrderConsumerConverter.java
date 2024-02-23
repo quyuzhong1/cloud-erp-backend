@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 
@@ -96,13 +97,14 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "invalidRemark", source = "dto.invalidRemark"),
             @Mapping(target = "labelJson", source = "dto.labelJson"),
             @Mapping(target = "extendData", source = "dto.extendData"),
+            @Mapping(target = "shopId",source = "dto.shopId"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
             @Mapping(target = "approveStatus", source = "oldEntity.approveStatus"),
             @Mapping(target = "platformCode", source = "oldEntity.platformCode"),
             @Mapping(target = "dictPlatform", source = "oldEntity.dictPlatform"),
-            @Mapping(target = "shopId", source = "oldEntity.shopId"),
+            //@Mapping(target = "shopId", source = "oldEntity.shopId"),
             @Mapping(target = "remark", source = "oldEntity.remark"),
             @Mapping(target = "orgId", source = "oldEntity.orgId"),
             @Mapping(target = "orgName", source = "oldEntity.orgName"),
