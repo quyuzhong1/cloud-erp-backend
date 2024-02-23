@@ -54,18 +54,31 @@ public class BaseDropDownDTO implements Serializable {
          * 启用/禁用
          */
         private Boolean disabled;
+        public DisabledDTO(String code, String value, Boolean disabled) {
+            this.setCode(code);
+            this.setValue(value);
+            this.disabled = disabled;
+        }
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SrmDisabledDTO extends CommonDTO {
+
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
         /**
          * 启用/禁用
          */
         private Boolean srmDisabled;
-        public DisabledDTO(String code, String value, Boolean disabled, Boolean srmDisabled) {
+        public SrmDisabledDTO(String code, String value, Boolean disabled, Boolean srmDisabled) {
             this.setCode(code);
             this.setValue(value);
             this.disabled = disabled;
             this.srmDisabled = srmDisabled;
         }
     }
-
     @Data
     @NoArgsConstructor
     public static class RemarkDTO extends CommonDTO {

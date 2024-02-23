@@ -73,13 +73,13 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/supplier/list")
-    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listSupplierDropDown() {
+    public ApiResult<List<BaseDropDownDTO.SrmDisabledDTO>> listSupplierDropDown() {
         List<Map<String, Object>> mapList = supplierService.listApproveSupplier();
         if (CollectionUtils.isEmpty(mapList)) {
             return success(new ArrayList<>());
         }
-        List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
-                .map(x -> new BaseDropDownDTO.DisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled"), (Boolean)x.get("srm_disabled")))
+        List<BaseDropDownDTO.SrmDisabledDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.SrmDisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled"), (Boolean)x.get("srm_disabled")))
                 .collect(Collectors.toList());
         return success(result);
     }
