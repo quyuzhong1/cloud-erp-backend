@@ -137,7 +137,7 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
     * @param response
     * @return
     */
-    void exportList(SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SubcontractChangeDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * @description: 作废
      * @author Will
