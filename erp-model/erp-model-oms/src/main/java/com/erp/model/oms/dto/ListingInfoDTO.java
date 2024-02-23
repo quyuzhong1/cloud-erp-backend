@@ -117,6 +117,35 @@ public class ListingInfoDTO implements Serializable {
          * 计划发货数量
          */
         private Integer qty;
+
+        /**
+         * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
+         */
+        private Boolean hasMappingAll;
+    }
+
+    /**
+     * sku映射参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSkuMappingParamDTO {
+
+        /**
+         * skuMapping id
+         */
+        private String id;
+
+        /**
+         * erp下拉的sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
     }
 
     @Data

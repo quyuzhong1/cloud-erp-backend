@@ -914,7 +914,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if(CollectionUtils.isNotEmpty(viewDTOList)){
                     String provideCode = viewDTOList.get(0).getProviderCode();
                     if(StringUtils.isNotBlank(provideCode)){
-                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(detailVie.getSkuId()) && v.getDictPlatform().equals(provideCode)).findFirst().orElse(null);
+                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                                v->v.getProductSkuId().equals(detailVie.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() && v.getWarehouseId().equals(data.getDestWarehouseId())))
+                                .findFirst().orElse(null);
                         if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
                             detailVie.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
                         }
@@ -1270,7 +1272,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //设置第三方SKU信息
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
             if(StringUtils.isNotBlank(data.getProvideCode())){
-                listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(data.getSkuId()) && v.getDictPlatform().equals(data.getProvideCode())).findFirst().orElse(null);
+                listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                        v->v.getProductSkuId().equals(data.getSkuId()) && v.getDictPlatform().equals(data.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(data.getDestWarehouseId()))
+                        )
+                        .findFirst().orElse(null);
             }
 
             if(Objects.nonNull(listingInfoWithSkuMappingDTO)){

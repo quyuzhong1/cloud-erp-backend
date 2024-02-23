@@ -425,7 +425,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if(CollectionUtils.isNotEmpty(viewDTOList)){
                     String provideCode = viewDTOList.get(0).getProviderCode();
                     if(StringUtils.isNotBlank(provideCode)){
-                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode)).findFirst().orElse(null);
+                        listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                                v->v.getProductSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getDictPlatform().equals(provideCode) && (v.getHasMappingAll() || v.getWarehouseId().equals(mainEntity.getChannelId()))
+                        ).findFirst().orElse(null);
                     }
                 }
             }
@@ -673,7 +675,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
             if(listDTO.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
                 if(StringUtils.isNotBlank(listDTO.getProvideCode())){
-                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode())).findFirst().orElse(null);
+                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+                            v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(listDTO.getChannelId()))
+                    ).findFirst().orElse(null);
                 }
             }
 

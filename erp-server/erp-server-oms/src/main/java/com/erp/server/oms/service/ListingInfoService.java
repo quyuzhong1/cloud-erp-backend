@@ -77,4 +77,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     void updateMatchResult(String listingId, Boolean matchResult);
 
     PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
+
+    Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto);
 }

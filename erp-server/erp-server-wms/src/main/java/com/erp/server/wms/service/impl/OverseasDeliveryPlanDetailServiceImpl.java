@@ -158,7 +158,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
             SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
                     .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
                             && req.getProductSkuId().equals(detailEntity.getSkuId())
-                            && req.getWarehouseId().equals(toWarehouseId))
+                            && (req.getHasMappingAll() || req.getWarehouseId().equals(toWarehouseId)))
                     .distinct().findFirst().orElse(null);
             if (ObjectUtil.isEmpty(listStockSkuNoByProductSkuIdView)) {
 
