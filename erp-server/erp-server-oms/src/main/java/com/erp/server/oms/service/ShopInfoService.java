@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -223,4 +224,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     String getShopifyAuthorizeUrl(ShopifyAuthorizeUrlDTO dto);
+
+    /**
+     * 根据shopify平台用户id查询用户信息
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    AssociatedUserBean getShopifyShopByUserId(String id);
 }

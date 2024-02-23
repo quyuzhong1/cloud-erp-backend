@@ -49,6 +49,7 @@ import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopee.service.ShopeeMerchantService;
 import com.sdk.oms.shopee.service.ShopeeShopService;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -62,9 +63,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponse;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -263,6 +261,18 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         // 生成跳转地址
         String grantOptions = "offline-access";
         return String.format(cfgAppClient.getUrl(), dto.getShop(), cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+    }
+
+    @Override
+    public AssociatedUserBean getShopifyShopByUserId(String id) {
+        ShopInfoEntity entity = lambdaQuery().eq(ShopInfoEntity::getPlatformShopCode, id).last("LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            Map<String, Object> extendData = entity.getExtendData();
+            AssociatedUserBean bean = BeanUtil.toBean(extendData, AssociatedUserBean.class);
+            return bean;
+        } else {
+            return null;
+        }
     }
 
     /**
