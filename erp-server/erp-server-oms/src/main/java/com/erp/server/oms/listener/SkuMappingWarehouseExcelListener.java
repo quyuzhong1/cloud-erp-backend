@@ -1,5 +1,6 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -18,6 +19,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
  * @Date 2023-06-28 18:07
  * @Created by yl
  */
+@Slf4j
 public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuMappingWarehouseImportExcelDTO> {
 
     /**
@@ -344,6 +347,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             addListingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
             addListingInfoEntity.setPlatformSkuNo(warehouseSkuNo);
             addListingInfoEntity.setPlatformSkuName(importExcelDTO.getWarehouseProductName());
+            addListingInfoEntity.setPlatform(currentPlatform);
             addListingInfoEntity.setMatchResult(Boolean.TRUE);
             addListingInfoEntityList.add(addListingInfoEntity);
             listingInfoEntityList.add(addListingInfoEntity);
