@@ -1308,9 +1308,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
-            JSONObject jsonObject = JSONObject.parseObject(shopInfoEntity.getExtendData());
+            Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
             //买家id
-            String sellerId = jsonObject.getOrDefault("sellerId","").toString();
+            String sellerId = String.valueOf(extendDataMap.get("sellerId"));
             result.setTopUserKey(sellerId);
         } else {
             result.setOrderCode(entity.getCode());
