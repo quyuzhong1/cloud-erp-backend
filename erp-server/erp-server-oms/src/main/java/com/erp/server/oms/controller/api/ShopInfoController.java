@@ -361,7 +361,7 @@ public class ShopInfoController extends BaseController {
      * @param id
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @GetMapping("checkShopIsAuthorize")
+    @GetMapping("getShopifyShopByUserId")
     public ApiResult<AssociatedUserBean> getShopifyShopByUserId(@RequestParam(value = "id") String id) {
         AssociatedUserBean bean = shopInfoService.getShopifyShopByUserId(id);
         return success(bean);
