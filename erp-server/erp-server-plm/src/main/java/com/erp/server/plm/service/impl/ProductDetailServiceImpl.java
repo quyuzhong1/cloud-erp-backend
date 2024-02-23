@@ -68,6 +68,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
@@ -2694,6 +2695,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date 2023-03-21 12:06
      */
     @Override
+    @Cacheable(cacheNames = "cache:plm:getSkuInfoBySkuIds",keyGenerator = "myKeyGenerator")
     public List<SkuVO> getSkuInfoBySkuIds(List<String> skuIds) {
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();

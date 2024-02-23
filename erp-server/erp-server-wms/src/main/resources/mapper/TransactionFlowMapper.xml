@@ -66,14 +66,9 @@
             t.dict_inventory_status as inventoryStatus,
             t.qty,
             t.cur_inventory_qty as afterQty,
-            t.instock_batch_date AS instockBatchDate,
-            pi.spu_no AS spuNo,
-            ps.sale_state AS saleState
+            t.instock_batch_date AS instockBatchDate
         FROM
             transaction_flow t
-        left join product_detail pd on pd.id = t.sku_id
-        left join product_info pi on pd.product_id = pi.id
-        left join product_sale ps on ps.sku_id = pd.id
         WHERE
             t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
