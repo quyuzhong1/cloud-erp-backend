@@ -320,9 +320,9 @@ public class PackageForecastDTO implements Serializable {
         private List<String> soCodeList;
 
         /**
-         * 交接状态
+         * 交接状态集合
          */
-        private String handoverStatus;
+        private List<String> handoverStatusList;
 
         /**
          * 物流跟踪号

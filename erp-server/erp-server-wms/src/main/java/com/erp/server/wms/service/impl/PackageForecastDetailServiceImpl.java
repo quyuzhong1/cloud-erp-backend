@@ -242,7 +242,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailEntity> detailList = this.lambdaQuery().
                 eq(PackageForecastDetailEntity::getMainId, dto.getId()).
                 in(CollectionUtils.isNotEmpty(dto.getSoCodeList()), PackageForecastDetailEntity::getSoCode, dto.getSoCodeList()).
-                eq(StringUtils.isNotBlank(dto.getHandoverStatus()), PackageForecastDetailEntity::getHandoverStatus, dto.getHandoverStatus()).
+                in(CollectionUtils.isNotEmpty(dto.getHandoverStatusList()), PackageForecastDetailEntity::getHandoverStatus, dto.getHandoverStatusList()).
                 like(StringUtils.isNotBlank(dto.getTrackNo()), PackageForecastDetailEntity::getTransportNo, dto.getTrackNo()).
                 list();
         List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
@@ -258,6 +258,15 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
                     item.setOutstockStatusName("已出库");
                 }
             }
+            String handoverStatus = item.getHandoverStatus();
+            String handoverStatusName =HandoverSubStatusEnum.getByCode(handoverStatus);
+            item.setHandoverStatusName(handoverStatusName);
+            String trackNo = item.getTrackNo();
+            String transportNo = item.getTransportNo();
+            if(StringUtils.isBlank(trackNo)){
+                trackNo=transportNo;
+            }
+            item.setTrackNo(trackNo);
         }
         return resultList;
     }
