@@ -79,8 +79,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Resource
     private CommonService commonService;
 
-    private static final  String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
-
     @Override
     public PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> pagingDTO) {
         ProductCertificateDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -477,7 +475,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
 
     @Override
-    public Boolean exportExcel(ProductCertificateDTO.SearchParamDTO params, HttpServletResponse response) {
+    public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params, HttpServletResponse response) {
         List<ProductCertificateDTO.ListDTO> records = this.baseMapper.exportExcel(params);
         if (CollectionUtils.isEmpty(records)) {
             throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"产品认证");

@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -15,7 +14,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductCertificateDTO;
-import com.erp.server.plm.query.ProductCertificateQueryHandler;
 import com.erp.server.plm.service.ProductCertificateService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -57,7 +55,6 @@ public class ProductCertificateController extends BaseController {
             tableField = "create_user_id",
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc")
-    @WebAdvanceQuery(handler = ProductCertificateQueryHandler.class)
     public ApiResult<PagingVO<ProductCertificateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ProductCertificateDTO.SearchParamDTO> dto) {
         PagingVO<ProductCertificateDTO.ListDTO> pagingVO = productCertificateService.paging(dto);
         return success(pagingVO);
@@ -192,7 +189,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc"
     )
-    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = productCertificateService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
