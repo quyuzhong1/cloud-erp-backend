@@ -513,6 +513,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                     .findFirst().orElse(null);
             if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
                 viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+                viewDTO.setThirdWarehouseProductName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
             }
 
         }
