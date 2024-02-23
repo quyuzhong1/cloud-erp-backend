@@ -43,6 +43,11 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         private String imageUrl;
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
         * 产品id
         */
         private String skuId;
