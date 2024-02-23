@@ -102,6 +102,9 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
      * 拼接配送地址
      */
     public String combineDeliveryFromAddress(){
+        if (null == this.shipmentInfo){
+            return "";
+        }
         Address shipFromAddress = this.shipmentInfo.getShipFromAddress();
         if (null == shipFromAddress){
             return "";

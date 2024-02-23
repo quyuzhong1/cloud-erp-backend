@@ -1,16 +1,13 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.handler.mybatisplus.MyOffsetDateTimeTypeHandler;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-
-import java.time.OffsetDateTime;
-
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.time.LocalDateTime;
 
 
 /**

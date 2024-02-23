@@ -60,7 +60,7 @@ public class PlatformDataThread {
         dto.setJobTaskDTO(jobTaskDTO);
         try {
             log.info("发起异步调用平台【{}】店铺【{}】任务【{}】", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getShopName(), dto.getJobTaskDTO().getApiName());
-            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
                 throw new RuntimeException("修改任务下次执行时间失败！");
@@ -81,7 +81,8 @@ public class PlatformDataThread {
     public void cleanOrder(JobTaskDTO jobTaskDTO) {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
-            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType());
+            PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
+            businessService.cleanProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), platformApiEnum);
 
         } catch (Exception e) {
             log.error(" {}重新推送数据错误:{}", jobTaskDTO.getDictPlatform(), e);
@@ -157,7 +158,7 @@ public class PlatformDataThread {
         dto.setJobTaskDTO(jobTaskDTO);
         try {
             log.info("发起同步调用平台【{}】店铺【{}】任务【{}】", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getShopName(), dto.getJobTaskDTO().getApiName());
-            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
                 throw new RuntimeException("修改任务下次执行时间失败！");

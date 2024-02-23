@@ -4,14 +4,15 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
 import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.AmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -69,8 +70,14 @@ public class AmzReportAllListingHandler extends AmzReportBusinessHandler {
 //        }
 
         jobTaskDTO.setSourceList(list);
+
+        PlatformApiEnum enumByType = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
+        RequestDTO dto = new RequestDTO();
+        dto.setPlatformApiEnum(enumByType);
+        dto.setJobTaskDTO(jobTaskDTO);
+
         // 事务处理
-        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO);
+        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
 
     }
 }

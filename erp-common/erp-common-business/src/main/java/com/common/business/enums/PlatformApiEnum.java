@@ -124,6 +124,10 @@ public enum PlatformApiEnum {
     LX_ERP_SHOP_LIST_GET(60, "getShopList", MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, TaskConstant.LX_PULL_DATA_TASK),
     LX_ERP_FBA_SHIPMENT_RECEIVE_GET(61, "getFbaReceive", MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, TaskConstant.LX_PULL_DATA_TASK),
 
+    /**
+     * 亚马逊api
+     */
+    FBA_SHIPMENT_DETAIL(65, "fba_shipment_detail", MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, ""),
     ;
 
     /** 状态码 */

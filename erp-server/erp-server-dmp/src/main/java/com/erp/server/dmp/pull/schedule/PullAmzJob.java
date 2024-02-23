@@ -124,12 +124,20 @@ public class PullAmzJob {
      */
     @XxlJob("amazonExecute")
     public ReturnT<String> execute() {
-        XxlJobHelper.log("[拉取亚马逊任务] 任务开始 =====");
-        // 分组查询
-        List<String> groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.AMAZON.getCode());
-        if (CollectionUtils.isEmpty(groupIds)) {
-            XxlJobHelper.log("[拉取亚马逊任务] 任务结束:无任务 =====");
-            return ReturnT.SUCCESS;
+        // 支持指定分组id执行
+        List<String> groupIds = new LinkedList<>();
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            groupIds = JSONUtil.toList(jobParamStr, String.class);
+        }
+        XxlJobHelper.log("[拉取亚马逊任务] 任务开始：param={} =====", groupIds);
+        if (CollectionUtils.isEmpty(groupIds)){
+            // 分组查询
+            groupIds = platformApiTaskService.findGroupIdByPlatform(PlatformDictEnum.AMAZON.getCode());
+            if (CollectionUtils.isEmpty(groupIds)) {
+                XxlJobHelper.log("[拉取亚马逊任务] 任务结束:无任务 =====");
+                return ReturnT.SUCCESS;
+            }
         }
         for (String x : groupIds) {
             try {
