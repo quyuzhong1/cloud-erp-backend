@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -27,6 +28,7 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -106,8 +108,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         //新增数据验证
         checkAddData(poReconciliationDetailList);
         //新增数据处理
-        handleAddData(poReconciliationDetailList);
-        
+        List<PoReconciliationDetailEntity> resultList = handleAddData(poReconciliationDetailList);
+        //无新增数据则直接返回
+        if (CollectionUtils.isEmpty(resultList)) {
+            return new BaseResultDTO.AddDTO();
+        }
         log.info("开始新增采购对账单明细");
         boolean save = super.saveBatch(poReconciliationDetailList);
         if(!save) {
@@ -462,17 +467,21 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
      * @date: 2024/1/26 9:56
      * @param poReconciliationDetailList
      */
-    private void handleAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+    private  List<PoReconciliationDetailEntity> handleAddData (List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+        //可新增数据
+        List<PoReconciliationDetailEntity> resultList = new ArrayList<>();
+        
         if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
-            return;
+            return resultList;
         }
+
         List<String> skuIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
 
         //采购供应商
         List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).collect(Collectors.toList());
         List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = scmTaskFeign.listOrderSupplierByOrderIdList(poIdList);
-
+        
         //结算方式
         List<String> payMethodIdList = purchaseOrderSupplierList.stream().map(PurchaseOrderSupplierEntity::getPayMethodId).collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(payMethodIdList);
@@ -488,19 +497,31 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<String> supplierIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSupplierId).collect(Collectors.toList());
         List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
+        //供应商信息
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
+
+            SupplierEntity entity = supplierList.stream().filter(obj -> StrUtil.equals(detailEntity.getSupplierId(), obj.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            }
+            //未启用srm或当天在启用时间之前则无需新增
+            if (entity.getSrmDisabled() || LocalDate.now().isBefore(entity.getSrmDisabledDate())) {
+                continue;
+            }
             //sku
             String skuNo = productDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
             detailEntity.setSkuNo(skuNo);
             //供应商
-            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPoId()))
+            PurchaseOrderSupplierEntity poSupplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPoId()))
                     .findFirst().orElse(new PurchaseOrderSupplierEntity());
             //供应商名称
-            detailEntity.setSupplierName(StrUtil.isBlank(detailEntity.getSupplierName()) ? supplierEntity.getSupplierName() : detailEntity.getSupplierName());
+            detailEntity.setSupplierName(StrUtil.isBlank(detailEntity.getSupplierName()) ? poSupplierEntity.getSupplierName() : detailEntity.getSupplierName());
             //付款条件
-            detailEntity.setPaymentCondition(supplierEntity.getPaymentCondition());
+            detailEntity.setPaymentCondition(poSupplierEntity.getPaymentCondition());
             //结算方式
-            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), supplierEntity.getPayMethodId()))
+            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
                     .map(DictBasicEntity::getValue).findFirst().orElse("");
             detailEntity.setSettleDict(settleDict);
             /**
@@ -535,7 +556,9 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 }
                 detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
             }
+            resultList.add(detailEntity);
         }
+        return resultList;
     }
 
     /**
