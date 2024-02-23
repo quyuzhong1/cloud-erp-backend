@@ -113,22 +113,23 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @return List<ProductCertificateEntity>
      */
     private List<ProductCertificateEntity> handleAdd(ProductCertificateDTO.AddDTO dto) {
-        List<String> skuIdList = dto.getSkuIdList();
+        List<String> skuNoList = dto.getSkuNoList();
         List<ProductCertificateDTO.FileDTO> fileList = dto.getFileList();
 
         //产品信息
-        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listBySkuNoList(skuNoList);
 
         //结果集
         List<ProductCertificateEntity> resultList = new ArrayList<>();
-        for (String skuId : skuIdList) {
+        for (String skuNo : skuNoList) {
             for (ProductCertificateDTO.FileDTO fileDTO : fileList) {
-                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), skuId)).findFirst().orElse(null);
+                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), skuNo)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_95154);
                 }
                 ProductCertificateEntity entity = new ProductCertificateEntity();
-                entity.setSkuId(skuId);
+                entity.setSkuId(productDetailEntity.getId());
+                entity.setProductId(productDetailEntity.getProductId());
                 entity.setType(dto.getType());
                 entity.setDictProject(fileDTO.getDictProject());
                 entity.setMultipartFile(fileDTO.getMultipartFile());
@@ -212,12 +213,21 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //结果集
         List<ProductCertificateEntity> resultList = new ArrayList<>();
 
+        //产品信息
+        List<String> skuIdList = productCertificateList.stream().map(ProductCertificateDTO.ProductAddOrUpdateDTO::getId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
+
         for (ProductCertificateDTO.ProductAddOrUpdateDTO productAddOrUpdateDTO : productCertificateList) {
             //新增数据附件不能为空
             if (StrUtil.isBlank(productAddOrUpdateDTO.getId()) && StrUtil.isBlank(productAddOrUpdateDTO.getAttachmentId())) {
                 throw new ServiceException(ApiError.TIME_NOT_NULL,"新增附件");
             }
             ProductCertificateEntity entity = BeanMapperUtils.map(ProductCertificateEntity.class, productAddOrUpdateDTO);
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), productAddOrUpdateDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            entity.setProductId(productDetailEntity.getProductId());
             resultList.add(entity);
         }
         //新增数据

@@ -170,10 +170,10 @@ public class ProductCertificateDTO implements Serializable {
     public static class AddDTO {
 
         /**
-         * skuId集合
+         * skuNo集合
          */
         @NotEmpty(message = "SKU不能为空")
-        private List<String> skuIdList;
+        private List<String> skuNoList;
 
         /**
          * 证书类型
@@ -235,7 +235,6 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * skuId
          */
-        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
         /**
