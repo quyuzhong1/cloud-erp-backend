@@ -143,7 +143,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
                 //速卖通平台仓订单不走任何规则
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && hasPlatformWarehouse) {
-                    aliExpressDeliveryQuery(dto, resultDTO, mainEntity);
+                    if (isShipped) {
+                        aliExpressDeliveryQuery(dto, resultDTO, mainEntity);
+                    }
                     return;
                 }
 
