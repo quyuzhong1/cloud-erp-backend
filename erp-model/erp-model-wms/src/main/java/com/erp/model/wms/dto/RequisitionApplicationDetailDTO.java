@@ -51,6 +51,26 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         private String skuId;
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
+         * MSKU
+         */
+        private String platformsSkuNo;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSku;
+
+        /**
+         * FNSKU
+         */
+        private String platformFnSku;
+
+        /**
         * 产品编号
         */
         private String skuNo;
