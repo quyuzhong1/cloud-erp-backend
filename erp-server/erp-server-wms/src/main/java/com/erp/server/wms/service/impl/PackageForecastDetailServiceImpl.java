@@ -109,6 +109,15 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
         List<PackageForecastDetailEntity> deleteList = dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
+        //删除的销售订单id 集合
+        List<String> deleteSoIdList = deleteList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(deleteSoIdList);
+        String soCode= soOutstockList.stream ().filter(s->ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
+                map(SoOutstockEntity::getSoCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(soCode)) {
+            throw new ServiceException(soCode + "销售订单已出库,不能删除");
+        }
+
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);

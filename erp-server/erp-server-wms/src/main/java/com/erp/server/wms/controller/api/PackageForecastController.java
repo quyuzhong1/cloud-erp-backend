@@ -70,6 +70,11 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:paging",
+            tableAlias = "pf"
+    )
     public ApiResult<PagingVO<PackageForecastDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PackageForecastDTO.PagingParamDTO> dto) {
         PagingVO<PackageForecastDTO.PagingViewDTO> pagingVO = packageForecastService.paging(dto);
         return success(pagingVO);
@@ -80,6 +85,11 @@ public class PackageForecastController extends BaseController {
      * 详情
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:view",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "id")
     public ApiResult<PackageForecastDTO.ViewDTO> view(@RequestParam("id") String id) {
         PackageForecastDTO.ViewDTO viewDTO = packageForecastService.view(id);
         return success(viewDTO);
@@ -95,6 +105,11 @@ public class PackageForecastController extends BaseController {
      * @date: 2024-01-26
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:update",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PackageForecastDTO.UpdateDTO dto) {
         Boolean result = packageForecastService.update(dto);
         return result ? success() : failure();
@@ -108,6 +123,11 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:delete",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -239,6 +259,11 @@ public class PackageForecastController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出组包预报")
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:paging",
+            tableAlias = "pf"
+    )
     public ApiResult export(@RequestBody @Valid PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = packageForecastService.exportExcel(dto, response);
         return result ? success() : failure();
