@@ -88,6 +88,18 @@ public class LogisticsChannelJob {
         return ReturnT.SUCCESS;
     }
 
+    @XxlJob("syncAliExpressLogisticsChannel")
+    public ReturnT syncAliExpressLogisticsChannel() {
+        XxlJobHelper.log("====开始同步渠道====");
+        log.info("====全部渠道同步开始=====");
+        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
+        XxlJobHelper.log("物流商{}开始同步渠道", LogisticsPlatformEnum.ALI_EXPRESS.getName());
+        List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncAliExpressChannel(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
+        XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", LogisticsPlatformEnum.ALI_EXPRESS.getName(), JSONUtil.toJsonStr(batchResultDTOS));
+        log.info("=====渠道同步结束=====");
+        XxlJobHelper.log("====同步渠道信息完成====");
+        return ReturnT.SUCCESS;
+    }
     /**
      * 同步物流轨迹
      */

@@ -43,6 +43,8 @@ import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -60,6 +62,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@RefreshScope
 @LogisticsPlatformType(LogisticsPlatformEnum.ALI_EXPRESS)
 public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
@@ -70,6 +73,12 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private AliExpressShipperService aliExpressShipperService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
+
+    @Value("${tms.AliExpress.orderId}")
+    private String orderId;
+
+    @Value("${tms.AliExpress.childOrderId}")
+    private String childOrderId;
 
     /**
      * 根据平台获取授权列表
@@ -105,8 +114,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             map.put("url", finalCfgAppClient.getUrl());
             map.put("token", shopAuthEntity.getToken());
             map.put("shopId", shopAuthEntity.getShopId());
-            map.put("orderId", "3031189945277223");
-            map.put("childOrderId","3031189945287223");
+            map.put("orderId", orderId);
+            map.put("childOrderId",childOrderId);
             mapList.add(map);
         });
         return mapList;
@@ -139,8 +148,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
-        map.put("orderId", "3031189945277223");
-        map.put("childOrderId","3031189945287223");
+        map.put("orderId", orderId);
+        map.put("childOrderId",childOrderId);
         if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
             ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
             if (Objects.nonNull(shopAuth)) {
