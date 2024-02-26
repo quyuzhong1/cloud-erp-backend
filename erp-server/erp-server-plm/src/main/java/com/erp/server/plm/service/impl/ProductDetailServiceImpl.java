@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -26,6 +27,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -34,6 +36,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -46,8 +49,13 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
+import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
@@ -72,6 +80,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,7 +100,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductCostService productCostService;
-
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private ProductPurchaseService productPurchaseService;
 
@@ -144,6 +155,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private BusinessProcessService businessProcessService;
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
 /*    @Resource
     private WorkflowFeign workflowFeign;*/
@@ -1942,6 +1956,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveProcess.setProcessInstanceId(entity.getProcessId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(dto.getComment());*/
+        //审核通过 重算目的国申报单价
+        recalDestDeclarePrice(entity);
         //查询审核任务下所有待办
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //更新产品信息状态
@@ -1958,6 +1974,55 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //审核通过后发送到金蝶系统
         syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return true;
+    }
+
+    private void recalDestDeclarePrice(ProductDetailEntity entity) {
+        if (Objects.isNull(entity)){
+            return;
+        }
+        ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
+        if(Objects.isNull(productCostEntity)){
+            return;
+        }
+        ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(entity.getId());
+        if (Objects.isNull(productLogistics)){
+            return;
+        }
+        CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
+        if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))){
+            return;
+        }
+        //是否重算目的国申报价
+        BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
+        if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+
+            String usdCode = CurrencyEnum.USD.getCurrencyCode();
+            String nowDay = LocalDate.now().toString();
+            //汇率
+            BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
+                rate = new BigDecimal("7.13");
+            }
+            //含税成本
+            BigDecimal actualTaxCost = productCostEntity.getActualTaxCost();
+            if (Objects.isNull(actualTaxCost) || BigDecimal.ZERO.compareTo(actualTaxCost) == 0) {
+                List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(Collections.singletonList(entity.getSkuNo()));
+                if (CollectionUtils.isNotEmpty(skuCostList)){
+                    actualTaxCost = skuCostList.get(0).getCostPrice();
+                }else {
+                    actualTaxCost = BigDecimal.ZERO;
+                }
+            }
+            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
+            List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
+            CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
+            if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())){
+                return;
+            }
+            BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
+            productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
+            productLogisticsService.updateById(productLogistics);
+        }
     }
 
     @Override
