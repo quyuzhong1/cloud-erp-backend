@@ -2,21 +2,15 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogViewService;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -295,18 +289,6 @@ public class PurchaseOrderFeignController {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         return purchaseOrderEntity.getCode();
-    }
-
-
-    /**
-     * @description: 自动提交审核采购订单
-     * @author Will
-     * @date: 2023/6/15 18:50
-     * @param poIds
-     */
-    @PostMapping("/autoApprovePurchaseOrder")
-    public void autoApprovePurchaseOrder(@RequestBody List<String> poIds) {
-         purchaseOrderService.autoApprovePurchaseOrder(poIds);
     }
 
     /**

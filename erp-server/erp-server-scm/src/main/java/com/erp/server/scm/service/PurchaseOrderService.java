@@ -66,28 +66,28 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 批量审核
      * @author Will
      * @date: 2023/3/16 11:26
-     * @param baseApproveParamDTO
+     * @param approveOneDTO
      */
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 14:21
      * @param dto
-     * @param list
+     * @param entity
      * @return Boolean
      */
-    Boolean approveEnd(BaseApproveParamDTO dto, List<PurchaseOrderEntity> list);
+    Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity);
 
     /**
      * @description: 批量反审核
      * @author Will
      * @date: 2023/3/16 11:26
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
     /**
      * @description: 取消流程
      * @author Will
@@ -282,13 +282,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<SubcontractOrderChildDTO>
      */
     List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(List<String> parentPodIds);
-    /**
-     * @description: 自动审核采购订单
-     * @author Will
-     * @date: 2023/6/15 18:51
-     * @param poIds
-     */
-    void autoApprovePurchaseOrder(List<String> poIds);
     /**
      * @description: 来源ids
      * @author Will
