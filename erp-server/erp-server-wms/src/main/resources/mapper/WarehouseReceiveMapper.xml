@@ -618,4 +618,11 @@
             ${params.permissionSql}
         </if>
     </select>
+    <select id="countOrderBySupplierId" resultType="java.lang.Integer">
+        select count(pr.*) from po_receive pr
+        where pr.supplier_id = #{supplierId}
+          and pr.approve_status = 'approve'
+          and pr.approve_time is not null
+          and pr.approve_time between #{startTime} and #{endTime}
+    </select>
 </mapper>

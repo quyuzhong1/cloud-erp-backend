@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -48,9 +50,12 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.WarehouseReceiveConverter;
+import com.erp.server.wms.mapper.WarehouseMappingMapper;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -64,6 +69,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -130,6 +137,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 /*
     @Autowired
@@ -1804,5 +1813,51 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 //            this.generateStockIn(dtos);
         }
         return true;
+    }
+
+    @Override
+    public SupplierCountDTO countOrderBySupplierId(String supplierId) {
+        //获取系统配置
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.PO_RECONCILIATION.getCode());
+        if (ObjectUtil.isEmpty(cfgSetting) || ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+            XxlJobHelper.log("无生成对账单数据");
+            return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
+        }
+        CfgSettingValueDTO.PoReconciliationSettingDTO dto = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
+        String endDate = dto.getEndDate();
+        if (StringUtils.isEmpty(endDate) || !NumberUtil.isInteger(endDate)){
+            return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
+        }
+        LocalDate startTime = null;
+        LocalDate endTime = null;
+        //判断 周期类型
+        if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getReconciliationType())){
+            startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
+            endTime = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+        }else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getReconciliationType())){
+            int end = Integer.parseInt(endDate);
+            LocalDate currentDate = LocalDate.now();
+            int dayOfMonth = currentDate.getDayOfMonth();
+            String nowMonth = currentDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            if (dayOfMonth > end){
+                //23-下月
+                // 获取上个月的日期
+                LocalDate beforeMonthDate = currentDate.minusMonths(-1);
+                String formattedMonth = beforeMonthDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+                startTime = LocalDate.parse(nowMonth + "-"+end, formatter);
+                endTime = LocalDate.parse(formattedMonth + "-"+end, formatter);
+            }else {
+                //上月 -23
+                // 获取上个月的日期
+                LocalDate lastMonthDate = currentDate.minusMonths(1);
+                String formattedMonth = lastMonthDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+                startTime = LocalDate.parse(formattedMonth + "-"+end, formatter);
+                endTime = LocalDate.parse(nowMonth + "-"+end, formatter);
+            }
+        }
+        //根据时间进行查询
+        Integer count = baseMapper.countOrderBySupplierId(supplierId,startTime,endTime);
+        return SupplierCountDTO.builder().count(count).localDate(endTime).build();
     }
 }

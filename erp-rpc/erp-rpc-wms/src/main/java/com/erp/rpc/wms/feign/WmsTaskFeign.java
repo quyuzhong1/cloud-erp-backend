@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -279,4 +280,12 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/wmsWorkOption/overseasDeliveryPlanApprove")
     Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 统计供应商周期内已审核订单数量
+     * @param supplierId
+     * @return
+     */
+    @GetMapping("/feign/warehouseReceive/countOrderBySupplierId")
+    SupplierCountDTO countOrderBySupplierId(@RequestParam("supplierId") String supplierId);
 }

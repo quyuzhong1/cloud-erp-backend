@@ -50,6 +50,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -58,6 +59,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -154,6 +156,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Resource
     private SrmPoReconciliationFeign srmPoReconciliationFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     @Autowired
     private TransferLogisticsFeign transferLogisticsFeign;
     @Resource
@@ -352,11 +356,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 }
             }else {
                 //启用时 检查当前周期确认订单是否存在，存在则下月生效
-                LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-                LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-                Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(supplierId,startTime,endTime);
-                if (Objects.nonNull(count) && count > 0){
-                    supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+                if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
+                    supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
                 }else {
                     supplier.setSrmDisabledDate(LocalDate.now());
                 }
