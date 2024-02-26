@@ -22,12 +22,12 @@ import java.util.List;
 @Mapper
 public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
 
-    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
+    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params);
 
     /**
      * 查询所有总数
      */
-    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
+    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params);
 
     /**
      * 查询需要汇总的订单详情id
@@ -36,10 +36,10 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @param soIdList
      * @return
      */
-    List<String> pagingTotalGetDetailIds(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
+    List<String> pagingTotalGetDetailIds(@Param("params") SoInfoDTO.PagingParamDTO params);
 
 
-    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList);
+    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto);
     /**
      * @description: 下推备货申请单数据显示
      * @author Will

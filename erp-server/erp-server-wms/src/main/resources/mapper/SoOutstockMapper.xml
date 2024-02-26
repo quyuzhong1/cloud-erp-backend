@@ -296,4 +296,7 @@
             ${params.permissionSql}
         </if>
     </select>
+    <select id="listByAdvanceQuery" resultType="com.erp.model.wms.entity.SoOutstockEntity">
+
+    </select>
 </mapper>

@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
@@ -20,6 +21,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +81,7 @@ public class SoInfoController extends BaseController {
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
+    @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public ApiResult<PagingVO<SoInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
         PagingVO<SoInfoDTO.PagingViewDTO> pagingVO = soInfoService.paging(dto);
         return success(pagingVO);
@@ -96,6 +99,7 @@ public class SoInfoController extends BaseController {
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
+    @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public ApiResult<SoInfoDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated SoInfoDTO.PagingParamDTO dto) {
         SoInfoDTO.PagingTotalDTO viewDTO = soInfoService.pagingTotal(dto);
         return success(viewDTO);
@@ -383,6 +387,7 @@ public class SoInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soInfoService.exportExcel(dto, response);
         return result ? success() : failure();

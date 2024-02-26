@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -380,4 +381,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     Boolean generateB2cSoOutstockByCode(String soB2cCode);
+
+    List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
 }
