@@ -1,7 +1,9 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -15,7 +17,9 @@ import java.time.LocalDate;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class SupplierCountDTO implements Serializable {
-    int count;
-    LocalDate localDate;
+    private int count;
+    private LocalDate localDate;
 }

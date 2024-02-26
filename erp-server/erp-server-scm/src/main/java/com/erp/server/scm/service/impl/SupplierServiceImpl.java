@@ -774,24 +774,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         supplier.setSrmDisabledDate(LocalDate.now());
         //当启用后 禁用时 校验是否存在未确认采购对账单明细
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
-                !supplier.getSrmDisabled() && dto.getState()){
+        if (!supplier.getSrmDisabled() && dto.getState()){
             Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
             if (Objects.nonNull(count) && count > 0){
                 throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
             }
         }
         //禁用后启用 校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
-                supplier.getSrmDisabled() && !dto.getState()){
+        if (supplier.getSrmDisabled() && !dto.getState()){
             //启用时 检查当前周期确认订单是否存在，存在则下月生效
-            LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-            Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(supplierId,startTime,endTime);
-            if (Objects.nonNull(count) && count > 0){
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+            if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
                 //SRM协同开启后，下月生效
                 msg = "SRM协同开启后，下月生效";
-                supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
+            }else {
+                supplier.setSrmDisabledDate(LocalDate.now());
             }
         }
         Boolean state = dto.getState();
@@ -801,7 +800,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplier.setSrmOperateUserId(userInfo.getUid());
             supplier.setSrmOperateUserName(userInfo.getUserName());
         }
-
         //添加日志
         String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "否" : "是", dto.getState() == true ? "否" : "是");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
