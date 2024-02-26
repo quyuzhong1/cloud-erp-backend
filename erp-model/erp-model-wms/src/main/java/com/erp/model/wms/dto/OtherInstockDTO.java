@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.InstockTypeEnum;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -33,6 +35,11 @@ public class OtherInstockDTO implements Serializable {
          * 主键id
          */
         private String  id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 其他入库编号
@@ -134,6 +141,17 @@ public class OtherInstockDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         * tabFlag,(toBeApprove待审批，approve已审核，reject不通过)
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
         /**
          * 主键ids

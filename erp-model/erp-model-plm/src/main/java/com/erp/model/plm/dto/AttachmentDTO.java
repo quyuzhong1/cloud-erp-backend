@@ -128,6 +128,11 @@ public class AttachmentDTO implements Serializable {
         private String attachName;
 
         /**
+         * 附件URL
+         */
+        private String attachUrl;
+
+        /**
          * 上传日期
          */
         private LocalDateTime createTime;
