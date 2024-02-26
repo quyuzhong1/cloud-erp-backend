@@ -24,6 +24,7 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -33,10 +34,7 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
-import com.erp.server.wms.service.QcInfoService;
-import com.erp.server.wms.service.SoReturnInstockDetailService;
-import com.erp.server.wms.service.SoReturnReceiveService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -87,6 +85,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
 
+    @Resource
+    private SoReturnReceiveDetailService soReturnReceiveDetailService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -115,15 +116,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
         //退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getSourceId());
-        //销售单
-        SoInfoEntity soInfoEntity = new SoInfoEntity();
-        if (ObjectUtils.isNotEmpty(soReturnEntity)) {
-            soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-        }
+
 
         String soId = "";
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
                 soId = soReturnReceiveEntities.get(0).getSoId();
             }
@@ -132,6 +129,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
             soId = entity.getSoId();
         }
+
+        //销售单
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        if (StringUtils.isNotBlank(soId)) {
+            soInfoEntity = soInfoFeign.getSoInfoById(soId);
+        }
+
 
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
@@ -219,9 +223,30 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         //金蝶 FEntity:物料信息
         List<Map<String,Object>> list = new ArrayList<>();
+
+        List<String> sourceDetailIds = returnInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+
+
+        //根据相应的来源id查询上有的数据
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailList = new ArrayList<>();
+        List<SoReturnDetailEntity> returnDetailList = new ArrayList<>();
+        List<SoDetailEntity> soDetailList = new ArrayList<>();
+        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+            soReturnReceiveDetailList = soReturnReceiveDetailService.listDetailByIds(sourceDetailIds);
+        } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+            returnDetailList = soReturnFeign.listDetailByIds(sourceDetailIds);
+        } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
+            soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIds);
+        }
+
+
         for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            //根据来源id获取销售订单详情id
+            String soDetailId = "";
+            soDetailId = getSoDetailid(entity, soReturnReceiveDetailList, returnDetailList, soDetailList, detailEntity, soDetailId);
+
+            String finalSoDetailId = soDetailId;
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(finalSoDetailId)).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
             //退货原因
             if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
@@ -276,6 +301,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 }
             }
 
+
             List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> linkMap = new HashMap<>();
             if (ObjectUtil.isNotEmpty(soDetailEntity) && ObjectUtil.isNotEmpty(soInfoEntity)) {
@@ -293,6 +319,27 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         //生成任务
         sendMqAndSaveTask(entity,operate,resultMap);
+    }
+
+    private String getSoDetailid(SoReturnInstockEntity entity, List<SoReturnReceiveDetailEntity> soReturnReceiveDetailList, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
+        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnReceiveDetailEntity)) {
+                soDetailId = soReturnReceiveDetailEntity.getSourceDetailId();
+            }
+
+        } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
+                soDetailId = soReturnDetailEntity.getSourceDetailId();
+            }
+        } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soDetailEntity)) {
+                soDetailId = soDetailEntity.getId();
+            }
+        }
+        return soDetailId;
     }
 
     /**
