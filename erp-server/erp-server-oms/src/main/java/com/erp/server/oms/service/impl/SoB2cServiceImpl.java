@@ -1620,6 +1620,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -1655,7 +1657,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
-        this.updateIntercept(interceptUpdateOrderDTO);
+        Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
+        if (flag) {
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", commonService.getUserInfo().getUserName(), "发货拦截", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "发货拦截");
+        }
 
         //新增发货拦截
         BatchResultDTO result = addIntercept(remark, entity, logisticsEntity);
