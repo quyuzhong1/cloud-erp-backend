@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -53,6 +54,7 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SoReturnNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
         PagingVO<SoReturnNoticeDTO.PagingView> pagingVO = soReturnNoticeService.paging(dto);
         return success(pagingVO);
@@ -295,6 +297,7 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnNoticeService.exportExcel(dto, response);
         return flag == true ? success() : failure();
