@@ -265,7 +265,7 @@ public class ProductCertificateDTO implements Serializable {
         private String remark;
 
         /**
-         * 需要上传的附件id集合
+         * 需要删除的附件id集合
          */
         private List<String> removeFileIdList;
     }
@@ -300,7 +300,7 @@ public class ProductCertificateDTO implements Serializable {
         private String remark;
 
         /**
-         * 需要上传的附件id集合
+         * 需要删除的附件id集合
          */
         private List<String> removeFileIdList;
     }
