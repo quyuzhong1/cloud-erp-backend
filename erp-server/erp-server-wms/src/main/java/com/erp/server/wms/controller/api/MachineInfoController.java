@@ -12,11 +12,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.server.wms.query.MachineInfoQueryHandler;
 import com.erp.server.wms.service.MachineInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -55,7 +56,7 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = MachineInfoQueryHandler.class)
     public ApiResult<PagingVO<MachineInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<MachineInfoDTO.SearchParamDTO> dto) {
         PagingVO<MachineInfoDTO.ListDTO> pagingVO = machineInfoService.paging(dto);
         return success(pagingVO);
@@ -329,7 +330,7 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = MachineInfoQueryHandler.class)
     public ApiResult exportExcel(@RequestBody MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = machineInfoService.exportExcel(dto, response);
         return flag == true ? success() : failure();

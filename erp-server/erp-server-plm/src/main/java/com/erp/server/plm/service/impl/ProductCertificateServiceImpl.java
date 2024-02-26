@@ -21,10 +21,7 @@ import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
 import com.erp.model.plm.dto.excel.ProductCertificateExcelDTO;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.PlmAttachmentEntity;
-import com.erp.model.plm.entity.ProductCertificateEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -104,6 +101,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         this.saveOrUpdateBatch(resultList);
         //上传附件
         uploadFile (resultList);
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        resultList.forEach(obj -> {
+            sysLogEntityList.add(
+                    new SysLogEntity().setContent(String.format("新增了一个【产品证书】"))
+                            .setBusinessId(obj.getSkuId())
+                            .setPid(obj.getId())
+            );
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
 
     /**
@@ -211,6 +218,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void productAddOrUpdate(List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList) {
         //结果集
         List<ProductCertificateEntity> resultList = new ArrayList<>();
@@ -238,6 +246,17 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         updateAttachmentId(resultList);
         //删除附件
         productCertificateList.forEach(obj -> deleteFile(obj.getRemoveFileIdList(),obj.getId()));
+
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        resultList.forEach(obj -> {
+            sysLogEntityList.add(
+                    new SysLogEntity().setContent(String.format("新增了一个【产品证书】"))
+                            .setBusinessId(obj.getSkuId())
+                            .setPid(obj.getId())
+            );
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
 
     /**
@@ -287,6 +306,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         if (CollectionUtils.isEmpty(removeFileIdList) || StrUtil.isBlank(businessId)) {
             return;
         }
+        ProductCertificateEntity productCertificateEntity = this.getById(businessId);
+        if (ObjectUtil.isEmpty(productCertificateEntity)) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"产品证书");
+        }
+
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Arrays.asList(businessId));
         long count = attachmentList.stream().filter(obj -> !removeFileIdList.contains(obj.getId())).count();
         if (count <= 0) {
@@ -299,6 +323,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             //fastdfs删除附件
             FastDFSClientUtil.deleteFile(entity.getAttachUrl());
         }
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        removeFileList.forEach(obj -> {
+            sysLogEntityList.add(
+                    new SysLogEntity().setContent(StrUtil.format("删除了一个产品证书【{}】",obj.getAttachName()))
+                            .setBusinessId(productCertificateEntity.getSkuId())
+                            .setPid(obj.getId())
+            );
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
 
     @Override

@@ -252,7 +252,7 @@ public class ProductCertificateDTO implements Serializable {
         /**
          * 有效期
          */
-        private String certificateValidTimeStr;
+        private LocalDate certificateValidTime;
 
         /**
          * 证书文件表id
