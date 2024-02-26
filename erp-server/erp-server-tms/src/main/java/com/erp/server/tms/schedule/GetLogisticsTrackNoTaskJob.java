@@ -2,18 +2,15 @@ package com.erp.server.tms.schedule;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
-import com.erp.model.plm.entity.ProjectTaskSysEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsService;
-import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -76,6 +73,15 @@ public class GetLogisticsTrackNoTaskJob {
                 ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
                 if (orderResponse.isSuccess()) {
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
+                    List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
+                    for (LogisticsOrderResponseVO item : resultList) {
+                        List<String> trackNoList = new ArrayList<>(2);
+                        String transportNo = item.getTransportNo();
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(transportNo)).
+                                map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                    }
+
+
                 }
             } catch (Exception e) {
                 log.error("查询物流跟踪号异常>>>>{}", e);
@@ -102,10 +108,11 @@ public class GetLogisticsTrackNoTaskJob {
                 LogisticsQueryBaseVO queryBase = new LogisticsQueryBaseVO();
                 queryBase.setTransportNo(item.getTransportNo());
                 Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId, logisticsPlatform);
+                authMap.put("token", item.getShopToken());
+                queryBase.setAuthMap(authMap);
+                queryBaseList.add(queryBase);
             }
-
-
         }
-        return null;
+        return queryBaseList;
     }
 }
