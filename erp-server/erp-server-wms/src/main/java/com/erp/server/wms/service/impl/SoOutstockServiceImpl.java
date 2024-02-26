@@ -445,20 +445,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         result.setSoCode(soOutstock.getSoCode());
         result.setSellerId(soOutstock.getSellerId());
         if (!isB2c) {
-            SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
-            if (soInfo != null) {
-                result.setCustomerName(soInfo.getCustomerName());
-                result.setSoRemark(soInfo.getSoRemark());
-                result.setReceiveAddress(soInfo.getReceiveAddress());
-                result.setReceiverName(soInfo.getReceiverName());
-                result.setDeliveryModeName(soInfo.getDeliveryModeName());
-                result.setRequireDate(soInfo.getRequireDate());
-                result.setTelNumber(soInfo.getTelNumber());
-                result.setTypeName(soInfo.getOrderTypeName());
-                result.setSellerName(soInfo.getSellerName());
-                result.setSalesDeptId(soInfo.getSalesDeptId());
-                result.setSalesDeptName(soInfo.getSalesDeptName());
-                result.setSalesOrgName(soInfo.getSalesOrgName());
+            if (StringUtils.isNotBlank(soId)){
+                SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
+                if (soInfo != null) {
+                    result.setCustomerName(soInfo.getCustomerName());
+                    result.setSoRemark(soInfo.getSoRemark());
+                    result.setReceiveAddress(soInfo.getReceiveAddress());
+                    result.setReceiverName(soInfo.getReceiverName());
+                    result.setDeliveryModeName(soInfo.getDeliveryModeName());
+                    result.setRequireDate(soInfo.getRequireDate());
+                    result.setTelNumber(soInfo.getTelNumber());
+                    result.setTypeName(soInfo.getOrderTypeName());
+                    result.setSellerName(soInfo.getSellerName());
+                    result.setSalesDeptId(soInfo.getSalesDeptId());
+                    result.setSalesDeptName(soInfo.getSalesDeptName());
+                    result.setSalesOrgName(soInfo.getSalesOrgName());
+                }
             }
         } else {
             SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
@@ -1792,8 +1794,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public List<String> getIdsByTemp() {
-        return baseMapper.getIdsByTemp();
+    public List<String> getIdsByTemp(String tableName) {
+        return baseMapper.getIdsByTemp(tableName);
     }
 
 

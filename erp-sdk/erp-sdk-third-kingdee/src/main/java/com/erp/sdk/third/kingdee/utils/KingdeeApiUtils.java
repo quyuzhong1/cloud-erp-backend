@@ -34,6 +34,10 @@ public class KingdeeApiUtils {
 
     private static String DCID;
 
+    private static Integer REQUEST_TIME_OUT;
+
+    private static Integer STOCK_TIME_OUT;
+
     private static String SWITCH_TIME;
 
     @Value("${openApi.kingdee.switchTime}")
@@ -66,6 +70,16 @@ public class KingdeeApiUtils {
         KingdeeApiUtils.DCID = dCid;
     }
 
+    @Value("${openApi.kingdee.requestTimeout}")
+    public void setRequestTimeout(Integer requestTimeout) {
+        KingdeeApiUtils.REQUEST_TIME_OUT = requestTimeout;
+    }
+
+    @Value("${openApi.kingdee.stockTimeout}")
+    public void setStockTimeout(Integer stockTimeout) {
+        KingdeeApiUtils.STOCK_TIME_OUT = stockTimeout;
+    }
+
     public KingdeeApiUtils() {
     }
 
@@ -76,6 +90,8 @@ public class KingdeeApiUtils {
         identifyInfo.setUserName(USERNAME);
         identifyInfo.setServerUrl(SERVERURL);
         identifyInfo.setAppSecret(APPSECRET);
+        identifyInfo.setRequestTimeout(REQUEST_TIME_OUT);
+        identifyInfo.setStockTimeout(STOCK_TIME_OUT);
         this.client = new K3CloudApi(identifyInfo);
         this.formId = formId;
     }
