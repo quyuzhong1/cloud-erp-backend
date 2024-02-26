@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -178,6 +179,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             attachmentEntity.setAttachUrl(fileUrl);
             attachmentEntity.setAttachName(fileName);
             attachmentEntity.setType(ProductCertificateEntity.TABLE_NAME);
+            attachmentEntity.setAttachSize(new BigDecimal(fileSize));
             attachmentList.add(attachmentEntity);
         }
         plmAttachmentService.saveBatch(attachmentList);
