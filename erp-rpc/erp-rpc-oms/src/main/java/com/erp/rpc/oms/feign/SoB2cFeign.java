@@ -307,7 +307,7 @@ public interface SoB2cFeign {
      * @param viewDTOList
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
      **/
-    @PostMapping("/feign/soB2c//generateTransferDeclareView")
+    @PostMapping("/feign/soB2c/generateTransferDeclareView")
     List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList);
 
     /**
@@ -348,4 +348,15 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2c/updateAliExpressOrderWarehouse")
     Boolean updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId);
+
+    /**
+     * 修改b2c 销售订单物流信息
+     * @description
+     * @param list
+     * @return
+     * @date 2024-02-26 16:41
+     * @author Lambda
+     */
+    @PostMapping("/feign/soB2c/batchUpdateLogistics")
+    Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
 }
