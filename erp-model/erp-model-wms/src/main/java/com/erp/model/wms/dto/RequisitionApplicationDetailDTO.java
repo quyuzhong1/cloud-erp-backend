@@ -58,7 +58,7 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         /**
          * MSKU
          */
-        private String platformsSkuNo;
+        private String platformSkuNo;
 
         /**
          * 平台产品名称

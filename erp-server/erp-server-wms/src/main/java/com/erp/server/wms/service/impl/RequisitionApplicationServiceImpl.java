@@ -651,7 +651,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
                 detailView.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                detailView.setPlatformsSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+                detailView.setPlatformSkuNo(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
                 detailView.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
                 detailView.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
             }
