@@ -3,6 +3,7 @@ package com.erp.server.tms.schedule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -12,6 +13,7 @@ import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -75,11 +78,32 @@ public class GetLogisticsTrackNoTaskJob {
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
                     List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
-                        List<String> trackNoList = new ArrayList<>(2);
                         String transportNo = item.getTransportNo();
                         String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(transportNo)).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(b2cLogisticsId)) {
+                            List<String> trackNoList = new ArrayList<>(2);
+                            SoB2cLogisticsEntity entity=new SoB2cLogisticsEntity();
+                            entity.setId(b2cLogisticsId);
+
+                            //跟踪单号
+                            String trackNo = item.getTrackNo();
+                            if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
+                                trackNoList.add(trackNo);
+                            }
+                            Boolean more = item.getMore();
+                            if (Objects.nonNull(more) && more) {
+                                List<LogisticsOrderResponseVO> responseList = item.getLogisticsOrderResponseVOS();
+                                trackNoList.addAll(responseList.stream().map(LogisticsOrderResponseVO::getTrackNo).collect(Collectors.toList()));
+                            }
+                            entity.setTrackNo(trackNoList.stream().collect(Collectors.joining(",")));
+                            updateList.add(entity);
+                        }
                     }
+                    if (CollectionUtils.isNotEmpty(updateList)) {
+                        soB2cFeign.batchUpdateLogistics(updateList);
+                    }
+
 
 
                 }

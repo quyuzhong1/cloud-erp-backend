@@ -555,7 +555,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult authorization(Map<String, String> authMap) {
         try {
             ChannelResult responseMsg = aliExpressShipperService.getChanelList(authMap);
-            if (Objects.isNull(responseMsg) || !responseMsg.getResultSuccess()) {
+            if (Objects.isNull(responseMsg) || Objects.isNull(responseMsg.getResultSuccess()) || !responseMsg.getResultSuccess()) {
                 //授权失败
                 return failure("授权失败");
             } else {
