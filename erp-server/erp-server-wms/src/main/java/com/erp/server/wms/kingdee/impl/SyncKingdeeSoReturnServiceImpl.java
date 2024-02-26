@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -275,18 +276,17 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 }
             }
 
-
-
-/*            List<Map<String, Object>> mapList = new ArrayList<>();
+            List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> linkMap = new HashMap<>();
-            linkMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
-            linkMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
-            linkMap.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
-            linkMap.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
-            mapList.add(linkMap);
-            //销售单金蝶明细id
-            map.put("FInStockEntry_Link", mapList);*/
-
+            if (ObjectUtil.isNotEmpty(soDetailEntity) && ObjectUtil.isNotEmpty(soInfoEntity)) {
+                linkMap.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
+                linkMap.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
+                linkMap.put("FEntity_Link_FSTableName", "T_SAL_ORDERENTRY");
+                linkMap.put("FEntity_Link_FRuleId", "SaleOrder-SalReturnStock");
+                mapList.add(linkMap);
+                //销售单金蝶明细id
+                map.put("FInStockEntry_Link", mapList);
+            }
             list.add(map);
         }
         resultMap.put("FEntityList", list);
