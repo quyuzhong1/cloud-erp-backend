@@ -105,8 +105,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             map.put("url", finalCfgAppClient.getUrl());
             map.put("token", shopAuthEntity.getToken());
             map.put("shopId", shopAuthEntity.getShopId());
-            map.put("orderId", "8182808069884648");
-            map.put("childOrderId","8182808069884648");
+            map.put("orderId", "3031189945277223");
+            map.put("childOrderId","3031189945287223");
             mapList.add(map);
         });
         return mapList;
@@ -139,8 +139,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
-        map.put("orderId", "8182808069884648");
-        map.put("childOrderId","8182808069884648");
+        map.put("orderId", "3031189945277223");
+        map.put("childOrderId","3031189945287223");
         if (org.apache.commons.lang3.StringUtils.isNotBlank(authId)) {
             ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(authId);
             if (Objects.nonNull(shopAuth)) {
