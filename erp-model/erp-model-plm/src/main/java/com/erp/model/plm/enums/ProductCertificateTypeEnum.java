@@ -10,7 +10,10 @@ import com.common.core.constant.EnumMessage;
 public enum ProductCertificateTypeEnum implements EnumMessage {
 
 
-    NO_DEVELOP("", "未开发");
+    PRODUCT_ATTESTATION("productAttestation", "产品认证"),
+    OTHER_ATTESTATION("otherAttestation", "其它认证"),
+    TRANSPORT_ATTESTATION("transportAttestation", "运输认证"),
+    ;
 
     private String code;
     private String name;
