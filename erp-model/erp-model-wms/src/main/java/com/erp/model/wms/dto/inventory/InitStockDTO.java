@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname: InventoryInitDTO
@@ -265,35 +267,14 @@ public class InitStockDTO implements Serializable {
     public static class SearchParamDTO extends SortDTO {
 
         /**
-         * 单据编号
+         * 页面高级查询
          */
-        private String code;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * sku编码
+         * sqlMap 默认key default
          */
-        private List<String> skuNoList;
-
-
-        /**
-         * spu编码 接口地址：/wms/drop/down/product/spuNo/list（一次性返回所有）
-         */
-        private List<String> spuNoList;
-
-        /**
-         * 仓库id集合
-         */
-        private List<String> warehouseIdList;
-
-        /**
-         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
-         */
-        private List<Integer> saleStatusList;
-
-        /**
-         * 库存组织集合
-         */
-        private List<String> orgIdList;
+        private Map<String,String> sqlMap;
 
     }
 
