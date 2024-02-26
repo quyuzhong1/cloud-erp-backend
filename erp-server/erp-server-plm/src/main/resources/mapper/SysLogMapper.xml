@@ -14,12 +14,6 @@
         from sys_log sl
         <where>
             sl.is_deleted = FALSE
-            <if test="params.classPaths !=null and params.classPaths.size()>0">
-                AND sl.class_path in
-                <foreach collection="params.classPaths" item="classPath" open="(" separator="," close=")">
-                    #{classPath}
-                </foreach>
-            </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}
             </if>

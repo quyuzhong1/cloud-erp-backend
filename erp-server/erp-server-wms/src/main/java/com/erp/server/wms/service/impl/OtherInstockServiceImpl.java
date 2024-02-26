@@ -10,7 +10,6 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -31,15 +30,12 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -47,6 +43,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.mapper.OtherInstockMapper;
+import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -60,10 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,6 +102,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private OtherInstockQueryHandler otherInstockQueryHandler;
+
+
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -133,19 +131,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             OtherInstockDTO.SearchParamDTO searchParamDTO = new OtherInstockDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             OtherInstockDTO.ListStatusCountDTO resultDTO = new OtherInstockDTO.ListStatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
+            String tabSql = otherInstockQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setSearchType(item.getCode());
             list.add(resultDTO);
