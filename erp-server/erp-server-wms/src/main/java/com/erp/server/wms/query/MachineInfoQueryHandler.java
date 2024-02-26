@@ -1,7 +1,9 @@
 package com.erp.server.wms.query;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import org.apache.commons.lang3.StringUtils;
+import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.PoTableFlagEnum;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -9,11 +11,37 @@ public class MachineInfoQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("tab".equals(field)) {
-            if (StringUtils.isBlank(value.toString())) {
-                return getQueryAllSql();
-            }
+        if("tab".equals(field)){
+            return getTabSql(value);
         }
         return null;
+    }
+
+
+    /**
+     * @description: tabSql
+     * @author Will
+     * @date: 2024/2/26 15:55
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        // 待提交
+        if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+            super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        }
+        // 待审核
+        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+        // 已审核
+        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE.getStatus());
+        }
+        //不通过
+        if (PoTableFlagEnum.APPROVE_REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.REJECT.getStatus());
+        }
+        return super.getSplicingSQL();
     }
 }
