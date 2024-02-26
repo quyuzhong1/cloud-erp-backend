@@ -173,12 +173,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastEntity entity = super.getById(updateDTO.getId());
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单"));
         entity.setBillDate(updateDTO.getBillDate());
+        packageForecastDetailService.update(entity, updateDTO.getDetailIdList());
         boolean save = super.updateById(entity);
         if (!save) {
             throw new ServiceException("组包预报单保存失败");
         }
-        packageForecastDetailService.update(entity.getId(), entity.getLogisticsSupplierId(), updateDTO.getDetailIdList());
-        return Boolean.TRUE;
+        return save;
     }
 
     /**

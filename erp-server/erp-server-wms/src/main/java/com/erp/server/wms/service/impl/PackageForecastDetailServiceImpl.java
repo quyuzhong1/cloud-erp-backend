@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.HandoverSubStatusEnum;
@@ -33,6 +34,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,7 +102,9 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String mainId, String logisticsSupplierId, List<String> detailIdList) {
+    public Boolean update(PackageForecastEntity entity, List<String> detailIdList) {
+        String mainId = entity.getId();
+        String logisticsSupplierId = entity.getLogisticsSupplierId();
         List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
@@ -108,6 +112,12 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
+        //表示没有删除的
+        List<PackageForecastDetailEntity> notDeleteList = dbList.stream().filter(s -> idList.contains(s.getId())).collect(Collectors.toList());
+        entity.setTotalPackageQty(notDeleteList.size());
+        BigDecimal notDeleteTotalPackageWeight = notDeleteList.stream().map(PackageForecastDetailEntity::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+        entity.setTotalPackageWeight(notDeleteTotalPackageWeight);
+
         //销售订单id
         List<String> soIdList = deleteList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
 
