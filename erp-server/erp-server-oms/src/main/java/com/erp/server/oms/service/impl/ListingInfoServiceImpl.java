@@ -17,6 +17,7 @@ import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
@@ -25,10 +26,10 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -269,13 +270,21 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     private void fillData(List<ListingInfoDTO.PageDTO> records) {
         List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
+        List<String> skuIds = records.stream().map(ListingInfoDTO.PageDTO::getSkuId).collect(Collectors.toList());
 
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         records.forEach(v->{
             SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
             if(Objects.nonNull(skuVO)){
                 v.setImagesUrl(skuVO.getSkuImagesUrl());
+            }
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(v.getSkuId())).count();
+                v.setIsCombination(count > 0);
             }
         });
     }

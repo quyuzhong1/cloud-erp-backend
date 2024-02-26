@@ -126,6 +126,10 @@ public class ListingInfoDTO implements Serializable {
          * 对照关系是否映射到服务商平台所有仓库: f=否, t=是
          */
         private Boolean hasMappingAll;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
     }
 
     /**
