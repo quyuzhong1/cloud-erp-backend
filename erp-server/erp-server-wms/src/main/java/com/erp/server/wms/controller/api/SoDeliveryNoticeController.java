@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,6 +17,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +53,7 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:paging",
             tableAlias = "sdn"
     )
+    @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public ApiResult<PagingVO<SoDeliveryNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
         PagingVO<SoDeliveryNoticeDTO.PagingView> pagingVO = soDeliveryNoticeService.paging(dto);
         return success(pagingVO);
@@ -296,6 +299,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货通知单")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public ApiResult exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soDeliveryNoticeService.exportExcel(dto, response);
         return flag == true ? success() : failure();
