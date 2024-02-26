@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -49,6 +50,9 @@ public interface SoOutstockFeign {
 
     @PostMapping("feign/soOutstock/listByTrackNo")
     List<SoOutstockEntity> listByTrackNo(String trackNo);
+
+    @PostMapping("feign/soOutstock/listByAdvanceQuery")
+    List<SoOutstockEntity> listByAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
     /**
      * 获取销售出货单
      *

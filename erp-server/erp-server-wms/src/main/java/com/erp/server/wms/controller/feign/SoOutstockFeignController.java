@@ -1,5 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -109,6 +111,12 @@ public class SoOutstockFeignController {
     @PostMapping("/listByTrackNo")
     List<SoOutstockEntity> listByTrackNo(@RequestBody String trackNo) {
         return soOutstockService.listByTrackNo(trackNo);
+    }
+
+    @PostMapping("/listByAdvanceQuery")
+    @WebAdvanceQuery
+    List<SoOutstockEntity> listByAdvanceQuery(@RequestBody AdvanceQueryContainer container) {
+        return soOutstockService.listByAdvanceQuery(container);
     }
 
     /**

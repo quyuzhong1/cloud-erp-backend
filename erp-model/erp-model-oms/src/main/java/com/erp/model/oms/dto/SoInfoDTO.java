@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -580,14 +582,22 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
          * all 全部
          * waitApprove 待审核
          * waitDelivery 待发货
          * delivery 已发货
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
 

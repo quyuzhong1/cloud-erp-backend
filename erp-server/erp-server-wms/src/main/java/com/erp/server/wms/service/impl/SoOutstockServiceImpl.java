@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -2144,6 +2145,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    public List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container) {
+        return this.lambdaQuery()
+                .last(" and "+container.getSqlMap().get("default"))
+                .list();
     }
 
     private SoOutstockEntity getBySoCode(String soB2cCode) {

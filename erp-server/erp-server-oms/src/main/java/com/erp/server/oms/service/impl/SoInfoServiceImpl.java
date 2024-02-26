@@ -558,30 +558,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        //运单号
-        String trackNo = params.getTrackNo();
-        List<String> soIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(trackNo)) {
-            /**
-             * 销售出库单
-             */
-            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
-            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(soIdList)) {
-                return new PagingVO<>(new Page<>());
-            }
-        }
 
-
-        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(params.getSearchType());
-        if (Objects.isNull(paramDetailIds)) {
-            paramDetailIds = Collections.emptyList();
-        } else {
-            if (paramDetailIds.size() == 0) {
-                return new PagingVO<>(new Page<>());
-            }
-        }
-        IPage pageData = baseMapper.paging(query, params, paramDetailIds, soIdList);
+        IPage pageData = baseMapper.paging(query, params);
         List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -812,35 +790,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public SoInfoDTO.PagingTotalDTO pagingTotal(SoInfoDTO.PagingParamDTO dto) {
 
-        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
-
-        //运单号
-        String trackNo = dto.getTrackNo();
-        List<String> soIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(trackNo)) {
-            /**
-             * 销售出库单
-             */
-            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
-            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(soIdList)) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, MathUtil.ZERO, MathUtil.ZERO);
-                return pagingTotalDTO;
-            }
-        }
-
-        if (Objects.isNull(paramDetailIds)) {
-            paramDetailIds = Collections.emptyList();
-        } else {
-            if (paramDetailIds.size() == 0) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, MathUtil.ZERO, MathUtil.ZERO);
-                return pagingTotalDTO;
-            }
-        }
-        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds, soIdList);
-
+        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
         //出库
-        List<String> detailIds = baseMapper.pagingTotalGetDetailIds(dto, paramDetailIds, soIdList);
+        List<String> detailIds = baseMapper.pagingTotalGetDetailIds(dto);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
@@ -1432,31 +1384,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        //运单号
-        String trackNo = dto.getTrackNo();
-        List<String> soIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(trackNo)) {
-            /**
-             * 销售出库单
-             */
-            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
-            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(soIdList)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-        }
 
 
-        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
-        if (Objects.isNull(paramDetailIds)) {
-            paramDetailIds = Collections.emptyList();
-        } else {
-            if (paramDetailIds.size() == 0) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-        }
         //获取导出数据
-        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto, paramDetailIds, soIdList);
+        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }

@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -71,4 +72,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(@Param("params") SoOutstockDTO.PagingParamDTO params);
+
+    List<SoOutstockEntity> listByAdvanceQuery(@Param("params") AdvanceQueryContainer container);
 }
