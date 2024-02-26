@@ -3883,10 +3883,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String unit = UnitEnum.WeightUnitEnum.G.getCode();
 
-        String waitTransfer = TransferStatusEnum.WAIT.getCode();
-        String notWaitTransferCode = soB2cList.stream().filter(s -> !waitTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(notWaitTransferCode)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, notWaitTransferCode);
+        String alreadyTransfer = TransferStatusEnum.ALREADY.getCode();
+        String alreadyTransferCode = soB2cList.stream().filter(s -> alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(alreadyTransferCode)) {
+            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, alreadyTransferCode);
         }
 
         String notPackage = PackageStatusEnum.NOT.getCode();
