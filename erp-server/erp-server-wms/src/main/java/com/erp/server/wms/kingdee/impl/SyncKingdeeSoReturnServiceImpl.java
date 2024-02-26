@@ -285,7 +285,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 linkMap.put("FEntity_Link_FRuleId", "SaleOrder-SalReturnStock");
                 mapList.add(linkMap);
                 //销售单金蝶明细id
-                map.put("FInStockEntry_Link", mapList);
+                map.put("FEntity_Link", mapList);
             }
             list.add(map);
         }
