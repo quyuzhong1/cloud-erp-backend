@@ -328,6 +328,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         String dictProjectName = certificateProjectList.stream().filter(obj -> StrUtil.equals(viewDTO.getDictProject(), obj.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         viewDTO.setDictProjectName(dictProjectName);
 
+        //产品信息
+        ProductDetailEntity productDetailEntity = productDetailService.getById(viewDTO.getSkuId());
+        if (ObjectUtil.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        viewDTO.setSkuNo(productDetailEntity.getSkuNo());
+
         //查询历史附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Arrays.asList(viewDTO.getId()));
         if (CollectionUtils.isNotEmpty(attachmentList)) {

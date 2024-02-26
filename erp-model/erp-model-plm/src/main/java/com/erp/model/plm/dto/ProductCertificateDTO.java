@@ -318,6 +318,16 @@ public class ProductCertificateDTO implements Serializable {
         private String id;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
          * 证书类型
          */
         private String type;
