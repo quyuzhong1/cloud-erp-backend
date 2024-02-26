@@ -259,7 +259,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 临时修复数据查询id
      * @return
      */
-    List<String> getIdsByTemp();
+    List<String> getIdsByTemp(String tableName);
 
 
     /**
