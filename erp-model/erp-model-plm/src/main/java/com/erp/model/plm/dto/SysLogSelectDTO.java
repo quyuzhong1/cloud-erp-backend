@@ -4,9 +4,6 @@ import com.common.business.dto.base.BaseSearchDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
-import java.util.List;
-
 /**
  * @author Will
  * @version 1.0
@@ -16,12 +13,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SysLogSelectDTO extends BaseSearchDTO {
-
-    /**
-     * 表名路径
-     */
-    @NotNull(message = "表名路径不能为空")
-    private List<String> classPaths;
 
     /**
      * 业务id(对应模块id)
