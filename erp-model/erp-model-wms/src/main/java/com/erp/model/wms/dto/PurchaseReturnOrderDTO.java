@@ -961,6 +961,11 @@ public class PurchaseReturnOrderDTO {
          * 退款单价
          */
         private BigDecimal taxPrice;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
     }
 
     @Data

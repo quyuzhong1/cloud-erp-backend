@@ -136,8 +136,9 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformAliExpressOrderDTO> sourceDataList) {
-
-        getDeliveryList(sourceDataList.get(0).getAliExpressShopInfoDTO(), sourceDataList);
+        if(!CollectionUtils.isEmpty(sourceDataList)){
+            getDeliveryList(sourceDataList.get(0).getAliExpressShopInfoDTO(), sourceDataList);
+        }
         return sourceDataList.stream()
                 // 组装
                 .map(PlatformAliExpressOrderDTO::convertDTO)

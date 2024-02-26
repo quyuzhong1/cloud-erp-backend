@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
+import com.erp.model.wms.entity.PackageForecastEntity;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     * @param detailIdList
     * @return
     */
-    Boolean update(String mainId,String logisticsSupplierId,List<String> detailIdList);
+    Boolean update(PackageForecastEntity entity, List<String> detailIdList);
 
     /**
      * 获取对应详情
