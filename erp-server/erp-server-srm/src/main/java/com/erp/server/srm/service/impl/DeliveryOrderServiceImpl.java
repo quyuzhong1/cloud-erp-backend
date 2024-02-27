@@ -142,6 +142,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList) {
+        if(CollectionUtils.isEmpty(supplierIdList)){
+            return new ArrayList<>();
+        }
         List<DeliveryOrderDTO.TabListDTO> result = new ArrayList<>();
         List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(supplierIdList);
         //ALL
