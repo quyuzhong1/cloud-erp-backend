@@ -55,4 +55,13 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @param dto
      */
     void removeAttachment(BaseIdDTO dto);
+    /**
+     * @description: 批量上传
+     * @author Will
+     * @date: 2024/2/27 15:03
+     * @param multipartFileList
+     * @param type
+     * @return List<PlmAttachmentEntity>
+     */
+    List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type);
 }

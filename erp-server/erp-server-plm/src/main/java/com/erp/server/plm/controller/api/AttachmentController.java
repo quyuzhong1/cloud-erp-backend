@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 
 /**
@@ -44,6 +45,22 @@ public class AttachmentController extends BaseController {
         return this.success(entity);
     }
 
+
+    /**
+     * 批量上传
+     * @author Will
+     * @date: 2024/2/27 15:02
+     * @param multipartFileList
+     * @param type
+     * @param request
+     * @return ApiResult<List<PlmAttachmentEntity>>
+     */
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
+    @PostMapping("/batchUpload")
+    public ApiResult<List<PlmAttachmentEntity>> batchUpload(@RequestParam("multipartFileList") List<MultipartFile> multipartFileList, @RequestParam("type") String type, HttpServletRequest request) {
+        List<PlmAttachmentEntity> list = plmAttachmentService.batchUpload(multipartFileList, type);
+        return this.success(list);
+    }
 
     /**
      * 删除附件信息

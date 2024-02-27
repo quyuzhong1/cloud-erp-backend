@@ -123,4 +123,18 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         //删除fastdfs
         FastDFSClientUtil.deleteFile(plmAttachmentEntity.getAttachUrl());
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type) {
+        if (CollectionUtils.isEmpty(multipartFileList)) {
+            throw new ServiceException(ApiError.ERROR_95018);
+        }
+        List<PlmAttachmentEntity> resultList = new ArrayList<>();
+        for(MultipartFile multipartFile :multipartFileList) {
+            PlmAttachmentEntity entity = upload(multipartFile, type);
+            resultList.add(entity);
+        }
+        return resultList;
+    }
 }
