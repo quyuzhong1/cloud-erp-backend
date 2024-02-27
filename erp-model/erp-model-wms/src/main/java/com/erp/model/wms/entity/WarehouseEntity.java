@@ -134,8 +134,8 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     /**
      * 经营类型
      */
-    @TableField("management_type")
-    private String managementType;
+    @TableField("warehouse_manage_type")
+    private String warehouseManageType;
 
     /**
      * 地理位置

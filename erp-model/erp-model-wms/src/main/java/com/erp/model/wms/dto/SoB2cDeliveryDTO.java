@@ -132,6 +132,24 @@ public class SoB2cDeliveryDTO implements Serializable {
         private List<SoB2cDeliveryDetailDTO.AddDTO> detailList;
     }
 
+
+    /**
+     * 发货的sku 信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverySkuDTO  {
+
+
+        private String skuId;
+
+        private String skuNo;
+
+        private Integer qty;
+
+
+    }
+
     /**
     * 修改
     */

@@ -122,12 +122,29 @@ public class WarehouseExcelDTO  implements Serializable {
     @FieldValid(fieldName = "仓库状态",isNotBlank = true,fieldValues = "启用,停用")
     private String enabled;
 
+    /**
+     * 仓库经营类型
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "仓库经营类型", index = 12)
+    @FieldValid(fieldName = "仓库经营类型",isNotBlank = true)
+    private String warehouseManageTypeName;
+
+
+    /**
+     * 仓库地理位置
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "仓库地理位置", index = 13)
+    @FieldValid(fieldName = "仓库地理位置",isNotBlank = true)
+    private String geographyLocationName;
+
 
     /**
      * 错误信息
      */
     @ColumnWidth(200)
-    @ExcelProperty(value = "错误信息", index = 12)
+    @ExcelProperty(value = "错误信息", index = 14)
     private String errorMsg;
 
 

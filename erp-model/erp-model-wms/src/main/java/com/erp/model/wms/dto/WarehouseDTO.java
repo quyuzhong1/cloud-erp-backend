@@ -133,10 +133,10 @@ public class WarehouseDTO implements Serializable {
 
 
         /**
-         * 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=managementType
+         * 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
          */
         @NotBlank(message = "经营类型不能为空")
-        private String managementType;
+        private String warehouseManageType;
 
         /**
          * 地理位置 来源 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
@@ -385,6 +385,26 @@ public class WarehouseDTO implements Serializable {
          * 第三方仓库名称
          */
         private String thirdWarehouseName;
+
+        /**
+         * 仓库经营类型
+         */
+        private String warehouseManageType;
+
+        /**
+         * 仓库经营类型
+         */
+        private String warehouseManageTypeName;
+
+        /**
+         * 地理位置
+         */
+        private String geographyLocation;
+
+        /**
+         * 地理位置名
+         */
+        private String geographyLocationName;
     }
 
 
@@ -435,6 +455,17 @@ public class WarehouseDTO implements Serializable {
          * 金蝶仓库编号
          */
         private String kingdeeWarehouseCode;
+
+        /**
+         * 经营类型 来源  http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
+         */
+        private String warehouseManageType;
+
+
+        /**
+         * 地理位置 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
+         */
+        private String geographyLocation;
 
 
         /**

@@ -15,6 +15,8 @@
          contact_tel_number AS contactTelNumber,
          disabled,
          address,
+         warehouse_manage_type AS warehouseManageType,
+         geography_location AS geographyLocation,
          org_id AS orgId,
          kingdee_warehouse_code AS kingdeeWarehouseCode,
          is_virtual AS isVirtual,
@@ -32,6 +34,15 @@
         </if>
         <if test="params.isVirtual != null ">
             AND  is_virtual = #{params.isVirtual}
+        </if>
+        <!--仓库经营类型-->
+        <if test="params.warehouseManageType != null and params.warehouseManageType!=''">
+            AND  warehouse_manage_type = #{params.warehouseManageType}
+        </if>
+
+        <!--地理位置-->
+        <if test="params.geographyLocation != null and params.geographyLocation!=''">
+            AND  geography_location = #{params.geographyLocation}
         </if>
         <if test="params.isEnableLocation != null ">
             AND  is_enable_location = #{params.isEnableLocation}
@@ -92,6 +103,8 @@
         contact_tel_number AS contactTelNumber,
         disabled,
         address,
+        warehouse_manage_type AS warehouseManageType,
+        geography_location AS geographyLocation,
         org_id AS orgId,
         kingdee_warehouse_code AS kingdeeWarehouseCode,
         is_virtual AS isVirtual,
@@ -119,6 +132,14 @@
               </if>
               <if test="params.isEnableLocation != null ">
                   AND  is_enable_location = #{params.isEnableLocation}
+              </if>
+              <!--仓库经营类型-->
+              <if test="params.warehouseManageType != null and params.warehouseManageType!=''">
+                  AND  warehouse_manage_type = #{params.warehouseManageType}
+              </if>
+              <!--地理位置-->
+              <if test="params.geographyLocation != null and params.geographyLocation!=''">
+                  AND  geography_location = #{params.geographyLocation}
               </if>
               <if test="params.address !=null  and params.address!=''">
                   AND  address ILIKE concat('%', #{params.address}::text ,'%')
