@@ -58,6 +58,12 @@ public class ProductCertificateShowDTO implements Serializable {
     private String dictProjectName;
 
     /**
+     * 文件id
+     * *
+     */
+    private String attachId;
+
+    /**
      * 文件名称
      */
     private String attachName;
@@ -72,6 +78,11 @@ public class ProductCertificateShowDTO implements Serializable {
      * 证书有效期
      */
     private LocalDate certificateValidTime;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 创建时间
