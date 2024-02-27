@@ -3,15 +3,13 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -33,13 +31,11 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
-import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
-import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -55,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.IdGenerator;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -461,6 +458,80 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
+    public List<BatchResultDTO> instockForecast(BaseDTO.QtyDTO qtyDTO) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        if (Objects.isNull(qtyDTO.getId())){
+            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_ID_NOT_EXIST);
+        }
+        if (Objects.isNull(qtyDTO.getQty())){
+            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST);
+        }
+        TransferDeclareEntity transferDeclareEntity = this.getById(qtyDTO.getId());
+        if (Objects.isNull(transferDeclareEntity)){
+            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
+        }
+        if (!TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())
+        || InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getInstockForecastStatus())) {
+            throw new ServiceException(ApiError.ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST);
+        }
+        //仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(qtyDTO.getId()));
+        List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
+                .filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus()))
+                .collect(Collectors.toList());
+
+        List<TransferLogisticsCreateInboundReq.ReceiveItem> receiveItemList = new ArrayList<>(transferDeclareDetailList.size());
+        //下单
+        for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
+            TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
+                    .orderCode(transferDeclareDetailEntity.getSoCode())
+                    .grossWeight(transferDeclareDetailEntity.getPackageWeight())
+                    .build();
+            receiveItemList.add(receiveItem);
+        }
+        if(CollectionUtils.isEmpty(receiveItemList)){
+            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
+        }
+        //查询授权信息
+        TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
+        if (ObjectUtil.isEmpty(authEntity)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+        }
+        TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
+        if (Objects.isNull(service)){
+            resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
+            return resultDTOList;
+        }
+        TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
+                .referenceCode(IdUtil.fastUUID())
+                .isDelivery(true)
+                .packQty(qtyDTO.getQty())
+                .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
+                .receivingStatus("2")
+                .receiveItemList(receiveItemList)
+                .build();
+        //下单
+        ApiResult<String> result = service.createInbound(request, authEntity.getId());
+
+        transferDeclareEntity.setInstockForecastAsnCode(result.getData());
+        transferDeclareEntity.setTotalQty(qtyDTO.getQty());
+        if (result.getCode() == 200) {
+            //拿到第三方订单号，用于给订单赋值第三方平台发货单号
+            transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
+            //上传成功
+            baseMapper.updateById(transferDeclareEntity);
+            resultDTOList.add(BatchResultDTO.success(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "入库预报成功"));
+        } else {
+            //上传失败
+            transferDeclareEntity.setInstockForecastRemark(result.getMsg());
+            transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
+            baseMapper.updateById(transferDeclareEntity);
+            resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "入库预报失败：" + result.getMsg() + ""));
+        }
+        return resultDTOList;
+    }
+
+    @Override
     public void declareAutoGenerationJob() {
         LocalTime localTime = LocalTime.now();
         //报关设置信息
@@ -635,6 +706,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             listDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadBatchStatus()));
             //上传状态（订单）中文
             listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
+            //入库预报状态
+            listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
         }
     }
 

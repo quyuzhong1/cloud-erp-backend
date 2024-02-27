@@ -953,6 +953,11 @@ public enum ApiError implements Serializable {
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
+    ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST(92132,"仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】"),
+    ERROR_TRANSFER_DECLARE_NOT_EXIST(92133,"中转报关单记录不存在"),
+    ERROR_TRANSFER_DECLARE_ID_NOT_EXIST(92134,"入库预报记录id不能为空"),
+    ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST(92135,"入库预报记录总件数不能为空"),
+    ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
 
 
 

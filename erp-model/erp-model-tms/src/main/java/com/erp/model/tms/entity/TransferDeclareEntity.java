@@ -82,6 +82,28 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     @TableField("package_total_weight")
     private BigDecimal packageTotalWeight;
 
+    /**
+     * 入库预报状态(批次) dict_basic：type=instockForecastStatus
+     */
+    @TableField("instock_forecast_status")
+    private String instockForecastStatus;
+
+    /**
+     * 入库预报asn单号
+     */
+    @TableField("instock_forecast_asn_code")
+    private String instockForecastAsnCode;
+    /**
+     * 总件数（页面录入）
+     */
+    @TableField("total_qty")
+    private Integer totalQty;
+    /**
+     * 入库成功/失败备注
+     */
+    @TableField("instock_forecast_remark")
+    private String instockForecastRemark;
+
 
     public static final String CODE = "code";
 

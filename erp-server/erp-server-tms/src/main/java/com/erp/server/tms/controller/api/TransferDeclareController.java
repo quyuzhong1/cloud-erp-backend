@@ -227,7 +227,7 @@ public class TransferDeclareController extends BaseController {
     }
 
     /**
-     * 上传报关
+     * 订单预报(批次)
      * @Author Luo_WG
      * @Date 2024/1/25 9:54
      * @param dto
@@ -247,10 +247,46 @@ public class TransferDeclareController extends BaseController {
             try {
                 result = transferDeclareService.upload(id);
             } catch (Exception e) {
-                log.error("上传报关单失败{}", e);
+                log.error("上传报关单失败", e);
                 TransferDeclareEntity entity = transferDeclareService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
+                    resultDTOS.addAll(result);
+                    continue;
+                }
+                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+            resultDTOS.addAll(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 入库预报
+     * @Author zdy
+     * @Date 2024/2/26 9:54
+     * @param dtos
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/instockForecast")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:TransferDeclareService:upload",
+            tableAlias = "td"
+    )
+    public ApiResult<List<BatchResultDTO>> instockForecast(@RequestBody @Validated List<BaseDTO.QtyDTO> dtos) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtos.size());
+        for (BaseDTO.QtyDTO qtyDTO : dtos) {
+            List<BatchResultDTO> result = new ArrayList<>();
+            try {
+                result = transferDeclareService.instockForecast(qtyDTO);
+            } catch (Exception e) {
+                log.error("入库预报失败", e);
+                TransferDeclareEntity entity = transferDeclareService.getById(qtyDTO.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    result.add(BatchResultDTO.fail(qtyDTO.getId(), qtyDTO.getId(), "报关单不存在, 入库预报失败"));
                     resultDTOS.addAll(result);
                     continue;
                 }

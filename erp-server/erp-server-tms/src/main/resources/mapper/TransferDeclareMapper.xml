@@ -53,6 +53,8 @@
             td.transfer_channel_name AS transferChannelName,
             td.package_total_qty AS packageTotalQty,
             td.package_total_weight AS packageTotalWeight,
+            td.instock_forecast_status AS instockForecastStatus,
+            td.instock_forecast_remark AS instockForecastRemark,
             tdd.so_id AS soId,
             tdd.so_code AS soCode,
             tdd.order_upload_status AS uploadOrderStatus,
@@ -117,6 +119,13 @@
             and tdd.transfer_status in
             <foreach collection="params.transferStatusList" item="transferStatus" open="(" separator="," close=")">
                 #{transferStatus}
+            </foreach>
+        </if>
+        <!--入库预报状态-->
+        <if test="params.instockForecastStatusList != null and params.instockForecastStatusList.size > 0">
+            and td.instock_forecast_status in
+            <foreach collection="params.instockForecastStatusList" item="instockForecastStatus" open="(" separator="," close=")">
+                #{instockForecastStatus}
             </foreach>
         </if>
         <!--创建人id-->
