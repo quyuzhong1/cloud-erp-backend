@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.TransferDirectionEnum;
@@ -13,6 +14,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -128,70 +130,14 @@ public class TransferApplicationDTO implements Serializable {
     public static class SearchParamDTO extends SortDTO {
 
         /**
-         * 主键ids
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 当前登录人能审核的ids
+         * sqlMap 默认key default
          */
-        private List<String> idList;
-
-        /**
-         * 搜索类型
-         */
-        private String  searchType;
-
-        /**
-         * 其他出库编号
-         */
-        private String  code;
-
-        /**
-         * sku编码集合
-         */
-        private List<String>  skuNoList;
-
-        /**
-         * 审核状态集合
-         */
-        private List<String>  approveStatusList;
-
-        /**
-         * 作废状态
-         */
-        private Boolean  invalidStatus;
-
-        /**
-         * 调拨方向
-         */
-        private String  transferDirection;
-
-        /**
-         * 调拨日期集合
-         */
-        private List<LocalDate>  billDateList;
-
-        /**
-         * 调入仓库id集合
-         */
-        private List<String>  inWarehouseIdList;
-
-        /**
-         * 调出仓库id集合
-         */
-        private List<String>  outWarehouseIdList;
-
-        /**
-         * 创建人id集合
-         */
-        private List<String>  createUserIdList;
-
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDate>   createTimeList;
-
+        private Map<String,String> sqlMap;
     }
 
     @Data

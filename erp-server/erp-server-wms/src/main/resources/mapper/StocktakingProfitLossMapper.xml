@@ -59,94 +59,19 @@
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE
         LEFT JOIN warehouse w
         ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
-        WHERE spl.is_deleted=FALSE
-        <if test="billType!=null and billType!=''">
-            AND spl.bill_type=#{billType}
-        </if>
-        <if test="sourceIdList!=null and sourceIdList.size>0">
-            AND (spl.source_id IN
-                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                    #{sourceId}
+        WHERE
+            ${params.sqlMap.default}
+            and  spl.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
                 </foreach>
-                OR
-                spl.id IN
-                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                    #{sourceId}
-                </foreach>
-                )
-        </if>
-        <!--code-->
-        <if test="params.code!=null and params.code!=''">
-            AND spl.code ILIKE concat('%', #{params.code}::text ,'%')
-        </if>
-        <if test="params.sourceCode!=null and params.sourceCode!=''">
-            AND spl.source_code ILIKE concat('%', #{params.sourceCode}::text ,'%')
-        </if>
-        <!--审核状态-->
-        <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
-            AND spl.approve_status IN
-            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
-                #{approveStatus}
-            </foreach>
-        </if>
-        <if test="params.billTypeList!=null and params.billTypeList.size>0">
-            AND spl.bill_type IN
-            <foreach collection="params.billTypeList" item="billType" open="(" separator="," close=")">
-                #{billType}
-            </foreach>
-        </if>
-        <!--创建人 -->
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND spl.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <!--创建时间 -->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND spl.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > spl.create_time
-        </if>
-
-        <!--审核人 -->
-        <if test="params.approveUserIdList !=null and params.approveUserIdList.size>0">
-            AND spl.approve_user_id IN
-            <foreach collection="params.approveUserIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--审核时间 -->
-        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-            AND spl.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL
-            '1
-            DAY' ) > spl.approve_time
-        </if>
-        <!--skuNo -->
-        <if test="params.skuNoList!=null and params.skuNoList.size>0">
-            AND spld.sku_no IN
-            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
-            </foreach>
-        </if>
-        <!--仓库 -->
-        <if test="params.warehouseId!=null and params.warehouseId!=''">
-            AND spld.warehouse_id =#{params.warehouseId}
-        </if>
-        <!--仓位 -->
-        <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
-            AND spld.warehouse_location ILIKE concat('%', #{params.warehouseLocation}::text ,'%')
-        </if>
-        <!--权限 -->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        spl.id DESC,spld.id DESC
+            </if>
+            spl.id DESC,spld.id DESC
     </select>
     <!--导出数据-->
     <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$ExportViewDTO">
@@ -175,97 +100,19 @@
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE
         LEFT JOIN warehouse w
         ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
-        WHERE spl.is_deleted=FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0">
-                AND spl.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
+        WHERE
+            ${params.sqlMap.default}
+            and  spl.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
                 </foreach>
-            </when>
-            <otherwise>
-                <if test="billType!=null and billType!=''">
-                    AND spl.bill_type=#{billType}
-                </if>
-                <if test="sourceIdList!=null and sourceIdList.size>0">
-                    AND (spl.source_id IN
-                    <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                        #{sourceId}
-                    </foreach>
-                    OR
-                    spl.id IN
-                    <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                        #{sourceId}
-                    </foreach>
-                    )
-                </if>
-                <!--code-->
-                <if test="params.code!=null and params.code!=''">
-                    AND spl.code ILIKE concat('%', #{params.code}::text ,'%')
-                </if>
-                <if test="params.sourceCode!=null and params.sourceCode!=''">
-                    AND spl.source_code ILIKE concat('%', #{params.sourceCode}::text ,'%')
-                </if>
-                <if test="params.billTypeList!=null and params.billTypeList.size>0">
-                    AND spl.bill_type IN
-                    <foreach collection="params.billTypeList" item="billType" open="(" separator="," close=")">
-                        #{billType}
-                    </foreach>
-                </if>
-                <!--创建人 -->
-                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                    AND spl.create_user_id IN
-                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                        #{createUserId}
-                    </foreach>
-                </if>
-                <!--创建时间 -->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND spl.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-                    INTERVAL '1
-                    DAY' ) > spl.create_time
-                </if>
-                <!--审核人 -->
-                <if test="params.approveUserIdList !=null and params.approveUserIdList.size>0">
-                    AND spl.approve_user_id IN
-                    <foreach collection="params.approveUserIdList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--审核时间 -->
-                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND spl.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP +
-                    INTERVAL '1
-                    DAY' ) > spl.approve_time
-                </if>
-                <!--skuId -->
-                <if test="params.skuNoList!=null and params.skuNoList.size>0">
-                    AND spld.sku_no IN
-                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                        #{skuNo}
-                    </foreach>
-                </if>
-                <!--仓库 -->
-                <if test="params.warehouseId!=null and params.warehouseId!=''">
-                    AND spld.warehouse_id =#{params.warehouseId}
-                </if>
-                <!--仓位 -->
-                <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
-                    AND spld.warehouse_location =#{params.warehouseLocation}
-                </if>
-                <!--权限 -->
-                <if test="params.permissionSql!=null and params.permissionSql!=''">
-                    ${params.permissionSql}
-                </if>
-            </otherwise>
-        </choose>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        spl.id DESC,spld.id DESC
+            </if>
+            spl.id DESC,spld.id DESC
     </select>
     <!--  获取到扣减库存所需的参数-->
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">

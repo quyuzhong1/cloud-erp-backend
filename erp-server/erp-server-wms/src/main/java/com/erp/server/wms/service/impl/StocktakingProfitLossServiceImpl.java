@@ -57,7 +57,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -115,9 +114,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private InventoryClosedRecordService inventoryClosedRecordService;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     /**
@@ -163,24 +159,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         StocktakingProfitLossDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        //单据类型
-        String billType = "";
-        String profit = BillTypeEnum.PROFIT.getCode();
-        String loss = BillTypeEnum.LOSS.getCode();
-        if (profit.equals(tabFlag)) {
-            billType = profit;
-        } else if (loss.equals(tabFlag)) {
-            billType = loss;
-        }
-        //盘点人
-        String stocktakingUserId = params.getStocktakingUserId();
-        List<String> sourceIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(stocktakingUserId)) {
-            List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            sourceIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
-        }
-        IPage pageData = baseMapper.paging(query, params, billType, sourceIdList);
+        IPage pageData = baseMapper.paging(query, params);
         List<StocktakingProfitLossDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -239,25 +218,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params, HttpServletResponse response) {
-        String tabFlag = params.getTabFlag();
-        //单据类型
-        String billType = "";
-        String profit = BillTypeEnum.PROFIT.getCode();
-        String loss = BillTypeEnum.LOSS.getCode();
-        if (profit.equals(tabFlag)) {
-            billType = profit;
-        } else if (loss.equals(tabFlag)) {
-            billType = loss;
-        }
-        //盘点人
-        String stocktakingUserId = params.getStocktakingUserId();
-        List<String> sourceIds = new ArrayList<>();
-        if (StringUtils.isNotBlank(stocktakingUserId)) {
-            List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            sourceIds = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
-        }
         //获取导出数据
-        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params, billType, sourceIds);
+        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }

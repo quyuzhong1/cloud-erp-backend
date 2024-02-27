@@ -34,22 +34,18 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * 分页查询
      * @param query
      * @param params
-     * @param billType
-     * @param sourceIdList
      * @return
      */
-    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params, @Param("billType")String billType,@Param("sourceIdList") List<String> sourceIdList);
+    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params);
 
     /**
      * 获取到导出数据
      * @author yl
      * @date 2023-08-11 12:16
      * @param params
-     * @param billType
-     * @param taskIdList
      * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDTO.PagingViewDTO>
      */
-    List<StocktakingProfitLossDTO.ExportViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params,@Param("billType") String billType, @Param("sourceIdList")List<String> taskIdList);
+    List<StocktakingProfitLossDTO.ExportViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params);
     /**
      * 获取到扣减库存所需的参数
      * @author yl

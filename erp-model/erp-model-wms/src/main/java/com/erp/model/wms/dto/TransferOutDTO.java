@@ -1,7 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.TransferDirectionEnum;
@@ -16,8 +16,8 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -165,57 +165,14 @@ public class TransferOutDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * sku no 集合
+         * 页面高级查询
          */
-        private List<String> skuNoList;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 搜索类型
+         * sqlMap 默认key default
          */
-        private String  searchType;
-
-        /**
-         * 调拨单号
-         */
-        private String code;
-
-        /**
-         * 审核状态集合 接口地址：/scm/drop/down/approveStatus/list
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 调拨方向  接口地址：/wms/dict/drop/down?type=transferDirection
-         */
-        private String transferDirection;
-
-        /**
-         * 作废状态  接口地址：/scm/drop/down/invalidStatus/list
-         * true 已作废
-         * false 未作废
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 调出日期
-         */
-        private List<LocalDate> billDateList;
-
-        /**
-         * 创建人id集合 接口地址：/plm/common/findUserList
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 调出仓库集合  接口地址：/wms/warehouse/list
-         */
-        private List<String> outWarehouseIdList;
-
+        private Map<String,String> sqlMap;
 
     }
 

@@ -61,58 +61,8 @@
         inner join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         LEFT JOIN machine_info mi ON ta.id = mi.source_id
         <where>
-            ta.is_deleted = false
-            <if test="params.code != null and params.code != ''">
-                and ta.code ILIKE concat('%',#{params.code}::text,'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and ta.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.transferDirection != null ">
-                and ta.transfer_direction = #{params.transferDirection}
-            </if>
-            <if test="params.idList != null and params.idList.size > 0">
-                and ta.id in
-                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and tad.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and ta.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
-                and ta.in_warehouse_id in
-                <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
-                and ta.out_warehouse_id in
-                <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and ta.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and ta.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ta.create_time
-            </if>
-            <if test="params.billDateList != null and params.billDateList.size > 0">
-                and ta.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ta.bill_date
-            </if>
+            ${params.sqlMap.default}
+            and  ta.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -132,19 +82,8 @@
         from transfer_application ta
         left join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         <where>
-            ta.is_deleted = false
-            <if test="params.idList != null and params.idList.size > 0">
-                and ta.id in
-                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and ta.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
+            ${params.sqlMap.default}
+            and  ta.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -173,71 +112,10 @@
         from transfer_application ta
         left join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         <where>
-            ta.is_deleted = false
-            <if test="params.ids != null and params.ids.size > 0">
-                and ta.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.ids == null or params.ids.size == 0">
-                <if test="params.searchType != null and params.searchType != ''">
-                    AND ta.approve_status = #{params.searchType}
-                </if>
-                <if test="params.code != null and params.code != ''">
-                    and ta.code ILIKE concat('%',#{params.code}::text,'%')
-                </if>
-                <if test="params.invalidStatus != null ">
-                    and ta.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.transferDirection != null ">
-                    and ta.transfer_direction = #{params.transferDirection}
-                </if>
-                <if test="params.idList != null and params.idList.size > 0">
-                    and ta.id in
-                    <foreach collection="params.idList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                    and tad.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and ta.approve_status in
-                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
-                    and ta.in_warehouse_id in
-                    <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
-                    and ta.out_warehouse_id in
-                    <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                    and ta.create_user_id in
-                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and ta.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ta.create_time
-                </if>
-                <if test="params.billDateList != null and params.billDateList.size > 0">
-                    and ta.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ta.bill_date
-                </if>
-                <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql}
-                </if>
+            ${params.sqlMap.default}
+            and  ta.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY

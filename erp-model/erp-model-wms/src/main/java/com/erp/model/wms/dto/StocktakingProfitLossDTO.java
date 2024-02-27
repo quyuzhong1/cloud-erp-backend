@@ -1,9 +1,8 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -16,6 +15,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -151,72 +151,14 @@ public class StocktakingProfitLossDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 单号
+         * 页面高级查询
          */
-        private String code;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 来源单号 盘点任务单号
+         * sqlMap 默认key default
          */
-        private String sourceCode;
-
-        /**
-         * skuId
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 单据审核状态集合
-         */
-        private List<ApproveStatusEnum> approveStatusList;
-
-
-        /**
-         * 单据类型
-         */
-        private List<String> billTypeList;
-
-        /**
-         * 盘点人
-         */
-        private String stocktakingUserId;
-
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 审核时间
-         */
-        private List<LocalDate> approveTimeList;
-
-        /**
-         * 审核人
-         */
-        private List<String> approveUserIdList;
-
-        /**
-         * 仓库
-         */
-        private String warehouseId;
-
-        /**
-         * 仓位
-         */
-        private String warehouseLocation;
-        /**
-         * 标识
-         */
-        @StateEnumValue(strValues = {"all", "profit", "loss"}, message = "tab类型有误")
-        @NotBlank(message = "tab不能为空")
-        private String tabFlag;
+        private Map<String, String> sqlMap;
 
     }
 
