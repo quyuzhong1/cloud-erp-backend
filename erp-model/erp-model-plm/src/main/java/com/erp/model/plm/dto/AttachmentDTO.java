@@ -2,12 +2,15 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -141,6 +144,25 @@ public class AttachmentDTO implements Serializable {
          * 大小
          */
         private BigDecimal fileSize;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BatchUploadDTO {
+
+        /**
+         * 类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
+         * 文件
+         */
+        @NotEmpty(message = "文件不能为空")
+        private List<MultipartFile> multipartFileList;
 
     }
 }
