@@ -5,7 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum WareHouseManageTypeEnum implements EnumMessage {
+public enum WarehouseManageTypeEnum implements EnumMessage {
     NOT_PACKING("selfBuild", "自建"),
     PACKING("thirdParty", "第三方仓"),
     ;
@@ -21,7 +21,7 @@ public enum WareHouseManageTypeEnum implements EnumMessage {
      */
     private String name;
 
-    WareHouseManageTypeEnum(String code, String name) {
+    WarehouseManageTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -38,7 +38,7 @@ public enum WareHouseManageTypeEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (WareHouseManageTypeEnum item : WareHouseManageTypeEnum.values()) {
+            for (WarehouseManageTypeEnum item : WarehouseManageTypeEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
@@ -47,9 +47,9 @@ public enum WareHouseManageTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static WareHouseManageTypeEnum getByCode(String code) {
-        WareHouseManageTypeEnum[] eumnList = WareHouseManageTypeEnum.values();
-        for (WareHouseManageTypeEnum item : eumnList) {
+    public static WarehouseManageTypeEnum getByCode(String code) {
+        WarehouseManageTypeEnum[] eumnList = WarehouseManageTypeEnum.values();
+        for (WarehouseManageTypeEnum item : eumnList) {
             if (code.equals(item.getCode())) {
                 return item;
             }
