@@ -1824,10 +1824,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
         }
         CfgSettingValueDTO.PoReconciliationSettingDTO dto = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
-        String endDate = dto.getEndDate();
-        if (StringUtils.isEmpty(endDate) || !NumberUtil.isInteger(endDate)){
-            return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
-        }
         LocalDate startTime = null;
         LocalDate endTime = null;
         //判断 周期类型
@@ -1835,12 +1831,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
             endTime = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
         }else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getReconciliationType())){
+            LocalDate currentDate = LocalDate.now();
+            String endDate = dto.getEndDate();
+            if (StringUtils.isEmpty(endDate) || !NumberUtil.isInteger(endDate)){
+                endTime = currentDate.with(TemporalAdjusters.lastDayOfMonth());
+                return SupplierCountDTO.builder().count(0).localDate(endTime).build();
+            }
             int end = Integer.parseInt(endDate);
             String endStr = String.valueOf(end);
             if (end < 10){
                 endStr = "0" + end;
             }
-            LocalDate currentDate = LocalDate.now();
             int dayOfMonth = currentDate.getDayOfMonth();
             String nowMonth = currentDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
