@@ -733,10 +733,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             record.setDeliveryQty(deliveryQty);
 
             //签收数量 QuantityReceived
-            Integer receiveQty = fbaShipmentReceiveEntities.stream()
-                    .filter(req -> req.getDetailId().equals(record.getDetailId()))
-                    .mapToInt(FbaShipmentReceiveEntity::getReceiveQty)
-                    .sum();
+//            Integer receiveQty = fbaShipmentReceiveEntities.stream()
+//                    .filter(req -> req.getDetailId().equals(record.getDetailId()))
+//                    .mapToInt(FbaShipmentReceiveEntity::getReceiveQty)
+//                    .sum();
+            Integer receiveQty = record.getReceiveQty();
             record.setReceiveQty(receiveQty);
 
             //发货数量-QuantityReceived，签收量大于等于发货量时，在途为0
