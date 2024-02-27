@@ -608,9 +608,9 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "inVolumeLength",source = "length", qualifiedByName="intToStr"),
-            @Mapping(target = "inVolumeWidth",constant = "width",qualifiedByName="intToStr"),
+            @Mapping(target = "inVolumeWidth",source = "width",qualifiedByName="intToStr"),
             @Mapping(target = "inVolumeHeight",source = "height",qualifiedByName="intToStr"),
-            @Mapping(target = "inVolumeGrossWeight",source = "totalWeight",qualifiedByName="gToKgByInt"),
+            @Mapping(target = "inVolumeGrossWeight",source = "totalWeight",qualifiedByName = "gTokgStr"),
 
     })
     CargoVolume orderCargoVolumeByBaTong(ParceInfoVO parceInfoVO);

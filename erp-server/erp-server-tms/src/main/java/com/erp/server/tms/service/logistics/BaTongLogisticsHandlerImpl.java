@@ -1,10 +1,12 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -21,6 +23,7 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
+import com.erp.tms.batong.model.label.base.BaseResult;
 import com.erp.tms.batong.model.label.request.AdditionalInfo;
 import com.erp.tms.batong.model.label.request.ConfigInfo;
 import com.erp.tms.batong.model.label.request.LabelRequest;
@@ -94,16 +97,29 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<CargoVolume> cargoVolumeList = Arrays.asList(cargoVolume);
         orderRequest.setCargoVolumeList(cargoVolumeList);
         try {
-            OrderResponse orderResponse = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
+            BaseResult result = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
 
-            responseVO = LogisticsOrderResponseVO.builder()
-                    .transportNo(orderResponse.getShippingMethodNo())
-                    .trackNo(orderResponse.getChannelHawbcode())
-                    .deliveryNo(logisticsOrder.getDeliveryNo())
-                    .build();
-            logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
-                    logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+            Integer createOrderSuccess = result.getSuccess();
+            //表示成功
+            if (BaTongConstants.SUCCESS.equals(createOrderSuccess)) {
+                OrderResponse orderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), OrderResponse.class);
+                responseVO = LogisticsOrderResponseVO.builder()
+                        .transportNo(orderResponse.getShippingMethodNo())
+                        .trackNo(orderResponse.getChannelHawbcode())
+                        .deliveryNo(logisticsOrder.getDeliveryNo())
+                        .build();
+
+                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                        logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+            }else{
+                success = false;
+                responseVO.failure(LogisticsPlatformEnum.BaTong.getName(), logisticsOrder.getDeliveryNo(), result.getCnMessage());
+                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                        logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder),result.getCnMessage() );
+            }
+
         } catch (Exception e) {
             log.error("巴通创建订单异常：{}", e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),

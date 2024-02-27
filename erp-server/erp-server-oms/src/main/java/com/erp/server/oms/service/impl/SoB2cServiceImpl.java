@@ -65,6 +65,7 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -1395,6 +1396,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (deliveryWarehouseIdList.size() > MathUtil.ONE) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX,soCode);
         }
+        String deliveryWarehouseId = deliveryWarehouseIdList.get(0);
+        //获取仓库信息
+        List<WarehouseDTO.UpdateDTO> deliveryWarehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryWarehouseId));
+        if(CollectionUtils.isEmpty(deliveryWarehouseList)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE);
+        }
+        //仓库经营类型
+        String warehouseManageType =deliveryWarehouseList.get(0).getWarehouseManageType();
         //检测是否是API 对接的仓库
         List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(deliveryWarehouseIdList);
         Boolean isApi = CollectionUtils.isNotEmpty(overseasWarehouseList);
@@ -1565,6 +1574,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Lambda
      */
     public List<SoB2cDeliveryDTO.DeliverySkuDTO> listDeliverySku(List<String> skuIdList,String warehouseManageType){
+
+
          return null;
     }
 
