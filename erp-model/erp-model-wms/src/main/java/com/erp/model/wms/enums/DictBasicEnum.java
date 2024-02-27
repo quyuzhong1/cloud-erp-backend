@@ -23,7 +23,6 @@ public enum DictBasicEnum {
     CFG_SETTING("cfgSetting", "", "系统配置"),
     WAREHOUSE_MANAGE_TYPE("warehouseManageType", "", "仓库经营类型"),
     GEOGRAPHY_LOCATION("geographyLocation", "", "仓库地库位置"),
-    CFG_SETTING("cfgSetting", "", "系统配置"),
 
     SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE("defaultManageDeliveryType", "", "默认SKU映射仓库发货配置"),
     ;
