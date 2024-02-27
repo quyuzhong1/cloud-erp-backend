@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingExtendDTO;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingExtendEntity;
 import com.common.business.service.SuperService;
 
@@ -29,4 +31,9 @@ public interface SkuMappingExtendService extends SuperService<SkuMappingExtendEn
      * @return map
      */
     Map<String, List<SkuMappingExtendDTO.ListDTO>> mapByMainIds(List<String> mainIds, boolean defaultNullThrow);
+
+    /**
+     * 检查和保存配置
+     */
+    void checkAndSave(SkuMappingEntity entity, List<SkuMappingDTO.SkuMappingExtendListDTO> extendList);
 }

@@ -28,6 +28,7 @@ import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -375,6 +376,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         // 无修改
         if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)) {
+            // 检查仓库发货配置
+            skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
             return skuMaping.getId();
         }
         LocalDateTime now = LocalDateTime.now();
@@ -401,6 +404,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
+        // 检查仓库发货配置
+        skuMappingExtendService.checkAndSave(addSkuMaping, dto.getExtendList());
+
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
@@ -898,6 +905,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         for (SkuMappingDTO.PagingViewDTO item : list) {
             Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
@@ -905,8 +915,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
-            List<SkuMappingExtendDTO.ListDTO> listDTO = extendMap.getOrDefault(item.getId(), Collections.emptyList());
-            item.setWarehouseCfgList(listDTO);
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream().filter(req -> req.getParentSkuId().equals(item.getProductSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setIsCombination(Boolean.TRUE);
+            } else {
+                item.setIsCombination(Boolean.FALSE);
+            }
+            if (item.getIsCombination()){
+                List<SkuMappingExtendDTO.ListDTO> listDTO = extendMap.getOrDefault(item.getId(), Collections.emptyList());
+                item.setExtendList(listDTO);
+            }
         }
     }
 
