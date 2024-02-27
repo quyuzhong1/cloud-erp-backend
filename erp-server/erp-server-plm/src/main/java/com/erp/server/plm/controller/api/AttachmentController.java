@@ -5,9 +5,11 @@ import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.server.plm.service.PlmAttachmentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,15 +52,14 @@ public class AttachmentController extends BaseController {
      * 批量上传
      * @author Will
      * @date: 2024/2/27 15:02
-     * @param multipartFileList
-     * @param type
+     * @param dto
      * @param request
      * @return ApiResult<List<PlmAttachmentEntity>>
      */
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
     @PostMapping("/batchUpload")
-    public ApiResult<List<PlmAttachmentEntity>> batchUpload(@RequestParam("multipartFileList") List<MultipartFile> multipartFileList, @RequestParam("type") String type, HttpServletRequest request) {
-        List<PlmAttachmentEntity> list = plmAttachmentService.batchUpload(multipartFileList, type);
+    public ApiResult<List<PlmAttachmentEntity>> batchUpload(@ModelAttribute @Validated AttachmentDTO.BatchUploadDTO dto, HttpServletRequest request) {
+        List<PlmAttachmentEntity> list = plmAttachmentService.batchUpload(dto.getMultipartFileList(), dto.getType());
         return this.success(list);
     }
 
