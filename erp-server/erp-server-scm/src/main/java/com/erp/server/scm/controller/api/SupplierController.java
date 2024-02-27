@@ -183,8 +183,21 @@ public class SupplierController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+        //增加校验
+        SupplierEntity supplier = supplierService.getById(dto.getId());
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        String msg = "请求成功！";
+        if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(dto.getId());
+            if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
+                msg = "SRM协同开启后，下月生效";
+            }
+        }
         Boolean result = supplierService.updateAndSubmit(dto);
-        return result == true ? success() : failure();
+        return result == true ? successMsg(msg) : failure();
     }
 
 
