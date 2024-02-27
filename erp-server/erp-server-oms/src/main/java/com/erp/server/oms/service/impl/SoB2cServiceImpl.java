@@ -5244,18 +5244,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (logisticsChannel.getSizeUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
+        BigDecimal maxWeight = logisticsChannel.getMaxWeight();
+        if (logisticsChannel.getWeightUnit().equals("kg")) {
+            maxWeight = maxWeight.multiply(BigDecimal.valueOf(1000));
+        }
+        String msg = "校验物流上限成功";
         //所有都清空就是初始值，其实就不用校验了。
         if(maxHeight.compareTo(BigDecimal.ZERO) == 0 && maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0){
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
-        }
-        if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
+            msg = "校验物流尺寸成功";
+        }else if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
                 soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
                 soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
-            String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
-            String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
+            String orderDesc = String.format("长【 %s cm】*宽【 %s cm】*高【 %s cm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
+            String logisticsDesc = String.format("长【 %s cm】*宽【 %s cm】*高【 %s cm】", maxLength, maxWidth, maxHeight);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("产品尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc));
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+        //包裹重量上限提示
+        if (maxWeight.compareTo(BigDecimal.ZERO) == 0){
+            msg = "校验物流重量成功";
+        }else if (soB2cLogisticsEntity.getWeight().compareTo(maxWeight) > 0 ){
+            //产品重量为*g,超出渠道配置重量*g
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("产品重量为 %s g，超出渠道配置重量 %s g", soB2cLogisticsEntity.getWeight(), maxWeight));
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), msg);
     }
 
     /**
