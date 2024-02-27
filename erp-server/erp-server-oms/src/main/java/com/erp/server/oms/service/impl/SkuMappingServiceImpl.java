@@ -19,22 +19,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -42,13 +33,11 @@ import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -111,6 +100,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Resource
+    private SkuMappingExtendService skuMappingExtendService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -901,6 +893,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * @date 2023-06-29 19:15
      */
     private void fillDb(List<SkuMappingDTO.PagingViewDTO> list) {
+        List<String> mainIds = list.stream().map(SkuMappingDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        Map<String, List<SkuMappingExtendDTO.ListDTO>> extendMap =  skuMappingExtendService.mapByMainIds(mainIds, false);
+
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SkuMappingDTO.PagingViewDTO item : list) {
@@ -910,6 +905,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            List<SkuMappingExtendDTO.ListDTO> listDTO = extendMap.getOrDefault(item.getId(), Collections.emptyList());
+            item.setWarehouseCfgList(listDTO);
         }
     }
 

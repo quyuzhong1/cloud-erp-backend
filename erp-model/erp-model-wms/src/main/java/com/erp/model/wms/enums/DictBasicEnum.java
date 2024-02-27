@@ -21,6 +21,8 @@ public enum DictBasicEnum {
     MACHINE_TYPE("machineType", "", "加工单类型"),
     ISSUE_TYPE("issueType", "", "发料类型"),
     CFG_SETTING("cfgSetting", "", "系统配置"),
+
+    SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE("defaultManageDeliveryType", "", "默认SKU映射仓库发货配置"),
     ;
 
 

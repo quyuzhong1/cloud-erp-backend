@@ -1,0 +1,73 @@
+package com.erp.server.oms.service.impl;
+
+
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SkuMappingExtendDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.SkuMappingExtendEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.server.oms.mapper.SkuMappingExtendMapper;
+import com.erp.server.oms.service.SkuMappingExtendService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.oms.service.DictBasicService;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+/**
+ * <p>
+ * sku仓库发货配置 服务实现类
+ * </p>
+ *
+ * @author Jim
+ * @since 2024-02-27
+ */
+@Slf4j
+@Service
+public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExtendMapper, SkuMappingExtendEntity> implements SkuMappingExtendService {
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Override
+    public List<SkuMappingExtendEntity> findByMainIds(List<String> mainIds) {
+        return this.lambdaQuery()
+                .in(SkuMappingExtendEntity::getMainId, mainIds)
+                .list();
+    }
+
+    @Override
+    public Map<String, List<SkuMappingExtendDTO.ListDTO>> mapByMainIds(List<String> mainIds, boolean defaultNullThrow) {
+        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
+        if (CollectionUtils.isEmpty(defaultConfigList) && defaultNullThrow){
+            throw new ServiceException("默认SKU仓库发货配置缺失");
+        }
+        Map<String, List<SkuMappingExtendEntity>> entityMap = this.findByMainIds(mainIds)
+                .stream()
+                .collect(Collectors.groupingBy(SkuMappingExtendEntity::getMainId));
+
+        Map<String, List<SkuMappingExtendDTO.ListDTO>> resultMap = new HashMap<>();
+
+        for (String mainId : mainIds) {
+            List<SkuMappingExtendEntity> cfgConfig = entityMap.get(mainId);
+            List<SkuMappingExtendDTO.ListDTO> currentValue;
+            if (CollectionUtils.isEmpty(cfgConfig)){
+                 currentValue = defaultConfigList.stream().map(e -> new SkuMappingExtendDTO.ListDTO(null, e)).collect(Collectors.toList());
+            } else{
+                Map<String, SkuMappingExtendEntity> currentExistMap = cfgConfig.stream().collect(Collectors.toMap(SkuMappingExtendEntity::getManagementType, Function.identity()));
+                 currentValue = defaultConfigList.stream().map(e -> {
+                    SkuMappingExtendEntity entity = currentExistMap.get(e.getType());
+                    return new SkuMappingExtendDTO.ListDTO(entity, e);
+                }).collect(Collectors.toList());
+            }
+            resultMap.put(mainId, currentValue);
+        }
+        return resultMap;
+    }
+}
