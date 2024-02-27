@@ -327,6 +327,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
             result = shopInfoFeign.getAuthShopByPlatformType(platform);
+            log.info("获取店铺结果：{}",JSONObject.toJSON(result));
         } catch (Exception e) {
             log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
         }
@@ -341,7 +342,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 if (CollectionUtils.isEmpty(map)) continue;
                 map.put("token", shopAuthEntity.getToken());
                 chanelQueryVO.setAuthMap(map);
+                log.info("授权信息：{}",JSONObject.toJSON(chanelQueryVO));
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+                log.info("获取渠道结果：{}",JSONObject.toJSON(channels));
                 //先暂停该渠道数据，然后进行更新动作
                 logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
                 if (channels.isSuccess()) {

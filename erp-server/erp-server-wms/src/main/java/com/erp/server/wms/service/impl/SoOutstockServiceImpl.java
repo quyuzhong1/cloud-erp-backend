@@ -41,6 +41,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -591,8 +592,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //订单推送dmp
             syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(Arrays.asList(entity.getSoId()));
+            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(Arrays.asList(entity.getSoId()), TransferOutstockStatusEnum.OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return Boolean.TRUE;
     }
@@ -944,7 +948,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(soIds, TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(soIds);
+            statusDTO.setStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return result;
     }
@@ -1787,8 +1794,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public List<String> getIdsByTemp() {
-        return baseMapper.getIdsByTemp();
+    public List<String> getIdsByTemp(String tableName) {
+        return baseMapper.getIdsByTemp(tableName);
     }
 
 
@@ -2164,6 +2171,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         // 出库日期
         soOutstock.setBillDate(LocalDate.now());
+
+        //速卖通菜鸟仓发货单生产的销售出库单，发货日期都取平台出库日期
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getSoId());
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder()) {
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+            if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
+                LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
+                soOutstock.setBillDate(deliveryTime.toLocalDate());
+                soOutstock.setPlanDeliveryDate(deliveryTime.toLocalDate());
+                soOutstock.setActualDeliveryDate(deliveryTime);
+            }
+        }
+
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode());

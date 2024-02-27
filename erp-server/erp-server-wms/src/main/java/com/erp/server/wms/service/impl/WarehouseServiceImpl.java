@@ -9,9 +9,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,10 +27,12 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -55,7 +61,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -92,6 +97,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private OverseasProviderService overseasProviderService;
 
+    @Resource
+    private WarehouseMappingService warehouseMappingService;
 
 
     @Override
@@ -282,9 +289,23 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             warehouse.setOnwayWarehouseName(entity.getName());
         }
 
-
         Boolean result = this.save(warehouse);
         if (result) {
+
+            //如果设置了第三方仓绑定
+            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+                WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
+                }
+                WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
+                addDTO.setName(dto.getThirdWarehouseName());
+                addDTO.setWarehouseId(warehouse.getId());
+                addDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                warehouseMappingService.add(addDTO);
+            }
+
             return warehouse.getId();
         }
         return "";
@@ -327,6 +348,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         Boolean result = this.updateById(warehouse);
         if (result) {
+            //如果设置了第三方仓绑定
+            WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
+            if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+                updateDTO.setId(mappingViewByDictPlatform.getId());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist) && !checkThirdWarehouseNameExist.getId().equals(mappingViewByDictPlatform.getId())) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                }
+            } else {
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                }
+            }
+            updateDTO.setName(dto.getThirdWarehouseName());
+            updateDTO.setWarehouseId(warehouse.getId());
+            updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+            warehouseMappingService.update(updateDTO);
             return warehouseId;
         }
         return "";
@@ -565,6 +606,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(warehouse, dto);
         ApproveStatusEnum approveStatusEnum = warehouse.getApproveStatus();
         dto.setApproveStatusCode(approveStatusEnum.getStatus());
+
+        WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+            dto.setThirdWarehouseName(mappingViewByDictPlatform.getThirdWarehouseName());
+        }
         return dto;
     }
 
@@ -643,6 +689,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
+            List<String> warehouseIds = viewList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
+
             for (WarehouseDTO.PagingViewDTO item : viewList) {
                 WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
@@ -669,6 +718,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 excelDTO.setOrgName(orgName);
                 excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
                 excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
+                excelDTO.setOnwayWarehouseName(item.getOnwayWarehouseName());
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> req.getWarehouseId().equals(item.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(mappingViewDTO)) {
+                    excelDTO.setThirdWarehouseName(mappingViewDTO.getThirdWarehouseName());
+                }
                 resultList.add(excelDTO);
 
 
@@ -730,8 +784,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+
+
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {

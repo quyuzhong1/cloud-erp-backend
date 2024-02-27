@@ -1,13 +1,21 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.server.wms.service.WarehouseMappingService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +47,8 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private List<WarehouseEntity> addWarehouseList = new ArrayList<>();
 
+    private WarehouseMappingService warehouseMappingService;
+
 
     /**
      * 错误信息
@@ -46,15 +56,16 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList, List<WarehouseEntity> existList) {
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList
+            , List<WarehouseEntity> existList, WarehouseMappingService warehouseMappingService) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;
         this.orgList = orgList;
         this.existList = existList;
+        this.warehouseMappingService = warehouseMappingService;
 
     }
-
 
     /**
      * 每解析一行数据回调一遍
@@ -69,7 +80,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     @Transactional(rollbackFor = Exception.class)
     public void invoke(WarehouseExcelDTO warehouseExcelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        WarehouseEntity addEntity = new WarehouseEntity();
+        WarehouseDTO.AddDTO addDTO = new WarehouseDTO.AddDTO();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(warehouseExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
@@ -111,9 +122,28 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (addCodeCount > 0) {
             errorMsgList.add("金蝶仓库编号已存在");
         }
-        addEntity.setKingdeeWarehouseCode(kingdeeWarehouseCode);
-        addEntity.setName(warehouseExcelDTO.getName());
-        addEntity.setTypeId(typeId);
+        WarehouseEntity warehouseEntity = null;
+        if (StringUtils.isNotBlank(warehouseExcelDTO.getOnwayWarehouseName())) {
+            warehouseEntity = existList.stream()
+                    .filter(req -> req.getName().equals(warehouseExcelDTO.getOnwayWarehouseName())
+                            && !req.getDisabled()
+                            && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())
+                    )
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isEmpty(warehouseEntity)) {
+                errorMsgList.add("在途仓库名称不存在");
+            }
+        }
+
+        WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(warehouseExcelDTO.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+            errorMsgList.add((StrUtil.format(ApiError.THIRD_WAREHOUSE_NAME_EXIST.msg, PlatformDictEnum.ALI_EXPRESS.getCode(), warehouseExcelDTO.getThirdWarehouseName())));
+        }
+
+        addDTO.setKingdeeWarehouseCode(kingdeeWarehouseCode);
+        addDTO.setName(warehouseExcelDTO.getName());
+        addDTO.setTypeId(typeId);
         //组织
         String orgName = warehouseExcelDTO.getOrgName();
         String orgId = orgList.stream().filter(d -> d.getName().equals(orgName)).findFirst().
@@ -121,7 +151,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (StringUtils.isBlank(orgId)) {
             errorMsgList.add("仓库组织不存在");
         }
-        addEntity.setOrgId(orgId);
+        addDTO.setOrgId(orgId);
         //是否虚拟仓
         String isVirtual = warehouseExcelDTO.getIsVirtual();
         List virtualList = Arrays.asList("是", "否");
@@ -129,7 +159,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (!virtualList.contains(isVirtual)) {
             errorMsgList.add("是否虚拟仓有误");
         }
-        addEntity.setIsVirtual(isVirtual.equals("是"));
+        addDTO.setIsVirtual(isVirtual.equals("是"));
         //仓库负责人
         String chargeName = warehouseExcelDTO.getChargeName();
         if(StringUtils.isNotBlank(chargeName)){
@@ -138,28 +168,36 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             if (StringUtils.isBlank(chargeId)) {
                 errorMsgList.add("仓库负责人有误");
             }
-            addEntity.setChargeId(chargeId);
+            addDTO.setChargeId(chargeId);
         }
         //联系人
         String contacts = warehouseExcelDTO.getContacts();
-        addEntity.setContacts(contacts);
+        addDTO.setContacts(contacts);
         //联系电话
         String contactTelNumber = warehouseExcelDTO.getContactTelNumber();
-        addEntity.setContactTelNumber(contactTelNumber);
+        addDTO.setContactTelNumber(contactTelNumber);
         //仓库地址
         String address = warehouseExcelDTO.getAddress();
-        addEntity.setAddress(address);
+        addDTO.setAddress(address);
         //状态
         String enabled = warehouseExcelDTO.getEnabled();
-        addEntity.setDisabled(!"启用".equals(enabled));
+        addDTO.setDisabled(!"启用".equals(enabled));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             warehouseExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(warehouseExcelDTO);
             return;
         }
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            addDTO.setOnwayWarehouseId(warehouseEntity.getId());
+            addDTO.setOnwayWarehouseName(warehouseEntity.getName());
+        }
+        if (StringUtils.isNotBlank(warehouseExcelDTO.getThirdWarehouseName())) {
+            addDTO.setThirdWarehouseName(warehouseExcelDTO.getThirdWarehouseName());
+        }
+
         //保存的数据
-        addWarehouseList.add(addEntity);
+        warehouseService.add(addDTO);
     }
 
 

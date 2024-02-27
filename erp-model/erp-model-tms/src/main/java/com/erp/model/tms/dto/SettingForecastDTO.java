@@ -113,7 +113,6 @@ public class SettingForecastDTO implements Serializable {
         /**
          * 中转物流商id
          */
-        @NotBlank(message = "中转物流商不能为空")
         private String transferLogisticsSupplierId;
 
     }

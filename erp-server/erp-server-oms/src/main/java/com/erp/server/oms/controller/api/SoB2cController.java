@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.Idempotent;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -15,7 +16,6 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.TransferDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -586,6 +586,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:49
      */
     @PostMapping("/submitDelivery")
+    @Idempotent
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

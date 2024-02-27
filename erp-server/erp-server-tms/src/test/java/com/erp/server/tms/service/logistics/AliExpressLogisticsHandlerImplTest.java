@@ -46,6 +46,8 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
 public class AliExpressLogisticsHandlerImplTest {
+    String TOP_USER_KEY = "2671706312";
+    String CLIENT = "ISV-数大臣";
     @Resource
     private AliExpressLogisticsHandlerImpl aliExpressLogisticsHandler;
     @Resource
@@ -59,14 +61,9 @@ public class AliExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
-        String TOP_USER_KEY = "2671706312";
-        String CLIENT = "ISV-数大臣";
-        String TOKEN = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
-        String APP_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-
-        String CLIENT_CODE = "502978";
-        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200d30A5lnunrfByGwhJPhVvkBDBpfoTUjoDx176b9edfJWFw0FE4HHX5FiL4Vt";
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000700315ck4nYbrSlt7IGwVN17f91baetch0mylJUfxsfagEt6svVfHGsjo4bIr30";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -131,7 +128,7 @@ public class AliExpressLogisticsHandlerImplTest {
         returnInfo.setZipCode("523000");
 
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
-        logisticsProductVO.setId("1005004996443696");
+        logisticsProductVO.setId("1005005951455393");
         logisticsProductVO.setSkuId("1005005616949322");
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
@@ -143,7 +140,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setIsElectric(false);
         logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
-        logisticsProductVO.setChildOrderId("3028833906091879");
+        logisticsProductVO.setChildOrderId("8184516086176025");
         logisticsProductVO.setScItemCode("");
 //        logisticsProductVO.setScItemId(40414943126L);
 //        logisticsProductVO.setScItemName("");
@@ -167,7 +164,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //                .pickupType("SELF_SEND")
 //                .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("3028833906081879")
+                .deliveryNo("8184516086166025")
 //                .deliveryNo("1102175972276889")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .streetAddress("Calle Alcatraz 244, Fraccionamiento Vistas de Tesistán, 45200 Zapopan, J")
@@ -176,8 +173,8 @@ public class AliExpressLogisticsHandlerImplTest {
                         .name("tr1011044319")
                         .companyName("tr1011044319")
                         .contact("zhang san")
-                        .country("ES")
-                        .zipCode("34690")
+                        .country("US")
+                        .zipCode("CV56DY")
                         .province("Istanbul")
                         .telNumber("1234567890")
                         .build())
@@ -200,6 +197,7 @@ public class AliExpressLogisticsHandlerImplTest {
                 ))
                 .logisticsChannelEntity(logisticsChannel)
                 .logisticsSaleChannel(logisticsSaleChannel)
+                .topUserKey(TOP_USER_KEY)
                 .build();
         ApiResult<LogisticsOrderResponseVO> order = aliExpressLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(order);
@@ -243,7 +241,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLogisticsService() throws ApiException {
         QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(8182808069884648L)
+                .order_id(8184516086176025L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
@@ -251,7 +249,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //                .order_id(1102175972276889L)
                 .build();
         QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
-                .order_id(8182808069884648L)
+                .order_id(8184516086176025L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
@@ -272,8 +270,8 @@ public class AliExpressLogisticsHandlerImplTest {
         OrderRequest orderRequest = OrderRequest.builder().
                 clientId(authMap.get("clientId")).
                 clientSecret(authMap.get("clientSecret")).
-                startTime("2024-01-30 00:00:00").
-                endTime("2024-02-02 00:00:00").
+                startTime("2024-02-18 00:00:00").
+                endTime("2024-02-20 00:00:00").
                 baseUrl(authMap.get("url")).
                 apiName(apiName).
                 currentPage(1).

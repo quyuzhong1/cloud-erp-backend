@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -114,7 +115,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         // 校验是否是本系统发起
         String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
         log.error("stateKey:：{}",stateKey);
@@ -167,6 +168,10 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopAuth.setRefreshToken(refreshToken);
                 shopAuth.setAppClientId(cfgAppClient.getId());
                 shopAuth.setExpiresIn(expiresIn);
+                String sellerId=jsonObject.getOrDefault("seller_id","").toString();
+                Map<String, Object> extendJsonMap = new HashMap<>();
+                extendJsonMap.put("sellerId", sellerId);
+                shopInfo.setExtendData(extendJsonMap);
                 shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
                 shopInfo.setAuthTime(LocalDateTime.now());
                 shopAuthService.saveOrUpdate(shopAuth);

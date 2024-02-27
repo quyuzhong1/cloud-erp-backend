@@ -203,13 +203,16 @@ public class AliExpressOrder implements Serializable {
 
         }
 
-        //待配货
+        //平台仓订单
         if(isPlatformWarehouseOrder){
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)
-                    || "WAIT_SELLER_SEND_GOODS".equals(orderStatus)
                     || "PAYMENT_PROCESSING".equals(orderStatus)
                     || "IN_FROZEN".equals(orderStatus)) {
                 return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            }
+
+            if ("WAIT_SELLER_SEND_GOODS".equals(orderStatus)) {
+                return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
             }
         }else{
             if ("PLACE_ORDER_SUCCESS".equals(orderStatus)

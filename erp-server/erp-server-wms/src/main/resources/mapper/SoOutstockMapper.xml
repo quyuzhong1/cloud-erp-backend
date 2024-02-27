@@ -367,7 +367,7 @@
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
         SELECT so.id FROM "temp_recovry_record" trr
-          left join so_return_instock so on trr.code = so.code and so.is_deleted = false
+          left join ${tableName} so on trr.code = so.code and so.is_deleted = false
         where so.approve_status = 'approve' limit 1000
     </select>
 

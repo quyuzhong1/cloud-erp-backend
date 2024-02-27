@@ -937,6 +937,7 @@ public enum ApiError implements Serializable {
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
+    THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
 
 
 
