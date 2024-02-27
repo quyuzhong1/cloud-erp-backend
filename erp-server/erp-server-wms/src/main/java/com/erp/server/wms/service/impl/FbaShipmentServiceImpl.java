@@ -991,7 +991,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         // 检查货件是否生成签收记录
-        if (this.checkStopGenReceived(entity)){
+        if (this.checkStopGenReceived(oldEntity)){
             return;
         }
 
