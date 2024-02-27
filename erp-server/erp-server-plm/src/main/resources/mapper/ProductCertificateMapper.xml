@@ -5,7 +5,7 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductCertificateMapper">
 
     <sql id="Base_Column_List">
-        pc.sku_id,
+        pc.sku_id,pc.type,pc.dict_project,
         pc.certificate_valid_time,pd.create_time,pd.create_user_id,
         pd.update_time,pd.update_user_id
     </sql>
@@ -85,9 +85,17 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
+        att.attach_name,
+        att.attach_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd
         INNER JOIN product_certificate pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        inner join (
+        select
+        business_id,attach_name,attach_url
+        from attachment
+        where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
         WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
@@ -98,9 +106,17 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
+        att.attach_name,
+        att.attach_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd
         INNER JOIN product_certificate pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        inner join (
+        select
+        business_id,attach_name,attach_url
+        from attachment
+        where id in ( select max(id) from attachment where is_deleted = false group by business_id )
+        ) att on pc.id = att.business_id
         WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>

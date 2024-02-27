@@ -562,7 +562,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      **/
     @Override
     public List<ProductCertificateShowDTO> list(String productId) {
-        return productCertificateMapper.list(productId);
+        List<ProductCertificateShowDTO> list = productCertificateMapper.list(productId);
+        //数据处理
+        handleProductCertificateShow(list);
+        return list;
     }
 
     /**
@@ -574,7 +577,35 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      **/
     @Override
     public List<ProductCertificateShowDTO> listBySkuId(String skuId) {
-        return productCertificateMapper.listBySkuId(skuId);
+        List<ProductCertificateShowDTO> list = productCertificateMapper.listBySkuId(skuId);
+        //数据处理
+        handleProductCertificateShow(list);
+        return list;
+    }
+
+    /**
+     * @description:查询数据处理
+     * @author Will
+     * @date: 2024/2/27 16:58
+     * @param list
+     */
+    private void handleProductCertificateShow (List<ProductCertificateShowDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //证书类型
+        List<BasicDictEntity> certificateTypeList = basicDictService.listByType(BasicDictTypeEnum.CERTIFICATE_TYPE.getCode());
+
+        //证书项目
+        List<BasicDictEntity> certificateProjectList = basicDictService.listByType(BasicDictTypeEnum.CERTIFICATE_PROJECT.getCode());
+        for (ProductCertificateShowDTO showDTO : list) {
+            //证书类型名称
+            String typeName = certificateTypeList.stream().filter(obj -> StrUtil.equals(showDTO.getType(), obj.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            showDTO.setTypeName(typeName);
+            //证书项目名称
+            String dictProjectName = certificateProjectList.stream().filter(obj -> StrUtil.equals(showDTO.getDictProject(), obj.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            showDTO.setDictProjectName(dictProjectName);
+        }
     }
 
     @Override
