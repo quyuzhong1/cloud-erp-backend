@@ -229,10 +229,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         //根据相应的来源id查询上有的数据
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailList = new ArrayList<>();
+        List<SoReturnDetailEntity> returnDetailEntitys = new ArrayList<>();
         List<SoReturnDetailEntity> returnDetailList = new ArrayList<>();
         List<SoDetailEntity> soDetailList = new ArrayList<>();
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
             soReturnReceiveDetailList = soReturnReceiveDetailService.listDetailByIds(sourceDetailIds);
+            List<String> soReturnDetailIds = soReturnReceiveDetailList.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+            returnDetailEntitys = soReturnFeign.listDetailByIds(soReturnDetailIds);
         } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
             returnDetailList = soReturnFeign.listDetailByIds(sourceDetailIds);
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
@@ -243,7 +246,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
             //根据来源id获取销售订单详情id
             String soDetailId = "";
-            soDetailId = getSoDetailid(entity, soReturnReceiveDetailList, returnDetailList, soDetailList, detailEntity, soDetailId);
+            soDetailId = getSoDetailid(entity, returnDetailEntitys, returnDetailList, soDetailList, detailEntity, soDetailId);
 
             String finalSoDetailId = soDetailId;
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(finalSoDetailId)).findFirst().orElse(new SoDetailEntity());
@@ -302,14 +305,16 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
 
 
-            List<Map<String, Object>> mapList = new ArrayList<>();
-            Map<String, Object> linkMap = new HashMap<>();
+
+
             if (ObjectUtil.isNotEmpty(soDetailEntity) && ObjectUtil.isNotEmpty(soInfoEntity)) {
-                linkMap.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
-                linkMap.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
-                linkMap.put("FEntity_Link_FSTableName", "T_SAL_ORDERENTRY");
-                linkMap.put("FEntity_Link_FRuleId", "SaleOrder-SalReturnStock");
-                mapList.add(linkMap);
+                List<Map<String, Object>> mapList = new ArrayList<>();
+                Map<String, Object> mapPush = new HashMap<>();
+                mapPush.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
+                mapPush.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
+                mapPush.put("FEntity_Link_FSTableName", "T_SAL_ORDERENTRY");
+                mapPush.put("FEntity_Link_FRuleId", "SaleOrder-SalReturnStock");
+                mapList.add(mapPush);
                 //销售单金蝶明细id
                 map.put("FEntity_Link", mapList);
             }
@@ -321,13 +326,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         sendMqAndSaveTask(entity,operate,resultMap);
     }
 
-    private String getSoDetailid(SoReturnInstockEntity entity, List<SoReturnReceiveDetailEntity> soReturnReceiveDetailList, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
+    private String getSoDetailid(SoReturnInstockEntity entity,  List<SoReturnDetailEntity> returnDetailEntitys, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnReceiveDetailEntity)) {
-                soDetailId = soReturnReceiveDetailEntity.getSourceDetailId();
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntitys.stream().filter(req -> req.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
+                soDetailId = soReturnDetailEntity.getSourceDetailId();
             }
-
         } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
             SoReturnDetailEntity soReturnDetailEntity = returnDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
