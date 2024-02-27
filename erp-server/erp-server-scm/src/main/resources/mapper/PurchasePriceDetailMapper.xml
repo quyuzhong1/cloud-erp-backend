@@ -31,8 +31,9 @@
         </where>
     </select>
 
-    <select id="getBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$AddDTO">
+    <select id="getBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$ViewDTO">
         SELECT
+        id,
         sku_id,
         delivery_day,
         min_qty,
@@ -40,6 +41,8 @@
         currency,
         tax_price,
         tax_rate,
+        effective_date,
+        expire_date,
         disabled
         FROM purchase_price_detail WHERE
         is_deleted=FALSE AND

@@ -2,6 +2,9 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -26,6 +29,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.scm.dto.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -36,20 +42,28 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.scm.enums.SupplierTabEnum;
+import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
+import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
+import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Maps;
@@ -70,7 +84,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,9 +148,20 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Autowired
     private LogisticsFeign logisticsFeign;
 
+    @Resource
+    private SrmCfgSettingFeign srmCfgSettingFeign;
+
+    @Resource
+    private SupplierRefUserService supplierRefUserService;
+
+    @Resource
+    private SrmPoReconciliationFeign srmPoReconciliationFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     @Autowired
     private TransferLogisticsFeign transferLogisticsFeign;
-
+    @Resource
+    private PurchaseOrderDetailMapper purchaseOrderDetailMapper;
     /**
      * 保存供应商信息
      *
@@ -191,6 +219,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
             addEntity.setPurchaseUserName(user != null ? user.getUserName() : "");
+        }
+        if (Objects.isNull(addEntity.getSrmDisabled())){
+            addEntity.setSrmDisabled(Boolean.TRUE);//默认禁用
+        }
+        addEntity.setSrmDisabledDate(LocalDate.now());
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.nonNull(userInfo)){
+            addEntity.setSrmOperateUserId(userInfo.getUid());
+            addEntity.setSrmOperateUserName(userInfo.getUserName());
         }
         Boolean result = this.save(addEntity);
         //保存成功
@@ -301,7 +338,32 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //旧的
         SupplierEntity old = new SupplierEntity();
         BeanMapper.copy(supplier, old);
-
+        //供应商srm状态是否修改
+        if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
+            LoginUser user = commonService.getUserInfo();
+            if (Objects.nonNull(user)){
+                supplier.setSrmOperateUserId(user.getUid());
+                supplier.setSrmOperateUserName(user.getUserName());
+            }
+            supplier.setSrmDisabledDate(LocalDate.now());
+            //设置为启用时：校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
+            //设置为停用时：供应商协同开启后关闭--新增校验：存在待对账明细/未确认的对账单，请完成对账后关闭
+            if (dto.getSrmDisabled()){
+                //禁用
+                Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
+                if (Objects.nonNull(count) && count > 0){
+                    throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
+                }
+            }else {
+                //启用时 检查当前周期确认订单是否存在，存在则下月生效
+                SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+                if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
+                    supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
+                }else {
+                    supplier.setSrmDisabledDate(LocalDate.now());
+                }
+            }
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -384,6 +446,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public PagingVO<SupplierDTO.PagingViewDTO> paging(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         SupplierDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+//        if (SupplierTabEnum.TO_ME_CHECK_TASK.getCode().equalsIgnoreCase(params.getTabFlag())){
+//            params.setBusinessIds(commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode()));
+//        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<SupplierDTO.PagingViewDTO> list = pageData.getRecords();
@@ -422,7 +487,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
-
+        //TODO 获取srm 供应商订单规则
+        List<SupplierConfigVO> configs = srmCfgSettingFeign.getConfigList(supplierIdList);
+        Map<String, SupplierConfigVO> configVOMap = configs.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();
             //等级id
@@ -462,6 +529,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(curApprove);
+            }
+            SupplierConfigVO configVO = configVOMap.get(item.getId());
+            if (Objects.nonNull(configVO)){
+                item.setOrderAcceptRule(configVO.getOrderAcceptRule());
+                item.setReturnConfirmRule(configVO.getReturnConfirmRule());
             }
         }
 
@@ -664,7 +736,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (transferLogisticsChannelCount > 0) {
                 throw new ServiceException(ApiError.ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST);
             }
-
         }
         supplier.setDisabled(state);
 
@@ -693,6 +764,49 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return this.updateById(supplier);
     }
 
+    @Override
+    public ApiResult<String> updateSrmStatus(UpdateStateDTO dto) {
+        String supplierId = dto.getId();
+        SupplierEntity supplier = this.getById(supplierId);
+        String msg = "操作成功";
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        supplier.setSrmDisabledDate(LocalDate.now());
+        //当启用后 禁用时 校验是否存在未确认采购对账单明细
+        if (!supplier.getSrmDisabled() && dto.getState()){
+            Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
+            if (Objects.nonNull(count) && count > 0){
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
+            }
+        }
+        //禁用后启用 校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
+        if (supplier.getSrmDisabled() && !dto.getState()){
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+            if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
+                //SRM协同开启后，下月生效
+                msg = "SRM协同开启后，下月生效";
+                supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
+            }else {
+                supplier.setSrmDisabledDate(LocalDate.now());
+            }
+        }
+        Boolean state = dto.getState();
+        supplier.setSrmDisabled(state);
+        LoginUser userInfo = commonService.getUserInfo();
+        if (Objects.nonNull(userInfo)){
+            supplier.setSrmOperateUserId(userInfo.getUid());
+            supplier.setSrmOperateUserName(userInfo.getUserName());
+        }
+        //添加日志
+        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "否" : "是", dto.getState() == true ? "否" : "是");
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
+        this.updateById(supplier);
+        return ApiResult.successMsg(msg);
+    }
+
 
     /**
      * 获取供应商
@@ -704,13 +818,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<Map<String, Object>> listApproveSupplier() {
         LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled);
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled, SupplierEntity::getSrmDisabled);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
         return this.listMaps(queryWrapper);
     }
-
 
     /**
      * 反审核
@@ -816,7 +929,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-29 14:50
      */
     @Override
-    public void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<SupplierDTO.PagingViewDTO> list = baseMapper.getExportSupplier(dto);
         List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
         if (CollectionUtils.isNotEmpty(list)) {
@@ -837,8 +950,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
 
-
-
+            //获取供应商配置
+            List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
+            Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
             //最新审核人
             ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
             list.forEach(obj -> {
@@ -859,8 +973,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 exportExcel.setName(item.getName());
                 exportExcel.setCode(item.getCode());
                 //禁用状态 true 禁用
-                boolean disabled = item.getDisabled();
-                exportExcel.setEnableStatus(disabled == true ? "停用" : "启用");
+                boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
+                exportExcel.setEnableStatus(disabled ? "停用" : "启用");
+                boolean srmDisabled = Objects.nonNull(item.getSrmDisabled()) ? item.getSrmDisabled() : true;
+                exportExcel.setSrmDisabled(srmDisabled ? "否" : "是");
+                SupplierConfigVO supplierConfigVO = configVOMap.get(id);
+                if (Objects.nonNull(supplierConfigVO)){
+                    exportExcel.setOrderAcceptRule(supplierConfigVO.getOrderAcceptRule());
+                    exportExcel.setReturnConfirmRule(supplierConfigVO.getReturnConfirmRule());
+                }
                 ApproveStatusEnum approveStatus = item.getApproveStatus();
                 exportExcel.setApproveStatusName(approveStatus.getName());
                 //阶段
@@ -984,8 +1105,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             view.setCurrencySymbol(viewDTO.getSymbol());
         }
         view.setPayMethodId(entity.getPayMethodId());
+        //结算方式名称
+        DictBasicEntity payMethod = dictBasicService.getById(entity.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(payMethod)) {
+            view.setPayMethodName(payMethod.getName());
+        }
+
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
+
+        //付款条件名称
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getValue(), entity.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        view.setPaymentConditionName(paymentConditionName);
         view.setCompanyAddress(entity.getCompanyAddress());
         return view;
     }
@@ -1019,6 +1151,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 supplier.setId(supplierId);
                 String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
                 supplier.setCode(code);
+                supplier.setSrmDisabled(true);
                 addSupplierList.add(supplier);
                 //账户
                 List<SupplierAccountDTO.ImportAddDTO> accountList = item.getBankAccountList();
@@ -1182,6 +1315,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 .list();
     }
 
+    @Override
+    public List<SupplierEntity> listByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery()
+                .in(SupplierEntity::getId, ids)
+                .list();
+    }
+
 
     /**
      * 根据名称获取供应商
@@ -1243,6 +1386,102 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         this.lambdaUpdate().in(SupplierEntity::getId, ids)
                 .set(SupplierEntity::getApproveStatus, approveStatus)
                 .update();
+    }
+
+    @Override
+    public SupplierEntity getSupplierByUid(String uid) {
+        SupplierRefUserEntity supplier = supplierRefUserService.getSupplierRelUserByUid(uid);
+        if(Objects.isNull(supplier)){
+            return null;
+        }
+        return this.getById(supplier.getSupplierId());
+    }
+
+    @Override
+    public List<SupplierTabCountDTO> getTabCount() {
+        List<SupplierTabCountDTO> dtos = new ArrayList<>();
+        //全部
+        getTotalCount(dtos);
+        //待我审核
+        getWaitMeApprove(dtos);
+        //已审核
+        getApproveCount(dtos);
+        //不通过
+        getRejectCount(dtos);
+        return dtos;
+    }
+
+    @Override
+    public List<SupplierEntity> listByPurchaseUserId(String purchaseUserId) {
+        if (StringUtils.isBlank(purchaseUserId)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(SupplierEntity::getPurchaseUserId, purchaseUserId)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).list();
+    }
+
+    @Override
+    public List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SupplierDTO.SupplierDefaultDTO> list = new ArrayList<>();
+
+        List<SupplierEntity> supplierList = this.listByIds(supplierIdList);
+        if (CollectionUtils.isEmpty(supplierList)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //联系人
+        List<SupplierContactEntity> supplierContractList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+
+        //账号
+        List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listBySupplierIdList(supplierIdList);
+
+        for (SupplierEntity supplierEntity : supplierList) {
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = new SupplierDTO.SupplierDefaultDTO();
+            supplierDefaultDTO.setSupplierId(supplierEntity.getId());
+            supplierDefaultDTO.setSupplierEntity(supplierEntity);
+            //联系人
+            if (CollectionUtils.isNotEmpty(supplierContractList)) {
+                SupplierContactEntity supplierContactEntity = supplierContractList.stream().filter(obj -> StrUtil.equals(supplierEntity.getId(), obj.getSupplierId())).findFirst().orElse(null);
+                supplierDefaultDTO.setSupplierContactEntity(supplierContactEntity);
+            }
+            //账号
+            if (CollectionUtils.isNotEmpty(supplierAccountList)) {
+                SupplierAccountEntity accountEntity = supplierAccountList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                supplierDefaultDTO.setAccountEntity(accountEntity);
+            }
+            list.add(supplierDefaultDTO);
+        }
+        return list;
+    }
+
+    private void getRejectCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.REJECT.getStatus())
+                .count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.REJECT.getCode()).name(SupplierTabEnum.REJECT.getName()).count(count).build());
+    }
+
+    private void getApproveCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                .count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.APPROVE.getCode()).name(SupplierTabEnum.APPROVE.getName()).count(count).build());
+    }
+
+    private void getWaitMeApprove(List<SupplierTabCountDTO> dtos) {
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER.getCode());
+        if (CollectionUtils.isNotEmpty(businessIds)){
+            dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.TO_ME_CHECK_TASK.getCode()).name(SupplierTabEnum.TO_ME_CHECK_TASK.getName()).count(businessIds.size()).build());
+        }else {
+            dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.TO_ME_CHECK_TASK.getCode()).name(SupplierTabEnum.TO_ME_CHECK_TASK.getName()).count(0).build());
+        }
+    }
+
+    private void getTotalCount(List<SupplierTabCountDTO> dtos) {
+        int count = lambdaQuery().eq(SupplierEntity::getIsDeleted,false).count();
+        dtos.add(SupplierTabCountDTO.builder().type(SupplierTabEnum.ALL_TASK.getCode()).name(SupplierTabEnum.ALL_TASK.getName()).count(count).build());
     }
 
     /**

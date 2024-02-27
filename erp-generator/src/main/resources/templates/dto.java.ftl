@@ -30,6 +30,8 @@ import javax.validation.constraints.Size;
 </#if>
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
 </#if>
 <#list table.fields as field>
 <#if field.propertyType == 'BigDecimal'>
@@ -86,9 +88,14 @@ public class ${table.dtoName} implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 搜索类型
+         * 页面高级查询
          */
-         private String  tabFlag;
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
 
      }
      </#if>
@@ -213,8 +220,8 @@ public class ${table.dtoName} implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-<#-- ----------  BEGIN 字段循环遍历  ---------->
-<#list table.fields as field>
+    <#-- ----------  BEGIN 字段循环遍历  ---------->
+    <#list table.fields as field>
     <#if field.keyFlag>
         <#assign keyPropertyName="${field.propertyName}"/>
     </#if>

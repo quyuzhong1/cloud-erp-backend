@@ -975,7 +975,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 view.setSkuId(usableInventoryParamDTO.getSkuId());
                 view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
                 view.setWarehouseLocation(usableInventoryParamDTO.getWarehouseLocation());
-                view.setUsableQty(this.getUsableInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
+                view.setUsableQty(inventoryTotal);
                 viewList.add(view);
             }
         }

@@ -23,6 +23,7 @@
         pro.return_remark AS returnRemark,
         pro.return_mode AS returnMode,
         pro.purchase_user_id AS purchaseUserId,
+        pro.purchase_user_name AS purchaseUserName,
         pro.return_user_name AS returnUserName,
         prod.remark,
         pro.approve_user_name AS approveUserName,
@@ -32,87 +33,18 @@
         prod.remark,
         prod.warehouse_location AS warehouseLocation,
         pro.source_type AS sourceType,
-        prod.purchase_order_detail_id AS purchaseOrderDetailId
+        pro.purchase_order_id AS purchaseOrderId,
+        prod.purchase_order_detail_id AS purchaseOrderDetailId,
+        pro.confirm_status AS confirmStatus,
+        pro.unusual_type,
+        pro.unusual_remark,
+        pro.unusual_handle_user_id,
+        pro.unusual_handle_user_name,
+        pro.confirm_date
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE
-        <if test="params.code != null and params.code != ''">
-            and pro.code = #{params.code}
-        </if>
-        <if test="params.skuNoList != null and params.skuNoList.size != ''">
-            and prod.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and pro.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and pro.purchase_order_code = #{params.purchaseOrderCode}
-        </if>
-
-        <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-            and pro.purchase_user_id in
-            <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and pro.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.invalidStatus != null">
-            and pro.invalid_status = #{params.invalidStatus}
-        </if>
-
-        <if test="params.returnMode != null and params.returnMode != ''">
-            and pro.return_mode = #{params.returnMode}
-        </if>
-        <if test="params.detailRemark != null and params.detailRemark != ''">
-            and prod.remark ilike concat('%',#{params.detailRemark}::text,'%')
-        </if>
-
-        <if test="params.billDateList != null and params.billDateList.size > 0">
-            and pro.bill_date >= #{params.billDateList[0]} and (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
-        </if>
-
-        <if test="params.returnWarehouseIdList != null and params.returnWarehouseIdList.size > 0">
-            and pro.return_warehouse_id in
-            <foreach collection="params.returnWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-            and pro.create_user_id in
-            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and pro.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.create_time
-        </if>
-        <if test="params.returnOrderSource != null and params.returnOrderSource != ''">
-            <choose>
-                <when test="params.returnOrderSource =='other' ">
-                    and pro.source_type != 'qcInfo'
-                </when>
-                <otherwise>
-                    and pro.source_type = 'qcInfo'
-                </otherwise>
-            </choose>
-        </if>
+        WHERE ${params.sqlMap.default}
+        and pro.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -172,7 +104,7 @@
         AND pro.purchase_order_id = #{purchaseOrderId}
     </select>
 
-    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.ReturnOrderExcelDTO">
+    <select id="listExport" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PagingViewDTO">
         SELECT
         pro.id,
         pro.code,
@@ -183,10 +115,13 @@
         prod.sku_id AS skuId,
         prod.sku_no AS skuNo,
         pro.bill_date AS billDate,
+        pro.return_warehouse_id AS returnWarehouseId,
         pro.return_warehouse_name AS returnWarehouseName,
         prod.return_qty AS returnQty,
         prod.return_price AS returnPrice,
         prod.deduct_amount_qty AS deductAmountQty,
+        prod.currency,
+        prod.currency_symbol AS currencySymbol,
         pro.return_remark AS returnRemark,
         pro.return_mode AS returnMode,
         pro.purchase_user_id AS purchaseUserId,
@@ -196,91 +131,21 @@
         pro.approve_time AS approveTime,
         pro.create_user_name AS createUserName,
         pro.create_time AS createTime,
+        prod.remark,
+        prod.warehouse_location AS warehouseLocation,
         pro.source_type AS sourceType,
-        prod.purchase_order_detail_id AS purchaseOrderDetailId
+        prod.purchase_order_detail_id AS purchaseOrderDetailId,
+        pro.confirm_status AS confirmStatus,
+        pro.unusual_type,
+        pro.unusual_remark,
+        pro.unusual_handle_user_id,
+        pro.unusual_handle_user_name,
+        pro.confirm_date
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE pro.is_deleted = FALSE
-        <if test="params.ids != null and params.ids.size != ''">
-            and pro.id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.code != null and params.code != ''">
-            and pro.code = #{params.code}
-        </if>
-        <if test="params.skuNoList != null and params.skuNoList.size != ''">
-            and prod.sku_no in
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and pro.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and pro.purchase_order_code = #{params.purchaseOrderCode}
-        </if>
-
-        <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-            and pro.purchase_user_id in
-            <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and pro.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.invalidStatus != null">
-            and pro.invalid_status = #{params.invalidStatus}
-        </if>
-
-        <if test="params.returnMode != null and params.returnMode != ''">
-            and pro.return_mode = #{params.returnMode}
-        </if>
-
-        <if test="params.billDateList != null and params.billDateList.size > 0">
-            and pro.bill_date >= #{params.billDateList[0]} and (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
-        </if>
-
-        <if test="params.returnWarehouseIdList != null and params.returnWarehouseIdList.size > 0">
-            and pro.return_warehouse_id in
-            <foreach collection="params.returnWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-            and pro.create_user_id in
-            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-
-        <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and pro.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.create_time
-        </if>
-        <if test="params.returnOrderSource != null and params.returnOrderSource != ''">
-            <choose>
-                <when test="params.returnOrderSource =='other' ">
-                    and pro.source_type != 'qcInfo'
-                </when>
-                <otherwise>
-                    and pro.source_type = 'qcInfo'
-                </otherwise>
-            </choose>
-        </if>
+        WHERE
+        ${params.sqlMap.default}
+        and pro.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -290,7 +155,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pro.create_time desc, pro.id
+        pro.create_time desc,pro.id
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -369,5 +234,108 @@
             </foreach>
         </if>
         ORDER BY pro.create_time desc
+    </select>
+
+    <!--供应商退货分页查询-->
+    <select id="supplierPaging" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierPagingViewDTO">
+        SELECT
+            pro.id,
+            prod.id AS detailId,
+            pro.confirm_date AS confirmDate,
+            pro.code AS code,
+            pro.purchase_order_code AS purchaseOrderCode,
+            pro.confirm_status AS confirmStatus,
+            prod.sku_id AS skuId,
+            prod.sku_no AS skuNo,
+            prod.return_qty AS returnQty,
+            pro.return_remark AS returnRemark,
+            prod.remark AS remark,
+            pro.return_user_name AS returnUserName,
+            pro.unusual_type AS unusualType,
+            pro.unusual_remark AS unusualRemark,
+            pro.bill_date AS billDate,
+            pro.source_type AS sourceType
+        FROM po_return_detail prod
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        and pro.is_deleted = FALSE
+        AND pro.approve_status = 'approve'
+
+        <!--供应商查询-->
+        <if test="params.supplierId != null and params.supplierId != ''">
+            AND pro.supplier_id = #{params.supplierId}
+        </if>
+
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pro.create_time desc,pro.id
+    </select>
+
+    <!--SRM供应商退货列表tab页-->
+    <select id="supplierTabList" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierTabListDTO">
+        SELECT
+        confirm_status AS tabFlag,
+        count(*)  AS count
+        FROM po_return
+        WHERE is_deleted=FALSE
+        AND approve_status = 'approve'
+        <!--供应商查询-->
+        <if test="params.supplierId != null and params.supplierId != ''">
+            AND supplier_id = #{params.supplierId}
+        </if>
+        GROUP BY confirm_status
+    </select>
+
+    <select id="statisticsBySupplier"
+            resultType="com.erp.model.wms.dto.PurchaseReturnStatisticsDTO$StatisticsMonthDTO">
+        select EXTRACT(MONTH FROM pr.bill_date) AS month,
+               count(distinct pr.id) AS returnCount,
+               sum(prd.return_qty) AS returnSkuCount,
+               sum(case when  pr.source_type = 'qcInfo' then prd.return_qty else 0 end) AS qcReturnSkuCount,
+               sum(prd.return_qty * prd.return_price) AS returnMoney
+        from po_return pr
+                 inner join po_return_detail prd on pr.id = prd.main_id and prd.is_deleted = false
+        where pr.supplier_id =  #{params.surpplierId}
+          and pr.approve_status = 'approve'
+        <if test="params.startTime != null">
+            and pr.bill_date >= #{params.startTime}
+        </if>
+        <if test="params.endTime != null">
+            and pr.bill_date <![CDATA[ <= ]]> #{params.endTime}
+        </if>
+          and pr.is_deleted = false
+        group by EXTRACT(MONTH FROM pr.bill_date)
+    </select>
+
+    <select id="listPoReturnAutoConfirm" resultType="java.lang.String">
+        SELECT
+        pr.id
+        FROM po_return pr
+        WHERE pr.is_deleted = FALSE
+        AND pr.approve_status = 'approve'
+        AND pr.confirm_status = 'waitConfirm' AND
+        <foreach collection="params" item="item" separator="or" open="(" close=")">
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "H"'>
+                now() - make_interval(hours => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "M"'>
+                now() - make_interval(mins => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+            <if test='item.returnConfirmDTO.unit != null and item.returnConfirmDTO.unit == "S"'>
+                now() - make_interval(secs => #{item.returnConfirmDTO.duration} :: int) > pr.approve_time AND
+                pr.supplier_id = #{item.supplierId}
+            </if>
+        </foreach>
     </select>
 </mapper>

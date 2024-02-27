@@ -38,10 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -148,7 +145,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         }
 
         List<JSONObject>  blankList = new ArrayList<>();
-        List<SupplierAccountEntity> accountList = supplierAccountService.listBySupplierId(entity.getId());
+        List<SupplierAccountEntity> accountList = supplierAccountService.listBySupplierIdList(Arrays.asList(entity.getId()));
 
         if (CollectionUtils.isNotEmpty(accountList)) {
             //查询银行信息

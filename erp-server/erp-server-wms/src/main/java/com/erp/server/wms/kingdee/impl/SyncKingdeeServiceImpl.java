@@ -60,6 +60,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
 
+    @Resource
+    private SubcontractIssueService subcontractIssueService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -132,6 +135,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
                 return;
             }
             warehouseReceiveService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+        //委外发料单
+        if (ApiModuleTypeEnum.SUBCONTRACT_ISSUE.getCode().toString().equals(code)) {
+            subcontractIssueService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

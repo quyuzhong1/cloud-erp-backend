@@ -90,51 +90,58 @@ public class PurchasePriceExportExcelDTO implements Serializable {
 
 
     /**
+     * 失效时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "失效时间", index = 8)
+    private LocalDate expireDate;
+
+    /**
      * 生效时间
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "启用状态", index = 8)
+    @ExcelProperty(value = "启用状态", index = 9)
     private String enabled;
 
     /**
      * 采购组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 9)
+    @ExcelProperty(value = "采购组织", index = 10)
     private String purchaseOrgName;
 
     /**
      * 单据状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "单据状态", index = 10)
+    @ExcelProperty(value = "单据状态", index = 11)
     private String approveStatusName;
 
 
     /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 11)
+    @ExcelProperty(value = "审核人（最新）", index = 12)
     @ColumnWidth(20)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 12,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 13,converter= LocalDateStringConverter.class)
     @ColumnWidth(20)
     private LocalDateTime approveTime;
 
 
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 13)
+    @ExcelProperty(value = "创建人", index = 14)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 14,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 15,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 

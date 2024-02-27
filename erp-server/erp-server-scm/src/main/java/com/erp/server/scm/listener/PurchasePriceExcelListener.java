@@ -7,6 +7,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
@@ -107,7 +108,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         Map<String, Object> supplierMap  = supplierList.stream().filter(r->Objects.equals(supplierName, StrUtils.null2EmptyWithTrim(r.get("name")))).findFirst().orElse(null);
         if(Objects.isNull(supplierMap)) {
-            errorMsgList.add("供应商不存在");
+            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
         } else {
             addDTO.setSupplierId(StrUtils.null2EmptyWithTrim(supplierMap.get("id")));
         }
@@ -172,6 +173,9 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         }
 
         PurchasePriceDetailDTO.ImportSaveDTO detailDTO = new  PurchasePriceDetailDTO.ImportSaveDTO();
+        //定价员id
+        detailDTO.setPricingUserId(addDTO.getPricingUserId());
+
         // 明细
         String skuNo = excelDTO.getSkuNo();
         SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);

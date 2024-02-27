@@ -243,6 +243,15 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据来源ids查询质检单
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
+     * @param sourceIds
+     * @return java.lang.Boolean
+     **/
+    List<QcInfoEntity> listQCBySourceIdsAndType(List<String> sourceIds,String sourceType);
+
+    /**
      * @description: 根据来源明细ids查询质检单
      * @author Will
      * @date: 2023/7/3 15:59
@@ -286,4 +295,6 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return void
      **/
     void repairQcInfoSourceCode();
+
+    List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds);
 }

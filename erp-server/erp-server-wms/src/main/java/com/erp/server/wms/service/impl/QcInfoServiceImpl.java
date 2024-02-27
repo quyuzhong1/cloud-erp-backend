@@ -32,6 +32,7 @@ import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -245,6 +246,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (StringUtils.isNotBlank(purchaseOrderId)) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
@@ -252,6 +261,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
+
         }
         String sourceDetailId = dto.getSourceDetailId();
         bill.setSourceDetailId(sourceDetailId);
@@ -566,6 +576,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
@@ -814,7 +832,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 完成质检，免检
-     * 当是 质检类型为b2b 质检的时候
+     * 当是 质检类型为b2b 质检的时候 或者来源是采购收货并且收货对应的质检单已全部质检完成
      * 自动批量完成入库单
      *
      * @return void
@@ -857,6 +875,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             addStockIn.setDetails(details);
             addList.add(addStockIn);
+        }
+        List<QcInfoEntity> qcInfoEntityList = listByIds(idList);
+        List<String> receiveIdList = qcInfoEntityList.stream().filter(v->SourceTypeEnum.PO_RECEIVE.getCode().equals(v.getSourceType())).map(QcInfoEntity::getSourceId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(receiveIdList)){
+            warehouseReceiveService.generateStockInWhenQcFinish(receiveIdList);
         }
         //批量生成 入库单
         purchaseStorageService.batchAdd(addList);
@@ -982,6 +1005,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
+                //采购订单验证
+                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                if (StrUtil.isNotBlank(skuNos)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
@@ -1978,6 +2009,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     @Override
+    public List<QcInfoEntity> listQCBySourceIdsAndType(List<String> sourceIds, String sourceType) {
+        return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).eq(QcInfoEntity::getSourceType,sourceType).list();
+    }
+
+    @Override
     public List<QcInfoEntity> listQCBySourceDetailIds(List<String> sourceDetailIds) {
         if (CollectionUtils.isEmpty(sourceDetailIds)) {
             return new ArrayList<>();
@@ -2418,5 +2454,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
         }
 
+    }
+
+    @Override
+    public List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(List<String> purchaseDetailIds) {
+        if(CollectionUtils.isEmpty(purchaseDetailIds)){
+            return new ArrayList<>();
+        }
+        return baseMapper.getQcReceiveResult(purchaseDetailIds);
     }
 }

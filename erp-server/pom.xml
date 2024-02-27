@@ -29,6 +29,7 @@
         <module>erp-server-msg</module>
         <module>erp-server-oms</module>
         <module>erp-server-tms</module>
+        <module>erp-server-srm</module>
     </modules>
     <dependencies>
         <dependency>

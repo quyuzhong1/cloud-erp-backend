@@ -40,10 +40,10 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @description: 根据供应商id 获取到账户信息
      * @author Will
      * @date: 2023/4/26 10:07
-     * @param supplierId
+     * @param supplierIdList
      * @return List<SupplierAccountEntity>
      */
-    List<SupplierAccountEntity> listBySupplierId(String supplierId);
+    List<SupplierAccountEntity> listBySupplierIdList(List<String> supplierIdList);
 
     /**
      * 更改供应商账户信息

@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -24,15 +26,15 @@ import java.util.List;
 public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
 
-    List<UserDTO> findList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findList(@Param("params") SysSearchUserDTO dto);
 
     IPage<UserManageDTO> paging(Page query, @Param("params") SysUserPagingSearchDTO params, @Param("roleIds") List<String> roleIds);
 
-    List<UserDTO> findRoleIfExistList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findRoleIfExistList(@Param("params") SysSearchUserDTO dto);
 
-    List<UserDTO> findPostIfExistList(@Param("searchKeyword") String q, @Param("postId") String postId);
+    List<UserDTO> findPostIfExistList(@Param("params") SysSearchUserDTO dto);
 
-    List<UserDTO> findDepartmentIfExistList(@Param("searchKeyword") String searchKeyWord, @Param("departmentId") String flagId);
+    List<UserDTO> findDepartmentIfExistList(@Param("params") SysSearchUserDTO dto);
 
     void setLoginIp(@Param("params") SysLoginIpDTO dto);
 
@@ -78,5 +80,18 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      */
     IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params,@Param("userIdList") List<String> userIdList);
 
+    /**
+     * 分页查询
+     * @param page
+     * @param params
+     * @return
+     */
+    IPage<SupplierUserVO> srmPaging(@Param("page") Page<SupplierUserVO> page, @Param("params")UserPagingSearchDTO params);
 
+    /**
+     * 查询用户列表
+     * @param dto
+     * @return
+     */
+    List<SupplierUserVO> srmList(@Param("params") UserPagingSearchDTO dto);
 }

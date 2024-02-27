@@ -106,28 +106,10 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String remark;
 
     /**
-     * 到货状态（0未到货，1部分到货，2已到货）
-     */
-    @TableField("arrival_status")
-    private String arrivalStatus;
-
-    /**
-     * 到货时间
-     */
-    @TableField("arrival_time")
-    private LocalDateTime arrivalTime;
-
-    /**
      * 税率
      */
     @TableField("tax_rate")
     private BigDecimal taxRate;
-
-    /**
-     * 签收数量
-     */
-    @TableField(exist = false)
-    private Integer receiveQty;
 
     /**
      * 是否加急（false否，true是）
@@ -170,6 +152,52 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      */
     @TableField("Kingdee_detail_id")
     private String KingdeeDetailId;
+
+    /**
+     * 确认日期
+     */
+    @TableField("confirm_date")
+    private LocalDate confirmDate;
+
+    /**
+     * 确认人id
+     */
+    @TableField("confirm_user_id")
+    private String confirmUserId;
+
+    /**
+     * 确认人名称
+     */
+    @TableField("confirm_user_name")
+    private String confirmUserName;
+
+    /**
+     * 接收说明
+     */
+    @TableField("confirm_remark")
+    private String confirmRemark;
+
+    /**
+     * 确认类型 auto系统 手动
+     */
+    private String confirmType;
+
+    /**
+     * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+     */
+    @TableField("execution_status")
+    private String executionStatus;
+
+
+
+    //----------------------------------------------------------------------辅助字段 -------------------------------------------------------------------
+
+
+    /**
+     * 签收数量
+     */
+    @TableField(exist = false)
+    private Integer receiveQty;
 
     /**
      * 委外到货状态

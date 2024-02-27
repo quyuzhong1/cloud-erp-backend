@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -33,7 +34,7 @@ import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -317,21 +318,20 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      * @Date 2023/4/20 18:47
      **/
     private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
-        String arrivalStatus = "";
-        //未到货
+        String executionStatus = "";
         if (receiveQty - returnQty <= MathUtil.ZERO) {
-            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+            //已确认
+            executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
         } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
-            //部分到货
-            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            //送货中
+            executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
         } else {
-            //已到货
-            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+            //已完成
+            executionStatus = ExecutionStatusEnum.FINISH.getCode();
         }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
         purchaseOrderDetailEntity.setId(id);
-        purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
-        purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+        purchaseOrderDetailEntity.setExecutionStatus(executionStatus);
         Boolean flag = purchaseOrderDetailService.updateById(purchaseOrderDetailEntity);
         return flag;
     }
@@ -574,7 +574,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
-
+        //同步到SRM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_INFO_TAG.getName(), purchaseOrderDetailList, IdUtil.simpleUUID());
     }
 
     /**
@@ -657,7 +658,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
             // 新的采购订单明细采购数量
             addDTO.setQty(purchaseChangeDetailEntity.getQty());
-            addDTO.setArriveStatus(purchaseOrderDetailEntity.getArrivalStatus());
+            addDTO.setExecutionStatus(purchaseOrderDetailEntity.getExecutionStatus());
             members.add(addDTO);
             dto.setMembers(members);
             dataList.add(dto);

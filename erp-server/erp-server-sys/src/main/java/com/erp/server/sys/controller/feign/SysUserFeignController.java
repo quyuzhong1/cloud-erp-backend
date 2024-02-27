@@ -1,15 +1,25 @@
 package com.erp.server.sys.controller.feign;
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.UserTypeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserWechatEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
@@ -19,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,7 +68,8 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private UserKingdeePostService userKingdeePostService;
 
-
+    @Resource
+    private SysUserWechatService wechatService;
 
 
     @PostMapping("/accountLogin")
@@ -234,19 +246,30 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getUserByUserName")
-    public FindUserDTO getUserByUserName(@RequestBody String userName) {
-        FindUserDTO dto = sysUserInfoService.getUserByUserName(userName);
+    public FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType) {
+        FindUserDTO dto = sysUserInfoService.getUserByUserName(userName,userType);
         return dto;
     }
 
+    /**
+     * 根据手机号和用户类型获取用户信息
+     * @param mobile
+     * @param userType
+     * @return
+     */
+    @GetMapping("/getUserByMobile")
+    FindUserDTO getUserByMobile(@RequestParam("mobile") String mobile,@RequestParam("userType") String userType){
+        FindUserDTO dto = sysUserInfoService.getUserByMobile(mobile,userType);
+        return dto;
+    }
     /**
      * 根据用户名称获取用户
      *
      * @return
      */
     @PostMapping("/listUserByUserNames")
-    public List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames) {
-        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames);
+    public List<FindUserDTO> listUserByUserNames(@RequestParam("userNames") List<String> userNames,@RequestParam("userType") String userType) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames,userType);
         return list;
     }
 
@@ -440,5 +463,92 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/listUserByDept")
     public List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName) {
         return sysUserInfoService.listUserByDept(deptName);
+    }
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/srmPaging")
+    public PagingVO<SupplierUserVO> page(@RequestBody @Validated PagingDTO<UserPagingSearchDTO> dto){
+        return sysUserInfoService.srmPaging(dto);
+    }
+    /**
+     * 查询
+     * @param dto
+     * @return
+     */
+    @PostMapping("/srmList")
+    public List<SupplierUserVO> srmList(@RequestBody @Validated UserPagingSearchDTO dto){
+        return sysUserInfoService.srmList(dto);
+    }
+
+    /**
+     * 添加用户
+     */
+    @PostMapping("/addSrmUser")
+    public String addSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        return sysUserInfoService.addSrmUser(sysUserInfoDTO);
+    }
+
+    /**
+     * 修改用户
+     */
+    @PostMapping("/updateSrmUser")
+    public Boolean updateSrmUser(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
+        return sysUserInfoService.updateSrmUser(sysUserInfoDTO);
+    }
+
+
+    /**
+     * 用户信息
+     */
+    @GetMapping("/info/{uid}")
+    public SysUserInfoEntity info(@PathVariable("uid") String uid) {
+        return sysUserInfoService.getById(uid);
+    }
+
+
+    /**
+     * 删除
+     */
+    @PostMapping("/deleteSrmUser")
+    public ApiResult deleteSrmUser(@RequestBody List<String> uids) {
+        sysUserInfoService.removeByIds(uids);
+        return success();
+    }
+
+    /**
+     * 批量启用/禁用
+     * @param stateDTO
+     * @return
+     */
+    @PostMapping("/updateStateSrm")
+    public ApiResult updateStateSrm(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
+        sysUserInfoService.updateStateSrm(stateDTO);
+        return success();
+    }
+
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:43
+     * @param
+     * @return
+     **/
+    @DataIdempotent(keyIdName = "uid")
+    @GetMapping("/changePassword")
+    public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
+        Boolean flag = sysUserInfoService.changePassword(uid,pwd);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 获取用户微信信息
+     **/
+    @GetMapping("/getWxInfo")
+    public SysUserWechatEntity getWxInfo(@RequestParam("uid") String uid) {
+        return wechatService.getWxInfo(uid);
     }
 }

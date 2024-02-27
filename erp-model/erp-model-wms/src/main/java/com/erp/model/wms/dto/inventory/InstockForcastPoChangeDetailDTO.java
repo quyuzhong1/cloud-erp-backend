@@ -42,9 +42,9 @@ public class InstockForcastPoChangeDetailDTO implements Serializable {
         private String purchaseOrderDetailId;
 
         /**
-         * 到货状态
+         * 执行状态
          */
-        private String arriveStatus;
+        private String executionStatus;
 
         /**
          * 原采购订单数量

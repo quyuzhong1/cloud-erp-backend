@@ -39,6 +39,8 @@ public enum KingdeePushModuleEnum {
     STK_STOCKCOUNTLOSS("STK_StockCountLoss","盘亏单"),
     PUR_POXCHANGE("PUR_POXChange","采购变更"),
     PUR_RECEIVEBILL("PUR_ReceiveBill","收料通知单"),
+    SUB_PICKMTRL("SUB_PickMtrl","委外领料单"),
+
 
     ;
     private String code;

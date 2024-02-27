@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 退货单DTO
@@ -603,9 +606,64 @@ public class PurchaseReturnOrderDTO {
         private String returnOrderSourceName;
 
         /**
+         * 采购订单表id
+         */
+        private String purchaseOrderId;
+
+        /**
          * 采购订单详情表id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 退货确认
+         */
+        private String confirmStatus;
+
+        /**
+         * 退货确认中文
+         */
+        private String confirmStatusName;
+
+        /**
+         * 异常分类
+         */
+        private String unusualType;
+
+        /**
+         * 异常分类中文
+         */
+        private String unusualTypeName;
+
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+
+        /**
+         * 异常处理人Id
+         */
+        private String unusualHandleUserId;
+
+        /**
+         * 异常处理人名称
+         */
+        private String unusualHandleUserName;
+
+        /**
+         * 退货确认日期
+         */
+        private LocalDate confirmDate;
+
+        /**
+         * 签收人
+         */
+        private String receiveUserName;
+
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
 
     }
 
@@ -646,7 +704,9 @@ public class PurchaseReturnOrderDTO {
         private List<String> purchaseUserIdList;
 
         /**
-         * 单据审核状态集合
+         * 状态(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核，waitForMeHandle 待我处理)
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnStatus
          */
         private List<String> approveStatusList;
 
@@ -690,6 +750,39 @@ public class PurchaseReturnOrderDTO {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 退货确认状态
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnConfirmStatus
+         */
+        private String confirmStatus;
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+        /**
+         * 异常处理人
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/27679
+         */
+        private List<String> unusualHandleUserIdList;
+
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
 
@@ -820,7 +913,9 @@ public class PurchaseReturnOrderDTO {
     public static class ReturnOrderCountDTO {
 
         /**
-         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         * 状态(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核，waitForMeHandle 待我处理)
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnStatus
          */
         private String type;
         /**
@@ -1148,37 +1243,38 @@ public class PurchaseReturnOrderDTO {
         private Integer count;
     }
 
-
-
     /**
      * SRM供应商分页信息
      */
     @Data
     @NoArgsConstructor
     public static class SupplierPagingViewDTO {
-
         /**
          * 表id
          */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
-         * 退货确认日期
+         * 退货确认日期【可排序】
          */
         private LocalDate confirmDate;
 
         /**
-         * 退货单号
+         * 退货单号【可排序】
          */
         private String code;
 
         /**
-         * 采购单号
+         * 采购单号【可排序】
          */
         private String purchaseOrderCode;
 
         /**
-         * 退货确认状态编码
+         * 退货确认状态
          */
         private String confirmStatus;
 
@@ -1193,7 +1289,7 @@ public class PurchaseReturnOrderDTO {
         private String skuId;
 
         /**
-         * sku
+         * sku【可排序】
          */
         private String skuNo;
 
@@ -1203,23 +1299,22 @@ public class PurchaseReturnOrderDTO {
         private String productName;
 
         /**
-         * 退货数量
+         * 退货数量【可排序】
          */
         private Integer returnQty;
 
         /**
-         * 退货原因
+         * 退货原因【可排序】
          */
         private String returnRemark;
 
         /**
-         * 退货备注
+         * 退货备注【可排序】
          */
         private String remark;
 
         /**
          * 退货来源
-         * 参考枚举ReturnOrderSourceEnum
          */
         private String returnOrderSource;
 
@@ -1233,128 +1328,210 @@ public class PurchaseReturnOrderDTO {
          */
         private String returnUserName;
 
-
-
         /**
-         * 供应商名称
+         * 异常分类
          */
-        private String supplierName;
+        private String unusualType;
 
         /**
-         * 单据状态
+         * 异常分类名称
          */
-        private String approveStatus;
+        private String unusualTypeName;
 
         /**
-         * 审核状态名称
+         * 异常反馈描述【可排序】
          */
-        private String approveStatusName;
+        private String unusualRemark;
 
         /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 作废状态名称
-         */
-        private String invalidStatusName;
-
-
-        /**
-         * 退货日期
+         * 退货日期【可排序】
          */
         private LocalDate billDate;
 
         /**
-         * 退货仓库Id
-         */
-        private String returnWarehouseId;
-
-        /**
-         * 退货仓库
-         */
-        private String returnWarehouseName;
-
-
-
-        /**
-         * 退款单价
-         */
-        private BigDecimal returnPrice;
-
-        /**
-         * 扣款数量
-         */
-        private Integer deductAmountQty;
-
-        /**
-         * 退款金额
-         */
-        private BigDecimal deductAmountAmount;
-
-        /**
-         * 币别
-         */
-        private String currency;
-
-        /**
-         * 币别符号
-         */
-        private String currencySymbol;
-
-
-        /**
-         * 退货方式
-         */
-        private String returnMode;
-
-        /**
-         * 退货方式名称
-         */
-        private String returnModeName;
-
-        /**
-         * 采购员名称
-         */
-        private String purchaseUserName;
-
-
-        /**
-         * 审核人
-         */
-        private String approveUserName;
-
-        /**
-         * 创建人
-         */
-        private String createUserName;
-
-        /**
-         * 创建时间
-         */
-        private LocalDateTime createTime;
-
-        /**
-         * 仓位
-         */
-        private String warehouseLocation;
-
-        /**
-         * 仓位名称
-         */
-        private String warehouseLocationName;
-
-        /**
-         * 单据来源
+         * 来源类型
          */
         private String sourceType;
 
+    }
+
+
+    /**
+     * SRM供应商分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierPagingParamDTO extends SortDTO {
+        /**
+         * 订单编号
+         */
+        private String code;
 
         /**
-         * 采购订单详情表id
+         * skuNo集合
          */
-        private String purchaseOrderDetailId;
+        private List<String> skuNoList;
+
+        /**
+         * 退货确认状态
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnConfirmStatus
+         */
+        private String confirmStatus;
+
+        /**
+         * 退货日期
+         */
+        private List<LocalDate> billDateList;
+
+        /**
+         * 退货原因
+         */
+        private String returnRemark;
+
+        /**
+         * 退货单来源类型
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=returnOrderSource
+         */
+        private String returnOrderSource;
+
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+
+        /**
+         * 异常说明
+         */
+        private String unusualRemark;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
 
     }
+
+
+    /**
+     * SRM供应商退货列表tab
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierTabListDTO {
+        /**
+         * tab页状态
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnConfirmStatus
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    /**
+     * 异常反馈入参
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnusualFeedbackParamDTO {
+        /**
+         * 单据id
+         */
+        private String id;
+
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+
+        /**
+         * 附件集合
+         */
+        private List<AttachDTO> attachList;
+    }
+
+
+    /**
+     * 查询异常处理人下拉
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnusualHandleUserOptionDTO {
+        /**
+         * 编号
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+    }
+
+    /**
+     * 异常反馈详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnusualFeedbackView {
+        /**
+         * 单据id
+         */
+        private String id;
+
+        /**
+         * 异常分类
+         * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
+         * 入参：key=poReturnUnusualType
+         */
+        private String unusualType;
+
+        /**
+         * 异常分类中文
+         */
+        private String unusualTypeName;
+
+        /**
+         * 异常反馈描述
+         */
+        private String unusualRemark;
+
+        /**
+         * 附件集合
+         */
+        private List<AttachDTO> attachList;
+    }
+
 }

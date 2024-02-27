@@ -21,4 +21,13 @@ public interface SysPostUserService  extends IService<SysPostUserEntity> {
     List<SysUserDTO> findPostUser(BaseSearchDTO dto);
 
     boolean saveBatchPostUser(BatchSavePostUserDTO dto);
+
+    /**
+     * 根据用户id查询岗位
+     * @Author Luo_WG
+     * @Date 2024/1/12 10:55
+     * @param userId
+     * @return java.util.List<com.erp.model.sys.entity.SysPostUserEntity>
+     **/
+    List<SysPostUserEntity> getByUserId(String userId);
 }

@@ -933,6 +933,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.category_id AS categoryId,
         ps.sale_state as saleState,
         pd.unit_name,
         pd.status,

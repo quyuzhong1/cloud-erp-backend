@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -310,4 +311,18 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
+
+    /**
+     * 批量质检完成时生成入库单
+     * @param ids ：  收货单id
+     * @return java.lang.Boolean
+     **/
+    Boolean generateStockInWhenQcFinish(List<String> ids);
+
+    /**
+     *
+     * @param supplierId
+     * @return
+     */
+    SupplierCountDTO countOrderBySupplierId(String supplierId);
 }

@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -37,12 +38,23 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void add(SysUserInfoDTO sysUserInfoDTO);
 
     /**
+     * 保存SRM用户
+     *
+     * @param sysUserInfoDTO
+     */
+    String addSrmUser(SysUserInfoDTO sysUserInfoDTO);
+    /**
      * 修改用户
      *
      * @param sysUserInfoDTO
      */
     void update(SysUserInfoDTO sysUserInfoDTO);
-
+    /**
+     * 修改用户
+     *
+     * @param sysUserInfoDTO
+     */
+    Boolean updateSrmUser(SysUserInfoDTO sysUserInfoDTO);
     /**
      * 账号登录
      *
@@ -61,7 +73,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     List<UserDTO> findList(SysSearchUserDTO dto);
 
-    PagingVO paging(PagingDTO<SysUserPagingSearchDTO> dto);
+    PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto);
 
     void bindingThirdParty(SysUserThirdDTO dto);
 
@@ -95,9 +107,9 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     FindUserDTO getUserByUserId(String userId);
 
-    FindUserDTO getUserByUserName(String userName);
+    FindUserDTO getUserByUserName(String userName,String userType);
 
-    List<FindUserDTO> listUserByUserNames(List<String> userNames);
+    List<FindUserDTO> listUserByUserNames(List<String> userNames,String userType);
 
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
@@ -144,8 +156,15 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param uid 用户id
      * @return java.lang.Boolean
      **/
-    Boolean resetPassword(String uid);
-
+    Boolean changePassword(String uid);
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:46
+     * @param uid 用户id
+     * @return java.lang.Boolean
+     **/
+    Boolean changePassword(String uid,String pwd);
     /**
      * 忘记密码
      * @Author Luo_WG
@@ -162,7 +181,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param userAccount userAccount
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Map<String,Object> forgotPasswordGetCode(String userAccount);
+    Map<String,Object> forgotPasswordGetCode(String userAccount,String userType);
+
+    /**
+     * 通过手机号和用户类型获取验证码
+     **/
+    Map<String,Object> getCodeByAccountAndType(String phone,String userType);
 
     /**
      * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
@@ -233,5 +257,29 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param userIdList
      */
     void updateSysUserTime(List<String> userIdList);
+
+    /**
+     *  供应商协同用户查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SupplierUserVO> srmPaging(PagingDTO<UserPagingSearchDTO> dto);
+
+    /**
+     * 根据用户类型和手机号获取用户信息
+     * @param mobile
+     * @param userType
+     * @return
+     */
+    FindUserDTO getUserByMobile(String mobile, String userType);
+
+    /**
+     * 列表查询
+     * @param dto
+     * @return
+     */
+    List<SupplierUserVO> srmList(UserPagingSearchDTO dto);
+
+    void updateStateSrm(UpdateUserStateDTO stateDTO);
 }
 
