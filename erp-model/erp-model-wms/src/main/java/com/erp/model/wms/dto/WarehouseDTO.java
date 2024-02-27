@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -129,6 +130,19 @@ public class WarehouseDTO implements Serializable {
          * 绑定第三方仓（目前只用于速卖通仓）
          */
         private String thirdWarehouseName;
+
+
+        /**
+         * 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=managementType
+         */
+        @NotBlank(message = "经营类型不能为空")
+        private String managementType;
+
+        /**
+         * 地理位置 来源 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
+         */
+        @NotBlank(message = "地理位置不能空")
+        private String geographyLocation;
 
     }
 

@@ -131,6 +131,18 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("onway_warehouse_name")
     private String onwayWarehouseName;
 
+    /**
+     * 经营类型
+     */
+    @TableField("management_type")
+    private String managementType;
+
+    /**
+     * 地理位置
+     */
+    @TableField("geography_location")
+    private String geographyLocation;
+
 
     @Override
     public Serializable pkVal() {
