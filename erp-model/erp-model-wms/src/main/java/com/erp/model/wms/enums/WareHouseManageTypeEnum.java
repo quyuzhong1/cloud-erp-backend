@@ -3,13 +3,11 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-public enum ManagementTypeEnum implements EnumMessage {
+public enum WareHouseManageTypeEnum implements EnumMessage {
     NOT_PACKING("selfBuild", "自建"),
-    PACKING("thirdparty", "第三方仓"),
+    PACKING("thirdParty", "第三方仓"),
     ;
 
     /**
@@ -23,7 +21,7 @@ public enum ManagementTypeEnum implements EnumMessage {
      */
     private String name;
 
-    ManagementTypeEnum(String code, String name) {
+    WareHouseManageTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -40,7 +38,7 @@ public enum ManagementTypeEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (ManagementTypeEnum item : ManagementTypeEnum.values()) {
+            for (WareHouseManageTypeEnum item : WareHouseManageTypeEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
@@ -49,9 +47,9 @@ public enum ManagementTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static ManagementTypeEnum getByCode(String code) {
-        ManagementTypeEnum[] eumnList = ManagementTypeEnum.values();
-        for (ManagementTypeEnum item : eumnList) {
+    public static WareHouseManageTypeEnum getByCode(String code) {
+        WareHouseManageTypeEnum[] eumnList = WareHouseManageTypeEnum.values();
+        for (WareHouseManageTypeEnum item : eumnList) {
             if (code.equals(item.getCode())) {
                 return item;
             }
