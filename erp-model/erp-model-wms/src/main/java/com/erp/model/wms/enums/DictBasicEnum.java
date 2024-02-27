@@ -20,6 +20,7 @@ public enum DictBasicEnum {
     WORK_TYPE("workType", "", "事务类型"),
     MACHINE_TYPE("machineType", "", "加工单类型"),
     ISSUE_TYPE("issueType", "", "发料类型"),
+    CFG_SETTING("cfgSetting", "", "系统配置"),
     WAREHOUSE_MANAGE_TYPE("warehouseManageType", "", "仓库经营类型"),
     GEOGRAPHY_LOCATION("geographyLocation", "", "仓库地库位置"),
 

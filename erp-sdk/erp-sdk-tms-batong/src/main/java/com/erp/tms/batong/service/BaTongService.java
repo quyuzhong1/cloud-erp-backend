@@ -66,7 +66,7 @@ public class BaTongService {
      * @param
      * @return
      */
-    public OrderResponse createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
+    public BaseResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
         String serviceMethod = BaTongConstants.POST_CREATE_ORDER_URL;
         String baseUrl = BaTongConstants.BASE_URL;
         log.info("创建巴通订单url：{}", baseUrl + serviceMethod);
@@ -76,13 +76,8 @@ public class BaTongService {
         String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
         log.info("创建巴通订单返回结果：{}", resBody);
         BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
-        Integer success = result.getSuccess();
-        //表示成功
-        if (BaTongConstants.SUCCESS.equals(success)) {
-            return JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), OrderResponse.class);
-        } else {
-            throw new ServiceException(result.getCnMessage());
-        }
+        return  result;
+
     }
 
 
