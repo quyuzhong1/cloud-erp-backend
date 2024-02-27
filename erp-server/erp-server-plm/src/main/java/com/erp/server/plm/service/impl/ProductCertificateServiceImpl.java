@@ -24,7 +24,6 @@ import com.erp.model.plm.dto.excel.ProductCertificateExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -213,7 +212,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         // 记录产品认证操作日志
         log.info("编辑 开始记录产品认证日志数据，id：【{}】", entity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), entity.getId(), "产品认证");
-        sysLogService.addSysLogByUpdate(old, entity, ModuleTypeEnum.PRODUCT_CERTIFICATE.getCode(),old.getSkuId(),entity.getId(), msg);
+        sysLogService.addSysLogByUpdate(old, entity, String.valueOf(ProductCertificateEntity.class),old.getSkuId(),entity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -224,7 +223,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         List<ProductCertificateEntity> resultList = new ArrayList<>();
 
         //产品信息
-        List<String> skuIdList = productCertificateList.stream().map(ProductCertificateDTO.ProductAddOrUpdateDTO::getId).collect(Collectors.toList());
+        List<String> skuIdList = productCertificateList.stream().map(ProductCertificateDTO.ProductAddOrUpdateDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
 
         for (ProductCertificateDTO.ProductAddOrUpdateDTO productAddOrUpdateDTO : productCertificateList) {
@@ -253,6 +252,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             sysLogEntityList.add(
                     new SysLogEntity().setContent(String.format("新增了一个【产品证书】"))
                             .setBusinessId(obj.getSkuId())
+                            .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
             );
         });
@@ -276,7 +276,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             attachmentEntity.setBusinessId(entity.getId());
             list.add(attachmentEntity);
         }
-        plmAttachmentService.saveBatch(list);
+        plmAttachmentService.saveOrUpdateBatch(list);
     }
 
     @Override
@@ -329,6 +329,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             sysLogEntityList.add(
                     new SysLogEntity().setContent(StrUtil.format("删除了一个产品证书【{}】",obj.getAttachName()))
                             .setBusinessId(productCertificateEntity.getSkuId())
+                            .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
             );
         });
