@@ -1238,15 +1238,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setCnyPrice(MathUtil.multiply(price, exchangeRate));
+            item.setCnyPrice(MathUtil.multiply(price, exchangeRate,4));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax,4);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
+            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate,4));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
