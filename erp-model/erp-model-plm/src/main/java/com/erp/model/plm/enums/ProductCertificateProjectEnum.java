@@ -40,5 +40,12 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
         return name;
     }
 
-
+    public static String getName(String code) {
+        for (ProductCertificateProjectEnum item : ProductCertificateProjectEnum.values()) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
 }

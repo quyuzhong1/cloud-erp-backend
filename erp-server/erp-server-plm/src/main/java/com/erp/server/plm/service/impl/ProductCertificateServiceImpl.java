@@ -12,10 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.FileUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.dto.ProductCertificateDTO;
@@ -23,6 +20,7 @@ import com.erp.model.plm.dto.ProductCertificateShowDTO;
 import com.erp.model.plm.dto.excel.ProductCertificateExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
+import com.erp.model.plm.enums.ProductCertificateProjectEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
@@ -96,6 +94,10 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Transactional(rollbackFor = Exception.class)
     public void add(ProductCertificateDTO.AddDTO dto) {
         List<ProductCertificateEntity> resultList = handleAdd(dto);
+
+        //数据验证
+        checkProductCertificate(resultList);
+
         //新增数据
         this.saveOrUpdateBatch(resultList);
         //上传附件
@@ -112,84 +114,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
     }
 
-    /**
-     * @description: 新增数据处理
-     * @author Will
-     * @date: 2024/2/19 15:46
-     * @param dto
-     * @return List<ProductCertificateEntity>
-     */
-    private List<ProductCertificateEntity> handleAdd(ProductCertificateDTO.AddDTO dto) {
-        List<String> skuNoList = dto.getSkuNoList();
-        List<ProductCertificateDTO.FileDTO> fileList = dto.getFileList();
-
-        //产品信息
-        List<ProductDetailEntity> productDetailEntityList = productDetailService.listBySkuNoList(skuNoList);
-
-        //结果集
-        List<ProductCertificateEntity> resultList = new ArrayList<>();
-        for (String skuNo : skuNoList) {
-            for (ProductCertificateDTO.FileDTO fileDTO : fileList) {
-                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), skuNo)).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95154);
-                }
-                ProductCertificateEntity entity = new ProductCertificateEntity();
-                entity.setSkuId(productDetailEntity.getId());
-                entity.setProductId(productDetailEntity.getProductId());
-                entity.setType(dto.getType());
-                entity.setDictProject(fileDTO.getDictProject());
-                entity.setMultipartFile(fileDTO.getMultipartFile());
-                entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                entity.setRemark(dto.getRemark());
-                resultList.add(entity);
-            }
-        }
-        return resultList;
-    }
-
-    /**
-     * @description: 上传文件
-     * @author Will
-     * @date: 2024/2/19 15:46
-     * @param resultList
-     */
-    private void uploadFile (List<ProductCertificateEntity> resultList) {
-        if (CollectionUtils.isEmpty(resultList)) {
-            return;
-        }
-        List<PlmAttachmentEntity> attachmentList = new ArrayList<>();
-        for (ProductCertificateEntity entity : resultList) {
-            //附件
-            MultipartFile multipartFile = entity.getMultipartFile();
-            if (ObjectUtil.isEmpty(multipartFile)) {
-                continue;
-            }
-            double size = multipartFile.getSize();
-            double fileSize = size / (1024 * 1024);
-            fileSize = (double) Math.round(fileSize * 100) / 100;
-            if (fileSize > 300) {
-                throw new ServiceException(ApiError.ERROR_95160, 300);
-            }
-            String fileName = multipartFile.getOriginalFilename().toLowerCase();
-            if (fileName.length() > 200) {
-                throw new ServiceException(ApiError.ERROR_1018);
-            }
-            File file = FileUtil.multiToFile(multipartFile);
-            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-            if (StringUtils.isBlank(fileUrl)) {
-                throw new ServiceException(ApiError.ERROR_95018);
-            }
-            PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
-            attachmentEntity.setBusinessId(entity.getId());
-            attachmentEntity.setAttachUrl(fileUrl);
-            attachmentEntity.setAttachName(fileName);
-            attachmentEntity.setType(ProductCertificateEntity.TABLE_NAME);
-            attachmentEntity.setAttachSize(new BigDecimal(fileSize));
-            attachmentList.add(attachmentEntity);
-        }
-        plmAttachmentService.saveBatch(attachmentList);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -645,6 +569,132 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
     }
 
+    /**
+     * @description: 验证重复
+     * @author Will
+     * @date: 2024/2/27 18:35
+     * @param resultList
+     */
+    private void checkProductCertificate (List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        //产品信息
+        List<String> skuIdList = resultList.stream().map(ProductCertificateEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
+
+        List<String> dictProductList = resultList.stream().map(ProductCertificateEntity::getDictProject).distinct().collect(Collectors.toList());
+        List<ProductCertificateEntity> productCertificateList = listBySkuListAndDictProductList(skuIdList, dictProductList);
+
+        Map<String, List<ProductCertificateEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getDictProject())));
+        for (Map.Entry<String, List<ProductCertificateEntity>> entry : map.entrySet()) {
+            List<ProductCertificateEntity> value = entry.getValue();
+            //验证保存时数据是否重复
+            if (value.size() > MathUtil.ONE) {
+                String skuNo = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+                throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
+            }
+            //验证是否和已存在数据重复
+            long count = productCertificateList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), value.get(0).getSkuId()) && StrUtil.equals(obj.getDictProject(), value.get(0).getDictProject())).count();
+            if (count > 0) {
+                String skuNo = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+                throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
+            }
+        }
+    }
+    /**
+     * @description: 查询认证
+     * @author Will
+     * @date: 2024/2/27 18:27
+     * @param skuIdList
+     * @param dictProductList
+     * @return List<ProductCertificateEntity>
+     */
+    private List<ProductCertificateEntity> listBySkuListAndDictProductList (List<String> skuIdList,List<String> dictProductList) {
+        List<ProductCertificateEntity> list = lambdaQuery().in(CollectionUtils.isNotEmpty(skuIdList),ProductCertificateEntity::getSkuId, skuIdList)
+                .in(CollectionUtils.isNotEmpty(dictProductList),ProductCertificateEntity::getDictProject, dictProductList)
+                .list();
+        return list;
+    }
+
+    /**
+     * @description: 新增数据处理
+     * @author Will
+     * @date: 2024/2/19 15:46
+     * @param dto
+     * @return List<ProductCertificateEntity>
+     */
+    private List<ProductCertificateEntity> handleAdd(ProductCertificateDTO.AddDTO dto) {
+        List<String> skuNoList = dto.getSkuNoList();
+        List<ProductCertificateDTO.FileDTO> fileList = dto.getFileList();
+
+        //产品信息
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listBySkuNoList(skuNoList);
+
+        //结果集
+        List<ProductCertificateEntity> resultList = new ArrayList<>();
+        for (String skuNo : skuNoList) {
+            for (ProductCertificateDTO.FileDTO fileDTO : fileList) {
+                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), skuNo)).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_95154);
+                }
+                ProductCertificateEntity entity = new ProductCertificateEntity();
+                entity.setSkuId(productDetailEntity.getId());
+                entity.setProductId(productDetailEntity.getProductId());
+                entity.setType(dto.getType());
+                entity.setDictProject(fileDTO.getDictProject());
+                entity.setMultipartFile(fileDTO.getMultipartFile());
+                entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                entity.setRemark(dto.getRemark());
+                resultList.add(entity);
+            }
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 上传文件
+     * @author Will
+     * @date: 2024/2/19 15:46
+     * @param resultList
+     */
+    private void uploadFile (List<ProductCertificateEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        List<PlmAttachmentEntity> attachmentList = new ArrayList<>();
+        for (ProductCertificateEntity entity : resultList) {
+            //附件
+            MultipartFile multipartFile = entity.getMultipartFile();
+            if (ObjectUtil.isEmpty(multipartFile)) {
+                continue;
+            }
+            double size = multipartFile.getSize();
+            double fileSize = size / (1024 * 1024);
+            fileSize = (double) Math.round(fileSize * 100) / 100;
+            if (fileSize > 300) {
+                throw new ServiceException(ApiError.ERROR_95160, 300);
+            }
+            String fileName = multipartFile.getOriginalFilename().toLowerCase();
+            if (fileName.length() > 200) {
+                throw new ServiceException(ApiError.ERROR_1018);
+            }
+            File file = FileUtil.multiToFile(multipartFile);
+            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
+            PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
+            attachmentEntity.setBusinessId(entity.getId());
+            attachmentEntity.setAttachUrl(fileUrl);
+            attachmentEntity.setAttachName(fileName);
+            attachmentEntity.setType(ProductCertificateEntity.TABLE_NAME);
+            attachmentEntity.setAttachSize(new BigDecimal(fileSize));
+            attachmentList.add(attachmentEntity);
+        }
+        plmAttachmentService.saveBatch(attachmentList);
+    }
 }
 
 
