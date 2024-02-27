@@ -87,7 +87,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     }
 
     @Override
-    public String upload(MultipartFile multipartFile,String type) {
+    public PlmAttachmentEntity upload(MultipartFile multipartFile,String type) {
         double size = multipartFile.getSize();
         double fileSize = size / (1024 * 1024);
         fileSize = (double) Math.round(fileSize * 100) / 100;
@@ -109,7 +109,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         attachmentEntity.setAttachSize(new BigDecimal(fileSize));
         attachmentEntity.setType(type);
         this.save(attachmentEntity);
-        return attachmentEntity.getId();
+        return attachmentEntity;
     }
 
     @Override

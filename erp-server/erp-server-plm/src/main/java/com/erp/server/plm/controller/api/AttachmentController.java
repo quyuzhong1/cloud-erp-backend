@@ -5,6 +5,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.server.plm.service.PlmAttachmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +39,11 @@ public class AttachmentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
     @PostMapping("/upload")
-    public ApiResult<String> upload(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("type") String type, HttpServletRequest request) {
-        String id = plmAttachmentService.upload(multipartFile, type);
-        return this.success(id);
+    public ApiResult<PlmAttachmentEntity> upload(@RequestParam("multipartFile") MultipartFile multipartFile, @RequestParam("type") String type, HttpServletRequest request) {
+        PlmAttachmentEntity entity = plmAttachmentService.upload(multipartFile, type);
+        return this.success(entity);
     }
+
 
     /**
      * 删除附件信息
@@ -54,4 +56,5 @@ public class AttachmentController extends BaseController {
         plmAttachmentService.removeAttachment(dto);
         return success();
     }
+
 }

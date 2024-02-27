@@ -47,7 +47,7 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @param multipartFile
      * @return String
      */
-    String upload(MultipartFile multipartFile,String type);
+    PlmAttachmentEntity upload(MultipartFile multipartFile,String type);
     /**
      * @description: 删除
      * @author Will
