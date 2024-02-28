@@ -237,7 +237,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
     public Boolean refreshToken(RefreshShopTokenDTO dto) {
         //先获取授权店铺 然后根据授权店铺进行
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.MERCADO_REFRESH_TOKEN;
+        AppClientEnum appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
         findDTO.setDictPlatform(appClientEnum.getPlatform());
         findDTO.setPlatformType(appClientEnum.getPlatformType());

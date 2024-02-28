@@ -1,11 +1,15 @@
 package com.sdk.oms.mercado.service;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.oms.dto.ShopDTO;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.MercadoRefreshTokenDTO;
 import com.sdk.oms.mercado.dto.mercado.MercadoTokenDTO;
 import jodd.util.StringUtil;
@@ -24,7 +28,11 @@ import java.util.Map;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&code=TG-65ddb75bae3ab00001ae1f68-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&code=TG-65dd996bae3ab00001abf4f5-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+
+        //组装刷新token请求的url
+//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&refresh_token=TG-65df03258fea2f0001855d7d-1509269799";
+
         //入参（无）
         Map<String, Object> param = new HashMap<>();
 
@@ -37,6 +45,9 @@ public class MercadoSdkClientService {
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
         System.out.println(bodyStr);
     }
+
+
+    private static RedisUtil redisUtil;
 
     /**
      * 发送请求到美客多获取token
@@ -53,8 +64,9 @@ public class MercadoSdkClientService {
         String redirectUri = paramMap.get("redirectUri");
         String url = paramMap.get("baseUrl");
         String code = paramMap.get("code");
-        //https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s
-        String baseUrl = String.format(url, clientId, clientSecret, code, redirectUri);
+        //https://api.mercadolibre.com
+        String path = "/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s";
+        String baseUrl = String.format(url + path, clientId, clientSecret, code, redirectUri);
 
         //入参（无）
         Map<String, Object> param = new HashMap<>();
@@ -86,8 +98,9 @@ public class MercadoSdkClientService {
     public MercadoRefreshTokenDTO refreshToken(ShopDTO.RefreshTokenDTO dto) {
 
         //组装刷新token请求的url
-        //https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s
-        String baseUrl = String.format(dto.getBaseUrl(), dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
+        //https://api.mercadolibre.com
+        String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
+        String baseUrl = String.format(dto.getBaseUrl() + path, dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
 
         //入参（无）
         Map<String, Object> param = new HashMap<>();
@@ -113,4 +126,42 @@ public class MercadoSdkClientService {
         //返回token实体
         return refreshTokenDTO;
     }
+
+    /**
+     * 获取Token
+     */
+    public static MercadoShopInfoDTO getTokenByShopId(String shopId) {
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);
+        // 缓存获取
+        Object tokenObj = redisUtil.get(tokenKey);
+        if (null != tokenObj) {
+            if (tokenObj instanceof MercadoShopInfoDTO) {
+                return (MercadoShopInfoDTO) tokenObj;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 发送POST请求查询订单
+     *
+     * @param baseUrl
+     * @param accessToken
+     * @param paramMap 入参
+     * @return
+     */
+    public String sendMercadoPost(String baseUrl, String accessToken, Map<String, Object> paramMap) {
+
+        //请求头
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", "Bearer "+ accessToken);
+
+        //发起POST请求
+        String bodyStr = OkHttpUtils.doPost(baseUrl, paramMap, headerMap);
+
+        //返回token实体
+        return bodyStr;
+    }
+
 }

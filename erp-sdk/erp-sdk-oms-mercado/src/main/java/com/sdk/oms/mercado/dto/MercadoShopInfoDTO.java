@@ -30,16 +30,6 @@ public class MercadoShopInfoDTO {
     private String name;
 
     /**
-     * 区域id
-     */
-    private String dictAreaCode;
-
-    /**
-     * 国家id
-     */
-    private String dictCountryCode;
-
-    /**
      * 负责人id
      */
     private String chargeId;
