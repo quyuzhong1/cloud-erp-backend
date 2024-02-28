@@ -4,6 +4,8 @@ import com.common.business.dto.PlatformCityDictDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
@@ -40,8 +42,8 @@ public enum CleanDataTableEnum {
     WALMART_PRODUCT("Walmart", "third_system_Walmart_product","third_system", "product","沃尔玛产品数据", PlatformWalmartListingDTO.class),
     // 亚马逊
     AMAZON_ORDER("Amazon", "third_system_Amazon_order","third_system", "order","Amazon订单数据", PlatformAmazonOrderDTO.class),
-    AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonOrderDTO.class),
-    AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformFbaShipmentDTO.class),
+    AMAZON_PRODUCT("Amazon", "third_system_Amazon_product","third_system", "product","Amazon产品数据", PlatformAmazonListingDTO.class),
+    AMAZON_FBA_SHIPMENT("Amazon", "third_system_Amazon_fba_shipment","third_system", "fba_shipment","AmazonFBA货件", PlatformAmazonFbaShipmentDTO.class),
 
 
     //track123
