@@ -106,6 +106,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(Objects.isNull(customerInfoEntity)){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息为空");
         }
+        if(!customerInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息未审核，无法进行销售员变更");
+        }
         List<CustomerB2bSellerChangeEntity> entityList = this.listByMainId(addDTO.getMainId());
         if(entityList.stream().anyMatch(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)||v.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT))){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "已经有待提交，审核中的变更单，无法新增");
