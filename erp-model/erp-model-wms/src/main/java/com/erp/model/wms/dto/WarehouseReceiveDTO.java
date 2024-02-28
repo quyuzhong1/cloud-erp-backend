@@ -1190,4 +1190,21 @@ public class WarehouseReceiveDTO {
          */
         private Integer count;
     }
+
+    /**
+     * 获取销售订单的入库单明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderDetailDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderDetailId;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+    }
+
 }
