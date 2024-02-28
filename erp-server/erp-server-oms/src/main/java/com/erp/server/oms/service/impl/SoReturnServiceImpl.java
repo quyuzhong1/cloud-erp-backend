@@ -46,6 +46,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
+import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -128,6 +129,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Resource
     private SoReturnInstockFeign soReturnInstockFeign;
 
+    @Resource
+    private SoReturnQueryHandler soReturnQueryHandler;
+
+
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -182,19 +187,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
             SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
+            String tabSql = soReturnQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParam.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(pagingParam);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setType(item.getCode());
             list.add(resultDTO);

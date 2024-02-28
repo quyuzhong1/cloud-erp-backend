@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -13,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
+import com.erp.server.oms.query.SoChangeQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -66,6 +68,7 @@ public class SoChangeController extends BaseController {
             menuCode = "oms:soChange:paging",
             tableAlias = "sc"
     )
+    @WebAdvanceQuery(handler = SoChangeQueryHandler.class)
     public ApiResult<PagingVO<SoChangeDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         PagingVO<SoChangeDTO.PagingViewDTO> pagingVO = soChangeService.paging(dto);
         return success(pagingVO);
@@ -299,6 +302,7 @@ public class SoChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售变更单")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = SoChangeQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean result = soChangeService.exportExcel(dto, response);
         return result ? success() : failure();
