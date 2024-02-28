@@ -977,7 +977,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
-        return baseMapper.listByParams(dto);
+        List<ListingInfoWithSkuMappingDTO> list = baseMapper.listByParams(dto);
+        if (CollectionUtils.isEmpty(list) || RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())){
+            return list;
+        }
+        List<String> mainIds = list.stream().map(ListingInfoWithSkuMappingDTO::getTableId).collect(Collectors.toList());
+        Map<String, List<SkuMappingExtendDTO.ListDTO>> entendMap = skuMappingExtendService.mapByMainIds(mainIds, false);
+        for (ListingInfoWithSkuMappingDTO mappingDTO : list) {
+            List<SkuMappingExtendDTO.ListDTO> extendList = entendMap.get(mappingDTO.getTableId());
+            if (CollectionUtils.isEmpty(extendList)){
+                continue;
+            }
+            Map<String, String> extendMap = extendList.stream().collect(Collectors.toMap(SkuMappingExtendDTO.ListDTO::getWarehouseManageType, SkuMappingExtendDTO.ListDTO::getWarehouseDeliveryType));
+            mappingDTO.setExtendMap(extendMap);
+        }
+        return list;
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Data
@@ -153,7 +154,7 @@ public class ListingInfoWithSkuMappingDTO {
      * {@link com.erp.model.wms.enums.WarehouseDeliveryTypeEnum}
      *
      */
-    private Map<String, String> extendMap;
+    private Map<String, String> extendMap = new HashMap<>();
 
     public String checkAndGetProductSkuId() {
         if (StringUtils.isNotBlank(this.productSkuId)){
