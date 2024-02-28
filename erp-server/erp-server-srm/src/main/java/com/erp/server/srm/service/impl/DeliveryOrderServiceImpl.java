@@ -118,16 +118,16 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        if(CollectionUtils.isEmpty(dto.getParams().getSupplierIdList())){
-            return new PagingVO<>();
-        }
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
-        this.fillData(pageData.getRecords(),dto.getParams().getSupplierIdList());
+        this.fillData(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
-    private void fillData(List<DeliveryOrderDTO.ListDTO> dataList,List<String> supplierIdList){
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(supplierIdList);
+    private void fillData(List<DeliveryOrderDTO.ListDTO> dataList){
+        if(CollectionUtils.isEmpty(dataList)){
+            return;
+        }
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dataList.stream().map(DeliveryOrderDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList()));
         List<String> purchaseDetailIds = dataList.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderDTO.ListDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
         List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
         dataList.forEach(v->{
@@ -142,9 +142,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList) {
-        if(CollectionUtils.isEmpty(supplierIdList)){
-            return new ArrayList<>();
-        }
         List<DeliveryOrderDTO.TabListDTO> result = new ArrayList<>();
         List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(supplierIdList);
         //ALL
@@ -279,11 +276,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto) {
-        if(CollectionUtils.isEmpty(dto.getSupplierIdList())){
-            throw new ServiceException("获取对应供应商为空");
-        }
         List<DeliveryOrderExportExcelDTO> list = this.baseMapper.getExportList(dto);
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dto.getSupplierIdList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(list.stream().map(DeliveryOrderExportExcelDTO::getSupplierId).distinct().collect(Collectors.toList()));
         list.forEach(v->{
             v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
@@ -310,15 +304,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto) {
-        if(CollectionUtils.isEmpty(dto.getSupplierIdList())){
-            return DeliveryOrderDTO.TotalInfo.builder()
-                    .totalDeliveryQty(0)
-                    .totalGiftQty(0)
-                    .totalOrderQty(0)
-                    .totalReceiveQty(0)
-                    .totalGiftReceiveQty(0)
-                    .build();
-        }
         return this.baseMapper.pagingTotal(dto);
     }
 
