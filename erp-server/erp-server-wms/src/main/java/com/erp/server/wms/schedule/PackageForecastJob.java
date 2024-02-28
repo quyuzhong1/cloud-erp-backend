@@ -41,6 +41,13 @@ public class PackageForecastJob {
     @XxlJob(value = "syncPackageForecastInfo")
     public void SyncPackageForecastInfo() throws Exception {
         XxlJobHelper.log("syncPackageForecastInfo start : {}", LocalDateTime.now());
+        DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
+        //根据订单查询组包明细  默认查询 3月内的组包数据
+        List<PackageForecastEntity> orders = packageForecastService.getAliExpressHandoverList(dateTime);
+        if (CollectionUtils.isEmpty(orders)){
+            XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
+            return;
+        }
         //查询需要查询的订单
         PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase;
         try {
@@ -48,13 +55,6 @@ public class PackageForecastJob {
         }catch (Exception e){
             XxlJobHelper.log("syncPackageForecastInfo error : {}", e.getMessage());
             throw new Exception(e);
-        }
-        DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
-        //根据订单查询组包明细  默认查询 3月内的组包数据
-        List<PackageForecastEntity> orders = packageForecastService.getAliExpressHandoverList(dateTime);
-        if (CollectionUtils.isEmpty(orders)){
-            XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
-            return;
         }
         orders.forEach(packageForecastEntity -> {
             packageForecastService.queryAliExpressInfo(packageForecastEntity, alExpressHandoverBase);

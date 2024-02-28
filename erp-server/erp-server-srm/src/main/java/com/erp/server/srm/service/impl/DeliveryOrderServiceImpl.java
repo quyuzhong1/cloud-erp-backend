@@ -118,6 +118,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        if(CollectionUtils.isEmpty(dto.getParams().getSupplierIdList())){
+            return new PagingVO<>();
+        }
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         this.fillData(pageData.getRecords(),dto.getParams().getSupplierIdList());
         return new PagingVO<>(pageData);
@@ -139,6 +142,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList) {
+        if(CollectionUtils.isEmpty(supplierIdList)){
+            return new ArrayList<>();
+        }
         List<DeliveryOrderDTO.TabListDTO> result = new ArrayList<>();
         List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(supplierIdList);
         //ALL
@@ -273,6 +279,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto) {
+        if(CollectionUtils.isEmpty(dto.getSupplierIdList())){
+            throw new ServiceException("获取对应供应商为空");
+        }
         List<DeliveryOrderExportExcelDTO> list = this.baseMapper.getExportList(dto);
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dto.getSupplierIdList());
         list.forEach(v->{
@@ -301,6 +310,15 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public DeliveryOrderDTO.TotalInfo pagingTotal(DeliveryOrderDTO.ParamDTO dto) {
+        if(CollectionUtils.isEmpty(dto.getSupplierIdList())){
+            return DeliveryOrderDTO.TotalInfo.builder()
+                    .totalDeliveryQty(0)
+                    .totalGiftQty(0)
+                    .totalOrderQty(0)
+                    .totalReceiveQty(0)
+                    .totalGiftReceiveQty(0)
+                    .build();
+        }
         return this.baseMapper.pagingTotal(dto);
     }
 

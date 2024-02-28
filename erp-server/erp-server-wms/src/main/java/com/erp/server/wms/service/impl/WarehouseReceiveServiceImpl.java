@@ -1860,6 +1860,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 startTime = LocalDate.parse(formattedMonth + "-" + endStr, formatter);
                 endTime = LocalDate.parse(nowMonth + "-" + endStr, formatter);
             }
+            endTime = endTime.plusDays(-1);
         }
         //根据时间进行查询
         Integer count = baseMapper.countOrderBySupplierId(supplierId,startTime,endTime);
