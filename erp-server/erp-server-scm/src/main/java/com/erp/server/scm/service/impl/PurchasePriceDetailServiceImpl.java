@@ -1,6 +1,5 @@
 package com.erp.server.scm.service.impl;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -26,7 +25,6 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -53,7 +51,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -162,7 +159,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (int i = 0;i < list.size();i++) {
             PurchasePriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
-            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getExpireDate())) {
+            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
             }
 
