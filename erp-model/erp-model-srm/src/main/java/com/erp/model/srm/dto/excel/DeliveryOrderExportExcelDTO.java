@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 @Data
 public class DeliveryOrderExportExcelDTO implements Serializable {
 
+    @ExcelIgnore
+    private String id;
+    @ExcelIgnore
+    private String purchaseDetailId;
     /**
      * 送货单号
      */

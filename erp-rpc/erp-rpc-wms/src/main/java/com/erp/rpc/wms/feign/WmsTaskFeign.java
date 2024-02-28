@@ -197,6 +197,14 @@ public interface WmsTaskFeign {
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@RequestBody WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
 
     /**
+     * 根据供应商id集合获取收货单量和收货数量
+     * @param dto
+     * @return List<WarehouseReceiveDTO.SupplierReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/listReceiveBySourceTypeAndIds")
+    List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(@RequestBody WarehouseReceiveDTO.SourceParamDTO dto);
+
+    /**
      * 根据供应商id集合获取入库单量和入库数量
      * @param dto
      * @return List<PoInstockDTO.SupplierInstockInfoDTO>
