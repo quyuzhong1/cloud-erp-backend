@@ -86,8 +86,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
 
-        if(purchaseOrderDetailEntities.stream().anyMatch(v->ExecutionStatusEnum.TO_BE_CONFIRM.getCode().equals(v.getExecutionStatus()))){
-            throw new ServiceException(ApiError.ERROR_99084);
+        if(purchaseOrderDetailEntities.stream().anyMatch(v->!ExecutionStatusEnum.CONFIRM.getCode().equals(v.getExecutionStatus()) && !ExecutionStatusEnum.DELIVERY.getCode().equals(v.getExecutionStatus()))){
+            throw new ServiceException(ApiError.ERROR_98041);
         }
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
