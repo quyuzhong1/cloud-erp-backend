@@ -1874,4 +1874,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return baseMapper.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
     }
+
+    @Override
+    public List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto) {
+        if(StringUtils.isBlank(dto.getSourceType()) || CollectionUtils.isEmpty(dto.getSourceIds())){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
+    }
 }
