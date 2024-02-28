@@ -1,5 +1,6 @@
 package com.common.business.query;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
@@ -15,6 +16,7 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     @Override
     public String splicingSQL(String field, String compareCode, Object value, String compareCodeSplicingValueSql) {
         try {
+            AdvanceQueryContext.setCompareCode(compareCode);
             String sql = handleSqlLogic(field,  value, compareCodeSplicingValueSql);
             if (StringUtils.isNotBlank(sql)) {
                 return sql;
@@ -28,6 +30,7 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
             AdvanceQueryContext.remove();
         }
     }
+
     protected abstract String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql);
 
     /**

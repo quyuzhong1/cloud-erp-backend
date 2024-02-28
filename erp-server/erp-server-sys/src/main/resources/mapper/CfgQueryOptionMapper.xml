@@ -54,7 +54,7 @@
         qo.create_time,
         qo.update_time,
         qo.update_user_name,
-        qo.props
+        qo.props,
         qo.api_type
         from cfg_query_option qo
         where  qo.is_deleted = false
