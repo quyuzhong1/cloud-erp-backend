@@ -1866,4 +1866,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         Integer count = baseMapper.countOrderBySupplierId(supplierId,startTime,endTime);
         return SupplierCountDTO.builder().count(count).localDate(endTime).build();
     }
+
+    @Override
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
+    }
 }

@@ -288,4 +288,12 @@ public interface WmsTaskFeign {
      */
     @GetMapping("/feign/warehouseReceive/countOrderBySupplierId")
     SupplierCountDTO countOrderBySupplierId(@RequestParam("supplierId") String supplierId);
+    /***
+     * 同销售订单获取 收货详情
+     * @param purchaseOrderIds
+     * @return
+     */
+    @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIds")
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds);
+
 }
