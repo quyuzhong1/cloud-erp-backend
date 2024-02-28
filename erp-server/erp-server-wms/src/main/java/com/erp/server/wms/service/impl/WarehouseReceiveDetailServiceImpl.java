@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
@@ -85,6 +86,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
 
+        if(purchaseOrderDetailEntities.stream().anyMatch(v->ExecutionStatusEnum.TO_BE_CONFIRM.getCode().equals(v.getExecutionStatus()))){
+            throw new ServiceException(ApiError.ERROR_99084);
+        }
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
