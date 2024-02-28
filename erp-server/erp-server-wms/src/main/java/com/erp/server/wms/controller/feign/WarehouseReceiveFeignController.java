@@ -56,4 +56,13 @@ public class WarehouseReceiveFeignController {
     public SupplierCountDTO countOrderBySupplierId(@RequestParam("supplierId") String supplierId){
         return warehouseReceiveService.countOrderBySupplierId(supplierId);
     }
+    /***
+     * 同销售订单获取 收货详情
+     * @param purchaseOrderIds
+     * @return
+     */
+    @PostMapping("/getReceiveListByPurchaseOrderIds")
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds){
+        return warehouseReceiveService.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
+    }
 }
