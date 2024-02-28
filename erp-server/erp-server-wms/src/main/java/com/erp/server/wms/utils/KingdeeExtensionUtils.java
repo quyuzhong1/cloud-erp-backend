@@ -92,6 +92,15 @@ public class KingdeeExtensionUtils {
         return postAndSign(HOST.concat(STK_CLOSE_PATH), new TreeMap<>());
     }
 
+    /**
+     * 查询最新存货核算关账时间列表
+     */
+    public static String queryHsClosedList() {
+        TreeMap<String, String> params = new TreeMap<>();
+        params.put("category","HS");
+        return postAndSign(HOST.concat(STK_CLOSE_PATH), new TreeMap<>());
+    }
+
     public static void main(String[] args) {
         TreeMap<String, String> params = new TreeMap<>();
         params.put(API_KEY_NAME, "test");
