@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.dto;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
@@ -61,10 +62,15 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.shopId=aliExpressShopInfoDTO.getId();
         this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        this.setUniqueId(aliExpressOrder.getOrderId());
+        this.setUniqueId(combineUnique(aliExpressOrder.getOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setDownloadAddressStatus(0);
         this.setLastPushTime(dto.getNextTime().toString());
+    }
+
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
     }
 
     /**

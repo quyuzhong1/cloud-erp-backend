@@ -4507,7 +4507,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         try {
-            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
+            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId());
         } catch (Exception e) {
             log.error("查询订单异常：{}", e.getMessage());
         }
@@ -4625,10 +4625,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform) {
+    public SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId) {
         return lambdaQuery()
                 .eq(SoB2cEntity::getPlatformCode, platformCode)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .eq(SoB2cEntity::getShopId, shopId)
                 .last("LIMIT 1")
                 .one();
     }
