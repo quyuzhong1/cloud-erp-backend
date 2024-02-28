@@ -85,7 +85,7 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
-        att.id as attach_id,
+        att.id as attachmentId,
         att.attach_name,
         att.attach_url,
         <include refid="Base_Column_List"/>
@@ -107,7 +107,7 @@
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
-        att.id as attach_id,
+        att.id as attachmentId,
         att.attach_name,
         att.attach_url,
         <include refid="Base_Column_List"/>

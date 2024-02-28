@@ -61,7 +61,7 @@ public class ProductCertificateShowDTO implements Serializable {
      * 文件id
      * *
      */
-    private String attachId;
+    private String attachmentId;
 
     /**
      * 文件名称
