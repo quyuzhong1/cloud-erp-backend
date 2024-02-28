@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -357,7 +358,7 @@ public class SkuMappingDTO implements Serializable {
         private String platformProductName;
 
 
-//        private List<>
+        private List<SkuMappingExtendListDTO> extendList;
 
 
 
@@ -370,32 +371,17 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SkuMappingExtendListDTO {
-
-
         /**
          * 仓库经营类型:selfBuild=自建,thirdParty=第三方
+         * 对应来源{@link /api/wms/common/enumDropDown?type=WarehouseManageTypeEnum}
          */
         private String warehouseManageType;
 
         /**
-         * 仓库经营类型:selfBuild=自建,thirdParty=第三方
-         */
-        private String warehouseManageTypeName;
-
-        /**
          * 发货类型:single=子件发货,combine=捆绑Sku发货
+         * 对应来源{@link /api/wms/common/enumDropDown?type=WarehouseDeliveryType}
          */
         private String warehouseDeliveryType;
-
-        /**
-         * 发货类型:single=子件发货,combine=捆绑Sku发货
-         */
-        private String warehouseDeliveryTypeName;
-
-        /**
-         * sku_mapping表主键id
-         */
-        private String mainId;
     }
 
 
@@ -595,11 +581,14 @@ public class SkuMappingDTO implements Serializable {
          * 平台SKU额外关联的FNSKU
          */
         private String platformFnSku;
-
+        /**
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
         /**
          * 仓库发货配置
          */
-        private List<SkuMappingExtendDTO.ListDTO> warehouseCfgList;
+        private List<SkuMappingExtendDTO.ListDTO> extendList = Collections.emptyList();
 
     }
 

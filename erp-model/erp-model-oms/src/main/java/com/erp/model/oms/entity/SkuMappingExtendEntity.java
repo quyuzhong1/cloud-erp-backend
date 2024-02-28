@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
@@ -22,6 +24,8 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("sku_mapping_extend")
 public class SkuMappingExtendEntity extends BaseEntity<SkuMappingExtendEntity> {
 
@@ -34,12 +38,11 @@ public class SkuMappingExtendEntity extends BaseEntity<SkuMappingExtendEntity> {
      * 仓库经营类型:selfBuild=自建,thirdParty=第三方仓库
      * {@link WarehouseManageTypeEnum}
      */
-    @TableField("management_type")
-    private String managementType;
+    @TableField("warehouse_manage_type")
+    private String warehouseManageType;
     /**
      * 发货类型:single=子件发货,combine=捆绑Sku发货
      * {@link WarehouseDeliveryTypeEnum}
-     *
      */
     @TableField("delivery_type")
     private String deliveryType;
