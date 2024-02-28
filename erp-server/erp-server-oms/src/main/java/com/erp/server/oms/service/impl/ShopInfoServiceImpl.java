@@ -866,6 +866,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         //增加店铺信息获取
 
@@ -1033,6 +1037,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth.setExpiresIn(Math.toIntExact(expireIn));
         }
         shopAuth.setAppClientId(cfClientId);
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
+        //提前半小时设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
         return Boolean.TRUE;
     }

@@ -2,6 +2,7 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -10,19 +11,14 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.common.business.annotation.PlatformAnnotate;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
@@ -190,24 +186,8 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         return result;
     }
 
-    /**
-     * shopInfo Entity 转换DTO
-     */
-    private ShopifyShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, String accessToken) {
-        return new ShopifyShopInfoDTO()
-                // 店铺ID
-                .setId(shopInfo.getId())
-                // 访问token
-                .setAccessToken(accessToken)
-                // 店铺名称
-                .setName(shopInfo.getName())
-                // 区域id
-                .setDictAreaCode(shopInfo.getDictAreaCode())
-                // 国家id
-                .setDictCountryCode(shopInfo.getDictCountryCode())
-                // 负责人id
-                .setChargeId(shopInfo.getChargeId())
-                // 店铺全域名: SHOP_NAME.myshopify.com
-                .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
+    @Override
+    public Boolean refreshToken(RefreshShopTokenDTO dto) {
+        return Boolean.TRUE;
     }
 }

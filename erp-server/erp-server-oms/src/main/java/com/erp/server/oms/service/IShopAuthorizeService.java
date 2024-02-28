@@ -1,8 +1,6 @@
 package com.erp.server.oms.service;
 
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
+import com.erp.model.oms.dto.*;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,5 +29,11 @@ public interface IShopAuthorizeService<T> {
      * @param dto
      */
     Boolean cancelAuthorize(CancelAuthorizeDTO dto);
+
+    /**
+     * 刷新token
+     * @param dto
+     */
+    Boolean refreshToken(RefreshShopTokenDTO dto);
 
 }

@@ -64,4 +64,35 @@
             and info.is_deleted = FALSE
             and dict_platform = #{platformType}
     </select>
+
+    <select id="listTokenExpiresShop" resultType="com.erp.model.oms.entity.ShopAuthEntity">
+        SELECT
+            auth.id,
+            auth.create_user_id,
+            auth.create_user_name,
+            auth.create_time,
+            auth.update_user_id,
+            auth.update_user_name,
+            auth.update_time,
+            auth.version,
+            auth.is_deleted,
+            auth.shop_id,
+            auth.token,
+            auth.access_token,
+            auth.app_client_id,
+            auth.expires_in,
+            auth.type,
+            auth.refresh_token,
+            auth.shopee_id,
+            auth.token_expire_time,
+            auth.refresh_status,
+            auth.refresh_error_msg,
+            info.dict_platform,
+        FROM shop_auth auth
+        INNER JOIN shop_info info ON auth.shop_id = info."id" and info.auth_status = 'already'
+        WHERE auth.is_deleted = FALSE
+        and info.is_deleted = FALSE
+        and now() >= auth.token_expire_time
+        and auth.refresh_status = 0
+    </select>
 </mapper>

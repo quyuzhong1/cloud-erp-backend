@@ -1132,6 +1132,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_COMPARE_LENGTH(92128,"产品尺寸为{}，超出渠道配置尺寸{}"),
     ERROR_LOGISTICS_ID_NOT_EXIST(92129,"物流单的渠道不能为空"),
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
+    ERROR_REFRESH_TOKEN(92131,"店铺【{}】，刷新token失败：{}"),
+    ERROR_SHOP_AUTHORIZE_FAIL(92108,"店铺【{}】，授权失败：【{}】"),
 
     /**
      * TMS 错误

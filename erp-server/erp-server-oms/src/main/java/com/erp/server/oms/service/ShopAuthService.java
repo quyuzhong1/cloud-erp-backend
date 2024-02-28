@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -107,7 +108,26 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      * @param accessToken token
      * @param refreshToken 刷新token
      * @param expiresIn 过期时间
-     * @return 
+     * @param tokenExpireTime token失效时间
+     * @return
      */
-    void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn);
+    void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn, LocalDateTime tokenExpireTime);
+
+    /**
+     * 查询token失效的店铺授权信息
+     * @Author Luo_WG
+     * @Date 2024/2/28 11:23
+     * @return java.util.List<com.erp.model.oms.entity.ShopAuthEntity>
+     **/
+    List<ShopAuthEntity> listTokenExpiresShop();
+
+    /**
+     * 修改授权信息刷新token失败
+     * @Author Luo_WG
+     * @Date 2024/2/28 11:48
+     * @param shopAuthId 授权id
+     * @param msg 错误信息
+     * @return java.lang.Boolean
+     **/
+    Boolean updateRefreshTokenError(String shopAuthId, String msg);
 }

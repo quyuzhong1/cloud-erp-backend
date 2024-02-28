@@ -21,4 +21,10 @@ public interface ShopAuthMapper extends BaseMapper<ShopAuthEntity> {
     List<ShopAuthEntity> getShopeeShopList(@Param("type") String type,@Param("status") String status);
 
     List<ShopAuthEntity> getAuthShopByPlatformType(@Param("platformType") String platformType);
+
+    /**
+     * 查询token失效的店铺授权信息
+     * @return
+     */
+    List<ShopAuthEntity> listTokenExpiresShop();
 }

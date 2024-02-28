@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -61,9 +62,27 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
      */
     @TableField("shopee_id")
     private String shopeeId;
+    /**
+     * token失效时间
+     */
+    @TableField("token_expire_time")
+    private LocalDateTime tokenExpireTime;
+    /**
+     * 刷新token状态 0 成功 1失败
+     */
+    @TableField("refresh_status")
+    private Integer refreshStatus;
+    /**
+     * 刷新token错误信息
+     */
+    @TableField("refresh_error_msg")
+    private String refreshErrorMsg;
 
     @TableField(exist = false)
     private String extendData;
+
+    @TableField(exist = false)
+    private String dictPlatform;
 
     public static final String SHOP_ID = "shop_id";
 

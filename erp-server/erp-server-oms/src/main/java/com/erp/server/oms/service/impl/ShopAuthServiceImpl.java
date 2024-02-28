@@ -2,8 +2,6 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -13,7 +11,6 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -24,7 +21,6 @@ import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopAuthService;
-import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.ItemInfo;
@@ -315,14 +311,29 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn) {
-        this.lambdaUpdate().set(ShopAuthEntity::getAccessToken, accessToken).
-                set(ShopAuthEntity::getRefreshToken, refreshToken).
-                set(ShopAuthEntity::getExpiresIn, expiresIn).eq(ShopAuthEntity::getId, shopAuthId).
-                set(ShopAuthEntity::getToken,accessToken).set(ShopAuthEntity::getUpdateTime, LocalDateTime.now()).
-                update();
+    public void refreshToken(String shopAuthId, String accessToken, String refreshToken, Integer expiresIn, LocalDateTime tokenExpireTime) {
+        this.lambdaUpdate().set(ShopAuthEntity::getAccessToken, accessToken)
+                .set(ShopAuthEntity::getRefreshToken, refreshToken)
+                .set(ShopAuthEntity::getExpiresIn, expiresIn)
+                .set(ShopAuthEntity::getToken,accessToken)
+                .set(ShopAuthEntity::getTokenExpireTime, tokenExpireTime)
+                .set(ShopAuthEntity::getUpdateTime, LocalDateTime.now())
+                .eq(ShopAuthEntity::getId, shopAuthId)
+                .update();
     }
 
+    @Override
+    public List<ShopAuthEntity> listTokenExpiresShop() {
+        return baseMapper.listTokenExpiresShop();
+    }
+
+    @Override
+    public Boolean updateRefreshTokenError(String shopAuthId, String msg) {
+        return this.lambdaUpdate().set(ShopAuthEntity::getRefreshStatus, 1)
+                .set(ShopAuthEntity::getRefreshErrorMsg, msg)
+                .eq(ShopAuthEntity::getId, shopAuthId)
+                .update();
+    }
 
     /**
      * 新增修改处理数据

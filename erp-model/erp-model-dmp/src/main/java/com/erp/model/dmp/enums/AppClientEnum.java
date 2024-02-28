@@ -24,6 +24,9 @@ public enum AppClientEnum  {
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
     AMAZON_AUTHORIZE("amazonAuthorize","sales","Amazon"),
     AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
+    MERCADO_AUTHORIZE("mercadoAuthorize","sales","Mercado"),
+    MERCADO_ACCESS_TOKEN("mercadoAccessToken","sales","Mercado"),
+    MERCADO_REFRESH_TOKEN("mercadoRefreshToken","sales","Mercado"),
 
 
     // 物流平台
