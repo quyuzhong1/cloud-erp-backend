@@ -254,7 +254,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             e.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode());
             e.setDetailId("");
         });
-        if (this.updateBatchById(oldList)){
+        if (!this.updateBatchById(oldList)){
             throw new ServiceException("批量更新FBA签收记录失败");
         }
 
