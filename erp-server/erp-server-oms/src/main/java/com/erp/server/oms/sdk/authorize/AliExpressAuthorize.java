@@ -173,8 +173,6 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 String refreshToken=jsonObject.getOrDefault("refresh_token","").toString();
                 Integer expiresIn=Integer.valueOf(jsonObject.getOrDefault("expires_in",0).toString());
 
-
-
                 shopAuth.setShopId(shopId);
                 shopAuth.setToken(token);
                 shopAuth.setAccessToken(token);
