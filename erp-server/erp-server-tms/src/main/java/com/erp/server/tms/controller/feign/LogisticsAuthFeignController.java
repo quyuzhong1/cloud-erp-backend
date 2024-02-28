@@ -4,10 +4,7 @@ import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.server.tms.service.LogisticsAuthService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -36,6 +33,19 @@ public class LogisticsAuthFeignController {
         return authByChannelId;
     }
 
+
+    /**
+     * 根据物流商id获取授权信息
+     * @Author tl
+     * @Date 2024/02/18 12:26
+     * @param logisticsSupplierId
+     * @return com.erp.model.tms.dto.LogisticsSupplierDTO.AuthDTO
+     **/
+    @GetMapping("/getAuthBySupplierId")
+    public LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId) {
+        LogisticsSupplierDTO.AuthDTO result = logisticsAuthService.getAuthBySupplierId(logisticsSupplierId);
+        return result;
+    }
     /**
      * 根据渠道id查询渠道关联的平台信息
      * @Author Luo_WG

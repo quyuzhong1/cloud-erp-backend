@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,4 +23,10 @@ public class ForgotPasswordDTO implements Serializable {
      * 密码
      */
     private String password;
+
+    /**
+     * 用户类型
+     */
+    @JsonIgnore
+    private String userType;
 }

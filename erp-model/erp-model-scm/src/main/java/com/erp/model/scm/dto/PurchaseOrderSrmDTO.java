@@ -1,0 +1,119 @@
+package com.erp.model.scm.dto;
+
+import com.common.business.dto.base.SortDTO;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * @author zdy
+ * @ClassName PurchaseOrderSrmDTO
+ * @description: TODO
+ * @date 2024年01月16日
+ * @version: 1.0
+ */
+@Data
+@NoArgsConstructor
+public class PurchaseOrderSrmDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class RequestDTO {
+        @NotNull(message = "供应商id不能为空")
+        private String supplierId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 全部  all
+         * 待确认  toBeConfirm
+         * 已确认  confirm
+         * 已拒绝  reject
+         * 送货中  delivery
+         * 已完成  finish
+         * 已关闭  closed
+         *
+         */
+        private String executionStatus;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryParamDTO extends SortDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 订单明细id列表
+         */
+        private List<String> purchaseDetailIds;
+        /**
+         * 全部  all
+         * 待确认  toBeConfirm
+         * 已确认  confirm
+         * 已拒绝  reject
+         * 送货中  delivery
+         * 已完成  finish
+         * 已关闭  closed
+         *
+         */
+        private List<String> executionStatusList;
+    }
+
+    /**
+     * 生成送货单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliveryParamDTO implements Serializable {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 订单明细id列表
+         */
+        @NotNull(message = "订单明细列表不能为空")
+        private List<String> purchaseDetailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryCountDTO implements Serializable {
+        /**
+         * "expired", "已超期"
+         */
+        private Integer expiredCount;
+        /**
+         * "almostOverdue", "即将超期"
+         */
+        private Integer almostOverdueCount;
+        /**
+         * "inOneMonth", "1个月内"
+         */
+        private Integer inOneMonthCount;
+        /**
+         * "inTwoMonth", "2个月内"
+         */
+        private Integer inTwoMonthCount;
+        /**
+         * "twoMonthLater", "2个月以后"
+         */
+        private Integer twoMonthLaterCount;
+
+    }
+}

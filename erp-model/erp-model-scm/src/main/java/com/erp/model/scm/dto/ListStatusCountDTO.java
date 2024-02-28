@@ -50,14 +50,19 @@ public class ListStatusCountDTO implements Serializable {
     public static class PurchaseOrderCountDTO {
 
         /**
-         * 类型(toBeApprove待审批，toBeCreate待到货，created已到货，reject不通过)
+         * 类型,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
          */
-        private String type;
+        private String tabFlag;
+
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
         /**
          * 数量
          */
         private Integer count;
-
     }
 
 
@@ -69,6 +74,63 @@ public class ListStatusCountDTO implements Serializable {
          * 类型(toBeApprove待审批，approve审核通过，reject不通过)
          */
         private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * SRM 订单确认列表统计
+     * ExecutionStatusEnum
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderConfirmCountDTO {
+
+        /**
+         * 全部  all
+         * 待确认  toBeConfirm
+         * 已确认  confirm
+         * 已拒绝  reject
+         * 送货中  delivery
+         * 已完成  finish
+         * 已关闭  closed
+         *
+         */
+        private String type;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * SRM 待发货列表统计
+     * WaitDeliveryCycleEnum
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaitDeliveryCountDTO {
+
+        /**
+         * "expired", "已超期"
+         * "inOneMonth", "1个月内"
+         * "inTwoMonth", "2个月内"
+         * "twoMonthLater", "2个月以后"
+         *
+         */
+        private String type;
+        /**
+         * 名称
+         */
+        private String name;
         /**
          * 数量
          */

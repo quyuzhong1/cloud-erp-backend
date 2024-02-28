@@ -1,6 +1,7 @@
 package com.erp.oms.aliexpress.dto;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -77,9 +78,17 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformAliExpressOrderDTO dto) {
         // 原订单信息
         AliExpressOrder sourceOrder = dto.getAliExpressOrder();
-
-
+        // 原单明细
+        AliExpressOrderDetail orderDetail = sourceOrder.getDetail();
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
+        String oaid=orderDetail.getOaid();
+        if(StringUtils.isNotBlank(oaid)){
+            JSONObject oaidJson = new JSONObject();
+            oaidJson.put("oaid",oaid);
+            orderDTO.setExtendData(oaidJson.toString());
+        }else{
+            orderDTO.setExtendData("{}");
+        }
         // 平台类型
         orderDTO.setPlatform(dto.getPlatform());
         // 唯一ID

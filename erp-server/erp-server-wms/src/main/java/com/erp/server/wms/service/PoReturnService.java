@@ -7,6 +7,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
+import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -204,7 +205,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param purchaseOrderIds
      * @return void
      **/
-    void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList);
+    void updateArrivalState(List<String> purchaseOrderIds);
 
     
     /**
@@ -300,4 +301,77 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      **/
     Boolean dataRepairTemp();
 
+    /**
+     * SRM供应商退货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
+     * @param pagingParamDTO pagingParamDTO
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>
+     **/
+    PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> supplierPaging(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> pagingParamDTO);
+
+    /**
+     * SRM供应商退货列表tab页
+     * @Author Luo_WG
+     * @Date 2024/1/11 17:58
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.SupplierTabListDTO>
+     **/
+    List<PurchaseReturnOrderDTO.SupplierTabListDTO> supplierTabList(PermissionsDTO dto);
+
+    /**
+     * 退货确认
+     * @Author Luo_WG
+     * @Date 2024/1/11 18:24
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    BatchResultDTO returnConfirm(String id);
+
+    /**
+     * 异常反馈
+     * @Author Luo_WG
+     * @Date 2024/1/11 18:50
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean unusualFeedback(PurchaseReturnOrderDTO.UnusualFeedbackParamDTO dto);
+
+    /**
+     * 异常处理人下拉接口
+     * @Author Luo_WG
+     * @Date 2024/1/12 11:17
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>>
+     **/
+    List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO> unusualHandleUserOption();
+
+    /**
+     * 异常反馈详情页
+     * @Author Luo_WG
+     * @Date 2024/1/12 12:35
+     * @param id
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackParamDTO
+     **/
+    PurchaseReturnOrderDTO.UnusualFeedbackView unusualFeedbackView(String id);
+
+    /**
+     * 查询审核通过待确认的单据
+     * @Author Luo_WG
+     * @Date 2024/1/12 14:54
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualFeedbackView
+     **/
+    List<PoReturnEntity> listByApproceAndWaitConfirm();
+
+
+    PurchaseReturnStatisticsDTO.ResponseDTO statisticsBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+    /**
+     * 退货单定时器自动确认
+     * @Author Luo_WG
+     * @Date 2024/1/24 12:40
+     * @return void
+     **/
+    void poReturnAutoConfirm();
+
+    PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 }

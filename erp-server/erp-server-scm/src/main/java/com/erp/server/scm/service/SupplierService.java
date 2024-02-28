@@ -3,7 +3,10 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierTabCountDTO;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,12 +113,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
-     * @description: 结束审核
-     * @author Will
-     * @date: 2023/7/11 12:02
      * @param dto
      * @param list
      * @return Boolean
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/11 12:02
      */
     Boolean approveEnd(BaseApproveParamDTO dto, List<SupplierEntity> list);
 
@@ -130,6 +133,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      */
     Boolean updateStatus(UpdateStateDTO dto);
 
+    /**
+     * 更新SRM协同状态
+     * @param dto
+     * @return
+     */
+    ApiResult<String> updateSrmStatus(UpdateStateDTO dto);
     /**
      * 获取供应商
      * 获取 审核通过且开启的供应商
@@ -180,7 +189,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-29 14:50
      */
-    void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
+    void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response);
 
 
     /**
@@ -278,6 +287,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     List<SupplierEntity> listByCodes(List<String> supplierCodes);
 
     /**
+     * 根据供应商id获取列表
+     *
+     * @param ids
+     * @return
+     */
+    List<SupplierEntity> listByIds(List<String> ids);
+
+    /**
      * 根据名称获取供应商
      * @author yl
      * @date 2023-09-22 19:51
@@ -293,4 +310,22 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
+    SupplierEntity getSupplierByUid(String uid);
+
+    /**
+     * 统计状态数量
+     * @return
+     */
+    List<SupplierTabCountDTO> getTabCount();
+
+    List<SupplierEntity> listByPurchaseUserId(String purchaseUserId);
+    /**
+     * @description: 根据供应商id集合查询
+     * @author Will
+     * @date: 2024/1/24 18:38
+     * @param supplierIdList
+     * @return List<SupplierDefaultDTO>
+     */
+    List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
 }

@@ -88,6 +88,17 @@ public class BaseController {
     }
 
     /**
+     * 请求成功，仅内容
+     *
+     * @param msg
+     * @param <T>
+     * @return
+     */
+    protected <T> ApiResult<T> successMsg(String msg) {
+        return message(CODE_SUCCESS, msg, null);
+    }
+
+    /**
      * 部分成功空数据
      *
      * @param <T>

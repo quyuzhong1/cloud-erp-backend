@@ -84,6 +84,10 @@ public class SysPostUserServiceImpl extends ServiceImpl<SysPostUserMapper, SysPo
         return false;
     }
 
+    @Override
+    public List<SysPostUserEntity> getByUserId(String userId) {
+        return lambdaQuery().eq(SysPostUserEntity::getUserId, userId).list();
+    }
 
     public void removePostUser(String postId, Set<String> userIds) {
         if (CollectionUtils.isNotEmpty(userIds)) {

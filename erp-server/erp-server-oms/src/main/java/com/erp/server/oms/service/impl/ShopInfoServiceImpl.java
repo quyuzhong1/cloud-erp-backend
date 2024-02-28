@@ -2,37 +2,30 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.dto.CustomerDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -46,6 +39,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
@@ -56,6 +51,7 @@ import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopee.service.ShopeeMerchantService;
 import com.sdk.oms.shopee.service.ShopeeShopService;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -65,13 +61,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,6 +87,7 @@ import java.util.stream.Collectors;
 @Service
 public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopInfoEntity> implements ShopInfoService {
 
+    private static final String CLIENT_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 
     @Resource
     private SysDictFeign sysDictFeign;
@@ -270,6 +270,18 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         // 生成跳转地址
         String grantOptions = "offline-access";
         return String.format(cfgAppClient.getUrl(), dto.getShop(), cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+    }
+
+    @Override
+    public AssociatedUserBean getShopifyShopByUserId(String id) {
+        ShopInfoEntity entity = lambdaQuery().eq(ShopInfoEntity::getPlatformShopCode, id).last("LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            Map<String, Object> extendData = entity.getExtendData();
+            AssociatedUserBean bean = BeanUtil.toBean(extendData, AssociatedUserBean.class);
+            return bean;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -1089,5 +1101,139 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
+    }
+
+    @Override
+    public void customersDataRequest(ShopifyWebhookDTO.CustomersDataRequestDTO dto, HttpServletResponse response, HttpServletRequest request) {
+        // 使用 Jackson 序列化工具将 DTO 对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestBody = "";
+        try {
+            requestBody = objectMapper.writeValueAsString(dto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        // 处理请求体数据
+        log.info("Shopify ERP方法：customersDataRequest, Request body: {}", requestBody);
+
+        // 从请求头中获取HMAC
+        String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
+        String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
+
+        // 处理请求体数据
+        log.info("Shopify ERP方法：customersDataRequest, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.info("Shopify ERP方法：customersDataRequest, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+
+        // 验证Webhook
+        boolean verified = false;
+        try {
+            verified = verifyWebhook(requestBody, hmacHeader);
+        } catch (Exception e) {
+            log.info("ERP方法：customersDataRequest, 加密入参计算hmac报错: {}", e.getMessage());
+            e.printStackTrace();
+        }
+
+        // 如果验证失败，则返回HTTP 401错误
+        if (!verified) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        return;
+    }
+
+    @Override
+    public void customersRedact(ShopifyWebhookDTO.CustomersRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
+// 使用 Jackson 序列化工具将 DTO 对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestBody = "";
+        try {
+            requestBody = objectMapper.writeValueAsString(dto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        // 处理请求体数据
+        log.info("Shopify ERP方法：customersRedact, Request body: {}", requestBody);
+
+        // 从请求头中获取HMAC
+        String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
+        String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
+
+        // 处理请求体数据
+        log.info("Shopify ERP方法：customersRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.info("Shopify ERP方法：customersRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+
+        // 验证Webhook
+        boolean verified = false;
+        try {
+            verified = verifyWebhook(requestBody, hmacHeader);
+        } catch (Exception e) {
+            log.info("ERP方法：customersRedact, 加密入参计算hmac报错: {}", e.getMessage());
+            e.printStackTrace();
+        }
+
+        // 如果验证失败，则返回HTTP 401错误
+        if (!verified) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        return;
+    }
+
+    @Override
+    public void shopRedact(ShopifyWebhookDTO.ShopRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
+        // 使用 Jackson 序列化工具将 DTO 对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestBody = "";
+        try {
+            requestBody = objectMapper.writeValueAsString(dto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        // 处理请求体数据
+        log.info("Shopify ERP方法：shopRedact, Request body: {}", requestBody);
+
+        // 从请求头中获取HMAC
+        String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
+        String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
+
+        // 处理请求体数据
+        log.info("Shopify ERP方法：shopRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.info("Shopify ERP方法：shopRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+
+        // 验证Webhook
+        boolean verified = false;
+        try {
+            verified = verifyWebhook(requestBody, hmacHeader);
+        } catch (Exception e) {
+            log.info("加密入参计算hmac报错: {}", e.getMessage());
+            e.printStackTrace();
+        }
+
+        // 如果验证失败，则返回HTTP 401错误
+        if (!verified) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        return;
+    }
+
+
+    // 验证Webhook
+    private static boolean verifyWebhook(String data, String hmacHeader) throws NoSuchAlgorithmException, InvalidKeyException {
+        // 使用HMAC-SHA256算法计算HMAC
+        Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+        SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        sha256Hmac.init(secretKey);
+        byte[] hmacBytes = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+        String calculatedHmac = Base64.getEncoder().encodeToString(hmacBytes);
+        log.info("Shopify  平台返回头hmac：{}, 入参加密计算hmac：{}", hmacHeader, calculatedHmac);
+        // 安全比较计算得到的HMAC和请求头中的HMAC
+        return calculatedHmac.equals(hmacHeader);
     }
 }

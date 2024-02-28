@@ -301,6 +301,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         if (CollectionUtil.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);

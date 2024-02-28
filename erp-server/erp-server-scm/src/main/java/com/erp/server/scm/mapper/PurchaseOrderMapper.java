@@ -3,10 +3,9 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.FirstPlaceOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -33,6 +32,15 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return IPage<ListDTO>
      */
     IPage<PurchaseOrderDTO.ListDTO> paging(Page query,@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+
+    /**
+     * srm 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<PurchaseOrderDTO.ListDTO> srmPaging(Page query,@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
+
 
     /**
      * @description: 查询总数量、金额
@@ -143,4 +151,31 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<SkuCostDTO>
      */
     List<SkuCostDTO> listPurchaseOrderCost(@Param("params") SkuCostDTO.ParamDTO paramDTO);
+
+    List<PurchaseStatisticsDTO.StatisticsMonthDTO> statisticsBySupplier(@Param("params") PurchaseStatisticsDTO.RequestDTO requestDTO);
+
+    Integer srmPurchaseOrderCount(@Param("params") PurchaseOrderSrmDTO.SearchParamDTO params);
+    /**
+     * @description: 查询需要自动确认的采购订单
+     * @author Will
+     * @date: 2024/1/17 10:34
+     * @return List<PurchaseOrderConfirmDTO>
+     */
+    List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> listPurchaseOrderAutoConfirm(@Param("list") List<CfgSettingDTO.ViewDTO> list);
+
+    /**
+     * 查询确认订单列表
+     * @param params
+     * @return
+     */
+    List<PurchaseOrderDTO.ListDTO> srmPurchaseOrderList(@Param("params") PurchaseOrderDTO.SrmSearchParamDTO params);
+
+
+    List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
+
+    /**
+     * 根据状态查询列表数据
+     * @return
+     */
+    List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> getSrmPurchaseOrder();
 }

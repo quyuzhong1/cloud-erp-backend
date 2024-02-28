@@ -77,6 +77,13 @@ public class PackageForecastDetailEntity extends BaseEntity<PackageForecastDetai
     private String handoverStatus;
 
 
+    /**
+     * 来源code 目前存速卖通物流单详情里面的 outOrderCode
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+
 
     public static final String MAIN_ID = "main_id";
 

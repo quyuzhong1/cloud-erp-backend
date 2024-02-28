@@ -1,13 +1,12 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -49,4 +48,32 @@ public class WarehouseReceiveFeignController {
         return warehouseReceiveService.getReceiveInfoBySupplierIds(dto);
     }
 
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listReceiveBySourceTypeAndIds")
+    public List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(@RequestBody WarehouseReceiveDTO.SourceParamDTO dto) {
+        return warehouseReceiveService.listReceiveBySourceTypeAndIds(dto);
+    }
+
+    /**
+     * 根据供应商获取当前周期内 已确认的收货单数量
+     * @param supplierId
+     * @return
+     */
+    @GetMapping("/countOrderBySupplierId")
+    public SupplierCountDTO countOrderBySupplierId(@RequestParam("supplierId") String supplierId){
+        return warehouseReceiveService.countOrderBySupplierId(supplierId);
+    }
+    /***
+     * 同销售订单获取 收货详情
+     * @param purchaseOrderIds
+     * @return
+     */
+    @PostMapping("/getReceiveListByPurchaseOrderIds")
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds){
+        return warehouseReceiveService.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
+    }
 }

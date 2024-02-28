@@ -35,13 +35,14 @@
     <!--根据仓库id查询映射信息-->
     <select id="listMappingViewByWarehouseIds" resultType="com.erp.model.wms.dto.WarehouseMappingDTO$MappingViewDTO">
         SELECT
+        wm.id AS id,
         w.id AS warehouseId,
         w.name AS warehouseName,
         w.org_id AS warehouseOrgId,
         wm.name AS  thirdWarehouseName,
         wm.dict_Platform AS dictPlatform
         FROM warehouse w
-        LEFT JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
+        INNER JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
         WHERE w.is_deleted = FALSE
         <if test="warehouseIdList != null and warehouseIdList.size > 0">
             and w.id in
@@ -54,15 +55,33 @@
     <!--根据平台编码查询仓库映射信息-->
     <select id="listMappingViewByDictPlatform" resultType="com.erp.model.wms.dto.WarehouseMappingDTO$MappingViewDTO">
         SELECT
+        wm.id AS id,
         w.id AS warehouseId,
         w.name AS warehouseName,
         w.org_id AS warehouseOrgId,
         wm.name AS  thirdWarehouseName,
         wm.dict_Platform AS dictPlatform
         FROM warehouse w
-        LEFT JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
+        INNER JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
         WHERE w.is_deleted = FALSE
         AND wm.dict_Platform = #{dictPlatform}
+    </select>
+
+    <!--根据平台编码和仓库id查询仓库映射信息-->
+    <select id="getMappingViewByDictPlatform" resultType="com.erp.model.wms.dto.WarehouseMappingDTO$MappingViewDTO">
+        SELECT
+        wm.id AS id,
+        w.id AS warehouseId,
+        w.name AS warehouseName,
+        w.org_id AS warehouseOrgId,
+        wm.name AS  thirdWarehouseName,
+        wm.dict_Platform AS dictPlatform
+        FROM warehouse w
+        INNER JOIN warehouse_mapping wm ON w.id = wm.warehouse_id AND wm.is_deleted = FALSE
+        WHERE w.is_deleted = FALSE
+        AND w.id = #{warehouseId}
+        AND wm.dict_Platform = #{dictPlatform}
+        LIMIT 1
     </select>
 
 </mapper>

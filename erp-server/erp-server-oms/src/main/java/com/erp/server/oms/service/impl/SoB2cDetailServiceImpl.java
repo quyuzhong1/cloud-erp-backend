@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -19,6 +20,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -81,6 +84,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private WarehouseMappingFeign warehouseMappingFeign;
+
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -282,7 +288,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         }
-
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String billStatus = mainEntity.getBillStatus();
+        Boolean isShipped = shipped.equals(billStatus);
         // 新增或更新列表
         List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
@@ -310,14 +319,30 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
             }
 
-            //查询映射的仓库信息
-            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
-                saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
-                saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
-                saveOrUpdateEntity.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
-                saveOrUpdateEntity.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
+                //查询映射的仓库信息
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
+                    saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
+                    saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
+                    saveOrUpdateEntity.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
+                    saveOrUpdateEntity.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
+                } else {
+                    saveOrUpdateEntity.setWarehouseId("");
+                    saveOrUpdateEntity.setWarehouseName("");
+                    saveOrUpdateEntity.setWarehouseOrgId("");
+                    saveOrUpdateEntity.setWarehouseOrgName("");
+
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(mainEntity.getId());
+                    addError.setMessage(StrUtil.format("生成销售出库单失败：发货单仓库【{}】未匹配系统仓库", detailDTO.getWarehouseName()));
+                    soB2cErrorService.add(addError);
+                }
             }
+
 
             //建议售价
 //            if (StringUtils.isNotBlank(skuId)){

@@ -79,6 +79,7 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoExcelListener;
 import com.erp.server.oms.listener.B2BSoImportExcelListener;
@@ -811,8 +812,40 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public SoInfoDTO.PagingTotalDTO pagingTotal(SoInfoDTO.PagingParamDTO dto) {
+        String searchType = dto.getSearchType();
 
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
+        //审核状态
+        List<String> approveStatusList=new ArrayList<>(1);
+        //发货状态
+        List<String> deliveryStatusList=new ArrayList<>(2);
+        switch (searchType){
+            //待提交
+            case OmsConstant.WAIT_SUBMIT:
+                approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+                break;
+            //待审核
+            case OmsConstant.WAIT_APPROVE:
+                approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+                break;
+            //审核不通过
+            case OmsConstant.REJECT:
+                approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+                break;
+            //未发货
+            case OmsConstant.WAIT_DELIVERY:
+                String unShipped = DeliveryStatusEnum.UN_SHIPPED.getCode();
+                String partialShipment = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
+                deliveryStatusList.add(unShipped);
+                deliveryStatusList.add(partialShipment);
+                break;
+
+            //已发货
+            case OmsConstant.DELIVERY:
+                String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
+                deliveryStatusList.add(completeShipment);
+                break;
+        }
 
         //运单号
         String trackNo = dto.getTrackNo();
@@ -837,7 +870,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return pagingTotalDTO;
             }
         }
-        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds, soIdList);
+        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto,soIdList,approveStatusList,deliveryStatusList);
 
         //出库
         List<String> detailIds = baseMapper.pagingTotalGetDetailIds(dto, paramDetailIds, soIdList);

@@ -38,7 +38,9 @@
             pod.product_name as productName,
             pod.purchase_qty as purchaseQty,
             pod.plan_delivery_date as planDeliveryDate,
+            po.code as code,
             po.receive_org_name as receiveOrgName,
+            po.purchase_user_name as purchaseUserName,
             pod.is_gift as isGift,
             pod.is_urgent as isUrgent,
             pod.remark as remark,
@@ -232,5 +234,13 @@
             #{id}
         </foreach>
         ) m  WHERE m.rn = 1
+    </select>
+    <select id="countOrderBySupplierId" resultType="java.lang.Integer">
+        select count(pod.*) from purchase_order_detail pod
+            left join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+            left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        where pos.supplier_id = #{supplierId}
+          and pod.confirm_date is not null
+          and pod.confirm_date between #{startTime} and #{endTime}
     </select>
 </mapper>

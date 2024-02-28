@@ -27,7 +27,7 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
     /**
      * 查询所有总数
      */
-    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
+    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("soIdList")List<String> soIdList,@Param("approveStatusList")List<String> approveStatusList,@Param("deliveryStatusList") List<String> deliveryStatusList );
 
     /**
      * 查询需要汇总的订单详情id

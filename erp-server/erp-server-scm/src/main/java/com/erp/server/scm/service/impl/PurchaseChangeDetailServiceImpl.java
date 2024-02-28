@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
@@ -13,6 +15,8 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -58,6 +62,8 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private PurchaseOrderService purchaseOrderService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -68,11 +74,41 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         List<PurchaseChangeDetailEntity> list = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
         //采购变更id赋值
         list.forEach(obj -> obj.setPurchaseChangeId(purchaseChangeId));
+
+        //新增变更时验证采购订单是否关闭
+        checkPoPushDown(list);
         //验证数量、单价是否符合供应商报价
         checkPurchasePrice(list,Arrays.asList(purchaseChangeId));
         //计算金额
         doOpCalculateAmount(list,purchaseChangeId,Boolean.TRUE);
         this.saveBatch(list);
+    }
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2024/1/17 18:35
+     */
+    private void checkPoPushDown (List<PurchaseChangeDetailEntity> list) {
+        List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //采购订单
+        PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderDetailList.get(0).getPurchaseOrderId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //订单明细数据校验
+        String skuNos = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                 && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                 && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
+                )
+                .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(skuNos)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
+        }
     }
 
     @Override
@@ -211,6 +247,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98026);
             }
+
 
             //赠品无需判断供应商报价
             if (ObjectUtils.isNotEmpty(detailEntity.getIsGift()) && detailEntity.getIsGift()) {

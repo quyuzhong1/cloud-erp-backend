@@ -1293,18 +1293,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String dictPlatform = entity.getDictPlatform();
         result.setSalesPlatform(dictPlatform);
         Boolean isAliExpress = aliExpress.equals(dictPlatform);
+        String shopId = entity.getShopId();
+        //扩展字段
+        String extendData = entity.getExtendData();
+        String oaid="";
+        if (StringUtils.isNotBlank(extendData) && extendData.contains("oaid")) {
+            oaid = JSONObject.parseObject(extendData).getOrDefault("oaid", "").toString();
+        }
+        result.setOaid(oaid);
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+
         if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
+            Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
+            //买家id
+            String sellerId = String.valueOf(extendDataMap.get("sellerId"));
+            result.setTopUserKey(sellerId);
         } else {
             result.setOrderCode(entity.getCode());
         }
 
         result.setOrderType(OrderTypeEnum.B2C.getCode());
-        String shopId = entity.getShopId();
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92058);
-        }
+
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
@@ -1607,6 +1620,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -1642,7 +1657,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
-        this.updateIntercept(interceptUpdateOrderDTO);
+        Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
+        if (flag) {
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】发起【{}】，已冻结单据单号【{}】", commonService.getUserInfo().getUserName(), "发货拦截", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "发货拦截");
+        }
 
         //新增发货拦截
         BatchResultDTO result = addIntercept(remark, entity, logisticsEntity);
@@ -1772,7 +1792,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
         interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
-        this.updateIntercept(interceptUpdateOrderDTO);
+        Boolean flag = this.updateIntercept(interceptUpdateOrderDTO);
+        if (flag) {
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】取消【{}】，已解冻单据单号【{}】", commonService.getUserInfo().getUserName(), "发货拦截", entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消发货拦截");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消发货拦截");
     }
 
@@ -3870,10 +3895,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String unit = UnitEnum.WeightUnitEnum.G.getCode();
 
-        String waitTransfer = TransferStatusEnum.WAIT.getCode();
-        String notWaitTransferCode = soB2cList.stream().filter(s -> !waitTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(notWaitTransferCode)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, notWaitTransferCode);
+        String alreadyTransfer = TransferStatusEnum.ALREADY.getCode();
+        String alreadyTransferCode = soB2cList.stream().filter(s -> alreadyTransfer.equals(s.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(alreadyTransferCode)) {
+            throw new ServiceException(ApiError.ERROR_WAIT_TRANSFER, alreadyTransferCode);
         }
 
         String notPackage = PackageStatusEnum.NOT.getCode();
@@ -5129,7 +5154,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
-                scanResult.setLogisticsSupplierId(baseDTO.getLogisticsSupplierId());
+                scanResult.setLogisticsSupplierId(baseDTO.getMainId());
                 scanResult.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
             }
 
@@ -5360,8 +5385,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             IopResponse response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(entity.getPlatformCode()));
 
             cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
-            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("result");
-            Boolean success = resultJsONObject.getBool("success", Boolean.FALSE);
+            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+            cn.hutool.json.JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+            Boolean success = resultJson.getBool("success", Boolean.FALSE);
             //失败
             if (!success) {
                 log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
@@ -5380,6 +5406,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
                     //生成速卖通发货单
                     addAliExpressDelivery(logisticsEntity, erpFulfillmentForwardDto.get(0), entity);
+
+                    return Boolean.TRUE;
                 }
             }
 
@@ -5387,7 +5415,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             e.printStackTrace();
         }
 
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 

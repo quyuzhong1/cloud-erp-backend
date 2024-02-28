@@ -150,6 +150,13 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return baseMapper.getAuthByChannelId(channelId);
     }
 
+
+
+    @Override
+    public LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(String logisticsSupplierId) {
+        return baseMapper.getAuthBySupplierId(logisticsSupplierId);
+    }
+
     @Override
     public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(List<String> channelIdList) {
         if (CollectionUtil.isEmpty(channelIdList)) {
@@ -184,16 +191,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateLogisticsAuthStatus(String mainId, String authStatus) {
-        LogisticsAuthEntity entity = this.getDbByMainId(mainId);
-        if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
-        }
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(supplierEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         supplierEntity.setAuthStatus(authStatus);
-        this.removeById(entity.getId());
         logisticsSupplierService.updateById(supplierEntity);
     }
 

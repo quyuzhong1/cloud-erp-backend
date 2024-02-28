@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1141,7 +1142,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             Stream<String> s2 = Arrays.stream(split);
             return s2;
         }).distinct().collect(Collectors.toList());
-        List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList);
+        List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList, UserTypeEnum.ERP.code);
         if (CollectionUtils.isEmpty(findUserList)) {
             throw new ServiceException(new ApiResult(ApiError.ERROR_1038.code, StrUtil.format(ApiError.ERROR_1038.msg, "二")));
         }

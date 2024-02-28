@@ -81,23 +81,25 @@
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
-         SELECT
-         id,
-         create_user_name AS createUserName,
-         create_time AS createTime,
-         name,
-         type_id AS typeId,
-         charge_id AS chargeId,
-         contacts,
-         contact_tel_number AS contactTelNumber,
-         disabled,
-         address,
-         org_id AS orgId,
-         kingdee_warehouse_code AS kingdeeWarehouseCode,
-         is_virtual AS isVirtual,
-         approve_status AS approveStatus,
-         is_enable_location AS isEnableLocation
-      FROM  warehouse  WHERE is_deleted=false
+        SELECT
+        id,
+        create_user_name AS createUserName,
+        create_time AS createTime,
+        name,
+        type_id AS typeId,
+        charge_id AS chargeId,
+        contacts,
+        contact_tel_number AS contactTelNumber,
+        disabled,
+        address,
+        org_id AS orgId,
+        kingdee_warehouse_code AS kingdeeWarehouseCode,
+        is_virtual AS isVirtual,
+        approve_status AS approveStatus,
+        is_enable_location AS isEnableLocation,
+        onway_warehouse_name AS onwayWarehouseName
+
+        FROM warehouse WHERE is_deleted=false
       <choose>
           <when test="params.ids!=null and params.ids.size>0">
               AND id IN
