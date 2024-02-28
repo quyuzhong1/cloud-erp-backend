@@ -26,6 +26,12 @@ public class ListingInfoParamDTO {
      */
     private List<String> skuNoList;
 
+
+    /**
+     * sku id 列表
+     */
+    private List<String> skuIdList;
+
     /**
      * 平台
      */

@@ -61,9 +61,9 @@ public class AliExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
-        String CLIENT_CODE = "503630";
-        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-        String token = "50000700315ck4nYbrSlt7IGwVN17f91baetch0mylJUfxsfagEt6svVfHGsjo4bIr30";
+        String CLIENT_CODE = "502978";
+        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+        String token = "50000201913g5RZqpecEaQ6pT179453ddTkJkRLXEqUDEXFxOEwPXvtsX3DHKlWZJx01";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -241,7 +241,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLogisticsService() throws ApiException {
         QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(8184516086176025L)
+                .order_id(8183524352516601L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
@@ -249,7 +249,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //                .order_id(1102175972276889L)
                 .build();
         QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
-                .order_id(8184516086176025L)
+                .order_id(8183524352506601L)
                 .goods_weight("1")
                 .goods_height(1L)
                 .goods_width(1L)
