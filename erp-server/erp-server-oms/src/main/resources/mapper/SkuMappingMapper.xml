@@ -620,6 +620,14 @@
                 #{platformSkuNo}
             </foreach>
         </if>
+        <!--平台sku no 列表-->
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>

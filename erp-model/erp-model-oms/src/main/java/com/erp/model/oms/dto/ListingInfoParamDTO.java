@@ -22,6 +22,11 @@ public class ListingInfoParamDTO {
     private List<String> platformSkuNoList;
 
     /**
+     * sku no 列表
+     */
+    private List<String> skuNoList;
+
+    /**
      * 平台
      */
     private String platform;
