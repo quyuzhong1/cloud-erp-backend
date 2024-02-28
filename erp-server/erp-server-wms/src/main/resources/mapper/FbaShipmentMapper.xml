@@ -111,7 +111,8 @@
         fsd.delivery_qty as deliveryQty,
         fsd.diff_qty AS diffQty,
         fs.shipment_create_time AS shipmentCreateTime,
-        fsd.receive_date AS shipmentReceiveTime
+        fsd.receive_date AS shipmentReceiveTime,
+        fsd.receive_qty AS receiveQty
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
