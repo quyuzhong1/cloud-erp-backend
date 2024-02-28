@@ -81,10 +81,12 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -105,10 +107,12 @@
         delivery_order do2
         WHERE
         do2.is_deleted = FALSE
+        <if test="supplierIdList != null and supplierIdList.size > 0">
         AND do2.supplier_id IN
         <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         GROUP BY
         do2.receipt_status,
         do2.is_print,
@@ -147,10 +151,12 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -193,10 +199,13 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
     </select>
 
 

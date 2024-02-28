@@ -10,12 +10,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.entity.BaseEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,9 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 供应商送货单
@@ -44,12 +39,6 @@ public class SupplierDeliveryOrderController extends BaseController {
     private SrmDeliveryOrderFeign srmDeliveryFeign;
 
     @Resource
-    private SupplierFeign supplierFeign;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
     private SupplierDeliveryOrderService service;
 
     /**
@@ -59,7 +48,6 @@ public class SupplierDeliveryOrderController extends BaseController {
     @GetMapping("/tabList")
     public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList() {
         DeliveryOrderDTO.ParamDTO paramDTO = new DeliveryOrderDTO.ParamDTO();
-        paramDTO.setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         List<DeliveryOrderDTO.TabListDTO> tabList = srmDeliveryFeign.tabList(paramDTO);
         return success(tabList);
     }
@@ -86,7 +74,6 @@ public class SupplierDeliveryOrderController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
-        dto.getParams().setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         return success(srmDeliveryFeign.paging(dto));
     }
 
@@ -99,7 +86,6 @@ public class SupplierDeliveryOrderController extends BaseController {
     @PostMapping("/pagingTotal")
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
-        dto.setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         return success(srmDeliveryFeign.pagingTotal(dto));
     }
 
