@@ -26,6 +26,7 @@ import com.erp.model.dmp.lingxing.ShopEntity;
 import com.erp.server.dmp.convert.DmpShopInfoConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -58,11 +59,21 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     private CfgSettingService cfgSettingService;
     @Resource
     private ShopInfoMappingService shopInfoMappingService;
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
-        List<ShopEntity> entityList = pullDate();
+        List<ShopEntity> entityList = null;
+        try {
+            entityList = pullDate();
+        } catch (Exception e) {
+            // 发送预警
+            dmpPushTaskService.sendWarnMsg(dto.getJobTaskDTO().getId());
+            log.error("拉取领星店铺信息异常,异常信息:{}", JSONUtil.toJsonStr(dto));
+            throw new RuntimeException(e);
+        }
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取领星店铺列表数据为空 entityList.size = 0 ");
             return;

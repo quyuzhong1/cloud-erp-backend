@@ -166,9 +166,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         // 更新shopAuth
         shopAuth.setAccessToken(tokenDTO.getAccessToken());
         shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-        if (!shopInfoFeign.updateShopAuthById(shopAuth)) {
-            throw new ServiceException("更新店铺授权信息失败:" + JSONUtil.toJsonStr(shopAuth));
-        }
+        shopInfoFeign.updateShopAuthById(shopAuth);
+//        if (!shopInfoFeign.updateShopAuthById(shopAuth)) {
+//            throw new ServiceException("更新店铺授权信息失败:" + JSONUtil.toJsonStr(shopAuth));
+//        }
         // token添加到redis
         redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
         redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
