@@ -30,8 +30,8 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -44,6 +44,7 @@ import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mapper.MachineInfoMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,6 +58,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -280,35 +282,20 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_99044);
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
-        
-        //查询明细子件
-        List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
-        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
-        if (CollectionUtils.isEmpty(machineSubComponentsList)) {
-            throw new ServiceException(ApiError.ERROR_99056);
-        }
-        //子件仓库id集合
-        List<String> warehouseIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        warehouseIdList.add(viewDTO.getWarehouseId());
 
-        //明细skuId集合
-        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //查询BOM中SKU子集
-        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
-
-        //子件skuId集合
-        List<String> subComponentsSkuIdList = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getSkuId).collect(Collectors.toList());
-        skuIds.addAll(subComponentsSkuIdList);
         //产品信息
+        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<MachineSubComponentsDTO.ViewDTO>> bomSubMap = Maps.newHashMap();
+        detailList.stream().forEach(obj-> bomSubMap.put(obj.getSkuId(), viewBomSubComponents( new MachineSubComponentsDTO.ViewBomParamDTO(obj.getSkuId(),obj.getReferenceVersion()))));
 
         //组织
-        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
-        skuInventoryDTO.setSkuIdList(skuIds);
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        //可用数量
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(Arrays.asList(viewDTO.getInventoryOrgId()));
+        param.setSkuIdList(skuIds);
+        param.setWarehouseIdList(Arrays.asList(viewDTO.getWarehouseId()));
+        //库存信息
+        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
 
         for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
@@ -317,39 +304,21 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),viewDetailDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
-                    .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
+                    .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
-
             //明细子件
-            List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> StrUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
-            List<MachineSubComponentsDTO.ViewDTO> subComponentsDTOList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, subComponentsList);
-
-            for (MachineSubComponentsDTO.ViewDTO subComponentsDTO : subComponentsDTOList) {
-                //产品信息
-                SkuVO skuVO = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())).findFirst().orElse(new SkuVO());
-                subComponentsDTO.setSkuNo(skuVO.getSkuNo());
-                subComponentsDTO.setProductName(skuVO.getSkuName());
-
-                //根据组织、仓库、sku查询可用库存
-                Integer  subComponentsQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),subComponentsDTO.getSkuId())
-                                && StrUtil.equals(obj.getWarehouseId(),subComponentsDTO.getWarehouseId())
-                                && StrUtil.equals(obj.getWarehouseLocationId(),subComponentsDTO.getWarehouseLocation()))
-                        .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
-                subComponentsDTO.setCurInventoryQty(subComponentsQty);
-
-                //bom用量
-                Integer quantity = childrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), viewDetailDTO.getSkuId())
-                        && StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())
-                ).map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(quantity)) {
+            List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());
+            List<MachineSubComponentsDTO.ViewDTO> subList = bomSubMap.get(viewDetailDTO.getSkuId());
+            Map<String,MachineSubComponentsDTO.ViewDTO> subMap = subList.stream().collect(Collectors.toMap(MachineSubComponentsDTO.ViewDTO::getSkuId, Function.identity()));
+            subComponentsList.stream().forEach(sub-> {
+                MachineSubComponentsDTO.ViewDTO subView = subMap.get(sub.getSkuId());
+                if (ObjectUtils.isEmpty(subView)) {
                     throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
                 }
-                subComponentsDTO.setItemQty(quantity);
-            }
-            viewDetailDTO.setSubComponentsList(subComponentsDTOList);
+                sub.setItemQty(subView.getQty());
+            });
+            viewDetailDTO.setSubComponentsList(subComponentsList);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
@@ -544,7 +513,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             list.forEach(obj->{
                 // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
 //                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                    syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
 //                }
             });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
