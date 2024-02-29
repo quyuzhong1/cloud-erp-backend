@@ -333,6 +333,9 @@
                pi.usage_desc,
                pi.pirate_risk,
                pi.materials,
+               pi.type,
+               pi.iterate_ref_sku_id,
+               pi.iterate_ref_sku_no,
                pd.plan_listing_time,
                pd.first_mass_product_date,
                pd.unit_id,
@@ -376,6 +379,9 @@
                pi.usage_desc,
                pi.pirate_risk,
                pi.materials,
+               pi.type,
+               pi.iterate_ref_sku_id,
+               pi.iterate_ref_sku_no,
                pd.plan_listing_time,
                pd.first_mass_product_date,
                pd.unit_id,
@@ -418,7 +424,10 @@
                pi.mold_cost,
                pi.sample_fee,
                pi.is_customized,
-               pi.sales_channel
+               pi.sales_channel,
+               pi.type,
+               pi.iterate_ref_sku_id,
+               pi.iterate_ref_sku_no
         FROM product_info pi
         WHERE pi.is_deleted = FALSE
           AND pi.id = #{productId}
@@ -450,6 +459,7 @@
         CASE WHEN pi.pirate_risk = 1 THEN '是' ELSE '否' END pirateRisk,
         pd.unit_name,
         pi.materials,
+        pi.type,
         pc.project_approval_cost,
         pc.mass_cost,
         pc.project_cost,
@@ -530,6 +540,9 @@
         <if test="params.no != null  and params.no != ''">
             AND (pi.spu_no ILIKE concat('%',#{params.no}::text,'%') OR pd.sku_no ILIKE concat('%',#{params.no}::text,'%') OR pd.name
             ILIKE concat('%', #{params.no}::text,'%'))
+        </if>
+        <if test="params.iterateRefSkuNo != null  and params.iterateRefSkuNo != ''">
+            AND pi.iterate_ref_sku_no ILIKE concat('%',#{params.iterateRefSkuNo}::text,'%')
         </if>
         <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
             AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')

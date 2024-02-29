@@ -119,7 +119,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
                 continue;
             }
             LocalDate date = closedParamDTO.getBillDate();
-            if (localDate.isBefore(date) || localDate.isEqual(date)) {
+            if (date.isBefore(localDate) || localDate.isEqual(date)) {
                 String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), closedParamDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
                 throw new ServiceException(StrUtil.format("组织【{}】已于{}关账",orgName,localDate));
             }
