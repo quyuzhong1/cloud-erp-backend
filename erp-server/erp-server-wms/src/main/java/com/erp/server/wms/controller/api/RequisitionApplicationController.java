@@ -302,7 +302,7 @@ public class RequisitionApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:requisitionApplication:delete",
-            serviceClass = OverseasDeliveryPlanService.class,
+            serviceClass = RequisitionApplicationService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "要货申请删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
