@@ -439,7 +439,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isNotBlank(result.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(result.getCarrierId());
-            result.setCarrierName(supplierById.getName());
+            if(Objects.nonNull(supplierById)){
+                result.setCarrierName(supplierById.getName());
+            }
         }
 
         String soId = soOutstock.getSoId();
@@ -1715,7 +1717,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 batchUpdateTrackNoDTOList.add(batchUpdateTrackNoDTO);
                 LogisticsChannelDTO.BaseDTO logisticsInfo = logisticsInfoList.stream().filter(v->v.getId().equals(pagingUpdateDTO.getLogisticsChannelId())).findFirst().orElse(null);
                 if(Objects.nonNull(logisticsInfo)){
-                    soOutstock.setCarrierId(logisticsInfo.getLogisticsSupplierId());
+                    soOutstock.setCarrierId(logisticsInfo.getSupplierId());
                     updateList.add(soOutstock);
                 }
             }

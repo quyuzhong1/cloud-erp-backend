@@ -430,6 +430,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
             if (Objects.nonNull(logisticsSupplierEntity)) {
                 baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
 
             }
         }
