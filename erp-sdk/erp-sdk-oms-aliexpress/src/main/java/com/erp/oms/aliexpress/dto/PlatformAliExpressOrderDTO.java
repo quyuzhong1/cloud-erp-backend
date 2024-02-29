@@ -224,6 +224,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
         String warehouseName = "";
+        String logisticsType = CollectionUtils.isNotEmpty(detail.getChildOrderList()) ? detail.getChildOrderList().get(0).getLogisticsType() : "";
         if (detailNotNull && CollectionUtils.isNotEmpty(detail.getLogisticInfoList())) {
             List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
                     filter(d -> StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
@@ -232,7 +233,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                     warehouseName = item.getWarehouseName();
                     PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
                     logisticsDTO.setCode(item.getLogisticsNo());
-                    logisticsDTO.setName(item.getLogisticsServiceName());
+                    logisticsDTO.setName(logisticsType);
                     String sendTime = item.getGmtSend();
 
                     LocalDateTime deliveryTime = LocalDateUtil.strToLocalDateTime(sendTime);
@@ -264,6 +265,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 receiverDTO.setReceiverName(receiptInfo.getContactPerson());
                 receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
                 receiverDTO.setPostCode(receiptInfo.getZip());
+                receiverDTO.setReceiverTaxNo(receiptInfo.getCpfNo());
             }
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());
