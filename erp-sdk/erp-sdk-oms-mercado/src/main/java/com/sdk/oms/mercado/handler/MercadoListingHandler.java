@@ -23,8 +23,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.dto.PlatformMercadoListingDTO;
-import com.sdk.oms.mercado.dto.mercado.MercadoListingDTO;
+import com.sdk.oms.mercado.dto.MercadoListingDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ResultsBean;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.MERCADO)
 @BusinessType(BusinessTypeEnum.PRODUCT)
-public class MercadoListingHandler extends AbstractProductHandler<PlatformMercadoListingDTO, PlatformProductDTO> {
+public class MercadoListingHandler extends AbstractProductHandler<MercadoListingDTO, PlatformProductDTO> {
 
     public static void main(String[] args) {
         //TG-65ddb89790e8fe00014506db-1509269799
@@ -78,7 +77,7 @@ public class MercadoListingHandler extends AbstractProductHandler<PlatformMercad
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoPost(sb.toString(), accessToken, paramMap);
 
-            MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, MercadoListingDTO.class);
+            com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
                 throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), date);
             }
@@ -105,7 +104,7 @@ public class MercadoListingHandler extends AbstractProductHandler<PlatformMercad
     private ShopInfoFeign shopInfoFeign;
 
     @Override
-    public List<PlatformMercadoListingDTO> download(JobTaskDTO data) {
+    public List<MercadoListingDTO> download(JobTaskDTO data) {
         //  根据店铺ID获取授权
         MercadoShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
@@ -123,19 +122,21 @@ public class MercadoListingHandler extends AbstractProductHandler<PlatformMercad
         //总页数
         Integer pageCount = 1;
 
-        paramMap.put("offset", pageNo);
-        paramMap.put("limit", pageSize);
         while(pageNo < pageCount) {
 
-
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
-            String path = "/marketplace/products/search?status=active&product_identifier=%s";
-            String baseUrl = String.format(shopInfoDTO.getBaseUrl() + path, "");
+            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search";
+            StringBuffer sb = new StringBuffer();
+            sb.append(baseUrl);
+            sb.append("?q=");
+            sb.append("&limit="+ pageSize +"");
+            sb.append("&offset="+ pageNo +"");
+            sb.append("&status=active");
 
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoPost(baseUrl, shopInfoDTO.getAccessToken(), paramMap);
 
-            MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, MercadoListingDTO.class);
+            com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
                 break;
             }
@@ -152,16 +153,16 @@ public class MercadoListingHandler extends AbstractProductHandler<PlatformMercad
 
         // 返回下载源数据
         return resultsBeanList.stream()
-                .map(e -> new PlatformMercadoListingDTO(e, data))
+                .map(e -> new MercadoListingDTO(e, data))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<PlatformProductDTO> convert(List<PlatformMercadoListingDTO> sourceDataList) {
+    public List<PlatformProductDTO> convert(List<MercadoListingDTO> sourceDataList) {
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 组装
-                .map(PlatformMercadoListingDTO::convertDTO).collect(Collectors.toList());
+                .map(MercadoListingDTO::convertDTO).collect(Collectors.toList());
     }
 
     @Override

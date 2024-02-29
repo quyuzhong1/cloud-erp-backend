@@ -17,7 +17,7 @@ import java.time.ZoneId;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class PlatformMercadoListingDTO extends CleanBaseDTO {
+public class MercadoListingDTO extends CleanBaseDTO {
 
 
     private ResultsBean resultsBean;
@@ -27,7 +27,7 @@ public class PlatformMercadoListingDTO extends CleanBaseDTO {
     /**
      * 初始化
      */
-    public PlatformMercadoListingDTO(ResultsBean resultsBean, JobTaskDTO dto) {
+    public MercadoListingDTO(ResultsBean resultsBean, JobTaskDTO dto) {
         this.resultsBean = resultsBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
@@ -40,7 +40,7 @@ public class PlatformMercadoListingDTO extends CleanBaseDTO {
     /**
      * 转换目标实体:PlatformProductDTO
      */
-    public static PlatformProductDTO convertDTO(PlatformMercadoListingDTO dto) {
+    public static PlatformProductDTO convertDTO(MercadoListingDTO dto) {
         // 原商品信息
         return initPlatformProductDTO(dto);
     }
@@ -48,7 +48,7 @@ public class PlatformMercadoListingDTO extends CleanBaseDTO {
     /**
      * 根据PlatformWalmartListingDTO 转换 DTO
      */
-    private static PlatformProductDTO initPlatformProductDTO(PlatformMercadoListingDTO dto) {
+    private static PlatformProductDTO initPlatformProductDTO(MercadoListingDTO dto) {
         ResultsBean resultsBean = dto.getResultsBean();
 
         PlatformProductDTO resultDto = new PlatformProductDTO();

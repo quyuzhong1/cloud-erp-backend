@@ -103,11 +103,13 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         //拼接授权地址
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
+            //https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=3457166802805723&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result
+
             shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl());
         }
         return shopAuthorizeUrl;
     }
-
+//    https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=3457166802805723&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result
     /**
      * 授权
      * @param dto
