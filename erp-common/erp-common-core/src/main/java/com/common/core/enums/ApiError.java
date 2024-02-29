@@ -107,6 +107,8 @@ public enum ApiError implements Serializable {
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
     ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+    LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
+    LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
 
     /**
      * 警告信息 从800 开始
