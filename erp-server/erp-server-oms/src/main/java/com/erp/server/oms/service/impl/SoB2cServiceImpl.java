@@ -5265,7 +5265,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
             String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
             String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("产品尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("包装尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
     }

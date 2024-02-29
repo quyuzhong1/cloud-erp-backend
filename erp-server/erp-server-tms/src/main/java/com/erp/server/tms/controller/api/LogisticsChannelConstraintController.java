@@ -42,7 +42,6 @@ public class LogisticsChannelConstraintController extends BaseController {
         return success(logisticsChannelConstraintService.getList(channelId));
     }
 
-
     /**
     * 保存
     * @author lrp
@@ -55,6 +54,4 @@ public class LogisticsChannelConstraintController extends BaseController {
         List<BatchResultDTO> batchResultDTOList = logisticsChannelConstraintService.addAndUpdate(dtoList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
-
-
 }
