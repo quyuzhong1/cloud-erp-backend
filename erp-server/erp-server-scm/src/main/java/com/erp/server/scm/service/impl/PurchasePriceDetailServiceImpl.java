@@ -159,7 +159,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (int i = 0;i < list.size();i++) {
             PurchasePriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
-            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
+            if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
             }
 
