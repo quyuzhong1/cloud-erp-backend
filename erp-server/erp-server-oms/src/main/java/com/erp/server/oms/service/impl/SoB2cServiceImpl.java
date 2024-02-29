@@ -1223,7 +1223,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_APPROVE_NOT_DISTRIBUTION, entity.getCode());
         }
-
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        String warehouseId = soB2cDetailList.get(0).getWarehouseId();
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
@@ -1263,8 +1264,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } catch (Exception e) {
             String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             message = e.getMessage();
-            //添加异常信息
-            soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+
+            //检测是否是API 对接的仓库
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(warehouseId));
+            Boolean isApiWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
+            if(isApiWarehouse){
+                soB2cErrorService.removeErrorOrder(id,type);
+            }else{
+                //添加异常信息
+                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+            }
+
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
         }
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
@@ -1396,6 +1406,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (deliveryWarehouseIdList.size() > MathUtil.ONE) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX,soCode);
         }
+        String warehouseId = deliveryWarehouseIdList.get(0);
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> deliveryWarehouseList = wmsTaskFeign.listWarehouseByIds(deliveryWarehouseIdList);
         if(CollectionUtils.isEmpty(deliveryWarehouseList)){
@@ -1427,7 +1438,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isApi) {
             try {
                 //下出库单命令
-                thirdWarehouseCreateOutStock(id, entity.getCode(), logisticsChannelId, overseasWarehouseList.get(0), list);
+                thirdWarehouseCreateOutStock(entity,warehouseId,warehouseManageType, logisticsChannelId, overseasWarehouseList.get(0), list);
             } catch (Exception e) {
                 log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -1672,9 +1683,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param overseasProviderWarehouse
      */
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void thirdWarehouseCreateOutStock(String mainId, String code, String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
+    public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId,String warehouseManageType , String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
+        List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>(wantSkuList.size());
+        String mainId = entity.getId();
+        //平台
+        String dictPlatform = overseasProviderWarehouse.getProviderCode();
+        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
+        for (SoB2cDeliveryDTO.DeliverySkuDTO item : wantSkuList) {
+            SkuMappingDTO.ListingSkuParamDTO listingSkuParam = new SkuMappingDTO.ListingSkuParamDTO();
+            listingSkuParam.setDictPlatform(dictPlatform);
+            listingSkuParam.setSkuId(item.getSkuId());
+            listingSkuParam.setSkuNo(item.getSkuNo());
+            listingSkuParam.setWarehouseId(warehouseId);
+            listingSkuParam.setType(warehouseType);
+            listSkuParamList.add(listingSkuParam);
+        }
+
         ThirdWarehouseCreateOutboundReq createOutboundReq = new ThirdWarehouseCreateOutboundReq();
-        SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(mainId);
+        SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(entity.getId());
         String secondAddress = receiver.getSecondAddress();
         String fullAddress = receiver.getFullAddress();
         String address2 = secondAddress + fullAddress;
@@ -1682,13 +1710,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
         receiverInfo.setAddress2(address2);
         createOutboundReq.setReceiverInfo(receiverInfo);
-        List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = B2cOrderConverter.INSTANCE.convertFindListingSku(detailList);
-        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
-        //平台
-        String dictPlatform = overseasProviderWarehouse.getProviderCode();
-        for (SkuMappingDTO.ListingSkuParamDTO item : listSkuParamList) {
-            item.setDictPlatform(dictPlatform);
-        }
+
+
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity item : detailList) {
@@ -1705,7 +1728,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
         createOutboundReq.setVerify(MathUtil.ONE);
-        createOutboundReq.setReferenceNo(code);
+        createOutboundReq.setReferenceNo(entity.getCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);

@@ -168,30 +168,44 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderList) {
+        List<CancelResponseVO> result = new ArrayList<>();
+        Boolean isSuccess = true;
+
         LogisticsCancelOrderVO logisticsCancelOrderVO = logisticsCancelOrderList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         Map<String, String> authMap = logisticsCancelOrderVO.getAuthMap();
         if (Objects.isNull(authMap)) {
             return failure("缺少授权信息");
         }
-        Boolean isSuccess = true;
-        List<CancelResponseVO> responseList = new ArrayList<>(logisticsCancelOrderList.size());
+        CancelResponseVO responseVO = new CancelResponseVO();
+
         for (LogisticsCancelOrderVO item : logisticsCancelOrderList) {
             try {
-                CancelResponseVO responseVO = new CancelResponseVO();
-                Boolean result = baTongService.deleteOrder(authMap, item.getDeliveryNo());
-                if (result) {
-                    responseVO.setDeliveryNo(item.getDeliveryNo());
+                responseVO.setDeliveryNo(item.getDeliveryNo());
+                BaseResult cancelResult = baTongService.deleteOrder(authMap, item.getDeliveryNo());
+                if (!BaTongConstants.SUCCESS.equals(cancelResult.getSuccess())) {
+                    isSuccess = false;
+                    responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),cancelResult.getCnMessage());
+                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                            item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(cancelResult));
+                }else{
+                    //成功
+                    responseVO.success();
+                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                            item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(responseVO), JSONUtil.toJsonStr(cancelResult));
                 }
-                responseList.add(responseVO);
             } catch (Exception e) {
+                isSuccess = false;
+                responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
                         item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e));
-                isSuccess = false;
             }
 
+            result.add(responseVO);
         }
-        return isSuccess ? success(responseList) : failure(responseList);
+        return isSuccess ? success(result) : failure(result);
 
     }
 

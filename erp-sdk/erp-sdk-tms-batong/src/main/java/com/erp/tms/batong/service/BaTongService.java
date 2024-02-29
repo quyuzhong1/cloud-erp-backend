@@ -2,8 +2,8 @@ package com.erp.tms.batong.service;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.OkHttpUtils;
@@ -90,7 +90,7 @@ public class BaTongService {
      * @author Lambda
      * @create 2024-01-15 9:40
      */
-    public Boolean deleteOrder(Map<String, String> authMap, String referenceNo) {
+    public BaseResult deleteOrder(Map<String, String> authMap, String referenceNo) {
         String baseUrl = BaTongConstants.BASE_URL;
         String serviceMethod = BaTongConstants.DELETE_ORDER_URL;
         log.info("删除巴通订单url：{}", baseUrl + serviceMethod);
@@ -100,13 +100,9 @@ public class BaTongService {
         paramsMap.put("paramsJson", JSONUtil.toJsonStr(map));
         String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
         log.info("刪除巴通订单返回结果：{}", resBody);
-        JSONObject jsonObject = JSONUtil.parseObj(resBody);
-        Integer success = jsonObject.getInt("success", 0);
-        if (BaTongConstants.SUCCESS.equals(success)) {
-            return Boolean.TRUE;
-        } else {
-            throw new ServiceException(jsonObject.getStr("cnmessage", "取消订单失败"));
-        }
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        return  result;
+
     }
 
     /**
@@ -185,8 +181,8 @@ public class BaTongService {
         Map<String, String> authMap = new HashMap<>();
         authMap.put("clientId", "681425f7eb33b64f3f809d97b56c46cf");
         authMap.put("clientSecret", "d85a27ff8690a777ee6485ebff679792d85a27ff8690a777ee6485ebff679792");
-        List<BaseData> list = service.listShippingMethod(authMap);
-        System.out.println(JSONUtil.toJsonStr(list));
+        BaseResult result = service.deleteOrder(authMap,"XSDS24022900002");
+        System.out.println(JSONUtil.toJsonStr(result));
 
 
     }
