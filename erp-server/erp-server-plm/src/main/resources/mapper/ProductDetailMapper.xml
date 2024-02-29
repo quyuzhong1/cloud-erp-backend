@@ -541,6 +541,9 @@
             AND (pi.spu_no ILIKE concat('%',#{params.no}::text,'%') OR pd.sku_no ILIKE concat('%',#{params.no}::text,'%') OR pd.name
             ILIKE concat('%', #{params.no}::text,'%'))
         </if>
+        <if test="params.iterateRefSkuNo != null  and params.iterateRefSkuNo != ''">
+            AND pi.iterate_ref_sku_no ILIKE concat('%',#{params.iterateRefSkuNo}::text,'%')
+        </if>
         <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
             AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')
         </if>
