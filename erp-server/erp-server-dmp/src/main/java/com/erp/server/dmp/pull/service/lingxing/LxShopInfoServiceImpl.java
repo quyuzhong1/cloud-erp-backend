@@ -59,21 +59,12 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     private CfgSettingService cfgSettingService;
     @Resource
     private ShopInfoMappingService shopInfoMappingService;
-    @Resource
-    private DmpPushTaskService dmpPushTaskService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
-        List<ShopEntity> entityList = null;
-        try {
-            entityList = pullDate();
-        } catch (Exception e) {
-            // 发送预警
-            dmpPushTaskService.sendWarnMsg(dto.getJobTaskDTO().getId());
-            log.error("拉取领星店铺信息异常,异常信息:{}", JSONUtil.toJsonStr(dto));
-            throw new RuntimeException(e);
-        }
+        List<ShopEntity> entityList = pullDate();
+
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取领星店铺列表数据为空 entityList.size = 0 ");
             return;
