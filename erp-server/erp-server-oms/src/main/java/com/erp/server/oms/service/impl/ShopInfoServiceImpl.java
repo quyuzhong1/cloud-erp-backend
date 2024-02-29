@@ -1113,9 +1113,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        Map<String, String[]> parameterMap = request.getParameterMap();
-        log.warn("Shopify ERP方法：HttpServletRequest, Request body: {}", parameterMap.toString());
-
         // 处理请求体数据
         log.warn("Shopify ERP方法：customersDataRequest, dto: {}", requestBody);
 
