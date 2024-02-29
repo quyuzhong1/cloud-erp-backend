@@ -308,6 +308,10 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String instockForecastRemark;
         /**
+         * 总件数（页面录入）
+         */
+        private Integer totalQty;
+        /**
          * 上传状态（批次）中文
          */
         private String uploadBatchStatusName;

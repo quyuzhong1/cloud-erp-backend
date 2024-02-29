@@ -55,6 +55,7 @@
             td.package_total_weight AS packageTotalWeight,
             td.instock_forecast_status AS instockForecastStatus,
             td.instock_forecast_remark AS instockForecastRemark,
+            td.total_qty AS totalQty,
             tdd.so_id AS soId,
             tdd.so_code AS soCode,
             tdd.order_upload_status AS uploadOrderStatus,

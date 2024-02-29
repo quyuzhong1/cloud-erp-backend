@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.srm.mapper.CfgSettingMapper">
+<mapper namespace="com.erp.server.tms.mapper.CfgSettingMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.CfgSettingEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgSettingEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -13,11 +13,10 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="key" property="key" />
-        <result column="data_json" jdbcType="OTHER" property="dataJson" typeHandler="com.erp.server.srm.handler.ObjectJsonHandler" />
+        <result column="data_json" jdbcType="OTHER" property="dataJson" typeHandler="com.erp.server.tms.handler.ObjectJsonHandler" />
         <result column="disabled" property="disabled" />
        <result column="index" property="index" />
        <result column="remark" property="remark" />
-       <result column="supplier_id" property="supplierId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -31,33 +30,23 @@
         update_time,
         version,
         is_deleted,
-        key, data_json, disabled, index, remark, supplier_id
+        key, data_json, disabled, index, remark
     </sql>
-    <insert id="saveCfgConfig">
-        insert into cfg_setting (<include refid="Base_Column_List"/>)
-        values (
-        #{entity.id},
-        #{entity.createUserId},
-        #{entity.createUserName},
-        #{entity.createTime},
-        #{entity.updateUserId},
-        #{entity.updateUserName},
-        #{entity.updateTime},
-        #{entity.version},
-        #{entity.isDeleted},
-        #{entity.key},
-        #{entity.dataJson,typeHandler=com.erp.server.srm.config.ObjectJsonHandler},
-        #{entity.disabled},
-        #{entity.index},
-        #{entity.remark},
-        #{entity.supplierId}
-        )
-    </insert>
-    <select id="getListBySupplierId" resultMap="BaseResultMap">
-        select <include refid="Base_Column_List"/>
+
+    <!-- 查询所有非禁用的配置 -->
+    <select id="listCfgSetting" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
         from cfg_setting
-        where supplier_id = #{supplierId} and is_deleted = false
+        where is_deleted = false and  disabled = false order by index asc
     </select>
 
-
+    <select id="getByKey" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM cfg_setting
+        WHERE is_deleted = FALSE
+        AND disabled = FALSE
+        AND key = #{key}
+    </select>
 </mapper>

@@ -105,17 +105,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return dto;
     }
 
-    @Override
-    public List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> getProductDestDeclarePrices() {
-        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
-        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson()) || CollectionUtils.isEmpty(entity.getDataJson().getJSONArray("data"))) {
-            return Collections.emptyList();
-        }
-        List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(entity.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
-        return data;
-    }
-
-
     /**
     * 新增修改处理数据
     */
@@ -159,10 +148,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PO_RECONCILIATION:
                 handlePoReconciliationSetting(addDTO.getPoReconciliationSettingDTO());
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReconciliationSettingDTO());
-                break;
-            case LOGISTICS_PRODUCT_DEST_DECLARE_PRICE:
-                JSONArray jsonArray = JSONUtil.parseArray(addDTO.getLogisticsProductDestDeclarePrices());
-                jsonObject.putOpt("data", jsonArray);
                 break;
             default:
                 break;

@@ -317,4 +317,19 @@ public class ProductDetailShowDTO implements Serializable {
      * 仓位
      */
     private String warehouseLocation;
+
+    /**
+     * 产品类型，ProductTypeEnum枚举，/plm/dict/list?type=productType
+     */
+    private String type;
+
+    /**
+     * 迭代产品关联skuid
+     */
+    private String iterateRefSkuId;
+
+    /**
+     * 迭代产品关联skuNo
+     */
+    private String iterateRefSkuNo;
 }
