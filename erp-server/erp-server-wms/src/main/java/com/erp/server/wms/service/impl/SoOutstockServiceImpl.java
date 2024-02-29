@@ -1721,7 +1721,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         if(CollectionUtils.isNotEmpty(batchUpdateTrackNoDTOList)){
-            batchResultDTOList.addAll(logisticsBillFeign.updateBatchTrackNo(batchUpdateTrackNoDTOList,true));
+            batchResultDTOList.addAll(logisticsBillFeign.updateBatchTrackNo(batchUpdateTrackNoDTOList,false));
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             this.updateBatchById(updateList);
