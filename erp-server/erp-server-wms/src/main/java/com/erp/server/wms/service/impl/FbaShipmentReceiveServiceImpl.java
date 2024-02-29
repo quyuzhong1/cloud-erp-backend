@@ -285,7 +285,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         for (Map.Entry<LocalDateTime, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {
             LocalDate billDate = entry.getKey().toLocalDate();
             // 执行调拨逻辑
-            fbaShipmentService.handlerWarehouse(entity, list, billDate, closedDateMap);
+            fbaShipmentService.handlerWarehouse(entity, entry.getValue(), billDate, closedDateMap);
         }
 
     }
