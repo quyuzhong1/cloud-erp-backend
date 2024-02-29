@@ -66,10 +66,15 @@ public class MercadoListingHandler extends AbstractProductHandler<PlatformMercad
         while(pageNo < pageCount) {
 
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
-            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search?q=vacuum%20wireless&limit=100&status=inactive&offset=10'";
+//            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search?q=vacuum%20wireless&limit=100&status=inactive&offset=10'";
+
+            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
-
+            sb.append("?q=");
+            sb.append("&limit="+ pageSize +"");
+            sb.append("&offset="+ pageNo +"");
+            sb.append("&status=active");
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoPost(sb.toString(), accessToken, paramMap);
 

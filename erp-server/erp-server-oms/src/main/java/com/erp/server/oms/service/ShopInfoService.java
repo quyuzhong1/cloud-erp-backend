@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
+import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -260,4 +261,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     void shopRedact(ShopifyWebhookDTO.ShopRedactDTO dto, HttpServletResponse response, HttpServletRequest request);
+
+    /**
+     * 测试
+     * @Author Luo_WG
+     * @Date 2024/2/29 15:52
+     * @param data
+     * @return void
+     **/
+    ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request);
 }

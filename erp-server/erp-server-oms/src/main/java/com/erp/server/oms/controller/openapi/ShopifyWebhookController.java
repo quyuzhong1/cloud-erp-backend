@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.openapi;
 
 import com.erp.model.oms.dto.ShopifyWebhookDTO;
 import com.erp.server.oms.service.ShopInfoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,5 +56,23 @@ public class ShopifyWebhookController {
     public void shopRedact(@RequestBody ShopifyWebhookDTO.ShopRedactDTO dto, HttpServletResponse response, HttpServletRequest request) {
         shopInfoService.shopRedact(dto, response, request);
     }
+
+
+
+    /**
+     * 要求删除店铺数据测试
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param data
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+
+    @PostMapping("/shopRedactTest")
+    public ResponseEntity<String> shopRedactTest(@RequestBody String data, HttpServletResponse response, HttpServletRequest request) {
+
+        return shopInfoService.shopRedactTest(data, response, request);
+
+    }
+
 
 }
