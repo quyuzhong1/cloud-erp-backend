@@ -79,7 +79,8 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
-        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        // 取上次开始的时间
+        LocalDateTime requestTime = dto.getJobTaskDTO().getLastTime();
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getJobTaskDTO().getShopId());
         if (null == shopInfoEntity){
             throw new ServiceException("店铺不存在,id=" + dto.getJobTaskDTO().getShopId());
@@ -90,9 +91,9 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
             throw new ServiceException("数据异常:找不到领星映射关系, 店铺id=" + shopInfoEntity.getId());
         }
         String sid = mappingEntity.getThirdPlatformShopId();
-        List<FbaShipmentReceiveDTO> dtoList = LingxingApiUtils.getAllReceivedInventory(Integer.parseInt(sid), nextTime.toLocalDate());
+        List<FbaShipmentReceiveDTO> dtoList = LingxingApiUtils.getAllReceivedInventory(Integer.parseInt(sid), requestTime.toLocalDate());
         if (CollectionUtil.isEmpty(dtoList)) {
-            log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, nextTime);
+            log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, requestTime);
             return;
         }
         List<FbaReceiveDetailEntity> entityList = DmpFbaShipmentReceiveConverter.INSTANCE.dtoListToEntityList(dtoList);
@@ -106,7 +107,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
                 .collect(Collectors.groupingBy(FbaReceiveDetailEntity::getFbaShipmentId));
         for (Map.Entry<String, List<FbaReceiveDetailEntity>> entry : entityToMqList.entrySet()) {
             // 构造消息体
-            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, nextTime.toLocalDate(), sid);
+            FbaReceiveGroupEntity entity = FbaReceiveGroupEntity.init(entry, requestTime.toLocalDate(), sid);
             UniqueDto orderMongoDTO = UniqueDto.getUniqId(entity.getUniqueId());
             List<FbaReceiveGroupEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
