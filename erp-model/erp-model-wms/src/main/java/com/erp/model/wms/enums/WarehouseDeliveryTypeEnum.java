@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum WarehouseDeliveryTypeEnum implements EnumMessage {
-    COMBINE("combine", "捆绑Sku发货"),
-    SINGLE("single", "子件发货"),
+    COMBINE("combine", "捆绑SKU发货"),
+    SINGLE("single", "子件SKU发货"),
     ;
 
     @EnumValue
