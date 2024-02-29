@@ -99,4 +99,11 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      */
     Integer countOrderBySupplierId(@Param(value = "supplierId") String supplierId,@Param(value = "startTime") LocalDate startTime,@Param(value = "endTime") LocalDate endTime);
 
+    /**
+     * 根据采购订单获取收货明细列表
+     * @param purchaseOrderIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@Param(value = "purchaseOrderIds") List<String> purchaseOrderIds);
+
 }

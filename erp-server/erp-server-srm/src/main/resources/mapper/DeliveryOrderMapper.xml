@@ -72,7 +72,6 @@
             do2.to_warehouse_name as toWarehouseName,
             do2.print_date as printDate,
             do2.confirm_receive_date as confirmReceiveDate,
-            do2.receive_user_name as receiveUserName,
             do2.create_user_name as createUserName,
             do2.create_time as createTime,
             do2.supplier_id as supplierId
@@ -81,17 +80,19 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        do2.plan_delivery_date ,do2.id ASC
+        do2.plan_delivery_date ASC,do2.create_time DESC ,do2.id ASC
     </select>
     <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
         select tab.receiptStatus,tab.isPrint,sum(qtyDifferences) as qtyDifferences,sum(count)  as count from (
@@ -105,10 +106,12 @@
         delivery_order do2
         WHERE
         do2.is_deleted = FALSE
+        <if test="supplierIdList != null and supplierIdList.size > 0">
         AND do2.supplier_id IN
         <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         GROUP BY
         do2.receipt_status,
         do2.is_print,
@@ -119,6 +122,7 @@
         select
         do2.id,
         do2.code,
+        doe.source_detail_id as purchaseDetailId,
         do2.plan_delivery_date as planDeliveryDate,
         do2.receive_code as receiveCode,
         do2.is_print as isPrint,
@@ -138,7 +142,6 @@
         do2.to_warehouse_name as toWarehouseName,
         do2.print_date as printDate,
         do2.confirm_receive_date as confirmReceiveDate,
-        do2.receive_user_name as receiveUserName,
         do2.create_user_name as createUserName,
         do2.create_time as createTime,
         do2.supplier_id as supplierId
@@ -147,10 +150,12 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -193,10 +198,13 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
     </select>
 
 

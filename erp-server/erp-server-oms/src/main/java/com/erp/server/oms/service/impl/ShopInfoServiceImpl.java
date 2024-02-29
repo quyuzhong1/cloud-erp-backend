@@ -1113,23 +1113,26 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        log.warn("Shopify ERP方法：HttpServletRequest, Request body: {}", parameterMap.toString());
+
         // 处理请求体数据
-        log.info("Shopify ERP方法：customersDataRequest, Request body: {}", requestBody);
+        log.warn("Shopify ERP方法：customersDataRequest, dto: {}", requestBody);
 
         // 从请求头中获取HMAC
         String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
         String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
 
         // 处理请求体数据
-        log.info("Shopify ERP方法：customersDataRequest, X-Shopify-Hmac-SHA256: {}", hmacHeader);
-        log.info("Shopify ERP方法：customersDataRequest, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+        log.warn("Shopify ERP方法：customersDataRequest, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.warn("Shopify ERP方法：customersDataRequest, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
 
         // 验证Webhook
         boolean verified = false;
         try {
             verified = verifyWebhook(requestBody, hmacHeader);
         } catch (Exception e) {
-            log.info("ERP方法：customersDataRequest, 加密入参计算hmac报错: {}", e.getMessage());
+            log.warn("ERP方法：customersDataRequest, 加密入参计算hmac报错: {}", e.getMessage());
             e.printStackTrace();
         }
 
@@ -1154,22 +1157,22 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             e.printStackTrace();
         }
         // 处理请求体数据
-        log.info("Shopify ERP方法：customersRedact, Request body: {}", requestBody);
+        log.warn("Shopify ERP方法：customersRedact, Request body: {}", requestBody);
 
         // 从请求头中获取HMAC
         String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
         String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
 
         // 处理请求体数据
-        log.info("Shopify ERP方法：customersRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
-        log.info("Shopify ERP方法：customersRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+        log.warn("Shopify ERP方法：customersRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.warn("Shopify ERP方法：customersRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
 
         // 验证Webhook
         boolean verified = false;
         try {
             verified = verifyWebhook(requestBody, hmacHeader);
         } catch (Exception e) {
-            log.info("ERP方法：customersRedact, 加密入参计算hmac报错: {}", e.getMessage());
+            log.warn("ERP方法：customersRedact, 加密入参计算hmac报错: {}", e.getMessage());
             e.printStackTrace();
         }
 
@@ -1194,22 +1197,22 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             e.printStackTrace();
         }
         // 处理请求体数据
-        log.info("Shopify ERP方法：shopRedact, Request body: {}", requestBody);
+        log.warn("Shopify ERP方法：shopRedact, Request body: {}", requestBody);
 
         // 从请求头中获取HMAC
         String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
         String HttpHmacHeader = request.getHeader("HTTP_X_SHOPIFY_HMAC_SHA256");
 
         // 处理请求体数据
-        log.info("Shopify ERP方法：shopRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
-        log.info("Shopify ERP方法：shopRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
+        log.warn("Shopify ERP方法：shopRedact, X-Shopify-Hmac-SHA256: {}", hmacHeader);
+        log.warn("Shopify ERP方法：shopRedact, HTTP_X_SHOPIFY_HMAC_SHA256: {}", HttpHmacHeader);
 
         // 验证Webhook
         boolean verified = false;
         try {
             verified = verifyWebhook(requestBody, hmacHeader);
         } catch (Exception e) {
-            log.info("加密入参计算hmac报错: {}", e.getMessage());
+            log.warn("加密入参计算hmac报错: {}", e.getMessage());
             e.printStackTrace();
         }
 
@@ -1232,7 +1235,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         sha256Hmac.init(secretKey);
         byte[] hmacBytes = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         String calculatedHmac = Base64.getEncoder().encodeToString(hmacBytes);
-        log.info("Shopify  平台返回头hmac：{}, 入参加密计算hmac：{}", hmacHeader, calculatedHmac);
+        log.warn("Shopify  平台返回头hmac：{}, 入参加密计算hmac：{}", hmacHeader, calculatedHmac);
         // 安全比较计算得到的HMAC和请求头中的HMAC
         return calculatedHmac.equals(hmacHeader);
     }

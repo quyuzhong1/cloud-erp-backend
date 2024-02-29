@@ -1820,14 +1820,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取系统配置
         CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.PO_RECONCILIATION.getCode());
         if (ObjectUtil.isEmpty(cfgSetting) || ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
-            XxlJobHelper.log("无生成对账单数据");
+            log.info("无生成对账单数据");
             return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
         }
         CfgSettingValueDTO.PoReconciliationSettingDTO dto = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
-        String endDate = dto.getEndDate();
-        if (StringUtils.isEmpty(endDate) || !NumberUtil.isInteger(endDate)){
-            return SupplierCountDTO.builder().count(0).localDate(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth())).build();
-        }
         LocalDate startTime = null;
         LocalDate endTime = null;
         //判断 周期类型
@@ -1835,8 +1831,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
             endTime = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
         }else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getReconciliationType())){
-            int end = Integer.parseInt(endDate);
             LocalDate currentDate = LocalDate.now();
+            String endDate = dto.getEndDate();
+            if (StringUtils.isEmpty(endDate) || !NumberUtil.isInteger(endDate)){
+                endTime = currentDate.with(TemporalAdjusters.lastDayOfMonth());
+                return SupplierCountDTO.builder().count(0).localDate(endTime).build();
+            }
+            int end = Integer.parseInt(endDate);
+            String endStr = String.valueOf(end);
+            if (end < 10){
+                endStr = "0" + end;
+            }
             int dayOfMonth = currentDate.getDayOfMonth();
             String nowMonth = currentDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -1845,19 +1850,36 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 // 获取上个月的日期
                 LocalDate beforeMonthDate = currentDate.minusMonths(-1);
                 String formattedMonth = beforeMonthDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
-                startTime = LocalDate.parse(nowMonth + "-"+end, formatter);
-                endTime = LocalDate.parse(formattedMonth + "-"+end, formatter);
+                startTime = LocalDate.parse(nowMonth + "-" + endStr, formatter);
+                endTime = LocalDate.parse(formattedMonth + "-" + endStr, formatter);
             }else {
                 //上月 -23
                 // 获取上个月的日期
                 LocalDate lastMonthDate = currentDate.minusMonths(1);
                 String formattedMonth = lastMonthDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
-                startTime = LocalDate.parse(formattedMonth + "-"+end, formatter);
-                endTime = LocalDate.parse(nowMonth + "-"+end, formatter);
+                startTime = LocalDate.parse(formattedMonth + "-" + endStr, formatter);
+                endTime = LocalDate.parse(nowMonth + "-" + endStr, formatter);
             }
+            endTime = endTime.plusDays(-1);
         }
         //根据时间进行查询
         Integer count = baseMapper.countOrderBySupplierId(supplierId,startTime,endTime);
         return SupplierCountDTO.builder().count(count).localDate(endTime).build();
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
+    }
+
+    @Override
+    public List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto) {
+        if(StringUtils.isBlank(dto.getSourceType()) || CollectionUtils.isEmpty(dto.getSourceIds())){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
     }
 }

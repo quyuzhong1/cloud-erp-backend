@@ -740,7 +740,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         supplier.setDisabled(state);
 
         //添加日志
-        String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
+        String content = String.format("编辑了供应商[%s] 启用状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
         //发送金蝶
@@ -801,7 +801,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplier.setSrmOperateUserName(userInfo.getUserName());
         }
         //添加日志
-        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "否" : "是", dto.getState() == true ? "否" : "是");
+        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() ? "启用" : "停用", dto.getState() ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
         this.updateById(supplier);
         return ApiResult.successMsg(msg);

@@ -46,6 +46,9 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.model.wms.enums.PoReceiveSourceTypeEnum;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -119,14 +122,21 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
-        this.fillData(pageData.getRecords(),dto.getParams().getSupplierIdList());
+        this.fillData(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
-    private void fillData(List<DeliveryOrderDTO.ListDTO> dataList,List<String> supplierIdList){
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(supplierIdList);
+    private void fillData(List<DeliveryOrderDTO.ListDTO> dataList){
+        if(CollectionUtils.isEmpty(dataList)){
+            return;
+        }
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dataList.stream().map(DeliveryOrderDTO.ListDTO::getSupplierId).distinct().collect(Collectors.toList()));
         List<String> purchaseDetailIds = dataList.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderDTO.ListDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
         List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
+        WarehouseReceiveDTO.SourceParamDTO sourceParamDTO = new WarehouseReceiveDTO.SourceParamDTO();
+        sourceParamDTO.setSourceIds(dataList.stream().map(DeliveryOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList()));
+        sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
+        List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
         dataList.forEach(v->{
             v.setReceiptStatusName(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
@@ -134,6 +144,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             if(Objects.nonNull(qcReceiveResultDTO)){
                 v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
             }
+            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
+            v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
         });
     }
 
@@ -274,11 +286,23 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto) {
         List<DeliveryOrderExportExcelDTO> list = this.baseMapper.getExportList(dto);
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(dto.getSupplierIdList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(list.stream().map(DeliveryOrderExportExcelDTO::getSupplierId).distinct().collect(Collectors.toList()));
+        List<String> purchaseDetailIds = list.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderExportExcelDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
+        List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
+        WarehouseReceiveDTO.SourceParamDTO sourceParamDTO = new WarehouseReceiveDTO.SourceParamDTO();
+        sourceParamDTO.setSourceIds(list.stream().map(DeliveryOrderExportExcelDTO::getId).distinct().collect(Collectors.toList()));
+        sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
+        List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
         list.forEach(v->{
             v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
+            v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
+            QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
+            if(Objects.nonNull(qcReceiveResultDTO)){
+                v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
+            }
         });
         return list;
     }
@@ -647,8 +671,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 throw new ServiceException("仓库信息为空");
             }
             WarehouseDTO.UpdateDTO warehouseInfo = warehouseList.get(0);
-            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
-            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
+//            deliveryOrderEntity.setReceiveUserId(warehouseInfo.getChargeId());
+//            deliveryOrderEntity.setReceiveUserName(warehouseInfo.getContacts());
             deliveryOrderEntity.setReceivePhone(warehouseInfo.getContactTelNumber());
             deliveryOrderEntity.setReceiveAddress(warehouseInfo.getAddress());
         }
