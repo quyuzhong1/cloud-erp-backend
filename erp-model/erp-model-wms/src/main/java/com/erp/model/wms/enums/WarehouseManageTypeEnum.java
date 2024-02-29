@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum WarehouseManageTypeEnum implements EnumMessage {
     SELF_BUILD("selfBuild", "自建"),
-    THIRDPARTY("thirdparty", "第三方仓"),
+    THIRD_PARTY("thirdParty", "第三方仓"),
     ;
 
     /**
