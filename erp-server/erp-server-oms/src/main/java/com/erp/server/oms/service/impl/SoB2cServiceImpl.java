@@ -1577,7 +1577,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         param.setSkuIdList(skuIdList);
         param.setShopIdList(Arrays.asList(shopId));
         //子件发货
-        String singleDelivery=WarehouseDeliveryTypeEnum.SINGLE.getCode();
+        String singleDelivery = WarehouseDeliveryTypeEnum.SINGLE.getCode();
         //自建
         String selfBuild = WarehouseManageTypeEnum.SELF_BUILD.getCode();
         //是否自建 如果是就是要拆分
