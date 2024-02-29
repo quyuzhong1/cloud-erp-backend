@@ -1,26 +1,23 @@
-package com.erp.server.wms.service;
-import com.erp.model.wms.dto.CfgSettingValueDTO;
-import com.erp.model.wms.entity.CfgSettingEntity;
+package com.erp.server.tms.service;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.CfgSettingDTO;
-
-import java.util.List;
+import com.erp.model.tms.dto.CfgSettingDTO;
 
 /**
  * <p>
  * 系统配置管理 服务类
  * </p>
  *
- * @author will
- * @since 2024-01-08
+ * @author zdy
+ * @since 2024-02-29
  */
 public interface CfgSettingService extends SuperService<CfgSettingEntity> {
 
     /**
     * 新增
-    * @author will
-    * @date: 2024-01-08
+    * @author zdy
+    * @date: 2024-02-29
     * @param dto
     * @return
     */
@@ -42,12 +39,4 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return com.erp.model.wms.entity.CfgSettingEntity
      **/
     CfgSettingEntity getByKey(String key);
-
-    /**
-     * @description: 查询退货设置
-     * @author Will
-     * @date: 2024/2/2 15:55
-     * @return PoReturnSettingDTO
-     */
-    CfgSettingValueDTO.PoReturnSettingDTO getPoReturnSetting();
 }

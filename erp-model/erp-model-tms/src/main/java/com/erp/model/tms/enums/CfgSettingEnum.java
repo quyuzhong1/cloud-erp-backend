@@ -1,14 +1,11 @@
-package com.erp.model.wms.enums;
+package com.erp.model.tms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum CfgSettingEnum implements EnumMessage {
-
-    SUBCONTRACT_ISSUE("subcontractIssue","委外发料单设置"),
-    PO_RETURN("poReturn","采购退货单设置"),
-    PO_RECONCILIATION("poReconciliation","采购对账单设置"),
+    LOGISTICS_PRODUCT_DEST_DECLARE_PRICE("logisticsProductDestDeclarePrice","物流产品信息-目的国申报价"),
     ;
 
     /**
