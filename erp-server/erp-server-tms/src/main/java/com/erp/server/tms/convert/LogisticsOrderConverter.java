@@ -586,7 +586,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "consigneePostCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "consigneeTelephone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consigneeMobile",source = "receiverInfoVO.telNumber"),
-            @Mapping(target = "consigneeEmail",source = "receiverInfoVO.email")
+            @Mapping(target = "consigneeEmail",source = "receiverInfoVO.email"),
+            @Mapping(target = "consigneeTariff",source = "receiverInfoVO.receiverTaxNo")
     })
     Consignee orderConsigneeByBaTong(LogisticsOrderVO logisticsOrder);
 
