@@ -39,6 +39,13 @@
                                        and  type = #{type}
 
     </delete>
+    <delete id="batchDeleteB2cError">
+        DELETE FROM so_b2c_error WHERE type = #{params.type}
+        and main_id in
+        <foreach collection="params.mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 
 
 </mapper>

@@ -108,6 +108,15 @@ public interface SoB2cFeign {
     void addSoB2cError(@RequestBody SoB2cErrorDTO.AddDTO dto);
 
     /**
+     * @param batchAdd
+     * @return
+     * @description 批量添加异常订单信息  一个请求中包含多个订单
+     * @author Lambda
+     * @create 2023-12-20 11:06
+     */
+    @PostMapping("/feign/soB2cError/batchAdd")
+    void batchAddSoB2cError(@RequestBody SoB2cErrorDTO.BatchAdd batchAdd);
+    /**
      * 删除异常信息
      *
      * @param deleteDTO
@@ -119,6 +128,17 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2cError/delete")
     void deleteError(@RequestBody SoB2cErrorDTO.DeleteDTO deleteDTO);
 
+    /**
+     * 批量删除异常信息
+     *
+     * @param batchDeleteDTO
+     * @return
+     * @description
+     * @author zdy
+     * @create 2023-12-20 11:20
+     */
+    @PostMapping("/feign/soB2cError/deleteErrorByMainIds")
+    void deleteErrorByMainIds(@RequestBody SoB2cErrorDTO.BatchDeleteDTO batchDeleteDTO);
     /**
      * 根据b2c订单id获取买家信息
      *

@@ -145,7 +145,7 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @param id
      * @return java.util.List<BatchResultDTO>
      **/
-    List<BatchResultDTO> upload(String id);
+    List<BatchResultDTO> orderForecast(String id);
 
     /**
      * 入库预报
@@ -197,4 +197,11 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
      * @return void
      **/
     void getOrderByCodeJob();
+
+    /**
+     * 订单维度重试订单预报
+     * @param id
+     * @return
+     */
+    List<BatchResultDTO> retryOrderForecast(String id);
 }

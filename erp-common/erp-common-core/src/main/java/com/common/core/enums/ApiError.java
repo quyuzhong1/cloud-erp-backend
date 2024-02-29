@@ -959,7 +959,7 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_DECLARE_ID_NOT_EXIST(92134,"入库预报记录id不能为空"),
     ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST(92135,"入库预报记录总件数不能为空"),
     ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
-
+    ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
 
 
 

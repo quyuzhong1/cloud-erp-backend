@@ -240,12 +240,12 @@ public class TransferDeclareController extends BaseController {
             menuCode = "wms:TransferDeclareService:upload",
             tableAlias = "td"
     )
-    public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             List<BatchResultDTO> result = new ArrayList<>();
             try {
-                result = transferDeclareService.upload(id);
+                result = transferDeclareService.orderForecast(id);
             } catch (Exception e) {
                 log.error("上传报关单失败", e);
                 TransferDeclareEntity entity = transferDeclareService.getById(id);
@@ -261,7 +261,41 @@ public class TransferDeclareController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    /**
+     * 重试订单预报
+     * @Author Luo_WG
+     * @Date 2024/1/25 9:54
+     * @param dto  这里的id是 so_id列表
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogViewService
+    @PostMapping(value = "/retryOrderForecast")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:TransferDeclareService:retryOrderForecast",
+            tableAlias = "td"
+    )
+    public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            List<BatchResultDTO> result = new ArrayList<>();
+            try {
+                result = transferDeclareService.retryOrderForecast(id);
+            } catch (Exception e) {
+                log.error("上传报关单失败", e);
+                TransferDeclareEntity entity = transferDeclareService.getBySoId(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
+                    resultDTOS.addAll(result);
+                    continue;
+                }
+                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+            resultDTOS.addAll(result);
 
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
     /**
      * 入库预报
      * @Author zdy
@@ -273,7 +307,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/instockForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:upload",
+            menuCode = "wms:TransferDeclareService:instockForecast",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> instockForecast(@RequestBody @Validated List<BaseDTO.QtyDTO> dtos) {
