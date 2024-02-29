@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 
-import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
+import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +32,7 @@ public interface InventoryClosedRecordService extends SuperService<InventoryClos
      * @author Jim
      * @date: 2023-10-12
      */
-    Map<String, LocalDate> mapByOrgId();
+    Map<String, LocalDate> mapByOrgId(String category);
 
     /**
      * 查询单据日期是否已关账(单据已关账返回关账时间)
@@ -41,4 +41,11 @@ public interface InventoryClosedRecordService extends SuperService<InventoryClos
      * @date: 2024-01-05
      */
     LocalDate checkClosed(String inventoryOrgId, LocalDate billDate);
+    /**
+     * @description: 根据组织id集合验证存货核算关账
+     * @author Will
+     * @date: 2024/2/28 20:10
+     * @param orgIdList
+     */
+    void checkHsClosed (List<InventoryClosedRecordDTO.ClosedParamDTO> orgIdList);
 }
