@@ -38,7 +38,7 @@ public interface LogisticsBillConverter {
             @Mapping(target = "addressFirst", source = "firstAddress"),
             @Mapping(target = "addressSecond", source = "secondAddress"),
             @Mapping(target = "zipCode", source = "postCode"),
-
+            @Mapping(target = "receiverTaxNo", source = "receiverTaxNo")
     })
     ReceiverInfoVO convertReceiver(LogisticsBillDTO.ReceiverDTO  receiver);
 
