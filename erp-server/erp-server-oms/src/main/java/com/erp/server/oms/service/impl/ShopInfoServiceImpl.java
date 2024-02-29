@@ -60,6 +60,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -1221,6 +1223,38 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             response.setStatus(HttpServletResponse.SC_OK);
         }
         return;
+    }
+
+    @Override
+    public ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request) {
+        log.warn("Shopify: shopRedactTest 方法 入参：{}", data);
+        String hmacHeader = request.getHeader("X_SHOPIFY_HMAC_SHA256");
+        boolean verified = verifyHmac(data, hmacHeader);
+
+        if (verified) {
+            // Process webhook payload
+            return ResponseEntity.ok("Webhook verified and processed successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+    }
+
+    private boolean verifyHmac(String data, String hmacHeader) {
+        try {
+            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(), "HmacSHA256");
+            sha256Hmac.init(secretKey);
+            byte[] calculatedHmac = sha256Hmac.doFinal(data.getBytes());
+            String calculatedHmacBase64 = Base64.getEncoder().encodeToString(calculatedHmac);
+
+            log.warn("Shopify: shopRedactTest 方法 hmac解密：{}，  请求头：{}", calculatedHmacBase64, hmacHeader);
+
+            return calculatedHmacBase64.equals(hmacHeader);
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 
