@@ -115,32 +115,18 @@ public class BaTongService {
      * @author Lambda
      * @create 2024-01-15 11:42
      */
-    public LabelResponse getLabel(Map<String, String> authMap, LabelRequest labelRequest) {
-        try {
-            String baseUrl = BaTongConstants.BASE_URL;
-            String serviceMethod = BaTongConstants.LABEL_URL;
-            log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
-            String paramsJson = JSONUtil.toJsonStr(labelRequest);
-            Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
-            paramsMap.put("paramsJson", paramsJson);
-            String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
-            log.info("获取巴通标签返回结果：{}", resBody);
-            BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
-            Integer success = result.getSuccess();
-            //表示成功
-            if (BaTongConstants.SUCCESS.equals(success)) {
-                LabelResponse response = JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
-                String labelUrl = response.getLabelUrl();
-                String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
-                response.setBase64(base64);
-                return response;
-            } else {
-                throw new ServiceException(result.getCnMessage());
-            }
+    public BaseResult getLabel(Map<String, String> authMap, LabelRequest labelRequest) {
+        String baseUrl = BaTongConstants.BASE_URL;
+        String serviceMethod = BaTongConstants.LABEL_URL;
+        log.info("获取巴通标签url：{}", baseUrl + serviceMethod);
+        String paramsJson = JSONUtil.toJsonStr(labelRequest);
+        Map<String, Object> paramsMap = getBaseMap(authMap, serviceMethod);
+        paramsMap.put("paramsJson", paramsJson);
+        String resBody = OkHttpUtils.doPost(baseUrl, paramsMap, MapUtil.empty());
+        log.info("获取巴通标签返回结果：{}", resBody);
+        BaseResult result = JSONUtil.toBean(resBody, BaseResult.class);
+        return result;
 
-        } catch (IOException e) {
-            throw new ServiceException(e.getMessage());
-        }
     }
 
     /**
