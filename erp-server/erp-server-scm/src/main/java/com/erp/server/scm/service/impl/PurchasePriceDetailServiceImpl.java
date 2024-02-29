@@ -803,12 +803,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.addAll(list);
         }
 
-        //采购价目历史表
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> historyList = purchasePriceHistoryService.getHistoryTaxPrice(dto);
-        if (CollectionUtils.isNotEmpty(historyList)) {
-            resultList.addAll(historyList);
-        }
-
         //未找到报价信息
         if (CollectionUtils.isEmpty(resultList)) {
             if (StringUtils.isNotBlank(dto.getSupplierId())) {
