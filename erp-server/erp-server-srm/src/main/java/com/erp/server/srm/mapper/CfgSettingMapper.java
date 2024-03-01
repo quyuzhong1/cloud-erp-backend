@@ -19,7 +19,5 @@ import java.util.List;
 @Mapper
 public interface CfgSettingMapper extends BaseMapper<CfgSettingEntity> {
 
-    boolean saveCfgConfig(@Param("entity") CfgSettingEntity cfgSettingEntity);
-
     List<CfgSettingEntity> getListBySupplierId(@Param("supplierId") String supplierId);
 }
