@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.TaskConstant;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -83,7 +84,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
         }
 
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), PlatformEnum.LINGXING.getName()));
+        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), TaskConstant.LX_PULL_DATA_TASK));
 
     }
 
