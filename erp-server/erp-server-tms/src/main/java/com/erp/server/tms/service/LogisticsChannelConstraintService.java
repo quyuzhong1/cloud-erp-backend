@@ -34,4 +34,6 @@ public interface LogisticsChannelConstraintService extends SuperService<Logistic
     void downloadTemplate(HttpServletResponse response);
 
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    LogisticsChannelConstraintEntity getByChannelAndCountry(String channelId,String country);
 }

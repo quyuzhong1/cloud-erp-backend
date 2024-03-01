@@ -8,8 +8,10 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -68,5 +70,6 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/getSignShipInfoByChannelById")
     LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId );
 
-
+    @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
+    LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
 }

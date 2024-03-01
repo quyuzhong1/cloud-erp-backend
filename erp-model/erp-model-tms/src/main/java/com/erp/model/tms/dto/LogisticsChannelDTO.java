@@ -2,6 +2,8 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 
+import com.common.business.enums.UnitEnum;
+import com.common.core.enums.CurrencyEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -87,6 +89,78 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean isPrintPlatform;
     }
 
+
+    /**
+     * 约束规则DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsChannelConstraintDTO {
+        /**
+         * 渠道id
+         */
+        private String  channelId;
+
+        /**
+         * 国家二字码
+         */
+        private String country;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 最高报关金额
+         */
+        private BigDecimal maxCustomsAmount = BigDecimal.ZERO;
+
+        /**
+         * 最高报关币别
+         */
+        private String maxCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();
+
+        /**
+         * 最低报关金额
+         */
+        private BigDecimal minCustomsAmount = BigDecimal.ZERO;
+
+        /**
+         * 最低报关币种
+         */
+        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();;
+
+        /**
+         * 重量上限
+         */
+        private BigDecimal maxWeight = BigDecimal.ZERO;;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit = UnitEnum.WeightUnitEnum.G.getCode();
+
+        /**
+         * 长度上限
+         */
+        private BigDecimal maxLength = BigDecimal.ZERO;
+
+        /**
+         * 宽度上限
+         */
+        private BigDecimal maxWidth = BigDecimal.ZERO;
+
+        /**
+         * 高度上限
+         */
+        private BigDecimal maxHeight = BigDecimal.ZERO;
+
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit = "cm";
+
+    }
 
     /**
      * 基础信息

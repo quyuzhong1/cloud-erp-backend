@@ -191,6 +191,14 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
         return true;
     }
 
+    @Override
+    public LogisticsChannelConstraintEntity getByChannelAndCountry(String channelId, String country) {
+        if(StringUtils.isBlank(country)){
+            return null;
+        }
+        return this.lambdaQuery().eq(LogisticsChannelConstraintEntity::getChannelId,channelId).eq(LogisticsChannelConstraintEntity::getCountry,country).one();
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void handleImportData(List<LogisticsChannelConstraintDTO.AddOrUpdateDTO> addOrUpdateDTOList) {
         List<String> channelIds = addOrUpdateDTOList.stream().map(LogisticsChannelConstraintDTO.AddOrUpdateDTO::getChannelId).collect(Collectors.toList());

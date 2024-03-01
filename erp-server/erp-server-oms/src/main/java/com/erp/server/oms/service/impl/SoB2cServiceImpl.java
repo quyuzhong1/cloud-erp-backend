@@ -5222,6 +5222,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = this.getById(id);
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
         //存在的物流渠道
         String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
         /**
@@ -5242,32 +5243,52 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
         }
-        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+        String country = Objects.nonNull(soB2cReceiverEntity)?soB2cReceiverEntity.getCountry():"";
+        if(country == null){
+            country = "";
+        }
+        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO =  logisticsFeign.getLogisticsChannelConstraint(soB2cLogisticsEntity.getLogisticsChannelId(),country);
+        BigDecimal maxWeight = channelConstraintDTO.getMaxWeight();
+        if (channelConstraintDTO.getSizeUnit().equals("kg")) {
+            maxWeight = maxWeight.multiply(BigDecimal.valueOf(1000));
+        }
         //默认为cm
-        BigDecimal maxLength = logisticsChannel.getMaxLength();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
+        BigDecimal maxLength = channelConstraintDTO.getMaxLength();
+        if (channelConstraintDTO.getSizeUnit().equals("m")) {
             maxLength = maxLength.multiply(BigDecimal.valueOf(100));
         }
-        BigDecimal maxWidth = logisticsChannel.getMaxWidth();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
+        BigDecimal maxWidth = channelConstraintDTO.getMaxWidth();
+        if (channelConstraintDTO.getSizeUnit().equals("m")) {
             maxWidth = maxWidth.multiply(BigDecimal.valueOf(100));
         }
-        BigDecimal maxHeight = logisticsChannel.getMaxHeight();
-        if (logisticsChannel.getSizeUnit().equals("m")) {
+        BigDecimal maxHeight = channelConstraintDTO.getMaxHeight();
+        if (channelConstraintDTO.getSizeUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
         //所有都清空就是初始值，其实就不用校验了。
-        if(maxHeight.compareTo(BigDecimal.ZERO) == 0 && maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0){
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+        if(maxHeight.compareTo(BigDecimal.ZERO) == 0 && maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0 && maxWeight.compareTo(BigDecimal.ZERO) == 0 ){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸重量成功");
         }
+        boolean result = true;
+        String msg = "";
         if (soB2cLogisticsEntity.getLength().compareTo(maxLength) > 0 ||
                 soB2cLogisticsEntity.getWidth().compareTo(maxWidth) > 0 ||
                 soB2cLogisticsEntity.getHeight().compareTo(maxHeight) > 0) {
             String orderDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", soB2cLogisticsEntity.getLength(), soB2cLogisticsEntity.getWidth(), soB2cLogisticsEntity.getHeight());
             String logisticsDesc = String.format("长【%scm】*宽【%scm】*高【%scm】", maxLength, maxWidth, maxHeight);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("包装尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc));
+            result = false;
+            msg = msg + String.format("包装尺寸为%s，超出渠道配置尺寸%s", orderDesc, logisticsDesc);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸成功");
+
+        if(soB2cLogisticsEntity.getWeight().compareTo(maxWeight) > 0){
+            msg = msg + " 。 " + String.format("重量为【%s】g，超出渠道配置【%s】g", soB2cLogisticsEntity.getWeight(), maxWeight);
+        }
+
+        if(result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸重量成功");
+        }else{
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+        }
     }
 
     /**
