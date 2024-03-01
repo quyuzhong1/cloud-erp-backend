@@ -167,4 +167,25 @@ public class MercadoSdkClientService {
         return bodyStr;
     }
 
+    /**
+     * 发送GET请求查询订单
+     *
+     * @param baseUrl
+     * @param accessToken
+     * @param paramMap 入参
+     * @return
+     */
+    public String sendMercadoGet(String baseUrl, String accessToken, Map<String, Object> paramMap) {
+
+        //请求头
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Authorization", "Bearer "+ accessToken);
+
+        //发起POST请求
+        String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headerMap);
+
+        //返回token实体
+        return bodyStr;
+    }
+
 }

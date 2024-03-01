@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class SettingsBean {
     /**
      * listing_strategy : open
@@ -10,11 +12,4 @@ public class SettingsBean {
     @SerializedName("listing_strategy")
     private String listingStrategy;
 
-    public String getListingStrategy() {
-        return listingStrategy;
-    }
-
-    public void setListingStrategy(String listingStrategy) {
-        this.listingStrategy = listingStrategy;
-    }
 }

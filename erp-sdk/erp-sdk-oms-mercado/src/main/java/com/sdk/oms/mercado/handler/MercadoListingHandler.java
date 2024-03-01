@@ -65,14 +65,12 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
 //            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search?q=vacuum%20wireless&limit=100&status=inactive&offset=10'";
 
-            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search";
+            String baseUrl = "https://api.mercadolibre.com/item";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
-            sb.append("?limit="+ pageSize +"");
-            sb.append("&offset="+ pageNo +"");
-            sb.append("&accessToken="+accessToken+"");
+
             //拉取数据
-            String date = mercadoSdkClientService.sendMercadoPost(sb.toString(), accessToken, paramMap);
+            String date = mercadoSdkClientService.sendMercadoGet(sb.toString(), accessToken, paramMap);
             System.out.println(date);
             com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
@@ -84,9 +82,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
 
             resultsBeanList.addAll(mercadoListingDTO.getResults());
         }
-        for (ResultsBean resultsBean : resultsBeanList) {
-            System.out.println(resultsBean.toString());
-        }
+            System.out.println(JSONUtil.toJsonStr(resultsBeanList));
     }
 
 

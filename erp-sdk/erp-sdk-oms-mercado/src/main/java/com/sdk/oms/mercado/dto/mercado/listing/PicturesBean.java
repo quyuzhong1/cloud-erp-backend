@@ -1,7 +1,9 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class PicturesBean {
     /**
      * id : 913045-MLA40439594053_012020
@@ -13,19 +15,4 @@ public class PicturesBean {
     @SerializedName("url")
     private String url;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
 }

@@ -1,9 +1,11 @@
 package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class ResultsBean {
     /**
      * id : CBT15276372
@@ -32,68 +34,4 @@ public class ResultsBean {
     private List<AttributesBean> attributes;
     @SerializedName("pictures")
     private List<PicturesBean> pictures;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getDomainId() {
-        return domainId;
-    }
-
-    public void setDomainId(String domainId) {
-        this.domainId = domainId;
-    }
-
-    public SettingsBean getSettings() {
-        return settings;
-    }
-
-    public void setSettings(SettingsBean settings) {
-        this.settings = settings;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Object getMainFeatures() {
-        return mainFeatures;
-    }
-
-    public void setMainFeatures(Object mainFeatures) {
-        this.mainFeatures = mainFeatures;
-    }
-
-    public List<AttributesBean> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(List<AttributesBean> attributes) {
-        this.attributes = attributes;
-    }
-
-    public List<PicturesBean> getPictures() {
-        return pictures;
-    }
-
-    public void setPictures(List<PicturesBean> pictures) {
-        this.pictures = pictures;
-    }
 }
