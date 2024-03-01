@@ -509,13 +509,19 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .collect(Collectors.toList());
 
         List<TransferLogisticsCreateInboundReq.ReceiveItem> receiveItemList = new ArrayList<>(transferDeclareDetailList.size());
+        //查询报关单包含的订单信息
+        List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
-            TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
-                    .orderCode(transferDeclareDetailEntity.getSoCode())
-                    .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-                    .build();
-            receiveItemList.add(receiveItem);
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
+                TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
+                        .orderCode(soB2cEntity.getShippingOrderNo())
+                        .grossWeight(transferDeclareDetailEntity.getPackageWeight())
+                        .build();
+                receiveItemList.add(receiveItem);
+            }
         }
         if(CollectionUtils.isEmpty(receiveItemList)){
             throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
