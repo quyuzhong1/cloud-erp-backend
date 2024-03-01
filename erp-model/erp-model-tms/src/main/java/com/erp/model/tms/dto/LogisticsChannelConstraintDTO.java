@@ -2,16 +2,17 @@ package com.erp.model.tms.dto;
 
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
+import com.erp.model.tms.entity.LogisticsChannelConstraintEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.Digits;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -184,6 +185,7 @@ public class LogisticsChannelConstraintDTO implements Serializable {
         /**
          * 列表
          */
+        @Valid
         private List<CommonDTO> commonDTOList;
     }
     @Data
@@ -258,6 +260,31 @@ public class LogisticsChannelConstraintDTO implements Serializable {
         private String sizeUnit = "cm";
 
 
+        public boolean equalsEntity(Object o) {
+            if (this == o) return true;
+            if (o == null || LogisticsChannelConstraintEntity.class != o.getClass()) return false;
+            LogisticsChannelConstraintEntity commonDTO = (LogisticsChannelConstraintEntity) o;
+            return Objects.equals(country, commonDTO.getCountry()) && Objects.equals(countryName, commonDTO.getCountryName()) && Objects.equals(maxCustomsAmount, commonDTO.getMaxCustomsAmount()) && Objects.equals(maxCustomsCurrency, commonDTO.getMaxCustomsCurrency()) && Objects.equals(minCustomsAmount, commonDTO.getMinCustomsAmount()) && Objects.equals(minCustomsCurrency, commonDTO.getMinCustomsCurrency()) && Objects.equals(maxWeight, commonDTO.getMaxWeight()) && Objects.equals(weightUnit, commonDTO.getWeightUnit()) && Objects.equals(maxLength, commonDTO.getMaxLength()) && Objects.equals(maxWidth, commonDTO.getMaxWidth()) && Objects.equals(maxHeight, commonDTO.getMaxHeight()) && Objects.equals(sizeUnit, commonDTO.getSizeUnit());
+        }
+
+        public boolean isValid() {
+            if ( minCustomsAmount.compareTo(BigDecimal.ZERO) == 0 && maxCustomsAmount.compareTo(BigDecimal.ZERO) == 0 &&
+                    maxWeight.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0 &&
+                    maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxHeight.compareTo(BigDecimal.ZERO) == 0) {
+                return false;
+            }
+            return true;
+        }
+
+        public boolean isValidSize() {
+            if (maxLength.compareTo(BigDecimal.ZERO) > 0 && maxWidth.compareTo(BigDecimal.ZERO) > 0 && maxHeight.compareTo(BigDecimal.ZERO) > 0) {
+                return true;
+            }
+            if (maxLength.compareTo(BigDecimal.ZERO) > 0 || maxWidth.compareTo(BigDecimal.ZERO) > 0 || maxHeight.compareTo(BigDecimal.ZERO) > 0) {
+                return false;
+            }
+            return true;
+        }
     }
 
 

@@ -14,7 +14,10 @@ import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineSubComponentsEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineSubComponentsMapper;
@@ -109,7 +112,11 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Override
     public List<MachineSubComponentsEntity> listByDetailIds(List<String> detailIds) {
-        return lambdaQuery().in(MachineSubComponentsEntity::getDetailId, detailIds).list();
+        return lambdaQuery()
+                .in(MachineSubComponentsEntity::getDetailId, detailIds)
+                .orderByAsc(MachineSubComponentsEntity::getSkuId)
+                .orderByAsc(MachineSubComponentsEntity::getIsChild)
+                .list();
     }
 
     @Override
