@@ -227,7 +227,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'C'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
 
@@ -250,7 +250,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         Integer pageSize = 10000;
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize) {
