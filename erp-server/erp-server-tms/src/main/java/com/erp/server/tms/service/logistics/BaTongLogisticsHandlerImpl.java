@@ -168,6 +168,12 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderList) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+
+
+    public ApiResult<List<CancelResponseVO>> deleteOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderList) {
         List<CancelResponseVO> result = new ArrayList<>();
         Boolean isSuccess = true;
 
@@ -208,6 +214,8 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return isSuccess ? success(result) : failure(result);
 
     }
+
+
 
 
     /**
