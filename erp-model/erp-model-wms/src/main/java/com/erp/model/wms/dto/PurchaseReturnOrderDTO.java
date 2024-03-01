@@ -434,6 +434,11 @@ public class PurchaseReturnOrderDTO {
         private String id;
 
         /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
          * 退货单号
          */
         private String code;
@@ -836,7 +841,7 @@ public class PurchaseReturnOrderDTO {
          * 来源：http://172.16.100.11:3002/project/92/interface/api/7186
          * 入参：key=poReturnStatus
          */
-        private String type;
+        private String tabFlag;
         /**
          * 数量
          */
