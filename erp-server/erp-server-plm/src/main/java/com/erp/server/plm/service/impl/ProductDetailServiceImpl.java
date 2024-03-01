@@ -35,6 +35,7 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.SkuMappingExtendDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -2368,7 +2369,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public List<SkuVO> searchSku(String searchKeyword) {
-        return baseMapper.searchSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+        List<SkuVO> skuVOS = baseMapper.searchSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+        if(CollectionUtils.isEmpty(skuVOS)){
+            return skuVOS;
+        }
+        List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(skuIds);
+        for (SkuVO skuVO : skuVOS) {
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(skuVO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                skuVO.setIsCombination(Boolean.TRUE);
+            } else {
+                skuVO.setIsCombination(Boolean.FALSE);
+            }
+        }
+        return skuVOS;
     }
 
 

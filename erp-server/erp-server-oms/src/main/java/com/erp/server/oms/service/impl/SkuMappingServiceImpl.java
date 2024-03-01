@@ -918,7 +918,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getName().equalsIgnoreCase(req.getType()))
+                    .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setIsCombination(Boolean.TRUE);
