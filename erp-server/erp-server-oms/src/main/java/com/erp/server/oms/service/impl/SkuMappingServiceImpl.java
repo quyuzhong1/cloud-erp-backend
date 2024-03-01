@@ -19,36 +19,27 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -111,6 +102,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Resource
+    private SkuMappingExtendService skuMappingExtendService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -383,6 +377,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         // 无修改
         if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)) {
+            // 检查仓库发货配置
+            skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
             return skuMaping.getId();
         }
         LocalDateTime now = LocalDateTime.now();
@@ -409,6 +405,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
+        // 检查仓库发货配置
+        skuMappingExtendService.checkAndSave(addSkuMaping, dto.getExtendList());
+
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku映射表", addSkuMaping.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
@@ -901,8 +901,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * @date 2023-06-29 19:15
      */
     private void fillDb(List<SkuMappingDTO.PagingViewDTO> list) {
+        List<String> mainIds = list.stream().map(SkuMappingDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        Map<String, List<SkuMappingExtendDTO.ListDTO>> extendMap =  skuMappingExtendService.mapByMainIds(mainIds, false);
+
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         for (SkuMappingDTO.PagingViewDTO item : list) {
             Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
@@ -910,6 +916,19 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setIsCombination(Boolean.TRUE);
+            } else {
+                item.setIsCombination(Boolean.FALSE);
+            }
+            if (item.getIsCombination()){
+                List<SkuMappingExtendDTO.ListDTO> listDTO = extendMap.getOrDefault(item.getId(), Collections.emptyList());
+                item.setExtendList(listDTO);
+            }
         }
     }
 
@@ -961,7 +980,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
-        return baseMapper.listByParams(dto);
+        List<ListingInfoWithSkuMappingDTO> list = baseMapper.listByParams(dto);
+        if (CollectionUtils.isEmpty(list) || RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())){
+            return list;
+        }
+        List<String> mainIds = list.stream().map(ListingInfoWithSkuMappingDTO::getTableId).collect(Collectors.toList());
+        Map<String, List<SkuMappingExtendDTO.ListDTO>> entendMap = skuMappingExtendService.mapByMainIds(mainIds, false);
+        for (ListingInfoWithSkuMappingDTO mappingDTO : list) {
+            List<SkuMappingExtendDTO.ListDTO> extendList = entendMap.get(mappingDTO.getTableId());
+            if (CollectionUtils.isEmpty(extendList)){
+                continue;
+            }
+            Map<String, String> extendMap = extendList.stream().collect(Collectors.toMap(SkuMappingExtendDTO.ListDTO::getWarehouseManageType, SkuMappingExtendDTO.ListDTO::getWarehouseDeliveryType));
+            mappingDTO.setExtendMap(extendMap);
+        }
+        return list;
     }
 
     @Override

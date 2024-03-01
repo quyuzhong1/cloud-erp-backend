@@ -31,6 +31,8 @@ public class DictBasicDTO implements Serializable {
 
         private String name;
 
+        private Integer sort;
+
 
     }
 

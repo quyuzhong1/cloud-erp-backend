@@ -116,15 +116,24 @@ public class WarehouseExportExcelDTO implements Serializable {
     @ExcelProperty(value = "数据状态", index = 12)
     private String approveStatusName;
 
+    @ColumnWidth(20)
+    @ExcelProperty(value = "仓库经营类型", index = 13)
+    private String warehouseManageTypeName;
+
+    @ColumnWidth(20)
+    @ExcelProperty(value = "地理位置", index = 14)
+    private String geographyLocationName;
+
+
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 13)
+    @ExcelProperty(value = "创建人", index = 15)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 14,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 16,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 

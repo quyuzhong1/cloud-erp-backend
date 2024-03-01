@@ -27,6 +27,15 @@ public interface RedisCacheConstants {
      */
     public long EMAIL_CODE_EXPIRATION = 5;
 
+    /**
+     * 登录错误限制次数
+     */
+    public final int MAX_LOGIN_ATTEMPTS = 5;
+
+    /**
+     * 登录错误限制间隔分钟
+     */
+    public final int LOCK_DURATION_MINUTES = 60;
 
     /**
      * 权限功能的redis 的key
@@ -48,6 +57,10 @@ public interface RedisCacheConstants {
      * platform-token:平台名称:店铺ID
      */
     String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
+    /**
+     * 登录错误Key : 系统:用户账号
+     */
+    String LOGIN_ERROR_KEY = "login_error:{}:{}";
 
     /**
      * 亚马逊报告文档URL:{文档类型}:MarketplaceId

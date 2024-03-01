@@ -1,5 +1,6 @@
 package com.erp.oms.aliexpress.dto;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
@@ -61,10 +62,15 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.shopId=aliExpressShopInfoDTO.getId();
         this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        this.setUniqueId(aliExpressOrder.getOrderId());
+        this.setUniqueId(combineUnique(aliExpressOrder.getOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setDownloadAddressStatus(0);
         this.setLastPushTime(dto.getNextTime().toString());
+    }
+
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
     }
 
     /**
@@ -218,6 +224,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         orderDTO.setSyncKingdeeStatus("0");
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList(5);
         String warehouseName = "";
+        String logisticsServiceName = CollectionUtils.isNotEmpty(detail.getChildOrderList()) ? detail.getChildOrderList().get(0).getLogisticsServiceName() : "";
         if (detailNotNull && CollectionUtils.isNotEmpty(detail.getLogisticInfoList())) {
             List<LogisitcsDTO> logisticInfoList = detail.getLogisticInfoList().stream().
                     filter(d -> StringUtils.isNotBlank(d.getLogisticsNo())).collect(Collectors.toList());
@@ -226,7 +233,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                     warehouseName = item.getWarehouseName();
                     PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
                     logisticsDTO.setCode(item.getLogisticsNo());
-                    logisticsDTO.setName(item.getLogisticsServiceName());
+                    logisticsDTO.setName(logisticsServiceName);
                     String sendTime = item.getGmtSend();
 
                     LocalDateTime deliveryTime = LocalDateUtil.strToLocalDateTime(sendTime);
@@ -258,6 +265,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 receiverDTO.setReceiverName(receiptInfo.getContactPerson());
                 receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
                 receiverDTO.setPostCode(receiptInfo.getZip());
+                receiverDTO.setReceiverTaxNo(receiptInfo.getCpfNo());
             }
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());

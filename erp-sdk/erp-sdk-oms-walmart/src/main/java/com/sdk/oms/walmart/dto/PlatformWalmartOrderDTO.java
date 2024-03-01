@@ -1,6 +1,7 @@
 package com.sdk.oms.walmart.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
@@ -43,10 +44,15 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WALMART.getCode());
-        this.setUniqueId(orderBean.getPurchaseOrderId());
+        this.setUniqueId(combineUnique(orderBean.getPurchaseOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
+    }
+
 
     /**
      * 转换目标实体:PlatformProductDTO

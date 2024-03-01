@@ -107,6 +107,8 @@ public enum ApiError implements Serializable {
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
     ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+    LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
+    LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
 
     /**
      * 警告信息 从800 开始
@@ -400,7 +402,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的BOM信息"),
+    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
