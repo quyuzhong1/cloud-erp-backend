@@ -458,6 +458,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsChannelDTO.ProvideChannelDTO> getProvideChannel(List<String> channelCodeList, List<String> provideNameList) {
+        return baseMapper.getProvideChannel(channelCodeList,provideNameList);
+    }
+
+    @Override
     public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
         LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
         LogisticsChannelEntity channelEntity = this.getById(channelId);

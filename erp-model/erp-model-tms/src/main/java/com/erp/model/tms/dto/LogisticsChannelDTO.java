@@ -562,4 +562,29 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private List<String> ids;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProvideChannelDTO {
+
+        /**
+         * 渠道id
+         */
+        private String channelId;
+
+        /**
+         * 渠道code
+         */
+        private String channelCode;
+
+        /**
+         * 物流供应商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流供应商名称
+         */
+        private String logisticsSupplierName;
+    }
 }

@@ -4,7 +4,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.LogisticsChannelConstraintDTO;
 import com.erp.model.tms.entity.LogisticsChannelConstraintEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,4 +30,8 @@ public interface LogisticsChannelConstraintService extends SuperService<Logistic
 
 
     List<LogisticsChannelConstraintDTO.ListDTO> getList(String channelId);
+
+    void downloadTemplate(HttpServletResponse response);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }
