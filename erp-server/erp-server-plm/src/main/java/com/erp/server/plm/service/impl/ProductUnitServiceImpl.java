@@ -1,20 +1,15 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.ProductUnitDTO;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.server.plm.mapper.ProductUnitMapper;
 import com.erp.server.plm.service.ProductUnitService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -98,6 +93,14 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
             return Boolean.TRUE;
         }
         return lambdaUpdate().set(ProductUnitEntity::getOccupyStatus, Boolean.TRUE).in(ProductUnitEntity::getId, ids).update();
+    }
+
+    @Override
+    public ProductUnitEntity getByName(String name) {
+        ProductUnitEntity entity = lambdaQuery().eq(ProductUnitEntity::getName, name)
+                .last("limit 1")
+                .one();
+        return entity;
     }
 }
 

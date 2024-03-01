@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SupplierRefUserMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SupplierRefUserEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="uid" property="uid" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        uid, supplier_id, disabled
+    </sql>
+    <!-- 根据供应商获取用户id -->
+    <select id="getUserIdsBySupplierIds" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+        SELECT
+            sru.id as refId,
+            sru.uid,
+            sru.supplier_id,
+            s.purchase_user_name AS purchaseUserName,
+            s.name AS supplierName
+        FROM
+            supplier_ref_user sru
+        left join supplier s on s.id = sru.supplier_id
+        WHERE sru.is_deleted = FALSE
+          <if test="supplierIds!=null and supplierIds.size>0">
+              AND sru.supplier_id IN
+              <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+                  #{supplierId}
+              </foreach>
+          </if>
+          <if test="isSuper != null">
+              AND sru.is_super = #{isSuper}
+          </if>
+
+    </select>
+    <select id="getSupplierRefByUids" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+        SELECT
+        sru.id as refId,
+        sru.uid,
+        sru.supplier_id,
+        sru.is_super,
+        s.purchase_user_name AS purchaseUserName,
+        s.name AS supplierName
+        FROM
+        supplier_ref_user sru
+        left join supplier s on s.id = sru.supplier_id
+        WHERE sru.is_deleted = FALSE
+        <if test="uids!=null and uids.size>0">
+            AND sru.uid IN
+            <foreach collection="uids" item="uid" open="(" separator="," close=")">
+                #{uid}
+            </foreach>
+        </if>
+    </select>
+    <select id="getSupplierRefBySupplierIds" resultType="com.erp.model.scm.vo.SupplierRefUserVO">
+        SELECT
+        sru.id as refId,
+        sru.uid,
+        sru.supplier_id,
+        sru.is_super,
+        s.purchase_user_name AS purchaseUserName,
+        s.name AS supplierName
+        FROM
+        supplier_ref_user sru
+        left join supplier s on s.id = sru.supplier_id
+        WHERE sru.is_deleted = FALSE
+        <if test="supplierIds!=null and supplierIds.size>0">
+            AND s.id IN
+            <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+                #{supplierId}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

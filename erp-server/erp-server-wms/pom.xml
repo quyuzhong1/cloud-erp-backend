@@ -122,6 +122,13 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-tms-aliexpress</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-oms</artifactId>
@@ -181,6 +188,12 @@
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-shopify</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-srm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

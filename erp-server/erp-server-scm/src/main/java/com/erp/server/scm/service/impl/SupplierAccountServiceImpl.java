@@ -85,8 +85,8 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
     }
 
     @Override
-    public List<SupplierAccountEntity> listBySupplierId(String supplierId) {
-        return lambdaQuery().eq(SupplierAccountEntity::getSupplierId,supplierId).list();
+    public List<SupplierAccountEntity> listBySupplierIdList(List<String> supplierIdList) {
+        return lambdaQuery().in(SupplierAccountEntity::getSupplierId,supplierIdList).list();
     }
 
     /**

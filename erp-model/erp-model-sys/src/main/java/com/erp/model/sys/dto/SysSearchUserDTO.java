@@ -26,6 +26,8 @@ public class SysSearchUserDTO  implements Serializable {
     private String flagId;
 
     private String searchKeyWord ;
-
-
+    /**
+     * 用户类型 erp srm
+     */
+    private String userType ;
 }

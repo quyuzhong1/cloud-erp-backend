@@ -206,9 +206,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
         //转map 比较是否存在记录 不存在则删除 存在则更新
-        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
-
-            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
+//        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
+        SoB2cLogisticsEntity entity = null;
+        if (CollectionUtils.isNotEmpty(listByMainId)){
+            entity = listByMainId.get(0);//跨店铺拆单需要修改这里
+        }
+//            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());

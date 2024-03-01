@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
+import com.erp.model.wms.entity.PackageForecastEntity;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
     * @param detailIdList
     * @return
     */
-    Boolean update(String mainId,String logisticsSupplierId,List<String> detailIdList);
+    Boolean update(PackageForecastEntity entity, List<String> detailIdList);
 
     /**
      * 获取对应详情
@@ -41,4 +43,17 @@ public interface PackageForecastDetailService extends SuperService<PackageForeca
      * @return
      */
     List<PackageForecastDetailDTO.ViewDTO> listDetailViewByMainId(String id);
+
+    List<PackageForecastDetailEntity> listDbByMainId(String mainId);
+
+    void removeByMainId(String mainId,String logisticsSupplierId);
+
+    List<PackageForecastDetailDTO.ViewDTO> detailQuery(PackageForecastDTO.DetailQueryParamDTO dto);
+
+    /**
+     * 更新订单明细状态
+     * @param orderCode
+     * @param status
+     */
+    void updateStatusByOrderCode(String orderCode, String status);
 }

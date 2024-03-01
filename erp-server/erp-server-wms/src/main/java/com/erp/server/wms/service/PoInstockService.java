@@ -10,6 +10,8 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.QcInfoEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -327,4 +329,6 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
      */
     PoInstockDTO.PagingTotalDTO pagingTotal(PoInstockDTO.SearchParamDTO  dto);
+
+    List<QcInfoEntity> getReceiveQcInfo (List<WarehouseReceiveDetailEntity> resultReceiveDetailList, List<String> notHasPodIdList);
 }

@@ -10,12 +10,13 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.*;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
@@ -23,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -311,8 +313,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
-        Boolean result = shopInfoService.shopAuthorize(dto);
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
+        Boolean result = shopInfoService.shopAuthorize(dto, response);
         return result ? success() : failure();
     }
 
@@ -351,4 +353,20 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
         return success(result);
     }
+
+    /**
+     * 根据shopify平台用户id查询用户信息
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/getShopifyShopByUserId")
+    public ApiResult<AssociatedUserBean> getShopifyShopByUserId(@RequestParam(value = "id") String id) {
+        AssociatedUserBean bean = shopInfoService.getShopifyShopByUserId(id);
+        return success(bean);
+    }
+
+
+
 }

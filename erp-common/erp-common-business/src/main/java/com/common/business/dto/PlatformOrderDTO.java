@@ -161,6 +161,11 @@ public class PlatformOrderDTO extends UniqueDto {
     private String syncKingdeeStatus;
 
     /**
+     * 扩展字段数据
+     */
+    private String extendData;
+
+    /**
      * 同步时间
      */
     private LocalDateTime syncKingdeeTime;

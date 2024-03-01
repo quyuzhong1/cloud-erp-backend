@@ -43,18 +43,23 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     public void asyncUpdateSaleChannel(Map<String, String> authMap) {
         if (Objects.isNull(authMap)) return;
-        if(StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
-        LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
-        ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-        chanelQueryVO.setAuthMap(authMap);
-        ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-        if (channels.isSuccess()) {
-            channels.getData().forEach(logisticsSaleChannelEntity -> {
-                logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
-            });
-        } else {
-            log.error("同步渠道异常：{}",channels.getMsg());
+        if (StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
+        try {
+            LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
+            ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
+            chanelQueryVO.setAuthMap(authMap);
+            ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+            if (channels.isSuccess()) {
+                channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+                });
+            } else {
+                log.error("同步渠道异常：{}", channels.getMsg());
+            }
+        } catch (Exception e) {
+            log.error("同步渠道异常：{}", e);
         }
+
     }
 
     @Async("tmsTransferChannelExecutor")
@@ -68,7 +73,7 @@ public class AsyncServiceImpl implements AsyncService {
                 transferLogisticsChannelService.saveOrUpdateChannel(logisticsSaleChannelEntity);
             });
         } else {
-            log.error("同步中转物流商渠道异常：{}",shippingMethodList.getMsg());
+            log.error("同步中转物流商渠道异常：{}", shippingMethodList.getMsg());
         }
     }
 }

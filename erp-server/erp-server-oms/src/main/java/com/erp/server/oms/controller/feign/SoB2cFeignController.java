@@ -305,10 +305,11 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 获取沃尔玛发货参数
-     * @Author Luo_WG
-     * @Date 2024/1/3 17:23
+     *
      * @param soId
      * @return com.common.business.dto.WalmartShipDTO
+     * @Author Luo_WG
+     * @Date 2024/1/3 17:23
      **/
     @PostMapping("/getWalmartShipOrderParam")
     public List<WalmartShipDTO> getWalmartShipOrderParam(@RequestBody String soId) {
@@ -351,27 +352,30 @@ public class SoB2cFeignController extends BaseController {
      * @create 2024-01-03
      */
     @GetMapping("/findMergeByTargetId")
-    public List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId")String targetId) {
+    public List<SoB2cRefEntity> findMergeByTargetId(@RequestParam("targetId") String targetId) {
         return soB2cRefService.listByTargetId(targetId, SoB2cOptionTypeEnum.ENUM_MERGE);
     }
 
     /**
      * 获取到b2c 销售订单物流跟踪号为空的
+     *
+     * @return
      * @description
      * @author Lambda
-     * @return
      * @create 2024-01-05 9:44
      */
     @GetMapping("/listTrackNoEmptyList")
     public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
         return soB2cLogisticsService.listTrackNoEmptyList();
     }
+
     /**
      * 查询订单详情
-     * @Author Luo_WG
-     * @Date 2024/1/5 9:50
+     *
      * @param id
      * @return com.erp.model.oms.dto.SoB2cDTO.ViewDTO
+     * @Author Luo_WG
+     * @Date 2024/1/5 9:50
      **/
     @GetMapping("/view")
     public SoB2cDTO.ViewDTO view(@RequestParam("id") String id) {
@@ -380,10 +384,11 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 拦截打标识，冻结订单
-     * @Author Luo_WG
-     * @Date 2024/1/17 18:54
+     *
      * @param interceptUpdateOrderDTO
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/17 18:54
      **/
     @PostMapping("/updateIntercept")
     public Boolean updateIntercept(@RequestBody SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO) {
@@ -392,11 +397,12 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 修改订单异常原因
-     * @Author Luo_WG
-     * @Date 2024/1/19 10:51
+     *
      * @param id
      * @param soB2cAbnormalType
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/19 10:51
      **/
     @GetMapping("/updateAbnormalType")
     public Boolean updateAbnormalType(@RequestParam("id") String id, @RequestParam("soB2cAbnormalType") String soB2cAbnormalType) {
@@ -406,36 +412,39 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 更新组包状态
-     * @description
+     *
      * @param dto
-     * @author Lambda
      * @return
+     * @description
+     * @author Lambda
      * @create 2024-01-19 10:57
      */
     @PostMapping("/updatePackageStatus")
-    public  Boolean updatePackageStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+    public Boolean updatePackageStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
         return soB2cService.updatePackageStatus(dto);
     }
 
     /**
      * 更新中转状态
-     * @description
+     *
      * @param dto
-     * @author Lambda
      * @return
+     * @description
+     * @author Lambda
      * @create 2024-01-19 10:57
      */
     @PostMapping("/updateTransferStatus")
-    public  Boolean updateTransferStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
+    public Boolean updateTransferStatus(@RequestBody @Validated UpdateStateDTO.UpdateByStrStatusDTO dto) {
         return soB2cService.updateTransferStatus(dto);
     }
 
     /**
      * 根据报关设置生成报关单信息
-     * @Author Luo_WG
-     * @Date 2024/1/25 17:29
+     *
      * @param viewDTOList
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.AddDTO>
+     * @Author Luo_WG
+     * @Date 2024/1/25 17:29
      **/
     @PostMapping("/generateTransferDeclareView")
     public List<TransferDeclareDTO.AddDTO> generateTransferDeclareView(@RequestBody @Validated List<TransferDeclareGenerationSettingDTO.ViewDTO> viewDTOList) {
@@ -444,11 +453,12 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 更改订单的中转状态
-     * @Author Luo_WG
-     * @Date 2024/1/25 19:39
-     * @param soIds 订单id
+     *
+     * @param soIds  订单id
      * @param status 中转状态
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/25 19:39
      **/
     @PostMapping("/updateTransferStatusBatch")
     public Boolean updateTransferStatusBatch(@RequestParam("soIds") List<String> soIds, @RequestParam("status") String status) {
@@ -457,10 +467,11 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 修改订单的第三方物流单号
-     * @Author Luo_WG
-     * @Date 2024/1/29 17:04
+     *
      * @param list
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2024/1/29 17:04
      **/
     @PostMapping("/updateShippingOrderNo")
     public Boolean updateShippingOrderNo(@RequestBody List<TransferDeclareDTO.ShippingOrderDTO> list) {
@@ -470,6 +481,7 @@ public class SoB2cFeignController extends BaseController {
     /**
      * 根据销售订单拆分sku
      * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
+     *
      * @param soIds
      * @return
      */
@@ -480,13 +492,23 @@ public class SoB2cFeignController extends BaseController {
 
     /**
      * 修改速卖通订单仓库
-     * @Author Luo_WG
-     * @Date 2024/2/1 10:44
+     *
      * @param soId
      * @return void
+     * @Author Luo_WG
+     * @Date 2024/2/1 10:44
      **/
     @PostMapping("/updateAliExpressOrderWarehouse")
     public Boolean updateAliExpressOrderWarehouse(@RequestParam("soId") String soId, @RequestParam("shopId") String shopId) {
         return soB2cService.updateAliExpressOrderWarehouse(soId, shopId);
+    }
+
+    @PostMapping("/batchUpdateLogistics")
+    public Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            return soB2cLogisticsService.updateBatchById(list);
+        } else {
+            return true;
+        }
     }
 }

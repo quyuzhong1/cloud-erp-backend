@@ -61,6 +61,16 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
         return this.list(queryWrapper);
     }
 
+    @Override
+    public BasicDictEntity listByTypeAndValue(String type, String value) {
+        BasicDictEntity entity = lambdaQuery()
+                .eq(BasicDictEntity::getType, type)
+                .eq(BasicDictEntity::getValue, value)
+                .last("limit 1")
+                .one();
+        return entity;
+    }
+
     /**
      * 根据id集合批量查询字典信息
      *

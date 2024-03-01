@@ -149,4 +149,39 @@ public class ReturnOrderExcelDTO {
      * 采购订单详情表id
      */
     private String purchaseOrderDetailId;
+
+    /**
+     * 退货确认
+     */
+    private String confirmStatus;
+
+    /**
+     * 退货确认中文
+     */
+    private String confirmStatusName;
+
+    /**
+     * 异常分类
+     */
+    private String unusualType;
+
+    /**
+     * 异常分类中文
+     */
+    private String unusualTypeName;
+
+    /**
+     * 异常反馈描述
+     */
+    private String unusualRemark;
+
+    /**
+     * 异常处理人名称
+     */
+    private String unusualHandleUserName;
+
+    /**
+     * 退货确认日期
+     */
+    private LocalDate confirmDate;
 }

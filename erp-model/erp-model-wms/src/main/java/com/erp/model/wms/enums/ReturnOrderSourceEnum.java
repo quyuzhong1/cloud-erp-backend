@@ -41,4 +41,13 @@ public enum ReturnOrderSourceEnum {
     public String getKingdeeCode() {
         return kingdeeCode;
     }
+
+    public static String getName(String code) {
+        for (ReturnOrderSourceEnum sourceEnum : ReturnOrderSourceEnum.values()) {
+            if (code.equals(sourceEnum.getCode())) {
+                return sourceEnum.getName();
+            }
+        }
+        return "";
+    }
 }

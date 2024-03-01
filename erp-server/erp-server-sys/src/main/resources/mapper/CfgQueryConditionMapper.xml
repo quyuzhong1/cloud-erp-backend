@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.CfgQueryConditionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.CfgQueryConditionEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="value" property="value" />
+       <result column="label" property="label" />
+       <result column="query_option_id" property="queryOptionId" />
+       <result column="controls" property="controls" />
+       <result column="data_type" property="dataType" />
+       <result column="date_type" property="dateType" />
+       <result column="props" property="props" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="index" property="index" />
+        <result column="is_extend" property="isExtend" />
+        <result column="group_name" property="groupName" />
+        <result column="display_type" property="displayType" />
+        <result column="option_list" property="optionList" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="PagingMap" extends="BaseResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ListDTO">
+        <result column="api_name" property="optionName" />
+        <result column="menu_name" property="name" />
+        <result column="system" property="system" />
+        <result column="queryOptionId" property="queryOptionId" />
+    </resultMap>
+
+    <resultMap id="cfgQueryConditionResultMap" type="com.erp.model.sys.dto.CfgQueryConditionDTO$ViewDTO">
+        <id  property="id" column="id"/>
+        <result property="value" column="value"/>
+        <result property="label" column="label"/>
+        <result property="type" column="controls"/>
+        <result property="dataType" column="data_type"/>
+        <result property="groupName" column="group_name"/>
+        <result property="displayType" column="display_type"/>
+        <result property="isExtend" column="is_extend"/>
+        <!-- 嵌套 Item 对象 -->
+        <association property="item" javaType="com.erp.model.sys.dto.CfgQueryConditionDTO$Item">
+            <id property="apiUrl" column="api_url"/>
+            <result property="requestType" column="request_method"/>
+            <result property="selectLabel" column="select_label"/>
+            <result property="selectValue" column="select_value"/>
+            <result property="selectDisabled" column="select_disabled"/>
+            <result property="searchKeyField" column="search_key_field"/>
+            <result property="dateType" column="date_type"/>
+            <result property="props" column="props"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="fieldProps" column="fieldProps"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="params" column="param"  typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result column="option_list" property="optionList" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        </association>
+
+        <!-- 嵌套 Compare 列表 -->
+        <collection property="compareList" ofType="com.erp.model.sys.dto.CfgQueryConditionDTO$Compare">
+            <result property="logic" column="compare_code"/>
+            <result property="logicName" column="compare_name"/>
+        </collection>
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, value, label, query_option_id, controls, data_type, date_type, props, index, is_extend, group_name, display_type,optionList
+    </sql>
+
+    <select id="getQueryConditionByCode" resultMap="cfgQueryConditionResultMap">
+        select
+            qc.id,
+            qc.code,
+            qc.value,
+            qc.label,
+            qc.controls,
+            qc.data_type,
+            qc.date_type,
+            qc.props as fieldProps,
+            cqc.compare_code,
+            cqc.compare_name,
+            qo.api_url,
+            qo.param,
+            qo.select_value,
+            qo.select_label,
+            qo.select_disabled,
+            qo.request_method,
+            qo.search_key_field,
+            qc.display_type,
+            qc.group_name,
+            qc.is_extend,
+            qo.props,
+            qc.option_list
+        from cfg_query_condition qc
+                 left join cfg_query_compare cqc on qc.data_type = cqc.data_type and cqc.is_deleted = false
+                 left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
+        where  qc.is_deleted = false
+          and qc.code = #{code}
+        order by qc.index,cqc.index
+    </select>
+
+    <select id="paging" resultMap="PagingMap">
+        with menu as (
+        select sm.menu_code,sm2.menu_name,CASE WHEN sm3.type = 1 THEN sm3.menu_name ELSE sm4.menu_name END as system
+        from sys_menu sm
+        left join sys_menu sm2 on sm.parent_id = sm2.menu_id
+        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id
+        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id
+        )
+        select
+        qc.id,
+        me.menu_name,
+        me.system,
+        qc.code,
+        qc.value,
+        qc.label,
+        qc.controls,
+        qc.data_type,
+        qc.date_type,
+        qc.props,
+        qc.index,
+        qo.api_name,
+        qc.is_extend,
+        qc.group_name,
+        qc.display_type,
+        qc.create_user_name,
+        qc.create_time,
+        qc.update_time,
+        qc.update_user_name,
+        qo.id as queryOptionId,
+        qc.option_list
+        from cfg_query_condition qc
+        left join cfg_query_option qo on qc.query_option_id = qo.id and qo.is_deleted = false
+        left join menu me on me.menu_code = qc.code
+        where  qc.is_deleted = false
+        <if test="params.code != null and params.code != ''">
+            and qc.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+        <if test="params.system != null and params.system != ''">
+            and me.system ILIKE concat('%',#{params.system}::text,'%')
+        </if>
+        <if test="params.name != null and params.name != ''">
+            and me.menu_name ILIKE concat('%',#{params.name}::text,'%')
+        </if>
+        order by qc.index
+    </select>
+
+
+    <select id="menuPaging" resultType="com.erp.model.sys.dto.CfgQueryConditionDTO$MenuDTO">
+        select sm.menu_code,
+               sm2.menu_name as name,
+               CASE WHEN sm3.type = 1 THEN sm3.menu_name ELSE sm4.menu_name END as system
+        from sys_menu sm
+        left join sys_menu sm2 on sm.parent_id = sm2.menu_id
+        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id
+        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id
+        where  sm.disabled = false and sm.type in (3,4)
+        <if test="params.menuCode != null and params.menuCode != ''">
+            and sm.menu_code ILIKE concat('%',#{params.menuCode}::text,'%')
+        </if>
+    </select>
+</mapper>

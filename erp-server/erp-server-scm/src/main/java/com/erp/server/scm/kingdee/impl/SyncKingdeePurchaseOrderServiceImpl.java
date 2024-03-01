@@ -8,19 +8,16 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.scm.entity.*;
@@ -39,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -202,6 +198,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
                 jsonObject.set("receiveOrgCode", receiveOrgCode);
+
+                //采购组织编码
+                String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("purchaseOrgCode", purchaseOrgCode);
             }
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());

@@ -677,6 +677,10 @@ public class InventoryDTO implements Serializable {
          * spu编号
          */
         private String spuNo;
+        /**
+         * 销售状态
+         */
+        private Integer saleState;
 
         /**
          * 仓位id

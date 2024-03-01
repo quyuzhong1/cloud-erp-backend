@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProductUnitDTO;
 import com.erp.model.plm.entity.ProductUnitEntity;
+
 import java.util.List;
 
 /**
@@ -55,4 +56,12 @@ public interface ProductUnitService extends IService<ProductUnitEntity> {
      * @return java.lang.Boolean
      **/
     Boolean setupOccupy(List<String> ids);
+    /**
+     * @description: 根据单位名称查询
+     * @author Will
+     * @date: 2024/2/23 16:30
+     * @param name
+     * @return ProductUnitEntity
+     */
+    ProductUnitEntity getByName(String name);
 }

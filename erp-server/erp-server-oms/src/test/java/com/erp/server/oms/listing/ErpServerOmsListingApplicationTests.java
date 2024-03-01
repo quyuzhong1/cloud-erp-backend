@@ -6,8 +6,11 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
@@ -27,10 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -82,6 +82,17 @@ public class ErpServerOmsListingApplicationTests {
 
     }
 
+
+    @Test
+    public void skuList(){
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setSkuNoList(Collections.singletonList("2775"));
+        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
+        System.out.println("结果");
+        System.out.println(JSONUtil.toJsonStr(skuMappingList));
+    }
 
 
 }

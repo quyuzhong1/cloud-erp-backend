@@ -153,7 +153,6 @@
 
     <select id="pagingTotal" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingTotalDTO">
         SELECT
-
             COALESCE(sum(sod.qty),0) as totalQty,
             COALESCE(sum(sod.amount),0) as totalAmount,
             COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,
@@ -238,10 +237,19 @@
             '1
             DAY' ) > si.require_date
         </if>
-        <if test="detailIdList!=null and detailIdList.size>0">
-            AND si.id IN
-            <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
-                #{detailId}
+        <!--审核状态-->
+        <if test="approveStatusList !=null and  approveStatusList.size>0">
+            AND si.approve_status IN
+            <foreach collection="approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+        <!--发货状态-->
+        <if test="deliveryStatusList !=null and  deliveryStatusList.size>0">
+            AND sod.delivery_status IN
+            <foreach collection="deliveryStatusList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.remark !=null and params.remark!=''">

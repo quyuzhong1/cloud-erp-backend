@@ -96,9 +96,9 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-07-13 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-07-14 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2024-02-27 17:40:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2024-02-27 17:50:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setDictPlatform("KINGDEE_PULL_DATA_TASK");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_OUTSTOCK);
@@ -121,9 +121,9 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-03-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-03-28 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2024-02-27 17:40:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2024-02-27 17:50:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setDictPlatform("KINGDEE_PULL_DATA_TASK");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_RETURNSTOCK);

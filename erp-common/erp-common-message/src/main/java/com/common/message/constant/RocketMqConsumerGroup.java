@@ -164,6 +164,12 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_STOCKTAKING_LOSS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_stocktaking_loss";
 
+
+    /**
+     * 委外发料单
+     */
+    public static final String SYNC_KINGDEE_SUBCONTRACT_ISSUE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_subcontract_issue";
+
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 
     /**

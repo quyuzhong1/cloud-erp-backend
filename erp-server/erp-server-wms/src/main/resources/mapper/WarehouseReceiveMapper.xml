@@ -618,4 +618,30 @@
             ${params.permissionSql}
         </if>
     </select>
+    <select id="countOrderBySupplierId" resultType="java.lang.Integer">
+        select count(pr.*) from po_receive pr
+        where pr.supplier_id = #{supplierId}
+          and pr.approve_status = 'approve'
+          and pr.approve_time is not null
+          and pr.approve_time between #{startTime} and #{endTime}
+    </select>
+
+    <select id="getReceiveListByPurchaseOrderIds" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PurchaseOrderDetailDTO">
+        SELECT
+        SUM( prd.receive_qty ) AS receiveQty,
+        prd.purchase_order_detail_id AS purchaseOrderDetailId
+        FROM
+        po_receive pr
+        INNER JOIN po_receive_detail prd ON prd.main_id = pr.id
+        WHERE
+        pr.approve_status = 'approve'
+        AND pr.source_id = ''
+        <if test="purchaseOrderIds !=null and purchaseOrderIds.size>0">
+            AND pr.purchase_order_id IN
+            <foreach collection="purchaseOrderIds" item="purchaseOrderId" open="(" separator="," close=")">
+                #{purchaseOrderId}
+            </foreach>
+        </if>
+        GROUP BY prd.purchase_order_detail_id
+    </select>
 </mapper>

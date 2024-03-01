@@ -45,6 +45,24 @@ public class SubcontractOrderDTO implements Serializable {
          private Integer count;
 
      }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSelectDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+    }
+
      /**
      * 分页列表查询参数
      */

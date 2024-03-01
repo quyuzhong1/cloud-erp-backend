@@ -3,10 +3,10 @@ package com.erp.server.scm.service;
 import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.ConfirmTypeEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -167,5 +167,27 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      **/
     List<String> listPoIdBySkuNo(String skuNo);
 
-
+    /**
+     * @description: 更新执行状态
+     * @author Will
+     * @date: 2024/1/16 17:47
+     * @param detailIdList
+     * @param typeEnum
+     * @param remark
+     */
+    void purchaseOrderConfirm(List<String> detailIdList, ExecutionStatusEnum typeEnum, String remark, ConfirmTypeEnum confirmType);
+    /**
+     * @description: 明细自动确认
+     * @author Will
+     * @date: 2024/1/17 14:09
+     * @param detailIdList
+     */
+    void purchaseOrderAutoConfirm(List<String> detailIdList);
+    /**
+     * @description: 更新执行状态
+     * @author Will
+     * @date: 2024/1/27 15:47
+     * @param mainIdList
+     */
+    void updateExecutionStatus(List<String> mainIdList,ExecutionStatusEnum statusEnum);
 }

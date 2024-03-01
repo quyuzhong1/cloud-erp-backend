@@ -67,7 +67,7 @@ public class PackageController extends BaseController {
     }
 
     /**
-     * 组包合并
+     * 组包合并  注意对应的ids 为销售订单ids  就是 soId 的集合
      *
      * @return
      */

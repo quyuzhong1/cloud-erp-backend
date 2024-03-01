@@ -36,7 +36,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * 根据来源id查询出库id 临时使用修复数据
      * @return
      */
-    List<String> getIdsByTemp();
+    List<String> getIdsByTemp(@Param("tableName") String tableName);
 
     /**
      * PDA:分页列表

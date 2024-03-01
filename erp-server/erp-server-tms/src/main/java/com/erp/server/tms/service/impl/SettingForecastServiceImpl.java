@@ -277,6 +277,10 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
             item.setLogisticsSupplierName(logisticsSupplierName);
 
             String transferLogisticsSupplierId = item.getTransferLogisticsSupplierId();
+            //如果为空就不校验
+            if (StringUtils.isBlank(transferLogisticsSupplierId)) {
+                continue;
+            }
             TransferLogisticsSupplierDTO.AuthDTO authDTO = transferLogisticsSupplierList.stream().filter(l -> l.getMainId().equals(transferLogisticsSupplierId)).findFirst().orElse(null);
             if (Objects.isNull(authDTO)) {
                 throw new ServiceException(logisticsSupplierName + " 对应的中转物流商不存在");

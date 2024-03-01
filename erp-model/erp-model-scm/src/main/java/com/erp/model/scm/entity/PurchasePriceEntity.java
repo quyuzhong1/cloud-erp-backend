@@ -89,6 +89,11 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     private String syncKingdeeId;
 
     /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    /**
      * 审核时间
      */
     @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)

@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -154,6 +155,29 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+
+    /**
+     * SRM协同 true 否 false 是
+     */
+    @TableField("srm_disabled")
+    private Boolean srmDisabled;
+
+    /**
+     * SRM操作时间
+     */
+    @TableField("srm_disabled_date")
+    private LocalDate srmDisabledDate;
+
+    /**
+     * SRM操作人名称ID
+     */
+    @TableField("srm_operate_user_id")
+    private String srmOperateUserId;
+    /**
+     * SRM操作人名称
+     */
+    @TableField("srm_operate_user_name")
+    private String srmOperateUserName;
 
     @Override
     public Serializable pkVal() {
