@@ -43,10 +43,10 @@ public class PdfRequest implements Serializable {
      * 要取消的交接物id，即大包id
      */
     @JSONField(name = "handover_content_id")
-    private String handoverContentId;
+    private Long handoverContentId;
     /**
      * 打印数据类型，1：面单、4：发货标签、512：交接清单
      */
     @JSONField(name = "type")
-    private String type;
+    private Integer type;
 }

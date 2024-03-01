@@ -254,7 +254,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             e.setHandleStatus(FbaReceiveHandleStatusEnum.NONE.getCode());
             e.setDetailId("");
         });
-        if (this.updateBatchById(oldList)){
+        if (!this.updateBatchById(oldList)){
             throw new ServiceException("批量更新FBA签收记录失败");
         }
 
@@ -276,5 +276,17 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         if (!this.updateBatchById(list)) {
             throw new ServiceException("[FbaShipmentDetailEntity] 批量更新失败: entity=" + JSONUtil.toJsonStr(list));
         }
+
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+        // 按签收日期分组调拨
+        Map<LocalDateTime, List<FbaShipmentReceiveEntity>> groupMap = list.stream().collect(Collectors.groupingBy(FbaShipmentReceiveEntity::getReceiveDate));
+
+        for (Map.Entry<LocalDateTime, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {
+            LocalDate billDate = entry.getKey().toLocalDate();
+            // 执行调拨逻辑
+            fbaShipmentService.handlerWarehouse(entity, entry.getValue(), billDate, closedDateMap);
+        }
+
     }
 }

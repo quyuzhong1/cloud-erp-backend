@@ -101,6 +101,7 @@ public class CommitRequest implements Serializable {
     /**
      * 多语言
      */
+    @NotBlank(message = "多语言不能为空")
     @JSONField(name = "locale")
     private String locale;
     /**

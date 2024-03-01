@@ -7,8 +7,11 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
-import org.springframework.transaction.annotation.Transactional;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
+import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -83,7 +86,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return
      */
-    Boolean shopAuthorize(ShopAuthorizeDTO dto);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
 
     /**
      * 取消授权
@@ -228,4 +231,48 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 查询指定或所有店铺
      */
     List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto);
+
+    /**
+     * 根据shopify平台用户id查询用户信息
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    AssociatedUserBean getShopifyShopByUserId(String id);
+
+    /**
+     * 请求查看存储的客户数据
+     * @Author Luo_WG
+     * @Date 2024/2/23 15:53
+     * @param dto
+     **/
+    void customersDataRequest(ShopifyWebhookDTO.CustomersDataRequestDTO dto, HttpServletResponse response, HttpServletRequest request);
+
+    /**
+     * 要求删除客户数据
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    void customersRedact(ShopifyWebhookDTO.CustomersRedactDTO dto, HttpServletResponse response, HttpServletRequest request);
+
+    /**
+     * 要求删除店铺数据
+     * @Author Luo_WG
+     * @Date 2024/2/23 14:07
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    void shopRedact(ShopifyWebhookDTO.ShopRedactDTO dto, HttpServletResponse response, HttpServletRequest request);
+
+    /**
+     * 测试
+     * @Author Luo_WG
+     * @Date 2024/2/29 15:52
+     * @param data
+     * @return void
+     **/
+    ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request);
 }

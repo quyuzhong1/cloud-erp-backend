@@ -2,6 +2,8 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -29,21 +31,31 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.CfgSettingCreateTypeEnum;
+import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SubcontractIssueFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
@@ -56,6 +68,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -74,57 +87,62 @@ import java.util.stream.Collectors;
 @Service
 public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrderMapper, SubcontractOrderEntity> implements SubcontractOrderService {
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private ModuleOperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CommonService commonService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
-    @Autowired
+    @Resource
     private SupplierService supplierService;
 
-    @Autowired
+    @Resource
     private PurchaseOrderService purchaseOrderService;
 
-    @Autowired
+    @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
-    @Autowired
+    @Resource
     private InventoryFeign inventoryFeign;
 
-    @Autowired
+    @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Autowired
+    @Resource
     private SupplierContactService supplierContactService;
 
-    @Autowired
+    @Resource
     private SyncKingdeeSubcontractOrderService syncKingdeeSubcontractOrderService;
 
-    @Autowired
+    @Resource
     private SubcontractChangeService subcontractChangeService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
+    @Resource
+    private SubcontractIssueFeign subcontractIssueFeign;
+
+    @Resource
+    private CfgSettingFeign cfgSettingFeign;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -147,9 +165,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     public List<SubcontractOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
-        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        PurchaseTableFlagEnum[] values = PurchaseTableFlagEnum.values();
         List<SubcontractOrderDTO.TabListDTO> list = new ArrayList<>();
-        for (PurchaseListTypeEnum item : values) {
+        for (PurchaseTableFlagEnum item : values) {
             SubcontractOrderDTO.PagingParamDTO searchParamDTO = new SubcontractOrderDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(param.getPermissionSql());
             SubcontractOrderDTO.TabListDTO resultDTO = new SubcontractOrderDTO.TabListDTO();
@@ -413,7 +431,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -431,7 +448,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(ids);
         //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = purchaseOrderService.listBySourceIds(ids);
+
+        //委外发料单
+        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueFeign.listBySourceIdList(ids);
+
         for (SubcontractOrderEntity entity : list) {
+            //判断是否下推委外发料单
+            List<SubcontractIssueEntity> subIssueList = subcontractIssueList.stream().filter(obj -> StrUtil.equals(obj.getSourceId(), entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(subIssueList)) {
+                String codes = subIssueList.stream().map(SubcontractIssueEntity::getCode).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_SUB_PUSH_ISSUE,entity.getCode(),codes);
+            }
             // 判断是否存在下推的采购订单
             List<PurchaseOrderEntity> foundList = purchaseOrderList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(foundList)) {
@@ -1122,6 +1149,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         return baseMapper.listByBomSku(bomSkuId);
     }
 
+    @Override
+    public List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder() {
+        List<SubcontractOrderEntity> list = lambdaQuery().eq(SubcontractOrderEntity::getInvalidStatus, Boolean.FALSE)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SubcontractOrderDTO.ListSelectDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.ListSelectDTO.class, list);
+        return resultList;
+    }
+
     /**
      * @description: 启动流程
      * @author Will
@@ -1264,7 +1302,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> approveStatusList = new ArrayList<>(1);
         List<String> arrivalStatusList = new ArrayList<>(2);
         //待我审核
-        if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
@@ -1274,22 +1312,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             params.setIdList(businessIds);
         }
         // 待提交
-        if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         }
         //待到货
-        if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             arrivalStatusList.add(ArrivalStatusEnum.NON_ARRIVAL.getCode());
             arrivalStatusList.add(ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode());
         }
         //已到货
-        if (PurchaseListTypeEnum.CREATED.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.CREATED.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             arrivalStatusList.add(ArrivalStatusEnum.ARRIVED.getCode());
         }
         //不通过
-        if (PurchaseListTypeEnum.REJECT.getCode().equals(params.getSearchType())) {
+        if (PurchaseTableFlagEnum.REJECT.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
@@ -1415,5 +1453,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         String subcontractOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setSubcontractOrgName(subcontractOrgName);
     }
+
+
 
 }

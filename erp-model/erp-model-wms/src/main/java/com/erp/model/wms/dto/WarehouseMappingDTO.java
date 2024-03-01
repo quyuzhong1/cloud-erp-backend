@@ -110,8 +110,6 @@ public class WarehouseMappingDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
 
@@ -124,6 +122,10 @@ public class WarehouseMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MappingViewDTO {
+        /**
+         * 映射表id
+         */
+        private String id;
         /**
          * ERP仓库id
          */

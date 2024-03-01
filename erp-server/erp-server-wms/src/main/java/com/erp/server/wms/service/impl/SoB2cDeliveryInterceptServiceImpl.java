@@ -267,11 +267,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 //                entity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             }else{
                 String logisticsPlatform = auth.getLogisticsPlatform();
-                //顺丰没有拦截，不更新拦截状态
-                if (!LogisticsPlatformEnum.SF_EXPRESS.getCode().equals(logisticsPlatform)) {
-                    entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
-                }
-
+                entity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
                 //记录异常原因：拦截失败
                 soB2cFeign.updateAbnormalType(entity.getSourceId(), SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
 

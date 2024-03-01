@@ -61,6 +61,16 @@ public interface ScmTaskFeign {
     PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id);
 
     /**
+     * @description: 根据采购订单id集合查询供应商
+     * @author Will
+     * @date: 2024/1/25 10:15
+     * @param idList
+     * @return List<PurchaseOrderSupplierEntity>
+     */
+    @PostMapping("feign/purchaseOrder/listOrderSupplierByOrderIdList")
+    List<PurchaseOrderSupplierEntity> listOrderSupplierByOrderIdList(@RequestBody List<String> idList);
+
+    /**
      * 根据采购订单详情id查询详情信息
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
@@ -313,6 +323,24 @@ public interface ScmTaskFeign {
     List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
 
     /**
+     * 根据ids查询子级委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listChildSubcontractDetailByIds")
+    List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(@RequestBody List<String> parentIdList);
+
+    /**
+     * 根据主表id集合查询委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractDetailByMainIds")
+    List<SubcontractOrderDetailEntity> listSubcontractDetailByMainIds(@RequestBody List<String> mainIdList);
+
+    /**
+     * 根据ids查询委外订单
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractOrderByIds")
+    List<SubcontractOrderEntity> listSubcontractOrderByIds(@RequestBody List<String> sourceIdList);
+
+    /**
      * 根据供应商Ids查询最新的sku价格信息
      * @param ids ids
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
@@ -413,4 +441,5 @@ public interface ScmTaskFeign {
      */
     @PostMapping("/feign/scmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
 }

@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -24,25 +25,31 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PoTableFlagEnum;
+import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
+import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -112,10 +119,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
-
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
 
+    @Resource
+    private SysDictFeign sysDictFeign;
+
+    @Resource
+    private PurchasePriceQueryHandler purchasePriceQueryHandler;
 
     @Resource
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
@@ -138,15 +149,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>(), skuIdList);
-
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
-
-        //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, historyList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -241,6 +243,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
 
+        //供应商信息
+        SupplierDTO.ViewDTO supplierDTO = supplierService.getBySupplierId(purchasePrice.getSupplierId());
+        viewDTO.setSupplierContactName(supplierDTO.getPerson());
+        viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
+
+        //付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(supplierDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        viewDTO.setPaymentConditionName(paymentConditionName);
         return viewDTO;
     }
 
@@ -280,14 +291,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         BeanMapper.copy(dto, purchasePrice);
-        //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds, skuIdList);
-        //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(), skuIdList);
-        //检查sku 区间报价
-        List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, historyList);
-
         //编号
         String code = purchasePrice.getCode();
         purchasePrice.setCode(code);
@@ -577,21 +580,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String searchType = params.getSearchType();
-        List<String> statusList = new ArrayList<>(1);
-        //待我审核
-        if (SearchType.WAIT_APPROVE.equals(searchType)) {
-            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
-            if (CollectionUtils.isEmpty(businessIds)) {
-                return new PagingVO(new Page());
-            }
-            params.setIdList(businessIds);
-        }
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, statusList);
+        IPage pageData = baseMapper.paging(query, params);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
@@ -647,7 +637,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 17:55
      */
     @Override
-    public void exportPurchasePrice(PurchasePriceDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<PurchasePriceDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<PurchasePriceExportExcelDTO> resultList = new ArrayList<>(viewList.size());
@@ -1001,6 +991,27 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         purchasePriceDetailService.updateDetailRemark(ids,remark);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        PurchasePriceTabFlagEnum[] values = PurchasePriceTabFlagEnum.values();
+        List<PurchasePriceDTO.TabListDTO> list = new ArrayList<>();
+        for (PurchasePriceTabFlagEnum item : values) {
+            PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
+            PurchasePriceDTO.TabListDTO resultDTO = new PurchasePriceDTO.TabListDTO();
+            String tabSql = purchasePriceQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

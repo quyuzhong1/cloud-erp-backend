@@ -45,7 +45,7 @@ public class CancelRequest implements Serializable {
      * 要取消的交接物id，即大包id
      */
     @JSONField(name = "handover_content_id")
-    private String handoverContentId;
+    private Long handoverContentId;
     /**
      *
      * ISV名称，ISV：ISV-ISV英文或拼音名称、商家ERP：SELLER-商家英文或拼音名称

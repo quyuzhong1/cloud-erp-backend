@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -8,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -22,13 +24,17 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ConfirmTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
@@ -40,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -75,7 +82,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private PurchaseApplicationDetailService purchaseApplicationDetailService;
+    private CommonService commonService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
@@ -88,6 +95,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private SupplierService supplierService;
+
+    @Resource
+    private SrmDeliveryOrderFeign srmDeliveryOrderFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -384,6 +394,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return Collections.EMPTY_LIST;
         }
         List<String> purchaseDetailIds = list.stream().map(PurchaseOrderDetailDTO.ViewProductDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+
+        //查询发货数据
+        List<DeliveryOrderDetailEntity> deliveryDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(purchaseDetailIds);
         //查询收货数据
         List<WarehouseReceiveDetailEntity> receiveDetails = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(purchaseDetailIds);
 
@@ -408,6 +421,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             if (CollectionUtils.isNotEmpty(receiveDetails)) {
                  receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+
+
+            //已发货数量
+            Integer deliveryQty = deliveryDetailList.stream().filter(v->v.getSourceDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
+            viewProductDTO.setDeliveryQty(deliveryQty);
 
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
 
@@ -461,8 +479,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //更新采购订单交货状态
         boolean update = lambdaUpdate()
                 .eq(PurchaseOrderDetailEntity::getId, entity.getId())
-                .set(PurchaseOrderDetailEntity::getArrivalStatus, entity.getArrivalStatus())
-                .set(PurchaseOrderDetailEntity::getArrivalTime, entity.getArrivalTime())
+                .set(PurchaseOrderDetailEntity::getExecutionStatus, entity.getExecutionStatus())
                 .set(ObjectUtils.isNotNull(entity.getPurchaseAmount()), PurchaseOrderDetailEntity::getPurchaseAmount, entity.getPurchaseAmount())
                 .update();
         if (!update) {
@@ -488,7 +505,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
+    public void updateArrivalStatusByIds(String executionStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
         List<PurchaseOrderDetailEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98026);
@@ -508,8 +525,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
             lambdaUpdate()
                     .eq(PurchaseOrderDetailEntity::getId,detailId)
-                    .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
-                    .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
+                    .set(PurchaseOrderDetailEntity::getExecutionStatus,executionStatus)
                     .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
                     .set(PurchaseOrderDetailEntity::getRemark, newRemark)
                     .update();
@@ -562,5 +578,39 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         queryWrapper.eq(PurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
         return listObjs(queryWrapper, Object::toString);
+    }
+
+    @Override
+    public void purchaseOrderConfirm(List<String> detailIdList, ExecutionStatusEnum typeEnum, String remark, ConfirmTypeEnum confirmType) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return;
+        }
+        LoginUser userInfo = commonService.getUserInfo();
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getId,detailIdList)
+                .set(PurchaseOrderDetailEntity::getExecutionStatus, typeEnum.getCode())
+                .set(PurchaseOrderDetailEntity::getConfirmRemark,remark)
+                .set(PurchaseOrderDetailEntity::getConfirmUserId, ObjectUtil.isEmpty(userInfo) ? "":userInfo.getUid())
+                .set(PurchaseOrderDetailEntity::getConfirmUserName, ObjectUtil.isEmpty(userInfo) ? "system":userInfo.getUserName())
+                .set(PurchaseOrderDetailEntity::getConfirmDate, LocalDate.now())
+                .set(PurchaseOrderDetailEntity::getConfirmType, confirmType.getCode())
+                .update(new PurchaseOrderDetailEntity());
+    }
+
+    @Override
+    public void purchaseOrderAutoConfirm(List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return;
+        }
+        purchaseOrderConfirm(detailIdList, ExecutionStatusEnum.CONFIRM,"系统自动确认",ConfirmTypeEnum.AUTO);
+    }
+
+    @Override
+    public void updateExecutionStatus(List<String> mainIdList, ExecutionStatusEnum statusEnum) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return;
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,mainIdList)
+                .set(PurchaseOrderDetailEntity::getExecutionStatus,statusEnum.getCode())
+                .update();
     }
 }

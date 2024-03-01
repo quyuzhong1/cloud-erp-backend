@@ -19,8 +19,13 @@ public enum DictBasicEnum {
     OUTSTOCK_TYPE("outstockType", "", "出库类型"),
     WORK_TYPE("workType", "", "事务类型"),
     MACHINE_TYPE("machineType", "", "加工单类型"),
+    ISSUE_TYPE("issueType", "", "发料类型"),
+    CFG_SETTING("cfgSetting", "", "系统配置"),
+    WAREHOUSE_MANAGE_TYPE("warehouseManageType", "", "仓库经营类型"),
+    GEOGRAPHY_LOCATION("geographyLocation", "", "仓库地库位置"),
     STOP_GEN_RECEIVE_TIME("stopGenReceiveTime", "", "系统停止生成FBA货件签收记录有效时间配置"),
 
+    SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE("defaultManageDeliveryType", "", "默认SKU映射仓库发货配置"),
     ;
 
 

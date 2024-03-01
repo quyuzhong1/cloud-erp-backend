@@ -1,9 +1,14 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -17,6 +22,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -29,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +43,7 @@ import java.util.List;
  * @author will
  * @since 2023-03-16
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购订单")
 @RequestMapping("/purchaseOrder")
@@ -59,6 +67,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
@@ -75,6 +84,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PurchaseOrderDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseOrderDTO.SearchParamDTO dto) {
         PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = purchaseOrderService.pagingTotal(dto);
         return success(pagingTotalDTO);
@@ -474,6 +484,7 @@ public class PurchaseOrderController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
@@ -569,4 +580,32 @@ public class PurchaseOrderController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 供应商确认
+     * @author Will
+     * @date: 2024/1/16 16:56
+     * @param dto
+     * @return ApiResult<List<ViewSubcontractPoDTO>>
+     */
+    @PostMapping("/supplierConfirm")
+    public ApiResult<List<BatchResultDTO>> supplierConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = purchaseOrderService.supplierConfirm(id);
+            }catch (Exception e){
+                log.error("采购订单 提交审核失败",e);
+                PurchaseOrderEntity entity = purchaseOrderService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "采购订单不存在, 提交失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

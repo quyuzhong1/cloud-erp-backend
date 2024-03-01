@@ -199,14 +199,14 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     }
 
     @Override
-    public Boolean updateOutstockStatus(List<String> soIdList, String status) {
-        if (CollectionUtils.isEmpty(soIdList)) {
+    public Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getSoIds())) {
             return Boolean.FALSE;
         }
 
         return lambdaUpdate()
-                .set(TransferDeclareDetailEntity::getOutstockStatus, status)
-                .in(TransferDeclareDetailEntity::getSoId, soIdList)
+                .set(TransferDeclareDetailEntity::getOutstockStatus, dto.getStatus())
+                .in(TransferDeclareDetailEntity::getSoId, dto.getSoIds())
                 .update();
     }
 

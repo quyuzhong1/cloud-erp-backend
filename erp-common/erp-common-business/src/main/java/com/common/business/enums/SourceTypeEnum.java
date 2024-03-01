@@ -59,6 +59,7 @@ public enum SourceTypeEnum {
     REQUISITION_APPLICATION_HANDLE("requisitionApplicationHandle", "要货申请(处理)","requisition_application"),
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
+    SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
 
 
     //OMS
@@ -72,6 +73,11 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
+
+    //SRM
+    DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
+
+
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),

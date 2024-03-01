@@ -33,6 +33,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -72,7 +73,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);

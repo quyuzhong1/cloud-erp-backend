@@ -23,6 +23,7 @@
         <module>erp-rpc-scm</module>
         <module>erp-rpc-oms</module>
         <module>erp-rpc-tms</module>
+        <module>erp-rpc-srm</module>
 
     </modules>
 

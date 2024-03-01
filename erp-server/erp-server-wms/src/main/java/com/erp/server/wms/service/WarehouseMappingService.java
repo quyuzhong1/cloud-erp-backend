@@ -51,4 +51,23 @@ public interface WarehouseMappingService extends SuperService<WarehouseMappingEn
      * @return java.util.List<com.erp.model.wms.dto.WarehouseMappingDTO.MappingViewDTO>
      **/
     List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByDictPlatform(String dictPlatform);
+
+    /**
+     * 根据平台编码和仓库id查询仓库映射信息
+     * @Author Luo_WG
+     * @Date 2024/1/31 12:34
+     * @param warehouseId
+     * @param dictPlatform
+     * @return com.erp.model.wms.dto.WarehouseMappingDTO.MappingViewDTO
+     **/
+    WarehouseMappingDTO.MappingViewDTO getMappingViewByDictPlatform(String warehouseId, String dictPlatform);
+
+    /**
+     * 校验第三方仓库名称是否存在
+     * @Author Luo_WG
+     * @Date 2024/2/21 15:31
+     * @param thirdWarehouseName
+     * @param dictPlatform
+     **/
+    WarehouseMappingEntity checkThirdWarehouseNameExist(String thirdWarehouseName, String dictPlatform);
 }

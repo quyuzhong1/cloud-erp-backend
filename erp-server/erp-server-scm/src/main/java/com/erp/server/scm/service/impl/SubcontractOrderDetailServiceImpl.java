@@ -37,10 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -162,6 +159,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
+    public List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(List<String> parentIdList) {
+        if (CollectionUtils.isEmpty(parentIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SubcontractOrderDetailEntity::getParentId,parentIdList).list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
@@ -218,6 +223,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Override
     public List<SubcontractOrderDetailEntity> listByMainId(String mainId) {
        return lambdaQuery().eq(SubcontractOrderDetailEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    public List<SubcontractOrderDetailEntity> listByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SubcontractOrderDetailEntity::getMainId,mainIdList).list();
     }
 
     @Override

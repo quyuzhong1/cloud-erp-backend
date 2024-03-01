@@ -92,9 +92,6 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             return Collections.emptyList();
         }
 
-        //查询发货单，获取发货仓库
-        getDeliveryList(shopInfoDTO, orderList);
-
 
         return orderList.stream()
                 .map(e -> new PlatformAliExpressOrderDTO(data, e, shopInfoDTO))
@@ -107,7 +104,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
      * @param shopInfoDTO
      * @param orderList
      */
-    private void getDeliveryList(AliExpressShopInfoDTO shopInfoDTO, List<AliExpressOrder> orderList) {
+    private void getDeliveryList(AliExpressShopInfoDTO shopInfoDTO, List<PlatformAliExpressOrderDTO> orderList) {
         String deliveryQueryAPiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_QUERY;
         OrderRequest deliveryRequest = OrderRequest.builder().
                 clientId(shopInfoDTO.getClientId()).
@@ -116,25 +113,32 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
                 apiName(deliveryQueryAPiName).
                 token(shopInfoDTO.getToken()).build();
         List<ErpFulfillmentForwardDtoBean> deliveryList = new ArrayList<>();
-        List<String> orderIdList = orderList.stream().map(req -> req.getOrderId()).distinct().collect(Collectors.toList());
+        List<String> orderIdList = orderList.stream().map(req -> req.getAliExpressOrder().getOrderId()).distinct().collect(Collectors.toList());
         //20个分片拆分，平台只支持一次查询20个;
         List<List<String>> partition = Lists.partition(orderIdList, 20);
         for (List<String> list : partition) {
             deliveryList.addAll(aliExpressOrderService.listDeliveryQuery(deliveryRequest, list));
         }
-        for (AliExpressOrder aliExpressOrder : orderList) {
-            List<LogisitcsDTO> logisticInfoList = aliExpressOrder.getDetail().getLogisticInfoList();
+        for (PlatformAliExpressOrderDTO platformAliExpressOrderDTO : orderList) {
+            List<LogisitcsDTO> logisticInfoList = platformAliExpressOrderDTO.getAliExpressOrder().getDetail().getLogisticInfoList();
+            if (!CollectionUtils.isEmpty(logisticInfoList)){
             for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
-                ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(aliExpressOrder.getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
+                ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(erpFulfillmentForwardDtoBean)) {
-                    erpFulfillmentForwardDtoBean.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
+                    logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
+                } else {
+                    logisitcsDTO.setWarehouseName("");
                 }
+            }
             }
         }
     }
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformAliExpressOrderDTO> sourceDataList) {
+        if(!CollectionUtils.isEmpty(sourceDataList)){
+            getDeliveryList(sourceDataList.get(0).getAliExpressShopInfoDTO(), sourceDataList);
+        }
         return sourceDataList.stream()
                 // 组装
                 .map(PlatformAliExpressOrderDTO::convertDTO)

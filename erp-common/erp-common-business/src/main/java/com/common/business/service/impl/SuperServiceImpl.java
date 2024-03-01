@@ -2,7 +2,9 @@ package com.common.business.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.SortParamDTO;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.SuperService;
 import com.common.business.vo.LoginUser;
@@ -12,10 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -97,5 +96,21 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
                 .update();
     }
 
-
+    protected List<OrderItem> buildOrders(List<SortParamDTO> sortList) {
+        if (CollectionUtils.isEmpty(sortList)){
+            return Collections.emptyList();
+        }
+        List<OrderItem> orderItems = new ArrayList<>(sortList.size());
+        sortList.stream().forEach(sortParamDTO -> {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setColumn(sortParamDTO.getField());
+            if (sortParamDTO.getSort().equals("ASC")){
+                orderItem.setAsc(true);
+            }else {
+                orderItem.setAsc(false);
+            }
+            orderItems.add(orderItem);
+        });
+        return orderItems;
+    }
 }

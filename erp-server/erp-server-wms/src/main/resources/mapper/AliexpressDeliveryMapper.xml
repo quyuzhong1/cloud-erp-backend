@@ -69,18 +69,18 @@
         </if>
         <!--店铺-->
         <if test="params.shopIdList !=null and params.shopIdList.size > 0">
-            and bty.shop_id in
+            and ad.shop_id in
             <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
                 #{shopId}
             </foreach>
         </if>
         <!--物流跟踪号-->
         <if test="params.trackNo != null and params.trackNo != ''">
-            and  ad.track_no concat('%',#{params.trackNo}::text,'%')
+            and  ad.track_no ILIKE concat('%',#{params.trackNo}::text,'%')
         </if>
         <!--平台发货仓库-->
         <if test="params.warehouseName != null and params.warehouseName != ''">
-            and  ad.warehouse_name concat('%',#{params.warehouseName}::text,'%')
+            and  ad.warehouse_name ILIKE concat('%',#{params.warehouseName}::text,'%')
         </if>
         <!--订单创建时间-->
         <if test="params.tradeCreateTimeList != null and params.tradeCreateTimeList.size > 0">
@@ -110,7 +110,7 @@
         FROM aliexpress_delivery ad
         WHERE ad.is_deleted = FALSE
         <!--ids-->
-        <if test="params.ids != null and params.ids != ''">
+        <if test="params.ids != null and params.ids.size  > 0">
             and ad.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
