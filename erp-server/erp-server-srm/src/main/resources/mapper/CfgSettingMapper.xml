@@ -33,26 +33,6 @@
         is_deleted,
         key, data_json, disabled, index, remark, supplier_id
     </sql>
-    <insert id="saveCfgConfig">
-        insert into cfg_setting (<include refid="Base_Column_List"/>)
-        values (
-        #{entity.id},
-        #{entity.createUserId},
-        #{entity.createUserName},
-        #{entity.createTime},
-        #{entity.updateUserId},
-        #{entity.updateUserName},
-        #{entity.updateTime},
-        #{entity.version},
-        #{entity.isDeleted},
-        #{entity.key},
-        #{entity.dataJson,typeHandler=com.erp.server.srm.config.ObjectJsonHandler},
-        #{entity.disabled},
-        #{entity.index},
-        #{entity.remark},
-        #{entity.supplierId}
-        )
-    </insert>
     <select id="getListBySupplierId" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"/>
         from cfg_setting
