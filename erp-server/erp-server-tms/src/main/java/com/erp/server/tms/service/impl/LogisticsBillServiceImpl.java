@@ -352,10 +352,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String salesPlatform = dto.getSalesPlatform();
         Boolean isAliExpress = aliExpress.equals(salesPlatform);
+
+        String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
+        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
         //最高报关金额
-        BigDecimal maxCustomsAmount = logisticsChannel.getMaxCustomsAmount();
+        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
         //最低报关金额
-        BigDecimal minCustomsAmount = logisticsChannel.getMinCustomsAmount();
+        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
 
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
         //发货人信息
