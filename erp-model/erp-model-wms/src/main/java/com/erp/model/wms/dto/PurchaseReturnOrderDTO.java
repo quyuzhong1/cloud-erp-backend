@@ -842,6 +842,11 @@ public class PurchaseReturnOrderDTO {
          * 入参：key=poReturnStatus
          */
         private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
         /**
          * 数量
          */

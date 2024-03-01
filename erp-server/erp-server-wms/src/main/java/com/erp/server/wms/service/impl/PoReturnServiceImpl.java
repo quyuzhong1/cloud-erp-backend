@@ -1093,6 +1093,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;

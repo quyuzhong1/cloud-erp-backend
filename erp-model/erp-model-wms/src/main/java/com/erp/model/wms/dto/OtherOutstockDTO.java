@@ -198,7 +198,11 @@ public class OtherOutstockDTO implements Serializable {
         /**
          * 类型(toBeApprove待审批，approve审核通过，reject不通过)
          */
-        private String searchType;
+        private String tabFlag;
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         /**
          * 数量

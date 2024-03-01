@@ -392,6 +392,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
         waitApprove.setTabFlag(PageListTypeEnum.TO_BE_APPROVE.getCode());
+        waitApprove.setTabFlagName(PageListTypeEnum.TO_BE_APPROVE.getName());
         resultList.add(waitApprove);
 
         //已审核
@@ -401,6 +402,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         approve.setCount(approveCount);
         approve.setTabFlag(PageListTypeEnum.APPROVE.getCode());
+        waitApprove.setTabFlagName(PageListTypeEnum.APPROVE.getName());
         resultList.add(approve);
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -409,6 +411,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
         reject.setTabFlag(PageListTypeEnum.REJECT.getCode());
+        waitApprove.setTabFlagName(PageListTypeEnum.REJECT.getName());
         resultList.add(reject);
         return resultList;
     }

@@ -44,6 +44,7 @@
             ta.transfer_direction as transferDirection,
             ta.approve_status as approveStatus,
             ta.invalid_status as invalidStatus,
+            tad.id as detailId,
             tad.sku_id as skuId,
             tad.sku_no as skuNo,
             ta.bill_date as billDate,

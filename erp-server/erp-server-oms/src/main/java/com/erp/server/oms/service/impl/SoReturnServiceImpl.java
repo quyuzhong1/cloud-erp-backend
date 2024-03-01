@@ -193,7 +193,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             pagingParam.setSqlMap(map);
             Integer count = this.baseMapper.listCount(pagingParam);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;

@@ -34,6 +34,11 @@ public class TransferApplicationDTO implements Serializable {
          * 主键id
          */
         private String  id;
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
         /**
          * 调拨单号
          */
@@ -147,7 +152,12 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 类型(toBeApprove待审批，approve审核通过，reject不通过)
          */
-        private String searchType;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         /**
          * 数量

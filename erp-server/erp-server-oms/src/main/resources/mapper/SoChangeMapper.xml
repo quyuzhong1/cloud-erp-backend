@@ -28,6 +28,7 @@
         si.code AS soCode,
         si.customer_id AS customerId,
         si.order_type AS orderType,
+        scd.id as detailId,
         scd.sku_id AS skuId,
         scd.sku_no AS skuNo,
         scd.qty,

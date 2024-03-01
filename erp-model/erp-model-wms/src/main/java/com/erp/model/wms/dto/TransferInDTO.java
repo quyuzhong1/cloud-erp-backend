@@ -39,7 +39,12 @@ public class TransferInDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
         //类型
-        private String searchType;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         //数量
         private Integer count;
@@ -53,6 +58,11 @@ public class TransferInDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * code

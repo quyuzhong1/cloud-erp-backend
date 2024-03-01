@@ -99,7 +99,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int allCount = approveCountList.stream().mapToInt(TransferInDTO.ApproveCountDTO::getCount).sum();
         TransferInDTO.TabListDTO all = new TransferInDTO.TabListDTO();
         all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
+        all.setTabFlag(SearchType.ALL);
         resultList.add(all);
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -107,7 +107,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
-        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        waitApprove.setTabFlag(ing);
+        waitApprove.setTabFlagName(ApproveStatusEnum.APPROVE_ING.getName());
         resultList.add(waitApprove);
 
         //已审核
@@ -116,7 +117,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         approve.setCount(approveCount);
-        approve.setSearchType(approveStatus);
+        approve.setTabFlag(approveStatus);
+        approve.setTabFlagName(ApproveStatusEnum.APPROVE.getName());
         resultList.add(approve);
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -124,7 +126,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
-        reject.setSearchType(rejectStatus);
+        reject.setTabFlag(rejectStatus);
+        reject.setTabFlagName(ApproveStatusEnum.REJECT.getName());
         resultList.add(reject);
         return resultList;
     }

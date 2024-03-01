@@ -39,6 +39,11 @@ public class StocktakingProfitLossDTO implements Serializable {
         private String tabFlag;
 
         /**
+         * tab名称
+         */
+        private String tabFlagName;
+
+        /**
          * 数量
          */
         private Integer count;
@@ -183,6 +188,11 @@ public class StocktakingProfitLossDTO implements Serializable {
 
 
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         private String mainId;
         /**

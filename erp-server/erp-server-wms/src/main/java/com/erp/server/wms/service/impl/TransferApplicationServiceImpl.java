@@ -166,7 +166,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             searchParamDTO.setSqlMap(map);
             Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setSearchType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;

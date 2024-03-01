@@ -197,7 +197,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
                     return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
                 }).sum();
-                TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(pageListTypeEnum.getCode(), statusQty);
+                TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(pageListTypeEnum.getCode(),pageListTypeEnum.getName(), statusQty);
                 resultList.add(tab);
             }
         });

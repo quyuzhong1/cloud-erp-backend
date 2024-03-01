@@ -183,7 +183,13 @@ public class SoReturnDTO {
         /**
          * 类型(toBeApprove 待审核，reject 审核不通过，approve 已审核)
          */
-        private String type;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
+
         /**
          * 数量
          */

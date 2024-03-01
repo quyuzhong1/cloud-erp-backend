@@ -10,6 +10,7 @@
             tfo.transfer_direction AS transferDirection,
             tfo.approve_status AS approveStatus,
             tfo.invalid_status AS invalidStatus,
+            tod.id as detailId,
             tod.sku_id AS skuId,
             tod.sku_no AS skuNo,
             tfo.bill_date AS billDate,

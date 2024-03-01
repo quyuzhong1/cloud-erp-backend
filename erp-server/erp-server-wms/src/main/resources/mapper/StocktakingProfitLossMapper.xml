@@ -45,6 +45,7 @@
         spl.approve_time AS approveTime,
         spl.approve_user_name AS approveUserName,
         spl.approve_status AS approveStatus,
+        spld.id as detailId,
         spld.sku_no AS skuNo,
         spld.sku_id AS skuId,
         spld.warehouse_id AS warehouseId,

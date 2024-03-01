@@ -35,7 +35,12 @@ public class TransferOutDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         //类型
-        private String searchType;
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
         //数量
         private Integer count;
@@ -49,6 +54,11 @@ public class TransferOutDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 调拨单号

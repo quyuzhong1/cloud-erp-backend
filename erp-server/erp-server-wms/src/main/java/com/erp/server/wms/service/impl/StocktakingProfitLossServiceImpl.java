@@ -140,6 +140,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         int profitCount = dbList.stream().filter(p -> profit.equals(p.getTabFlag())).findFirst().
                 map(StocktakingProfitLossDTO.TabDTO::getCount).orElse(0);
         profitTab.setTabFlag(profit);
+        profitTab.setTabFlagName(BillTypeEnum.PROFIT.getName());
         profitTab.setCount(profitCount);
         tabList.add(profitTab);
 
@@ -148,6 +149,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         int lossCount = dbList.stream().filter(p -> loss.equals(p.getTabFlag())).findFirst().
                 map(StocktakingProfitLossDTO.TabDTO::getCount).orElse(0);
         lossTab.setTabFlag(loss);
+        lossTab.setTabFlagName(BillTypeEnum.LOSS.getName());
         lossTab.setCount(lossCount);
         tabList.add(lossTab);
 
