@@ -21,6 +21,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -112,6 +114,9 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductCustomsService productCustomsService;
+
+    @Resource
+    private BomSkuService bomSkuService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -904,6 +909,35 @@ public class ProductDetailController extends BaseController {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
         return success(skuList);
     }
+
+    /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2023-01-11 14:58
+     */
+    @GetMapping("/search/skuWithCombination")
+    public ApiResult<List<SkuVO>> skuWithCombination(String searchKeyword) {
+        List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
+        if(CollectionUtils.isEmpty(skuList)){
+            return success(skuList);
+        }
+        List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(skuIds);
+        for (SkuVO skuVO : skuList) {
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(skuVO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                skuVO.setIsCombination(Boolean.TRUE);
+            } else {
+                skuVO.setIsCombination(Boolean.FALSE);
+            }
+        }
+        return success(skuList);
+    }
+
 
     /**
      * 搜索sku

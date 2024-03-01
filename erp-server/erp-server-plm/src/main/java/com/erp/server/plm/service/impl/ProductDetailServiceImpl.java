@@ -2369,23 +2369,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public List<SkuVO> searchSku(String searchKeyword) {
-        List<SkuVO> skuVOS = baseMapper.searchSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
-        if(CollectionUtils.isEmpty(skuVOS)){
-            return skuVOS;
-        }
-        List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(skuIds);
-        for (SkuVO skuVO : skuVOS) {
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(skuVO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                skuVO.setIsCombination(Boolean.TRUE);
-            } else {
-                skuVO.setIsCombination(Boolean.FALSE);
-            }
-        }
-        return skuVOS;
+        return baseMapper.searchSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
     }
 
 

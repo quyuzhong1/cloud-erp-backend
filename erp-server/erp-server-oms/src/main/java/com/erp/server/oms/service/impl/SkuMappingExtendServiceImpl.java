@@ -65,7 +65,7 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
             } else{
                 Map<String, SkuMappingExtendEntity> currentExistMap = cfgConfig.stream().collect(Collectors.toMap(SkuMappingExtendEntity::getWarehouseManageType, Function.identity()));
                  currentValue = defaultConfigList.stream().map(e -> {
-                    SkuMappingExtendEntity entity = currentExistMap.get(e.getType());
+                    SkuMappingExtendEntity entity = currentExistMap.get(e.getValue());
                     return new SkuMappingExtendDTO.ListDTO(entity, e);
                 }).collect(Collectors.toList());
             }
