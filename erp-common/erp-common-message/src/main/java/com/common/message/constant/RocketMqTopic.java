@@ -103,4 +103,11 @@ public class RocketMqTopic {
      * dmp推送第三方平台数据
      */
     public static final String PLATFORM_PUSH_DATA_TOPIC = "${spring.cloud.nacos.discovery.namespace}-platform_push_data_topic";
+
+
+    /**
+     * 推送系统日志数据
+     */
+    public static final String AMZ_REPORT_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-amz_report_task_topic";
+
 }

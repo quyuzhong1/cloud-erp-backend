@@ -23,7 +23,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.ReportHandleService;
+import com.erp.server.dmp.service.AmzReportHandleService;
 import com.erp.server.dmp.service.mq.JmsAmazonSqsConsumer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +45,7 @@ public class JmsConsumerTest {
     @Resource
     private JmsAmazonSqsConsumer jmsAmazonSqsConsumer;
     @Resource
-    private ReportHandleService reportHandleService;
+    private AmzReportHandleService amzReportHandleService;
     @Resource
     private MongoService mongoService;
 
@@ -269,7 +269,7 @@ public class JmsConsumerTest {
         List<ReportListingCsvEntity> cvsList = JSONUtil.toList(json, ReportListingCsvEntity.class);
 
         // 根据不同地区区分
-        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1, null, true);
+        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1, null, true, null);
         // 查询当前报告是否是属于系统计划报告
 //        Report report = reportsApi.getReport("730602019674");
         String reportJson = "{\"marketplaceIds\":[\"ATVPDKIKX0DER\"],\"reportId\":\"730602019674\",\"reportType\":\"GET_MERCHANT_LISTINGS_DATA\",\"dataStartTime\":1699835310000,\"dataEndTime\":1699836210000,\"reportScheduleId\":\"50007019671\",\"createdTime\":1699836258000,\"processingStatus\":\"DONE\",\"processingStartTime\":1699836265000,\"processingEndTime\":1699836276000,\"reportDocumentId\":\"amzn1.spdoc.1.4.na.0c047a82-212d-4d0f-bd6d-eb2ca70c4793.TQLWD3FS907B4.300\"}";
@@ -317,18 +317,5 @@ public class JmsConsumerTest {
                 "    \"receiptHandle\": \"AQEBnamXijcgsRCU/kmWRWz0Hqo/XN5a+pvULbnK/9ZJ5DHdhlpaLc+IYpkGV3YJKyJtVapfJI5uhjxGjCxJnMn52bXhSz6vlWtEM1fRB7t2CqDQowcfcYEjo0dlpTbguOAkZqF92ZuSkVWI35ydwmZeyW4oBZxMOkeyMh68gA9convnJDWWK8tnXMY9Cu57B/xK6tLeMmEkZ+YtI6qmQdIQmFe6o5+pKFIain8hTA1w76A9Gp06We97pE2baodKPBWBnLKlauUX7/Z9ONb3mWG9ZsQFz+j5EAlDSfocNLa6BLOC1+D+BUw9MLH4C7g7kyL5NZjyANeWsWWkWULUhdqAKjrjRypGO1b35WDI0SNYdIbv17EK6IUQVycvlzu/iEW1t5IpTjoj/QlTq2B7WavVTw==\"\n" +
                 "}");
         jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
-    }
-
-    @Test
-    public void check() {
-        String shopId = "1720261566995107842";
-        String reportId = "125730019696";
-
-
-        ReportListingMongoDTO mongoDTO = new ReportListingMongoDTO();
-        mongoDTO.setReportId(reportId);
-        List<ReportListingMongoDTO> mongoData = mongoService.findMongoData(mongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingMongoDTO.class);
-
-        reportHandleService.pullBusinessHandler(shopId, reportId, mongoData);
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,4 +33,19 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * @return
      */
     List<FbaShipmentReceiveEntity> checkAndSetReceiveSkuMapping(List<FbaShipmentDetailEntity> oldDetailEntityList, List<FbaShipmentReceiveEntity> receiveEntityList);
+
+    /**
+     * 保存签收记录并检查调拨
+     */
+    Boolean saveAndCheckTransfer(List<FbaShipmentReceiveEntity> entityList);
+
+    /**
+     * 移除非Erp系统的签收记录的关联关系
+     */
+    void checkAndRemoveDetailIds(List<String> mainIds);
+
+    /**
+     * 检查并绑定历史的签收记录
+     */
+    void checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> newDetailEntityList, String sourceType);
 }

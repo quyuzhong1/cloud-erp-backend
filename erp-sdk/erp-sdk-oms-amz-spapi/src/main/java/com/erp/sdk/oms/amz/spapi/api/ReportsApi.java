@@ -1285,7 +1285,7 @@ public class ReportsApi {
     /**
      * 初始化Api
      */
-    public static ReportsApi initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox) {
+    public static ReportsApi initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox, RateLimitConfiguration rateLimitConfig) {
         AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
 
         LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
@@ -1301,6 +1301,7 @@ public class ReportsApi {
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
                 .endpoint(isSandbox ? endpointsEnum.getSandboxEndpoints() : endpointsEnum.getEndpoints())
+                .rateLimitConfigurationOnRequests(rateLimitConfig)
                 .build();
         if (null == reportsApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");

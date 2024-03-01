@@ -83,4 +83,9 @@ public class ReceiverInfoVO {
     private String zipCode;
     //买家ID
     private String actId;
+
+    /**
+     * 收货人税号
+     */
+    private String receiverTaxNo;
 }

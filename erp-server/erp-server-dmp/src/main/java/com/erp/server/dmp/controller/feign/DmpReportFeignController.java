@@ -1,7 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
-import com.erp.server.dmp.service.ReportScheduleService;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.server.dmp.service.AmzReportScheduleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,24 +22,15 @@ import javax.validation.Valid;
 @RequestMapping("feign/dmp")
 public class DmpReportFeignController {
     @Resource
-    private ReportScheduleService reportScheduleService;
+    private AmzReportScheduleService reportScheduleService;
 
     /**
-     * 添加报告计划
+     * 添加或更新报告计划
      */
-    @PostMapping("/reportSchedule/add")
-    public Boolean addReportSchedule(@RequestBody @Valid DmpSyncReportScheduleDTO dto){
-        return reportScheduleService.addReportSchedule(dto);
+    @PostMapping("/reportSchedule/addOrUpdate")
+    public Boolean addReportSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO dto) {
+        return reportScheduleService.addOrUpdateReportSchedule(dto);
     }
-
-    /**
-     * 取消报告计划
-     */
-    @PostMapping("/reportSchedule/cancel")
-    public Boolean cancelReportSchedule(@RequestBody @Valid DmpSyncReportScheduleDTO dto){
-        return reportScheduleService.cancelReportSchedule(dto);
-    }
-
 
 
 }

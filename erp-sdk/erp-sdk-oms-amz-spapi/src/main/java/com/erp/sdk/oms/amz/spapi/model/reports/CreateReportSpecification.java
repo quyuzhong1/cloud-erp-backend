@@ -15,8 +15,6 @@ package com.erp.sdk.oms.amz.spapi.model.reports;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.time.OffsetDateTime;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -34,10 +32,10 @@ public class CreateReportSpecification {
   private String reportType = null;
 
   @SerializedName("dataStartTime")
-  private OffsetDateTime dataStartTime = null;
+  private String dataStartTime = null;
 
   @SerializedName("dataEndTime")
-  private OffsetDateTime dataEndTime = null;
+  private String dataEndTime = null;
 
   @SerializedName("marketplaceIds")
   private List<String> marketplaceIds = new ArrayList<String>();
@@ -78,7 +76,7 @@ public class CreateReportSpecification {
     this.reportType = reportType;
   }
 
-  public CreateReportSpecification dataStartTime(OffsetDateTime dataStartTime) {
+  public CreateReportSpecification dataStartTime(String dataStartTime) {
     this.dataStartTime = dataStartTime;
     return this;
   }
@@ -88,15 +86,15 @@ public class CreateReportSpecification {
    * @return dataStartTime
   **/
 
-  public OffsetDateTime getDataStartTime() {
+  public String getDataStartTime() {
     return dataStartTime;
   }
 
-  public void setDataStartTime(OffsetDateTime dataStartTime) {
+  public void setDataStartTime(String dataStartTime) {
     this.dataStartTime = dataStartTime;
   }
 
-  public CreateReportSpecification dataEndTime(OffsetDateTime dataEndTime) {
+  public CreateReportSpecification dataEndTime(String dataEndTime) {
     this.dataEndTime = dataEndTime;
     return this;
   }
@@ -106,11 +104,11 @@ public class CreateReportSpecification {
    * @return dataEndTime
   **/
 
-  public OffsetDateTime getDataEndTime() {
+  public String getDataEndTime() {
     return dataEndTime;
   }
 
-  public void setDataEndTime(OffsetDateTime dataEndTime) {
+  public void setDataEndTime(String dataEndTime) {
     this.dataEndTime = dataEndTime;
   }
 

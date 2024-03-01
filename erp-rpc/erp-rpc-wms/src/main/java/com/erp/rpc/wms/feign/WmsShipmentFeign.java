@@ -2,7 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,4 +19,12 @@ public interface WmsShipmentFeign {
      */
     @PostMapping("/feign/shipment/consumer")
     ApiResult<?> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO);
+
+
+    /**
+     * 保存签收记录并检查调拨
+     * @author Jim
+     */
+    @PostMapping("/feign/shipment/saveAndCheckTransfer")
+    Boolean saveAndCheckTransfer(@RequestBody List<FbaShipmentReceiveEntity> entityList);
 }

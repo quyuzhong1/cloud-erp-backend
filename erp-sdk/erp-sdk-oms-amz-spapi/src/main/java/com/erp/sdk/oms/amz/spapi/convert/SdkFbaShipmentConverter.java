@@ -43,6 +43,9 @@ public interface SdkFbaShipmentConverter {
     })
     PlatformFbaShipmentDTO downloadDtoToSaveDto(PlatformAmazonFbaShipmentDTO dto);
 
+    @Mappings({
+    })
+    List<PlatformFbaShipmentDTO> downloadDtoToSaveDtoList(List<PlatformAmazonFbaShipmentDTO> daoList);
 
     @Mappings({
             @Mapping(target = "sellerSku", source = "sellerSKU"),
@@ -56,5 +59,7 @@ public interface SdkFbaShipmentConverter {
     PlatformFbaShipmentReceiveDTO receiveDtoToSaveDto(InboundShipmentItem item);
 
 
+    @Mappings({
+    })
     List<PlatformFbaShipmentReceiveDTO> receiveDtoToSaveDtoList(List<InboundShipmentItem> item);
 }

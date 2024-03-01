@@ -228,6 +228,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     String getShopifyAuthorizeUrl(ShopifyAuthorizeUrlDTO dto);
 
     /**
+     * 查询指定或所有店铺
+     */
+    List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto);
+
+    /**
      * 根据shopify平台用户id查询用户信息
      * @Author Luo_WG
      * @Date 2024/2/23 14:07

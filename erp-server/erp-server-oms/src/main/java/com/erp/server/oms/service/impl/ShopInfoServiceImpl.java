@@ -286,6 +286,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
     }
 
+    @Override
+    public List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto) {
+        return lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(ShopInfoEntity::getAuthStatus, dto.getAuthStatus())
+                .eq(ShopInfoEntity::getDisabled, false)
+                .in(CollectionUtils.isNotEmpty(dto.getShopIdList()), ShopInfoEntity::getId, dto.getShopIdList())
+                .list()
+                ;
+    }
+
     /**
      * 检查店铺是否存在
      *
@@ -552,6 +563,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled) {
         if (Objects.nonNull(shop)) {
             //数据库的禁用状态
@@ -562,7 +575,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shop.setDisabled(disabled);
             this.updateById(shop);
             // 禁用启用任务
-            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shop.getId(), shop.getDictPlatform(), disabled));
+            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
+                    shop.getName(),
+                    shop.getDictPlatform(),
+                    disabled,
+                    shop.getDictCountryCode(),
+                    shop.getPlatformShopCode()));
             return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
         }
         return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
@@ -610,6 +628,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaUpdate()
                 .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
                 .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
+                .set(ShopInfoEntity::getPlatformStatus, shopInfoEntity.getPlatformStatus())
+                .set(ShopInfoEntity::getDisabled , shopInfoEntity.getDisabled())
                 .update();
     }
 

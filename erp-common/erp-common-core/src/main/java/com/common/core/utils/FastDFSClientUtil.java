@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -181,6 +182,26 @@ public class FastDFSClientUtil {
 			IOUtils.closeQuietly(inputStream);
 		}
 	}
+
+	/**
+	 * 指定字符集上传文件
+	 *
+	 * @param inputStream 文件流
+	 * @param fileName    文件名
+	 * @param metaList    文件元数据
+	 * @return
+	 */
+	public synchronized static String uploadFile(InputStreamReader inputStream, Charset charset, String fileName, Map<String, String> metaList) {
+		try {
+			byte[] buff = IOUtils.toByteArray(inputStream, charset);
+			return uploadFile2Client(buff, fileName, metaList);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			IOUtils.closeQuietly(inputStream);
+		}
+	}
+
 
 	/**
 	 * 获取文件元数据

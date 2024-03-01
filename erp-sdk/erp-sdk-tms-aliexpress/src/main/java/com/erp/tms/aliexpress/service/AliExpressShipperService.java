@@ -276,32 +276,47 @@ public class AliExpressShipperService {
     public static void main(String[] args) throws ApiException {
         AliExpressShipperService service = new AliExpressShipperService();
         Map<String, String> authMap = new HashMap<>();
-        String CLIENT_CODE = "503630";
-        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-        String token = "50000201326tOAyeueoufxwfeiat5mxXHHeLgx183c2ca0etyIE3GSShKP4IUHrpU3LN";
-        authMap.put("clientId",CLIENT_CODE);
-        authMap.put("clientSecret",CHECK_WORD);
-        authMap.put("token",token);
-        authMap.put("url","https://api-sg.aliexpress.com");
+        String CLIENT_CODE = "502978";
+        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+        String token = "50000201913g5RZqpecEaQ6pT179453ddTkJkRLXEqUDEXFxOEwPXvtsX3DHKlWZJx01";
+        String url="https://api-sg.aliexpress.com";
+//        authMap.put("clientId",CLIENT_CODE);
+//        authMap.put("clientSecret",CHECK_WORD);
+//        authMap.put("token",token);
+//        authMap.put("url","https://api-sg.aliexpress.com");
+
+        IopClient client = new IopClientImpl(url, CLIENT_CODE, CHECK_WORD);
+        IopRequest request = new IopRequest();
+        request.setApiName("/aliexpress/logistics/query/rule/info");
+        Map<String,String> map=new HashMap<>();
+        map.put("type","platformRule");
+        request.addApiParameter("param1",JSONObject.toJSONString(map));
+        request.addApiParameter("simplify", "true");
+
+
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println(response.getBody());
+
+
 //        IopResponse logisticsAddress = service.getLogisticsAddress(authMap);
 //        System.out.println(logisticsAddress);
-        QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
-                .order_id(1102446978507349L)
-                .goods_weight("1")
-                .goods_height(1L)
-                .goods_width(1L)
-                .goods_length(1L)
-//                .order_id(1102175972276889L)
-                .build();
-        QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
-                .order_id(8182864532297635L)
-                .goods_weight("1")
-                .goods_height(1L)
-                .goods_width(1L)
-                .goods_length(1L)
-                .sub_order_list(Collections.singletonList(queryLogisticsRequest))
-                .build();
-        IopResponse logisticsService = service.getLogisticsService(authMap, queryLogisticsRequest1);
-        System.out.println(logisticsService);
+//        QueryLogisticsRequest queryLogisticsRequest =  QueryLogisticsRequest.builder()
+//                .order_id(1102446978507349L)
+//                .goods_weight("1")
+//                .goods_height(1L)
+//                .goods_width(1L)
+//                .goods_length(1L)
+////                .order_id(1102175972276889L)
+//                .build();
+//        QueryLogisticsRequest queryLogisticsRequest1 =  QueryLogisticsRequest.builder()
+//                .order_id(8182864532297635L)
+//                .goods_weight("1")
+//                .goods_height(1L)
+//                .goods_width(1L)
+//                .goods_length(1L)
+//                .sub_order_list(Collections.singletonList(queryLogisticsRequest))
+//                .build();
+//        IopResponse logisticsService = service.getLogisticsService(authMap, queryLogisticsRequest1);
+//        System.out.println(logisticsService);
     }
 }

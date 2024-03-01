@@ -407,14 +407,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
                 //目的国申报价
                 BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
-                int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
-                if (maxCustoms < 0) {
+                if (maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                     productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
-                int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
-                if (minCustoms < 0) {
+                if (minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
                     productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
 

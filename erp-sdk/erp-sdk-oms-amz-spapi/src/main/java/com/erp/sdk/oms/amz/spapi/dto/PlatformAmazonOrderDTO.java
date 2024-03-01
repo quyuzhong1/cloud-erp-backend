@@ -67,7 +67,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     public PlatformAmazonOrderDTO(Order order, String shopId) {
         this.order = order;
         this.shopId = shopId;
-        this.setUniqueId(order.getAmazonOrderId());
+        this.setUniqueId(combineUnique(order.getAmazonOrderId(), shopId));
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
         this.setDownloadStatus(0);
         this.setDownloadAddressStatus(0);
@@ -79,6 +79,10 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderMongoDTO.setDownloadStatus(1);
         orderMongoDTO.setDownloadAddressStatus(0);
         return orderMongoDTO;
+    }
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
     }
 
     /**

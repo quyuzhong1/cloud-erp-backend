@@ -91,4 +91,11 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/getRelatedShopByIdAndCountry")
     ShopInfoEntity getRelatedShopByIdAndCountry(@RequestBody ShopInfoDTO.RelatedDTO relateDTO);
+
+
+    /**
+     * 查询指定或所有店铺
+     */
+    @PostMapping("feign/shop/listByParams")
+    List<ShopInfoEntity> listByParams(@RequestBody ShopInfoDTO.ListParamDTO dto);
 }

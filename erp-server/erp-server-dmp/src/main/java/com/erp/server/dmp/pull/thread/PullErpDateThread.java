@@ -4,14 +4,18 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.handler.SaveHandler;
 import com.common.business.service.ModelService;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -46,6 +50,8 @@ public class PullErpDateThread {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private MQProducerService mqProducerService;
 
 
     @Async("pullErpOpenApi")
@@ -70,7 +76,24 @@ public class PullErpDateThread {
             }
             DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(dto),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);
+            // 发送预警
+            sendWarnMsg(dmpErrorLogEntity, jobTaskDTO);
         }
+    }
+
+    /***
+     * 发送预警信息
+     */
+    public void sendWarnMsg(DmpErrorLogEntity dmpErrorLogEntity, JobTaskDTO jobTaskDTO) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(jobTaskDTO.getApiName());
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle(StrUtil.format("【{}】从{}拉取至{}失败",jobTaskDTO.getApiName(),jobTaskDTO.getDictPlatform(),"ERP"));
+        warnMsgInfo.setTableName("dmp_pull_task");
+        warnMsgInfo.setTableId(dmpErrorLogEntity.getTaskId());
+        warnMsgInfo.setKeyInfo(dmpErrorLogEntity.getReturnMsg());
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
     public void executeTask(String taskName) {

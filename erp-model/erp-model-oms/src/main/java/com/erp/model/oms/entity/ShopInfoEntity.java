@@ -173,6 +173,14 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("ioss_tax_no")
     private String iossTaxNo;
 
+    /**
+     * 平台店铺状态:none=无, open=正常, closed关闭
+     * ShopPlatformStatusEnum
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
+
     public static final String PLATFORM_DICT = "platform_dict";
 
     public static final String SHOP_CODE = "shop_code";
