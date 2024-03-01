@@ -26,8 +26,8 @@ import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.dto.mercado.MercadoRefreshTokenDTO;
-import com.sdk.oms.mercado.dto.mercado.MercadoTokenDTO;
+import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
+import com.sdk.oms.mercado.dto.mercado.PlatformMercadoTokenDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -103,13 +103,12 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         //拼接授权地址
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
-            //https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=3457166802805723&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result
 
             shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl());
         }
         return shopAuthorizeUrl;
     }
-//    https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=3457166802805723&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result
+
     /**
      * 授权
      * @param dto
@@ -153,8 +152,8 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         paramMap.put("baseUrl", cfgAppClient.getUrl());
         paramMap.put("code", dto.getCode());
 
-        MercadoTokenDTO mercadoTokenDTO = mercadoSdkClientService.sendMercadoPostToken(paramMap);
-        if (ObjectUtil.isEmpty(mercadoTokenDTO)) {
+        PlatformMercadoTokenDTO platformMercadoTokenDTO = mercadoSdkClientService.sendMercadoPostToken(paramMap);
+        if (ObjectUtil.isEmpty(platformMercadoTokenDTO)) {
             return Boolean.FALSE;
         }
         //根据店铺id 获取到授权信息
@@ -163,19 +162,23 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
             shopAuth = new ShopAuthEntity();
         }
         shopAuth.setShopId(shopId);
-        shopAuth.setToken(mercadoTokenDTO.getAccessToken());
-        shopAuth.setAccessToken(mercadoTokenDTO.getAccessToken());
-        shopAuth.setRefreshToken(mercadoTokenDTO.getRefreshToken());
+        shopAuth.setToken(platformMercadoTokenDTO.getAccessToken());
+        shopAuth.setAccessToken(platformMercadoTokenDTO.getAccessToken());
+        shopAuth.setRefreshToken(platformMercadoTokenDTO.getRefreshToken());
         shopAuth.setAppClientId(cfgAppClient.getId());
-        shopAuth.setExpiresIn(mercadoTokenDTO.getExpiresIn());
+        shopAuth.setExpiresIn(platformMercadoTokenDTO.getExpiresIn());
 
-        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(mercadoTokenDTO.getExpiresIn());
+        LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(platformMercadoTokenDTO.getExpiresIn());
         //提前半小时设置token失效，以免失效了以后才刷新容易出错
         LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
         shopAuth.setTokenExpireTime(tokenExpireTime);
 
         shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfo.setAuthTime(LocalDateTime.now());
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId", platformMercadoTokenDTO.getUserId());
+        shopInfo.setExtendData(map);
         shopAuthService.saveOrUpdate(shopAuth);
         dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         shopInfo.setIsGenTask(Boolean.TRUE);
@@ -186,9 +189,9 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
         shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
         shopInfoDTO.setName(shopInfo.getName());
-        shopInfoDTO.setToken(mercadoTokenDTO.getAccessToken());
+        shopInfoDTO.setToken(platformMercadoTokenDTO.getAccessToken());
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);
-        redisUtil.set(tokenKey, shopInfoDTO, mercadoTokenDTO.getExpiresIn());
+        redisUtil.set(tokenKey, shopInfoDTO, platformMercadoTokenDTO.getExpiresIn());
 
         redisUtil.del(stateKey);
 
@@ -263,10 +266,10 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         refreshTokenDTO.setClientSecret(clientSecret);
 
         //请求SDK刷新token
-        MercadoRefreshTokenDTO mercadoRefreshTokenDTO = null;
+        PlatformMercadoRefreshTokenDTO platformMercadoRefreshTokenDTO = null;
 
         try {
-            mercadoRefreshTokenDTO = mercadoSdkClientService.refreshToken(refreshTokenDTO);
+            platformMercadoRefreshTokenDTO = mercadoSdkClientService.refreshToken(refreshTokenDTO);
         } catch (Exception e) {
             log.info("::::: 美客多刷新token失败 ::::: 错误信息：" + e.getMessage());
             //错误3次记录错误信息，不在重试，并且发送预警通知
@@ -274,9 +277,9 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         //获取SDK返回的数据
-        String accessToken = mercadoRefreshTokenDTO.getAccessToken();
-        String refreshToken = mercadoRefreshTokenDTO.getRefreshToken();
-        Integer expiresIn = mercadoRefreshTokenDTO.getExpiresIn();
+        String accessToken = platformMercadoRefreshTokenDTO.getAccessToken();
+        String refreshToken = platformMercadoRefreshTokenDTO.getRefreshToken();
+        Integer expiresIn = platformMercadoRefreshTokenDTO.getExpiresIn();
         LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(expiresIn);
         //提前半小时设置token失效，以免失效了以后才刷新容易出错
         LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);

@@ -10,8 +10,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.oms.dto.ShopDTO;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.dto.mercado.MercadoRefreshTokenDTO;
-import com.sdk.oms.mercado.dto.mercado.MercadoTokenDTO;
+import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
+import com.sdk.oms.mercado.dto.mercado.PlatformMercadoTokenDTO;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,10 +28,10 @@ import java.util.Map;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e12c65326e580001c3a0ba-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e12c65326e580001c3a0ba-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
 
         //组装刷新token请求的url
-//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&refresh_token=TG-65df03258fea2f0001855d7d-1509269799";
+        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&refresh_token=TG-65e12d7f681a7a0001a06f3b-1509269799";
 
         //入参（无）
         Map<String, Object> param = new HashMap<>();
@@ -56,7 +56,7 @@ public class MercadoSdkClientService {
      * @param paramMap
      * @return com.sdk.oms.mercado.dto.mercado.MercadoTokenDTO
      **/
-    public MercadoTokenDTO sendMercadoPostToken(Map<String, String> paramMap) {
+    public PlatformMercadoTokenDTO sendMercadoPostToken(Map<String, String> paramMap) {
 
         //组装授权url
         String clientId = paramMap.get("clientId");
@@ -80,9 +80,9 @@ public class MercadoSdkClientService {
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
         //解析数据
-        MercadoTokenDTO tokenDTO = null;
+        PlatformMercadoTokenDTO tokenDTO = null;
         try {
-            tokenDTO = JSONUtil.toBean(bodyStr, MercadoTokenDTO.class);
+            tokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoTokenDTO.class);
             log.info(String.format("::::: 美客多授权 ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, tokenDTO));
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);
@@ -95,7 +95,7 @@ public class MercadoSdkClientService {
         return tokenDTO;
     }
 
-    public MercadoRefreshTokenDTO refreshToken(ShopDTO.RefreshTokenDTO dto) {
+    public PlatformMercadoRefreshTokenDTO refreshToken(ShopDTO.RefreshTokenDTO dto) {
 
         //TG-65e12c65326e580001c3a0ba-1509269799
         //组装刷新token请求的url
@@ -113,9 +113,9 @@ public class MercadoSdkClientService {
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
         //解析数据
-        MercadoRefreshTokenDTO refreshTokenDTO = null;
+        PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
         try {
-            refreshTokenDTO = JSONUtil.toBean(bodyStr, MercadoRefreshTokenDTO.class);
+            refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
             log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), bodyStr);

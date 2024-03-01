@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class MercadoListingDTO {
+public class PlatformMercadoListingDTO {
 
     /**
      * product_identifier : 6941059633686

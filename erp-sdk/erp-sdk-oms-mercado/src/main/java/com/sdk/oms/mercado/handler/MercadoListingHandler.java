@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
+import com.sdk.oms.mercado.dto.mercado.PlatformMercadoListingDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ResultsBean;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     public static void main(String[] args) {
         //TG-65ddb89790e8fe00014506db-1509269799
         MercadoSdkClientService mercadoSdkClientService = new MercadoSdkClientService();
-        String accessToken = "APP_USR-3457166802805723-022921-2ac16f3485aa65c12e00c2cb6e0f04cb-1509269799";
+        String accessToken = "APP_USR-3457166802805723-030103-014e885bfebbe93566572374790f6cac-1509269799";
         List<ResultsBean> resultsBeanList = new ArrayList<>();
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
@@ -65,14 +66,14 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
 //            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search?q=vacuum%20wireless&limit=100&status=inactive&offset=10'";
 
-            String baseUrl = "https://api.mercadolibre.com/item";
+            String baseUrl = "https://api.mercadolibre.com/users/1509269799/items/search";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
 
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoGet(sb.toString(), accessToken, paramMap);
             System.out.println(date);
-            com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
+            PlatformMercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, PlatformMercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
                 throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), date);
             }
@@ -129,15 +130,15 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoPost(baseUrl, shopInfoDTO.getAccessToken(), paramMap);
 
-            com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
-            if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
+            PlatformMercadoListingDTO platformMercadoListingDTO = JSONUtil.toBean(date, PlatformMercadoListingDTO.class);
+            if (CollectionUtils.isEmpty(platformMercadoListingDTO.getResults())) {
                 break;
             }
-            pageCount = (mercadoListingDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
+            pageCount = (platformMercadoListingDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
 
             pageNo++;
 
-            resultsBeanList.addAll(mercadoListingDTO.getResults());
+            resultsBeanList.addAll(platformMercadoListingDTO.getResults());
         }
 
         if (CollectionUtils.isEmpty(resultsBeanList)) {
