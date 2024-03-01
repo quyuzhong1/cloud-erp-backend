@@ -13,8 +13,6 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.business.utils.RedisUtil;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -22,9 +20,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
+import com.google.common.collect.Lists;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
-import com.sdk.oms.mercado.dto.mercado.PlatformMercadoListingDTO;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
+import com.sdk.oms.mercado.dto.mercado.ListingDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ResultsBean;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -62,18 +61,21 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
         Integer pageCount = 1;
 
         while(pageNo < pageCount) {
-
+    //https://api.mercadolibre.com/users/$USER_ID/items/search?search_type=scan&scroll_id=eyJpZCI6IkNCVDE4ODcxMDcxODUiLCJudW1lcmljX2lkIjoxODg3MTA3MTg1LCJzdG9wX3RpbWUiOiIyMDQ0LTAxLTA2VDA0OjAwOjAwLjAwMFoifQ==
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
 //            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search?q=vacuum%20wireless&limit=100&status=inactive&offset=10'";
 
             String baseUrl = "https://api.mercadolibre.com/users/1509269799/items/search";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
+            sb.append("?limit="+pageSize+"");
+            sb.append("&offset="+pageNo+"");
 
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoGet(sb.toString(), accessToken, paramMap);
             System.out.println(date);
-            PlatformMercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, PlatformMercadoListingDTO.class);
+            return;
+           /* PlatformMercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, PlatformMercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
                 throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), date);
             }
@@ -81,7 +83,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
 
             pageNo++;
 
-            resultsBeanList.addAll(mercadoListingDTO.getResults());
+            resultsBeanList.addAll(mercadoListingDTO.getResults());*/
         }
             System.out.println(JSONUtil.toJsonStr(resultsBeanList));
     }
@@ -106,7 +108,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
             return Collections.emptyList();
         }
 
-        List<ResultsBean> resultsBeanList = new ArrayList<>();
+        List<ListingDTO> resultsBeanList = new ArrayList<>();
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
         //每次最多获取200条
@@ -119,18 +121,16 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
         while(pageNo < pageCount) {
 
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
-            String baseUrl = "https://api.mercadolibre.com/marketplace/products/search";
+            String baseUrl = "https://api.mercadolibre.com/users/"+shopInfoDTO.getUserId()+"/items/search";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
-            sb.append("?q=");
-            sb.append("&limit="+ pageSize +"");
+            sb.append("?limit="+ pageSize +"");
             sb.append("&offset="+ pageNo +"");
-            sb.append("&status=active");
 
             //拉取数据
-            String date = mercadoSdkClientService.sendMercadoPost(baseUrl, shopInfoDTO.getAccessToken(), paramMap);
+            String date = mercadoSdkClientService.sendMercadoGet(baseUrl, shopInfoDTO.getAccessToken(), paramMap);
 
-            PlatformMercadoListingDTO platformMercadoListingDTO = JSONUtil.toBean(date, PlatformMercadoListingDTO.class);
+            ListingDTO platformMercadoListingDTO = JSONUtil.toBean(date, ListingDTO.class);
             if (CollectionUtils.isEmpty(platformMercadoListingDTO.getResults())) {
                 break;
             }
@@ -138,17 +138,20 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
 
             pageNo++;
 
-            resultsBeanList.addAll(platformMercadoListingDTO.getResults());
+            List<String> results = platformMercadoListingDTO.getResults();
+            List<List<String>> partition = Lists.partition(results, 20);
+
         }
 
         if (CollectionUtils.isEmpty(resultsBeanList)) {
             return Collections.emptyList();
         }
-
+/*
         // 返回下载源数据
         return resultsBeanList.stream()
                 .map(e -> new MercadoListingDTO(e, data))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
+        return null;
     }
 
     @Override
@@ -165,13 +168,23 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     }
 
 
+    //http://api.mercadolibre.com/items?ids=CBT910553725,CBT910547444
+
+
+    public MercadoShopInfoDTO listItemView() {
+        /*String baseUrl = "http://api.mercadolibre.com/items?ids=";
+        StringBuffer sb = new StringBuffer();
+        sb.append(baseUrl);
+
+        //拉取数据
+        String date = mercadoSdkClientService.sendMercadoGet(baseUrl, shopInfoDTO.getAccessToken(), paramMap);*/
+        return null;
+    }
+
     /**
-     * 获取基础信息
-     *
-     * @param shopId listOrder
+     * 查询店铺信息
+     * @param shopId
      * @return
-     * @author yl
-     * @date 2023-11-29 12:13
      */
     public MercadoShopInfoDTO getShopInfoByShopId(String shopId) {
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);

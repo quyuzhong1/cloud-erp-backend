@@ -53,4 +53,9 @@ public class MercadoShopInfoDTO {
      * 请求地址
      */
     private String baseUrl;
+
+    /**
+     * 平台店铺/用户id
+     */
+    private Integer userId;
 }

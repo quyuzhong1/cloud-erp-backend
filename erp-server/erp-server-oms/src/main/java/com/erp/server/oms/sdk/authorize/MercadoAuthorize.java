@@ -20,7 +20,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
@@ -183,13 +182,14 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         shopInfo.setIsGenTask(Boolean.TRUE);
         shopInfoService.updateById(shopInfo);
-        AliExpressShopInfoDTO shopInfoDTO = new AliExpressShopInfoDTO();
+        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
         shopInfoDTO.setId(shopId);
         shopInfoDTO.setClientId(cfgAppClient.getClientId());
         shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
         shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
         shopInfoDTO.setName(shopInfo.getName());
-        shopInfoDTO.setToken(platformMercadoTokenDTO.getAccessToken());
+        shopInfoDTO.setAccessToken(platformMercadoTokenDTO.getAccessToken());
+        shopInfoDTO.setUserId(platformMercadoTokenDTO.getUserId());
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADO.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, platformMercadoTokenDTO.getExpiresIn());
 
