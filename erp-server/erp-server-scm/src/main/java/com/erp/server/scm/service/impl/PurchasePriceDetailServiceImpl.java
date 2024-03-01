@@ -173,8 +173,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 if (entity.getEffectiveDate().compareTo(detailEntity.getEffectiveDate()) == MathUtil.ZERO
                     && entity.getExpireDate().compareTo(detailEntity.getExpireDate()) == MathUtil.ZERO ) {
                     //区间不能重叠
-                    if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) <= MathUtil.ZERO
-                            && detailEntity.getMinQty().compareTo(entity.getMaxQty()) <= MathUtil.ZERO ) {
+                    if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                            && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                     }
                 } else {
