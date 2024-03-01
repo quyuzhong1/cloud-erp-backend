@@ -121,21 +121,24 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             return;
         }
 
-        String orgCode = "";
-        //如果采购订单存在并且有采购组织，就用采购订单的组织,没有就用退货组织
+        //金蝶采购组织：如果采购订单存在并且有采购组织，就用采购订单的组织,没有就用退货组织
         if (ObjectUtil.isNotEmpty(purchaseOrderEntity) && StringUtils.isNotBlank(purchaseOrderEntity.getPurchaseOrgId())) {
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrderEntity.getPurchaseOrgId()));
             PurchaseOrderEntity finalPurchaseOrderEntity = purchaseOrderEntity;
             String purchaseOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(finalPurchaseOrderEntity.getPurchaseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
             //采购组织
-            orgCode = purchaseOrgCode;
+            resultMap.put("purchaseOrgCode", purchaseOrgCode);
         } else {
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReturnOrgId()));
             String returnOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getReturnOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
             //退料组织
-            orgCode = returnOrgCode;
+            resultMap.put("purchaseOrgCode", returnOrgCode);
         }
-        resultMap.put("returnOrgName", orgCode);
+
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReturnOrgId()));
+        String returnOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getReturnOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+        //退料组织
+        resultMap.put("returnOrgName", returnOrgCode);
 
         //退货日期
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
@@ -153,7 +156,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             }
 
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode(orgCode);
+            findBusinessOperator.setOrgCode(returnOrgCode);
             findBusinessOperator.setUserId(purchaseUserId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
             //获取员工业务信息
