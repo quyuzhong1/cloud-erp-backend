@@ -200,7 +200,12 @@ public class TransferDeclareController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping(value = "/delete")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:transferDeclare:delete",
+            serviceClass = TransferDeclareService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = transferDeclareService.delete(dto.getIds());
         return flag ? success() : failure();
@@ -218,7 +223,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:TransferDeclareService:paging",
+            menuCode = "tms:transferDeclare:paging",
             tableAlias = "td"
     )
     public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
@@ -237,7 +242,7 @@ public class TransferDeclareController extends BaseController {
     @PostMapping(value = "/upload")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:TransferDeclareService:upload",
+            menuCode = "tms:transferDeclare:upload",
             tableAlias = "td"
     )
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

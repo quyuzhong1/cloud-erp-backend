@@ -3,6 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
@@ -27,10 +28,9 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @date: 2023/10/18 17:21
      * @param query
      * @param params
-     * @param statusList
      * @return IPage<PagingViewDTO>
      */
-    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params);
     /**
      * @description: 查询导出
      * @author Will
@@ -38,11 +38,19 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @param dto
      * @return List<PagingViewDTO>
      */
-    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
+    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.PagingParamDTO dto);
 
     /**
      * 临时查询方法
-     * @return
+     * @returnch
      */
     List<PurchasePriceChangeDetailEntity> listTemp();
+    /**
+     * @description: tab集合
+     * @author Will
+     * @date: 2024/1/20 9:26
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer tabList(@Param("params")PurchaseOrderDTO.SearchParamDTO searchParamDTO);
 }

@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -52,12 +51,11 @@ public class TransferDeclareFeignController {
      * 修改出库状态
      * @Author Luo_WG
      * @Date 2024/2/1 18:39
-     * @param soIdList
-     * @param status
+     * @param dto
      * @return java.lang.Boolean
      **/
     @PostMapping("/updateOutstockStatus")
-    public Boolean updateOutstockStatus(@RequestParam("soIdList") List<String> soIdList, @RequestParam("status") String status) {
-        return transferDeclareDetailService.updateOutstockStatus(soIdList, status);
+    public Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
+        return transferDeclareDetailService.updateOutstockStatus(dto);
     }
 }

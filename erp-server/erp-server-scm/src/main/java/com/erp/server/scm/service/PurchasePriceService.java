@@ -2,8 +2,10 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -134,7 +136,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param response
      * @return void
      */
-    void exportPurchasePrice(PurchasePriceDTO.ExportDTO dto, HttpServletResponse response);
+    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 删除供应商的时候后 看是否有关联 如果有就不能删除
@@ -206,4 +208,12 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids,String remark);
+    /**
+     * @description: tab查询
+     * @author Will
+     * @date: 2024/1/19 18:49
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

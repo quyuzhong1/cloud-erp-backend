@@ -11,6 +11,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
@@ -45,8 +46,16 @@ public class LogisticsAddressJob {
         XxlJobHelper.log("====开始同步速卖通卖家地址====");
         LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
+        String jobParam = XxlJobHelper.getJobParam();
         if (CollectionUtils.isNotEmpty(mapList)) {
-            mapList.forEach(logisticsBaseService::syncLogisticsAddress);
+            mapList.forEach(map -> {
+                if (StringUtils.isNotEmpty(jobParam)){
+                    String[] split = jobParam.split(",");
+                    map.put("orderId", split[0]);
+                    map.put("childOrderId",split[1]);
+                }
+                logisticsBaseService.syncLogisticsAddress(map);
+            });
         }
         XxlJobHelper.log("====结束同步速卖通卖家地址====");
         return ReturnT.SUCCESS;

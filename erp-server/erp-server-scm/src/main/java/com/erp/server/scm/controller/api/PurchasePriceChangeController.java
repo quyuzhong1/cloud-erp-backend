@@ -2,10 +2,8 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -17,6 +15,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
+import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.lang3.StringUtils;
@@ -58,9 +59,28 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:paging",
             tableAlias = "pp")
+    @WebAdvanceQuery(handler = PurchasePriceChangeQueryHandler.class)
     public ApiResult<PagingVO<PurchasePriceChangeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
         PagingVO<PurchasePriceChangeDTO.PagingViewDTO> pagingVO = purchasePriceChangeService.paging(dto);
         return success(pagingVO);
+    }
+
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2024/1/20 9:20
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tab/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "adjust_user_id",
+            menuCode = "scm:purchase:price:change:paging",
+            tableAlias = "pp")
+    public ApiResult<List<PurchasePriceChangeDTO.TabListDTO>> tabList(PermissionsDTO dto) {
+        List<PurchasePriceChangeDTO.TabListDTO> list = purchasePriceChangeService.tabList(dto);
+        return success(list);
     }
 
     /**
@@ -285,7 +305,8 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:change:paging",
             tableAlias = "pp")
-    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = PurchasePriceChangeQueryHandler.class)
+    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         purchasePriceChangeService.export(dto, response);
         return success();
     }

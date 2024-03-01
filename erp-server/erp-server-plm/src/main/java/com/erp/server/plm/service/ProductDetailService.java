@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -623,4 +624,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> listBySkuNoList(List<String> skuNoList);
+
+    /**
+     * 搜索SKU
+     */
+    List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword);
 }

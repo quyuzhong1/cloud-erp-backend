@@ -510,6 +510,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 data.setProductName(skuVO.getSkuName());
                 data.setSpuNo(skuVO.getSpuNo());
+                data.setSaleState(skuVO.getSaleState());
             }
             SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
             if(Objects.nonNull(sysAccountingCompanyEntity)) {

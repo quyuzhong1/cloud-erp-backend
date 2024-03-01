@@ -68,6 +68,14 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param mainId
      */
     List<SubcontractOrderDetailEntity> listByMainId(String mainId);
+
+    /**
+     * @description: 根据主表id集合查询
+     * @author Will
+     * @date: 2023/6/12 18:39
+     * @param mainIdList
+     */
+    List<SubcontractOrderDetailEntity> listByMainIds(List<String> mainIdList);
     /**
      * @description: 根据父级id查询
      * @author Will
@@ -116,4 +124,12 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param list
      */
     void updateKingdeeDetailId(JSONArray list);
+    /**
+     * @description: 根据父级Id查询子级委外明细
+     * @author Will
+     * @date: 2024/1/29 10:20
+     * @param parentIdList
+     * @return List<SubcontractOrderDetailEntity>
+     */
+    List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(List<String> parentIdList);
 }

@@ -1,10 +1,13 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -21,6 +24,7 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
+import com.erp.tms.batong.model.label.base.BaseResult;
 import com.erp.tms.batong.model.label.request.AdditionalInfo;
 import com.erp.tms.batong.model.label.request.ConfigInfo;
 import com.erp.tms.batong.model.label.request.LabelRequest;
@@ -94,16 +98,29 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<CargoVolume> cargoVolumeList = Arrays.asList(cargoVolume);
         orderRequest.setCargoVolumeList(cargoVolumeList);
         try {
-            OrderResponse orderResponse = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
+            BaseResult result = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
 
-            responseVO = LogisticsOrderResponseVO.builder()
-                    .transportNo(orderResponse.getShippingMethodNo())
-                    .trackNo(orderResponse.getShippingMethodNo())
-                    .deliveryNo(logisticsOrder.getDeliveryNo())
-                    .build();
-            logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
-                    logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+            Integer createOrderSuccess = result.getSuccess();
+            //表示成功
+            if (BaTongConstants.SUCCESS.equals(createOrderSuccess)) {
+                OrderResponse orderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(result.getData()), OrderResponse.class);
+                responseVO = LogisticsOrderResponseVO.builder()
+                        .transportNo(orderResponse.getShippingMethodNo())
+                        .trackNo(orderResponse.getChannelHawbcode())
+                        .deliveryNo(logisticsOrder.getDeliveryNo())
+                        .build();
+
+                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                        logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+            }else{
+                success = false;
+                responseVO.failure(LogisticsPlatformEnum.BaTong.getName(), logisticsOrder.getDeliveryNo(), result.getCnMessage());
+                logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
+                        logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder),result.getCnMessage() );
+            }
+
         } catch (Exception e) {
             log.error("巴通创建订单异常：{}", e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrder.getAuthMap().get("id"),
@@ -151,32 +168,54 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderList) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+
+
+    public ApiResult<List<CancelResponseVO>> deleteOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderList) {
+        List<CancelResponseVO> result = new ArrayList<>();
+        Boolean isSuccess = true;
+
         LogisticsCancelOrderVO logisticsCancelOrderVO = logisticsCancelOrderList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         Map<String, String> authMap = logisticsCancelOrderVO.getAuthMap();
         if (Objects.isNull(authMap)) {
             return failure("缺少授权信息");
         }
-        Boolean isSuccess = true;
-        List<CancelResponseVO> responseList = new ArrayList<>(logisticsCancelOrderList.size());
+        CancelResponseVO responseVO = new CancelResponseVO();
+
         for (LogisticsCancelOrderVO item : logisticsCancelOrderList) {
             try {
-                CancelResponseVO responseVO = new CancelResponseVO();
-                Boolean result = baTongService.deleteOrder(authMap, item.getDeliveryNo());
-                if (result) {
-                    responseVO.setDeliveryNo(item.getDeliveryNo());
+                responseVO.setDeliveryNo(item.getDeliveryNo());
+                BaseResult cancelResult = baTongService.deleteOrder(authMap, item.getDeliveryNo());
+                if (!BaTongConstants.SUCCESS.equals(cancelResult.getSuccess())) {
+                    isSuccess = false;
+                    responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),cancelResult.getCnMessage());
+                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                            item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(cancelResult));
+                }else{
+                    //成功
+                    responseVO.success();
+                    logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
+                            item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(responseVO), JSONUtil.toJsonStr(cancelResult));
                 }
-                responseList.add(responseVO);
             } catch (Exception e) {
+                isSuccess = false;
+                responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(item.getAuthMap().get("id"),
                         item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e));
-                isSuccess = false;
             }
 
+            result.add(responseVO);
         }
-        return isSuccess ? success(responseList) : failure(responseList);
+        return isSuccess ? success(result) : failure(result);
 
     }
+
+
 
 
     /**
@@ -193,7 +232,9 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         assert logisticsGetLabelVO != null;
 
-        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>(logisticsQueryList.size());
+        List<LogisticsPrintLabelResponse> responseList = new ArrayList<>(logisticsQueryList.size());
+        Boolean isSuccess = true;
+
         for (LogisticsGetLabelVO item : logisticsQueryList) {
             try {
                 Map<String, String> authMap = item.getAuthMap();
@@ -222,17 +263,45 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 additionalInfo.setLabelPrintBuyerid("N");
                 additionalInfo.setLabelPrintDatetime("Y");
                 additionalInfo.setCustomsDeclarationPrintActualWeight("N");
+                configInfo.setAdditionalInfo(additionalInfo);
                 ListOrder listOrder = ListOrder.builder().referenceNo(deliveryNo).build();
                 LabelRequest labelRequest = LabelRequest.builder().
                         configInfo(configInfo).
                         orderList(Arrays.asList(listOrder)).build();
-                LabelResponse labelResponse = baTongService.getLabel(authMap, labelRequest);
+                BaseResult result = baTongService.getLabel(authMap, labelRequest);
+                //表示失败
+                if (!BaTongConstants.SUCCESS.equals(result.getSuccess())) {
+                    LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+                    response.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), result.getCnMessage());
+                    responseList.add(response);
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                            logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(result));
+                    isSuccess = false;
+                    continue;
+                }
                 LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
                 response.setDeliveryNoList(Collections.singletonList(deliveryNo));
                 response.setTrackNoList(Collections.singletonList(item.getTrackNo()));
                 response.setTransportNoList(Collections.singletonList(item.getTransportNo()));
-                response.setBase64(labelResponse.getBase64());
-                resultList.add(response);
+                List<LabelResponse> labelResponseList = JSONUtil.toList(JSONUtil.toJsonStr(result.getData()), LabelResponse.class);
+                if (CollectionUtils.isEmpty(labelResponseList)) {
+                    LogisticsPrintLabelResponse response1 = new LogisticsPrintLabelResponse();
+                    response1.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), "没有返回文件url");
+                    responseList.add(response);
+                    isSuccess = false;
+                    continue;
+                }
+                LabelResponse labelResponse= labelResponseList.get(0);
+                String labelUrl = labelResponse.getLabelUrl();
+                String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
+                labelResponse.setBase64(base64);
+                response.setBase64(base64);
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                        logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
+
+                responseList.add(response);
             } catch (Exception e) {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
@@ -242,7 +311,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
         }
 
-        return success(resultList);
+        return isSuccess ? success(responseList) : failure(responseList);
     }
 
 

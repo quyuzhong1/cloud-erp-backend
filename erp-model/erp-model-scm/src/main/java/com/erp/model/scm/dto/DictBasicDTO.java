@@ -23,11 +23,6 @@ public class DictBasicDTO implements Serializable {
     private String id;
 
     /**
-     * key 查询依据
-     */
-    private String key;
-
-    /**
      * value 使用值
      */
     private String value;
@@ -36,6 +31,11 @@ public class DictBasicDTO implements Serializable {
      * type 分组
      */
     private String type;
+
+    /**
+     * 名称
+     */
+    private String typeName;
 
     /**
      * 名称

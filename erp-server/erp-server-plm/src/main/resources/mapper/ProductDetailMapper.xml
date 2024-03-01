@@ -933,6 +933,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.category_id AS categoryId,
         ps.sale_state as saleState,
         pd.unit_name,
         pd.status,
@@ -1520,5 +1521,41 @@
          </if>
 
 
+    </select>
+
+    <select id="searchSkuWithCombination" resultType="com.erp.model.plm.vo.SkuSimpleVO">
+        SELECT
+        pd.ID AS skuId,
+        pi.ID AS productId,
+<!--        pi.spu_no,-->
+<!--        pi.NAME AS spuName,-->
+        pd.sku_no,
+<!--        pd.NAME AS skuName,-->
+        CASE WHEN pbi."type" IS NULL OR pbi."type" = 'single' THEN false ELSE true END AS is_combination
+        FROM
+        product_detail pd
+        LEFT JOIN product_info pi ON pi.ID = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (SELECT parent_sku_id,MAX(id) AS min_id,bom_id FROM product_bom_sku WHERE is_deleted = FALSE GROUP BY parent_sku_id, bom_id) AS pbs on pd.id = pbs.parent_sku_id
+        LEFT JOIN product_bom_info pbi on pbi.id = pbs.bom_id and pbi.is_deleted = false and pbi."state" =4
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="state!=null">
+            AND pd.status=#{state}
+        </if>
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
+            OR
+            pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
+            )
+            ORDER BY CASE
+            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
+            ELSE 2
+            END,
+            LENGTH(pd.sku_no), LENGTH(pd.name),
+            pd.sku_no, pd.name;
+        </if>
     </select>
 </mapper>

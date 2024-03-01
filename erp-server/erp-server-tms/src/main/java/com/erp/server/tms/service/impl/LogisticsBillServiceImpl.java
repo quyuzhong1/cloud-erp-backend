@@ -368,13 +368,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
-        SenderInfo returnInfo = new SenderInfo();
+        SenderInfo returnInfo = null;
         //退货地址
         LogisticsAddressEntity returnAddress = addressList.stream().filter(a -> refundType.equals(a.getType())).findFirst().orElse(null);
         if (Objects.nonNull(returnAddress)) {
+            returnInfo = new SenderInfo();
             BeanMapperUtils.copy(returnAddress, returnInfo);
             //地址id
             returnInfo.setId(returnAddress.getAddressId());
+        } else {
+            returnInfo = senderInfo;
         }
 
 
@@ -404,14 +407,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
                 //目的国申报价
                 BigDecimal destDeclarePrice = productDTO.getDestDeclarePrice();
-                int maxCustoms = maxCustomsAmount.compareTo(destDeclarePrice);
                 //表示最大的报关价还小于 目的过申报价
-                if (maxCustoms < 0) {
+                if (maxCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && maxCustomsAmount.compareTo(destDeclarePrice) < 0) {
                     productDTO.setDestDeclarePrice(maxCustomsAmount);
                 }
-                int minCustoms = destDeclarePrice.compareTo(minCustomsAmount);
                 //表示最小的报关价还小于 目的过申报价
-                if (minCustoms < 0) {
+                if (minCustomsAmount.compareTo(BigDecimal.ZERO) != 0 && destDeclarePrice.compareTo(minCustomsAmount) < 0) {
                     productDTO.setDestDeclarePrice(minCustomsAmount);
                 }
 
@@ -453,6 +454,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
+                topUserKey(dto.getTopUserKey()).
+                oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 iossCode(dto.getIossTaxNo()).
                 senderInfo(senderInfo).
@@ -805,6 +808,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
+                }
+            }
+            //如果是保宏
+            if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getB2cSoId());
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                 }
             }
 

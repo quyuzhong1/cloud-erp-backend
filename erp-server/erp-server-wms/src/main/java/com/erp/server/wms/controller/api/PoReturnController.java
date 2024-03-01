@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,6 +17,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.wms.query.PoReturnQueryHandler;
 import com.erp.server.wms.service.PoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -51,6 +53,7 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro"
     )
+    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = poReturnService.paging(dto);
         return success(pagingVO);
@@ -302,11 +305,12 @@ public class PoReturnController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:paging",
-            tableAlias = "po")
+            menuCode = "scm:purchaseReturnOrder:paging",
+            tableAlias = "pro")
+    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = poReturnService.exportExcel(dto, response);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
 
@@ -349,6 +353,7 @@ public class PoReturnController extends BaseController {
         return flag?success():failure();
     }
 
+
     /**
      * 修复退货来源错误数据
      * @Author Luo_WG
@@ -360,5 +365,18 @@ public class PoReturnController extends BaseController {
         Boolean flag = poReturnService.dataRepairTemp();
         return flag?success():failure();
     }
+
+    /**
+     * 异常处理人下拉接口
+     * @Author Luo_WG
+     * @Date 2024/1/12 11:17
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>>
+     **/
+    @GetMapping("/unusualHandleUserOption")
+    public ApiResult<List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO>> unusualHandleUserOption() {
+        List<PurchaseReturnOrderDTO.UnusualHandleUserOptionDTO> unusualHandleUserOption = poReturnService.unusualHandleUserOption();
+        return success(unusualHandleUserOption);
+    }
+
 
 }

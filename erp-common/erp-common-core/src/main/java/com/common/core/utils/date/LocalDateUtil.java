@@ -1,7 +1,6 @@
 package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -477,12 +476,21 @@ public class LocalDateUtil {
         return null;
     }
 
+    /**
+     * 检查两个时间段是否有时间重叠
+     */
+    public static boolean isOverlap (LocalDate realStartDate, LocalDate realEndDate,
+                                      LocalDate startDate, LocalDate endDate) {
+        return (realStartDate.compareTo(endDate) <=0 && startDate.compareTo(realEndDate) <= 0);
+    }
 
+    public static LocalDateTime getStartDateTimeOfYear(int year) {
+        return LocalDateTime.of(year, Month.JANUARY, 1, 0, 0, 0);
+    }
 
     public static LocalDateTime getEndDateTimeOfYear(int year) {
         LocalDateTime endDateTime = LocalDateTime.of(year, Month.DECEMBER, 31, 23, 59, 59);
         return endDateTime.withNano(999_999_999); // Adjust nanoseconds to the maximum value
     }
-
 }
 

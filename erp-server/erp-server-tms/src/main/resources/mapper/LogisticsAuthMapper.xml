@@ -73,6 +73,23 @@
             </foreach>
         </if>
     </select>
+    <!--获取授权信息根据物流商id-->
+    <select id="getAuthBySupplierId" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
+        SELECT
+            la.id,
+            la.id AS authId,
+            la.main_id,
+            la.name,
+            la.logistics_platform,
+            ls.supplier_id,
+            ls.supplier_name,
+            ls.auth_status
+        FROM logistics_auth la
+        INNER JOIN logistics_supplier ls
+        ON ls.id=la.main_id and  ls.is_deleted=false
+        WHERE ls.id=#{logisticsSupplierId}
+        AND la.is_deleted=false
+    </select>
 
 
 </mapper>

@@ -125,10 +125,17 @@ public class SysLoggingAspect {
      * 说明：假如有after，先执行after,再执行returning
      */
     @AfterReturning(value = "logPointcut()", returning = "apiResult")
-    public void doAfterReturning(Object apiResult) {
+    public void doAfterReturning(JoinPoint joinPoint, Object apiResult) {
         try {
             log.debug("Sys Logging doAfterReturning()");
             if (null == apiResult) {
+                return;
+            }
+            MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+            Method method = signature.getMethod();
+            LogAction logAction = method.getAnnotation(LogAction.class);
+            // 登陆响应菜单记录过大忽略记录响应体
+            if (LogActionEnum.LOGIN.equals(logAction.value())){
                 return;
             }
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();

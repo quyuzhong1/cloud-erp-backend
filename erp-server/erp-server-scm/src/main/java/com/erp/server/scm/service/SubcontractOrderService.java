@@ -234,4 +234,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
      */
     List<SubcontractOrderDTO.ListDTO> listByBomSku(String bomSkuId);
+    /**
+     * @description: 委外订单下拉列表
+     * @author Will
+     * @date: 2024/1/10 19:17
+     * @return List<ListSelectDTO>
+     */
+    List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder();
 }

@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.feign;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,6 +41,48 @@ public class SubcontractOrderFeignController {
             return Collections.EMPTY_LIST;
         }
         return subcontractOrderDetailService.listByIds(sourceDetailIds);
+    }
+
+    /**
+     * @description: 根据ids查询子级委外订单明细
+     * @author Will
+     * @date: 2024/1/29 10:15
+     * @param parentIdList
+     * @return List<SubcontractOrderDetailEntity> 
+     */
+    @PostMapping("/listChildSubcontractDetailByIds")
+    public List<SubcontractOrderDetailEntity> listChildSubcontractDetailByIds(@RequestBody List<String> parentIdList) {
+        if (CollectionUtils.isEmpty(parentIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return subcontractOrderDetailService.listChildSubcontractDetailByIds(parentIdList);
+    }
+    
+    /**
+     * 根据主表ids查询委外订单明细
+     * @author Will
+     * @date: 2024/1/10 10:58
+     * @param mainIdList 
+     * @return List<SubcontractOrderDetailEntity> 
+     */
+    @PostMapping("/listSubcontractDetailByMainIds")
+    public List<SubcontractOrderDetailEntity> listSubcontractDetailByMainIds(@RequestBody List<String> mainIdList) {
+        return subcontractOrderDetailService.listByMainIds(mainIdList);
+    }
+
+    /**
+     * 根据ids查询委外订单
+     * @author Will
+     * @date: 2024/1/9 15:40
+     * @param sourceIdList
+     * @return List<SubcontractOrderEntity>
+     */
+    @PostMapping("/listSubcontractOrderByIds")
+    public List<SubcontractOrderEntity> listSubcontractOrderByIds(@RequestBody List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return subcontractOrderService.listByIds(sourceIdList);
     }
 
     /**

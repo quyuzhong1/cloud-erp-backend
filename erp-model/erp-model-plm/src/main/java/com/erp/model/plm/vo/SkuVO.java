@@ -119,6 +119,16 @@ public class SkuVO implements Serializable {
     private String brandName;
 
     /**
+     * 分类id
+     */
+    private String categoryId;
+
+    /**
+     * 分类名称
+     */
+    private String categoryName;
+
+    /**
      * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
      */
     private Integer saleState;
@@ -197,6 +207,12 @@ public class SkuVO implements Serializable {
      * 净重
      */
     private BigDecimal netWeight;
+
+    /**
+     * 是否是捆绑商品:true=是，false=否
+     * (可能字段为null，需添加查询)
+     */
+    private Boolean isCombination;
 
     public String checkAndGetSkuImagesUrl() {
         if (StringUtils.isBlank(this.skuImagesUrl)){

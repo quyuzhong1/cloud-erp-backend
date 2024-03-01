@@ -43,8 +43,10 @@ public class LoginUser {
 
     //绑定的平台
     private String bindingPlatform;
-
-
+    /**
+     * 是否是超级管理员
+     */
+    private Boolean isSupper;
 
 
     //菜单的列表 后面还会改

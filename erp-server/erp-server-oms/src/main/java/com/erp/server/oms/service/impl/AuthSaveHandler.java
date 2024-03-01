@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 @Component
@@ -33,9 +34,9 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
         return service.getShopAuthorizeUrl(dto);
     }
 
-    public static Boolean shopAuthorize(ShopAuthorizeDTO dto){
+    public static Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
         IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
-        return service.shopAuthorize(dto);
+        return service.shopAuthorize(dto, response);
     }
 
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {

@@ -293,6 +293,11 @@ public enum RocketMqTagEnum {
      * 采购订单变更单同步金蝶
      */
     KINGDEE_PURCHASE_CHANGE_TAG(1029, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_change_tag"),
+
+    /**
+     * 委外发料单同步金蝶
+     */
+    KINGDEE_SUBCONTRACT_ISSUE_TAG(1030, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_issue_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -397,6 +402,14 @@ public enum RocketMqTagEnum {
      */
     SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4002,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
 
+    /**
+     * 同步采购订单详情到SRM
+     */
+    SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG(4004,RocketMqTagEnum.SYNC_SCM,"sync_srm_purchase_order_detail_tag"),
+    /**
+     * 同步采购变更单信息到SRM
+     */
+    SYNC_SRM_PURCHASE_ORDER_DETAIL_INFO_TAG(4005,RocketMqTagEnum.SYNC_SCM,"sync_srm_purchase_order_detail_info_tag"),
     /**
      * 同步采购订单供应商信息到WMS
      */

@@ -37,4 +37,14 @@ public interface WarehouseMappingMapper extends BaseMapper<WarehouseMappingEntit
      * @return java.util.List<com.erp.model.wms.dto.WarehouseMappingDTO.MappingViewDTO>
      **/
     List<WarehouseMappingDTO.MappingViewDTO> listMappingViewByDictPlatform(@Param("dictPlatform") String dictPlatform);
+
+    /**
+     * 根据平台编码和仓库id查询仓库映射信息
+     * @Author Luo_WG
+     * @Date 2024/1/31 12:34
+     * @param warehouseId
+     * @param dictPlatform
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseMappingDTO.MappingViewDTO>
+     **/
+    WarehouseMappingDTO.MappingViewDTO getMappingViewByDictPlatform(@Param("warehouseId") String warehouseId, @Param("dictPlatform") String dictPlatform);
 }

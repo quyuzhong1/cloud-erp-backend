@@ -238,18 +238,6 @@ public class PoInstockDTO implements Serializable {
          * 入库数量
          */
         private Integer totalQty;
-
-        /**
-         * 合计金额
-         */
-        private BigDecimal totalAmount;
-
-        /**
-         * 合计含税金额
-         */
-        private BigDecimal totalTaxAmount;
-
-
     }
 
     @Data
@@ -718,6 +706,11 @@ public class PoInstockDTO implements Serializable {
          * 币别符号
          */
         private String currencySymbol;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
     }
 
     /**
