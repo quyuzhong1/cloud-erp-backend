@@ -177,11 +177,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                             && detailEntity.getMinQty().compareTo(entity.getMaxQty()) <= MathUtil.ZERO ) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                     }
-                }
-                //时间区间不能重叠
-                boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
-                if (overlap) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                } else {
+                    //时间区间不能重叠
+                    boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+                    if (overlap) {
+                        throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                    }
                 }
             }
 
