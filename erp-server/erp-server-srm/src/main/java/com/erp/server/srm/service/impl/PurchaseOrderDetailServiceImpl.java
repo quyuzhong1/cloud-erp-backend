@@ -15,8 +15,10 @@ import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.rpc.wms.feign.PurchaseOrderFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.PurchaseOrderConverter;
 import com.erp.server.srm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.srm.service.*;
@@ -68,7 +70,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private DeliveryOrderService deliveryOrderService;
     @Resource
     private DeliveryOrderDetailService deliveryOrderDetailService;
-
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -246,16 +249,17 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
         // 采购订单明细id集合
         List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        List<String> ids = records.stream().map(PurchaseOrderDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         //送货信息
         List<DeliveryOrderDetailEntity> deliveryOrderDetailList = deliveryOrderDetailService.listDetailByDetailSourceIds(podIds);
-
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(ids);
         records.forEach(obj -> {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
             //收货数量
-            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                receiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
-                        .map(DeliveryOrderDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             obj.setReceiveQty(receiveQty);
             //已送货数量
@@ -266,7 +270,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
             obj.setWaitReceiveQty(waitReceiveQty);
             //待交货量
-            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty);
+            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - receiveQty);
 
             //交货周期
             Boolean deliveryCycleFlag = false;

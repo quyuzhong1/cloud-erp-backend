@@ -675,6 +675,6 @@
         where
         po.is_deleted = false
         and po.approve_status = 'approve'
-        and pod.execution_status in ('confirm','delivery')
+--         and pod.execution_status in ('confirm','delivery')
     </select>
 </mapper>

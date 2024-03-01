@@ -1860,9 +1860,26 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 startTime = LocalDate.parse(formattedMonth + "-" + endStr, formatter);
                 endTime = LocalDate.parse(nowMonth + "-" + endStr, formatter);
             }
+            endTime = endTime.plusDays(-1);
         }
         //根据时间进行查询
         Integer count = baseMapper.countOrderBySupplierId(supplierId,startTime,endTime);
         return SupplierCountDTO.builder().count(count).localDate(endTime).build();
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getReceiveListByPurchaseOrderIds(purchaseOrderIds);
+    }
+
+    @Override
+    public List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto) {
+        if(StringUtils.isBlank(dto.getSourceType()) || CollectionUtils.isEmpty(dto.getSourceIds())){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().eq(WarehouseReceiveEntity::getSourceType,dto.getSourceType()).in(WarehouseReceiveEntity::getSourceId,dto.getSourceIds()).list();
     }
 }

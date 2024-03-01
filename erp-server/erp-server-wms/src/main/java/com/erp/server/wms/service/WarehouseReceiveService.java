@@ -325,4 +325,12 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return
      */
     SupplierCountDTO countOrderBySupplierId(String supplierId);
+    /**
+     * 根据采购订单获取收货单明细
+     * @param purchaseOrderIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(List<String> purchaseOrderIds);
+
+    List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto);
 }
