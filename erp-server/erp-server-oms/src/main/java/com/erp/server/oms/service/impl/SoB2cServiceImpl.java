@@ -5249,7 +5249,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO =  logisticsFeign.getLogisticsChannelConstraint(soB2cLogisticsEntity.getLogisticsChannelId(),country);
         BigDecimal maxWeight = channelConstraintDTO.getMaxWeight();
-        if (channelConstraintDTO.getSizeUnit().equals("kg")) {
+        if (channelConstraintDTO.getWeightUnit().equals("kg")) {
             maxWeight = maxWeight.multiply(BigDecimal.valueOf(1000));
         }
         //默认为cm
