@@ -287,10 +287,10 @@ public class AliExpressShipperService {
 
         IopClient client = new IopClientImpl(url, CLIENT_CODE, CHECK_WORD);
         IopRequest request = new IopRequest();
-        request.setApiName("/aliexpress/logistics/query/rule/info");
+        request.setApiName("aliexpress.logistics.redefining.getonlinelogisticsinfo");
         Map<String,String> map=new HashMap<>();
         map.put("type","platformRule");
-        request.addApiParameter("param1", JSONObject.toJSONString(map));
+       // request.addApiParameter("order_id", "1102905727618544");
         request.addApiParameter("simplify", "true");
 
         IopResponse response = client.execute(request, token, Protocol.TOP);

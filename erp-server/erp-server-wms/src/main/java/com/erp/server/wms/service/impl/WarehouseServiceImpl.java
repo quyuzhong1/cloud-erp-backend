@@ -747,13 +747,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 String warehouseManageType = item.getWarehouseManageType();
                 String warehouseManageTypeName = dictBasicList.stream().filter(d -> warehouseManageType.equals(d.getValue())).
                         map(DictBasicEntity::getName).findFirst().orElse("");
-                item.setWarehouseManageTypeName(warehouseManageTypeName);
+                excelDTO.setWarehouseManageTypeName(warehouseManageTypeName);
 
                 //地理位置
                 String geographyLocation = item.getGeographyLocation();
                 String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
                         map(DictBasicEntity::getName).findFirst().orElse("");
-                item.setGeographyLocationName(geographyLocationName);
+                excelDTO.setGeographyLocationName(geographyLocationName);
 
                 resultList.add(excelDTO);
 
