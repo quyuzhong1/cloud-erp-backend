@@ -23,6 +23,7 @@ import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,11 +32,13 @@ import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +58,7 @@ import java.util.stream.Collectors;
  * @Author Luo_WG
  * @Date 2022/9/22 11:48
  **/
+@Slf4j
 @RestController
 @LogSystemModule("产品管理")
 @RequestMapping("product/detail")
@@ -918,23 +922,12 @@ public class ProductDetailController extends BaseController {
      * @date 2023-01-11 14:58
      */
     @GetMapping("/search/skuWithCombination")
-    public ApiResult<List<SkuVO>> skuWithCombination(String searchKeyword) {
-        List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
-        if(CollectionUtils.isEmpty(skuList)){
-            return success(skuList);
-        }
-        List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(skuIds);
-        for (SkuVO skuVO : skuList) {
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(skuVO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                skuVO.setIsCombination(Boolean.TRUE);
-            } else {
-                skuVO.setIsCombination(Boolean.FALSE);
-            }
-        }
+    public ApiResult<List<SkuSimpleVO>> skuWithCombination(String searchKeyword) {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        List<SkuSimpleVO> skuList = productDetailService.searchSkuWithCombination(searchKeyword);
+        stopWatch.stop();
+        log.warn(stopWatch.prettyPrint());
         return success(skuList);
     }
 

@@ -40,6 +40,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -4052,5 +4053,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              return Collections.emptyList();
         }
         return this.lambdaQuery().in(ProductDetailEntity::getSkuNo, skuNoList).list();
+    }
+
+    @Override
+    public List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword) {
+        return baseMapper.searchSkuWithCombination(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
     }
 }
