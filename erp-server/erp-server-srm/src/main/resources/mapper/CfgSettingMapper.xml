@@ -46,7 +46,7 @@
         #{entity.version},
         #{entity.isDeleted},
         #{entity.key},
-        #{entity.dataJson,typeHandler=com.erp.server.srm.config.ObjectJsonHandler},
+        #{entity.dataJson,typeHandler=com.erp.server.srm.handler.ObjectJsonHandler},
         #{entity.disabled},
         #{entity.index},
         #{entity.remark},
