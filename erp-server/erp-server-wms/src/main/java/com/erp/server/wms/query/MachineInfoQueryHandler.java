@@ -35,7 +35,7 @@ public class MachineInfoQueryHandler extends AbstractQueryHandler {
             super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
         }
         // 已审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE.getStatus());
         }
         //不通过

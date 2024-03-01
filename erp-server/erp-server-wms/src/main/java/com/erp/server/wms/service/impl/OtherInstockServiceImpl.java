@@ -128,6 +128,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         PageListTypeEnum[] values = PageListTypeEnum.values();
         List<OtherInstockDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PageListTypeEnum item : values) {
+            if (PageListTypeEnum.WAIT_SUBMIT.equals(item)) {
+                continue;
+            }
             OtherInstockDTO.SearchParamDTO searchParamDTO = new OtherInstockDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             OtherInstockDTO.ListStatusCountDTO resultDTO = new OtherInstockDTO.ListStatusCountDTO();

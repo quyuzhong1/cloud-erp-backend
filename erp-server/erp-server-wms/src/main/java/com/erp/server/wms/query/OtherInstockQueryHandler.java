@@ -35,7 +35,7 @@ public class OtherInstockQueryHandler extends AbstractQueryHandler {
             super.buildDefaultDTO("oi.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
         }
         // 已审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("oi.approve_status", ApproveStatusEnum.APPROVE.getStatus());
         }
         //不通过
