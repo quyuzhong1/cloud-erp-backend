@@ -49,7 +49,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     public static void main(String[] args) {
         //TG-65ddb89790e8fe00014506db-1509269799
         MercadoSdkClientService mercadoSdkClientService = new MercadoSdkClientService();
-        String accessToken = "APP_USR-3457166802805723-022806-588ea20477c090677107434948b2ceff-1509269799";
+        String accessToken = "APP_USR-3457166802805723-022921-2ac16f3485aa65c12e00c2cb6e0f04cb-1509269799";
         List<ResultsBean> resultsBeanList = new ArrayList<>();
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
@@ -60,8 +60,6 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
         //总页数
         Integer pageCount = 1;
 
-        paramMap.put("offset", pageNo);
-        paramMap.put("limit", pageSize);
         while(pageNo < pageCount) {
 
             //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
@@ -70,13 +68,12 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
             String baseUrl = "https://api.mercadolibre.com/marketplace/products/search";
             StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
-            sb.append("?q=");
-            sb.append("&limit="+ pageSize +"");
+            sb.append("?limit="+ pageSize +"");
             sb.append("&offset="+ pageNo +"");
-            sb.append("&status=active");
+            sb.append("&accessToken="+accessToken+"");
             //拉取数据
             String date = mercadoSdkClientService.sendMercadoPost(sb.toString(), accessToken, paramMap);
-
+            System.out.println(date);
             com.sdk.oms.mercado.dto.mercado.MercadoListingDTO mercadoListingDTO = JSONUtil.toBean(date, com.sdk.oms.mercado.dto.mercado.MercadoListingDTO.class);
             if (CollectionUtils.isEmpty(mercadoListingDTO.getResults())) {
                 throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADO.getName(), date);

@@ -28,7 +28,7 @@ import java.util.Map;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&code=TG-65dd996bae3ab00001abf4f5-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
+        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e12c65326e580001c3a0ba-1509269799&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
 
         //组装刷新token请求的url
 //        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=F1L9EUIhsIlUc6yRGyzMhwFVweBZKIJ7&refresh_token=TG-65df03258fea2f0001855d7d-1509269799";
@@ -97,6 +97,7 @@ public class MercadoSdkClientService {
 
     public MercadoRefreshTokenDTO refreshToken(ShopDTO.RefreshTokenDTO dto) {
 
+        //TG-65e12c65326e580001c3a0ba-1509269799
         //组装刷新token请求的url
         //https://api.mercadolibre.com
         String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
@@ -126,6 +127,8 @@ public class MercadoSdkClientService {
         //返回token实体
         return refreshTokenDTO;
     }
+
+    //https://global-selling.mercadolibre.com/authorization?client_id=3457166802805723&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result&response_type=code
 
     /**
      * 获取Token
