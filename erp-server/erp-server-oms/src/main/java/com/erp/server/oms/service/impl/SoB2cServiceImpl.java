@@ -1714,9 +1714,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
-        for (SoB2cDetailEntity item : detailList) {
+        for (SoB2cDeliveryDTO.DeliverySkuDTO item : wantSkuList) {
+            String sourceSkuId = item.getSourceSkuId();
+            Integer baseQty = detailList.stream().filter(d -> d.getSkuId().equals(sourceSkuId)).
+                    findFirst().map(SoB2cDetailEntity::getQty).orElse(1);
+
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
-            outboundReqItem.setQuantity(item.getQty());
+            outboundReqItem.setQuantity(baseQty*item.getQty());
             /**
              * 海外仓产品SKU
              */
