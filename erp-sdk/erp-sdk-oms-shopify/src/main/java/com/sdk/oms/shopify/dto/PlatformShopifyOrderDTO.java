@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
@@ -67,12 +68,16 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         this.shopifyOrder = shopifyOrder;
         this.setIsClean(CleanStatusEnum.NONE.getCode());
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
-        this.setUniqueId(shopifyOrder.getOrderId());
 //        this.setLastPushTime(dto.getNextTime());
         this.shopId = dto.getShopId();
+        this.setUniqueId(combineUnique(shopifyOrder.getOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.downloadStatus = 0;
+    }
+
+    public static String combineUnique(String orderId, String shopId){
+        return StrUtil.format("{}_{}", orderId, shopId);
     }
 
     /**
@@ -93,7 +98,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单日期
         orderDTO.setBillDate(sourceOrder.getCreatedAt().toLocalDate());
         // 平台订单号
-        orderDTO.setPlatformCode(dto.getUniqueId());
+        orderDTO.setPlatformCode(sourceOrder.getOrderId());
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
         // 店铺ID

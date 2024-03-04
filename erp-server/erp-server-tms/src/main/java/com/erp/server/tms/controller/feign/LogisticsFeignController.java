@@ -4,9 +4,11 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.server.tms.service.LogisticsAddressService;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
@@ -37,6 +39,9 @@ public class LogisticsFeignController {
 
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private LogisticsAddressService logisticsAddressService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -125,5 +130,17 @@ public class LogisticsFeignController {
     @GetMapping("/getLogisticsChannelConstraint")
     public LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId, @RequestParam(value = "country")String country) {
         return logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
+    }
+
+    /**
+     * @description
+     * @param id
+     * @return
+     * @date 2024-02-18 11:54
+     * @author Lambda
+     */
+    @GetMapping("/getLogisticsAddressById")
+    public LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id") String id) {
+        return logisticsAddressService.getById(id);
     }
 }

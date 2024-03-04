@@ -33,6 +33,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -72,7 +73,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
@@ -109,7 +110,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
             addDTO.setClientSecret(dto.getClientSecret());
             appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
             // 授权后添加任务
-            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         } else {
             CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
             updateDTO.setId(appClientId);
@@ -174,8 +175,13 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         Boolean result = shopInfoService.updateById(shopInfo);
         if (result) {
             shopAuthService.removeByShopId(shopId);
-            // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+            // 禁用任务
+            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    true,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

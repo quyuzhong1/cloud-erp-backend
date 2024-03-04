@@ -84,4 +84,9 @@ public class PlatformOrderReceiverDTO implements Serializable {
      * 区
      */
     private String districtName;
+
+    /**
+     * 收件人税号
+     */
+    private String receiverTaxNo;
 }

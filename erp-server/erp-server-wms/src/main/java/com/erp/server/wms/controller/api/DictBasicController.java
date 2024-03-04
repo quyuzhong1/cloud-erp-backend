@@ -60,7 +60,7 @@ public class DictBasicController extends BaseController {
      * @param type transferType 调拨类型，transferDirection 调拨方向，instockType 入库类型，outstockType 出库类型，workType 事务类型，machineType 加工单类型，inventoryDirection 库存方向
      *             stocktakingMethod 盘点方式 stocktakingType 盘点类型 separateRule 分单规则 stocktakingStatus 盘点状态 warehouseType 仓库类型 qcProblemType 质检单 问题属性
      *             handleModeType 质检单 处理措施 qcReportResult 质检单 质检报告结果 inventoryDirection 库存方向
-     *              machineHandleType 加工处理类型 issueType 发料类型
+     *              machineHandleType 加工处理类型    collectMode 揽收方式 issueType 发料类型
      * @param remark 备注
      * @return
      */

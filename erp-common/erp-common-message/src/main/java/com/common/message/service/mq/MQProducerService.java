@@ -174,6 +174,23 @@ public class MQProducerService<T> {
     }
 
     /**
+     * 指定延时等级同步发送对象消息
+     * @param topic
+     * @param tag
+     * @param entity
+     * @param key
+     * @return
+     */
+    public SendResult syncClassMsgWithDelayLevel(String topic, String tag, T entity, String key, int delayLevel) {
+        Message<T> msg = MessageBuilder.withPayload(entity)
+                .setHeader(RocketMQHeaders.KEYS, key)
+                .build();
+
+        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, delayLevel);
+    }
+
+
+    /**
      * 异步发送对象消息
      * @param topic
      * @param tag

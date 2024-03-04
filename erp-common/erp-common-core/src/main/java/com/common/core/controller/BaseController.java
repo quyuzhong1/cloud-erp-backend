@@ -94,7 +94,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiResult<T> success(String msg) {
+    protected <T> ApiResult<T> successMsg(String msg) {
         return message(CODE_SUCCESS, msg, null);
     }
 

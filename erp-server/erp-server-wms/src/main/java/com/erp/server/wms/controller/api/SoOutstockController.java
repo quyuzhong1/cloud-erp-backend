@@ -297,17 +297,20 @@ public class SoOutstockController extends BaseController {
                  * 那么就要去找店铺的仓库 然后匹配上仓库
                  * [排除速卖通订单]
                  */
-                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
+                if (Objects.nonNull(soB2c) && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
                     soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
                 }
 
+                //速卖通是否重试成功表示
+                Boolean flag = Boolean.TRUE;
+
                 //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
-                if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getPlatformCode())) {
-                    soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
+                if (Objects.nonNull(soB2c) && PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())) {
+                    flag = soB2cFeign.updateAliExpressOrderWarehouse(soB2c.getId(), soB2c.getShopId());
                 }
 
                 Boolean result = soOutstockService.generateB2cSoOutstock(id);
-                if (result) {
+                if (result && flag) {
                     SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
                     deleteDTO.setMainId(id);
                     deleteDTO.setType(type);

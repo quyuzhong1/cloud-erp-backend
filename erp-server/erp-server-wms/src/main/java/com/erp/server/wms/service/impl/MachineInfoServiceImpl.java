@@ -24,6 +24,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -55,6 +56,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -168,8 +170,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
-        //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZZCX, BusinessNoTypeEnum.CODE_ZZCX.getCode()));
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
         //生成单号
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZZCX);
         entity.setCode(code);
@@ -182,6 +185,29 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             machineDetailService.add(dto.getDetailList(), entity.getId());
         }
         return entity.getId();
+    }
+
+
+    /**
+     * @description
+     * @param checkSkuIdList 检查 的sku
+     * @return
+     * @date 2024-02-28 11:58
+     * @author Lambda
+     */
+    private void checkSkuIsCombination(List<String> checkSkuIdList) {
+        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(checkSkuIdList);
+        //套装
+        String combinationType = BomTypeEnum.COMBINATION.getType();
+        //套装bom的父级sku
+        List<String> parentSkuIdList = bomSkuList.stream().filter(b-> combinationType.equals(b.getType())).
+                map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+
+        List<String> notExistSkuIdList = checkSkuIdList.stream().filter(c -> !parentSkuIdList.contains(c)).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(notExistSkuIdList)){
+            throw new ServiceException("存在非销售套装的sku");
+        }
+
     }
 
     @Override
@@ -209,6 +235,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        List<String> checkSkuIdList=dto.getDetailList().stream().
+                map(MachineDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        checkSkuIsCombination(checkSkuIdList);
 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -276,7 +305,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_99044);
         }
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
-        
+
         //查询明细子件
         List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIdList);
@@ -367,8 +396,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //bom版本取最新
         String bomVersion = childrenList.stream().max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).map(BomChildrenSkuDTO::getBomVersion).get();
         dto.setBomVersion(MathUtil.compareTo(dto.getBomVersion(),MathUtil.ZERO) == MathUtil.ZERO ? bomVersion : dto.getBomVersion());
-
-        List<BomChildrenSkuDTO> versionChildList = childrenList.stream().filter(obj -> obj.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
+        String combinationType = BomTypeEnum.COMBINATION.getType();
+        List<BomChildrenSkuDTO> versionChildList = childrenList.stream().
+                filter(obj -> obj.getBomVersion().equals(dto.getBomVersion()) && combinationType.equals(obj.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(versionChildList)) {
             return resultList;
         }
@@ -540,7 +570,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             list.forEach(obj->{
                 // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
 //                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                    syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
 //                }
             });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {

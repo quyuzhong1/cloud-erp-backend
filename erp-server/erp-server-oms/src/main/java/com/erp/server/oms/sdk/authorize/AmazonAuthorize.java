@@ -8,7 +8,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -33,12 +32,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -169,7 +168,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
         }
@@ -260,14 +259,13 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
             redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
 
-            // 授权后添加任务
-            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
-
-            // 添加报告计划
-            DmpSyncReportScheduleDTO dmpDTO = new DmpSyncReportScheduleDTO();
-            BeanUtils.copyProperties(shopInfo, dmpDTO);
-            dmpDTO.setShopId(shopInfo.getId());
-            dmpReportFeign.addReportSchedule(dmpDTO);
+            // 授权后添加任务和添加报告计划
+            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    false,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
         }
         redisUtil.del(key);
         return Boolean.TRUE;
@@ -292,15 +290,19 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         Boolean result = shopInfoService.updateById(shopInfo);
         if (result) {
             // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+//            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+            // 禁用启用任务和取消报告计划任务
+            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    true,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
+        } else {
+            throw new ServiceException("取消授权失败");
         }
-        // 取消报告计划任务
-        DmpSyncReportScheduleDTO dmpDTO = new DmpSyncReportScheduleDTO();
-        BeanUtils.copyProperties(shopInfo, dmpDTO);
-        dmpDTO.setShopId(dto.getShopId());
-        dmpReportFeign.cancelReportSchedule(dmpDTO);
         return result;
 
     }

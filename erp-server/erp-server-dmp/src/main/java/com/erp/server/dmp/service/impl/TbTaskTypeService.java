@@ -4,15 +4,11 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.model.dmp.entity.PlatformApiEntity;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,7 +105,7 @@ public class TbTaskTypeService {
     @Transactional(rollbackFor = Exception.class)
     public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
+        platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
         // 添加完成后，修改店铺生成任务状态
         Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(shopInfo.getId(), Boolean.TRUE));
     }

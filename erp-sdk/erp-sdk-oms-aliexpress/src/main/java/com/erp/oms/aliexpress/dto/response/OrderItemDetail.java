@@ -100,5 +100,11 @@ public class OrderItemDetail implements Serializable {
     @SerializedName("already_taxed")
     private String alreadyTaxed;
 
+    /**
+     * 物流服务名称 （买家物流）
+     */
+    @SerializedName("logistics_service_name")
+    private String logisticsServiceName;
+
 
 }

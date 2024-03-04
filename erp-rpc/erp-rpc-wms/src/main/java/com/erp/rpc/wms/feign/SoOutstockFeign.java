@@ -82,4 +82,15 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/generateB2cSoOutstock")
     Boolean generateB2cSoOutstock(@RequestBody String b2cSoId);
 
+    /**
+     * 生成b2c 销售出库单
+     * @description
+     * @param generateB2cDTO
+     * @author Lambda
+     * @return Boolean
+     * @create 2023-12-13 18:18
+     */
+    @PostMapping("feign/soOutstock/generateB2cSoOutstockByData")
+    Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
+
 }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * <p>
  * 亚马逊报告计划订阅类型
@@ -18,6 +20,7 @@ public enum ReportScheduleSubscribedTypeEnum {
 
     AMAZON("amazon", "亚马逊报告计划"),
     MANUAL("manual", "手动(定时任务amazonReportJob)"),
+    QUERY("query", "查询最新"),
     ;
 
     /**
@@ -32,4 +35,10 @@ public enum ReportScheduleSubscribedTypeEnum {
     private final String name;
 
 
+    public static ReportScheduleSubscribedTypeEnum getByCode(String code){
+        return Arrays.stream(ReportScheduleSubscribedTypeEnum.values())
+                .filter(e-> e.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
+    }
 }

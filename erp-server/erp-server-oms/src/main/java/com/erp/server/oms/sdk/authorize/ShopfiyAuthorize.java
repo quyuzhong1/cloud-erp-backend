@@ -1,8 +1,8 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.AuthorizeDTO;
@@ -20,7 +20,14 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.IShopAuthorizeService;
+import com.erp.server.oms.service.ShopAuthService;
+import com.erp.server.oms.service.ShopInfoService;
+import com.sdk.oms.shopify.api.dto.AccessDTO;
+import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
+import com.erp.server.oms.service.IShopAuthorizeService;
+import com.erp.server.oms.service.ShopAuthService;
+import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -32,8 +39,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -104,7 +113,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String bodyStr = "";
         // 二级域名
         String secondDomain = dto.getShop();
@@ -137,7 +146,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         findShopAuthorize.setShop(dto.getShop());
         findShopAuthorize.setTimestamp(dto.getTimestamp());
         try {
-            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
+            bodyStr = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize, response);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
@@ -146,14 +155,16 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(bodyStr)) {
             throw new ServiceException("Authorize timed out");
         }
-        JSONObject jsonObject = JSONObject.parseObject(bodyStr);
+        AccessDTO accessDTO = BeanUtil.toBean(bodyStr, AccessDTO.class);
+
         //token
-        String accessToken = jsonObject.getOrDefault("access_token", "").toString();
+        String accessToken = accessDTO.getAccessToken();
         //过期时间
-        Integer expiresIn = Integer.valueOf(jsonObject.getOrDefault("expires_in", 0).toString());
+        Integer expiresIn = accessDTO.getExpiresIn();
         if (StringUtils.isBlank(accessToken)) {
             return Boolean.FALSE;
         }
+
         String shopId = shopInfo.getId();
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
@@ -167,10 +178,19 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         shopAuth.setAppClientId(cfgAppClient.getId());
         shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfo.setAuthTime(LocalDateTime.now());
+
+        //用户信息
+        AssociatedUserBean associatedUser = accessDTO.getAssociatedUser();
+        //用户id
+        shopInfo.setPlatformShopCode(String.valueOf(associatedUser.getId()));
+        //扩展字段
+        Map<String, Object> map = BeanUtil.beanToMap(accessDTO);
+        shopInfo.setExtendData(map);
+
         shopAuthService.saveOrUpdate(shopAuth);
         boolean result = shopInfoService.updateById(shopInfo);
         // 授权后添加任务
-        dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+        dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         shopInfo.setIsGenTask(Boolean.TRUE);
         shopInfoService.updateShopInfoById(shopInfo);
         // 添加到缓存redis
@@ -210,8 +230,13 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         Boolean result = shopInfoService.updateById(shopInfo);
         if (result) {
             shopAuthService.removeByShopId(shopId);
-            // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+            // 禁用任务
+            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    true,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

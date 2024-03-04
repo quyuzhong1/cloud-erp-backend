@@ -17,11 +17,14 @@ import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,6 +64,21 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
 
         handleUpdateData (list,mainId);
 
+        //原明细数据被删除的需要清除mainId
+        List<PoReconciliationDetailEntity> oldList = poReconciliationDetailScmService.listMainIdList(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<PoReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
+            //更新主表id
+            if (CollectionUtils.isNotEmpty(deleteList)) {
+                deleteList.stream().forEach(obj -> obj.setMainId(""));
+                list.addAll(deleteList);
+            }
+        }
+
         log.info("编辑 开始修改采购对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -86,6 +104,15 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         poReconciliationDetailScmService.exportList(dto,response);
     }
 
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<PoReconciliationDetailEntity> newList, List<PoReconciliationDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
 
     /**
      * @description: 修改处理

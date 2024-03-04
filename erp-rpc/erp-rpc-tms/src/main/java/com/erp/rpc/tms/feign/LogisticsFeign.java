@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -72,4 +73,13 @@ public interface LogisticsFeign {
 
     @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
+    /**
+     * 获取地址信息
+     * @param id
+     * @return
+     */
+    @GetMapping("/feign/logistics/getLogisticsAddressById")
+    LogisticsAddressEntity getLogisticsAddressById(@RequestParam("id")String id);
+
+
 }

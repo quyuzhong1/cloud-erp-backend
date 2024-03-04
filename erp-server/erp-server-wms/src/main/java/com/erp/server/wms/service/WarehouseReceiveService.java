@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -317,4 +318,19 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean generateStockInWhenQcFinish(List<String> ids);
+
+    /**
+     *
+     * @param supplierId
+     * @return
+     */
+    SupplierCountDTO countOrderBySupplierId(String supplierId);
+    /**
+     * 根据采购订单获取收货单明细
+     * @param purchaseOrderIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(List<String> purchaseOrderIds);
+
+    List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(WarehouseReceiveDTO.SourceParamDTO dto);
 }

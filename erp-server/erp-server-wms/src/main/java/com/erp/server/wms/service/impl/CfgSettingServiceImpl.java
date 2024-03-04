@@ -120,7 +120,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
        for (DictBasicDTO.ListDTO listDTO : dictList) {
            //添加数据
            CfgSettingEntity entity = handleAddEnum(listDTO, addDTO,cfgSettingList);
-           list.add(entity);
+           if (Objects.nonNull(entity)){
+               list.add(entity);
+           }
        }
        return  list;
     }
@@ -138,6 +140,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         //系统配置json
         JSONObject jsonObject = new JSONObject();
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(listDTO.getValue());
+        if (Objects.isNull(cfgSettingEnum)){
+            return null;
+        }
         switch (cfgSettingEnum) {
             case SUBCONTRACT_ISSUE:
                  jsonObject = JSONUtil.parseObj(addDTO.getSubcontractIssueSettingDTO());

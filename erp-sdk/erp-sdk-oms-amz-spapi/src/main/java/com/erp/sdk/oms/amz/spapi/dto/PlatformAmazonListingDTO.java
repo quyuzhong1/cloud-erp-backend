@@ -5,14 +5,15 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 /**
  * 平台亚马逊产品DTO
@@ -29,8 +30,10 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
     private String itemDescription;
 
+    @Panno(findType = PannoEnum.EQ,field = "listingId")
     private String listingId;
 
+    @Panno(findType = PannoEnum.EQ,field = "sellerSku")
     private String sellerSku;
 
     private String price;
@@ -82,6 +85,9 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
     private String merchantShippingGroup;
 
+    @Panno(findType = PannoEnum.EQ,field = "status")
+    private String status;
+
     /**
      * 店铺ID
      */
@@ -112,6 +118,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private Integer downloadStatus;
 
     /**
+     * 下载描述
+     */
+    private String downloadDesc;
+
+    /**
      * 产品详情
      */
     private Item detail;
@@ -120,6 +131,13 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 亚马逊关联的库存SKU
      */
     private String platformFnSku;
+
+    /**
+     * redisson执行中key
+     */
+    private String redissonKey;
+
+
 
     /**
      * 转换目标实体:PlatformProductDTO
@@ -160,15 +178,34 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         return resultDto;
     }
 
-    public static void main(String[] args) {
-        String ee = "2020-08-04 03:56:29 PDT";
-        LocalDateTime parse = LocalDateTime.parse(ee, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z", Locale.ENGLISH));
-        System.out.println(parse);
-    }
-
     public static PlatformAmazonListingDTO getByDownloadStatus() {
         PlatformAmazonListingDTO amazonListingDTO = new PlatformAmazonListingDTO();
         amazonListingDTO.setDownloadStatus(0);
         return amazonListingDTO;
+    }
+
+    /**
+     * 转换IdentifiersType
+     */
+    public AmazonIdentifiersTypeEnum convertIdentifiersType(AmazonMarketplaceEnum marketPlaceEnum) {
+        // 日本/法国
+//        if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum) || AmazonMarketplaceEnum.FR.equals(marketPlaceEnum)){
+            if ("3".equals(this.productIdType)){
+                return AmazonIdentifiersTypeEnum.UPC;
+            } else {
+                return AmazonIdentifiersTypeEnum.ASIN;
+            }
+//        }
+//        return AmazonIdentifiersTypeEnum.ASIN;
+    }
+
+    /**
+     * 检查IdentifiersType
+     */
+    public String checkAndGetIdentifier() {
+        if (("4".equals(this.productIdType) || "2".equals(this.productIdType))&& StringUtils.isNotBlank(this.getAsin1())){
+            return this.getAsin1();
+        }
+        return this.getProductId();
     }
 }

@@ -129,6 +129,16 @@ public class SoOutstockFeignController {
         return soOutstockService.generateB2cSoOutstock(b2cSoId);
     }
 
+    /**
+     * 生成B2C销售出库单
+     * @param generateB2cDTO
+     * @return
+     */
+    @PostMapping("/generateB2cSoOutstockByData")
+    Boolean generateB2cSoOutstockByData(@RequestBody SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
+        return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+    }
+
 }
 
 

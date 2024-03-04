@@ -9,6 +9,10 @@ package com.common.business.constant;
 public class AuthPassPath {
 
     public static final String PASS_PATH_LIST = "/user/accountLogin;/user/scanCodeLogin;/calendar/save/year;/user/forgotPasswordGetCode;" +
-            "/user/forgotPassword;/shop/shopAuthorize;/shop/shopifyAuthorizeIndex;/shop/shopifyUrl;" +
-            "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode";
+            "/user/forgotPassword;/shop/shopAuthorize;/shop/shopifyAuthorizeIndex;/shop/shopifyUrl;/shopifyWebhook/customersDataRequest;" +
+            "/shopifyWebhook/customersRedact;/shopifyWebhook/shopRedact;" +
+            "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode;/shop/shopifyUrl";
+
+
+
 }

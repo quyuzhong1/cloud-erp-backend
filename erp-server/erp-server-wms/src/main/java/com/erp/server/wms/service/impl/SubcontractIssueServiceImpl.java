@@ -476,8 +476,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
 
         //已审核发料数量
-        List<String> sourceDetailIdList = childList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
-        List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySourceDetailIdList(sourceDetailIdList);
+        List<String> subcontractOrderDetailIdList = childList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
+        List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         //sku信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(parentSkuIdList);
@@ -540,7 +540,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 detailDTO.setCurInventoryQty(curInventoryQty);
 
                 //已发料数量
-                Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+                Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(detailDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailDTO.setHasIssueQty(hasIssueQty);
                 detailList.add(detailDTO);
@@ -668,7 +668,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //已审核发料数量
         List<String> subDetailIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getSubcontractOrderDetailId).collect(Collectors.toList());
-        List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySourceDetailIdList(subDetailIdList);
+        List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subDetailIdList);
 
         //委外明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subDetailIdList);
@@ -692,12 +692,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                     .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             viewDTO.setCurInventoryQty(curInventoryQty);
             //已发料数量
-            Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+            Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(viewDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                     .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDTO.setHasIssueQty(hasIssueQty);
 
             //委外明细父级来源id
-            String parentSourceDetailId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(viewDTO.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            String parentSourceDetailId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(viewDTO.getSubcontractOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
             viewDTO.setParentSourceDetailId(parentSourceDetailId);
         }
         data.setDetailList(detailList);

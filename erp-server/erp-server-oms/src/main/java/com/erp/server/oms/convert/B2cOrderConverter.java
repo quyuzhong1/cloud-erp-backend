@@ -52,6 +52,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "districtName", source = "districtName"),
             @Mapping(target = "firstAddress", source = "firstAddress"),
             @Mapping(target = "secondAddress", source = "secondAddress"),
+            @Mapping(target = "receiverTaxNo", source = "receiverTaxNo"),
 
     })
     LogisticsBillDTO.ReceiverDTO convertReceiver(SoB2cReceiverEntity receiverEntity);

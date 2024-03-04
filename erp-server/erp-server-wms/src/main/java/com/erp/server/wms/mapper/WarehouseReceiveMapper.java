@@ -89,4 +89,21 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * @return java.lang.Integer
      **/
     Integer waitInStockListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    /**
+     *  汇总供应商 当前周期内已确认订单数量
+     * @param supplierId
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    Integer countOrderBySupplierId(@Param(value = "supplierId") String supplierId,@Param(value = "startTime") LocalDate startTime,@Param(value = "endTime") LocalDate endTime);
+
+    /**
+     * 根据采购订单获取收货明细列表
+     * @param purchaseOrderIds
+     * @return
+     */
+    List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@Param(value = "purchaseOrderIds") List<String> purchaseOrderIds);
+
 }

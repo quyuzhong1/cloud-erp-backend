@@ -2,14 +2,15 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  *
@@ -23,7 +24,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("shop_info")
+@TableName(value = "shop_info", autoResultMap = true)
 public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
 
     /**
@@ -161,10 +162,24 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String platformShopCode;
 
     /**
+     * 扩展字段的 数据+值
+     */
+    @TableField(value = "extend_data", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> extendData;
+
+    /**
      * ioss税号
      */
     @TableField("ioss_tax_no")
     private String iossTaxNo;
+
+    /**
+     * 平台店铺状态:none=无, open=正常, closed关闭
+     * ShopPlatformStatusEnum
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
 
     public static final String PLATFORM_DICT = "platform_dict";
 

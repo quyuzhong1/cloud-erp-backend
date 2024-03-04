@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -57,6 +58,9 @@ public class PlatformTaskDTO {
          */
         @NotEmpty(message = "店铺id不能为空")
         private String shopId;
+
+        @NotNull(message = "店铺名称不能为空")
+        private String shopName;
         /**
          * 平台编码
          */
@@ -65,6 +69,16 @@ public class PlatformTaskDTO {
 
         @NotNull(message = "禁用状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 国家id
+         */
+        @NotBlank(message = "国家id不能为空")
+        private String dictCountryCode;
+        /**
+         * 平台店铺代号/平台卖家ID
+         */
+        private String platformShopCode;
 
     }
 

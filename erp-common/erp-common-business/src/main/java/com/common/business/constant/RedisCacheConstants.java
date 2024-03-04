@@ -27,6 +27,15 @@ public interface RedisCacheConstants {
      */
     public long EMAIL_CODE_EXPIRATION = 5;
 
+    /**
+     * 登录错误限制次数
+     */
+    public final int MAX_LOGIN_ATTEMPTS = 5;
+
+    /**
+     * 登录错误限制间隔分钟
+     */
+    public final int LOCK_DURATION_MINUTES = 60;
 
     /**
      * 权限功能的redis 的key
@@ -48,6 +57,10 @@ public interface RedisCacheConstants {
      * platform-token:平台名称:店铺ID
      */
     String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
+    /**
+     * 登录错误Key : 系统:用户账号
+     */
+    String LOGIN_ERROR_KEY = "login_error:{}:{}";
 
     /**
      * 亚马逊报告文档URL:{文档类型}:MarketplaceId
@@ -105,12 +118,40 @@ public interface RedisCacheConstants {
     String PLATFORM_REQUEST_PREFIX = "platform_request:{}";
 
     /**
+     * 亚马逊报告同类型处理中:shopId:recordType
+     */
+    String AMZ_REPORT_HANDLE_PREFIX = "amz_report_handle:{}:{}";
+
+    /**
+     * 亚马逊创建报告缓存响应信息:amz_report_result:taskId:status
+     */
+    String AMZ_REPORT_RESULT_PREFIX = "amz_report_result:{}:{}";
+
+
+    /**
+     * 亚马逊报告缓存结果:amz_report_info:taskId:status
+     */
+    String AMZ_REPORT_INFO_PREFIX = "amz_report_info:{}:{}";
+
+    /**
      * 平台请求频率:平台类型:sellerId:业务类型/接口类型
      */
     String PLATFORM_RATE_LIMIT = "platform_rate_limit:{}:{}:{}";
 
     /**
+     * 平台请求频率:平台类型:sellerId:业务类型/接口类型:端点
+     */
+    String PLATFORM_RATE_LIMIT_ENDPOINTS = "platform_rate_limit:{}:{}:{}:{}";
+
+
+    /**
      * 平台请求频率前缀:groupId
      */
     String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
+
+
+    /**
+     * 平台请求频率:groupId:操作类型
+     */
+    String PLATFORM_RATE_LIMIT_PREFIX_LAST = "platform_rate_limit:{}:{}";
 }

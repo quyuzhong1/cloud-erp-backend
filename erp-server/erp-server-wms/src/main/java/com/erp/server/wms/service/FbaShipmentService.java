@@ -228,4 +228,12 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     void generateTransfer(ShopInfoEntity shopInfoEntity, FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
 
     void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 检查当前Fba货件是否停止生成签收记录
+     *
+     * @param entity Fba主表信息
+     * @return ture=停止生成签收记录
+     */
+    boolean checkStopGenReceived(FbaShipmentEntity entity);
 }

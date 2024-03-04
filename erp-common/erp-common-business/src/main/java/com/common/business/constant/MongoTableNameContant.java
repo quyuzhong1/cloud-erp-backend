@@ -222,6 +222,17 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_ALI_EXPRESS_ORDER = "third_system_AliExpress_order";
 
     /**
+     * 领星店铺信息表
+     */
+    String ORIGINAL_LX_SHOP_LIST = "original_lx_shop_list";
+
+    /**
+     * 领星签收明细表
+     */
+    String ORIGINAL_LX_FBA_SHIPMENT_RECEIVE = "original_lx_fba_shipment_receive";
+
+
+    /**
      * 根据任务 key 获取表名
      * @param key
      * @return
@@ -236,6 +247,8 @@ public interface MongoTableNameContant {
                 return Arrays.asList(ORIGINAL_KINGDEE_ORDER, ORIGINAL_KINGDEE_SKU, ORIGINAL_KINGDEE_RETURN_ORDER, ORIGINAL_KINGDEE_SHOP, ORIGINAL_KINGDEE_ECC_SHOP, ORIGINAL_KINGDEE_DELIVERY_DETAIL,ORIGINAL_KINGDEE_DIRECT_TRANSFER);
             case TaskConstant.IML_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_IML_INBOUND_ORDER);
+            case TaskConstant.LX_PULL_DATA_TASK:
+                return Arrays.asList(ORIGINAL_LX_SHOP_LIST,  ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
             default:
                 return Collections.EMPTY_LIST;
         }

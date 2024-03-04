@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -196,6 +197,14 @@ public interface WmsTaskFeign {
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@RequestBody WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
 
     /**
+     * 根据供应商id集合获取收货单量和收货数量
+     * @param dto
+     * @return List<WarehouseReceiveDTO.SupplierReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/listReceiveBySourceTypeAndIds")
+    List<WarehouseReceiveEntity> listReceiveBySourceTypeAndIds(@RequestBody WarehouseReceiveDTO.SourceParamDTO dto);
+
+    /**
      * 根据供应商id集合获取入库单量和入库数量
      * @param dto
      * @return List<PoInstockDTO.SupplierInstockInfoDTO>
@@ -279,4 +288,20 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/wmsWorkOption/overseasDeliveryPlanApprove")
     Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 统计供应商周期内已审核订单数量
+     * @param supplierId
+     * @return
+     */
+    @GetMapping("/feign/warehouseReceive/countOrderBySupplierId")
+    SupplierCountDTO countOrderBySupplierId(@RequestParam("supplierId") String supplierId);
+    /***
+     * 同销售订单获取 收货详情
+     * @param purchaseOrderIds
+     * @return
+     */
+    @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIds")
+    public List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIds(@RequestBody List<String> purchaseOrderIds);
+
 }

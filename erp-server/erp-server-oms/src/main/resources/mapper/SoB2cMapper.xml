@@ -726,10 +726,15 @@
             sb.package_status AS packageStatus,
             sbl.logistics_channel_id AS logisticsChannelId,
             sbl.code AS trackNo,
-            sbl.weight AS weight
+            sbl.weight AS weight,
+            sbr.receiver_name AS receiverName,
+            sbr.country_name AS countryName,
+            sbr.country AS country
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
+        LEFT JOIN so_b2c_receiver sbr
+        ON sb.id = sbr.main_id AND sbr.is_deleted = FALSE
         WHERE sb.is_deleted = FALSE
         <if test="params.billStatusList !=null and params.billStatusList.size>0">
           AND sb.bill_status IN
@@ -743,6 +748,23 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.shopIdList !=null and params.shopIdList.size>0">
+            AND sb.shop_id IN
+            <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.logisticsChannelIdList !=null and params.logisticsChannelIdList.size>0">
+            AND sbl.logistics_channel_id IN
+            <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.logisticsChannelName !=null and params.logisticsChannelName!=''">
+            AND sbl.logistics_channel_name ILIKE CONCAT('%',#{params.logisticsChannelName}::text,'%')
+        </if>
+        ORDER BY sb.create_time DESC
+
     </select>
 
 

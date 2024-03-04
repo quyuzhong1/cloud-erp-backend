@@ -38,6 +38,8 @@ public class DeliveryOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
     public static class TotalInfo {
         /**
          * 订单数量

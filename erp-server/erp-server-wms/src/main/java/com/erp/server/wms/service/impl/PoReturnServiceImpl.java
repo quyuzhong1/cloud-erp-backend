@@ -694,7 +694,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     }
                 }
                 poReturnEntity.setConfirmStatus(confirmStatus);
-                poReturnEntity.setConfirmDate(LocalDate.now());
+                poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
 
 
@@ -1272,6 +1272,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            addDTO.setPurchaseUserId(purchaseReturnOrderDTO.getPurchaseUserId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();

@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.service.LogisticsAuthFieldService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ public class LogisticsAuthController extends BaseController {
 
     @Autowired
     private LogisticsAuthFieldService logisticsAuthFieldService;
+
+    @Autowired
+    private LogisticsSupplierService logisticsSupplierService;
 
     /**
      * 物流授权新增

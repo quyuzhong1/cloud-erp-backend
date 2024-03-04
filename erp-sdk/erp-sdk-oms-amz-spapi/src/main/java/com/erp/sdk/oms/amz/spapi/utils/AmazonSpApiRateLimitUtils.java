@@ -5,12 +5,18 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
+import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 
 /**
  * 亚马逊速率限制工具类
@@ -45,4 +51,17 @@ public class AmazonSpApiRateLimitUtils {
                 .build();
     }
 
+    /**
+     * 检查和缓存到redis
+     */
+    public void checkAndSetRedis(String limitKey, ApiResponse<?> reportWithHttpInfo) {
+        String rateLimitStr;
+        List<String> limitArray = reportWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+        rateLimitStr = limitArray.get(0);
+        if (StringUtils.isNotBlank(rateLimitStr)){
+            // 设置动态速率，失效时间=1/limit
+            BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+            redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+        }
+    }
 }

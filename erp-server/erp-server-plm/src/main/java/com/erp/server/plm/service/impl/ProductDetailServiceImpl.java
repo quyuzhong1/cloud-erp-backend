@@ -37,10 +37,12 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.oms.dto.SkuMappingExtendDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -72,6 +74,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
@@ -3969,5 +3972,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              return Collections.emptyList();
         }
         return this.lambdaQuery().in(ProductDetailEntity::getSkuNo, skuNoList).list();
+    }
+
+    @Override
+    public List<SkuSimpleVO> searchSkuWithCombination(String searchKeyword) {
+        return baseMapper.searchSkuWithCombination(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
     }
 }

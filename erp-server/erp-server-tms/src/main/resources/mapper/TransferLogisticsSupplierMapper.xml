@@ -38,7 +38,7 @@
         SELECT
         COUNT(id) AS count,
         auth_status AS tabFlag
-        FROM transfer_logistics_supplier
+        FROM transfer_logistics_supplier ls
         WHERE is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}

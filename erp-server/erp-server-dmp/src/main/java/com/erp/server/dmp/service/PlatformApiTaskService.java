@@ -5,6 +5,8 @@ import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.lingxing.ShopEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,7 +36,7 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @param dto
      * @return
      */
-    Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto);
+    Boolean createOrEnablePlatformTask(PlatformTaskDTO.AddDTO dto);
 
     /**
      * 根据平台和店铺id查询任务
@@ -95,4 +97,20 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @return List<PlatformApiTaskEntity> 任务列表
      */
     List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType);
+
+    /**
+     * 更新任务禁用/启用和取消/开启报告计划
+     *
+     */
+    Boolean allAddOrUpdateTaskAndSchedule(PlatformTaskDTO.DisabledDTO dto);
+
+    /**
+     * 关闭店铺所有信息
+     */
+    void checkAndClosedPlatformShop(ShopInfoEntity shopInfo);
+
+    /**
+     * 关闭店铺所有信息
+     */
+    void checkAndClosedPlatformShopByShopId(String shopId);
 }
