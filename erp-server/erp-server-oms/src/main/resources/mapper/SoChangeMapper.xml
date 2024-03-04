@@ -82,7 +82,7 @@
         INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
-        and  sr.is_deleted=false
+        and  sc.is_deleted=false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
