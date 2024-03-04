@@ -6,6 +6,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.IOException;
 import java.util.List;
@@ -123,4 +124,6 @@ public interface LogisticsService {
      * @return
      */
     LogisticsPlatformEnum getPlatForm();
+
+    ApiResult<List<LogisticsServiceResponseVO>>  listLogisticsService(Map<String, String> authMap);
 }
