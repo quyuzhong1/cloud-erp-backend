@@ -53,6 +53,12 @@ public class PurchaseReturnOrderDTO {
         private String returnOrgId;
 
         /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+
+        /**
          * 退货仓库id
          */
         @NotBlank(message = "退货仓库不能为空")
@@ -156,6 +162,12 @@ public class PurchaseReturnOrderDTO {
          * 退货人组织id
          */
         private String returnOrgId;
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
 
         /**
          * 退货原因
@@ -292,6 +304,16 @@ public class PurchaseReturnOrderDTO {
          * 退货人组织名称
          */
         private String returnOrgName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgName ;
 
         /**
          * 退货原因
