@@ -29,7 +29,7 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
      */
-    List<SoChangeDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
+    Integer listCount(@Param("params")SoChangeDTO.PagingParamDTO params);
 
     IPage<SoChangeDTO.PagingViewDTO> paging(Page query, @Param("params")SoChangeDTO.PagingParamDTO params);
 

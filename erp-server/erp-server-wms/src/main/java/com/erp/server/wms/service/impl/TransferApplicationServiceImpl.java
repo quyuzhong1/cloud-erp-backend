@@ -167,7 +167,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
-            resultDTO.setTabFlagName(item.getName());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
             list.add(resultDTO);
         }
         return list;

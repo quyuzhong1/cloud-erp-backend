@@ -465,10 +465,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 if (ObjectUtils.isEmpty(updateDTO)) {
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
-                //仓库组织匹配校验
-                if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG,updateDTO.getName(),subcontractOrderEntity.getSubcontractOrgName());
-                }
+                childEntity.setWarehouseName(updateDTO.getName());
                 //供应商名称
                 if (CollectionUtils.isNotEmpty(supplierList)) {
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

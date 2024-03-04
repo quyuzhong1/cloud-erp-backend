@@ -3,7 +3,6 @@ package com.erp.server.wms.query;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.scm.enums.PoTableFlagEnum;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,11 +34,11 @@ public class MachineInfoQueryHandler extends AbstractQueryHandler {
             super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
         }
         // 已审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.APPROVE.getStatus());
         }
         //不通过
-        if (PoTableFlagEnum.APPROVE_REJECT.getCode().equals(value)) {
+        if (PageListTypeEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("mi.approve_status", ApproveStatusEnum.REJECT.getStatus());
         }
         return super.getSplicingSQL();

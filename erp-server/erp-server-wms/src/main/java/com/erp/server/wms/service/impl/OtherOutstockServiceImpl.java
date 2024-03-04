@@ -46,6 +46,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
 import com.erp.server.wms.mapper.OtherOutstockMapper;
+import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +60,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -111,6 +109,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private OtherOutstockQueryHandler otherOutstockQueryHandler;
+
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -130,22 +131,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         PageListTypeEnum[] values = PageListTypeEnum.values();
         List<OtherOutstockDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PageListTypeEnum item : values) {
+            if (PageListTypeEnum.WAIT_SUBMIT.equals(item)) {
+                continue;
+            }
             OtherOutstockDTO.SearchParamDTO searchParamDTO = new OtherOutstockDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             OtherOutstockDTO.ListStatusCountDTO resultDTO = new OtherOutstockDTO.ListStatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
+            String tabSql = otherOutstockQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
             resultDTO.setTabFlagName(item.getName());
