@@ -206,7 +206,6 @@ public class LogisticsChannelConstraintDTO implements Serializable {
         /**
         * 国家名称
         */
-        @NotBlank(message = "国家名称不能为空")
         private String countryName;
 
         /**
