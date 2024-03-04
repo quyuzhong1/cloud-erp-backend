@@ -155,7 +155,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             }
 
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgCode(returnOrgCode);
+            findBusinessOperator.setOrgCode(String.valueOf(resultMap.get("purchaseOrgCode")));
             findBusinessOperator.setUserId(purchaseUserId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
             //获取员工业务信息
