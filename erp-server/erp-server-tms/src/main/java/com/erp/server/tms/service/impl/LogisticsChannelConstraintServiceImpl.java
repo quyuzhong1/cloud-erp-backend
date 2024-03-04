@@ -14,10 +14,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelConstraintDTO;
 import com.erp.model.tms.dto.excel.LogisticsChannelConstraintExcelDTO;
 import com.erp.model.tms.entity.LogisticsChannelConstraintEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.listener.LogisticsChannelConstraintExcelListener;
 import com.erp.server.tms.mapper.LogisticsChannelConstraintMapper;
 import com.erp.server.tms.service.LogisticsChannelConstraintService;
@@ -58,6 +60,9 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
     @Resource
     private LogisticsChannelConstraintServiceImpl service;
 
+    @Resource
+    private SysDictFeign dictFeign;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public  List<BatchResultDTO> addAndUpdate(LogisticsChannelConstraintDTO.AddOrUpdateDTO dto) {
@@ -65,6 +70,16 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
         if(Objects.isNull(channelEntity)){
             throw new ServiceException("获取不到物流渠道信息");
         }
+        //设置国家名称
+        List<String> countryList = dto.getCommonDTOList().stream().map(LogisticsChannelConstraintDTO.CommonDTO::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> dictCountryEntityList = dictFeign.listCountryByIds(countryList);
+        dto.getCommonDTOList().forEach(v->{
+            DictCountryEntity dictCountry = dictCountryEntityList.stream().filter(t->t.getId().equals(v.getCountry())).findFirst().orElse(null);
+            if(Objects.isNull(dictCountry)){
+                throw new ServiceException("获取不到国家信息");
+            }
+            v.setCountryName(dictCountry.getNameCn());
+        });
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //当前数据库数据
         List<LogisticsChannelConstraintEntity> list = this.lambdaQuery().eq(LogisticsChannelConstraintEntity :: getChannelId,dto.getChannelId()).list();

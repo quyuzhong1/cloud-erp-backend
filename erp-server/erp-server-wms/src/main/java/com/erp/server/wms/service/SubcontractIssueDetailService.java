@@ -1,9 +1,7 @@
 package com.erp.server.wms.service;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 
 import java.util.List;
 
@@ -62,4 +60,13 @@ public interface SubcontractIssueDetailService extends SuperService<SubcontractI
      * @return List<SubcontractIssueDetailEntity>
      */
     List<SubcontractIssueDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList);
+
+    /**
+     * @description: 根据委外订单明细id集合查询
+     * @author Will
+     * @date: 2024/2/23 11:48
+     * @param subcontractOrderDetailIdList
+     * @return List<SubcontractIssueDetailEntity>
+     */
+    List<SubcontractIssueDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList);
 }

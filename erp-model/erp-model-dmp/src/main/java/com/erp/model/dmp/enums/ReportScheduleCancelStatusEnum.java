@@ -18,7 +18,7 @@ public enum ReportScheduleCancelStatusEnum {
 
     NONE("none", "未取消"),
     WAIT("wait", "待取消"),
-    ALREADY("cancel", "已取消"),
+    CANCEL("cancel", "已取消"),
     ;
 
     /**

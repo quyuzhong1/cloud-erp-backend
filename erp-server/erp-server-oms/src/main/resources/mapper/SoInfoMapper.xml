@@ -63,7 +63,6 @@
 
     <select id="pagingTotal" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingTotalDTO">
         SELECT
-
             COALESCE(sum(sod.qty),0) as totalQty,
             COALESCE(sum(sod.amount),0) as totalAmount,
             COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,

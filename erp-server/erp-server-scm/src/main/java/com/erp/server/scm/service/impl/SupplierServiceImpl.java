@@ -50,6 +50,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -58,6 +59,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -154,6 +156,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Resource
     private SrmPoReconciliationFeign srmPoReconciliationFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     @Autowired
     private TransferLogisticsFeign transferLogisticsFeign;
     @Resource
@@ -352,11 +356,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 }
             }else {
                 //启用时 检查当前周期确认订单是否存在，存在则下月生效
-                LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-                LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-                Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(supplierId,startTime,endTime);
-                if (Objects.nonNull(count) && count > 0){
-                    supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+                if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
+                    supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
                 }else {
                     supplier.setSrmDisabledDate(LocalDate.now());
                 }
@@ -738,7 +740,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         supplier.setDisabled(state);
 
         //添加日志
-        String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
+        String content = String.format("编辑了供应商[%s] 启用状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
         //发送金蝶
@@ -772,24 +774,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         supplier.setSrmDisabledDate(LocalDate.now());
         //当启用后 禁用时 校验是否存在未确认采购对账单明细
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
-                !supplier.getSrmDisabled() && dto.getState()){
+        if (!supplier.getSrmDisabled() && dto.getState()){
             Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
             if (Objects.nonNull(count) && count > 0){
                 throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
             }
         }
         //禁用后启用 校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
-        if (supplier.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode()) &&
-                supplier.getSrmDisabled() && !dto.getState()){
+        if (supplier.getSrmDisabled() && !dto.getState()){
             //启用时 检查当前周期确认订单是否存在，存在则下月生效
-            LocalDate startTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endTime = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
-            Integer count = purchaseOrderDetailMapper.countOrderBySupplierId(supplierId,startTime,endTime);
-            if (Objects.nonNull(count) && count > 0){
+            //启用时 检查当前周期确认订单是否存在，存在则下月生效
+            SupplierCountDTO countDTO = wmsTaskFeign.countOrderBySupplierId(supplierId);
+            if (Objects.nonNull(countDTO) && Objects.nonNull(countDTO.getLocalDate()) && countDTO.getCount() > 0){
                 //SRM协同开启后，下月生效
                 msg = "SRM协同开启后，下月生效";
-                supplier.setSrmDisabledDate(LocalDate.now().plusMonths(1).with(TemporalAdjusters.firstDayOfMonth()));
+                supplier.setSrmDisabledDate(countDTO.getLocalDate().plusDays(1));
+            }else {
+                supplier.setSrmDisabledDate(LocalDate.now());
             }
         }
         Boolean state = dto.getState();
@@ -799,12 +800,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplier.setSrmOperateUserId(userInfo.getUid());
             supplier.setSrmOperateUserName(userInfo.getUserName());
         }
-
         //添加日志
-        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "否" : "是", dto.getState() == true ? "否" : "是");
+        String content = String.format("编辑了供应商[%s] 启用SRM协同状态 由[%s] 变更为[%s]", supplier.getName(), dto.getState() ? "启用" : "停用", dto.getState() ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
         this.updateById(supplier);
-        return ApiResult.success(msg);
+        return ApiResult.successMsg(msg);
     }
 
 
@@ -818,15 +818,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<Map<String, Object>> listApproveSupplier() {
         LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled);
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled, SupplierEntity::getSrmDisabled);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
-        queryWrapper.eq(SupplierEntity::getSrmDisabled,Boolean.FALSE);
-        queryWrapper.eq(SupplierEntity::getDisabled,Boolean.FALSE);
         return this.listMaps(queryWrapper);
     }
-
 
     /**
      * 反审核

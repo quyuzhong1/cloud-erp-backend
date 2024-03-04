@@ -115,7 +115,7 @@ public class ApiResult<T>  implements Serializable {
     /**
      * 成功时候的调用
      */
-    public static <T> ApiResult<T> success(String msg) {
+    public static <T> ApiResult<T> successMsg(String msg) {
         return new ApiResult<>(200, msg);
     }
 }

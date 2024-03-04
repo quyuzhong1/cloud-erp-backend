@@ -480,4 +480,17 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String shippingOrderNo;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateOutstockStatusDTO {
+        /**
+         * 订单id
+         */
+        private List<String> soIds;
+        /**
+         * 状态
+         */
+        private String status;
+    }
 }

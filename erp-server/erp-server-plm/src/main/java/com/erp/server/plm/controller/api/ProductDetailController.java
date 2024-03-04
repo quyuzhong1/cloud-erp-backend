@@ -21,7 +21,9 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -30,11 +32,13 @@ import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -53,6 +58,7 @@ import java.util.*;
  * @Author Luo_WG
  * @Date 2022/9/22 11:48
  **/
+@Slf4j
 @RestController
 @LogSystemModule("产品管理")
 @RequestMapping("product/detail")
@@ -112,6 +118,9 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductCustomsService productCustomsService;
+
+    @Resource
+    private BomSkuService bomSkuService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -876,6 +885,24 @@ public class ProductDetailController extends BaseController {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
         return success(skuList);
     }
+
+    /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2023-01-11 14:58
+     */
+    @GetMapping("/search/skuWithCombination")
+    public ApiResult<List<SkuSimpleVO>> skuWithCombination(String searchKeyword) {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        List<SkuSimpleVO> skuList = productDetailService.searchSkuWithCombination(searchKeyword);
+        stopWatch.stop();
+        log.warn(stopWatch.prettyPrint());
+        return success(skuList);
+    }
+
 
     /**
      * 搜索sku

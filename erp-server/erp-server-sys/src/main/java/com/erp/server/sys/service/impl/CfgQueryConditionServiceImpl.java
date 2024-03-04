@@ -49,7 +49,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
     @Override
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
         List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
-        if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()))){
+        if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()) && v.getDisplayType().equals(dto.getDisplayType()))){
             throw new ServiceException("已存在配置字段,无法重复新增");
         }
         if(QueryDisplayTypeEnum.TAB.getCode().equals(dto.getDisplayType()) && dbEntityList.stream().anyMatch(v->v.getDisplayType().equals(QueryDisplayTypeEnum.TAB.getCode()))){

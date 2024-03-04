@@ -2,8 +2,10 @@ package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -18,6 +20,18 @@ public interface LogisticsAuthFeign {
      **/
     @PostMapping("/feign/logisticsAuth/getAuthByChannelId")
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(@RequestBody String channelId);
+
+
+    /**
+     * 根据物流商id 获取授权信息
+     * @description
+     * @param logisticsSupplierId
+     * @return
+     * @date 2024-02-18 12:14
+     * @author Lambda
+     */
+    @GetMapping("/feign/logisticsAuth/getAuthBySupplierId")
+    LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId);
 
     /**
      * 根据渠道id查询渠道关联的平台信息

@@ -41,6 +41,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -84,6 +86,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX, data.getGroupId());
         RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
         String rateLimitStr;
+        // 根据亚马逊的响应时间记录下次执行开始时间
+        LocalDateTime nextStartTime;
 
         // 亚马逊订单下载
         OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
@@ -100,6 +104,9 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrdersResponse orders = ordersWithHttpInfo.getData();
+            // 亚马逊接口响应时间UTC转换8区
+            LocalDateTime parse = LocalDateTime.parse(orders.getPayload().getLastUpdatedBefore(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            nextStartTime = DateUtil.utcSamePlus8(parse);
 
             List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
             String currentNextToken = orders.getPayload().getNextToken();
@@ -113,6 +120,9 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
                 }
                 GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
                 orderList.addAll(currentResp.getPayload().getOrders());
+                // 亚马逊接口响应时间UTC转换8区
+//                LocalDateTime currentParse = LocalDateTime.parse(currentResp.getPayload().getLastUpdatedBefore(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+//                nextStartTime = DateUtil.utcSamePlus8(currentParse);
                 currentNextToken = currentResp.getPayload().getNextToken();
                 currentSize = currentResp.getPayload().getOrders().size();
                 List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
@@ -123,7 +133,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
                 BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
-
+            // 设置根据亚马逊的响应时间记录下次执行开始时间
+            data.setNextTime(nextStartTime);
             // 返回下载源数据
             return orderList.stream()
                     .map(e-> new PlatformAmazonOrderDTO(e, shopInfoDTO.getId()))

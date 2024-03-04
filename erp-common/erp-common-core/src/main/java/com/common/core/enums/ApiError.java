@@ -108,6 +108,8 @@ public enum ApiError implements Serializable {
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
     ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+    LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
+    LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
 
     /**
      * 警告信息 从800 开始
@@ -401,7 +403,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的BOM信息"),
+    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -630,7 +632,7 @@ public enum ApiError implements Serializable {
     ERROR_98032(98032,"只有待提交或审核不通过数据支持提交"),
     ERROR_98033(98033,"已审核数据才能生成采购单"),
     ERROR_98034(98034,"供应商名称不能重复"),
-    ERROR_98035(98035,"只有未交货或者部分交货的采购订单能结束交货"),
+    ERROR_98035(98035,"只有已确认和送货中的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
     ERROR_98037(98037,"资质有效起不能大于资质有效止"),
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
@@ -819,6 +821,7 @@ public enum ApiError implements Serializable {
     ERROR_99081(99081,"只有已审核的单据才能下推退货入库单"),
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
+    ERROR_99084(99084,"采购订单的执行状态是待确认，不允许新增收货单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -960,6 +963,8 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_DECLARE_QTY_NOT_EXIST(92135,"入库预报记录总件数不能为空"),
     ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST(92136,"入库预报订单明细不能为空"),
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
+    THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
+
 
 
 
@@ -1231,6 +1236,9 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
     ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
     ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
+    // 亚马逊公用异常
+    ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

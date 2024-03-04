@@ -9,9 +9,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,10 +27,13 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -55,7 +62,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -92,6 +98,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private OverseasProviderService overseasProviderService;
 
+    @Resource
+    private WarehouseMappingService warehouseMappingService;
 
 
     @Override
@@ -168,46 +176,46 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList) {
         if (CollectionUtil.isEmpty(assertList)) {
-            return ;
+            return;
         }
         List<WarehouseDTO.WarehouseDisabledAssertDTO> invalidList = new ArrayList<>();
         assertList.stream().forEach(item -> {
             // 仓库禁用/未审核
-            if(StrUtil.isBlank(item.getWarehouseId())){
+            if (StrUtil.isBlank(item.getWarehouseId())) {
                 throw new ServiceException("仓库id不能为空");
             }
             WarehouseDTO.UpdateDTO warehouse = detailWithCache(item.getWarehouseId());
-            if(ObjectUtil.isNotEmpty(warehouse)){
+            if (ObjectUtil.isNotEmpty(warehouse)) {
                 item.setWarehouseName(item.getWarehouseName());
             }
-            if (ObjectUtil.isNotEmpty(warehouse) && (warehouse.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatusCode()))){
+            if (ObjectUtil.isNotEmpty(warehouse) && (warehouse.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatusCode()))) {
                 invalidList.add(item);
                 return;
             }
             // 库区禁用/未审核
-            if(StrUtil.isNotBlank(item.getWarehouseArea())){
+            if (StrUtil.isNotBlank(item.getWarehouseArea())) {
                 WarehouseLocationEntity area = warehouseLocationService.findArea(item.getWarehouseId(), item.getWarehouseArea());
-                if (ObjectUtil.isEmpty(area) || area.getDisabled()){
+                if (ObjectUtil.isEmpty(area) || area.getDisabled()) {
                     invalidList.add(item);
                     return;
                 }
             }
             // 仓位禁用/未审核
-            if(StrUtil.isNotBlank(item.getWarehouseLocation())){
+            if (StrUtil.isNotBlank(item.getWarehouseLocation())) {
                 WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(item.getWarehouseId(), item.getWarehouseLocation());
-                if (ObjectUtil.isEmpty(location) || location.getDisabled()){
+                if (ObjectUtil.isEmpty(location) || location.getDisabled()) {
                     invalidList.add(item);
                 }
             }
         });
-        if (CollectionUtil.isNotEmpty(invalidList)){
+        if (CollectionUtil.isNotEmpty(invalidList)) {
             List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
             List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
             List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
             warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
             warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
             warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
-            throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList) );
+            throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
         }
     }
 
@@ -215,7 +223,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public List<WarehouseDTO.ListDTO> listOverseasWarehouse() {
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-        if (warehouseBindMap.isEmpty()){
+        if (warehouseBindMap.isEmpty()) {
             return Collections.emptyList();
         }
         // 查询对应仓库
@@ -282,9 +290,23 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             warehouse.setOnwayWarehouseName(entity.getName());
         }
 
-
         Boolean result = this.save(warehouse);
         if (result) {
+
+            //如果设置了第三方仓绑定
+            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+                WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
+                }
+                WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
+                addDTO.setName(dto.getThirdWarehouseName());
+                addDTO.setWarehouseId(warehouse.getId());
+                addDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+                warehouseMappingService.add(addDTO);
+            }
+
             return warehouse.getId();
         }
         return "";
@@ -327,6 +349,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         Boolean result = this.updateById(warehouse);
         if (result) {
+            //如果设置了第三方仓绑定
+            WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
+
+            WarehouseMappingDTO.UpdateDTO updateDTO = new WarehouseMappingDTO.UpdateDTO();
+            if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+                updateDTO.setId(mappingViewByDictPlatform.getId());
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist) && !checkThirdWarehouseNameExist.getId().equals(mappingViewByDictPlatform.getId())) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                }
+            } else {
+                if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
+                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                }
+            }
+            updateDTO.setName(dto.getThirdWarehouseName());
+            updateDTO.setWarehouseId(warehouse.getId());
+            updateDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+            warehouseMappingService.update(updateDTO);
             return warehouseId;
         }
         return "";
@@ -565,6 +607,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(warehouse, dto);
         ApproveStatusEnum approveStatusEnum = warehouse.getApproveStatus();
         dto.setApproveStatusCode(approveStatusEnum.getStatus());
+
+        WarehouseMappingDTO.MappingViewDTO mappingViewByDictPlatform = warehouseMappingService.getMappingViewByDictPlatform(warehouseId, PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
+            dto.setThirdWarehouseName(mappingViewByDictPlatform.getThirdWarehouseName());
+        }
         return dto;
     }
 
@@ -587,8 +634,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        //获取到仓库类型
-        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        //获取到字典数据类型
+        List<String> dictTypeList = new ArrayList<>(3);
+        dictTypeList.add(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        dictTypeList.add(DictBasicEnum.WAREHOUSE_MANAGE_TYPE.getKey());
+        dictTypeList.add(DictBasicEnum.GEOGRAPHY_LOCATION.getKey());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
         List<String> userIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
@@ -615,6 +666,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setOrgName(orgName);
+            //经营类型
+            String warehouseManageType = item.getWarehouseManageType();
+            String warehouseManageTypeName = dictBasicList.stream().filter(d -> warehouseManageType.equals(d.getValue())).
+                    map(DictBasicEntity::getName).findFirst().orElse("");
+            item.setWarehouseManageTypeName(warehouseManageTypeName);
+
+            //地理位置
+            String geographyLocation = item.getGeographyLocation();
+            String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
+                    map(DictBasicEntity::getName).findFirst().orElse("");
+            item.setGeographyLocationName(geographyLocationName);
         }
         return new PagingVO<>(pageData);
     }
@@ -635,13 +697,20 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
         if (CollectionUtils.isNotEmpty(viewList)) {
-            //获取到仓库类型
-            List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            //获取到字典数据类型
+            List<String> dictTypeList = new ArrayList<>(3);
+            dictTypeList.add(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            dictTypeList.add(DictBasicEnum.WAREHOUSE_MANAGE_TYPE.getKey());
+            dictTypeList.add(DictBasicEnum.GEOGRAPHY_LOCATION.getKey());
+            List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
             List<String> userIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
             //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
             List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+            List<String> warehouseIds = viewList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
 
             for (WarehouseDTO.PagingViewDTO item : viewList) {
                 WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
@@ -669,6 +738,23 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 excelDTO.setOrgName(orgName);
                 excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
                 excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
+                excelDTO.setOnwayWarehouseName(item.getOnwayWarehouseName());
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> req.getWarehouseId().equals(item.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(mappingViewDTO)) {
+                    excelDTO.setThirdWarehouseName(mappingViewDTO.getThirdWarehouseName());
+                }
+                //经营类型
+                String warehouseManageType = item.getWarehouseManageType();
+                String warehouseManageTypeName = dictBasicList.stream().filter(d -> warehouseManageType.equals(d.getValue())).
+                        map(DictBasicEntity::getName).findFirst().orElse("");
+                excelDTO.setWarehouseManageTypeName(warehouseManageTypeName);
+
+                //地理位置
+                String geographyLocation = item.getGeographyLocation();
+                String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
+                        map(DictBasicEntity::getName).findFirst().orElse("");
+                excelDTO.setGeographyLocationName(geographyLocationName);
+
                 resultList.add(excelDTO);
 
 
@@ -726,12 +812,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        //获取到仓库类型
-        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        //获取到字典数据类型
+        List<String> dictTypeList = new ArrayList<>(3);
+        dictTypeList.add(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        dictTypeList.add(DictBasicEnum.WAREHOUSE_MANAGE_TYPE.getKey());
+        dictTypeList.add(DictBasicEnum.GEOGRAPHY_LOCATION.getKey());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+
+
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -821,16 +913,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(kingdeeWarehouseCodeList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(WarehouseEntity::getKingdeeWarehouseCode,kingdeeWarehouseCodeList).list();
+        return this.lambdaQuery().in(WarehouseEntity::getKingdeeWarehouseCode, kingdeeWarehouseCodeList).list();
     }
 
 
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<WarehouseEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dto.getWarehouseName()),WarehouseEntity::getName,dto.getWarehouseName())
-                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
-                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()),WarehouseEntity::getId,dto.getWarehouseIdList())
+                .eq(StringUtils.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
+                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
+                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
@@ -843,8 +935,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream()
-                .filter(e-> StringUtils.isBlank(dto.getDictPlatform()) ||
-                            (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
+                        (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
@@ -900,7 +992,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setOrgName(orgName);
             return item;
-         }).collect(Collectors.toList());
+        }).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
 
@@ -978,13 +1070,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     /**
+     * @param list
+     * @return List<ListTreeDTO>
      * @description: 处理下拉数据
      * @author Will
      * @date: 2023/9/6 15:59
-     * @param list
-     * @return List<ListTreeDTO>
      */
-    private List<WarehouseDTO.ListTreeDTO> handleWarehouseTree (List<WarehouseDTO.ListDTO> list) {
+    private List<WarehouseDTO.ListTreeDTO> handleWarehouseTree(List<WarehouseDTO.ListDTO> list) {
 
         //获取到仓库类型
         List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());

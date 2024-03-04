@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Will
@@ -54,14 +55,36 @@ public class BaseDropDownDTO implements Serializable {
          * 启用/禁用
          */
         private Boolean disabled;
-
         public DisabledDTO(String code, String value, Boolean disabled) {
             this.setCode(code);
             this.setValue(value);
             this.disabled = disabled;
         }
     }
+    @Data
+    @NoArgsConstructor
+    public static class SrmDisabledDTO extends CommonDTO {
 
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        /**
+         * srm 启用/禁用
+         */
+        private Boolean srmDisabled;
+        /**
+         * 供应商在协同用户中是否能够使用
+         */
+        private Boolean supplierDisabled;
+        public SrmDisabledDTO(String code, String value, Boolean disabled, Boolean srmDisabled) {
+            this.setCode(code);
+            this.setValue(value);
+            this.disabled = disabled;
+            this.srmDisabled = srmDisabled;
+            this.supplierDisabled = Objects.isNull(disabled) || Objects.isNull(srmDisabled) || (disabled || srmDisabled);
+        }
+    }
     @Data
     @NoArgsConstructor
     public static class RemarkDTO extends CommonDTO {

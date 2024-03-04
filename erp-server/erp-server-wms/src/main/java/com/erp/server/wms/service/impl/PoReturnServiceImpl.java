@@ -40,7 +40,6 @@ import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
@@ -270,7 +269,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
 
         //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
+        List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
         //生成单号
@@ -306,7 +305,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             poReturnEntity.setSupplierContactName(supplierContactById.getPerson());
         }
         poReturnEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
-        poReturnEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        //退货组织名称
+        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setReturnOrgName(returnOrgName);
+        //采购组织名称
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setPurchaseOrgName(purchaseOrgName);
+
         poReturnEntity.setBillDate(dto.getBillDate());
         poReturnEntity.setReturnWarehouseName(warehouseEntity.getName());
 
@@ -336,7 +341,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //获取用户信息
         SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
         //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
+        List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
@@ -383,7 +388,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
-        poReturnEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        //退货组织名称
+        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setReturnOrgName(returnOrgName);
+        //采购组织名称
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        poReturnEntity.setPurchaseOrgName(purchaseOrgName);
+
         poReturnEntity.setBillDate(dto.getBillDate());
         poReturnEntity.setReturnWarehouseName(warehouseEntity.getName());
         //更新收货单主表信息
@@ -417,8 +428,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(poReturnEntity.getPurchaseOrderId());
             viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
-            viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
-            viewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
             viewDTO.setSourceCode(purchaseOrderEntity.getCode());
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(viewDTO.getReturnUserId());
             if (ObjectUtils.isNotEmpty(deptByUserId)) {
@@ -694,7 +703,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     }
                 }
                 poReturnEntity.setConfirmStatus(confirmStatus);
-                poReturnEntity.setConfirmDate(LocalDate.now());
+                poReturnEntity.setConfirmDate(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()) ? null :LocalDate.now());
             }
 
 
@@ -761,7 +770,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setSkuId(poReturnDetailEntity.getSkuId());
             addDTO.setReceiveQty(poReturnDetailEntity.getReturnQty() * -1);
             addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());
-            addDTO.setSettleOrgId(entity.getReturnOrgId());
+            addDTO.setSettleOrgId(entity.getPurchaseOrgId());
             addDTO.setCurrency(poReturnDetailEntity.getCurrency());
             ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                     ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
@@ -1272,6 +1281,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            addDTO.setPurchaseUserId(purchaseReturnOrderDTO.getPurchaseUserId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();

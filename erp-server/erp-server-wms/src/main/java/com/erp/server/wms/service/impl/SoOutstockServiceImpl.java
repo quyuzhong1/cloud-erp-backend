@@ -43,6 +43,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -600,8 +601,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //订单推送dmp
             syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(Arrays.asList(entity.getSoId()));
+            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(Arrays.asList(entity.getSoId()), TransferOutstockStatusEnum.OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return Boolean.TRUE;
     }
@@ -953,7 +957,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(soIds, TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+            statusDTO.setSoIds(soIds);
+            statusDTO.setStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return result;
     }
@@ -1239,15 +1246,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setCnyPrice(MathUtil.multiply(price, exchangeRate));
+            item.setCnyPrice(MathUtil.multiply(price, exchangeRate,4));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax,4);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
+            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate,4));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
@@ -1698,6 +1705,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
+        List<String> allTrackNoList = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getTrackNoList).flatMap(List::stream).collect(Collectors.toList());
+        long distinctCount = allTrackNoList.stream().distinct().count();
+        if (distinctCount != allTrackNoList.size()) {
+            throw new ServiceException("同一批更新的跟踪号不能重复");
+        }
         List<String> channelIds = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getLogisticsChannelId).collect(Collectors.toList());
         //物流供应商信息
         List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(channelIds);
@@ -1797,8 +1809,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public List<String> getIdsByTemp() {
-        return baseMapper.getIdsByTemp();
+    public List<String> getIdsByTemp(String tableName) {
+        return baseMapper.getIdsByTemp(tableName);
     }
 
 
@@ -2143,6 +2155,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         // 出库日期
         soOutstock.setBillDate(LocalDate.now());
+
+        //速卖通菜鸟仓发货单生产的销售出库单，发货日期都取平台出库日期
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(dto.getSoId());
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder()) {
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+            if (ObjectUtil.isNotEmpty(soB2cLogisticsEntities)) {
+                LocalDateTime deliveryTime = soB2cLogisticsEntities.get(0).getDeliveryTime();
+                soOutstock.setBillDate(deliveryTime.toLocalDate());
+                soOutstock.setPlanDeliveryDate(deliveryTime.toLocalDate());
+                soOutstock.setActualDeliveryDate(deliveryTime);
+            }
+        }
+
         Boolean addResult = this.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode());

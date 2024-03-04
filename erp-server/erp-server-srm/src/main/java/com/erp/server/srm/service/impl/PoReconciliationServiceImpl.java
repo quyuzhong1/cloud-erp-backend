@@ -1,52 +1,40 @@
 package com.erp.server.srm.service.impl;
 
 
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.TabFlagEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
-import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
-import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.srm.dto.PoReconciliationDTO;
-
-import java.time.LocalDate;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -89,6 +77,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         addMultipartFileUrl(updateDTO);
         //更新明细
         poReconciliationDetailService.update(updateDTO.getDetailList(),updateDTO.getId());
+        //更新主表对账金额
+        poReconciliationScmService.updateAmount(updateDTO.getId());
         return Boolean.TRUE;
     }
 

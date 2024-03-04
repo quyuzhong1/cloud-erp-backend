@@ -71,4 +71,9 @@ public class ReportListingCsvEntity implements Serializable {
     private String merchantShippingGroup;
 
     private String status;
+
+    private String minimumOrderQuantity;
+
+    private String sellRemainder;
+
 }

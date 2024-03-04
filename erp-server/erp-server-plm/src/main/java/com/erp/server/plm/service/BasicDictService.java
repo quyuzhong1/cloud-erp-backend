@@ -22,6 +22,11 @@ public interface BasicDictService extends IService<BasicDictEntity> {
     List<BasicDictEntity>  listByType(String type);
 
     /**
+     * 根据类型和值查询字典信息
+     */
+    BasicDictEntity  listByTypeAndValue(String type,String value);
+
+    /**
      * 根据id集合批量查询字典信息
      * @Author Luo_WG
      * @Date 2022/10/22 19:50

@@ -27,6 +27,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -132,7 +133,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
         //如果已发货且仓库为空且是平台仓订单
-        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse) {
+        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
@@ -142,15 +143,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             if (Objects.nonNull(mainEntity)) {
 
                 //速卖通平台仓订单不走任何规则
-                if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && hasPlatformWarehouse && isShipped) {
-                    aliExpressDeliveryQuery(dto, resultDTO, mainEntity);
+                if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && hasPlatformWarehouse) {
+                    if (isShipped) {
+                        aliExpressDeliveryQuery(dto, resultDTO, mainEntity);
+                    }
                     return;
                 }
 
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
                 if (isShipped && hasPlatformWarehouse) {
-                    soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
+                    SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
+                    soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
                 }
             }
 
@@ -174,11 +178,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(logisticsDTOS) && StringUtils.isNotBlank(warehouseName)) {
+            if (resultDTO.getIsWarehouseEmpty()) {
+                return;
+            }
+            //生成速卖通发货单
+            addAliExpressDelivery(dto, mainEntity, logisticsDTOS, warehouseName);
+
             //生成销售出库单
             soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
-
-            //生成速卖通发货单
-            addAliExpressDelivery(dto, mainEntity, logisticsDTOS);
         } else {
             //如果仓库名称为空表示没找到速卖通发货单，记录异常订单，这里的WarehouseName是速卖通仓库名称
             if (StringUtils.isBlank(warehouseName)) {
@@ -199,7 +206,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 addError.setParamJson("");
                 addError.setReturnJson("");
                 addError.setMainId(mainEntity.getId());
-                addError.setMessage("平台发货单仓库【" + resultDTO.getWarehouseName() + "】未匹配系统仓库");
+                addError.setMessage(StrUtil.format("发货单仓库【{}】未匹配系统仓库", resultDTO.getWarehouseName()));
                 soB2cErrorService.add(addError);
                 return;
             }
@@ -213,7 +220,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
      * @param mainEntity
      * @param logisticsDTOS
      */
-    private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS) {
+    private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS, String warehouseName) {
         AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
         addDTO.setOutBoundTime(logisticsDTOS.get(0).getDeliveryTime());
         addDTO.setPlatformCode(mainEntity.getPlatformCode());
@@ -229,6 +236,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         addDTO.setTrackNo(logisticsDTOS.get(0).getCode());
         addDTO.setTradeCreateTime(dto.getOrderCreateTime());
+        addDTO.setWarehouseName(warehouseName);
         aliexpressDeliveryFeign.add(addDTO);
     }
 

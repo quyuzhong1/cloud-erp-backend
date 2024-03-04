@@ -32,6 +32,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -167,7 +168,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             Integer count = this.baseMapper.listCount(searchParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
-            resultDTO.setTabFlagName(item.getName());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -775,6 +776,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         //根据sku查询拥有的子sku
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        String combinationType = BomTypeEnum.COMBINATION.getType();
+        bomChildrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(b -> combinationType.equals(b.getType())).collect(Collectors.toList());
         for (TransferApplicationDTO.ViewGenerateMachineInfo viewGenerateMachineInfo : list) {
             //如果是自动生成的需要设置批准数量为加工数量再下推
             if (isAutoMachine) {

@@ -52,9 +52,11 @@
         sid.source_detail_id,
         sid.warehouse_location,
         si.approve_status,
-        si.type
+        si.type,
+        sid.subcontract_order_detail_id
     </sql>
 
+    <!-- 根据来源明细id查询 -->
     <select id="listBySourceDetailIdList" resultType="com.erp.model.wms.entity.SubcontractIssueDetailEntity">
         select
                <include refid="Base_Column_List" />
@@ -65,6 +67,24 @@
             <if test="sourceDetailIdList != null and sourceDetailIdList.size > 0">
                 and sid.source_detail_id in
                 <foreach collection="sourceDetailIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据来源明细id查询 -->
+    <select id="listBySubcontractOrderDetailIdList"
+            resultType="com.erp.model.wms.entity.SubcontractIssueDetailEntity">
+        select
+        <include refid="Base_Column_List" />
+        from subcontract_issue_detail sid
+        inner join subcontract_issue si on si.is_deleted = false and si.id = sid.main_id
+        <where>
+            sid.is_deleted = false and si.invalid_status = false
+            <if test="subcontractOrderDetailIdList != null and subcontractOrderDetailIdList.size > 0">
+                and sid.subcontract_order_detail_id in
+                <foreach collection="subcontractOrderDetailIdList" open="(" close=")" separator="," item="item">
                     #{item}
                 </foreach>
             </if>

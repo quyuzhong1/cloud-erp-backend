@@ -216,8 +216,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 history.setPriceDetailId(priceDetailId);
                 history.setId(IdWorker.getIdStr());
                 history.setChangeDetailId(changeDetail.getId());
-                //失效时间
-                history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
                 history.setSupplierId(changeDetail.getSupplierId());
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());

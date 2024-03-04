@@ -39,6 +39,7 @@ import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -374,6 +375,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         lambdaUpdate().in(PoReconciliationDetailEntity::getSourceId,sourceIdList)
                 .set(PoReconciliationDetailEntity::getBusinessStatus,statusDTO.getBusinessStatus())
+                .set(PoReturnConfirmStatusEnum.CONFIRM.getCode().equals(statusDTO.getBusinessStatus()),PoReconciliationDetailEntity::getConfirmDate,LocalDate.now())
                 .update();
     }
 

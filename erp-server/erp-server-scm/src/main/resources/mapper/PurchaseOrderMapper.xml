@@ -283,7 +283,8 @@
         pod.currency,
         pod.currency_symbol,pos.supplier_name,
         pos.supplier_id,
-        pod.tax_price
+        pod.tax_price,
+        po.purchase_user_id
         FROM purchase_order_detail   pod
         LEFT JOIN
         purchase_order po  ON
@@ -719,6 +720,6 @@
         where
         po.is_deleted = false
         and po.approve_status = 'approve'
-        and pod.execution_status in ('confirm','delivery')
+--         and pod.execution_status in ('confirm','delivery')
     </select>
 </mapper>

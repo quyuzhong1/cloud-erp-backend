@@ -586,7 +586,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "consigneePostCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "consigneeTelephone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "consigneeMobile",source = "receiverInfoVO.telNumber"),
-            @Mapping(target = "consigneeEmail",source = "receiverInfoVO.email")
+            @Mapping(target = "consigneeEmail",source = "receiverInfoVO.email"),
+            @Mapping(target = "consigneeTariff",source = "receiverInfoVO.receiverTaxNo")
     })
     Consignee orderConsigneeByBaTong(LogisticsOrderVO logisticsOrder);
 
@@ -608,9 +609,9 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "inVolumeLength",source = "length", qualifiedByName="intToStr"),
-            @Mapping(target = "inVolumeWidth",constant = "width",qualifiedByName="intToStr"),
+            @Mapping(target = "inVolumeWidth",source = "width",qualifiedByName="intToStr"),
             @Mapping(target = "inVolumeHeight",source = "height",qualifiedByName="intToStr"),
-            @Mapping(target = "inVolumeGrossWeight",source = "totalWeight",qualifiedByName="gToKgByInt"),
+            @Mapping(target = "inVolumeGrossWeight",source = "totalWeight",qualifiedByName = "gTokgStr"),
 
     })
     CargoVolume orderCargoVolumeByBaTong(ParceInfoVO parceInfoVO);

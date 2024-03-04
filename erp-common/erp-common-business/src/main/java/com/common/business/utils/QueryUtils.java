@@ -3,7 +3,6 @@ package com.common.business.utils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
-import com.common.business.query.IQueryHandler;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -32,7 +31,7 @@ public class QueryUtils {
      */
     public static String splicingSQL(List<AdvanceQueryDTO> dtoList){
         if(CollectionUtils.isEmpty(dtoList)){
-            return null;
+            return "1 = 1";
         }
         //将最后一个比较符去掉
         dtoList.get(dtoList.size()-1).setCompareSymbol("");

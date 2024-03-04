@@ -31,6 +31,7 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -888,11 +889,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detailAddDTO.setSoReturnDetailId(view.getSourceDetailId());
                 }
 
-                if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
-                    detailAddDTO.setSourceDetailId(view.getSourceDetailId());
-                } else {
-                    detailAddDTO.setSourceDetailId(view.getId());
-                }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailList.add(detailAddDTO);
@@ -1115,6 +1111,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        String combinationType= BomTypeEnum.COMBINATION.getType();
+        bomList = bomList.stream().filter(obj -> combinationType.equals(obj.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1225,6 +1223,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
+        String combinationType= BomTypeEnum.COMBINATION.getType();
+        bomList = bomList.stream().filter(obj -> combinationType.equals(obj.getType())).collect(Collectors.toList());
+
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }

@@ -866,6 +866,27 @@ public class WarehouseReceiveDTO {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class SourceParamDTO {
+
+        /**
+         * 来源ids
+         */
+        private List<String> sourceIds;
+
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+    }
+
+    /**
+     * 供应商 收货批次和收货数量 查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SupplierReceiveParamDTO {
 
         /**
@@ -1190,4 +1211,21 @@ public class WarehouseReceiveDTO {
          */
         private Integer count;
     }
+
+    /**
+     * 获取销售订单的入库单明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderDetailDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderDetailId;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+    }
+
 }

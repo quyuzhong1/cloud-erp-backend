@@ -126,6 +126,24 @@ public class WarehouseDTO implements Serializable {
          */
         private String onwayWarehouseName;
 
+        /**
+         * 绑定第三方仓（目前只用于速卖通仓）
+         */
+        private String thirdWarehouseName;
+
+
+        /**
+         * 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
+         */
+        @NotBlank(message = "经营类型不能为空")
+        private String warehouseManageType;
+
+        /**
+         * 地理位置 来源 经营类型 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
+         */
+        @NotBlank(message = "地理位置不能空")
+        private String geographyLocation;
+
     }
 
 
@@ -357,6 +375,36 @@ public class WarehouseDTO implements Serializable {
          * 是否启用仓位
          */
         private Boolean isEnableLocation;
+
+        /**
+         * 在途仓库名称
+         */
+        private String onwayWarehouseName;
+
+        /**
+         * 第三方仓库名称
+         */
+        private String thirdWarehouseName;
+
+        /**
+         * 仓库经营类型
+         */
+        private String warehouseManageType;
+
+        /**
+         * 仓库经营类型
+         */
+        private String warehouseManageTypeName;
+
+        /**
+         * 地理位置
+         */
+        private String geographyLocation;
+
+        /**
+         * 地理位置名
+         */
+        private String geographyLocationName;
     }
 
 
@@ -407,6 +455,17 @@ public class WarehouseDTO implements Serializable {
          * 金蝶仓库编号
          */
         private String kingdeeWarehouseCode;
+
+        /**
+         * 经营类型 来源  http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
+         */
+        private String warehouseManageType;
+
+
+        /**
+         * 地理位置 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
+         */
+        private String geographyLocation;
 
 
         /**

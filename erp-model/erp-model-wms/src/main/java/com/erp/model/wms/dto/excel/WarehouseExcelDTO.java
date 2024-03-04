@@ -92,10 +92,25 @@ public class WarehouseExcelDTO  implements Serializable {
 
 
     /**
+     * 在途仓库名称
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "在途仓库名称", index = 8)
+    @FieldValid(fieldName = "在途仓库名称",maxLength = 50)
+    private String onwayWarehouseName;
+
+    /**
+     * 第三方仓库名称
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "第三方仓库名称", index = 9)
+    @FieldValid(fieldName = "第三方仓库名称",maxLength = 50)
+    private String thirdWarehouseName;
+    /**
      * 仓库地址
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库地址", index = 8)
+    @ExcelProperty(value = "仓库地址", index = 10)
     @FieldValid(fieldName = "仓库地址",maxLength = 200)
     private String address;
 
@@ -103,17 +118,33 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "仓库状态", index = 9)
+    @ExcelProperty(value = "仓库状态", index = 11)
     @FieldValid(fieldName = "仓库状态",isNotBlank = true,fieldValues = "启用,停用")
     private String enabled;
 
+    /**
+     * 仓库经营类型
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "仓库经营类型", index = 12)
+    @FieldValid(fieldName = "仓库经营类型",isNotBlank = true)
+    private String warehouseManageTypeName;
+
+
+    /**
+     * 仓库地理位置
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "仓库地理位置", index = 13)
+    @FieldValid(fieldName = "仓库地理位置",isNotBlank = true)
+    private String geographyLocationName;
 
 
     /**
      * 错误信息
      */
     @ColumnWidth(200)
-    @ExcelProperty(value = "错误信息", index = 10)
+    @ExcelProperty(value = "错误信息", index = 14)
     private String errorMsg;
 
 

@@ -14,18 +14,24 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,6 +42,9 @@ import java.util.List;
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
 public class CatalogApiTest {
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     /**
      * 
@@ -71,23 +80,76 @@ public class CatalogApiTest {
      */
     @Test
     public void searchCatalogItemsTest() throws ApiException {
-        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
-        List<String> identifiers = Arrays.asList("1963-US7");
-        String identifiersType = "SKU";
-        List<String> includedData = null;
+        // 2350+2351
+        // 788185949481
+        //B08TBLHVTP
+//        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
+//        List<String> identifiers = Arrays.asList("1963-US7");
+//        String identifiersType = "SKU";
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
+//        String shopId = "1735479610549735425";
+        String shopId = "1735516266715680769";
+        List<String> marketplaceIds = Arrays.asList(marketplaceEnum.getMarketplaceId());
+        List<String> identifiers = Arrays.asList(
+                "699942852190",
+                "699973419805",
+                "699946240887",
+                "699990602211",
+                "699994473985",
+                "699961098241",
+                "708214680710",
+                "699919591947"
+        );
+        String identifiersType = "JAN";
+//        String identifiersType = "UPC";
+//        List<String> identifiers = Arrays.asList(
+//                "B07B9MXJTK",
+//                "B07CZ8J9GX",
+//                "B0928FVD8W",
+//                "B09DGKNH31",
+//                "B094MYTPVF",
+//                "B09CYJ5XQK",
+//                "B09CT5ZSLW",
+//                "B0C49KNYKV",
+//                "B0BC1P629W",
+//                "B0B7L1XFRD",
+//                "B0BWCLMZ8W",
+//                "B0BGN75SJW",
+//                "B0BGN6QMZD",
+//                "B0C1SH518V",
+//                "B0BSL2GF54",
+//                "B0BZ3PZ4JX",
+//                "B0C6K9V8GY",
+//                "B0BPBG6JVQ",
+//                "B0C581CX5P",
+//                "B0BRLWCXN4"
+//                );
+//        String identifiersType = "ASIN";
+        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");;
         String locale = null;
-//        String sellerId = "AZFY4CTNEDLZX";
         String sellerId = null;
         List<String> keywords = null;
         List<String> brandNames = null;
         List<String> classificationIds = null;
-        Integer pageSize = null;
+        Integer pageSize = 20;
         String pageToken = null;
         String keywordsLocale = null;
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        //查询商品详情
+        CatalogApi api =  CatalogApi.init(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false,  rateLimitConfig);
 //        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
-//        ItemSearchResults response = api.searchCatalogItems(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
-//        System.out.println("CatalogItems信息");
-//        System.out.println(JSONUtil.toJsonStr(response));
+        ItemSearchResults response = api.searchCatalogItems(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
+        System.out.println("CatalogItems信息");
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
     

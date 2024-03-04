@@ -340,7 +340,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
+    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform, String shopId);
 
     Map<String,Object> getJson(String id);
 
