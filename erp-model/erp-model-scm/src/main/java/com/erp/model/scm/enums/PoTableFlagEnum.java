@@ -9,7 +9,7 @@ package com.erp.model.scm.enums;
 public enum PoTableFlagEnum {
 
     WAIT_SUBMIT("waitSubmit", "待提交"),
-    TO_BE_APPROVE("toBeApprove", "待审批"),
+    TO_BE_APPROVE("toBeApprove", "待我审核"),
     TO_BE_CONFIRM("toBeConfirm", "待确认"),
     CONFIRM("confirm", "已确认"),
     REJECT("reject", "已拒绝"),

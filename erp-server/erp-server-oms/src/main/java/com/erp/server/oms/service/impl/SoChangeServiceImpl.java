@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -21,10 +20,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
@@ -44,6 +40,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
+import com.erp.server.oms.query.SoChangeQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -109,6 +106,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Autowired
     private CustomerAddressService customerAddressService;
 
+    @Autowired
+    private SoChangeQueryHandler soChangeQueryHandler;
 
     /**
      * 添加销售订单
@@ -378,42 +377,26 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     public List<SoChangeDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<SoChangeDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<SoChangeDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
-        int allCount = approveCountList.stream().mapToInt(SoChangeDTO.ApproveCountDTO::getCount).sum();
-        SoChangeDTO.TabListDTO all = new SoChangeDTO.TabListDTO();
-        all.setCount(allCount);
-        all.setTabFlag(SearchType.ALL);
-        resultList.add(all);
-        //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
-        SoChangeDTO.TabListDTO waitApprove = new SoChangeDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setTabFlag(PageListTypeEnum.TO_BE_APPROVE.getCode());
-        waitApprove.setTabFlagName(PageListTypeEnum.TO_BE_APPROVE.getName());
-        resultList.add(waitApprove);
-
-        //已审核
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        SoChangeDTO.TabListDTO approve = new SoChangeDTO.TabListDTO();
-        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        approve.setCount(approveCount);
-        approve.setTabFlag(PageListTypeEnum.APPROVE.getCode());
-        approve.setTabFlagName(PageListTypeEnum.APPROVE.getName());
-        resultList.add(approve);
-        //审核不通过
-        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-        SoChangeDTO.TabListDTO reject = new SoChangeDTO.TabListDTO();
-        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        reject.setCount(rejectCount);
-        reject.setTabFlag(PageListTypeEnum.REJECT.getCode());
-        reject.setTabFlagName(PageListTypeEnum.REJECT.getName());
-        resultList.add(reject);
-        return resultList;
+        PageListTypeEnum[] values = PageListTypeEnum.values();
+        List<SoChangeDTO.TabListDTO> list = new ArrayList<>();
+        for (PageListTypeEnum item : values) {
+            if (PageListTypeEnum.WAIT_SUBMIT.equals(item)) {
+                continue;
+            }
+            SoChangeDTO.PagingParamDTO pagingParamDTO = new SoChangeDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            SoChangeDTO.TabListDTO resultDTO = new SoChangeDTO.TabListDTO();
+            String tabSql = soChangeQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParamDTO.setSqlMap(map);
+            Integer count = this.baseMapper.listCount(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.equals(PageListTypeEnum.TO_BE_APPROVE) ? "待我审核" : item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
 
