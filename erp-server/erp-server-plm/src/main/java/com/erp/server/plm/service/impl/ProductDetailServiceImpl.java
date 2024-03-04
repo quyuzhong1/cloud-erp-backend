@@ -418,6 +418,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
                 List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setProductProperty(StringUtils.join(countryNameList, ","));
+                //增加是否存在电池属性
+                BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
+                if (Objects.nonNull(isElectric)){
+                    req.setElectric(true);
+                }else {
+                    req.setElectric(false);
+                }
             }
         });
 
@@ -515,6 +522,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
                 List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setProductProperty(StringUtils.join(countryNameList, ","));
+                //增加是否存在电池属性
+                BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
+                if (Objects.nonNull(isElectric)){
+                    req.setElectric(true);
+                }else {
+                    req.setElectric(false);
+                }
             }
         });
 
@@ -715,14 +729,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //物流 禁用字段
             List<String> logisticsDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_LOGISTICS_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(logisticsDisableFields);
-        });
-
-        logisticsShowDTOList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getProductPropertyId())) {
                 String[] split = req.getProductPropertyId().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
                 List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setProductProperty(StringUtils.join(countryNameList, ","));
+                //增加是否存在电池属性
+                BasicDictEntity isElectric = basicDictEntities.stream().filter(e -> e.getRemark().equals("isElectric")).findFirst().orElse(null);
+                if (Objects.nonNull(isElectric)){
+                    req.setElectric(true);
+                }else {
+                    req.setElectric(false);
+                }
             }
         });
 

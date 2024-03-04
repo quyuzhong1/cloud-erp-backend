@@ -91,6 +91,66 @@ public class ProductLogisticsShowDTO implements Serializable {
      * 英文用途
      */
     private String englishUsage;
+    /**
+     * 判断是否含电 true 展示输入输出电池电压功率  false不展示入输出电池电压功率
+     */
+    private Boolean electric;
+
+    /**
+     * 输入电压
+     */
+    private BigDecimal inputVoltage;
+    /**
+     * 输出电压
+     */
+    private BigDecimal outputVoltage;
+
+    /**
+     * 电压单位  dict type=voltageUnit
+     */
+    private String voltageUnit;
+
+    /**
+     * 输入电流
+     */
+    private BigDecimal inputElectric;
+    /**
+     * 输出电流
+     */
+    private BigDecimal outputElectric;
+
+    /**
+     * 电流单位 dict type=electricUnit
+     */
+    private String electricUnit;
+
+    /**
+     * 输入功率
+     */
+    private BigDecimal inputPower;
+    /**
+     * 输出功率
+     */
+    private BigDecimal outputPower;
+
+    /**
+     * 功率单位 dict type=powerUnit
+     */
+    private String powerUnit;
+
+    /**
+     * 输入电池容量
+     */
+    private BigDecimal inputBatteryCapacity;
+    /**
+     * 输出电池容量
+     */
+    private BigDecimal outputBatteryCapacity;
+
+    /**
+     * 电池容量单位 dict type=batteryCapacityUnit
+     */
+    private String batteryCapacityUnit;
 
     /**
      * 创建时间
