@@ -142,8 +142,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         if (StringUtils.isNotBlank(soId)) {
             soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
         }
-
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(entity.getWarehouseId());
         //仓库
