@@ -1698,6 +1698,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
+        List<String> allTrackNoList = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getTrackNoList).flatMap(List::stream).collect(Collectors.toList());
+        long distinctCount = allTrackNoList.stream().distinct().count();
+        if (distinctCount != allTrackNoList.size()) {
+            throw new ServiceException("同一批更新的跟踪号不能重复");
+        }
         List<String> channelIds = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getLogisticsChannelId).collect(Collectors.toList());
         //物流供应商信息
         List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(channelIds);
