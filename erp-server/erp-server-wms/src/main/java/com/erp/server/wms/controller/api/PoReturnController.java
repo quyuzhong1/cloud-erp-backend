@@ -12,9 +12,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.wms.query.PoReturnQueryHandler;
@@ -304,9 +304,10 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购退货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseReturnOrder:paging",
-            tableAlias = "pro")
+            tableField = "return_user_id",
+            menuCode = "wms:purchaseReturnOrder:paging",
+            tableAlias = "pro"
+    )
     @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = poReturnService.exportExcel(dto, response);
