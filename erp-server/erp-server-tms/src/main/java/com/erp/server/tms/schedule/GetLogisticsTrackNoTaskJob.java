@@ -1,5 +1,6 @@
 package com.erp.server.tms.schedule;
 
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -12,6 +13,8 @@ import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsService;
+import com.google.common.collect.Lists;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +50,7 @@ public class GetLogisticsTrackNoTaskJob {
     @Resource
     private LogisticsAuthService logisticsAuthService;
 
-    // @XxlJob("getLogisticsTrackNo")
+    @XxlJob("getLogisticsTrackNo")
     public void getLogisticsTrackNo() {
         //获取到了为空的跟踪单号
         List<SoB2cLogisticsDTO.TrackNoDTO> list = soB2cFeign.listTrackNoEmptyList();
@@ -56,11 +59,14 @@ public class GetLogisticsTrackNoTaskJob {
         //平台分组
         Map<String, List<LogisticsChannelDTO.LogisticsPlatformDTO>> platformMap = platformList.stream().
                 collect(Collectors.groupingBy(LogisticsChannelDTO.LogisticsPlatformDTO::getLogisticsPlatform));
-
+        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
 
         for (Map.Entry<String, List<LogisticsChannelDTO.LogisticsPlatformDTO>> entry : platformMap.entrySet()) {
             //平台
             String logisticsPlatform = entry.getKey();
+
+            Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
+
             List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList = entry.getValue();
             //这个平台对应的渠道id
             List<String> platformChannelIdList = platformLogisticsList.stream().map(LogisticsChannelDTO.LogisticsPlatformDTO::getChannelId).
@@ -70,50 +76,50 @@ public class GetLogisticsTrackNoTaskJob {
                     .collect(Collectors.toList());
             LogisticsService logisticsService = logisticsRegistry.getHandler(logisticsPlatform);
 
-            try {
-                //真正查询跟踪号的
-                List<LogisticsQueryBaseVO> logisticsQuery = listQuery(logisticsPlatform, finalQueryList, platformLogisticsList);
-                ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
-                if (orderResponse.isSuccess()) {
+            //真正查询跟踪号的
+            List<LogisticsQueryBaseVO> logisticsQueryList = listQuery(isAliExpress, logisticsPlatform, finalQueryList, platformLogisticsList);
+            List<List<LogisticsQueryBaseVO>> logisticsPartitionList = Lists.partition(logisticsQueryList, 20);
+            for (List<LogisticsQueryBaseVO> logisticsQuery : logisticsPartitionList) {
+                try {
+                    //查询跟踪号
+                    ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
                     List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
-                        String transportNo = item.getTransportNo();
-                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(transportNo)).
+                        String deliveryNo = item.getDeliveryNo();
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo)).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
                         if (StringUtils.isNotBlank(b2cLogisticsId)) {
                             List<String> trackNoList = new ArrayList<>(2);
-                            SoB2cLogisticsEntity entity=new SoB2cLogisticsEntity();
+                            SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
                             entity.setId(b2cLogisticsId);
 
                             //跟踪单号
                             String trackNo = item.getTrackNo();
-                            if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
-                                trackNoList.add(trackNo);
+                            if (StringUtils.isBlank(trackNo) || "null".equals(trackNo)) {
+                                continue;
                             }
+                            trackNoList.add(trackNo);
                             Boolean more = item.getMore();
                             if (Objects.nonNull(more) && more) {
                                 List<LogisticsOrderResponseVO> responseList = item.getLogisticsOrderResponseVOS();
                                 trackNoList.addAll(responseList.stream().map(LogisticsOrderResponseVO::getTrackNo).collect(Collectors.toList()));
                             }
-                            entity.setTrackNo(trackNoList.stream().collect(Collectors.joining(",")));
-                            updateList.add(entity);
+                            String trackNoStr = trackNoList.stream().collect(Collectors.joining(","));
+                            if (StringUtils.isNotBlank(trackNoStr)) {
+                                entity.setTrackNo(trackNoStr);
+                                updateList.add(entity);
+                            }
                         }
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
                         soB2cFeign.batchUpdateLogistics(updateList);
                     }
-
-
-
+                } catch (Exception e) {
+                    log.error("查询物流跟踪号异常>>>>{}", e);
                 }
-            } catch (Exception e) {
-                log.error("查询物流跟踪号异常>>>>{}", e);
             }
-
-
         }
-
     }
 
 
@@ -123,7 +129,7 @@ public class GetLogisticsTrackNoTaskJob {
      * @param list
      * @return
      */
-    private List<LogisticsQueryBaseVO> listQuery(String logisticsPlatform, List<SoB2cLogisticsDTO.TrackNoDTO> list, List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList) {
+    private List<LogisticsQueryBaseVO> listQuery(Boolean isAliExpress, String logisticsPlatform, List<SoB2cLogisticsDTO.TrackNoDTO> list, List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList) {
         List<LogisticsQueryBaseVO> queryBaseList = new ArrayList<>(list.size());
         for (SoB2cLogisticsDTO.TrackNoDTO item : list) {
             String authId = platformLogisticsList.stream().filter(p -> p.getChannelId().
@@ -131,6 +137,15 @@ public class GetLogisticsTrackNoTaskJob {
             if (StringUtils.isNotBlank(authId)) {
                 LogisticsQueryBaseVO queryBase = new LogisticsQueryBaseVO();
                 queryBase.setTransportNo(item.getTransportNo());
+                String deliveryNo = item.getSoCode();
+                if (isAliExpress) {
+                    deliveryNo = item.getPlatformCode();
+                }
+                if (isAliExpress && StringUtils.isBlank(deliveryNo)) {
+                    continue;
+                }
+                item.setDeliveryNo(deliveryNo);
+                queryBase.setDeliveryNo(deliveryNo);
                 Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId, logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);

@@ -18,6 +18,7 @@ import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -395,6 +396,12 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.BaTong;
+    }
+
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
     }
 
 
