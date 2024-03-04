@@ -6,7 +6,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.sdk.oms.mercado.dto.mercado.listing.AttributesBean;
-import com.sdk.oms.mercado.dto.mercado.listing.ResultsBean;
+import com.sdk.oms.mercado.dto.mercado.listing.BodyBean;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -19,20 +19,19 @@ import java.time.ZoneId;
 @NoArgsConstructor
 public class MercadoListingDTO extends CleanBaseDTO {
 
-
-    private ResultsBean resultsBean;
+    private BodyBean bodyBean;
 
     private String shopId;
 
     /**
      * 初始化
      */
-    public MercadoListingDTO(ResultsBean resultsBean, JobTaskDTO dto) {
-        this.resultsBean = resultsBean;
+    public MercadoListingDTO(BodyBean bodyBean, JobTaskDTO dto) {
+        this.bodyBean = bodyBean;
         this.setIsClean(0);
         this.shopId = dto.getShopId();
-        super.setPlatform(PlatformDictEnum.WALMART.getCode());
-        this.setUniqueId(resultsBean.getId());
+        super.setPlatform(PlatformDictEnum.MERCADO.getCode());
+        this.setUniqueId(bodyBean.getId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -49,18 +48,15 @@ public class MercadoListingDTO extends CleanBaseDTO {
      * 根据PlatformWalmartListingDTO 转换 DTO
      */
     private static PlatformProductDTO initPlatformProductDTO(MercadoListingDTO dto) {
-        ResultsBean resultsBean = dto.getResultsBean();
-
+        BodyBean bodyBean = dto.getBodyBean();
         PlatformProductDTO resultDto = new PlatformProductDTO();
-        AttributesBean attributesBean = resultsBean.getAttributes().stream().filter(req -> "seller_sku".equals(req.getId())).findFirst().orElse(null);
+        AttributesBean attributesBean = bodyBean.getAttributes().stream().filter(req -> "seller_sku".equals(req.getId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(attributesBean)) {
-
+            //平台sku
+            resultDto.setPlatformSkuNo(attributesBean.getValueName());
+            // 平台sku名称
+            resultDto.setPlatformSkuName(bodyBean.getTitle());
         }
-
-        //平台sku
-        resultDto.setPlatformSkuNo(attributesBean.getValueName());
-        // 平台产品名称
-        resultDto.setPlatformSkuName(attributesBean.getValueName());
         // 类型 platform 平台  warehouse 仓库
         resultDto.setPlatformType("platform");
         //产品规格
@@ -68,12 +64,12 @@ public class MercadoListingDTO extends CleanBaseDTO {
         // 平台
         resultDto.setPlatform(dto.getPlatform());
         //平台产品id
-        resultDto.setPlatformProductNo(resultsBean.getId());
+        resultDto.setPlatformProductNo(bodyBean.getId());
         // 平台产品名称
-        resultDto.setPlatformProductName(resultsBean.getName());
+        resultDto.setPlatformProductName(bodyBean.getTitle());
         //图片
-        resultDto.setPlatformProductName(resultsBean.getPictures().get(0).getUrl());
-        resultDto.setUniqueId(resultsBean.getId());
+        resultDto.setProductImageUrl(bodyBean.getPictures().get(0).getUrl());
+        resultDto.setUniqueId(bodyBean.getId());
         resultDto.setShopId(dto.getShopId());
         resultDto.setPlatformUpdateTime(LocalDateTime.now());
         return resultDto;

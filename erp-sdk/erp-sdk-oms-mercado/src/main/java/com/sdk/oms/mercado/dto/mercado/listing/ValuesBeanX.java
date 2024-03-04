@@ -2,16 +2,19 @@ package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
 
-public class AvailableOrdersBean {
+public class ValuesBeanX {
     /**
-     * id : stop_time_asc
-     * name : Order by stop time ascending
+     * id : 2537728
+     * name : Ulanzi
+     * struct : null
      */
 
     @SerializedName("id")
     private String id;
     @SerializedName("name")
     private String name;
+    @SerializedName("struct")
+    private Object struct;
 
     public String getId() {
         return id;
@@ -27,5 +30,13 @@ public class AvailableOrdersBean {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Object getStruct() {
+        return struct;
+    }
+
+    public void setStruct(Object struct) {
+        this.struct = struct;
     }
 }

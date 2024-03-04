@@ -293,6 +293,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setClientSecret(clientSecret);
         shopInfoDTO.setBaseUrl(baseUrl);
         shopInfoDTO.setName("");
+        shopInfoDTO.setUserId(platformMercadoRefreshTokenDTO.getUserId());
         shopInfoDTO.setAccessToken(accessToken);
 
         //设置缓存

@@ -4,24 +4,24 @@ import com.google.gson.annotations.SerializedName;
 
 public class PagingBean {
     /**
-     * total : 1
+     * limit : 100
      * offset : 0
-     * limit : 10
+     * total : 35
      */
 
-    @SerializedName("total")
-    private int total;
-    @SerializedName("offset")
-    private int offset;
     @SerializedName("limit")
     private int limit;
+    @SerializedName("offset")
+    private int offset;
+    @SerializedName("total")
+    private int total;
 
-    public int getTotal() {
-        return total;
+    public int getLimit() {
+        return limit;
     }
 
-    public void setTotal(int total) {
-        this.total = total;
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 
     public int getOffset() {
@@ -32,11 +32,11 @@ public class PagingBean {
         this.offset = offset;
     }
 
-    public int getLimit() {
-        return limit;
+    public int getTotal() {
+        return total;
     }
 
-    public void setLimit(int limit) {
-        this.limit = limit;
+    public void setTotal(int total) {
+        this.total = total;
     }
 }

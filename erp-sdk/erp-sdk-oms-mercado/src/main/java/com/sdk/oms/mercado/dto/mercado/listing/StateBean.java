@@ -2,10 +2,10 @@ package com.sdk.oms.mercado.dto.mercado.listing;
 
 import com.google.gson.annotations.SerializedName;
 
-public class AvailableOrdersBean {
+public class StateBean {
     /**
-     * id : stop_time_asc
-     * name : Order by stop time ascending
+     * id : HK-HK
+     * name : Hong Kong
      */
 
     @SerializedName("id")

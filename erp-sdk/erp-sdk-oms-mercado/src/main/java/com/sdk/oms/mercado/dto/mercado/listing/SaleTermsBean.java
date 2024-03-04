@@ -4,14 +4,15 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class AttributesBean {
+public class SaleTermsBean {
     /**
-     * id : BRAND
-     * name : Brand
-     * value_id : 2537728
-     * value_name : Ulanzi
-     * values : [{"id":"2537728","name":"Ulanzi","struct":null}]
-     * value_type : string
+     * id : WARRANTY_TIME
+     * name : Warranty time
+     * value_id : null
+     * value_name : 1 months
+     * value_struct : {"number":1,"unit":"months"}
+     * values : [{"id":null,"name":"1 months","struct":{"number":1,"unit":"months"}}]
+     * value_type : number_unit
      */
 
     @SerializedName("id")
@@ -19,13 +20,15 @@ public class AttributesBean {
     @SerializedName("name")
     private String name;
     @SerializedName("value_id")
-    private String valueId;
+    private Object valueId;
     @SerializedName("value_name")
     private String valueName;
+    @SerializedName("value_struct")
+    private ValueStructBean valueStruct;
     @SerializedName("value_type")
     private String valueType;
     @SerializedName("values")
-    private List<ValuesBeanX> values;
+    private List<ValuesBean> values;
 
     public String getId() {
         return id;
@@ -43,11 +46,11 @@ public class AttributesBean {
         this.name = name;
     }
 
-    public String getValueId() {
+    public Object getValueId() {
         return valueId;
     }
 
-    public void setValueId(String valueId) {
+    public void setValueId(Object valueId) {
         this.valueId = valueId;
     }
 
@@ -59,6 +62,14 @@ public class AttributesBean {
         this.valueName = valueName;
     }
 
+    public ValueStructBean getValueStruct() {
+        return valueStruct;
+    }
+
+    public void setValueStruct(ValueStructBean valueStruct) {
+        this.valueStruct = valueStruct;
+    }
+
     public String getValueType() {
         return valueType;
     }
@@ -67,11 +78,11 @@ public class AttributesBean {
         this.valueType = valueType;
     }
 
-    public List<ValuesBeanX> getValues() {
+    public List<ValuesBean> getValues() {
         return values;
     }
 
-    public void setValues(List<ValuesBeanX> values) {
+    public void setValues(List<ValuesBean> values) {
         this.values = values;
     }
 }
