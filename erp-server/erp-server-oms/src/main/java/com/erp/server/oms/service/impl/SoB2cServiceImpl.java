@@ -5467,10 +5467,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (channelConstraintDTO.getSizeUnit().equals("m")) {
             maxHeight = maxHeight.multiply(BigDecimal.valueOf(100));
         }
-        BigDecimal maxWeight = logisticsChannel.getMaxWeight();
-        if (logisticsChannel.getWeightUnit().equals("kg")) {
-            maxWeight = maxWeight.multiply(BigDecimal.valueOf(1000));
-        }
         //所有都清空就是初始值，其实就不用校验了。
         if(maxHeight.compareTo(BigDecimal.ZERO) == 0 && maxWidth.compareTo(BigDecimal.ZERO) == 0 && maxLength.compareTo(BigDecimal.ZERO) == 0 && maxWeight.compareTo(BigDecimal.ZERO) == 0 ){
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "校验物流尺寸重量成功");
@@ -5487,7 +5483,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         if(soB2cLogisticsEntity.getWeight().compareTo(maxWeight) > 0){
-            msg = msg + " 。 " + String.format("重量为【%s】g，超出渠道配置【%s】g", soB2cLogisticsEntity.getWeight(), maxWeight);
+            result = false;
+            if (StrUtil.isNotBlank(msg)){
+                msg = msg + " 。 ";
+            }
+            msg = msg + String.format("重量为【%s】g，超出渠道配置【%s】g", soB2cLogisticsEntity.getWeight(), maxWeight);
         }
 
         if(result){
