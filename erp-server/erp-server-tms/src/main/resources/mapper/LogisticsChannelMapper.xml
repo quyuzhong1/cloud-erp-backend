@@ -108,9 +108,9 @@
             la.id AS authId
         FROM logistics_auth la
         INNER JOIN logistics_supplier ls
-        ON ls.id=la.main_id and  ls.is_deleted=false
-        INNER logistics_channel lc
-        ON lc.main_id=ls.id lc.is_deleted=false
+        ON ls.id=la.main_id AND  ls.is_deleted=false
+        INNER JOIN logistics_channel lc
+        ON lc.main_id=ls.id AND lc.is_deleted=false
         WHERE la.is_deleted=false
         <if test="channelIdList !=null and channelIdList.size>0">
             and lc.id in
