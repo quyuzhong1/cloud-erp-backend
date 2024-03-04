@@ -11,10 +11,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.InterceptResponseVO;
-import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -273,5 +270,11 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.WEI_SHI;
+    }
+
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
     }
 }

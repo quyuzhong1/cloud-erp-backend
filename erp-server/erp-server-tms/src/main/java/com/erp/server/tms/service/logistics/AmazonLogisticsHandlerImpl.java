@@ -10,10 +10,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.ConfirmResponseVO;
-import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -475,5 +472,11 @@ public class AmazonLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.AMAZON;
+    }
+
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
     }
 }
