@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
@@ -21,6 +22,7 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -571,6 +573,37 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success("授权成功");
             }
         } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+    }
+    /**
+     * 获取到速卖通支持的物流服务列表
+     * @description
+     * @param
+     * @return
+     * @date 2024-03-04 15:22
+     * @author Lambda
+     */
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>>  listLogisticsService(Map<String, String> authMap){
+        try {
+            IopResponse  response= aliExpressShipperService.listLogisticsService(authMap);
+            String body = response.getBody();
+            JSONObject jsonObject=JSONObject.parseObject(body);
+            if(jsonObject.containsKey("result_list")){
+                List<LogisticsServiceDTO> list = JSONObject.parseArray(jsonObject.getString("result_list"), LogisticsServiceDTO.class);
+                List<LogisticsServiceResponseVO> result=new ArrayList<>(list.size());
+                for (LogisticsServiceDTO item : list) {
+                    LogisticsServiceResponseVO vo = new LogisticsServiceResponseVO();
+                    vo.setServiceName(item.getDisplayName());
+                    vo.setLogisticsType(item.getServiceName());
+                    result.add(vo);
+                }
+                return success(result);
+            }else{
+                return success(Collections.emptyList());
+            }
+        } catch (ApiException e) {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }

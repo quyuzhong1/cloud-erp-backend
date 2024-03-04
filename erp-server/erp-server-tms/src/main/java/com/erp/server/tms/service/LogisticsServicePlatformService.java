@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsServicePlatformDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流平台服务表 服务类
@@ -33,4 +35,13 @@ public interface LogisticsServicePlatformService extends SuperService<LogisticsS
     Boolean update(LogisticsServicePlatformDTO.UpdateDTO dto);
 
 
+    /**
+     * 根据平台查询
+     * @description
+     * @param logisticsPlatform
+     * @return
+     * @date 2024-03-04 16:52
+     * @author Lambda
+     */
+    List<LogisticsServicePlatformEntity> listByPlatform(String logisticsPlatform);
 }

@@ -272,13 +272,38 @@ public class AliExpressShipperService {
         System.out.println(response.getBody());
         return response;
     }
+    /**
+     * @description 获取服务列表
+     * @param
+     * @return
+     * @date 2024-03-04 15:27
+     * @author Lambda
+     */
+    public IopResponse listLogisticsService(Map<String, String> authMap) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)) {
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey, appSecret, token, url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        return response;
+    }
 
     public static void main(String[] args) throws ApiException {
         AliExpressShipperService service = new AliExpressShipperService();
         Map<String, String> authMap = new HashMap<>();
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000201913g5RZqpecEaQ6pT179453ddTkJkRLXEqUDEXFxOEwPXvtsX3DHKlWZJx01";
+        //String token = "50000201913g5RZqpecEaQ6pT179453ddTkJkRLXEqUDEXFxOEwPXvtsX3DHKlWZJx01";
+        String token = "";
+
         String url="https://api-sg.aliexpress.com";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
@@ -295,6 +320,7 @@ public class AliExpressShipperService {
 
 
         IopResponse response = client.execute(request, token, Protocol.TOP);
+        System.out.println("code========="+response.getCode());
         System.out.println(response.getBody());
 
 

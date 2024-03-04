@@ -87,6 +87,11 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<LogisticsServicePlatformEntity> listByPlatform(String logisticsPlatform) {
+        return this.lambdaQuery().eq(LogisticsServicePlatformEntity::getLogisticsPlatform, logisticsPlatform).list();
+    }
+
 
     /**
     * 新增修改处理数据

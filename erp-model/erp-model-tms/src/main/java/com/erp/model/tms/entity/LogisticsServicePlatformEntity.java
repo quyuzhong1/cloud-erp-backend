@@ -26,9 +26,17 @@ public class LogisticsServicePlatformEntity extends BaseEntity<LogisticsServiceP
 
     /**
     * 服务名称
+     * 对应速卖通接口 aliexpress.logistics.redefining.listlogisticsservice 里面的 display_name值
     */
     @TableField("service_name")
     private String serviceName;
+
+    /**
+     * 服务类型
+     * 对应速卖通接口 aliexpress.logistics.redefining.listlogisticsservice 里面的 service_name 值
+     */
+    @TableField("logistics_type")
+    private String logisticsType;
     /**
     * 物流平台
     */

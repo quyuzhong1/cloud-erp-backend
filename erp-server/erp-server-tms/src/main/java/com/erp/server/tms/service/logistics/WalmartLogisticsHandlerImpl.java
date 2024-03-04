@@ -17,10 +17,7 @@ import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.ConfirmResponseVO;
-import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -136,5 +133,11 @@ public class WalmartLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.WALMART;
+    }
+
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
     }
 }
