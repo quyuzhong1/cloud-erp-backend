@@ -286,41 +286,14 @@ public class InitStockDTO implements Serializable {
     public static class ExportSearchParamDTO extends SortDTO {
 
         /**
-         * 勾选的单据id集合
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 单据编号
+         * sqlMap 默认key default
          */
-        private String code;
-
-        /**
-         * sku编码
-         */
-        private List<String> skuNoList;
-
-
-        /**
-         * spu编码
-         */
-        private List<String> spuNoList;
-
-        /**
-         * 仓库id集合
-         */
-        private List<String> warehouseIdList;
-
-        /**
-         * 销售状态集合
-         */
-        private List<Integer> saleStatusList;
-
-        /**
-         * 库存组织集合
-         */
-        private List<String> orgIdList;
-
+        private Map<String,String> sqlMap;
     }
 
     /**
