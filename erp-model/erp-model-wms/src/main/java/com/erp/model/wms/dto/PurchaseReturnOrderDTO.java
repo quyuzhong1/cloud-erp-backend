@@ -411,16 +411,6 @@ public class PurchaseReturnOrderDTO {
         private String purchaseUserDeptName;
 
         /**
-         * 采购组织id
-         */
-        private String purchaseOrgId;
-
-        /**
-         * 采购组织名称
-         */
-        private String purchaseOrgName;
-
-        /**
          * 创建人id
          */
         private String createUserId;

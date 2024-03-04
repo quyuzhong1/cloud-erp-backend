@@ -428,8 +428,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(poReturnEntity.getPurchaseOrderId());
             viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
-            viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
-            viewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
             viewDTO.setSourceCode(purchaseOrderEntity.getCode());
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(viewDTO.getReturnUserId());
             if (ObjectUtils.isNotEmpty(deptByUserId)) {
