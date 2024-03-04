@@ -120,12 +120,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
-        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(null);
         if (ObjectUtil.isEmpty(skuVO)) {
             throw new ServiceException("sku不存在");
         }
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
+        skuMapping.setIsDeleted(true);
         skuMapping.setIsExpire(Boolean.TRUE);
         if (!skuMappingService.updateById(skuMapping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");

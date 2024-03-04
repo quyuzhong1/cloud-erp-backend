@@ -60,6 +60,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -282,6 +284,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } else {
             return null;
         }
+    }
+
+    @Override
+    public List<ShopInfoEntity> listByParams(ShopInfoDTO.ListParamDTO dto) {
+        return lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(ShopInfoEntity::getAuthStatus, dto.getAuthStatus())
+                .eq(ShopInfoEntity::getDisabled, false)
+                .in(CollectionUtils.isNotEmpty(dto.getShopIdList()), ShopInfoEntity::getId, dto.getShopIdList())
+                .list()
+                ;
     }
 
     /**
@@ -550,6 +563,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled) {
         if (Objects.nonNull(shop)) {
             //数据库的禁用状态
@@ -560,7 +575,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shop.setDisabled(disabled);
             this.updateById(shop);
             // 禁用启用任务
-            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shop.getId(), shop.getDictPlatform(), disabled));
+            dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
+                    shop.getName(),
+                    shop.getDictPlatform(),
+                    disabled,
+                    shop.getDictCountryCode(),
+                    shop.getPlatformShopCode()));
             return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
         }
         return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
@@ -608,6 +628,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaUpdate()
                 .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
                 .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
+                .set(ShopInfoEntity::getPlatformStatus, shopInfoEntity.getPlatformStatus())
+                .set(ShopInfoEntity::getDisabled , shopInfoEntity.getDisabled())
                 .update();
     }
 
@@ -1114,7 +1136,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             e.printStackTrace();
         }
         // 处理请求体数据
-        log.warn("Shopify ERP方法：customersDataRequest, Request body: {}", requestBody);
+        log.warn("Shopify ERP方法：customersDataRequest, dto: {}", requestBody);
 
         // 从请求头中获取HMAC
         String hmacHeader = request.getHeader("X-Shopify-Hmac-SHA256");
@@ -1221,6 +1243,38 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             response.setStatus(HttpServletResponse.SC_OK);
         }
         return;
+    }
+
+    @Override
+    public ResponseEntity<String> shopRedactTest(String data, HttpServletResponse response, HttpServletRequest request) {
+        log.warn("Shopify: shopRedactTest 方法 入参：{}", data);
+        String hmacHeader = request.getHeader("X_SHOPIFY_HMAC_SHA256");
+        boolean verified = verifyHmac(data, hmacHeader);
+
+        if (verified) {
+            // Process webhook payload
+            return ResponseEntity.ok("Webhook verified and processed successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+    }
+
+    private boolean verifyHmac(String data, String hmacHeader) {
+        try {
+            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(), "HmacSHA256");
+            sha256Hmac.init(secretKey);
+            byte[] calculatedHmac = sha256Hmac.doFinal(data.getBytes());
+            String calculatedHmacBase64 = Base64.getEncoder().encodeToString(calculatedHmac);
+
+            log.warn("Shopify: shopRedactTest 方法 hmac解密：{}，  请求头：{}", calculatedHmacBase64, hmacHeader);
+
+            return calculatedHmacBase64.equals(hmacHeader);
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 

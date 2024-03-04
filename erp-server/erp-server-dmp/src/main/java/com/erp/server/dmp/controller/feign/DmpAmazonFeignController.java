@@ -2,10 +2,8 @@ package com.erp.server.dmp.controller.feign;
 
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.server.dmp.service.CfgAppClientService;
-import com.erp.server.dmp.service.ReportHandleService;
-import com.erp.server.dmp.service.ReportScheduleService;
+import com.erp.server.dmp.service.AmzReportHandleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +21,7 @@ import javax.validation.Valid;
 @RequestMapping("feign/dmp")
 public class DmpAmazonFeignController {
     @Resource
-    private ReportHandleService reportHandleService;
+    private AmzReportHandleService amzReportHandleService;
     @Resource
     private CfgAppClientService cfgAppClientService;
 
@@ -35,7 +33,7 @@ public class DmpAmazonFeignController {
      **/
     @PostMapping("/amazon/getShipment")
     public Boolean pullShipment(@RequestBody @Valid DmpPullShipmentDTO dto){
-        return reportHandleService.pullShipment(dto);
+        return amzReportHandleService.pullShipment(dto);
     }
 
     /**

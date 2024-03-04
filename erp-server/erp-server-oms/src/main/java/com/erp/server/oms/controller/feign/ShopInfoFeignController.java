@@ -128,4 +128,13 @@ public class ShopInfoFeignController extends BaseController {
         return shopInfoService.getRelatedShopByIdAndCountry(relateDTO);
     }
 
+
+    /**
+     * 查询指定或所有店铺
+     */
+    @PostMapping("/listByParams")
+    public List<ShopInfoEntity> listByParams(@RequestBody ShopInfoDTO.ListParamDTO dto){
+        return shopInfoService.listByParams(dto);
+    }
+
 }

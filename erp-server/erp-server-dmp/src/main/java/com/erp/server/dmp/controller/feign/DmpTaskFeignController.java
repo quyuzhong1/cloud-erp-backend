@@ -1,6 +1,5 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
@@ -34,7 +33,7 @@ public class DmpTaskFeignController {
 
     @PostMapping("/createPlatformTask")
     public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
-        return platformApiTaskService.createPlatformTask(dto);
+        return platformApiTaskService.createOrEnablePlatformTask(dto);
     }
 
     @PostMapping("/removePlatformTask")
@@ -55,5 +54,14 @@ public class DmpTaskFeignController {
     @PostMapping("/getPullTaskById")
     public DmpPullTaskEntity getPullTaskById(@RequestBody String id){
         return dmpPullTaskService.getById(id);
+    }
+
+    /**
+     * 更新任务禁用/启用和取消/开启报告计划
+     *
+     */
+    @PostMapping("/allAddOrUpdateTaskAndSchedule")
+    public Boolean allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO dto){
+        return platformApiTaskService.allAddOrUpdateTaskAndSchedule(dto);
     }
 }

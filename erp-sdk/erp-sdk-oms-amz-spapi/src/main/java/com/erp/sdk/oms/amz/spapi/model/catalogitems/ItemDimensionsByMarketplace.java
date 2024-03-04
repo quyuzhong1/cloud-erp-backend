@@ -147,26 +147,31 @@ public class ItemDimensionsByMarketplace {
         Dimension width = dimensions.getWidth();
 
 //    （重量统一换算成KG，pounds=lb=0.453KG，1oz=0.028KG；尺寸统一换算成CM，inches=2.54CM）
+        String heightStr = null == height ? "" : height.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM";
+        String lengthStr = null == length ? "" : length.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM";
+        String weightStr = null == weight ? "" : this.weightKg(weight).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "KG";
+        String widthStr = null == width ? "" : width.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM";
+
         String resultStr = StrUtil.format("高度:{};\n" +
                         "长度:{};\n" +
                         "重量:{};\n" +
                         "宽度:{};",
-                height.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM",
-                length.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM",
-                this.weightKg(weight).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "KG",
-                width.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM"
-        );
+                heightStr,
+                lengthStr,
+                weightStr,
+                widthStr
+                );
         return resultStr;
     }
 
     private BigDecimal weightKg(Dimension weight) {
-        if ("kilograms".equalsIgnoreCase(weight.getUnit())){
+        if ("kilograms".equalsIgnoreCase(weight.getUnit())) {
             return weight.getValue();
         }
-        if ("pounds".equalsIgnoreCase(weight.getUnit())){
+        if ("pounds".equalsIgnoreCase(weight.getUnit())) {
             return weight.getValue().multiply(new BigDecimal("0.453"));
         }
-        if ("1oz".equalsIgnoreCase(weight.getUnit())){
+        if ("1oz".equalsIgnoreCase(weight.getUnit())) {
             return weight.getValue().multiply(new BigDecimal("0.028"));
         }
         return weight.getValue();

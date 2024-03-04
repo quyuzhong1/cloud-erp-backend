@@ -33,4 +33,9 @@ public interface TaskConstant {
      * 谷仓任务名称
      */
     String GOODCANG_PULL_DATA_TASK = "GOODCANG_PULL_DATA_TASK";
+
+    /**
+     * 领星任务名称
+     */
+    String LX_PULL_DATA_TASK = "LX_PULL_DATA_TASK";
 }

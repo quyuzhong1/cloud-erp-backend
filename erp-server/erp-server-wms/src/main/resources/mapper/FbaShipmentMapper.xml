@@ -23,6 +23,7 @@
         fsd.fn_sku AS fnSku,
         fsd.sku_no AS skuNo,
         fsd.declare_qty AS declareQty,
+        fsd.receive_qty AS receiveQty,
         fsd.diff_qty AS diffQty,
         fsd.is_combination AS isCombination
         FROM fba_shipment_detail fsd

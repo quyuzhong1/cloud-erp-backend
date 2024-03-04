@@ -3,10 +3,8 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +14,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -359,8 +358,32 @@ public class SkuMappingDTO implements Serializable {
         private String platformProductName;
 
 
+        private List<SkuMappingExtendListDTO> extendList;
+
+
 
     }
+
+    /**
+     * 列表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SkuMappingExtendListDTO {
+        /**
+         * 仓库经营类型:selfBuild=自建,thirdParty=第三方
+         * 对应来源{@link /api/wms/common/enumDropDown?type=WarehouseManageTypeEnum}
+         */
+        private String warehouseManageType;
+
+        /**
+         * 发货类型:single=子件发货,combine=捆绑Sku发货
+         * 对应来源{@link /api/wms/common/enumDropDown?type=WarehouseDeliveryType}
+         */
+        private String warehouseDeliveryType;
+    }
+
 
     /**
      * 更改库存SKU
@@ -558,6 +581,14 @@ public class SkuMappingDTO implements Serializable {
          * 平台SKU额外关联的FNSKU
          */
         private String platformFnSku;
+        /**
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
+        /**
+         * 仓库发货配置
+         */
+        private List<SkuMappingExtendDTO.ListDTO> extendList = Collections.emptyList();
 
     }
 

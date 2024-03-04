@@ -48,11 +48,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         }
         List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
         Boolean result = this.saveOrUpdateBatch(addList);
-        //当保存成功
-//        if (result) {
-//            String redisKey = RedisCacheConstants.WMS_DICT_KEY;
-//            redisService.deleteObject(redisKey);
-//        }
+
         return result;
     }
 
@@ -105,8 +101,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (StringUtils.isBlank(type)) {
             return Collections.emptyList();
         }
-        List<DictBasicEntity> allList = listAll();
-        return allList.stream().filter(l -> l.getType().equals(type)).collect(Collectors.toList());
+        List<DictBasicEntity> allList = this.lambdaQuery().
+                eq(DictBasicEntity::getType,type).
+                orderByAsc(DictBasicEntity::getSort).list();
+        return  allList;
     }
 
     /**

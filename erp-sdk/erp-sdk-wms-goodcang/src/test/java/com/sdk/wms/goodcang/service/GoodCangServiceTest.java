@@ -71,7 +71,7 @@ public class GoodCangServiceTest {
 
     @Test
     public void getInboundDetailTest() {
-        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail("RVG1149-231207-0010");
+        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail("RVG2199-240112-0001");
         System.out.println(response);
     }
 //    @Test

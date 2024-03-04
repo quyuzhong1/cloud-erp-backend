@@ -42,6 +42,10 @@ public enum SettingEnum {
     //同步ERP的b2c订单同步到中台启动时间
     ERP_B2C_TO_DMP_LISTING_DATE("listing_date",SettingEnum.ERP_B2C_TO_DMP, "同步ERP的b2c订单同步到中台启动时间"),
 
+    // 亚马逊报告配置
+    AMAZON_REPORT_CHECK_COUNT("amazon_report_check_count", SettingEnum.AMAZON_REPORT, "亚马逊报告创建失败检查历史成功报告的次数,默认2"),
+    AMAZON_REPORT_STOP_COUNT("amazon_report_stop_count", SettingEnum.AMAZON_REPORT, "亚马逊报告创建失败停止次数,默认3"),
+
     // 亚马逊货件白名单
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
     ;
@@ -90,6 +94,11 @@ public enum SettingEnum {
      * 亚马逊FBA货件暂时跳过亚马逊请求
      */
     public static final String AMAZON_FBA_SHIPMENT_SKIP = "amazon_fba_shipment_skip";
+
+    /**
+     * 亚马逊报告
+     */
+    public static final String AMAZON_REPORT = "amazon_report";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

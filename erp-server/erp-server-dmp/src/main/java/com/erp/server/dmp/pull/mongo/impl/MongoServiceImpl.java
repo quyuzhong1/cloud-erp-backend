@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -254,4 +256,7 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 
+	public static void main(String[] args) {
+		System.out.println(Date.from(OffsetDateTime.now().toInstant()));
+	}
 }

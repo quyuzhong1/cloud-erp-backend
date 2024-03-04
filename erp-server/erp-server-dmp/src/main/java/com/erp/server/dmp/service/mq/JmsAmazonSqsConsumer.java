@@ -1,16 +1,13 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.common.business.constant.BusinessCommonConstants;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.ReportHandleService;
+import com.erp.server.dmp.service.AmzReportHandleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.jms.Message;
@@ -25,7 +22,7 @@ public class JmsAmazonSqsConsumer {
     @Resource
     private MongoService mongoService;
     @Resource
-    private ReportHandleService reportHandleService;
+    private AmzReportHandleService amzReportHandleService;
 
     @Value("${spring.cloud.nacos.discovery.namespace}")
     private String namespace;
@@ -53,7 +50,7 @@ public class JmsAmazonSqsConsumer {
 
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(textObj.getStr("notificationType"))) {
-            reportHandleService.handlerNotifications(textObj);
+            amzReportHandleService.handlerNotifications(textObj);
         }
 
         // 开发环境忽略处理

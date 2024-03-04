@@ -155,50 +155,60 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = getBySupplierId(supplierId, null, skuIdList);
+        if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
+            List<String> oldIdList = list.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
+            purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
+        }
 
         for (int i = 0;i < list.size();i++) {
             PurchasePriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
-            if (entity.getEffectiveDate().isEqual(entity.getExpireDate()) || entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
+            if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
             }
-
             //校验录入数据是否存在时间重叠
             for (int j = 0;j < list.size();j++) {
                 PurchasePriceDetailEntity detailEntity = list.get(j);
                 if (i == j || !StrUtil.equals(entity.getSkuId(),detailEntity.getSkuId())) {
                     continue;
                 }
-                //时间区间完全一致时
-                if (entity.getEffectiveDate().compareTo(detailEntity.getEffectiveDate()) == MathUtil.ZERO
-                    && entity.getExpireDate().compareTo(detailEntity.getExpireDate()) == MathUtil.ZERO ) {
-                    //区间不能重叠
-                    if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) <= MathUtil.ZERO
-                            && detailEntity.getMinQty().compareTo(entity.getMaxQty()) <= MathUtil.ZERO ) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
-                    }
-                }
-                //时间区间不能重叠
-                boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
-                if (overlap) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
-                }
+                //验证是否重叠
+                checkOverlap(entity,detailEntity);
             }
 
-            List<PurchasePriceDetailDTO.ViewDTO> oldList = purchaseDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            List<PurchasePriceDetailEntity> oldList = purchaseDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())).map(obj -> BeanMapperUtils.map(PurchasePriceDetailEntity.class,obj) ).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(oldList)) {
                 continue;
             }
-            //检验和已存在数据相同时间时区间是否重叠
-            long qtyCount = oldList.stream().filter(obj -> !StrUtil.equals(obj.getId(),entity.getId()) && (entity.getEffectiveDate().compareTo( obj.getEffectiveDate()) == MathUtil.ZERO && entity.getExpireDate().compareTo(obj.getExpireDate()) == MathUtil.ZERO )
-                    && (entity.getMinQty().compareTo(obj.getMaxQty()) <= MathUtil.ZERO && obj.getMinQty().compareTo(entity.getMaxQty()) <= MathUtil.ZERO )).count();
-            if (qtyCount > 0) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
-            }
-            //检验和已存在数据的时间是否重叠
-            long dateCount = oldList.stream().filter(obj ->  !StrUtil.equals(obj.getId(),entity.getId()) && LocalDateUtil.isOverlap(entity.getEffectiveDate(),entity.getExpireDate(),obj.getEffectiveDate(),obj.getExpireDate())).count();
-            if (dateCount > 0) {
+            //验证是否重叠
+            oldList.stream().forEach(obj -> checkOverlap(entity,obj));
+        }
+    }
+
+    /**
+     * @description: 验证是否重叠
+     * @author Will
+     * @date: 2024/3/1 14:17
+     * @param entity
+     * @param detailEntity
+     */
+    private void checkOverlap (PurchasePriceDetailEntity entity,PurchasePriceDetailEntity detailEntity) {
+        //区间重叠时
+        if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+            //时间不能重叠
+            boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+            if (overlap) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+            }
+        }
+        //时间重叠时
+        boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+        if (overlap) {
+            //区间不能重叠
+            if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                    && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
             }
         }
     }
@@ -801,12 +811,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
         if (CollectionUtils.isNotEmpty(list)) {
             resultList.addAll(list);
-        }
-
-        //采购价目历史表
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> historyList = purchasePriceHistoryService.getHistoryTaxPrice(dto);
-        if (CollectionUtils.isNotEmpty(historyList)) {
-            resultList.addAll(historyList);
         }
 
         //未找到报价信息

@@ -13,6 +13,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.server.wms.service.WarehouseMappingService;
@@ -37,7 +38,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private WarehouseService warehouseService;
 
-    private List<DictBasicDTO.ListDTO> dictBasicList;
+    private List<DictBasicEntity> dictBasicList;
 
     private List<FindUserDTO> userList;
 
@@ -56,7 +57,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicEntity> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList
             , List<WarehouseEntity> existList, WarehouseMappingService warehouseMappingService) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
@@ -100,6 +101,23 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (StringUtils.isBlank(typeId)) {
             errorMsgList.add("仓库类型不存在");
         }
+
+        //仓库经营类型
+        String warehouseManageTypeName = warehouseExcelDTO.getWarehouseManageTypeName();
+        String warehouseManageType = dictBasicList.stream().filter(d -> d.getName().equals(warehouseManageTypeName)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+        if (StringUtils.isBlank(warehouseManageType)) {
+            errorMsgList.add("仓库经营类型不存在");
+        }
+        addDTO.setWarehouseManageType(warehouseManageType);
+        //地理位置
+        String geographyLocationName = warehouseExcelDTO.getGeographyLocationName();
+        String geographyLocation = dictBasicList.stream().filter(d -> d.getName().equals(geographyLocationName)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+        if (StringUtils.isBlank(geographyLocation)) {
+            errorMsgList.add("仓库地理位置不存在");
+        }
+        addDTO.setGeographyLocation(geographyLocation);
         String name = warehouseExcelDTO.getName();
         long nameCount = existList.stream().filter(w -> name.equals(w.getName())).count();
         if (nameCount > 0) {
