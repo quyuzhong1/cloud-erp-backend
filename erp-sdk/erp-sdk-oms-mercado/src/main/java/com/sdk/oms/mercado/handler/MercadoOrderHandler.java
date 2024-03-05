@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.SHOPEE)
+@PlatformType(PlatformDictEnum.MERCADO)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, PlatformOrderDTO> {
     @Resource
