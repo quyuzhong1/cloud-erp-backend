@@ -122,6 +122,10 @@ public class StocktakingProfitLossDTO implements Serializable {
         @NotNull(message = "单据类型不能为空")
         private BillTypeEnum billType;
 
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
 
         /**
          * 库存组织
@@ -471,7 +475,10 @@ public class StocktakingProfitLossDTO implements Serializable {
          * 单据类型
          */
         private BillTypeEnum billType;
-
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
         /**
          * 单据类型名
          */
