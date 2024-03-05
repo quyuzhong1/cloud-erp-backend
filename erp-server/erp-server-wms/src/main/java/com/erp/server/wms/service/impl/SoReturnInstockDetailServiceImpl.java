@@ -15,16 +15,14 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SoReturnInstockDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoReturnInstockDetailService;
-import com.erp.server.wms.service.SoReturnReceiveDetailService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +34,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +62,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private SoReturnInstockService soReturnInstockService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -422,7 +424,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         if(CollectionUtils.isEmpty(soReturnDetailIds)){
             return new ArrayList<>();
         }
-        return lambdaQuery().in(SoReturnInstockDetailEntity::getSoReturnDetailId, soReturnDetailIds).list();
+        List<SoReturnInstockDetailEntity> detailEntityList = lambdaQuery().in(SoReturnInstockDetailEntity::getSoReturnDetailId, soReturnDetailIds).list();
+        if(CollectionUtils.isEmpty(detailEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> mainIdList = detailEntityList.stream().map(SoReturnInstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockEntity> mainList = soReturnInstockService.listByIds(mainIdList);
+        detailEntityList = detailEntityList.stream().filter(v->{
+            SoReturnInstockEntity main = mainList.stream().filter(t->t.getId().equals(v.getMainId())).findFirst().orElse(new SoReturnInstockEntity());
+            return Objects.isNull(main.getInvalidStatus()) || !main.getInvalidStatus();
+        }).collect(Collectors.toList());
+
+        return detailEntityList;
     }
 
     /**
