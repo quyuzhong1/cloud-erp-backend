@@ -902,6 +902,23 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     }
 
+    @Override
+    public List<StocktakingProfitLossDTO.LastDTO> listByOrgIdAndSkuIds(List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(orgIds)){
+            throw new ServiceException("组织IDS不能为空");
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            throw new ServiceException("SKU IDS不能为空");
+        }
+        return baseMapper.listByOrgIdAndSkuIds(orgIds, skuIds);
+    }
+
+    @Override
+    public String findLastOneCode(String warehouseId, String skuId, LocalDate billDate) {
+        List<String> codeList = baseMapper.findLastOneCode(warehouseId, skuId, billDate);
+        return codeList.stream().findFirst().orElse("");
+    }
+
     /**
      * 更改审核信息
      *
