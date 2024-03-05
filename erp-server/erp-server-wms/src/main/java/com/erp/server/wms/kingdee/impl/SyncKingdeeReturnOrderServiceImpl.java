@@ -124,7 +124,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //金蝶采购组织：如果采购订单存在并且有采购组织，就用采购订单的组织,没有就用退货组织
         if (ObjectUtil.isNotEmpty(purchaseOrderEntity) && StringUtils.isNotBlank(purchaseOrderEntity.getPurchaseOrgId())) {
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrderEntity.getPurchaseOrgId()));
-            String purchaseOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getReturnOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+            PurchaseOrderEntity finalPurchaseOrderEntity = purchaseOrderEntity;
+            String purchaseOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(finalPurchaseOrderEntity.getPurchaseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
             //采购组织
             resultMap.put("purchaseOrgCode", purchaseOrgCode);
         } else {

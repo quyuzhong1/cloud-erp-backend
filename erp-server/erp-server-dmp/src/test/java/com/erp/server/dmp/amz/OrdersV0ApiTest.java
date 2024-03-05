@@ -15,15 +15,18 @@ package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
+import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.dmp.service.CfgAppClientService;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -33,9 +36,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -106,29 +111,24 @@ public class OrdersV0ApiTest {
 
     @Test
     public void getOrderAllListTest() throws Exception {
-        OrdersV0Api api = new OrdersV0Api();
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.US;
-//        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
-//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-//        OrdersV0Api api = new OrdersV0Api.Builder()
-//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-//                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
-//                //北美，https://sellingpartnerapi-na.amazon.com
-//                //欧洲，https://sellingpartnerapi-eu.amazon.com
-//                //远东，https://sellingpartnerapi-fe.amazon.com
-////                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
-//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
-//                .build();
+        String shopId = "1735479610549735425";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                .rateLimitPermit(0.5)
+                .waitTimeOutInMilliSeconds(10000L)
+                .build();
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         if (null == api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
         }
 
         List<String> marketplaceIds = new ArrayList<>();
-        marketplaceIds.add("ATVPDKIKX0DER");//根据国家确定
+        marketplaceIds.add(marketplaceEnum.getMarketplaceId());//根据国家确定
 //        marketplaceIds.add("A1AM78C64UM0Y8");//根据国家确定
 
         List<String> fulfillmentChannels = new ArrayList<>();
@@ -139,27 +139,56 @@ public class OrdersV0ApiTest {
         String createdAfter = null;
 //        String createdAfter = "2020-10-01T00:00:00";
         String createdBefore = null;
-        String lastUpdateBefore = "2023-11-11T00:00:00.000Z";
-        String lastUpdatedAfter = "2023-11-12T23:00:00.000Z";
+        String lastUpdatedAfter = "2024-02-22T00:00:00.000Z";
+        String lastUpdatedBefore = "2024-02-22T03:48:00.000Z";
 //        String lastUpdatedAfter = "2023-10-15T16:30:19";
 //        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
 //        orderStatuses.add("Unshipped");
-        List<Order> allOrders = api.getAllOrders(marketplaceIds, createdAfter, createdBefore, lastUpdateBefore,
-                lastUpdatedAfter, null, null, null, null, null,
-                null, null, null, null, null, null,
-                null, null, null, null, null);
-        if (null == allOrders) {
-            throw new RuntimeException("响应为空");
-        }
-        System.out.println(allOrders);
-        System.out.println("amz sp-查询订单");
-        System.out.println(JSONUtil.toJsonStr(allOrders));
-        Map<String, List<Order>> collect = allOrders.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
-        for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
-            if ( stringListEntry.getValue().size() > 1 ){
-                System.out.println("存在重复,value={}"+ JSONUtil.toJsonStr(stringListEntry.getValue()));
+        String rateLimitStr;
+        try {
+            // 发起请求
+            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                    null, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null, 100,
+                    null, null, null, null, null, null, null, null, null, null, null);
+            List<String> limitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+            rateLimitStr = limitArray.get(0);
+            GetOrdersResponse orders = ordersWithHttpInfo.getData();
+            System.out.println("amz spi查询订单首次");
+            System.out.println(JSONUtil.toJsonStr(orders));
+
+            List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
+            String currentNextToken = orders.getPayload().getNextToken();
+            int currentSize = orders.getPayload().getOrders().size();
+            while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
+                // 上一次请求的响应频率设置
+                if (StringUtils.isNotBlank(rateLimitStr)) {
+                    RateLimitConfigurationOnRequests rateLimitConfigurationRequests = (RateLimitConfigurationOnRequests) rateLimitConfig;
+                    rateLimitConfigurationRequests.setRateLimitPermit(Double.parseDouble(rateLimitStr));
+                    api.getApiClient().setRateLimiter(rateLimitConfigurationRequests);
+                }
+                GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
+                System.out.println("amz spi循环查询订单token=" + currentNextToken);
+                System.out.println(JSONUtil.toJsonStr(currentResp));
+                orderList.addAll(currentResp.getPayload().getOrders());
+                currentNextToken = currentResp.getPayload().getNextToken();
+                currentSize = currentResp.getPayload().getOrders().size();
+                List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+                rateLimitStr = currentLimitArray.get(0);
             }
+            // 设置根据亚马逊的响应时间记录下次执行开始时间
+            System.out.println(orderList);
+            System.out.println("amz sp-查询订单");
+            System.out.println(JSONUtil.toJsonStr(orderList));
+            Map<String, List<Order>> collect = orderList.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
+            for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
+                if (stringListEntry.getValue().size() > 1) {
+                    System.out.println("存在重复,value={}" + JSONUtil.toJsonStr(stringListEntry.getValue()));
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
         }
+
     }
 
 
@@ -494,5 +523,12 @@ public class OrdersV0ApiTest {
         System.out.println(JSONUtil.toJsonStr(voidApiResponse));
         // {"statusCode":204,"headers":{"connection":["keep-alive"],"content-type":["application/json"],"date":["Wed, 27 Dec 2023 09:16:14 GMT"],"server":["Server"],"strict-transport-security":["max-age=47474747; includeSubDomains; preload"],"vary":["Content-Type,Accept-Encoding,User-Agent"],"x-amz-apigw-id":["OPF462433fc1fae"],"x-amz-rid":["QMA9Z504GHC8P8PPJT5Y"],"x-amzn-ratelimit-limit":["2.0"],"x-amzn-requestid":["462433fc-1fae-4f62-9797-b57badfc7c23"],"x-amzn-trace-id":["Root=1-658beb5e-462433fc1fae4f62"]}}
         // TODO: test validations
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime parse = LocalDateTime.parse("2024-02-21T02:00:00Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        System.out.println(parse);
+        LocalDateTime localDateTime = DateUtil.utcSamePlus8(parse);
+        System.out.println(localDateTime);
     }
 }

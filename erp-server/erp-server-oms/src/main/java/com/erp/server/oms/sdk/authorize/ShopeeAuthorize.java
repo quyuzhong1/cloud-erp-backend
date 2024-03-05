@@ -8,6 +8,11 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -128,6 +133,13 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
             shopAuthService.removeByShopId(shopId);
             // 删除授权
 //            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            // 禁用任务
+            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
+                    shopInfo.getName(),
+                    shopInfo.getDictPlatform(),
+                    true,
+                    shopInfo.getDictCountryCode(),
+                    shopInfo.getPlatformShopCode()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

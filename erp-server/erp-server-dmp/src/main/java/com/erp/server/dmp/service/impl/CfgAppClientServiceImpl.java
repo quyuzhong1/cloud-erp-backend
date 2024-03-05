@@ -18,6 +18,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.erp.server.dmp.mapper.CfgAppClientMapper;
@@ -115,6 +116,9 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public AmazonShopInfoDTO cacheAndFindShopAuth(String shopId) {
+        if (StringUtils.isBlank(shopId)){
+            throw new ServiceException("获取店铺授权异常:数据异常：店铺ID为空");
+        }
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
         // 缓存获取
@@ -130,6 +134,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         if (null == shopInfo) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        if (shopInfo.getDisabled()){
+            throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
+        }
+
         // 查询已授权信息
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
@@ -158,9 +166,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         // 更新shopAuth
         shopAuth.setAccessToken(tokenDTO.getAccessToken());
         shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-        if (!shopInfoFeign.updateShopAuthById(shopAuth)) {
-            throw new ServiceException("更新店铺授权信息失败:" + JSONUtil.toJsonStr(shopAuth));
-        }
+        shopInfoFeign.updateShopAuthById(shopAuth);
+//        if (!shopInfoFeign.updateShopAuthById(shopAuth)) {
+//            throw new ServiceException("更新店铺授权信息失败:" + JSONUtil.toJsonStr(shopAuth));
+//        }
         // token添加到redis
         redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
         redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());

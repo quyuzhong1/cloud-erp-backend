@@ -40,6 +40,9 @@ public class ReportInfoMongoDTO {
     @Panno(findType = PannoEnum.EQ, field = "reportScheduleId")
     private String reportScheduleId;
 
+    /**
+     * 记录创建时间
+     */
     @Panno(findType = PannoEnum.EQ, field = "createdTime")
     private String createdTime;
 
@@ -89,6 +92,20 @@ public class ReportInfoMongoDTO {
      */
     @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
+
+    /**
+     * 报告创建时间
+     */
+    @Panno(findType = PannoEnum.EQ, field = "reportCreatedTime")
+    private String reportCreatedTime;
+
+    /**
+     * 报告来源
+     * 0 ERP系统请求亚马逊创建
+     * 1 请求亚马逊报告列表获取
+     */
+    @Panno(findType = PannoEnum.EQ,field = "reportSourceType")
+    private Integer reportSourceType;
 
     public ReportInfoMongoDTO(String reportId) {
         this.reportId = reportId;

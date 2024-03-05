@@ -170,6 +170,12 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         return LogisticsPlatformEnum.BAO_HONG;
     }
 
+    @Override
+    public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+
+    }
+
     private boolean isFailure(BaoHongResponse<?> response){
         return response.getAsk().equals("0");
     }

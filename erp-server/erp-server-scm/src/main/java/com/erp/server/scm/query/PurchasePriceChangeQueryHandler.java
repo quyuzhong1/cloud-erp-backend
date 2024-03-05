@@ -4,7 +4,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.TabFlagEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.server.scm.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -14,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author liuruipeng
+ * @author will
  * @date 2024年01月08日 9:54
  */
 @Component
@@ -27,7 +26,7 @@ public class PurchasePriceChangeQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //供应商名称
         if("supplierName".equals(field)){
-            return "pp.supplier_id IN (SELECT id FROM supplier  WHERE is_deleted= false and name "+ compareCodeSplicingValueSql +
+            return "ppd.supplier_id IN (SELECT id FROM supplier  WHERE is_deleted= false and name "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         //选项卡

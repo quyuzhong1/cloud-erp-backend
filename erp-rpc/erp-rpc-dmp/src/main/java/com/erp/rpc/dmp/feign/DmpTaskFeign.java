@@ -7,9 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -129,7 +127,7 @@ public interface DmpTaskFeign {
      * @return
      */
     @PostMapping("feign/dmp/createPlatformTask")
-    Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto);
+    Boolean createAndEnablePlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto);
 
     /**
      * 删除平台任务
@@ -248,4 +246,11 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/cfgApiAuth/getByKey")
     CfgApiAuthEntity getByKey(@RequestBody @Valid CfgApiAuthDTO.FeignDTO feignDTO);
+
+    /**
+     * 更新任务禁用/启用和取消/开启报告计划
+     *
+     */
+    @PostMapping("feign/dmp/allAddOrUpdateTaskAndSchedule")
+    void allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
 }

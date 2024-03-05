@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -141,6 +143,18 @@ public class ListingInfoWithSkuMappingDTO {
      * 平台最后修改时间
      */
     private LocalDateTime platformUpdateTime;
+
+    /**
+     * 仓库发货配置map
+     * key:
+     * 仓库经营类型:selfBuild=自建,thirdParty=第三方
+     * {@link com.erp.model.wms.enums.WarehouseManageTypeEnum}
+     * value:
+     * 发货类型:single=子件发货,combine=捆绑Sku发货
+     * {@link com.erp.model.wms.enums.WarehouseDeliveryTypeEnum}
+     *
+     */
+    private Map<String, String> extendMap = new HashMap<>();
 
     public String checkAndGetProductSkuId() {
         if (StringUtils.isNotBlank(this.productSkuId)){

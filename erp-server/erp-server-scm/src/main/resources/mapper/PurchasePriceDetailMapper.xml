@@ -17,8 +17,8 @@
         inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
-            ppd.effective_date and ppd.expire_date >= now()
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+            ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
             <if test="params.skuId != null and params.skuId != ''">
                 and ppd.sku_id = #{params.skuId}
             </if>
@@ -159,8 +159,8 @@
         inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-        pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
-        ppd.effective_date and ppd.expire_date >= now()
+        pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+        ppd.effective_date and ppd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
         <if test="params.skuIdList != null and params.skuIdList.size > 0">
             and ppd.sku_id in
             <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">

@@ -32,7 +32,7 @@ public enum AmazonReportRecordTypeEnum {
     // 库存报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-inventory
 //    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA", "库存报告", false, "", null),
-    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
+    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class, "amzReportAllListingHandler"),
 //    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
 //    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA", "非在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT", "表符分隔的库存模板文件在售商品报告", false, "", null),
@@ -47,9 +47,10 @@ public enum AmazonReportRecordTypeEnum {
     // 亚马逊物流 (FBA) 报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
-    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class),
-    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class),
-    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class),
+    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class, "amzReportFbaMyiAllInventoryHandler"),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告",  MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class,"amzReportReservedInventoryHandler"),
+    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告",  MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class,"amzReportFbaInventoryPlanningHandler"),
+    GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告",  null, null, null,"amzReportLedgerDetailViewHandler"),
 
     ;
 
@@ -64,11 +65,6 @@ public enum AmazonReportRecordTypeEnum {
      * 名称
      */
     private final String name;
-
-    /**
-     * 是否直接保存mongo? true = 是， false=否
-     */
-    private final boolean directSaveMongo;
 
     /**
      * mongo表名
@@ -87,6 +83,12 @@ public enum AmazonReportRecordTypeEnum {
 
 
     /**
+     * Listing报告处理服务实现类名称
+     */
+    private final String amzReportBusinessHandlerName;
+
+
+    /**
      * 通过reportType字符串查询枚举类型
      */
     public static AmazonReportRecordTypeEnum getByRecordType(String reportType) {
@@ -94,6 +96,17 @@ public enum AmazonReportRecordTypeEnum {
                 .filter(e -> e.getRecordType().equalsIgnoreCase(reportType))
                 .findFirst()
                 .orElse(null)
+                ;
+    }
+
+    /**
+     * 通过reportType字符串查询枚举类型
+     */
+    public static AmazonReportRecordTypeEnum checkAndGetByRecordType(String reportType) {
+        return Stream.of(AmazonReportRecordTypeEnum.values())
+                .filter(e -> e.getRecordType().equalsIgnoreCase(reportType))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("未找到报告类型枚举：" + reportType))
                 ;
     }
 

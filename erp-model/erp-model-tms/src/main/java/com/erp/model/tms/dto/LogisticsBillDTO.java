@@ -808,6 +808,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String secondAddress;
 
+        /**
+         * 收货人税号
+         */
+        private String receiverTaxNo;
+
     }
 
 

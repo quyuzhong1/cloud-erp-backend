@@ -107,6 +107,8 @@ public enum ApiError implements Serializable {
     EXCEL_ILLEGAL_FIELDS(1055,"excel第【{}】行 【{}】列非法字段"),
     ERROR_CFG_SETTING_KEY(1056,"未找到配置的key【{}】"),
     ERROR_BILL_APPROVE(1057,"{}单据审核失败"),
+    LOGIN_ERROR(1058,"账户密码已输入错误5次，请在1小时后重试"),
+    LOGIN_USER_ERROR(1059,"账号密码错误,还可尝试【{}】次,失败后将锁定1小时"),
 
     /**
      * 警告信息 从800 开始
@@ -400,7 +402,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "未找到选择的BOM信息"),
+    ERROR_95163(95163, "未找到选择的销售套装BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -1213,6 +1215,9 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST(94039,"存在未停用的中转物流渠道,无法停用该物流商"),
     ORDER_UPLOAD_SUCCESS_NOT_DELETE(94040,"订单【{}】上传成功不能删除"),
     ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY(94041,"长宽高单个值不能为空，需大于0"),
+
+    // 亚马逊公用异常
+    ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

@@ -62,7 +62,7 @@
         WHERE
             auth.is_deleted = FALSE
             and info.is_deleted = FALSE
-            and dict_platform = #{platformType}
+            and info.dict_platform = #{platformType}
     </select>
 
     <select id="listTokenExpiresShop" resultType="com.erp.model.oms.entity.ShopAuthEntity">

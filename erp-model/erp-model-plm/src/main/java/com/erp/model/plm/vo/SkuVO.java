@@ -208,6 +208,12 @@ public class SkuVO implements Serializable {
      */
     private BigDecimal netWeight;
 
+    /**
+     * 是否是捆绑商品:true=是，false=否
+     * (可能字段为null，需添加查询)
+     */
+    private Boolean isCombination;
+
     public String checkAndGetSkuImagesUrl() {
         if (StringUtils.isBlank(this.skuImagesUrl)){
             return "";

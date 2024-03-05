@@ -27,6 +27,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -152,7 +153,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 handleRule(mainEntity);
                 //如果是已发货且是平台仓订单 就生成销售出库单
                 if (isShipped && hasPlatformWarehouse) {
-                    soOutstockFeign.generateB2cSoOutstock(mainEntity.getId());
+                    SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
+                    soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
                 }
             }
 

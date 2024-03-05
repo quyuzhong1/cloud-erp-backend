@@ -1,9 +1,9 @@
 package com.erp.sdk.oms.amz.spapi.csv;
 
-import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class ReportReservedCsvEntity extends ReportSuperMongoDTO {
+public class ReportReservedCsvEntity {
     @CsvBindByName(column = "sku")
     private String sku;
 
@@ -36,4 +36,24 @@ public class ReportReservedCsvEntity extends ReportSuperMongoDTO {
     @CsvBindByName(column = "reserved_fc-processing")
     private String reservedFCProcessing;
 
+    public Integer reservedFCTransfersCheckToInt(){
+        if (StringUtils.isBlank(this.reservedFCTransfers)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedFCTransfers);
+    }
+
+    public Integer reservedFCProcessingCheckToInt(){
+        if (StringUtils.isBlank(this.reservedFCProcessing)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedFCProcessing);
+    }
+
+    public Integer reservedCustomerOrdersCheckToInt(){
+        if (StringUtils.isBlank(this.reservedCustomerOrders)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedCustomerOrders);
+    }
 }

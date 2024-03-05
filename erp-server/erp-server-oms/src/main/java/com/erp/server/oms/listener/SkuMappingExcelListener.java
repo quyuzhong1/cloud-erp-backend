@@ -269,7 +269,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         LocalDateTime now = LocalDateTime.now();
         SkuMappingEntity add = new SkuMappingEntity();
         add.setDictPlatform(dictPlatform);
-        add.setPlatformName(platformName);
+        add.setPlatformName(platform.getName());
         add.setProductSkuId(sku.getSkuId());
         add.setProductSkuNo(sku.getSkuNo());
         add.setShopId(shop.getId());

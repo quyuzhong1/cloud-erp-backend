@@ -147,6 +147,16 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_EXCHANGE_RATE_TAG(27,RocketMqTagEnum.SYNC_DMP,"kingdee_exchange_rate_tag"),
 
+    /**
+     * 领星店铺信息tag
+     */
+    LX_SHOP_INFO_TAG(28, RocketMqTagEnum.SHOP_INFO,"lx_shop_info_tag"),
+
+    /**
+     * 领星FBA货件信息tag
+     */
+    LX_FBA_SHIPMENT_RECEIVE_TAG(29, RocketMqTagEnum.FBA_SHIPMENT,"lx_fba_shipment_receive_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -459,6 +469,32 @@ public enum RocketMqTagEnum {
      */
     ERP_DMP_MACHINE_INFO_TAG(7003, RocketMqTagEnum.SYNC_DMP,"erp_dmp_machine_info_tag"),
 
+    //-----------------------------亚马逊报告编码从8001开始------------------------------------------------------------------
+
+    /**
+     * 亚马逊创建报告Tag
+     */
+    AMZ_REPORT_CREATE_TAG(8001, RocketMqTagEnum.AMZ_REPORT,"amz_report_create_tag"),
+    /**
+     * 亚马逊查询报告Tag
+     */
+    AMZ_REPORT_QUERY_TAG(8002, RocketMqTagEnum.AMZ_REPORT,"amz_report_query_tag"),
+
+    /**
+     * 亚马逊下载报告Tag
+     */
+    AMZ_REPORT_DOWNLOAD_TAG(8003, RocketMqTagEnum.AMZ_REPORT,"amz_report_download_tag"),
+
+    /**
+     * 亚马逊解析报告Tag
+     */
+    AMZ_REPORT_PARSE_TAG(8004, RocketMqTagEnum.AMZ_REPORT,"amz_report_parse_tag"),
+
+    /**
+     * 亚马逊不创建直接查询报告Tag
+     */
+    AMZ_REPORT_DIRECT_QUERY_TAG(8005, RocketMqTagEnum.AMZ_REPORT,"amz_report_direct_query_tag"),
+
 
 
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
@@ -517,6 +553,10 @@ public enum RocketMqTagEnum {
     public static final String FBA_DELIVERY = "fba_delivery";
 
     public static final String SYS_LOG = "sys_log";
+
+    public static final String AMZ_REPORT = "amz_report";
+
+    public static final String FBA_SHIPMENT = "fba_shipment";
 
     private Integer code;
 

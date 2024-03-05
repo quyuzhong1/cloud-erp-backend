@@ -5,6 +5,8 @@ import com.common.core.enums.PannoEnum;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 /**
  * 清洗基础数据
  *
@@ -37,4 +39,10 @@ public class CleanBaseDTO extends UniqueDto {
      */
     @Panno(findType = PannoEnum.EQ,field = "authId")
     private String authId;
+
+    /**
+     * 更新的Map(空=更新所有)
+     * 只更新指定的字段
+     */
+    private Map<String, Object> updateFieldMap;
 }
