@@ -26,8 +26,6 @@
         <result column="plan_delivery_date" property="planDeliveryDate" />
         <result column="is_gift" property="isGift" />
         <result column="remark" property="remark" />
-        <result column="arrival_status" property="arrivalStatus" />
-        <result column="arrival_time" property="arrivalTime" />
         <result column="tax_rate" property="taxRate" />
     </resultMap>
 
@@ -86,8 +84,7 @@
             pod.plan_delivery_date,
             pod.is_gift,
             pod.remark,
-            pod.arrival_status,
-            pod.arrival_time,
+            pod.execution_status,
             pod.tax_rate,
             pod.is_urgent,
             pod.variant_property,
@@ -125,8 +122,7 @@
             plan_delivery_date,
             is_gift,
             remark,
-            arrival_status,
-            arrival_time,
+            execution_status,
             tax_rate,
             is_urgent,
             variant_property,
@@ -152,8 +148,7 @@
                 pod.plan_delivery_date,
                 pod.is_gift,
                 pod.remark,
-                pod.arrival_status,
-                pod.arrival_time,
+                pod.execution_status,
                 pod.tax_rate,
                 pod.is_urgent,
                 pod.variant_property,
@@ -190,8 +185,7 @@
         plan_delivery_date,
         is_gift,
         remark,
-        arrival_status,
-        arrival_time,
+        execution_status,
         tax_rate,
         is_urgent,
         variant_property,
@@ -217,8 +211,7 @@
         pod.plan_delivery_date,
         pod.is_gift,
         pod.remark,
-        pod.arrival_status,
-        pod.arrival_time,
+        pod.execution_status,
         pod.tax_rate,
         pod.is_urgent,
         pod.variant_property,
