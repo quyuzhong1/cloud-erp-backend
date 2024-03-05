@@ -46,17 +46,17 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
 
     public static void main(String[] args) {
 
-     /*   String baseUrl = "https://api.mercadolibre.com/marketplace/orders/search";
+        String baseUrl = "https://api.mercadolibre.com/marketplace/orders/search";
 
 
         //入参
         HashMap<String, Object> params = new HashMap<>(2);
-        params.put("seller.id", "1511265855");
-        params.put("limit", "1");
-        params.put("offset", "1");
+        params.put("order.status", "cancelled,paid,invalid");
+        params.put("limit", "100");
+        params.put("offset", "0");
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-030421-7ae5abf29d54cfe1274eedf82f2398d6-1509269799");
+        headerMap.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-030505-67f461af1a1b82d19d1f0463aeb98d4a-1509269799");
 
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
@@ -64,16 +64,16 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
             log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
                     baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
-        }*/
+        }
 
 
-        String baseUrl2 = "https://api.mercadolibre.com/marketplace/orders/2000007633674134";
+/*        String baseUrl2 = "https://api.mercadolibre.com/marketplace/orders/2000007633674134";
 
         //入参
         HashMap<String, Object> params2 = new HashMap<>(2);
         //设置请求头
         Map<String, String> headerMap2 = new HashMap<>(1);
-        headerMap2.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-030421-7ae5abf29d54cfe1274eedf82f2398d6-1509269799");
+        headerMap2.put("Authorization", "Bearer "+ "APP_USR-3457166802805723-030505-67f461af1a1b82d19d1f0463aeb98d4a-1509269799");
 
         //拉取数据
         ApiResult apiResult2 = HttpCommonUtil.sendOkHttpApiResult(baseUrl2, JSONUtil.toJsonStr(params2), null, headerMap2, RequestMethod.GET);
@@ -84,7 +84,7 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
         }
 
 
-        System.out.println(JSONUtil.toJsonStr(apiResult2.getData()));
+        System.out.println(JSONUtil.toJsonStr(apiResult2.getData()));*/
     }
 
     @Override

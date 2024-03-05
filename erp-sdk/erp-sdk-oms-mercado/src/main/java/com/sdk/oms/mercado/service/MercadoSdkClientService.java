@@ -291,8 +291,9 @@ public class MercadoSdkClientService {
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
-            params.put("seller.id", "1511265855");
+//            params.put("seller.id", "1511265855");
 //            params.put("seller.id", shopInfoDTO.getUserId());
+            params.put("order.status", "cancelled,paid,invalid");
             params.put("last_updated.from", task.getLastTime());
             params.put("last_updated.to", task.getNextTime());
             params.put("limit", pageSize);

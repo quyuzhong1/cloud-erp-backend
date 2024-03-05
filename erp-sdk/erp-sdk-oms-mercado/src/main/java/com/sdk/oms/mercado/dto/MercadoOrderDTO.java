@@ -4,13 +4,17 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -51,9 +55,6 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
-
-
-
         //平台订单号
         orderDTO.setPlatformCode(String.valueOf(orderBean.getId()));
 
@@ -62,15 +63,21 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
-/*
+
 
         //付款时间
-        Instant instant = Instant.ofEpochMilli(orderBean.getPayments().get(0).getDateLastModified());
-        ZoneId zone = ZoneId.systemDefault();
-        orderDTO.setPayTime(LocalDateTime.ofInstant(instant, zone));
+        //使用 DateTimeFormatter 解析字符串日期
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        if (CollectionUtils.isNotEmpty(orderBean.getPayments())) {
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getPayments().get(0).getDateLastModified(), formatter);
+            // 转换为 LocalDateTime
+            LocalDateTime payTime = offsetDateTime.toLocalDateTime();
+            orderDTO.setPayTime(payTime);
+        }
+
 
         // 订单状态，详情金额汇总
-        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
+//        fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO, orderBean.getShipNode().getType());
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -82,11 +89,11 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
         // 来源id
-        orderDTO.setSourceId(orderBean.getPurchaseOrderId());
+        orderDTO.setSourceId(String.valueOf(orderBean.getId()));
 
         // 来源编码
         orderDTO.setSourceCode("");
-
+/*
         // 标签json
         Map<String, String> lableMap = new HashMap<>();
         lableMap.put("shipNodeType", orderBean.getShipNode().getType());
