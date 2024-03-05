@@ -3518,6 +3518,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("orderProfitRate", financialInfo.getProfitRate());
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
+            detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
+
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {
@@ -3580,6 +3582,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         String isCombinationOrder = getByField("isCombinationOrder", mapList);
         map.put("isCombinationOrder", isCombinationOrder);
+
+        long isOutStockCount = mapList.stream().filter(m-> (boolean) m.get("isOutStock")).count();
+        map.put("isOutStock", isOutStockCount > 0);
 
 
         return map;
