@@ -95,10 +95,11 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
     @Override
     public List<LogisticsServicePlatformDTO.ServiceNameDTO> listServiceNameByLogisticsPlatform(String logisticsPlatform) {
         List<LogisticsServicePlatformEntity> dbList = listByPlatform(logisticsPlatform);
-        List<LogisticsServicePlatformDTO.ServiceNameDTO> list = new ArrayList<>(dbList.size());
-        for (LogisticsServicePlatformEntity item : dbList) {
+        List<String> nameList = dbList.stream().map(LogisticsServicePlatformEntity::getServiceName).distinct().collect(Collectors.toList());
+        List<LogisticsServicePlatformDTO.ServiceNameDTO> list = new ArrayList<>(nameList.size());
+        for (String item : nameList) {
             LogisticsServicePlatformDTO.ServiceNameDTO serviceNameDTO = new LogisticsServicePlatformDTO.ServiceNameDTO();
-            serviceNameDTO.setServiceName(item.getServiceName());
+            serviceNameDTO.setServiceName(item);
             list.add(serviceNameDTO);
         }
         return list;
