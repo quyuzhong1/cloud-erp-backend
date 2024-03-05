@@ -37,7 +37,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
-import com.erp.model.oms.dto.SkuMappingExtendDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -74,7 +73,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
@@ -3976,7 +3974,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productInfo)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            if (!StrUtil.equals(SaleMethodEnum.GOODS.getName(),productInfo.getSaleMethod())) {
+            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| !productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
                 continue;
             }
             /**
@@ -3996,7 +3994,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(),MathUtil.ZERO) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_BOX_SIZE_NOT_EXIST,detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST,detailEntity.getSkuNo());
             }
             //单箱重量
             if (MathUtil.compareTo(productPackEntity.getBoxWeight(),MathUtil.ZERO) == MathUtil.ZERO) {

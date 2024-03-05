@@ -472,6 +472,18 @@ public class LogisticsProductDTO {
          * 物流属性
          */
         private String logisticsPropertyName;
+        /**
+         * 判断是否含电 true 展示输入输出电池电压功率  false不展示入输出电池电压功率
+         */
+        private Boolean electric;
+        /**
+         * 输入参数 仅展示使用
+         */
+        private String inputParams;
+        /**
+         * 输出参数 仅展示使用
+         */
+        private String outputParams;
 
         /**
          * ENA 吗

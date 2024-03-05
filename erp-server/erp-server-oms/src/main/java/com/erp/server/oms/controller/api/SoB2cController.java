@@ -876,8 +876,9 @@ public class SoB2cController extends BaseController {
 
     @GetMapping("/getJson")
     public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
-        Map<String, Object> map = soB2cService.getJson(id);
-        return success(map);
+        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>());
+        System.out.println(JSONUtil.toJsonStr(logisticsRuleResult));
+        return success();
 
     }
     @GetMapping("/getSplitSku")

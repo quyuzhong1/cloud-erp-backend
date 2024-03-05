@@ -190,4 +190,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param mainIdList
      */
     void updateExecutionStatus(List<String> mainIdList,ExecutionStatusEnum statusEnum);
+    /**
+     * @description: 根据编码集合和sku编码集合查询
+     * @author Will
+     * @date: 2024/3/5 16:06
+     * @param codeList
+     * @param skuNoList
+     * @return List<ImportEndReceiveDTO>
+     */
+    List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(List<String> codeList, List<String> skuNoList);
 }

@@ -28,6 +28,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -639,5 +640,52 @@ public class PurchaseOrderController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 下载结束交货模板
+     * @author Will
+     * @date: 2024/3/0 10:22
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载结束交货模板")
+    @GetMapping("/exportEndRecveiveTemplate")
+    public ApiResult exportEndRecveiveTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/purchaseEndReceiveTemplate.xlsx";
+        String excelName = "purchaseEndReceiveTemplate.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+    /**
+     * 导入结束交货采购订单
+     * @author Will
+     * @date: 2024/3/5 11:07
+     * @param multipartFile
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入结束交货采购订单")
+    @PostMapping("/importEndReceiveFile")
+    public ApiResult importEndReceiveFile(@RequestParam("multipartFile") MultipartFile multipartFile, HttpServletResponse response) {
+        purchaseOrderService.importEndReceiveFile(multipartFile, response);
+        return success();
     }
 }
