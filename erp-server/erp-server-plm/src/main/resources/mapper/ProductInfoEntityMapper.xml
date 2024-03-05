@@ -237,7 +237,7 @@
         </if>
 
         <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
-            AND pi.charge_id IN
+            AND p.project_charge_id IN
             <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
                 #{chargeId}
             </foreach>
