@@ -2603,7 +2603,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (!isError) {
                 PurchaseEndReceiveImportExcelDTO excelDTO = value.get(0);
                 try {
-                    finishDelivery(Arrays.asList(excelDTO.getDetailId()),"导入结束交货",Boolean.TRUE);
+                    finishDelivery(Arrays.asList(excelDTO.getDetailId()),excelDTO.getRemark(),Boolean.TRUE);
                 } catch (Exception e) {
                     errorMsgList.add(e.getMessage());
                 }

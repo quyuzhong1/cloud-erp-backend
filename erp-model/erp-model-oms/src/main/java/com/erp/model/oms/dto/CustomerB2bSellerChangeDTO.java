@@ -78,7 +78,7 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 最新审核人[可排序]
+         * 最新审核人[不可排序]
          */
         private String approveUserName;
 
