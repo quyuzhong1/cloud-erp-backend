@@ -37,6 +37,7 @@ import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.PurchaseEndReceiveImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -68,6 +69,7 @@ import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
+import com.erp.server.scm.listener.PurchaseEndReceiveExcelListener;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
@@ -2505,6 +2507,115 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
     }
+
+    @Override
+    public Boolean importEndReceiveFile(MultipartFile excelFile, HttpServletResponse response) {
+
+        PurchaseEndReceiveExcelListener excelListenerUtil = new PurchaseEndReceiveExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchaseEndReceiveImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<PurchaseEndReceiveImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<PurchaseEndReceiveImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<PurchaseEndReceiveImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportEndReceiveFile(successList, errorList);
+
+        if (errorList.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/purchaseEndReceiveError.xlsx";
+            String name = "purchaseEndReceiveError";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 处理导入采购结束交货
+     * @author Will
+     * @date: 2024/3/5 11:33
+     * @param successList
+     * @param errorList
+     */
+    private void handleImportEndReceiveFile (List<PurchaseEndReceiveImportExcelDTO> successList,List<PurchaseEndReceiveImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //采购订单编码集合
+        List<String> codeList = successList.stream().map(PurchaseEndReceiveImportExcelDTO::getCode).collect(Collectors.toList());
+        //sku编码集合
+        List<String> skuNoList = successList.stream().map(PurchaseEndReceiveImportExcelDTO::getSkuNo).collect(Collectors.toList());
+        List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> importEndReceiveList = purchaseOrderDetailService.listImportEndReceive(codeList, skuNoList);
+
+        Map<String, List<PurchaseEndReceiveImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCode().concat(obj.getSkuNo())));
+        for (Map.Entry<String,List<PurchaseEndReceiveImportExcelDTO>> entry : map.entrySet()) {
+            List<String> errorMsgList = new ArrayList<>();
+            List<PurchaseEndReceiveImportExcelDTO> value = entry.getValue();
+            Boolean isError = Boolean.FALSE;
+            for (PurchaseEndReceiveImportExcelDTO excelDTO : value) {
+                //判断导入数据是否重复
+                if (value.size() > 1) {
+                    errorMsgList.add("存在两条相同的数据，请重新导入");
+                }
+                List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> detailList = importEndReceiveList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())
+                                && StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo()))
+                        .collect(Collectors.toList());
+                //验证是否存在未作废数据
+                if (CollectionUtils.isEmpty(detailList)) {
+                    errorMsgList.add(StrUtil.format("系统中未找到有效的采购订单【{}】SKU【{}】的数据",excelDTO.getCode(),excelDTO.getSkuNo()));
+                } else {
+                    //存在多条相同sku则不允许更新
+                    if (detailList.size() > MathUtil.ONE) {
+                        errorMsgList.add(StrUtil.format("系统中存在多条采购订单【{}】SKU【{}】的数据",excelDTO.getCode(),excelDTO.getSkuNo()));
+                    }
+                }
+                //存在错误信息则
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                    isError = Boolean.TRUE;
+                    continue;
+                }
+                excelDTO.setDetailId(detailList.get(0).getDetailId());
+            }
+            //结束交货
+            if (!isError) {
+                PurchaseEndReceiveImportExcelDTO excelDTO = value.get(0);
+                try {
+                    finishDelivery(Arrays.asList(excelDTO.getDetailId()),"导入结束交货",Boolean.TRUE);
+                } catch (Exception e) {
+                    errorMsgList.add(e.getMessage());
+                }
+                //存在错误信息则
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                }
+            }
+        }
+    }
+
 
     private List<PurchaseOrderDTO.ListDTO> listByDetailIds(List<String> purchaseDetailIds) {
         if (CollectionUtils.isEmpty(purchaseDetailIds)){
