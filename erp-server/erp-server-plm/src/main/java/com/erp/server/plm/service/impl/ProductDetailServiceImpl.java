@@ -3974,7 +3974,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productInfo)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
+            if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| !productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName())) {
                 continue;
             }
             /**
