@@ -197,6 +197,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(value = "exchange_rate")
     private BigDecimal exchangeRate;
 
+    /**
+     * 发货数量
+     */
+    @TableField(value = "delivery_qty")
+    private Integer deliveryQty;
+
 
     @TableField(exist = false)
     private String approveStatus;
