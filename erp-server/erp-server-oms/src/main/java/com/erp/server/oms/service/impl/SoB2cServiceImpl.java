@@ -3478,12 +3478,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("packageHeight", logisticsEntity.getHeight());
             //产品尺寸(长+宽+高)
             BigDecimal detailPackageSize = logisticsEntity.getLength()
-                    .add(logisticsEntity.getWeight())
+                    .add(logisticsEntity.getWidth())
                     .add(logisticsEntity.getHeight());
             map.put("packageSize",detailPackageSize);
             //产品尺寸(长+2*宽+2*高)
             BigDecimal detailPackageMultiSize = logisticsEntity.getLength()
-                    .add(MathUtil.multiply(logisticsEntity.getWeight(),MathUtil.TWO))
+                    .add(MathUtil.multiply(logisticsEntity.getWidth(),MathUtil.TWO))
                     .add(MathUtil.multiply(logisticsEntity.getHeight(),MathUtil.TWO));
             map.put("packageMultiSize",detailPackageMultiSize);
 
