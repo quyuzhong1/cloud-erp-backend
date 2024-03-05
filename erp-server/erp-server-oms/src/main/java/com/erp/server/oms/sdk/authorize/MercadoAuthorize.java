@@ -179,7 +179,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         map.put("userId", platformMercadoTokenDTO.getUserId());
         shopInfo.setExtendData(map);
         shopAuthService.saveOrUpdate(shopAuth);
-        dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+        dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         shopInfo.setIsGenTask(Boolean.TRUE);
         shopInfoService.updateById(shopInfo);
         MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
