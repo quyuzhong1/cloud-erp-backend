@@ -473,8 +473,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             return;
         }
         //推送同步中台dmp任务
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", entity.getId());
+        //客户编号
+        resultMap.put("code", entity.getCode());
+        resultMap.put("operate", operate);
+
         DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
-                .setMqData(JSON.toJSONString(entity))
+                .setMqData(JSON.toJSONString(resultMap))
                 .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
                 .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
                 .setSourceCode(entity.getCode())
@@ -485,14 +492,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .setSyncOperate(operate);
         log.info("推送消息开始：{}", dto.toString());
         String dmpPullTaskId = dmpTaskFeign.savePullTask(dto);
-
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        //业务id
-        resultMap.put("id", entity.getId());
-        //客户编号
-        resultMap.put("code", entity.getCode());
-        resultMap.put("operate", operate);
+        resultMap.put("dmpSyncTaskId", dmpPullTaskId);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
