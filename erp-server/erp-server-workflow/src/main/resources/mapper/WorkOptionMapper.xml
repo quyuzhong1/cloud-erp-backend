@@ -94,7 +94,7 @@
             pm.business_id as businessId,
             pm.business_key as businessKey,
             pm.create_user_id as createUserId,
-            EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
+            COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),0) AS approveDuration,
             pm.create_time as createTime,
             pm.approve_status as approveStatus,
             concat(wm.detail_url,pm.business_id) as detailUrl,
