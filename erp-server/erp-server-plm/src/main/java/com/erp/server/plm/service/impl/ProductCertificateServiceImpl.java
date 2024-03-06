@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -252,7 +251,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                             .setBusinessId(productCertificateEntity.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(businessId)
-                            .setOperation(OperationTypeEnum.DELETE.getName())
+                            .setOperation("删除附件")
             );
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
@@ -704,6 +703,22 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             attachmentList.add(attachmentEntity);
         }
         plmAttachmentService.saveBatch(attachmentList);
+
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        attachmentList.forEach(obj -> {
+            //skuId
+            ProductCertificateEntity entity = resultList.stream().filter(e -> StrUtil.equals(e.getId(), obj.getBusinessId())).findFirst().orElse(new ProductCertificateEntity());
+            sysLogEntityList.add(
+                    new SysLogEntity().setContent(StrUtil.format("新增了一个产品证书附件【{}】",obj.getAttachName()))
+                            .setBusinessId(entity.getSkuId())
+                            .setClassPath(String.valueOf(ProductCertificateEntity.class))
+                            .setPid(obj.getBusinessId())
+                            .setOperation("新增附件")
+            );
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
     }
 }
 
