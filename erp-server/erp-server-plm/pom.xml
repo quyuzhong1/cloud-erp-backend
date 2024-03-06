@@ -40,12 +40,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <scope>5.3.9</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-plm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
@@ -105,6 +99,10 @@
             <artifactId>erp-rpc-tms</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
         </dependency>
 
     </dependencies>
