@@ -25,11 +25,6 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
      */
     private String mqData;
 
-    public DmpSyncMqDTO(String id, String mqData) {
-        super(id);
-        this.mqData = mqData;
-    }
-
 
     @Data
     @NoArgsConstructor

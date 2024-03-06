@@ -1,31 +1,29 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.erp.server.dmp.service.DmpFbaDeliveryService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.dmp.service.DmpPullTaskService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 
@@ -84,15 +82,16 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
         dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
         dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
-        String mqData = JSONObject.toJSONString(fbaDeliveryEntity);
+        String mqData = JSONUtil.toJsonStr(fbaDeliveryEntity);
         dmpPullTaskEntity.setMqData(mqData);
         dmpPullTaskService.save(dmpPullTaskEntity);
 
         if(PlatformEnum.MABANG.getDesc().equals(fbaDeliveryEntity.getPlatformSign())) {
-            // 发送到ERP WMS系统，生成加工单
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
+            // 发送推送同步任务消息
+            JSONObject jsonObject = JSONUtil.parseObj(dmpPullTaskEntity.getMqData());
+            jsonObject.set("dmpSyncTaskId",dmpPullTaskEntity.getId());
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                    jsonObject, StrUtil.uuid().toLowerCase());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
