@@ -81,7 +81,11 @@
             ra.handle_user_name AS handleUserName,
             ra.handle_time AS handleTime,
             ra.create_time AS createTime,
-            op.code AS provideCode
+            op.code AS provideCode,
+            rad.platform_sku as thirdWarehouseSku,
+            rad.platform_sku as platformSku,
+            rad.platform_spu as platformProductId,
+            rad.platform_fn_sku as platformFnSku
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
@@ -182,7 +186,11 @@
         ra.handle_user_name AS handleUserName,
         ra.handle_time AS handleTime,
         ra.create_time AS createTime,
-        op.code AS provideCode
+        op.code AS provideCode,
+        rad.platform_sku as thirdWarehouseSku,
+        rad.platform_sku as platformSku,
+        rad.platform_spu as platformProductId,
+        rad.platform_fn_sku as platformFnSku
         FROM requisition_application ra
         LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false

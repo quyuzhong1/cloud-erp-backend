@@ -156,14 +156,19 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         private String platformSku;
 
         /**
-         * 平台spu
+         * 平台spu（asin）
          */
-        private String platformSpu;
+        private String asin;
 
         /**
          * fnSku
          */
-        private String platformFnSku;
+        private String fnSku;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
 
         /**
         * 产品编码

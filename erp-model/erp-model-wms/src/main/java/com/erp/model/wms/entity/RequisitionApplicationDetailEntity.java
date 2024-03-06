@@ -97,6 +97,12 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     private String platformSku;
 
     /**
+     * 平台sku
+     */
+    @TableField("platform_sku_name")
+    private String platformSkuName;
+
+    /**
      * 平台spu
      */
     @TableField("platform_spu")

@@ -721,27 +721,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             listDTO.setTypeName(RequisitionApplicationTypeEnum.getName(listDTO.getType()));
 
             //根据类型设置第三方SKU信息
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
-                if(StringUtils.isNotBlank(listDTO.getProvideCode())){
-                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-                            v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(listDTO.getChannelId()))
-                    ).findFirst().orElse(null);
-                }
-            }
-
-            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
-                if(StringUtils.isNotBlank(listDTO.getChannelId())){
-                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getShopId().equals(listDTO.getChannelId())).findFirst().orElse(null);
-                }
-            }
-
-            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-                listDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                listDTO.setPlatformProductId(listingInfoWithSkuMappingDTO.getPlatformSpuNo());
-                listDTO.setPlatformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-                listDTO.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
-            }
+//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
+//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
+//                if(StringUtils.isNotBlank(listDTO.getProvideCode())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
+//                            v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(listDTO.getChannelId()))
+//                    ).findFirst().orElse(null);
+//                }
+//            }
+//
+//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
+//                if(StringUtils.isNotBlank(listDTO.getChannelId())){
+//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getShopId().equals(listDTO.getChannelId())).findFirst().orElse(null);
+//                }
+//            }
+//
+//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
+//                listDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                listDTO.setPlatformProductId(listingInfoWithSkuMappingDTO.getPlatformSpuNo());
+//                listDTO.setPlatformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
+//                listDTO.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
+//            }
         }
     }
 
