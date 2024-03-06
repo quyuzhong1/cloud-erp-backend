@@ -281,8 +281,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
             batchResultDTO.setId(entity.getId());
             batchResultDTO.setCode(customerInfoEntity.getCode());
-            if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)){
-                batchResultDTO.setMsg("只有待提交状态可以提交审核");
+            if(!(entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT))){
+                batchResultDTO.setMsg("只有待提交或审核失败状态可以提交审核");
                 batchResultDTO.setSuccess(false);
                 resultDTOList.add(batchResultDTO);
                 continue;
@@ -293,7 +293,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 continue;
             }
             entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
-            boolean result = this.updateById(entity);
+            boolean result = this.updateApproveInfo(entity,"",null);
             if (result) {
                 //添加日志
                 String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -454,13 +454,32 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         CustomerB2bSellerChangeEntity againEntity = this.getById(entity.getId());
         if(againEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-            againEntity.setRemark(dto.getComment());
-            againEntity.setApproveTime(LocalDateTime.now());
-            againEntity.setApproveUserId(userInfo.getUid());
-            againEntity.setApproveUserName(userInfo.getUserName());
-            this.updateById(againEntity);
+            this.updateApproveInfo(againEntity,dto.getComment(),LocalDateTime.now());
         }
     }
+
+    public Boolean updateApproveInfo(CustomerB2bSellerChangeEntity entity,String comment,LocalDateTime approveTime){
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), entity.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveInfoDTOList = listApiResult.getData();
+            String curApproveId = curApproveInfoDTOList.stream().filter(v->StringUtils.isNotBlank(v.getCurApproveId())).findFirst().orElse(new ProcessManagementDTO.CurApproveInfoDTO()).getCurApproveId();
+            String curApproveName = curApproveInfoDTOList.stream().filter(v->StringUtils.isNotBlank(v.getCurApproveName())).findFirst().orElse(new ProcessManagementDTO.CurApproveInfoDTO()).getCurApproveName();
+            if(StringUtils.isNotBlank(curApproveId)){
+                entity.setApproveUserId(curApproveId);
+            }
+            if(StringUtils.isNotBlank(curApproveName)){
+                entity.setApproveUserName(curApproveName);
+            }
+            if(approveTime != null){
+                entity.setApproveTime(approveTime);
+            }
+            entity.setRemark(comment);
+        }
+        return this.updateById(entity);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
