@@ -711,25 +711,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //更改打包日期 以及发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
+
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(allList);
-        List<String> soDetailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
-
-        //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        soDetailList = soDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
-        //分组
-        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
-        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
-        for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
+        soOutstockDetailList=soOutstockDetailList.stream().filter(s->StringUtils.isNotBlank(s.getSoDetailId())).collect(Collectors.toList());
+        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>();
+        for (SoOutstockDetailEntity item : soOutstockDetailList) {
             SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
-            String soDetailId = entry.getKey();
-            param.setId(soDetailId);
-            //已发货数量
-            Integer alreadyDeliveryQty = entry.getValue().stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-            param.setAlreadyDeliveryQty(alreadyDeliveryQty);
+            param.setDeliveryQty(item.getActualQty());
+            param.setId(item.getSoDetailId());
             paramList.add(param);
-
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
@@ -867,24 +857,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //更改发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(idList);
-        List<String> soDetailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
-        //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        //分组
-        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
-        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
-        for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
-            SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
-            String soDetailId = entry.getKey();
-            param.setId(soDetailId);
-            //已发货数量
-            Integer alreadyDeliveryQty = entry.getValue().stream().filter(s -> s.getApproveStatus().equals(approveStatus)).
-                    mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-            param.setAlreadyDeliveryQty(alreadyDeliveryQty);
-            paramList.add(param);
-
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> StringUtils.isNotBlank(s.getSoDetailId())).collect(Collectors.toList());
+        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(soOutstockDetailList.size());
+        for (SoOutstockDetailEntity item : soOutstockDetailList) {
+            SoDetailDTO.UpdateDeliveryStatusDTO paramDTO = new SoDetailDTO.UpdateDeliveryStatusDTO();
+            paramDTO.setId(item.getSoDetailId());
+            Integer actualQty = item.getActualQty();
+            Integer deliveryQty = -actualQty;
+            paramDTO.setDeliveryQty(deliveryQty);
+            paramList.add(paramDTO);
         }
+
         soInfoFeign.updateDeliveryStatus(paramList);
 
         //删除物流单
@@ -952,8 +935,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (isPushKingDee) {
                 //B2B 反审核发送金蝶
                 haveSoIdList.stream().filter(l -> !b2cType.equals(l.getOrderType())).forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
-
-
             }
 
             //修改中转报关单订单出库状态

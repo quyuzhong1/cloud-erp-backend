@@ -955,28 +955,43 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
-        if (CollectionUtils.isNotEmpty(paramList)) {
-            List<String> idList = paramList.stream().map(SoDetailDTO.UpdateDeliveryStatusDTO::getId).collect(Collectors.toList());
-            List<SoDetailEntity> soDetailList = this.listByIds(idList);
-            for (SoDetailEntity item : soDetailList) {
-                String id = item.getId();
-                Integer qty = item.getQty();
-                Integer deliveryQty = paramList.stream().filter(p -> p.getId().equals(id)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getAlreadyDeliveryQty())).orElse(0);
-                if (deliveryQty >= qty) {
-                    item.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
-                }
-                if (deliveryQty < qty && deliveryQty != 0) {
-                    item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
-                }
-                if (deliveryQty == 0) {
-                    item.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
-                }
-            }
-            this.updateBatchById(soDetailList);
+        if (CollectionUtils.isEmpty(paramList)) {
+            return;
         }
-
+        List<String> idList = paramList.stream().map(SoDetailDTO.UpdateDeliveryStatusDTO::getId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = this.listByIds(idList);
+        for (SoDetailEntity item : soDetailList) {
+            String id = item.getId();
+            Integer qty = item.getQty();
+            //已发货数据
+            Integer alreadyDeliverQty = item.getDeliveryQty();
+            //本次发货数量
+            Integer deliveryQty = paramList.stream().filter(p -> p.getId().equals(id)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
+            //最终的
+            Integer finalDeliverQty = alreadyDeliverQty + deliveryQty;
+            if (finalDeliverQty >= qty) {
+                item.setDeliveryQty(qty);
+            } else {
+                item.setDeliveryQty(finalDeliverQty);
+            }
+            if (finalDeliverQty < 0) {
+                item.setDeliveryQty(0);
+            }
+            if (finalDeliverQty >= qty) {
+                item.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+            }
+            if (finalDeliverQty < qty && finalDeliverQty >= 0) {
+                item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
+            }
+            if (finalDeliverQty <= 0) {
+                item.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
+            }
+        }
+        this.updateBatchById(soDetailList);
     }
+
+
 
 
     /**
