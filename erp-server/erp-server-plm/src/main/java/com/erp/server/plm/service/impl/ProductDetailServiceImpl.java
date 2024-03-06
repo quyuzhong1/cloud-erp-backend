@@ -3479,6 +3479,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //workflowFeign.taskPass(approveProcess);
             entityList.forEach(obj -> {
+                //发送通知
+                noticeMessageService.approveProductNotice(CommonInterceptor.threadLocal.get().getUserName(), obj);
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
