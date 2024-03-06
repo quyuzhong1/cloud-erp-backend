@@ -14,6 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
@@ -23,6 +24,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -87,6 +89,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -586,6 +591,25 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String requisitionWarehouseId = requisitionApplicationEntity.getRequisitionWarehouseId();
         List<WarehouseDTO.UpdateDTO> warehouse = warehouseService.listWarehouseByIds(Arrays.asList(requisitionWarehouseId));
         requisitionApplicationEntity.setRequisitionWarehouseName(warehouse.get(MathUtil.ZERO).getName());
+        if(StringUtils.isBlank(requisitionApplicationEntity.getChannelName())){
+            if(StringUtils.isBlank(requisitionApplicationEntity.getChannelId())){
+                return;
+            }
+            String channelName = "";
+            if(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode().equals(requisitionApplicationEntity.getType())){
+                ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
+                if(Objects.nonNull(shopInfoEntity)){
+                    channelName = shopInfoEntity.getName();
+                }
+            }
+            if(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplicationEntity.getChannelId());
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    channelName =  overseasProviderWarehouseEntity.getWarehouseName();
+                }
+            }
+            requisitionApplicationEntity.setChannelName(channelName);
+        }
     }
 
     /**
