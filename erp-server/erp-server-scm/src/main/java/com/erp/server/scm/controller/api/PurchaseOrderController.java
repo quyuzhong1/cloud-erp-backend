@@ -684,7 +684,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入结束交货采购订单")
     @PostMapping("/importEndReceiveFile")
-    public ApiResult importEndReceiveFile(@RequestParam("multipartFile") MultipartFile multipartFile, HttpServletResponse response) {
+    public ApiResult importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
         purchaseOrderService.importEndReceiveFile(multipartFile, response);
         return success();
     }
