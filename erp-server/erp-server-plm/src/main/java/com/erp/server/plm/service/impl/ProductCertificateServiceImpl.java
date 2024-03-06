@@ -663,6 +663,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         if (CollectionUtils.isEmpty(resultList)) {
             return;
         }
+
+
+        HashMap<String,File> map = new HashMap<>();
         List<PlmAttachmentEntity> attachmentList = new ArrayList<>();
         for (ProductCertificateEntity entity : resultList) {
             //附件
@@ -681,6 +684,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 throw new ServiceException(ApiError.ERROR_1018);
             }
             File file = FileUtil.multiToFile(multipartFile);
+            if (ObjectUtil.isEmpty(map.get(entity.getDictProject()))) {
+                map.put(entity.getDictProject(),file);
+            } else {
+                file = map.get(entity.getDictProject());
+            }
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
