@@ -90,6 +90,24 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     @TableField("requisition_warehouse_location")
     private String requisitionWarehouseLocation;
 
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku")
+    private String platformSku;
+
+    /**
+     * 平台spu
+     */
+    @TableField("platform_spu")
+    private String platformSpu;
+
+    /**
+     * fnSku
+     */
+    @TableField("platform_fn_sku")
+    private String platformFnSku;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
