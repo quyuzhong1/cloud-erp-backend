@@ -63,6 +63,13 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
     private MultipartFile multipartFile;
 
     /**
+     * 附件路径
+     */
+    @TableField(exist = false)
+    @JSONField(serialize = false)
+    private String pathUrl;
+
+    /**
      * 证书文件表id
      */
     @TableField(exist = false)

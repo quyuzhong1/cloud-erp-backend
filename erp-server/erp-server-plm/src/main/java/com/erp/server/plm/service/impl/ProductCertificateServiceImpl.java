@@ -21,28 +21,23 @@ import com.erp.model.plm.dto.excel.ProductCertificateExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProductCertificateProjectEnum;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -122,7 +117,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         entity.setId(dto.getId());
         entity.setRemark(dto.getRemark());
         entity.setMultipartFile(dto.getMultipartFile());
-        //entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        entity.setCertificateValidTime(ObjectUtil.isEmpty(dto.getCertificateValidTimeStr()) ? null : LocalDate.parse(dto.getCertificateValidTimeStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         log.info("编辑 开始更新产品认证", entity.getId());
         //更新主表数据
         this.updateById(entity);
@@ -380,7 +375,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return;
         }
         List<String> skuNoList = successList.stream().map(ProductCertificateExcelDTO::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        List<ProductDetailEntity> skuList = productDetailService.listBySkuNoList(skuNoList);
 
         List<ProductCertificateEntity> resultList = new ArrayList<>();
         for (ProductCertificateExcelDTO excelDTO : successList) {
@@ -388,8 +383,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             List<String> errorMsgList = new ArrayList<>();
 
             //产品信息
-            SkuVO skuVO = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(skuVO)) {
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
                 errorMsgList.add("系统中未找到SKU");
             }
             String pathUrl = excelDTO.getPathUrl();
@@ -420,37 +415,41 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     /**
      * 获取MultipartFile
      */
-    private  MultipartFile getMulFileByPath(String filePath)
-    {
-        FileItemFactory factory = new DiskFileItemFactory(16, null);
-        String textFieldName = "textField";
-        int num = filePath.lastIndexOf(".");
-        String extFile = filePath.substring(num);
-        FileItem item = factory.createItem(textFieldName, "text/plain", true,
-                "MyFileName" + extFile);
-        File newfile = new File(filePath);
-        int bytesRead = 0;
-        byte[] buffer = new byte[8192];
-        try
-        {
-            FileInputStream fis = new FileInputStream(newfile);
-            OutputStream os = item.getOutputStream();
-            while ((bytesRead = fis.read(buffer, 0, 8192))
-                    != -1)
-            {
-                os.write(buffer, 0, bytesRead);
-            }
-            os.close();
-            fis.close();
-        }
-        catch (IOException e)
-        {
-            throw new ServiceException(ApiError.ERROR_500);
-        }
-        MultipartFile mfile = new CommonsMultipartFile(item);
-        return mfile;
-    }
+    private MultipartFile getMulFileByPath(String filePath) {
+        try {
+            // 打开 URL 连接
+            URL url = new URL(filePath);
+            URLConnection conn = url.openConnection();
+            // 从连接获取输入流
+            BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
 
+            // 读取输入流中的数据并存储到 ByteArrayOutputStream 中
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            // 关闭输入流
+            inputStream.close();
+
+            // 从 ByteArrayOutputStream 中获取 byte 数组
+            byte[] bytes = outputStream.toByteArray();
+
+            // 关闭 ByteArrayOutputStream
+            outputStream.close();
+
+            // 从文件路径中提取文件名
+            String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+
+            // 创建 MockMultipartFile 对象
+            return new MockMultipartFile(fileName, new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            // 捕获异常并抛出自定义的 ServiceException
+            throw new ServiceException("未能获取文件");
+        }
+    }
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params, HttpServletResponse response) {
