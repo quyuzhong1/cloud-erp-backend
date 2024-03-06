@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -173,6 +174,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                             .setBusinessId(obj.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
+                            .setOperation("编辑操作")
             );
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
@@ -249,7 +251,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                     new SysLogEntity().setContent(StrUtil.format("删除了一个产品证书【{}】",obj.getAttachName()))
                             .setBusinessId(productCertificateEntity.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
-                            .setPid(obj.getId())
+                            .setPid(businessId)
+                            .setOperation(OperationTypeEnum.DELETE.getName())
             );
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
